@@ -145,7 +145,7 @@ void USOAPParser::startElement(const XML_Char* name, const XML_Char** attrs)
 
    if (flag_state == 0)
       {
-      U_INTERNAL_ASSERT(u_rmatch(U_STRING_TO_PARAM(str), U_CONSTANT_TO_PARAM(":Envelope")))
+      U_INTERNAL_ASSERT(u_endsWith(U_STRING_TO_PARAM(str), U_CONSTANT_TO_PARAM(":Envelope")))
 
       flag_state = 1;
       }
@@ -160,12 +160,12 @@ void USOAPParser::startElement(const XML_Char* name, const XML_Char** attrs)
    if (flag_state <= 2)
       {
       if (flag_state == 1 &&
-          u_rmatch(U_STRING_TO_PARAM(str), U_CONSTANT_TO_PARAM(":Header")))
+          u_endsWith(U_STRING_TO_PARAM(str), U_CONSTANT_TO_PARAM(":Header")))
          {
          header     = ptree;
          flag_state = 2;
          }
-      else if (u_rmatch(U_STRING_TO_PARAM(str), U_CONSTANT_TO_PARAM(":Body")))
+      else if (u_endsWith(U_STRING_TO_PARAM(str), U_CONSTANT_TO_PARAM(":Body")))
          {
          body       = ptree;
          flag_state = 3;

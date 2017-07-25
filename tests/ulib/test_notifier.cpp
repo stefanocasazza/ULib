@@ -378,7 +378,7 @@ int U_EXPORT main(int argc, char* argv[])
 
    list_test();
 
-   int fds[2], n = (argc > 1 ? atoi(argv[1]) : 5);
+   int fds[2], n = (argc > 1 ? u_atoi(argv[1]) : 5);
 
    pipe(fds);
 

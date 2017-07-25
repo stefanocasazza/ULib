@@ -128,6 +128,8 @@ userver {
  PLUGIN_DIR ../../../src/ulib/net/server/plugin/.libs
  ORM_DRIVER_DIR ../../../src/ulib/orm/driver/.libs
  PREFORK_CHILD $N
+ CRASH_COUNT 1
+ CRASH_EMAIL_NOTIFY mail.unirel.com:stefano.casazza@unirel.com
 }
 http {
  ENABLE_INOTIFY yes

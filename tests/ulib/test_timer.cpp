@@ -107,7 +107,7 @@ int U_EXPORT main (int argc, char* argv[])
    if (argc > 2) UTimer::printInfo(cout);
 #endif
 
-   int n = (argc > 1 ? atoi(argv[1]) : 5);
+   int n = (argc > 1 ? u_atoi(argv[1]) : 5);
 
    for (int i = 0; i < n; ++i)
       {

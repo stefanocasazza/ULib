@@ -25,6 +25,10 @@ typedef uint64_t siginfo_t;
 struct U_EXPORT UInterrupt {
 
    static struct sigaction act;
+   static sigset_t* mask_interrupt; // SIGALRM | SIGUSR[1|2] | SIGCHLD
+   static sigset_t mask_wait_for_signal;
+   static sig_atomic_t flag_wait_for_signal;
+   static bool exit_loop_wait_event_for_signal;
 
    /*
    static const char*    CLD_list[];
@@ -41,13 +45,31 @@ struct U_EXPORT UInterrupt {
    static void init();
    static void setMaskInterrupt(sigset_t* mask, int signo);
 
-   static RETSIGTYPE handlerInterrupt(int signo);
+   static RETSIGTYPE handlerInterrupt(int signo)
+      {
+      U_TRACE(0, "UInterrupt::handlerInterrupt(%d)", signo)
 
-   static sigset_t* mask_interrupt; // SIGALRM | SIGUSR[1|2] | SIGCHLD
-   static sig_atomic_t flag_wait_for_signal;
-   static bool exit_loop_wait_event_for_signal;
+      U_MESSAGE("(pid %P) program interrupt - %Y", signo);
 
-   static RETSIGTYPE handlerSignal(int signo);
+      if (signo == SIGBUS || //  7
+          signo == SIGSEGV)  // 11 
+         {
+#     ifdef DEBUG
+         u_debug_at_exit(); 
+#     endif
+         }
+
+   // U_EXIT(-1);
+
+      sendOurselves(signo);
+      }
+
+   static RETSIGTYPE handlerSignal(int signo)
+      {
+      U_TRACE(0, "[SIGNAL] UInterrupt::handlerSignal(%d)", signo)
+
+      flag_wait_for_signal = false;
+      }
 
    static void setHandlerForSignal(int signo, sighandler_t function)
       {
@@ -70,9 +92,29 @@ struct U_EXPORT UInterrupt {
       act.sa_flags = 0;
       }
 
-   static void waitForSignal(int signo);
-   static void sendOurselves(int signo);
-   static bool sendSignal(   int signo, pid_t pid)
+   static void waitForSignal(int signo)
+      {
+      U_TRACE(1, "UInterrupt::waitForSignal(%d)", signo)
+
+      flag_wait_for_signal = true;
+
+      setHandlerForSignal(signo, (sighandler_t)handlerSignal);
+
+      while (flag_wait_for_signal == true) (void) U_SYSCALL(sigsuspend, "%p", &mask_wait_for_signal);
+      }
+
+   static void sendOurselves(int signo) // Send ourselves the signal: see http://www.cons.org/cracauer/sigint.html
+      {
+      U_TRACE(0, "UInterrupt::sendOurselves(%d)", signo)
+
+      setHandlerForSignal(signo, (sighandler_t)SIG_DFL);
+
+      u_exit();
+
+      (void) U_SYSCALL(kill, "%d,%d", u_pid, signo);
+      }
+
+   static bool sendSignal(int signo, pid_t pid)
       {
       U_TRACE(1, "UInterrupt::sendSignal(%d,%d)", signo, pid)
 
@@ -81,14 +123,59 @@ struct U_EXPORT UInterrupt {
       U_RETURN(false);
       }
 
-   static bool  enable(sigset_t* mask);
-   static bool disable(sigset_t* mask, sigset_t* mask_old);
+   static bool enable(sigset_t* mask)
+      {
+      U_TRACE(1, "UInterrupt::enable(%p)", mask)
+
+      if (!mask)
+         {
+         if (!mask_interrupt) setMaskInterrupt(U_NULLPTR, 0);
+
+         mask = mask_interrupt;
+         }
+
+      if (U_SYSCALL(sigprocmask, "%d,%p,%p", SIG_BLOCK, mask, U_NULLPTR) == 0) U_RETURN(true);
+
+      U_RETURN(false);
+      }
+
+   static bool disable(sigset_t* mask, sigset_t* mask_old)
+      {
+      U_TRACE(1, "UInterrupt::disable(%p,%p)", mask, mask_old)
+
+      if (!mask)
+         {
+         if (!mask_interrupt) setMaskInterrupt(U_NULLPTR, 0);
+
+         mask = mask_interrupt;
+         }
+
+      if (U_SYSCALL(sigprocmask, "%d,%p,%p", SIG_BLOCK, mask, mask_old) == 0) U_RETURN(true);
+
+      U_RETURN(false);
+      }
 
    // manage sync signal
   
    static bool flag_alarm;
    static struct itimerval timerval;
-   static RETSIGTYPE handlerAlarm(int signo);
+
+   static RETSIGTYPE handlerAlarm(int signo)
+      {
+      U_TRACE(0, "[SIGALRM] UInterrupt::handlerAlarm(%d)", signo)
+
+      U_INTERNAL_DUMP("timerval.it_value = { %ld %6ld } timerval.it_interval = { %ld %6ld }",
+                       timerval.it_value.tv_sec, timerval.it_value.tv_usec, timerval.it_interval.tv_sec, timerval.it_interval.tv_usec)
+
+      if (signo) flag_alarm = (signo == SIGALRM);
+      else  
+         {
+         timerval.it_value.tv_sec  =
+         timerval.it_value.tv_usec = 0;
+
+         (void) U_SYSCALL(setitimer, "%d,%p,%p", ITIMER_REAL, &timerval, U_NULLPTR);
+         }
+      }
 
    static void setAlarm(int timeoutMS)
       {
@@ -149,10 +236,43 @@ struct U_EXPORT UInterrupt {
       U_RETURN(false);
       }
 
-   static void  erase(int signo);
-   static void insert(int signo, sighandler_t handler);
+   static void erase(int signo)
+      {
+      U_TRACE(1, "UInterrupt::erase(%d)", signo)
 
-   static RETSIGTYPE handlerEventSignal(int signo);
+      U_INTERNAL_ASSERT_RANGE(1, signo, NSIG)
+      U_INTERNAL_ASSERT_POINTER(handler_signal[signo])
+
+      handler_signal[signo] = U_NULLPTR;
+
+      (void) U_SYSCALL(sigaction, "%d,%p,%p", signo, old + signo, U_NULLPTR);
+      }
+
+   static void insert(int signo, sighandler_t handler)
+      {
+      U_TRACE(1, "UInterrupt::insert(%d,%p)", signo, handler)
+
+      U_INTERNAL_ASSERT_RANGE(1, signo, NSIG)
+
+      handler_signal[signo] = handler;
+
+      act.sa_handler = handlerEventSignal;
+
+      (void) U_SYSCALL(sigaction, "%d,%p,%p", signo, &act, old + signo);
+      }
+
+   static RETSIGTYPE handlerEventSignal(int signo)
+      {
+#  ifdef DEBUG
+      u_trace_unlock();
+#  endif
+
+      U_TRACE(0, "[SIGNAL] UInterrupt::handlerEventSignal(%d)", signo)
+
+      ++event_signal[signo];
+
+      event_signal_pending = (event_signal_pending ? NSIG : signo);
+      }
 };
 
 #endif

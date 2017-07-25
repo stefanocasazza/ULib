@@ -357,8 +357,8 @@ public:
        * Not After : Jan 25 11:54:00 2006 GMT
        */
 
-      if (time >= UTimeDate::getSecondFromTime(getNotBefore(), true, "%s %2d %2d:%2d:%2d %4d GMT") &&
-          time <= UTimeDate::getSecondFromTime(getNotAfter(),  true, "%s %2d %2d:%2d:%2d %4d GMT"))
+      if (time >= UTimeDate::getSecondFromDate(getNotBefore()) &&
+          time <= UTimeDate::getSecondFromDate(getNotAfter()))
          {
          U_RETURN(true);
          }

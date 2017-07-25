@@ -594,6 +594,7 @@ __pure unsigned u_getMonth(const char* buf)
 
    U_INTERNAL_TRACE("u_getMonth(%s)", buf)
 
+   U_INTERNAL_ASSERT(u__istext(*buf))
    U_INTERNAL_ASSERT_EQUALS(u__isspace(*buf), false)
 
    for (i = 0; i < 12; ++i)

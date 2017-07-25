@@ -35,6 +35,7 @@ userver {
  PLUGIN "tsa http"
  PLUGIN_DIR ../../../src/ulib/net/server/plugin/.libs
  ORM_DRIVER_DIR ../../../src/ulib/orm/driver/.libs
+ PREFORK_CHILD 0
 #CERT_FILE ../../ulib/CA/server.crt
 # KEY_FILE ../../ulib/CA/server.key
 #PASSWORD caciucco
@@ -60,24 +61,30 @@ wait_server_ready localhost 8080
 #../../tmp/openssl/ssl/misc/tsget -h http://localhost:8443/tsa TSA/request/tsq.req
 send_req $NCAT localhost 8080 TSA/request/http.req TSA_response 2 kill
 
-tail -c +155 out/TSA_response.out > TSA/response/response.tsr
+if [ -s out/TSA_response.out ]; then
 
-TSA/bin/openssl ts -verify -queryfile TSA/request/tsq.req \
-						 -in TSA/response/response.tsr -CApath TSA/CA/CApath > out/tsa_http.out 2>&1
+	tail -c +155 out/TSA_response.out > TSA/response/response.tsr
+
+	TSA/bin/openssl ts -verify -queryfile TSA/request/tsq.req \
+							 -in TSA/response/response.tsr -CApath TSA/CA/CApath > out/tsa_http.out
+fi
 
 rm -f out/TSA_response*
 
 #../../tmp/openssl/ssl/misc/tsget -h http://localhost:8443/tsa TSA/request/tsq.req
 send_req $NCAT localhost 8080 TSA/request/http.req TSA_response 2 kill
 
+$SLEEP
 kill_server userver_tcp
 
 mv err/userver_tcp.err err/tsa_http.err
 
-tail -c +155 out/TSA_response.out > TSA/response/response.tsr
+if [ -s out/TSA_response.out ]; then
+	tail -c +155 out/TSA_response.out > TSA/response/response.tsr
 
-TSA/bin/openssl ts -verify -queryfile TSA/request/tsq.req \
-						 -in TSA/response/response.tsr -CApath TSA/CA/CApath >> out/tsa_http.out
+	TSA/bin/openssl ts -verify -queryfile TSA/request/tsq.req \
+							 -in TSA/response/response.tsr -CApath TSA/CA/CApath >> out/tsa_http.out
+fi
 
 rm -f $DOC_ROOT/$DOC_ROOT
 

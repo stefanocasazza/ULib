@@ -462,26 +462,20 @@ public:
       {
       U_TRACE(0, "UTimeDate::getSecondFromTime(%.*S)", 8, str)
 
-      // NB: sscanf() is VERY HEAVY...!!!
-
       /**
        * 23:59:59
        * |  |  |
        * 0  3  6
        */
 
-      U_INTERNAL_ASSERT_EQUALS(str[2], ':')
-      U_INTERNAL_ASSERT_EQUALS(str[5], ':')
+      time_t t = (u__strtoul(str, 2) * U_ONE_HOUR_IN_SECOND);
 
-      time_t t = (u_strtoul(str, str+2) * U_ONE_HOUR_IN_SECOND);
+      if (str[2] == ':')
+         {
+         t += (u__strtoul(str+3, 2) * 60L);
 
-      str += 3;
-
-      t += (u_strtoul(str, str+2) * 60L);
-
-      str += 3;
-
-      t += u_strtoul(str, str+2);
+         if (str[5] == ':') t += u__strtoul(str+6, 2);
+         }
 
       U_RETURN(t);
       }
@@ -502,7 +496,7 @@ public:
       date.setCurrentDate();
       }
 
-   static time_t getSecondFromTime(const char* str, bool gmt, const char* fmt = "%a, %d %b %Y %T GMT", struct tm* tm = U_NULLPTR);
+   static time_t getSecondFromDate(const char* str, bool gmt = true, struct tm* tm = U_NULLPTR, const char* fmt = U_NULLPTR);
 
    // This can be used for comments and other form of communication to tell the time ago
    // instead of the exact time which might not be correct to someone in another time zone

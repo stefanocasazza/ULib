@@ -1801,9 +1801,8 @@ void UNoCatPlugIn::sendData(uint32_t index_AUTH, const UString& data, const char
    // NB: we can't try to send immediately the info data on users to portal because the worst we have a hole
    //     of 10 seconds and the portal can have need to ask us something (to logout some user, the list of peer permitted, ...)
 
-   char buffer[4096];
-   const char* log_msg = U_NULLPTR;
    uint32_t sz = data.size();
+   const char* log_msg = U_NULLPTR;
    UString body = data, url = getUrlForSendMsgToPortal(index_AUTH, service, service_len);
 
 #ifdef USE_LIBZ
@@ -1811,6 +1810,8 @@ void UNoCatPlugIn::sendData(uint32_t index_AUTH, const UString& data, const char
 #endif
 
 #ifndef U_LOG_DISABLE
+   char buffer[4096];
+
    if (UServer_Base::isLog())
       {
       UString str = UStringExt::substitute(data.data(), U_min(sz,200), '%', U_CONSTANT_TO_PARAM("%%")); // NB: we need this because we have a message with url encoded char...
@@ -2232,7 +2233,7 @@ int UNoCatPlugIn::handlerInit()
  
    U_INTERNAL_DUMP("num_peers_preallocate = %u", num_peers_preallocate)
 
-   U_NEW(UHashMap<UModNoCatPeer*>, peers, UHashMap<UModNoCatPeer*>(num_peers_preallocate < 49157U ? U_GET_NEXT_PRIME_NUMBER(num_peers_preallocate * 8) : 49157U));
+   U_NEW(UHashMap<UModNoCatPeer*>, peers, UHashMap<UModNoCatPeer*>(u_nextPowerOfTwo64(num_peers_preallocate)));
 
    U_NEW(UString, status_content, UString(U_CAPACITY));
    U_NEW(UVector<UString>, openlist, UVector<UString>);

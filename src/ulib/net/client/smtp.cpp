@@ -336,6 +336,58 @@ bool USmtpClient::sendMessage(bool secure)
    U_RETURN(true);
 }
 
+void USmtpClient::sendEmail(const UString& emailAddress, const UString& subject, const UString& body)
+{
+   U_TRACE(0, "USmtpClient::sendEmail(%V,%V,%V)", emailAddress.rep, subject.rep, body.rep)
+
+   UString server, rcpt;
+   uint32_t index = emailAddress.find(':');
+
+   if (index == U_NOT_FOUND)
+      {
+      rcpt   = emailAddress;
+      server = *UString::str_localhost;
+      }
+   else
+      {
+      rcpt   = emailAddress.substr(index+1);
+      server = emailAddress.substr(0U, index).copy();
+      }
+
+   U_DEBUG("sending email to %V: %V", emailAddress.rep, body.rep);
+
+   if (_connectServer(server) == false)
+      {
+      if (u_buffer_len)
+         {
+         U_WARNING("%.*s", u_buffer_len, u_buffer);
+
+         u_buffer_len = 0;
+         }
+
+      return;
+      }
+
+   setMessageBody(body);
+   setRecipientAddress(rcpt);
+   setMessageSubject(subject);
+
+#ifdef USE_LIBSSL
+   bool bsecure = true;
+#else
+   bool bsecure = false;
+#endif
+
+   if (sendMessage(bsecure) == false)
+      {
+      setStatus();
+
+      U_WARNING("email notification to %V failed: %.*s", emailAddress.rep, u_buffer_len, u_buffer);
+
+      u_buffer_len = 0;
+      }
+}
+
 #if defined(U_STDCPP_ENABLE) && defined(DEBUG)
 const char* USmtpClient::dump(bool reset) const
 {

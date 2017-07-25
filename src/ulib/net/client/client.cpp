@@ -560,7 +560,7 @@ bool UClient_Base::readHTTPResponse()
          {
          uint32_t end = buffer.findWhiteSpace(pos += U_CONSTANT_SIZE("Content-Length") + 2);
 
-         U_http_info.clength = (end != U_NOT_FOUND ? u_strtoul(buffer.c_pointer(pos), buffer.c_pointer(end)) : 0);
+         U_http_info.clength = (end != U_NOT_FOUND ? u__strtoul(buffer.c_pointer(pos), end-pos) : 0);
 
          if (U_http_info.clength == 0)
             {

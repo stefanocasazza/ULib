@@ -55,17 +55,14 @@
 #  endif
 #endif
 
-__pure unsigned long u_hex2int(const char* restrict s, const char* restrict e)
+__pure unsigned long u_hex2int(const char* restrict s, uint32_t len) /* handle up to 16 digits */
 {
-   /* handle up to 16 digits */
-
-   uint32_t len = e-s;
    unsigned long val = 0UL;
 
-   U_INTERNAL_TRACE("u_hex2int(%p,%p)", s, e)
+   U_INTERNAL_TRACE("u_hex2int(%p,%u)", s, len)
 
    U_INTERNAL_ASSERT_POINTER(s)
-   U_INTERNAL_ASSERT_POINTER(e)
+   U_INTERNAL_ASSERT_MAJOR(len, 0)
 
 #ifndef U_COVERITY_FALSE_POSITIVE /* Control flow issues (MISSING_BREAK) */
    switch (len)
@@ -94,17 +91,14 @@ __pure unsigned long u_hex2int(const char* restrict s, const char* restrict e)
    return val;
 }
 
-__pure unsigned long u_strtoul(const char* restrict s, const char* restrict e)
+__pure unsigned long u__strtoul(const char* restrict s, uint32_t len) /* handle up to 10 digits */
 {
-   /* handle up to 10 digits */
-
-   uint32_t len = e-s;
    unsigned long val = 0UL;
 
-   U_INTERNAL_TRACE("u_strtoul(%p,%p)", s, e)
+   U_INTERNAL_TRACE("u__strtoul(%p,%u)", s, len)
 
    U_INTERNAL_ASSERT_POINTER(s)
-   U_INTERNAL_ASSERT_POINTER(e)
+   U_INTERNAL_ASSERT_MAJOR(len, 0)
 
 #ifndef U_COVERITY_FALSE_POSITIVE /* Control flow issues (MISSING_BREAK) */
    switch (len)
@@ -120,22 +114,21 @@ __pure unsigned long u_strtoul(const char* restrict s, const char* restrict e)
       case  2: val += (s[len- 2] - '0') * 10UL; /* FALLTHRU */
       case  1: val += (s[len- 1] - '0');
       }
-#endif
+   #endif
 
    U_INTERNAL_PRINT("val = %lu", val)
 
    return val;
 }
 
-__pure uint64_t u_strtoull(const char* restrict s, const char* restrict e)
+__pure uint64_t u__strtoull(const char* restrict s, uint32_t len)
 {
-   uint32_t len = e-s;
    uint64_t val = 0UL;
 
-   U_INTERNAL_TRACE("u_strtoul(%p,%p)", s, e)
+   U_INTERNAL_TRACE("u__strtoull(%p,%u)", s, len)
 
    U_INTERNAL_ASSERT_POINTER(s)
-   U_INTERNAL_ASSERT_POINTER(e)
+   U_INTERNAL_ASSERT_MAJOR(len, 0)
 
 #ifndef U_COVERITY_FALSE_POSITIVE /* Control flow issues (MISSING_BREAK) */
    switch (len)
@@ -168,20 +161,21 @@ __pure uint64_t u_strtoull(const char* restrict s, const char* restrict e)
    return val;
 }
 
-__pure long u_strtol(const char* restrict s, const char* restrict e)
+__pure long u__strtol(const char* restrict s, uint32_t len)
 {
    int sign = 1;
 
-   U_INTERNAL_TRACE("u_strtol(%p,%p)", s, e)
+   U_INTERNAL_TRACE("u__strtol(%p,%u)", s, len)
 
    U_INTERNAL_ASSERT_POINTER(s)
-   U_INTERNAL_ASSERT_POINTER(e)
+   U_INTERNAL_ASSERT_MAJOR(len, 0)
 
-// while (u__isspace(*s)) ++s;
+// while (u__isdigit(*s) == false) ++s;
 
    if (*s == '-')
       {
       ++s;
+      --len;
 
       sign = -1;
       }
@@ -191,26 +185,28 @@ __pure long u_strtol(const char* restrict s, const char* restrict e)
           *s == '0')
          {
          ++s;
+         --len;
          }
       }
 
-   return (sign * u_strtoul(s, e));
+   return (len ? sign * u__strtoul(s, len) : 0L);
 }
 
-__pure int64_t u_strtoll(const char* restrict s, const char* restrict e)
+__pure int64_t u__strtoll(const char* restrict s, uint32_t len)
 {
    int sign = 1;
 
-   U_INTERNAL_TRACE("u_strtoll(%p,%p)", s, e)
+   U_INTERNAL_TRACE("u__strtoll(%p,%u)", s, len)
 
    U_INTERNAL_ASSERT_POINTER(s)
-   U_INTERNAL_ASSERT_POINTER(e)
+   U_INTERNAL_ASSERT_MAJOR(len, 0)
 
-// while (u__isspace(*s)) ++s;
+// while (u__isdigit(*s) == false) ++s;
 
    if (*s == '-')
       {
       ++s;
+      --len;
 
       sign = -1;
       }
@@ -220,10 +216,38 @@ __pure int64_t u_strtoll(const char* restrict s, const char* restrict e)
           *s == '0')
          {
          ++s;
+         --len;
          }
       }
 
-   return (sign * u_strtoull(s, e));
+   return (len ? sign * u__strtoull(s, len) : 0LL);
+}
+
+__pure unsigned long u__atoi(const char* restrict s)
+{
+   char c;
+   const char* restrict ptr;
+
+   U_INTERNAL_TRACE("u__atoi(%12s)", s)
+
+   U_INTERNAL_ASSERT_POINTER(s)
+
+   c = *s;
+
+   if (u__isalpha(c) ||
+       (c == '0'     &&
+        u__isdigit(*++s) == false))
+      {
+      return 0UL;
+      }
+
+   while (u__isdigitw0(*s) == false) ++s;
+
+   ptr = s;
+
+   while (u__isdigit(*s)) ++s;
+
+   return u__strtoul(ptr, s-ptr);
 }
 
 /* To avoid libc locale overhead */
@@ -1149,10 +1173,10 @@ void u_get_memusage(unsigned long* vsz, unsigned long* rss)
       (void) u_split(buffer, bytes_read, field, 0);
 
          p = field[22];
-      *vsz = u_strtoul(p, p+u__strlen(p,__PRETTY_FUNCTION__));
+      *vsz = u__strtoul(p, u__strlen(p,__PRETTY_FUNCTION__));
 
          p = field[23];
-      *rss = u_strtoul(p, p+u__strlen(p,__PRETTY_FUNCTION__)) * PAGESIZE;
+      *rss = u__strtoul(p, u__strlen(p,__PRETTY_FUNCTION__)) * PAGESIZE;
       }
 #endif
 }
@@ -1196,51 +1220,35 @@ uint8_t u_get_loadavg(void)
 
 uint32_t u_get_uptime(void)
 {
-#ifdef U_LINUX
-   FILE* fp = fopen("/proc/uptime", "r");
+   /**
+    * /proc/uptime (ex: 1753.44 6478.08)
+    *
+    * This file contains two numbers: how long the system has been running (seconds), and the amount of time spent in idle process (seconds)
+    */
+
+#if defined(U_LINUX) && !defined(U_COVERITY_FALSE_POSITIVE)
+   static int fd_uptime;
+
+   char buffer[12];
+   ssize_t bytes_read;
 
    U_INTERNAL_TRACE("u_get_uptime()")
 
-   if (fp)
+   if (fd_uptime == 0) fd_uptime = open("/proc/uptime", O_RDONLY);
+
+   U_INTERNAL_ASSERT_DIFFERS(fd_uptime, -1)
+
+   bytes_read = pread(fd_uptime, buffer, sizeof(buffer), 0);
+
+   if (bytes_read > 0)
       {
-      uint32_t sec;
+      U_INTERNAL_ASSERT_RANGE(1,bytes_read,(int)sizeof(buffer))
 
-      (void) fscanf(fp, "%u", &sec);
-
-      (void) fclose(fp);
-
-      return sec;
+      return u_atoi(buffer);
       }
 #endif
 
    return 0;
-}
-
-__pure bool u_rmatch(const char* restrict haystack, uint32_t haystack_len, const char* restrict needle, uint32_t needle_len)
-{
-   U_INTERNAL_TRACE("u_rmatch(%.*s,%u,%.*s,%u)", U_min(haystack_len,128), haystack, haystack_len,
-                                                 U_min(  needle_len,128),   needle,   needle_len)
-
-   U_INTERNAL_ASSERT_POINTER(needle)
-   U_INTERNAL_ASSERT_POINTER(haystack)
-   U_INTERNAL_ASSERT_MAJOR(haystack_len,0)
-
-   if (haystack_len >= needle_len)
-      {
-      /* see if substring characters match at end */
-
-      const char* restrict nn = needle   + needle_len   - 1;
-      const char* restrict hh = haystack + haystack_len - 1;
-
-      while (*nn-- == *hh--)
-         {
-         if (nn >= needle) continue;
-
-         return true; /* we got all the way to the start of the substring so we must've won */
-         }
-      }
-
-   return false;
 }
 
 /**
@@ -1336,40 +1344,6 @@ loop: c = *++s;
       }
 
    return 0;
-}
-
-/* check if string 'a' start with string 'b' */
-
-__pure bool u_startsWith(const char* restrict a, uint32_t n1, const char* restrict b, uint32_t n2)
-{
-   int32_t diff = n1 - n2;
-
-   U_INTERNAL_TRACE("u_startsWith(%.*s,%u,%.*s,%u)", U_min(n1,128), a, n1, U_min(n2,128), b, n2)
-
-   if (diff >= 0 &&
-       (memcmp(a, b, n2) == 0))
-      {
-      return true;
-      }
-
-   return false;
-}
-
-/* check if string a terminate with string b */
-
-__pure bool u_endsWith(const char* restrict a, uint32_t n1, const char* restrict b, uint32_t n2)
-{
-   int32_t diff = n1 - n2;
-
-   U_INTERNAL_TRACE("u_endsWith(%.*s,%u,%.*s,%u)", U_min(n1,128), a, n1, U_min(n2,128), b, n2)
-
-   if (diff >= 0 &&
-       (memcmp(a+diff, b, n2) == 0))
-      {
-      return true;
-      }
-
-   return false;
 }
 
 __pure bool u_isNumber(const char* restrict s, uint32_t n)
@@ -2326,7 +2300,7 @@ bool u_pathfind(char* restrict result, const char* restrict path, uint32_t path_
 }
 
 /**
- * Canonicalize path, and build a new path. The new path differs from original in that:
+ * Canonicalize path by building a new path. The new path differs from original in that:
  *
  * Multiple    '/'                     are collapsed to a single '/'
  * Trailing    '/'                     are removed
@@ -2494,7 +2468,7 @@ loop:    if ((sz -= 2) <= 2) goto end;
          continue;
          }
 
-      /* search for the previous token */
+      /* Search for the previous token */
 
       s = p-1;
 
@@ -2538,7 +2512,7 @@ loop:    if ((sz -= 2) <= 2) goto end;
          continue;
          }
 
-      /* trailing ".." */
+      /* Trailing ".." */
 
       if (s == path)
          {
@@ -2582,7 +2556,7 @@ int u_splitCommand(char* restrict s, uint32_t n, char** restrict argv, char* res
    U_INTERNAL_ASSERT_MAJOR(n, 0)
    U_INTERNAL_ASSERT_MAJOR(pathbuf_size, 0)
 
-   /* check if command have path separator */
+   /* Check if command have path separator */
 
    while ((c = argv[1][i++]))
       {
@@ -2618,7 +2592,7 @@ int u_splitCommand(char* restrict s, uint32_t n, char** restrict argv, char* res
 }
 
 /**
- * It uses George Marsaglia's MWC algorithm to produce an unsigned integer.
+ * We use George Marsaglia's MWC algorithm to produce an unsigned integer.
  *
  * see http://www.bobwheeler.com/statistics/Password/MarsagliaPost.txt
  */
@@ -3582,7 +3556,7 @@ __pure int u_isUTF16(const unsigned char* restrict buf, uint32_t len)
 #define U__U  0x00008000 /* Uppercase */
 #define U__Z  0x00010000 /* Octal */
 #define U__F  0x00020000 /* character never appears in plain ASCII text */
-#define U__T  0x00040000 /* character      appears in plain ASCII text */
+#define U__T  0x00040000 /* character       appears in plain ASCII text */
 #define U__X  0x00080000 /* Hexadecimal */
 #define U__A  0x00100000 /* BASE64 encoded: '+' (43 0x2B) | '/' (47 0x2F) | '=' (61 0x3D) */
 #define U__M  0x00200000 /* HTTP request/response (COPY, DELETE, GET, HEAD|HTTP, OPTIONS, POST/PUT/PATCH) */
@@ -3594,28 +3568,32 @@ __pure int u_isUTF16(const unsigned char* restrict buf, uint32_t len)
 #define U__UF 0x08000000 /* filename invalid char: '"' '*' ':' '<' '>' '?' '\' '|' */
 #define U__XM 0x10000000 /* char >= (32 0x20) */
 #define U__XE 0x20000000 /* char '}' | ']' */
+#define U__XD 0x40000000 /* char [1-9] */
 
 #define LU    (U__L | U__U)
 #define LX    (U__L | U__X)
 #define UX    (U__U | U__X)
-#define ITK   (U__I | U__T | U__K | U__UF |               U__XM)
 #define LT    (U__L | U__T |                              U__XM)
 #define UT    (U__U | U__T |                              U__XM)
+#define DT    (U__D | U__T |               U__E |         U__XM)
+#define IT    (U__I |        U__T |        U__E | U__UF | U__XM)
+#define ITK   (U__I | U__T | U__K | U__UF |               U__XM)
 #define ITF   (U__I | U__T |                              U__XM) 
 #define ITA   (U__I | U__T | U__A |                       U__XM)
 #define ITQ   (U__I | U__T | U__Q |                       U__XM)
 #define LTE   (U__L | U__T |               U__E |         U__XM)
 #define LTY   (U__L | U__T | U__Y |        U__E |         U__XM)
 #define UXT   (U__U | U__X | U__T |        U__E |         U__XM)
-#define DT    (U__D | U__T |               U__E |         U__XM)
 #define ITN   (U__I | U__T | U__N |        U__E |         U__XM)
 #define ITO   (U__I | U__T | U__O |        U__E |         U__XM)
 #define DTZ   (U__D | U__T | U__Z |        U__E |         U__XM)
+#define DTW   (U__D | U__T |               U__E |         U__XM | U__XD)
 #define UTE   (U__U | U__T |               U__E |         U__XM)
 #define UTY   (U__U | U__T | U__Y |        U__E |         U__XM)
 #define UTM   (U__U | U__T | U__M |        U__E |         U__XM)
 #define LTM   (U__L | U__T | U__M |        U__E |         U__XM)
 #define LXT   (U__L | U__X | U__T |        U__E |         U__XM)
+#define DTZW  (U__D | U__T | U__Z |        U__E |         U__XM | U__XD)
 #define LTMY  (U__L | U__T | U__M | U__Y | U__E |         U__XM)
 #define UTMY  (U__U | U__T | U__M | U__Y | U__E |         U__XM)
 #define UXTM  (U__U | U__X | U__T | U__M | U__E |         U__XM)
@@ -3624,22 +3602,21 @@ __pure int u_isUTF16(const unsigned char* restrict buf, uint32_t len)
 #define LXTY  (U__L | U__X | U__T | U__Y | U__E |         U__XM)
 #define LXTMY (U__L | U__X | U__T | U__M | U__E | U__Y  | U__XM)
 #define UXTMY (U__U | U__X | U__T | U__M | U__E | U__Y  | U__XM)
-#define IT    (U__I |        U__T |        U__E | U__UF | U__XM)
 
-#define FUE   (U__F |                       U__UE | U__XM)
 #define IF    (U__I | U__F |                U__UE)
 #define CF    (U__C | U__F |                U__UE)
 #define CT    (U__C | U__T |                U__UE)
 #define WF    (U__W | U__F |                U__UE)
-#define ITUE  (U__I | U__T |        U__UF | U__UE | U__XM)
+#define FUE   (U__F |                       U__UE | U__XM)
 #define CWT   (U__C | U__W | U__T |         U__UE)
 #define CWF   (U__C | U__W | U__F |         U__UE)
 #define ITG   (U__I | U__T | U__G | U__UF | U__UE | U__XM)
 #define ITJ   (U__I | U__T | U__J | U__UF |         U__XM)
+#define SWT   (U__S | U__W | U__T |         U__UE | U__XM | U__E)
+#define ITUE  (U__I | U__T |        U__UF | U__UE | U__XM)
 #define CWBT  (U__C | U__W | U__B | U__T  | U__UE)
 #define CWRT  (U__C | U__W | U__R | U__T  | U__UE)
 #define ITUQ  (U__I | U__T |                U__UE | U__XM)
-#define SWT   (U__S | U__W | U__T |         U__UE | U__XM | U__E)
 #define ITAH  (U__I | U__T | U__A | U__H  | U__UE | U__XM | U__E)
 #define ITAU  (U__I | U__T | U__A |         U__UE | U__XM | U__UQ)
 #define ITJU  (U__I | U__T | U__J |         U__UE | U__XM | U__UQ)
@@ -3656,27 +3633,27 @@ CF, CF, CF, CF, CF, CF, CF, CT, CT, CWBT, CWRT, CWF, CWT, CWRT, CF, CF,/* 0x00 *
 /*                                              ESC                            */
 CF, CF, CF, CF, CF, CF, CF, CF, CF,   CF,   CF,  CT,  CF,  CF,  CF, CF,/* 0x10 */
 
-/* ' ' '!' '"'  '#'   '$'  '%'  '&' '\'' '('  ')' '*' '+'   ','  '-'   '.'  '/'         */
+/* ' ' '!' '"'  '#'   '$'  '%'  '&' '\'' '('  ')' '*' '+'   ','  '-'   '.'  '/'          */
   SWT, ITF,ITK,ITUEFQ,ITF,ITUQ,ITJU,ITKF,ITF,ITF, IT,ITAH,ITVF, ITO,  ITN, ITA,  /* 0x20 */
-/* '0' '1' '2'  '3'   '4'  '5'  '6' '7'  '8'  '9' ':' ';'   '<'  '='   '>'  '?'         */
-  DTZ, DTZ,DTZ, DTZ, DTZ,  DTZ,DTZ, DTZ, DT,  DT,ITG,ITUEF,ITJ, ITAU, ITJ,ITUE,  /* 0x30 */
-/* '@' 'A' 'B'  'C'   'D'  'E'  'F' 'G'  'H'  'I' 'J' 'K'   'L'  'M'   'N'  'O'         */
+/* '0' '1' '2'  '3'   '4'  '5'  '6' '7'  '8'  '9' ':' ';'   '<'  '='   '>'  '?'          */
+  DTZ,DTZW,DTZW,DTZW,DTZW,DTZW,DTZW,DTZW,DTW,DTW,ITG,ITUEF,ITJ, ITAU, ITJ,ITUE,  /* 0x30 */
+/* '@' 'A' 'B'  'C'   'D'  'E'  'F' 'G'  'H'  'I' 'J' 'K'   'L'  'M'   'N'  'O'          */
   ITF,UXTY,UXT,UXTMY,UXTM, UXT,UXT, UTM,UTMY, UTY,UTE,UT,  UTE, UTE,  UTE, UTM,  /* 0x40 */
-/* 'P' 'Q' 'R'  'S'   'T'  'U'  'V' 'W'  'X'  'Y' 'Z' '['   '\'  ']'   '^'  '_'         */
+/* 'P' 'Q' 'R'  'S'   'T'  'U'  'V' 'W'  'X'  'Y' 'Z' '['   '\'  ']'   '^'  '_'          */
   UTM,UTE,UTY, UTY,  UTE, UTY, UTE,UTE, UTY, UTE, UT,ITUEF,ITUE,ITUEFX,ITUEF,ITQ,/* 0x50 */
-/* '`' 'a' 'b'  'c'   'd'  'e'  'f' 'g'  'h'  'i' 'j' 'k'   'l'  'm'   'n'  'o'         */
+/* '`' 'a' 'b'  'c'   'd'  'e'  'f' 'g'  'h'  'i' 'j' 'k'   'l'  'm'   'n'  'o'          */
 ITUEF,LXTY,LXT,LXTMY,LXTM,LXT, LXT,LTM,LTMY, LTY,LTE, LT,  LTE,  LT,  LTE, LTM,  /* 0x60 */
-/* 'p' 'q' 'r'  's'   't'  'u'  'v' 'w'  'x'  'y' 'z' '{'   '|'  '}'   '~'              */
+/* 'p' 'q' 'r'  's'   't'  'u'  'v' 'w'  'x'  'y' 'z' '{'   '|'  '}'   '~'               */
   LTM,LTE,LTY, LTY,   LT, LTY, LTE,LTE, LTY,  LT, LT,ITUEF,ITUE,ITUEFX,ITF, CF,  /* 0x70 */
 
-FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, /* 0x80 */
-FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, /* 0x90 */
-FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, /* 0xa0 */
-FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, /* 0xb0 */
-FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, /* 0xc0 */
-FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, /* 0xd0 */
-FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, /* 0xe0 */
-FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE  /* 0xf0 */
+FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE,  /* 0x80 */
+FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE,  /* 0x90 */
+FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE,  /* 0xa0 */
+FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE,  /* 0xb0 */
+FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE,  /* 0xc0 */
+FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE,  /* 0xd0 */
+FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE,  /* 0xe0 */
+FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE   /* 0xf0 */
 
 /**
  * ISO-1 character set
@@ -3721,6 +3698,7 @@ FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE  
 #undef U__UF
 #undef U__XM
 #undef U__XE
+#undef U__XD
 
 #undef CF
 #undef CT
@@ -3739,6 +3717,7 @@ FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE  
 #undef CWT
 #undef CWF
 #undef DTZ
+#undef DTW
 #undef ITA
 #undef ITF
 #undef ITG
@@ -3754,6 +3733,7 @@ FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE  
 #undef SWT
 #undef UTY
 #undef UTM
+#undef DTZW
 #undef ITVF
 #undef ITKF
 #undef ITUE

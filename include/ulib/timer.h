@@ -62,6 +62,9 @@ public:
       {
       U_TRACE_NO_PARAM(0, "UTimer::isAlarm()")
 
+         U_INTERNAL_DUMP("UInterrupt::timerval.it_value = { %ld %6ld } UInterrupt::timerval.it_interval = { %ld %6ld }", UInterrupt::timerval.it_value.tv_sec,
+                          UInterrupt::timerval.it_value.tv_usec,       UInterrupt::timerval.it_interval.tv_sec,          UInterrupt::timerval.it_interval.tv_usec)
+
       if (UInterrupt::timerval.it_value.tv_sec  != 0 ||
           UInterrupt::timerval.it_value.tv_usec != 0)
          {

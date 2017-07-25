@@ -145,6 +145,15 @@ static inline uint8_t u_loadavg(const char* buffer)
    return (((buffer[0]-'0') * 10) + (buffer[2]-'0') + (buffer[3] > '5')); // 0.19 => 2, 4.56 => 46, ...
 }
 
+static inline uint64_t u_nextPowerOfTwo64(uint64_t n)
+{
+   U_INTERNAL_TRACE("u_nextPowerOfTwo64(%llu)", n)
+
+   U_INTERNAL_ASSERT_MAJOR(n, 1)
+
+   return 1ULL << (sizeof(uint64_t) * 8 - __builtin_clzll(n-1));
+}
+
 /* Random number generator */ 
 
 U_EXPORT double   u_get_uniform(void);
@@ -161,19 +170,26 @@ static inline void u_set_seed_random(uint32_t u, uint32_t v)
    U_INTERNAL_ASSERT_MAJOR(u_m_z, 0)
 }
 
-U_EXPORT double u_calcRate(uint64_t bytes, uint32_t msecs, int* restrict units); /* Calculate the transfert rate */
-
-U_EXPORT char* u_getPathRelativ(const char* restrict path, uint32_t* restrict path_len);
+U_EXPORT const char* u_get_mimetype(const char* restrict suffix, int* pmime_index);
 
 U_EXPORT char*    u_memoryDump( char* restrict bp, unsigned char* restrict cp, uint32_t n);
 U_EXPORT uint32_t u_memory_dump(char* restrict bp, unsigned char* restrict cp, uint32_t n);
 
-U_EXPORT int  u_getScreenWidth(void) __pure; /* Determine the width of the terminal we're running on */
-U_EXPORT bool u_isNumber(const char* restrict s, uint32_t n) __pure;
+U_EXPORT uint8_t  u_get_loadavg(void); /* Get the load average of the system (over last 1 minute) */
+U_EXPORT uint32_t u_get_uptime( void); /* Get the uptime of the system (seconds) */
+U_EXPORT int      u_getScreenWidth(void) __pure; /* Determine the width of the terminal we're running on */
 U_EXPORT uint32_t u_printSize(char* restrict buffer, uint64_t bytes); /* print size using u_calcRate() */
-U_EXPORT bool u_rmatch(const char* restrict haystack, uint32_t haystack_len, const char* restrict needle, uint32_t needle_len) __pure;
+U_EXPORT bool     u_isNumber(const char* restrict s, uint32_t n) __pure;
+U_EXPORT double   u_calcRate(uint64_t bytes, uint32_t msecs, int* restrict units); /* Calculate the transfert rate */
+U_EXPORT char*    u_getPathRelativ(const char* restrict path, uint32_t* restrict path_len);
 
-U_EXPORT const char* u_get_mimetype(const char* restrict suffix, int* pmime_index);
+U_EXPORT int  u_get_num_cpu(void); /* Get the number of the processors including offline CPUs */
+U_EXPORT void u_switch_to_realtime_priority(void); /* Set the process to maximum priority that can be used with the scheduling algorithm */
+U_EXPORT void u_bind2cpu(cpu_set_t* cpuset, int n); /* Pin the process to a particular core */
+U_EXPORT void u_get_memusage(unsigned long* vsz, unsigned long* rss); /* Get address space and rss (resident set size) usage */
+U_EXPORT bool u_runAsUser(const char* restrict user, bool change_dir); /* Change the current working directory to the user's home dir, and downgrade security to that user account */
+U_EXPORT int  u_strnatcmp(char const* restrict a, char const* restrict b) __pure; /* Perform 'natural order' comparisons of strings */
+U_EXPORT bool u_validate_email_address(const char* restrict address, uint32_t address_len) __pure; /* Verifies that the passed string is actually an e-mail address */
 
 static inline bool u_isSuffixSwap(const char* restrict suffix) // NB: vi tmp...
 {
@@ -216,8 +232,45 @@ static inline uint32_t u_findEndHeader1(const char* restrict s, uint32_t n) /* f
 
 U_EXPORT uint32_t u_findEndHeader(const char* restrict s, uint32_t n) __pure; /* find sequence of U_CRLF2 or U_LF2 */
 
-U_EXPORT bool   u_endsWith(const char* restrict a, uint32_t n1, const char* restrict b, uint32_t n2) __pure; /* check if string a terminate with string b */
-U_EXPORT bool u_startsWith(const char* restrict a, uint32_t n1, const char* restrict b, uint32_t n2) __pure; /* check if string a start     with string b */
+/* check if string a start with string b */
+
+__pure static inline bool u_startsWith(const char* restrict a, uint32_t n1, const char* restrict b, uint32_t n2)
+{
+   U_INTERNAL_TRACE("u_startsWith(%.*s,%u,%.*s,%u)", U_min(n1,128), a, n1, U_min(n2,128), b, n2)
+
+   U_INTERNAL_ASSERT(n1 >= n2)
+   U_INTERNAL_ASSERT_POINTER(a)
+   U_INTERNAL_ASSERT_POINTER(b)
+   U_INTERNAL_ASSERT_MAJOR(n1, 0)
+
+   return (memcmp(a, b, n2) == 0);
+}
+
+/* check if string a terminate with string b */
+
+__pure static inline bool u_endsWith(const char* restrict haystack, uint32_t haystack_len, const char* restrict needle, uint32_t needle_len)
+{
+   /* see if substring characters match at end */
+
+   const char* restrict nn = needle   + needle_len   - 1;
+   const char* restrict hh = haystack + haystack_len - 1;
+
+   U_INTERNAL_TRACE("u_endsWith(%.*s,%u,%.*s,%u)", U_min(haystack_len,128), haystack, haystack_len, U_min(needle_len,128), needle, needle_len)
+
+   U_INTERNAL_ASSERT_POINTER(needle)
+   U_INTERNAL_ASSERT_POINTER(haystack)
+   U_INTERNAL_ASSERT_MAJOR(haystack_len, 0)
+   U_INTERNAL_ASSERT(haystack_len >= needle_len)
+
+   while (*nn-- == *hh--)
+      {
+      if (nn >= needle) continue;
+
+      return true; /* we got all the way to the start of the substring so we must've won */
+      }
+
+   return false;
+}
 
 /* check if the string is quoted... */
 
@@ -252,8 +305,7 @@ U_EXPORT const char* u__strpbrk(const char* restrict s, uint32_t slen, const cha
 
 /* Search a string for a terminator of a group of delimitator {} [] () <%%>...*/
 
-U_EXPORT const char* u_strpend(const char* restrict s, uint32_t slen,
-                               const char* restrict group_delimitor, uint32_t group_delimitor_len, char skip_line_comment) __pure;
+U_EXPORT const char* u_strpend(const char* restrict s, uint32_t slen, const char* restrict group_delimitor, uint32_t group_delimitor_len, char skip_line_comment) __pure;
 
 /**
  * WILDCARD PATTERN - The rules are as follows (POSIX.2, 3.13)
@@ -330,26 +382,13 @@ static inline bool u_dosmatch_ext_with_OR(const char* restrict s, uint32_t n1, c
    return u_match_with_OR(u_dosmatch_ext, s, n1, pattern, n2, flags);
 }
 
-U_EXPORT uint8_t  u_get_loadavg(void); /* Get the load average of the system (over last 1 minute) */
-U_EXPORT uint32_t u_get_uptime(void); /* Get the uptime of the system (seconds) */
-
-U_EXPORT int  u_get_num_cpu(void); /* Get the number of the processors including offline CPUs */
-U_EXPORT int  u_strnatcmp(char const* restrict a, char const* restrict b) __pure; /* Perform 'natural order' comparisons of strings. */
-U_EXPORT void u_switch_to_realtime_priority(void); /* Set the process to maximum priority that can be used with the scheduling algorithm */
-U_EXPORT void u_bind2cpu(cpu_set_t* cpuset, int n); /* Pin the process to a particular core */
-U_EXPORT void u_get_memusage(unsigned long* vsz, unsigned long* rss); /* Get address space and rss (resident set size) usage */
-U_EXPORT bool u_runAsUser(const char* restrict user, bool change_dir); /* Change the current working directory to the `user` user's home dir, and downgrade security to that user account */
-U_EXPORT bool u_validate_email_address(const char* restrict address, uint32_t address_len) __pure; /* Verifies that the passed string is actually an e-mail address */
-
 /**
- * Canonicalize PATH, and build a new path. The new path differs from PATH in that:
- * --------------------------------------------------------------------------------
- * Multiple    '/'   are collapsed to a single '/'
- * Leading     './'  are removed
- * Trailing    '/.'  are removed
- * Trailing    '/'   are removed
+ * Canonicalize path by building a new path. The new path differs from original in that:
+ *
+ * Multiple    '/'                     are collapsed to a single '/'
+ * Trailing    '/'                     are removed
+ * Leading     './'  and trailing '/.' are removed
  * Non-leading '../' and trailing '..' are handled by removing portions of the path
- * --------------------------------------------------------------------------------
  */
 
 U_EXPORT uint32_t u_canonicalize_pathname(char* restrict path, uint32_t sz);
@@ -398,7 +437,6 @@ static inline unsigned char u__toupper(unsigned char c) { return u__ct_tou[c]; }
 static inline bool u__islterm(unsigned char c)   { return ((u_cttab(c) & 0x00000200) != 0); } /* __R carriage return | new line (\r | \n) */
 static inline bool u__isspace(unsigned char c)   { return ((u_cttab(c) & 0x00000400) != 0); } /* __W WhiteSpace */
 static inline bool u__iscntrl(unsigned char c)   { return ((u_cttab(c) & 0x00000800) != 0); } /* __C Control character */
-static inline bool u__isdigit(unsigned char c)   { return ((u_cttab(c) & 0x00001000) != 0); } /* __D Digit */
 static inline bool u__islower(unsigned char c)   { return ((u_cttab(c) & 0x00002000) != 0); } /* __L Lowercase */
 static inline bool u__ispunct(unsigned char c)   { return ((u_cttab(c) & 0x00004000) != 0); } /* __I Punctuation */
 static inline bool u__isupper(unsigned char c)   { return ((u_cttab(c) & 0x00008000) != 0); } /* __U Uppercase */
@@ -410,6 +448,7 @@ static inline bool u__istext( unsigned char c)   { return ((u_cttab(c) & 0x00020
                                                                       /* 0x08000000              __UF filename invalid char: ":<>*?\| */
                                                                       /* 0x10000000              __XM char >= (32 0x20) */
                                                                       /* 0x20000000              __XE char '}' | ']' */
+                                                                      /* 0x40000000              __XD char [1-9] */
 static inline bool u__ismethod( unsigned char c) { return ((u_cttab(c) & 0x00200000) != 0); } /* __M HTTP (COPY,DELETE,GET,HEAD|HTTP,OPTIONS,POST/PUT/PATCH) */
 static inline bool u__isheader( unsigned char c) { return ((u_cttab(c) & 0x00400000) != 0); } /* __Y HTTP header (Host,Range,...) */
 static inline bool u__isquote(  unsigned char c) { return ((u_cttab(c) & 0x00800000) != 0); } /* __K string quote: '"' (34 0x22) | ''' (39 0x27) */
@@ -434,6 +473,9 @@ static inline bool u__isename( unsigned char c)  { return ((u_cttab(c) & 0x00003
 static inline bool u__ishname( unsigned char c)  { return ((u_cttab(c) & 0x0000B0B0) != 0); } /* (__O | __N | __Q | __L | __D | __U)   */
 static inline bool u__isbase64(unsigned char c)  { return ((u_cttab(c) & 0x0010B000) != 0); } /* (__A | __L | __U | __D)               */
 static inline bool u__isb64url(unsigned char c)  { return ((u_cttab(c) & 0x0000B090) != 0); } /* (      __L | __U | __D | __O | __Q)   */
+
+static inline bool u__isdigit(unsigned char c)   { return ((u_cttab(c) & 0x00001000) != 0); } /* __D  Digit */
+static inline bool u__isdigitw0(unsigned char c) { return ((u_cttab(c) & 0x40000000) != 0); } /* __DX Digit without '0' */
 
 static inline bool u__isfnameinvalid(unsigned char c) { return ((u_cttab(c) & 0x08000000) != 0); } /* __UF                   */
 static inline bool u__isvalidchar(   unsigned char c) { return ((u_cttab(c) & 0x10000000) != 0); } /* __XM                   */
@@ -488,31 +530,115 @@ U_EXPORT int  u_isUTF16(const unsigned char* restrict s, uint32_t n) __pure;
 
 static inline bool u_isBinary(const unsigned char* restrict s, uint32_t n) { return ((u_isText(s,n) || u_isUTF8(s,n) || u_isUTF16(s,n)) == false); }
 
-U_EXPORT unsigned long u_strtoul( const char* restrict s, const char* restrict e) __pure;
-U_EXPORT uint64_t      u_strtoull(const char* restrict s, const char* restrict e) __pure;
-U_EXPORT long          u_strtol(  const char* restrict s, const char* restrict e) __pure;
-U_EXPORT int64_t       u_strtoll( const char* restrict s, const char* restrict e) __pure;
+U_EXPORT unsigned long u__strtoul( const char* restrict s, uint32_t len) __pure;
+U_EXPORT          long u__strtol(  const char* restrict s, uint32_t len) __pure;
+U_EXPORT       int64_t u__strtoll( const char* restrict s, uint32_t len) __pure;
+U_EXPORT      uint64_t u__strtoull(const char* restrict s, uint32_t len) __pure;
 
-static inline unsigned long u_atoi(const char* restrict s)
+static inline unsigned long u_strtoul(const char* restrict s, const char* restrict e)
 {
-   U_INTERNAL_TRACE("u_atoi(%p)", s)
+#ifndef DEBUG
+   return u__strtoul(s, e-s);
+#else
+   unsigned long value = u__strtoul(s, e-s), tmp = strtoul(s, U_NULLPTR, 10);
 
-   const char* restrict e;
+   if (value != tmp)
+      {
+      U_WARNING("u_strtoul(%.*S); value = %lu differs from ::strtoul() = %lu", e-s, s, value, tmp);
+      }
+
+   return value;
+#endif
+}
+
+static inline long u_strtol(const char* restrict s, const char* restrict e)
+{
+#ifndef DEBUG
+   return u__strtol(s, e-s);
+#else
+   long value = u__strtol(s, e-s), tmp = strtol(s, U_NULLPTR, 10);
+
+   if (value != tmp)
+      {
+      U_WARNING("u_strtol(%.*S); value = %ld differs from ::strtol() = %ld", e-s, s, value, tmp);
+      }
+
+   return value;
+#endif
+}
+
+static inline int64_t u_strtoll( const char* restrict s, const char* restrict e)
+{
+#ifndef DEBUG
+   return u__strtoll(s, e-s);
+#else
+   int64_t value = u__strtoll(s, e-s), tmp = strtoll(s, U_NULLPTR, 10);
+
+   if (value != tmp)
+      {
+      U_WARNING("u_strtoll(%.*S); value = %lld differs from ::strtoll() = %lld", e-s, s, value, tmp);
+      }
+
+   return value;
+#endif
+}
+
+static inline uint64_t u_strtoull(const char* restrict s, const char* restrict e)
+{
+#ifndef DEBUG
+   return u__strtoull(s, e-s);
+#else
+   uint64_t value = u__strtoull(s, e-s), tmp = strtoull(s, U_NULLPTR, 10);
+
+   if (value != tmp)
+      {
+      U_WARNING("u_strtoull(%.*S); value = %llu differs from ::strtoull() = %llu", e-s, s, value, tmp);
+      }
+
+   return value;
+#endif
+}
+
+static inline unsigned long u_strtoulp(const char** restrict s)
+{
+   const char* restrict ptr;
+   const char* restrict p = *s;
+
+   U_INTERNAL_TRACE("u_strtolp(%p)", s)
 
    U_INTERNAL_ASSERT_POINTER(s)
 
-   while (u__isdigit(*s) == false) ++s;
+   while (u__isdigitw0(*p) == false) ++p;
 
-   for (e = s; u__isdigit(*e); ++e) {}
+   ptr = p;
 
-   return u_strtoul(s, e);
+   while (u__isdigit(*p)) ++p;
+
+   return u_strtoul(ptr, *s = p);
+}
+
+extern U_EXPORT unsigned long u__atoi(const char* restrict s) __pure;
+
+static inline unsigned long u_atoi(const char* restrict s)
+{
+#ifndef DEBUG
+   return u__atoi(s);
+#else
+   unsigned long value = u__atoi(s), tmp = atoi(s);
+
+   if (value != tmp)
+      {
+      U_WARNING("u_atoi(%12S); value = %lu differs from ::atoi() = %lu", s, value, tmp);
+      }
+
+   return value;
+#endif
 }
 
 static inline unsigned u__octc2int(unsigned char c) { return ((c - '0') & 07); }
 
 /**
- * Quick and dirty int->hex. The only standard way is to call snprintf (?),
- * which is undesirably slow for such a frequently-called function...
+ * Quick and dirty int->hex. The only standard way is to call snprintf (?), which is undesirably slow for such a frequently-called function...
  */
 
 extern U_EXPORT const unsigned char u__ct_hex2int[112];
@@ -521,7 +647,7 @@ static inline unsigned int u__hexc2int(unsigned char c) { return u__ct_hex2int[c
 
 static inline void u_int2hex(char* restrict p, uint32_t n) { int s; for (s = 28; s >= 0; s -= 4, ++p) *p = "0123456789ABCDEF"[((n >> s) & 0x0F)]; }
 
-U_EXPORT unsigned long u_hex2int(const char* restrict s, const char* restrict e) __pure;
+U_EXPORT unsigned long u_hex2int(const char* restrict s, uint32_t len) __pure;
 
 /* ip address type identification */
 

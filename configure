@@ -7719,6 +7719,7 @@ else
   CLANG_FALSE=
 fi
 
+gcc_version=`clang -dumpversion`
 fi
 
 ULIB_LIBS=

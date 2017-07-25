@@ -316,44 +316,7 @@ public:
 #  endif
       }
 
-   static uint32_t checkRequestToCache()
-      {
-      U_TRACE_NO_PARAM(0, "UClientImage_Base::checkRequestToCache()")
-
-      U_INTERNAL_DUMP("U_ClientImage_request_is_cached = %b", U_ClientImage_request_is_cached)
-
-#  if !defined(U_CACHE_REQUEST_DISABLE) || defined(U_SERVER_CHECK_TIME_BETWEEN_REQUEST)
-      U_INTERNAL_ASSERT(U_ClientImage_request_is_cached)
-
-      uint32_t    sz  = request->size();
-      const char* ptr = request->data();
-
-      U_INTERNAL_DUMP("cbuffer(%u) = %.*S", U_http_info.startHeader, U_http_info.startHeader, cbuffer)
-      U_INTERNAL_DUMP("request(%u) = %.*S", sz, sz, ptr)
-      U_INTERNAL_DUMP("U_ClientImage_pipeline = %b size_request = %u U_http_uri_offset = %u", U_ClientImage_pipeline, size_request, U_http_uri_offset)
-
-      U_INTERNAL_ASSERT_MAJOR(size_request, 0)
-      U_INTERNAL_ASSERT_RANGE(1,U_http_uri_offset,254)
-      U_INTERNAL_ASSERT_MAJOR(U_http_info.uri_len, 0)
-      U_INTERNAL_ASSERT_MAJOR(U_http_info.startHeader, 0)
-      U_INTERNAL_ASSERT_EQUALS(U_ClientImage_data_missing, false)
-
-      if (u__isblank((ptr+U_http_uri_offset)[U_http_info.startHeader]) &&
-          memcmp(ptr+U_http_uri_offset, cbuffer, U_http_info.startHeader) == 0)
-         {
-         if (size_request > sz &&
-             (callerIsValidMethod( ptr)     == false ||
-              callerIsValidRequest(ptr, sz) == false))
-            {
-            U_RETURN(1); // partial valid (not complete)
-            }
-
-         if (callerHandlerCache()) U_RETURN(2);
-         }
-#  endif
-
-      U_RETURN(0);
-      }
+   static uint32_t checkRequestToCache();
 
    // DEBUG
 
@@ -366,23 +329,23 @@ public:
 public:
    UString* logbuf; // it is needed for U_SRV_LOG_WITH_ADDR...
 
-   static bool bIPv6; 
    static UString* body;
    static UString* rbuffer;
    static UString* wbuffer;
    static UString* request;
+   static bool bIPv6, bsendGzipBomp;
 
    static char cbuffer[128];
    static UString* request_uri;
    static UString* environment;
-   static bPF callerHandlerCache;
    static struct iovec iov_sav[4];
    static struct iovec iov_vec[4];
-   static bPFpc callerIsValidMethod;
-   static vPF callerHandlerEndRequest;
    static uint32_t rstart, size_request;
+
+   static bPF callerHandlerCache;
+   static bPFpc callerIsValidMethod;
+   static iPF callerHandlerRead, callerHandlerRequest;
    static bPFpcu callerIsValidRequest, callerIsValidRequestExt;
-   static iPF callerHandlerRead, callerHandlerRequest, callerHandlerDataPending;
 
    // NB: these are for ULib Servlet Page (USP) - USP_PRINTF...
 
@@ -498,15 +461,6 @@ protected:
    static void manageReadBufferResize(uint32_t n);
    static void setSendfile(int _sfd, uint32_t _start, uint32_t _count);
 
-   static void do_nothing() {}
-
-   // NB: we have default to true to manage pipeline for protocol as RPC...
-
-   static bool handlerCache()                                  { return true; }
-   static bool isValidMethod(    const char* ptr)              { return true; }
-   static bool isValidRequest(   const char* ptr, uint32_t sz) { return true; }
-   static bool isValidRequestExt(const char* ptr, uint32_t sz) { return true; }
-
 #ifndef U_CACHE_REQUEST_DISABLE
    static bool isRequestCacheable() __pure;
 #endif
@@ -519,6 +473,11 @@ protected:
 #endif
 
 private:
+   static inline bool handlerCache() U_NO_EXPORT;
+   static inline bool isValidMethod(    const char* ptr) U_NO_EXPORT;
+   static inline bool isValidRequest(   const char* ptr, uint32_t sz) U_NO_EXPORT;
+   static inline bool isValidRequestExt(const char* ptr, uint32_t sz) U_NO_EXPORT;
+
    U_DISALLOW_COPY_AND_ASSIGN(UClientImage_Base)
 
                       friend class UHTTP;

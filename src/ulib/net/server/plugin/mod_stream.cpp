@@ -205,7 +205,7 @@ int UStreamPlugIn::handlerRequest()
 
             rbuf->close(readd);
 
-            U_RETURN(U_PLUGIN_HANDLER_ERROR);
+            U_RETURN(U_PLUGIN_HANDLER_FINISHED);
             }
 
          UTimeVal to_sleep(0L, 10 * 1000L);

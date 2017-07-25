@@ -18,8 +18,8 @@ static void checkForDaylightSavingTime(const char* tz, const char* start, const 
 
    int res1_exp = (u_is_daylight() ? 0 : 1);
 
-   time_t dst_start = UTimeDate::getSecondFromTime(start, true),
-          dst_end   = UTimeDate::getSecondFromTime(  end, true);
+   time_t dst_start = UTimeDate::getSecondFromDate(start),
+          dst_end   = UTimeDate::getSecondFromDate(end);
 
    int res1 = UTimeDate::checkForDaylightSavingTime(dst_start),
        res2 = UTimeDate::checkForDaylightSavingTime(dst_end);
@@ -105,7 +105,29 @@ U_EXPORT main(int argc, char* argv[])
 
    while (cin >> data6) cout << data6 << '\n';
 
-   U_ASSERT( UTimeDate::getSecondFromTime("19030314104248Z", true, "%4u%2u%2u%2u%2u%2uZ") < u_now->tv_sec )
+   time_t t = UTimeDate::getSecondFromTime("01:01:00");
+
+   U_INTERNAL_ASSERT_EQUALS( t, 3660 )
+
+   t = UTimeDate::getSecondFromTime("01:01 A");
+
+   U_INTERNAL_ASSERT_EQUALS( t, 3660 )
+
+   t = UTimeDate::getSecondFromDate("Fri, 31 Dec 1999 23:59:59 GMT");
+
+   U_INTERNAL_ASSERT_MINOR( t, u_now->tv_sec )
+
+   t = UTimeDate::getSecondFromDate("Jan 25 11:54:00 2005 GMT");
+
+   U_INTERNAL_ASSERT_MINOR( t, u_now->tv_sec )
+
+   t = UTimeDate::getSecondFromDate("100212124550Z");
+
+   U_INTERNAL_ASSERT_MINOR( t, u_now->tv_sec )
+
+   t = UTimeDate::getSecondFromDate("20030314104248Z", false, U_NULLPTR, "%4u%2u%2u%2u%2u%2uZ");
+
+   U_INTERNAL_ASSERT_MINOR( t, u_now->tv_sec )
 
 // typedef struct log_date {
 //    char date1[17+1];             // 18/06/12 18:45:56

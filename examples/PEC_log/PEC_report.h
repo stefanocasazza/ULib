@@ -292,11 +292,15 @@ protected:
 
    static unsigned getMonth(const char* ptr)
       {
-      U_TRACE(5, "PEC_report::getMonth(%p)", ptr)
+      U_TRACE(5, "PEC_report::getMonth(%20S)", ptr)
 
-      while (u__isspace(*ptr)) ++ptr;
+      if (u__istext(*ptr) &&
+          u__isspace(*ptr) == false)
+         {
+         return u_getMonth(ptr);
+         }
 
-      return u_getMonth(ptr);
+      return 0;
       }
 
    static bool setLine();

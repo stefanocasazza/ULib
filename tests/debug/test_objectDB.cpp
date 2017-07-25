@@ -80,7 +80,7 @@ int U_EXPORT main (int argc, char* argv[])
 
    U_TRACE(5, "main(%d,%p)", argc, argv)
 
-   int sz = (argc > 1 ? atoi(argv[1]) : 1000);
+   int sz = (argc > 1 ? u_atoi(argv[1]) : 1000);
 
    U_SET_LOCATION_INFO;
    Figlio   figlio;

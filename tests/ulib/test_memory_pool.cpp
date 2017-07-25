@@ -206,7 +206,7 @@ U_EXPORT main(int argc, char** argv)
 #  define U_NUM_ENTRY_MEM_BLOCK 32
 
    int i, j, k;
-   int n = U_NUM_ENTRY_MEM_BLOCK * (argc > 1 ? atoi(argv[1]) : 1);
+   int n = U_NUM_ENTRY_MEM_BLOCK * (argc > 1 ? u_atoi(argv[1]) : 1);
 
    char* vptr[n];
    UString* obj[n];

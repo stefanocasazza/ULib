@@ -4,7 +4,7 @@
 
 ## PEC.test -- Test PEC feature
 
-#UTRACE="5 5M 0"
+#UTRACE="0 5M 0"
 #UOBJDUMP="0 100k 10"
 #USIMERR="error.sim"
 #VALGRIND=valgrind

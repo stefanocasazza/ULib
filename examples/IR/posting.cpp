@@ -104,8 +104,8 @@ UPosting::UPosting(uint32_t dimension, bool parsing, bool index)
 
       dimension += dimension / 4;
 
-      U_NEW(UHashMap<UString>, tbl_name,  UHashMap<UString>(U_GET_NEXT_PRIME_NUMBER(dimension)));
-      U_NEW(UHashMap<UString>, tbl_words, UHashMap<UString>(U_GET_NEXT_PRIME_NUMBER(approximate_num_words), ignore_case));
+      U_NEW(UHashMap<UString>, tbl_name,  UHashMap<UString>(u_nextPowerOfTwo64(dimension)));
+      U_NEW(UHashMap<UString>, tbl_words, UHashMap<UString>(u_nextPowerOfTwo64(approximate_num_words), ignore_case));
       }
 
    if (parsing)

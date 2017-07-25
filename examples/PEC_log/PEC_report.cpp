@@ -931,11 +931,11 @@ bool PEC_report::readContent()
 
          // month[3] = '\0';
 
-         day = atoi(ptr + 4);
+         day = u_atoi(ptr + 4);
 
          if (rejected == false)
             {
-            year = atoi(ptr + U_LINEDATA + 10);
+            year = u_atoi(ptr + U_LINEDATA + 10);
 
             year_present = (year > 0); // check if year is present or not...
 
@@ -1348,7 +1348,7 @@ void PEC_report::manageOptions()
    mittente         = new UString;
    identifier       = new UString;
 
-   tfile = new UHashMap<UString>(U_GET_NEXT_PRIME_NUMBER(1024));
+   tfile = new UHashMap<UString>(1024);
 
    if (rejected)
       {

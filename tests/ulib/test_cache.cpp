@@ -249,7 +249,7 @@ U_EXPORT main (int argc, char* argv[])
       }
    */
 
-   (void) c.open(U_STRING_FROM_CONSTANT("./cache.file"), atoi(argv[1]));
+   (void) c.open(U_STRING_FROM_CONSTANT("./cache.file"), u_atoi(argv[1]));
 
    cin >> c;
 

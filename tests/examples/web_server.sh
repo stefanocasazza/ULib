@@ -7,7 +7,7 @@
 #DOC_ROOT=ruby/blog
  DOC_ROOT=benchmark/docroot
 
-rm -f tmp/usp_compile.sh.err /tmp/*.hpack.* \
+rm -f tmp/usp_compile.sh.err /tmp/*.hpack.* /var/log/httpd/access_log \
 		$DOC_ROOT/web_server.log* \
       out/userver_*.out err/userver_*.err \
 					 trace.*userver_*.[0-9]*			  object.*userver_*.[0-9]*				 stack.*userver_*.[0-9]*			  mempool.*userver_*.[0-9]* \
@@ -66,6 +66,11 @@ userver {
 #LOAD_BALANCE_DEVICE_NETWORK enp0s20u1
 #LOAD_BALANCE_LOADAVG_THRESHOLD 4.0
 #PREFORK_CHILD 0
+#CRASH_COUNT 1
+#CRASH_EMAIL_NOTIFY mail.unirel.com:stefano.casazza@unirel.com
+#DOS_SITE_COUNT 1
+#DOS_WHITE_LIST 127.0.0.1
+#DOS_LOGFILE /tmp/dos_blacklist.txt
 #REQ_TIMEOUT 300
 #PLUGIN "ssi http"
 #ORM_DRIVER "sqlite mysql"
@@ -90,6 +95,7 @@ ALIAS "[ / /100.html ]"
  ENABLE_INOTIFY yes
  LIMIT_REQUEST_BODY 3M
  REQUEST_READ_TIMEOUT 30
+ APACHE_LIKE_LOG /var/log/httpd/access_log
 #DIGEST_AUTHENTICATION yes
 #CACHE_FILE_STORE nocat/webif.gz
 #CACHE_FILE_MASK inp/http/data/file1|*.flv|*.svgz

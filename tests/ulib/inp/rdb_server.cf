@@ -2,10 +2,11 @@ SERVER {
 
    PORT 8080
 
-#	DOS_SITE_COUNT 1
- 	DOS_WHITE_LIST 127.0.0.1,10.8.0.0/16
-#	DOS_EMAIL_NOTIFY mail.unirel.com:stefano.casazza2@unirel.com
-	DOS_SYSTEM_COMMAND "sh -c 'echo `date \"+[%%d/%%b/%%Y:%%T %%z]\"` %.*s: %.*s >> /tmp/dos_blacklist.txt'"
+#  DOS_SITE_COUNT 1
+   DOS_WHITE_LIST 127.0.0.1,10.8.0.0/16
+   DOS_LOGFILE /tmp/dos_blacklist.txt
+#  DOS_EMAIL_NOTIFY mail.unirel.com:stefano.casazza2@unirel.com
+#  DOS_SYSTEM_COMMAND "sh -c 'echo `date \"+[%%d/%%b/%%Y:%%T %%z]\"` %.*s: %.*s >> /tmp/dos_blacklist.txt'"
 
    LOG_FILE    rdb_server.log
    LOG_FILE_SZ 1M

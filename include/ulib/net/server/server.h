@@ -98,7 +98,6 @@ vClientImage = new client_type[UNotifier::max_connection]; } }
 class UHTTP;
 class UHTTP2;
 class UCommand;
-class UEvasive;
 class UDayLight;
 class UTimeStat;
 class USSLSocket;
@@ -111,7 +110,6 @@ class UFileConfig;
 class UHttpPlugIn;
 class UFCGIPlugIn;
 class USCGIPlugIn;
-class UThrottling;
 class USmtpClient;
 class UNoCatPlugIn;
 class UGeoIPPlugIn;
@@ -191,13 +189,16 @@ public:
    // PREFORK_CHILD number of child server processes created at startup ( 0 - serialize, no forking
    //                                                                     1 - classic, forking after client accept
    //                                                                    >1 - pool of serialized processes plus monitoring process)
+   //
+   // CRASH_COUNT         this is the threshold for the number of crash of child server processes
+   // CRASH_EMAIL_NOTIFY  the email address to send a message whenever the number of crash > CRASH_COUNT
    // --------------------------------------------------------------------------------------------------------------------------------------
    // This directive are for evasive action in the event of an HTTP DoS or DDoS attack or brute force attack
    // --------------------------------------------------------------------------------------------------------------------------------------
-   // DOS_PAGE_COUNT      this is the threshhold for the number of requests for the same page (or URI) per page interval
-   // DOS_PAGE_INTERVAL   the interval for the page count threshhold; defaults to 1 second intervals
-   // DOS_SITE_COUNT      this is the threshhold for the total number of requests for any object by the same client per site interval
-   // DOS_SITE_INTERVAL   the interval for the site count threshhold; defaults to 1 second intervals
+   // DOS_PAGE_COUNT      this is the threshold for the number of requests for the same page (or URI) per page interval
+   // DOS_PAGE_INTERVAL   the interval for the page count threshold; defaults to 1 second intervals
+   // DOS_SITE_COUNT      this is the threshold for the total number of requests for any object by the same client per site interval
+   // DOS_SITE_INTERVAL   the interval for the site count threshold; defaults to 1 second intervals
    // DOS_BLOCKING_PERIOD the blocking period is the amount of time (in seconds) that a client will be blocked for if they are added to the blocking list (defaults to 10)
    // DOS_WHITE_LIST      list of comma separated IP addresses of trusted clients can be whitelisted to insure they are never denied (IPADDR[/MASK])
    // DOS_EMAIL_NOTIFY    the email address to send a message whenever an IP address becomes blacklisted
@@ -293,7 +294,6 @@ public:
       char buffer4[512];
       char buffer5[512];
       char buffer6[512];
-      char buffer7[402];
    // ---------------------------------
       uint8_t flag_sigterm;
    // ---------------------------------
@@ -304,20 +304,18 @@ public:
       sig_atomic_t tot_connection;
       sig_atomic_t cnt_parallelization;
    // ---------------------------------
+      long last_time_email_dos;
+   // ---------------------------------
       sem_t lock_user1;
       sem_t lock_user2;
-      sem_t lock_evasive;
       sem_t lock_throttling;
       sem_t lock_rdb_server;
       sem_t lock_data_session;
-      sem_t lock_db_not_found;
       char spinlock_user1[1];
       char spinlock_user2[1];
-      char spinlock_evasive[1];
       char spinlock_throttling[1];
       char spinlock_rdb_server[1];
       char spinlock_data_session[1];
-      char spinlock_db_not_found[1];
 #  ifdef USE_LIBSSL
       sem_t    lock_ssl_session;
       char spinlock_ssl_session[1];
@@ -337,6 +335,7 @@ public:
       bool daylight_shared;
 #  endif
       ULog::log_data log_data_shared;
+      char buffer[1];
    // -> maybe unnamed array of char for gzip compression (log rotate)
    // --------------------------------------------------------------------------------
    } shared_data;
@@ -359,6 +358,7 @@ public:
 #define U_SRV_CNT_USR9              UServer_Base::ptr_shared_data->cnt_usr9
 #define U_SRV_MY_LOAD               UServer_Base::ptr_shared_data->my_load
 #define U_SRV_FLAG_SIGTERM          UServer_Base::ptr_shared_data->flag_sigterm
+#define U_SRV_LAST_TIME_EMAIL_DOS   UServer_Base::ptr_shared_data->last_time_email_dos
 #define U_SRV_LEN_OCSP_STAPLE       UServer_Base::ptr_shared_data->len_ocsp_staple
 #define U_SRV_VALID_OCSP_STAPLE     UServer_Base::ptr_shared_data->valid_ocsp_staple
 #define U_SRV_MIN_LOAD_REMOTE       UServer_Base::ptr_shared_data->min_load_remote
@@ -367,20 +367,16 @@ public:
 #define U_SRV_CNT_PARALLELIZATION   UServer_Base::ptr_shared_data->cnt_parallelization
 #define U_SRV_LOCK_USER1          &(UServer_Base::ptr_shared_data->lock_user1)
 #define U_SRV_LOCK_USER2          &(UServer_Base::ptr_shared_data->lock_user2)
-#define U_SRV_LOCK_EVASIVE        &(UServer_Base::ptr_shared_data->lock_evasive)
 #define U_SRV_LOCK_THROTTLING     &(UServer_Base::ptr_shared_data->lock_throttling)
 #define U_SRV_LOCK_RDB_SERVER     &(UServer_Base::ptr_shared_data->lock_rdb_server)
 #define U_SRV_LOCK_SSL_SESSION    &(UServer_Base::ptr_shared_data->lock_ssl_session)
 #define U_SRV_LOCK_DATA_SESSION   &(UServer_Base::ptr_shared_data->lock_data_session)
-#define U_SRV_LOCK_DB_NOT_FOUND   &(UServer_Base::ptr_shared_data->lock_db_not_found)
 #define U_SRV_SPINLOCK_USER1        UServer_Base::ptr_shared_data->spinlock_user1
 #define U_SRV_SPINLOCK_USER2        UServer_Base::ptr_shared_data->spinlock_user2
-#define U_SRV_SPINLOCK_EVASIVE      UServer_Base::ptr_shared_data->spinlock_evasive
 #define U_SRV_SPINLOCK_THROTTLING   UServer_Base::ptr_shared_data->spinlock_throttling
 #define U_SRV_SPINLOCK_RDB_SERVER   UServer_Base::ptr_shared_data->spinlock_rdb_server
 #define U_SRV_SPINLOCK_SSL_SESSION  UServer_Base::ptr_shared_data->spinlock_ssl_session
 #define U_SRV_SPINLOCK_DATA_SESSION UServer_Base::ptr_shared_data->spinlock_data_session
-#define U_SRV_SPINLOCK_DB_NOT_FOUND UServer_Base::ptr_shared_data->spinlock_db_not_found
 
    static ULock* lock_user1;
    static ULock* lock_user2;
@@ -389,37 +385,26 @@ public:
    static uint32_t shared_data_add, map_size;
    static bool update_date, update_date1, update_date2, update_date3;
 
-#ifdef USE_LIBSSL
+#define U_SHM_LOCK_NENTRY 128
+
    typedef struct shm_data {
-      sem_t lock_user1;
-      sem_t lock_user2;
-      sem_t lock_user3;
-      sem_t lock_user4;
-      sem_t lock_user5;
       sem_t lock_evasive;
       sem_t lock_db_not_found;
-      char spinlock_user1[1];
-      char spinlock_user2[1];
-      char spinlock_user3[1];
-      char spinlock_user4[1];
-      char spinlock_user5[1];
+      sem_t lock_base[U_SHM_LOCK_NENTRY];
       char spinlock_evasive[1];
       char spinlock_db_not_found[1];
-      char buffer[3864];
+      char spinlock_base[U_SHM_LOCK_NENTRY];
+      char buffer[1];
    } shm_data;
 
    static shm_data* ptr_shm_data;
 
-#  define U_SHM_LOCK_USER1           &(UServer_Base::ptr_shm_data->lock_user1)
-#  define U_SHM_LOCK_USER2           &(UServer_Base::ptr_shm_data->lock_user2)
-#  define U_SHM_LOCK_USER3           &(UServer_Base::ptr_shm_data->lock_user3)
-#  define U_SHM_LOCK_USER4           &(UServer_Base::ptr_shm_data->lock_user4)
-#  define U_SHM_LOCK_USER5           &(UServer_Base::ptr_shm_data->lock_user5)
-#  define U_SHM_LOCK_EVASIVE         &(UServer_Base::ptr_shm_data->lock_evasive)
-#  define U_SHM_LOCK_DB_NOT_FOUND    &(UServer_Base::ptr_shm_data->lock_db_not_found)
-#  define U_SHM_SPINLOCK_EVASIVE       UServer_Base::ptr_shm_data->spinlock_evasive
-#  define U_SHM_SPINLOCK_DB_NOT_FOUND  UServer_Base::ptr_shm_data->spinlock_db_not_found
-#endif
+#define U_SHM_LOCK_EVASIVE        &(UServer_Base::ptr_shm_data->lock_evasive)
+#define U_SHM_LOCK_DB_NOT_FOUND   &(UServer_Base::ptr_shm_data->lock_db_not_found)
+#define U_SHM_LOCK_BASE           &(UServer_Base::ptr_shm_data->lock_base)
+#define U_SHM_SPINLOCK_BASE       &(UServer_Base::ptr_shm_data->spinlock_base)
+#define U_SHM_SPINLOCK_EVASIVE      UServer_Base::ptr_shm_data->spinlock_evasive
+#define U_SHM_SPINLOCK_DB_NOT_FOUND UServer_Base::ptr_shm_data->spinlock_db_not_found
 
 #ifdef USE_LOAD_BALANCE
    static UString* ifname;
@@ -513,7 +498,20 @@ public:
       U_RETURN(false);
       }
 
-   static void removeZombies();
+   static void removeZombies()
+      {
+      U_TRACE_NO_PARAM(0, "UServer_Base::removeZombies()")
+
+      U_INTERNAL_ASSERT_POINTER(ptr_shared_data)
+
+#  ifdef U_LOG_DISABLE
+            (void) UProcess::removeZombies();
+#  else
+      uint32_t n = UProcess::removeZombies();
+
+      if (n) U_SRV_LOG("removed %u zombies - current parallelization (%d)", n, U_SRV_CNT_PARALLELIZATION);
+#  endif
+      }
 
    // PARALLELIZATION (dedicated process for long-running task)
 
@@ -560,14 +558,39 @@ public:
    static UVector<file_LOG*>* vlog;
 
    static void  closeLog();
-   static void reopenLog();
+   static void reopenLog()
+      {
+      U_TRACE_NO_PARAM(0, "UServer_Base::reopenLog()")
+
+      file_LOG* item;
+
+      for (uint32_t i = 0, n = vlog->size(); i < n; ++i)
+         {
+         item = (*vlog)[i];
+
+         item->LOG->reopen(item->flags);
+         }
+      }
 
    static bool isLog()      { return (log != U_NULLPTR); }
    static bool isOtherLog() { return (vlog->empty() == false); }
 
    static bool addLog(UFile* log, int flags = O_APPEND | O_WRONLY);
 
-   static void logCommandMsgError(const char* cmd, bool balways);
+   static void logCommandMsgError(const char* cmd, bool balways)
+      {
+      U_TRACE(0, "UServer_Base::logCommandMsgError(%S,%b)", cmd, balways)
+
+#  ifndef U_LOG_DISABLE
+      if (isLog())
+         {
+         if (UCommand::setMsgError(cmd, !balways) || balways) ULog::log(U_CONSTANT_TO_PARAM("%s%.*s"), mod_name[0], u_buffer_len, u_buffer);
+
+         errno        = 0;
+         u_buffer_len = 0;
+         }
+#  endif
+      }
 
    // NETWORK CTX
 
@@ -627,8 +650,12 @@ protected:
    static UProcess* proc;
    static UEventTime* ptime;
    static UServer_Base* pthis;
+   static uint32_t crash_count;
    static UString* cenvironment;
    static UString* senvironment;
+   static USmtpClient* emailClient;
+   static long last_time_email_crash;
+   static UString* crashEmailAddress;
    static bool monitoring_process, set_realtime_priority, public_address, binsert, set_tcp_keep_alive, called_from_handlerTime;
 
    static uint32_t                 vplugin_size;
@@ -668,9 +695,14 @@ protected:
 #endif
 
 #ifdef U_THROTTLING_SUPPORT
+   typedef struct uthrottling {
+      uint64_t bytes_since_avg;
+      uint32_t krate, min_limit, max_limit, num_sending;
+   } uthrottling;
+
    static bool         throttling_chk;
    static UString*     throttling_mask;
-   static UThrottling* throttling_rec;
+   static uthrottling* throttling_rec;
    static URDBObjectHandler<UDataStorage*>* db_throttling;
 
    static void clearThrottling();
@@ -682,12 +714,16 @@ protected:
 #endif
 
 #ifdef U_EVASIVE_SUPPORT // provide evasive action in the event of an HTTP DoS or DDoS attack or brute force attack
+   typedef struct uevasive {
+      uint32_t timestamp, count;
+   } uevasive;
+
+   static UFile* dos_LOG;
    static bool bwhitelist;
-   static UString* emailAddress;
    static UString* whitelist_IP;
-   static UEvasive* evasive_rec;
+   static uevasive* evasive_rec;
    static UString* systemCommand;
-   static USmtpClient* emailClient;
+   static UString* dosEmailAddress;
    static UVector<UIPAllow*>* vwhitelist_IP;
    static URDBObjectHandler<UDataStorage*>* db_evasive;
    static uint32_t blocking_period, page_interval, page_count, site_interval, site_count;
@@ -766,21 +802,60 @@ protected:
 
    static RETSIGTYPE handlerForSigHUP(  int signo);
    static RETSIGTYPE handlerForSigTERM( int signo);
-   static RETSIGTYPE handlerForSigCHLD( int signo);
+// static RETSIGTYPE handlerForSigCHLD( int signo);
 
    static void sendSignalToAllChildren(int signo, sighandler_t handler);
 
 private:
-   static void manageSigHUP() U_NO_EXPORT;
+   static void manageWaitAll()
+      {
+      U_TRACE_NO_PARAM(0, "UServer_Base::manageWaitAll()")
+
+      U_INTERNAL_ASSERT_POINTER(proc)
+
+      if (proc->waitAll(2) == U_FAILED_ALARM) manageCommand(U_CONSTANT_TO_PARAM("pkill -KILL -P %P"), 0);
+      }
+
+   static void manageSigHUP()
+      {
+      U_TRACE_NO_PARAM(0, "UServer_Base::manageSigHUP()")
+
+      manageWaitAll();
+
+#  ifndef U_LOG_DISABLE
+      U_SRV_TOT_CONNECTION = 0;
+#  endif
+
+      if (pluginsHandlerSigHUP() != U_PLUGIN_HANDLER_FINISHED) U_WARNING("Plugins stage SigHUP failed...");
+      }
+
+   static void logMemUsage(const char* signame)
+      {
+      U_TRACE(0, "UServer_Base::logMemUsage(%S)", signame)
+
+      U_INTERNAL_ASSERT(isLog())
+
+#  ifndef U_LOG_DISABLE
+      unsigned long vsz, rss;
+
+      u_get_memusage(&vsz, &rss);
+
+      ULog::log(U_CONSTANT_TO_PARAM("%s (Interrupt): "
+                "address space usage: %.2f MBytes - "
+                          "rss usage: %.2f MBytes"), signame,
+                (double)vsz / (1024.0 * 1024.0),
+                (double)rss / (1024.0 * 1024.0));
+#  endif
+      }
+
    static bool clientImageHandlerRead() U_NO_EXPORT;
-   static void logMemUsage(const char* signame) U_NO_EXPORT;
    static void loadStaticLinkedModules(const char* name) U_NO_EXPORT;
+   static void manageCommand(const char* format, uint32_t fmt_size, ...) U_NO_EXPORT;
 
    U_DISALLOW_COPY_AND_ASSIGN(UServer_Base)
 
    friend class UHTTP;
    friend class UHTTP2;
-   friend class UEvasive;
    friend class UDayLight;
    friend class UTimeStat;
    friend class USSLSocket;
@@ -792,7 +867,6 @@ private:
    friend class UHttpPlugIn;
    friend class USCGIPlugIn;
    friend class UFCGIPlugIn;
-   friend class UThrottling;
    friend class UApplication;
    friend class UProxyPlugIn;
    friend class UNoCatPlugIn;

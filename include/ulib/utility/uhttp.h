@@ -46,6 +46,7 @@ class UHttpPlugIn;
 class USSLSession;
 class UMimeMultipart;
 class UModProxyService;
+class UClientImage_Base;
 
 template <class T> class UClient;
 template <class T> class URDBObjectHandler;
@@ -392,8 +393,24 @@ public:
 
    static UString checkDirectoryForUpload(const UString& dir) { return checkDirectoryForUpload(U_STRING_TO_PARAM(dir)); }
 
-   static const char* getHeaderValuePtr(                        const char* name, uint32_t name_len, bool nocase) __pure;
-   static const char* getHeaderValuePtr(const UString& request, const char* name, uint32_t name_len, bool nocase) __pure;
+   static const char* getHeaderValuePtr(const UString& request, const char* name, uint32_t name_len, bool nocase)
+      {
+      U_TRACE(0, "UHTTP::getHeaderValuePtr(%V,%.*S,%u,%b)", request.rep, name_len, name, name_len, nocase)
+
+      if (U_http_info.endHeader)
+         {
+         return UStringExt::getValueFromName(request, U_http_info.startHeader,
+                                                      U_http_info.endHeader - U_CONSTANT_SIZE(U_CRLF2) - U_http_info.startHeader, name, name_len, nocase);
+         }
+
+      U_RETURN((const char*)U_NULLPTR);
+      }
+
+#ifndef U_HTTP2_DISABLE
+   static const char* getHeaderValuePtr(const char* name, uint32_t name_len, bool nocase);
+#else
+   static const char* getHeaderValuePtr(const char* name, uint32_t name_len, bool nocase) { return getHeaderValuePtr(*UClientImage_Base::request, name, name_len, nocase); }
+#endif
 
    static const char* getHeaderValuePtr(                        const UString& name, bool nocase) { return getHeaderValuePtr(         U_STRING_TO_PARAM(name), nocase); }
    static const char* getHeaderValuePtr(const UString& request, const UString& name, bool nocase) { return getHeaderValuePtr(request, U_STRING_TO_PARAM(name), nocase); }
@@ -544,13 +561,23 @@ public:
    static UMimeMultipart* formMulti;
    static UVector<UString>* form_name_value;
 
+   static uint32_t processForm();
+
+   static void getFormValue(UString& value, uint32_t pos)
+      {
+      U_TRACE(0, "UHTTP::getFormValue(%V,%u)", value.rep, pos)
+
+      U_INTERNAL_ASSERT_POINTER(form_name_value)
+
+      if (pos >= form_name_value->size()) value.clear();
+      else                         (void) value.replace((*form_name_value)[pos]);
+      }
+
    static int getFormFirstNumericValue(int _min, int _max) __pure;
 
-   static uint32_t processForm();
-   static void     getFormValue(UString& value, const char* name, uint32_t len);
-   static void     getFormValue(UString& value,                                                 uint32_t pos);
-   static UString  getFormValue(                const char* name, uint32_t len, uint32_t start,               uint32_t end);
-   static void     getFormValue(UString& value, const char* name, uint32_t len, uint32_t start, uint32_t pos, uint32_t end);
+   static void    getFormValue(UString& value, const char* name, uint32_t len);
+   static UString getFormValue(                const char* name, uint32_t len, uint32_t start,               uint32_t end);
+   static void    getFormValue(UString& value, const char* name, uint32_t len, uint32_t start, uint32_t pos, uint32_t end);
 
    // COOKIE
 
@@ -1043,7 +1070,7 @@ public:
    mode_t mode;             // file type
    int mime_index;          // index file mime type
    int fd;                  // file descriptor
-   bool link;               // true => ptr point to another entry
+   bool link;               // true => ptr data point to another entry
 
     UFileCacheData();
     UFileCacheData(const UFileCacheData& elem);
@@ -1071,6 +1098,7 @@ public:
    static UString* cache_file_store;
    static UString* nocache_file_mask;
    static UFileCacheData* file_data;
+   static UFileCacheData* file_gzip_bomb;
    static UHashMap<UFileCacheData*>* cache_file;
    static UFileCacheData* file_not_in_cache_data;
 
@@ -1178,14 +1206,20 @@ public:
       }
 #endif
 
-   static UFileCacheData* getFileInCache(const char* path, uint32_t len)
+   static UString contentOfFromCache(const char* path, uint32_t len)
       {
-      U_TRACE(0, "UHTTP::getFileInCache(%.*S,%u)", len, path, len)
+      U_TRACE(0, "UHTTP::contentOfFromCache(%.*S,%u)", len, path, len)
 
-      UHTTP::UFileCacheData* ptr_file_data = cache_file->at(path, len);
+      UString result;
 
-      U_RETURN_POINTER(ptr_file_data, UHTTP::UFileCacheData);
+      file_data = cache_file->at(path, len);
+
+      if (file_data) result = getBodyFromCache();
+
+      U_RETURN_STRING(result);
       }
+
+   static UString contentOfFromCache(const UString& path) { return contentOfFromCache(U_STRING_TO_PARAM(path)); }
 
 private:
    static uint32_t old_response_code;
@@ -1301,6 +1335,7 @@ private:
    friend class UHTTP2;
    friend class USSIPlugIn;
    friend class UHttpPlugIn;
+   friend class UClientImage_Base;
 };
 
 template <> inline void u_destroy(const UHTTP::UFileCacheData* elem)

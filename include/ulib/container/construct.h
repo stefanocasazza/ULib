@@ -95,10 +95,9 @@ template <> inline void u_destroy(const UStringRep** rep, uint32_t n)
 {
    U_TRACE(0, "u_destroy<UStringRep*>(%p,%u)", rep, n)
 
-// coverity[RESOURCE_LEAK]
+   // coverity[RESOURCE_LEAK]
 #ifndef U_COVERITY_FALSE_POSITIVE
    for (uint32_t i = 0; i < n; ++i) ((UStringRep*)rep[i])->release();
 #endif
 }
-
 #endif

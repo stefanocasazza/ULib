@@ -95,7 +95,7 @@ int U_EXPORT main(int argc, char* argv[])
 
       if (argc == 3)
          {
-         iteration = atoi(argv[2]);
+         iteration = u_atoi(argv[2]);
 
          (void) U_SYSCALL(signal, "%d,%p", SIGALRM, (sighandler_t)&manage_alarm);
 

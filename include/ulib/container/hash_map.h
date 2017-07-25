@@ -106,7 +106,7 @@ public:
 
    UHashMap(uint32_t n, bool ignore_case);
 
-   UHashMap(uint32_t n = 53, bPFptpcu _set_index = setIndex);
+   UHashMap(uint32_t n = 64, bPFptpcu _set_index = setIndex);
 
    ~UHashMap()
       {
@@ -151,13 +151,13 @@ public:
       set_index = (flag ? setIndexIgnoreCase : setIndex);
       }
 
-   void setIndexFunction(bPFptpcu _set_index)
+   void setIndexFunction(bPFptpcu fset_index)
       {
-      U_TRACE(0, "UHashMap<void*>::setIndexFunction(%p)", _set_index)
+      U_TRACE(0, "UHashMap<void*>::setIndexFunction(%p)", fset_index)
 
       U_INTERNAL_ASSERT_EQUALS(_length, 0)
 
-      set_index = _set_index;
+      set_index = fset_index;
       }
 
    bool ignoreCase() const { return (set_index == setIndexIgnoreCase); }
@@ -300,6 +300,10 @@ protected:
 
       table     = (UHashMapNode**) UMemoryPool::_malloc(&n, sizeof(UHashMapNode*), true);
       _capacity = n;
+
+      // Must be a power of 2, It's done this way because bitwise-and is an inexpensive operation, whereas integer modulo (%) is quite heavy
+
+      U_INTERNAL_ASSERT_EQUALS(_capacity & (_capacity-1), 0)
       }
 
    void _deallocate()
@@ -375,13 +379,27 @@ protected:
    void _eraseAfterFind();
    void _callForAllEntrySorted(bPFprpv function);
 
+   static void _setIndex(UHashMap<void*>* pthis)
+      {
+      U_TRACE(0, "UHashMap<void*>::_setIndex(%p)", pthis)
+
+      U_INTERNAL_DUMP("pthis->hash = %u", pthis->hash)
+
+      U_INTERNAL_ASSERT_MAJOR(pthis->hash, 0)
+      U_INTERNAL_ASSERT_EQUALS(pthis->_capacity & (pthis->_capacity-1), 0) // Must be a power of 2
+
+      pthis->index = pthis->hash & (pthis->_capacity-1);
+
+      U_INTERNAL_ASSERT_EQUALS(pthis->index, pthis->hash % pthis->_capacity)
+      }
+
    static bool setIndex(UHashMap<void*>* pthis, const char* _key, uint32_t keylen)
       {
       U_TRACE(0, "UHashMap<void*>::setIndex(%p,%.*S,%u)", pthis, keylen, _key, keylen)
 
-      pthis->index = (pthis->hash = u_hash((unsigned char*)_key, keylen)) % pthis->_capacity;
+      pthis->hash = u_hash((unsigned char*)_key, keylen);
 
-      U_INTERNAL_ASSERT_MAJOR(pthis->hash, 0)
+      _setIndex(pthis);
 
       U_RETURN(false);
       }
@@ -390,9 +408,9 @@ protected:
       {
       U_TRACE(0, "UHashMap<void*>::setIndexIgnoreCase(%p,%.*S,%u)", pthis, keylen, _key, keylen)
 
-      pthis->index = (pthis->hash = u_hash_ignore_case((unsigned char*)_key, keylen)) % pthis->_capacity;
+      pthis->hash = u_hash_ignore_case((unsigned char*)_key, keylen);
 
-      U_INTERNAL_ASSERT_MAJOR(pthis->hash, 0)
+      _setIndex(pthis);
 
       U_RETURN(true);
       }
@@ -422,7 +440,7 @@ public:
       U_TRACE_REGISTER_OBJECT(0, UHashMap<T*>, "%u,%b", n, ignore_case)
       }
 
-   UHashMap(uint32_t n = 53, bPFptpcu _set_index = setIndex) : UHashMap<void*>(n, _set_index)
+   UHashMap(uint32_t n = 64, bPFptpcu _set_index = setIndex) : UHashMap<void*>(n, _set_index)
       {
       U_TRACE_REGISTER_OBJECT(0, UHashMap<T*>, "%u,%p", n, _set_index)
       }
@@ -810,7 +828,7 @@ public:
       U_TRACE_REGISTER_OBJECT(0, UHashMap<UString>, "%u,%b", n, ignore_case)
       }
 
-   explicit UHashMap(uint32_t n = 53, bPFptpcu _set_index = setIndex) : UHashMap<UStringRep*>(n, _set_index)
+   explicit UHashMap(uint32_t n = 64, bPFptpcu _set_index = setIndex) : UHashMap<UStringRep*>(n, _set_index)
       {
       U_TRACE_REGISTER_OBJECT(0, UHashMap<UString>, "%u,%p", n, _set_index)
       }
@@ -898,7 +916,7 @@ public:
       U_TRACE_REGISTER_OBJECT(0, UHashMap<UVectorUString>, "%u,%b", n, ignore_case)
       }
 
-   explicit UHashMap(uint32_t n = 53, bPFptpcu _set_index = setIndex) : UHashMap<UVectorUString*>(n, _set_index)
+   explicit UHashMap(uint32_t n = 64, bPFptpcu _set_index = setIndex) : UHashMap<UVectorUString*>(n, _set_index)
       {
       U_TRACE_REGISTER_OBJECT(0, UHashMap<UVectorUString>, "%u,%p", n, _set_index)
       }

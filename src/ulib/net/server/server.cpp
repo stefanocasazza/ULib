@@ -18,13 +18,10 @@
 #include <ulib/utility/escape.h>
 #include <ulib/orm/orm_driver.h>
 #include <ulib/net/client/http.h>
+#include <ulib/net/client/smtp.h>
 #include <ulib/dynamic/dynamic.h>
 #include <ulib/utility/services.h>
 #include <ulib/net/server/server.h>
-
-#ifdef U_EVASIVE_SUPPORT
-#  include <ulib/net/client/smtp.h>
-#endif
 
 #ifdef _MSWINDOWS_
 #  include <ws2tcpip.h>
@@ -102,6 +99,7 @@ bool          UServer_Base::update_date1;
 bool          UServer_Base::update_date2;
 bool          UServer_Base::update_date3;
 bool          UServer_Base::called_from_handlerTime;
+long          UServer_Base::last_time_email_crash;
 char          UServer_Base::mod_name[2][16];
 ULog*         UServer_Base::log;
 ULog*         UServer_Base::apache_like_log;
@@ -111,6 +109,7 @@ ULock*        UServer_Base::lock_user2;
 uint32_t      UServer_Base::map_size;
 uint32_t      UServer_Base::vplugin_size;
 uint32_t      UServer_Base::nClientIndex;
+uint32_t      UServer_Base::crash_count;
 uint32_t      UServer_Base::shared_data_add;
 uint32_t      UServer_Base::client_address_len;
 uint32_t      UServer_Base::document_root_size;
@@ -132,6 +131,7 @@ UString*      UServer_Base::IP_address;
 UString*      UServer_Base::cenvironment;
 UString*      UServer_Base::senvironment;
 UString*      UServer_Base::document_root;
+UString*      UServer_Base::crashEmailAddress;
 USocket*      UServer_Base::socket;
 USocket*      UServer_Base::csocket;
 UProcess*     UServer_Base::proc;
@@ -140,6 +140,7 @@ UEventFd*     UServer_Base::handler_inotify;
 UEventTime*   UServer_Base::ptime;
 const char*   UServer_Base::document_root_ptr;
 unsigned int  UServer_Base::port;
+USmtpClient*  UServer_Base::emailClient;
 UFileConfig*  UServer_Base::cfg;
 UServer_Base* UServer_Base::pthis;
 
@@ -148,14 +149,12 @@ UVector<UString>*                 UServer_Base::vplugin_name_static;
 UClientImage_Base*                UServer_Base::vClientImage;
 UClientImage_Base*                UServer_Base::pClientImage;
 UClientImage_Base*                UServer_Base::eClientImage;
+UServer_Base::shm_data*           UServer_Base::ptr_shm_data;
 UVector<UServerPlugIn*>*          UServer_Base::vplugin;
 UVector<UServerPlugIn*>*          UServer_Base::vplugin_static;
 UServer_Base::shared_data*        UServer_Base::ptr_shared_data;
 UVector<UServer_Base::file_LOG*>* UServer_Base::vlog;
 
-#ifdef USE_LIBSSL
-UServer_Base::shm_data* UServer_Base::ptr_shm_data;
-#endif
 #ifdef U_WELCOME_SUPPORT
 UString* UServer_Base::msg_welcome;
 #endif
@@ -331,72 +330,12 @@ private:
  */
 
 #ifdef U_THROTTLING_SUPPORT
-#  define U_THROTTLE_TIME 2 // Time between updates of the throttle table's rolling averages
+bool                              UServer_Base::throttling_chk;
+UString*                          UServer_Base::throttling_mask;
+UServer_Base::uthrottling*        UServer_Base::throttling_rec;
+URDBObjectHandler<UDataStorage*>* UServer_Base::db_throttling;
 
-class U_NO_EXPORT UThrottling : public UDataStorage {
-public:
-
-   uint64_t bytes_since_avg;
-   uint32_t krate, min_limit, max_limit, num_sending;
-
-   // COSTRUTTORE
-
-   UThrottling()
-      {
-      U_TRACE_REGISTER_OBJECT(0, UThrottling, "", 0)
-
-      (void) memset(&bytes_since_avg, 0, sizeof(uint32_t) * 6);
-      }
-
-   ~UThrottling()
-      {
-      U_TRACE_UNREGISTER_OBJECT(0, UThrottling)
-
-      if (UServer_Base::db_throttling)
-         {
-                UServer_Base::db_throttling->close();
-         delete UServer_Base::db_throttling;
-         }
-      }
-
-   // define method VIRTUAL of class UDataStorage
-
-   virtual char* toBuffer()
-      {
-      U_TRACE_NO_PARAM(0, "UThrottling::toBuffer()")
-
-      U_CHECK_MEMORY
-
-      U_INTERNAL_ASSERT_EQUALS(u_buffer_len, 0)
-
-      U_MEMCPY(u_buffer, &bytes_since_avg, u_buffer_len = sizeof(uint32_t) * 6);
-
-      U_INTERNAL_ASSERT_MINOR(u_buffer_len, U_BUFFER_SIZE)
-
-      buffer_len = u_buffer_len;
-
-      U_RETURN(u_buffer);
-      }
-
-   virtual void fromData(const char* ptr, uint32_t len)
-      {
-      U_TRACE(0, "UThrottling::fromData(%.*S,%u)", len, ptr, len)
-
-      U_CHECK_MEMORY
-
-      U_INTERNAL_ASSERT_POINTER(ptr)
-      U_INTERNAL_ASSERT(len >= sizeof(uint32_t) * 6)
-
-      U_MEMCPY(&bytes_since_avg, ptr, sizeof(uint32_t) * 6);
-      }
-
-#if defined(DEBUG) && defined(U_STDCPP_ENABLE)
-   const char* dump(bool breset) const { return ""; }
-#endif
-
-private:
-   U_DISALLOW_COPY_AND_ASSIGN(UThrottling)
-};
+#define U_THROTTLE_TIME 2 // Time between updates of the throttle table's rolling averages
 
 class U_NO_EXPORT UBandWidthThrottling : public UEventTime {
 public:
@@ -431,8 +370,6 @@ public:
 
       UServer_Base::throttling_rec->num_sending--;
 
-      (void) UServer_Base::db_throttling->putDataStorage();
-
       // NB: db can have different pattern matching the same url...
 
       U_RETURN(1);
@@ -462,8 +399,6 @@ public:
          }
       
       UServer_Base::throttling_rec->num_sending++;
-
-      (void) UServer_Base::db_throttling->putDataStorage();
 
       uint32_t l = UServer_Base::throttling_rec->max_limit / UServer_Base::throttling_rec->num_sending;
 
@@ -495,8 +430,6 @@ public:
                                                                                         UServer_Base::throttling_rec->bytes_since_avg = 0;
 
       U_INTERNAL_DUMP("krate = %u", UServer_Base::throttling_rec->krate)
-
-      (void) UServer_Base::db_throttling->putDataStorage();
 
 #  ifndef U_LOG_DISABLE
       if (UServer_Base::isLog())
@@ -539,8 +472,6 @@ public:
                         UServer_Base::throttling_rec->max_limit, UServer_Base::throttling_rec->num_sending, UServer_Base::throttling_rec->bytes_since_avg)
 
       UServer_Base::throttling_rec->bytes_since_avg += UServer_Base::pClientImage->bytes_sent;
-
-      (void) UServer_Base::db_throttling->putDataStorage();
 
       // NB: db can have different pattern matching the same url...
 
@@ -666,11 +597,6 @@ private:
    U_DISALLOW_COPY_AND_ASSIGN(UClientThrottling)
 };
 
-bool                              UServer_Base::throttling_chk;
-UString*                          UServer_Base::throttling_mask;
-UThrottling*                      UServer_Base::throttling_rec;
-URDBObjectHandler<UDataStorage*>* UServer_Base::db_throttling;
-
 void UServer_Base::initThrottlingClient()
 {
    U_TRACE_NO_PARAM(0, "UServer_Base::initThrottlingClient()")
@@ -699,8 +625,7 @@ void UServer_Base::initThrottlingServer()
       }
    else
       {
-      U_NEW(UThrottling, throttling_rec, UThrottling);
-      U_NEW(URDBObjectHandler<UDataStorage*>, db_throttling, URDBObjectHandler<UDataStorage*>(U_STRING_FROM_CONSTANT("../db/BandWidthThrottling"), -1, throttling_rec));
+      U_NEW(URDBObjectHandler<UDataStorage*>, db_throttling, URDBObjectHandler<UDataStorage*>(U_STRING_FROM_CONSTANT("../db/BandWidthThrottling"), -1, &throttling_rec, true));
 
       if (isPreForked())
          {
@@ -722,20 +647,18 @@ void UServer_Base::initThrottlingServer()
 
          db_throttling->reset(); // Initialize the db to contain no entries
 
+         UServer_Base::uthrottling rec = { 0, 0, 0, 0, 0 };
+
          for (int32_t i = 0, n = vec.size(); i < n; i += 2)
             {
             pattern = vec[i];
              number = vec[i+1];
 
-                                                                                      throttling_rec->max_limit = ::strtol(number.data(),      &ptr, 10);
-            if (ptr[0] == '-') throttling_rec->min_limit = throttling_rec->max_limit, throttling_rec->max_limit = ::strtol(        ptr+1, U_NULLPTR, 10);
+                                                              rec.max_limit = ::strtol(number.data(),      &ptr, 10);
+            if (ptr[0] == '-') rec.min_limit = rec.max_limit, rec.max_limit = ::strtol(        ptr+1, U_NULLPTR, 10);
 
-            (void) db_throttling->insertDataStorage(pattern, RDB_INSERT);
+            (void) db_throttling->insertDataStorage(&rec, sizeof(uthrottling), U_STRING_TO_PARAM(pattern), RDB_INSERT);
             }
-
-#     ifdef DEBUG
-         db_throttling->resetKeyID(); // NB: to avoid DEAD OF SOURCE STRING WITH CHILD ALIVE...
-#     endif
          }
       else
          {
@@ -843,6 +766,288 @@ bool UServer_Base::checkThrottlingBeforeSend(bool bwrite)
 }
 #endif
 
+/**
+ * This code provide evasive action in the event of an HTTP DoS or DDoS attack or brute force attack. It is also designed to be a
+ * detection tool, and can be easily configured to talk to ipchains, firewalls, routers, and etcetera. Detection is performed by
+ * creating an internal dynamic hash table of IP Addresses and URIs, and denying any single IP address from any of the following:
+ *
+ * - Requesting the same page more than a few times per second
+ * - Making more than 50 concurrent requests per second
+ * - Making any requests while temporarily blacklisted (on a blocking list)
+ *
+ * This method has worked well in both single-server script attacks as well as distributed attacks, but just like other evasive tools,
+ * is only as useful to the point of bandwidth and processor consumption (e.g. the amount of bandwidth and processor required to
+ * receive/process/respond to invalid requests), which is why it's a good idea to integrate this with your firewalls and routers.
+ *
+ * This code has a built-in cleanup mechanism and scaling capabilities. Because of this, legitimate requests are rarely ever compromised,
+ * only legitimate attacks. Even a user repeatedly clicking on 'reload' should not be affected unless they do it maliciously,
+ *
+ * A web hit request comes in. The following steps take place:
+ *
+ * - The IP address of the requestor is looked up on the temporary blacklist.
+ * - The IP address of the requestor is hashed into a "key". A lookup is performed in the listener's internal hash table to determine if
+ *   the same host has requested more than 50 objects within the past second.
+ * - The IP address of the requestor and the URI are both hashed into a "key". A lookup is performed in the listener's internal hash table
+ *   to determine if the same host has requested this page more than 3 within the past 1 second.
+ *
+ * If any of the above are true, a RESET is sent. This conserves bandwidth and system resources in the event of a DoS attack. Additionally,
+ * a system command and/or an email notification can also be triggered to block all the originating addresses of a DDoS attack.
+ *
+ * Once a single RESET incident occurs, evasive code now blocks the entire IP address for a period of 10 seconds (configurable). If the host
+ * requests a page within this period, it is forced to wait even longer. Since this is triggered from requesting the same URL multiple times
+ * per second, this again does not affect legitimate users.
+ *
+ * The blacklist can/should be configured to talk to your network's firewalls and/or routers to push the attack out to the front lines, but
+ * this is not required. This tool is *excellent* at fending off request-based DoS attacks or scripted attacks, and brute force attacks.
+ * When integrated with firewalls or IP filters, evasive code can stand up to even large attacks. Its features will prevent you from wasting
+ * bandwidth or having a few thousand CGI scripts running as a result of an attack.
+ *
+ * If you do not have an infrastructure capable of fending off any other types of DoS attacks, chances are this tool will only help you to the
+ * point of your total bandwidth or server capacity for sending RESET's. Without a solid infrastructure and address filtering tool in place, a
+ * heavy distributed DoS will most likely still take you offline
+ */
+
+#ifdef U_EVASIVE_SUPPORT
+bool                              UServer_Base::bwhitelist;
+UFile*                            UServer_Base::dos_LOG;
+uint32_t                          UServer_Base::page_count;
+uint32_t                          UServer_Base::site_count;
+uint32_t                          UServer_Base::site_interval;
+uint32_t                          UServer_Base::page_interval;
+uint32_t                          UServer_Base::blocking_period;
+UString*                          UServer_Base::dosEmailAddress;
+UString*                          UServer_Base::whitelist_IP;
+UString*                          UServer_Base::systemCommand;
+UVector<UIPAllow*>*               UServer_Base::vwhitelist_IP;
+UServer_Base::uevasive*           UServer_Base::evasive_rec;
+URDBObjectHandler<UDataStorage*>* UServer_Base::db_evasive;
+
+void UServer_Base::initEvasive()
+{
+   U_TRACE_NO_PARAM(0, "UServer_Base::initEvasive()")
+
+   U_INTERNAL_ASSERT_EQUALS(db_evasive, U_NULLPTR)
+
+   U_NEW(URDBObjectHandler<UDataStorage*>, db_evasive, URDBObjectHandler<UDataStorage*>(U_STRING_FROM_CONSTANT("../db/Evasive"), -1, &evasive_rec, true));
+
+   if (db_evasive->open(4096 * 4096, false, true)) // NB: we don't want truncate (we have only the journal)...
+      {
+      U_SRV_LOG("db Evasive initialization success: size(%u)", db_evasive->size());
+
+      U_INTERNAL_ASSERT_POINTER(ptr_shared_data)
+      U_INTERNAL_ASSERT_DIFFERS(ptr_shared_data, MAP_FAILED)
+
+      // POSIX shared memory object: interprocess - can be used by unrelated processes (userver_tcp and userver_ssl)
+      db_evasive->setShared(U_SHM_LOCK_EVASIVE, U_SHM_SPINLOCK_EVASIVE, true);
+
+      db_evasive->reset(); // Initialize the db to contain no entries
+
+      if (dos_LOG) (void) UServer_Base::addLog(dos_LOG);
+      }
+   else
+      {
+      U_SRV_LOG("WARNING: db Evasive initialization failed");
+
+      delete db_evasive;
+             db_evasive = U_NULLPTR;
+      }
+}
+
+bool UServer_Base::checkHold(in_addr_t client, const char* client_address, uint32_t client_address_len)
+{
+   U_TRACE(0, "UServer_Base::checkHold(%u,%.*S,%u)", client, client_address_len, client_address, client_address_len)
+
+   U_INTERNAL_ASSERT_POINTER(db_evasive)
+
+   bool result = false;
+
+   if ((bwhitelist = (whitelist_IP && UIPAllow::isAllowed(client, *vwhitelist_IP))) == false) // Check whitelist
+      {
+      U_gettimeofday // NB: optimization if it is enough a time resolution of one second...
+
+      // First see if the IP itself is on "hold"
+
+      if (db_evasive->getDataStorage(client_address, client_address_len))
+         {
+         db_evasive->lockRecord();
+
+         if ((u_now->tv_sec - evasive_rec->timestamp) < blocking_period)
+            {
+            result = true;
+
+            evasive_rec->timestamp = u_now->tv_sec; // Make it wait longer in blacklist land
+            }
+
+         db_evasive->unlockRecord();
+         }
+      }
+
+   U_RETURN(result);
+}
+
+bool UServer_Base::checkHitStats(const char* key, uint32_t key_len, uint32_t interval, uint32_t count)
+{
+   U_TRACE(0, "UServer_Base::checkHitStats(%.*S,%u,%u,%u)", key_len, key, key_len, interval, count)
+
+   U_INTERNAL_ASSERT_POINTER(db_evasive)
+   U_INTERNAL_ASSERT_EQUALS(bwhitelist, false)
+
+   bool binterval;
+
+   if (db_evasive->getDataStorage(key, key_len) == false)
+      {
+      UServer_Base::uevasive rec = { (uint32_t)u_now->tv_sec, 0 };
+
+      (void) db_evasive->insertDataStorage(&rec, sizeof(uevasive), key, key_len, RDB_INSERT);
+
+      U_RETURN(false);
+      }
+
+   db_evasive->lockRecord();
+
+   binterval = ((u_now->tv_sec - evasive_rec->timestamp) >= interval);
+
+   // If site/URI is being hit too much, add to "hold" list
+
+   if (binterval ||
+       evasive_rec->count < count)
+      {
+      if (binterval) evasive_rec->count = 0; // Reset our hit count list as necessary
+
+      evasive_rec->count++;
+      evasive_rec->timestamp = u_now->tv_sec;
+
+      db_evasive->unlockRecord();
+
+      U_RETURN(false);
+      }
+
+   U_INTERNAL_ASSERT_EQUALS(binterval, false)
+   U_INTERNAL_ASSERT(evasive_rec->count >= count)
+
+   evasive_rec->count     = 0;
+   evasive_rec->timestamp = u_now->tv_sec;
+
+   db_evasive->unlockRecord();
+
+   if (db_evasive->getDataStorage(U_CLIENT_ADDRESS_TO_PARAM)) evasive_rec->timestamp = u_now->tv_sec; // Make it wait longer in blacklist land
+   else
+      {
+      UServer_Base::uevasive rec = { (uint32_t)u_now->tv_sec, 0 };
+
+      (void) db_evasive->insertDataStorage(&rec, sizeof(uevasive), U_CLIENT_ADDRESS_TO_PARAM, RDB_INSERT);
+      }
+
+   /*
+   U_INTERNAL_DUMP("u_now->tv_sec = %ld evasive_rec->timestamp = %u evasive_rec->count = %u", u_now->tv_sec, evasive_rec->timestamp, evasive_rec->count)
+
+   U_INTERNAL_ASSERT_EQUALS(evasive_rec->timestamp, (uint32_t)u_now->tv_sec)
+   */
+
+   char msg[4096];
+   uint32_t msg_len;
+   bool bmail = false;
+
+   if (count == site_count)
+      {
+      msg_len = u__snprintf(msg, sizeof(msg), U_CONSTANT_TO_PARAM("(pid %P) it has requested more than %u objects within the past %u seconds"), site_count, site_interval);
+
+      if (dosEmailAddress)
+         {
+         if ((u_now->tv_sec - U_SRV_LAST_TIME_EMAIL_DOS) > U_ONE_DAY_IN_SECOND)
+            {
+            bmail                     = true;
+            U_SRV_LAST_TIME_EMAIL_DOS = u_now->tv_sec;
+            }
+         }
+      }
+   else
+      {
+      uint32_t sz;
+      const char* ptr = UClientImage_Base::getRequestUri(sz);
+
+      msg_len = u__snprintf(msg, sizeof(msg), U_CONSTANT_TO_PARAM("(pid %P) it has requested the same page %.*S more than %u within the past %u seconds"),
+                            sz, ptr, page_count, page_interval);
+
+      UClientImage_Base::abortive_close();
+      }
+
+   U_DEBUG("blacklisting address %.*S, possible DoS attack: %.*s", U_CLIENT_ADDRESS_TO_TRACE, msg_len, msg);
+
+   U_SRV_LOG("WARNING: blacklisting address %.*S, possible DoS attack: %.*s", U_CLIENT_ADDRESS_TO_TRACE, msg_len, msg);
+
+   if (dos_LOG) ULog::log(dos_LOG->getFd(), U_CONSTANT_TO_PARAM("blacklisting %.*S: %.*s"), U_CLIENT_ADDRESS_TO_TRACE, msg_len, msg);
+
+   if (bmail ||
+       systemCommand)
+      {
+      // Perform system functions and/or email notification
+
+      pid_t pid = UServer_Base::startNewChild();
+
+      if (pid > 0) U_RETURN(true); // parent
+
+      // child
+
+      if (systemCommand) manageCommand(U_STRING_TO_PARAM(*systemCommand), U_CLIENT_ADDRESS_TO_TRACE, msg_len, msg);
+
+      if (bmail)
+         {
+         U_INTERNAL_ASSERT_POINTER(emailClient)
+
+         UString body(100U);
+
+         body.snprintf(U_CONSTANT_TO_PARAM("blacklisting address %.*S, possible DoS attack: %.*s"), U_CLIENT_ADDRESS_TO_TRACE, msg_len, msg);
+
+         emailClient->sendEmail(*dosEmailAddress, U_STRING_FROM_CONSTANT("possible DoS attack"), body);
+         }
+
+      if (pid == 0) UServer_Base::endNewChild();
+      }
+
+   U_RETURN(true);
+}
+
+bool UServer_Base::checkHitSiteStats()
+{
+   U_TRACE_NO_PARAM(0, "UServer_Base::checkHitSiteStats()")
+
+   U_INTERNAL_ASSERT_POINTER(db_evasive)
+
+   if (bwhitelist == false)
+      {
+      char key[32];
+
+      U_gettimeofday // NB: optimization if it is enough a time resolution of one second...
+
+      if (checkHitStats(key, u__snprintf(key, sizeof(key), U_CONSTANT_TO_PARAM("%.*s_SITE"), U_CLIENT_ADDRESS_TO_TRACE), site_interval, site_count)) U_RETURN(true);
+      }
+
+   U_RETURN(false);
+}
+
+bool UServer_Base::checkHitUriStats()
+{
+   U_TRACE_NO_PARAM(0, "UServer_Base::checkHitUriStats()")
+
+   U_INTERNAL_ASSERT_POINTER(db_evasive)
+
+   if (bwhitelist == false)
+      {
+      uint32_t sz;
+      const char* ptr = UClientImage_Base::getRequestUri(sz);
+
+      UString key(UServer_Base::client_address_len + sz);
+
+      key.snprintf(U_CONSTANT_TO_PARAM("%.*s%.*s"), U_CLIENT_ADDRESS_TO_TRACE, sz, ptr);
+
+      if (checkHitStats(U_STRING_TO_PARAM(key), page_interval, page_count)) U_RETURN(true);
+      }
+
+   U_RETURN(false);
+}
+#endif
+
 #ifdef ENABLE_THREAD
 #  include <ulib/thread.h>
 
@@ -876,7 +1081,7 @@ public:
 
       U_SRV_LOG("UTimeThread optimization for time resolution of one second activated (tid %u)", u_gettid());
 
-#  ifdef USE_LOAD_BALANCE
+#    ifdef USE_LOAD_BALANCE
       uusockaddr addr;
       int fd_sock = -1;
       uint32_t laddr = 0;
@@ -910,7 +1115,7 @@ public:
                         fd_sock, UServer_Base::loadavg_threshold, UServer_Base::ifname->rep, UIPAddress::toString(addr.psaIP4Addr.sin_addr.s_addr).rep);
             }
          }
-#  endif
+#    endif
 
       u_gettimenow();
 
@@ -934,12 +1139,12 @@ public:
             continue;
             }
             
-#     if !defined(U_LOG_DISABLE) && defined(USE_LIBZ)
+#       if !defined(U_LOG_DISABLE) && defined(USE_LIBZ)
          if (UServer_Base::log)                         UServer_Base::log->checkForLogRotateDataToWrite();
          if (UServer_Base::apache_like_log) UServer_Base::apache_like_log->checkForLogRotateDataToWrite();
-#     endif
+#       endif
 
-#     ifdef USE_LOAD_BALANCE
+#       ifdef USE_LOAD_BALANCE
          if (fd_sock > 0)
             {
             uint8_t my_loadavg = u_get_loadavg();
@@ -987,7 +1192,7 @@ public:
                U_DUMP("U_SRV_MIN_LOAD_REMOTE = %u U_SRV_MIN_LOAD_REMOTE_IP = %s", U_SRV_MIN_LOAD_REMOTE, UIPAddress::getAddressString(U_SRV_MIN_LOAD_REMOTE_IP))
                }
             }
-#     endif
+#       endif
 
          u_gettimenow();
 
@@ -997,13 +1202,13 @@ public:
 
          sec = u_now->tv_sec;
 
-#     if !defined(U_LOG_DISABLE) && defined(USE_LIBZ)
+#       if !defined(U_LOG_DISABLE) && defined(USE_LIBZ)
          if (daylight &&
              (sec % U_ONE_HOUR_IN_SECOND) == 0)
             {
             (void) UTimeDate::checkForDaylightSavingTime(sec);
             }
-#     endif
+#       endif
 
          if (UServer_Base::update_date)
             {
@@ -1101,379 +1306,6 @@ private:
 
 ULock*   UServer_Base::lock_ocsp_staple;
 UThread* UServer_Base::pthread_ocsp;
-#  endif
-
-/**
- * This code provide evasive action in the event of an HTTP DoS or DDoS attack or brute force attack. It is also designed to be a
- * detection tool, and can be easily configured to talk to ipchains, firewalls, routers, and etcetera. Detection is performed by
- * creating an internal dynamic hash table of IP Addresses and URIs, and denying any single IP address from any of the following:
- *
- * - Requesting the same page more than a few times per second
- * - Making more than 50 concurrent requests per second
- * - Making any requests while temporarily blacklisted (on a blocking list)
- *
- * This method has worked well in both single-server script attacks as well as distributed attacks, but just like other evasive tools,
- * is only as useful to the point of bandwidth and processor consumption (e.g. the amount of bandwidth and processor required to
- * receive/process/respond to invalid requests), which is why it's a good idea to integrate this with your firewalls and routers.
- *
- * This code has a built-in cleanup mechanism and scaling capabilities. Because of this, legitimate requests are rarely ever compromised,
- * only legitimate attacks. Even a user repeatedly clicking on 'reload' should not be affected unless they do it maliciously,
- *
- * A web hit request comes in. The following steps take place:
- *
- * - The IP address of the requestor is looked up on the temporary blacklist.
- * - The IP address of the requestor is hashed into a "key". A lookup is performed in the listener's internal hash table to determine if
- *   the same host has requested more than 50 objects within the past second.
- * - The IP address of the requestor and the URI are both hashed into a "key". A lookup is performed in the listener's internal hash table
- *   to determine if the same host has requested this page more than 3 within the past 1 second.
- *
- * If any of the above are true, a RESET is sent. This conserves bandwidth and system resources in the event of a DoS attack. Additionally,
- * a system command and/or an email notification can also be triggered to block all the originating addresses of a DDoS attack.
- *
- * Once a single RESET incident occurs, evasive code now blocks the entire IP address for a period of 10 seconds (configurable). If the host
- * requests a page within this period, it is forced to wait even longer. Since this is triggered from requesting the same URL multiple times
- * per second, this again does not affect legitimate users.
- *
- * The blacklist can/should be configured to talk to your network's firewalls and/or routers to push the attack out to the front lines, but
- * this is not required. This tool is *excellent* at fending off request-based DoS attacks or scripted attacks, and brute force attacks.
- * When integrated with firewalls or IP filters, evasive code can stand up to even large attacks. Its features will prevent you from wasting
- * bandwidth or having a few thousand CGI scripts running as a result of an attack.
- *
- * If you do not have an infrastructure capable of fending off any other types of DoS attacks, chances are this tool will only help you to the
- * point of your total bandwidth or server capacity for sending RESET's. Without a solid infrastructure and address filtering tool in place, a
- * heavy distributed DoS will most likely still take you offline
- */
-
-#  ifdef U_EVASIVE_SUPPORT
-class U_NO_EXPORT UEvasive : public UDataStorage {
-public:
-
-   uint32_t timestamp, count;
-
-   // COSTRUTTORE
-
-   UEvasive()
-      {
-      U_TRACE_REGISTER_OBJECT(0, UEvasive, "", 0)
-
-      (void) memset(&timestamp, 0, sizeof(uint32_t) * 2);
-      }
-
-   ~UEvasive()
-      {
-      U_TRACE_UNREGISTER_OBJECT(0, UEvasive)
-
-      if (UServer_Base::db_evasive)
-         {
-                UServer_Base::db_evasive->close();
-         delete UServer_Base::db_evasive;
-         }
-      }
-
-   // define method VIRTUAL of class UDataStorage
-
-   virtual char* toBuffer()
-      {
-      U_TRACE_NO_PARAM(0, "UEvasive::toBuffer()")
-
-      U_CHECK_MEMORY
-
-      U_INTERNAL_ASSERT_EQUALS(u_buffer_len, 0)
-
-      U_MEMCPY(u_buffer, &timestamp, u_buffer_len = sizeof(uint32_t) * 2);
-
-      U_INTERNAL_ASSERT_MINOR(u_buffer_len, U_BUFFER_SIZE)
-
-      buffer_len = u_buffer_len;
-
-      U_RETURN(u_buffer);
-      }
-
-   virtual void fromData(const char* ptr, uint32_t len)
-      {
-      U_TRACE(0, "UEvasive::fromData(%.*S,%u)", len, ptr, len)
-
-      U_CHECK_MEMORY
-
-      U_INTERNAL_ASSERT_POINTER(ptr)
-      U_INTERNAL_ASSERT(len >= sizeof(uint32_t) * 2)
-
-      U_MEMCPY(&timestamp, ptr, sizeof(uint32_t) * 2);
-      }
-
-#if defined(DEBUG) && defined(U_STDCPP_ENABLE)
-   const char* dump(bool breset) const { return ""; }
-#endif
-
-private:
-   U_DISALLOW_COPY_AND_ASSIGN(UEvasive)
-};
-
-void UServer_Base::initEvasive()
-{
-   U_TRACE_NO_PARAM(0, "UServer_Base::initEvasive()")
-
-   U_INTERNAL_ASSERT_EQUALS(db_evasive, U_NULLPTR)
-
-   U_NEW(UEvasive, evasive_rec, UEvasive);
-   U_NEW(URDBObjectHandler<UDataStorage*>, db_evasive, URDBObjectHandler<UDataStorage*>(U_STRING_FROM_CONSTANT("../db/Evasive"), -1, evasive_rec));
-
-   if (db_evasive->open(4096 * 4096, false, true)) // NB: we don't want truncate (we have only the journal)...
-      {
-      U_SRV_LOG("db Evasive initialization success: size(%u)", db_evasive->size());
-
-      U_INTERNAL_ASSERT_POINTER(ptr_shared_data)
-      U_INTERNAL_ASSERT_DIFFERS(ptr_shared_data, MAP_FAILED)
-
-#  ifdef USE_LIBSSL
-      // POSIX shared memory object: interprocess - can be used by unrelated processes (userver_tcp and userver_ssl)
-      db_evasive->setShared(U_SHM_LOCK_EVASIVE, U_SHM_SPINLOCK_EVASIVE);
-#  else
-      db_evasive->setShared(U_SRV_LOCK_EVASIVE, U_SRV_SPINLOCK_EVASIVE);
-#  endif
-
-      db_evasive->reset(); // Initialize the db to contain no entries
-      }
-   else
-      {
-      U_SRV_LOG("WARNING: db Evasive initialization failed");
-
-      delete db_evasive;
-      delete    evasive_rec;
-
-      db_evasive     = U_NULLPTR;
-         evasive_rec = U_NULLPTR;
-      }
-}
-
-bool UServer_Base::checkHold(in_addr_t client, const char* client_address, uint32_t client_address_len)
-{
-   U_TRACE(0, "UServer_Base::checkHold(%u,%.*S,%u)", client, client_address_len, client_address, client_address_len)
-
-   U_INTERNAL_ASSERT_POINTER(db_evasive)
-
-   if ((bwhitelist = (whitelist_IP && UIPAllow::isAllowed(client, *vwhitelist_IP))) == false) // Check whitelist
-      {
-      U_gettimeofday // NB: optimization if it is enough a time resolution of one second...
-
-      // First see if the IP itself is on "hold"
-
-      if (db_evasive->getDataStorage(client_address, client_address_len))
-         {
-         U_INTERNAL_DUMP("diff = %u evasive_rec->count = %u", u_now->tv_sec - evasive_rec->timestamp, evasive_rec->count)
-
-         if ((u_now->tv_sec - evasive_rec->timestamp) < blocking_period)
-            {
-            // Make it wait longer in blacklist land
-
-            evasive_rec->timestamp = u_now->tv_sec;
-
-            (void) db_evasive->putDataStorage();
-
-            U_RETURN(true);
-            }
-         }
-      }
-
-   U_RETURN(false);
-}
-
-bool UServer_Base::checkHitStats(const char* key, uint32_t key_len, uint32_t interval, uint32_t count)
-{
-   U_TRACE(0, "UServer_Base::checkHitStats(%.*S,%u,%u,%u)", key_len, key, key_len, interval, count)
-
-   U_INTERNAL_ASSERT_POINTER(db_evasive)
-   U_INTERNAL_ASSERT_EQUALS(bwhitelist, false)
-
-   if (db_evasive->getDataStorage(key, key_len) == false)
-      {
-      evasive_rec->count     = 0;
-      evasive_rec->timestamp = u_now->tv_sec;
-      }
-   else
-      {
-      // If site/URI is being hit too much, add to "hold" list
-
-      uint32_t diff = u_now->tv_sec - evasive_rec->timestamp;
-
-      U_INTERNAL_DUMP("diff = %u evasive_rec->count = %u", diff, evasive_rec->count)
-
-      if (diff < interval &&
-          evasive_rec->count >= count)
-         {
-         char msg[256];
-         uint32_t msg_len = (count == site_count
-                           ? u__snprintf(msg, sizeof(msg), U_CONSTANT_TO_PARAM("it has requested more than %u objects within the past %u seconds"),       site_count, site_interval) 
-                           : u__snprintf(msg, sizeof(msg), U_CONSTANT_TO_PARAM("it has requested the same page more than %u within the past %u seconds"), page_count, page_interval));
-
-         evasive_rec->count     = 0;
-         evasive_rec->timestamp = u_now->tv_sec;
-
-         (void) db_evasive->insertDataStorage(U_CLIENT_ADDRESS_TO_PARAM, RDB_REPLACE);
-
-         U_DEBUG("blacklisting address %.*S, possible DoS attack: %.*s", U_CLIENT_ADDRESS_TO_TRACE, msg_len, msg);
-
-         U_SRV_LOG("WARNING: blacklisting address %.*S, possible DoS attack: %.*s", U_CLIENT_ADDRESS_TO_TRACE, msg_len, msg);
-
-         UClientImage_Base::abortive_close();
-
-         if (emailAddress ||
-             systemCommand)
-            {
-            // Perform system functions and/or email notification
-
-            pid_t pid = UServer_Base::startNewChild();
-
-            if (pid > 0) U_RETURN(true); // parent
-
-            // child
-
-            if (systemCommand)
-               {
-               static int fd_stderr;
-
-               if (fd_stderr == 0) fd_stderr = UServices::getDevNull("/tmp/dos_system_command.err");
-
-               UString cmd(U_CAPACITY);
-
-               cmd.snprintf(U_STRING_TO_PARAM(*systemCommand), U_CLIENT_ADDRESS_TO_TRACE, msg_len, msg);
-
-               UString output = UCommand::outputCommand(cmd, U_NULLPTR, -1, fd_stderr);
-
-               UServer_Base::logCommandMsgError(cmd.data(), true);
-
-               if (UCommand::exit_value) U_WARNING("DOS system command failed: EXIT_VALUE=%d RESPONSE=%V", UCommand::exit_value, output.rep);
-               }
-
-            if (emailAddress &&
-                count == site_count)
-               {
-               static time_t last_time;
-
-               if ((u_now->tv_sec - last_time) > U_ONE_DAY_IN_SECOND)
-                  {
-                  last_time = u_now->tv_sec;
-
-                  UString server, rcpt;
-                  uint32_t index = emailAddress->find(':');
-
-                  if (index == U_NOT_FOUND)
-                     {
-                     rcpt   = *emailAddress;
-                     server = *UString::str_localhost;
-                     }
-                  else
-                     {
-                     rcpt   = emailAddress->substr(index+1);
-                     server = emailAddress->substr(0U, index).copy();
-                     }
-
-                  if (emailClient->_connectServer(server) == false)
-                     {
-                     if (u_buffer_len)
-                        {
-                        U_WARNING("%.*s", u_buffer_len, u_buffer);
-
-                        u_buffer_len = 0;
-                        }
-                     }
-                  else
-                     {
-                     UString body(100U);
-
-                     body.snprintf(U_CONSTANT_TO_PARAM("blacklisting address %.*S, possible DoS attack: %.*s"), U_CLIENT_ADDRESS_TO_TRACE, msg_len, msg);
-
-                     emailClient->setMessageBody(body);
-                     emailClient->setRecipientAddress(rcpt);
-                     emailClient->setMessageSubject(U_STRING_FROM_CONSTANT("possible DoS attack"));
-
-#                 ifdef USE_LIBSSL
-                     bool bsecure = true;
-#                 else
-                     bool bsecure = false;
-#                 endif
-
-                     if (emailClient->sendMessage(bsecure) == false)
-                        {
-                        emailClient->setStatus();
-
-                        U_WARNING("DOS email notification to %.*S failed: %.*s", U_STRING_TO_TRACE(*emailAddress), u_buffer_len, u_buffer);
-
-                        u_buffer_len = 0;
-                        }
-                     }
-                  }
-               }
-
-            if (pid == 0) UServer_Base::endNewChild();
-            }
-
-         U_RETURN(true);
-         }
-
-      if (diff >= interval) evasive_rec->count = 0; // Reset our hit count list as necessary
-
-      evasive_rec->count++;
-      evasive_rec->timestamp = u_now->tv_sec;
-      }
-
-   (void) db_evasive->putDataStorage();
-
-   U_RETURN(false);
-}
-
-bool UServer_Base::checkHitSiteStats()
-{
-   U_TRACE_NO_PARAM(0, "UServer_Base::checkHitSiteStats()")
-
-   U_INTERNAL_ASSERT_POINTER(db_evasive)
-
-   if (bwhitelist == false)
-      {
-      char key[32];
-
-      U_gettimeofday // NB: optimization if it is enough a time resolution of one second...
-
-      if (checkHitStats(key, u__snprintf(key, sizeof(key), U_CONSTANT_TO_PARAM("%.*s_SITE"), U_CLIENT_ADDRESS_TO_TRACE), site_interval, site_count)) U_RETURN(true);
-      }
-
-   U_RETURN(false);
-}
-
-bool UServer_Base::checkHitUriStats()
-{
-   U_TRACE_NO_PARAM(0, "UServer_Base::checkHitUriStats()")
-
-   U_INTERNAL_ASSERT_POINTER(db_evasive)
-
-   if (bwhitelist == false)
-      {
-      uint32_t sz;
-      const char* ptr = UClientImage_Base::getRequestUri(sz);
-
-      UString key(UServer_Base::client_address_len + sz);
-
-      key.snprintf(U_CONSTANT_TO_PARAM("%.*s%.*s"), U_CLIENT_ADDRESS_TO_TRACE, sz, ptr);
-
-      if (checkHitStats(U_STRING_TO_PARAM(key), page_interval, page_count)) U_RETURN(true);
-      }
-
-   U_RETURN(false);
-}
-
-bool                              UServer_Base::bwhitelist;
-uint32_t                          UServer_Base::page_count;
-uint32_t                          UServer_Base::site_count;
-uint32_t                          UServer_Base::site_interval;
-uint32_t                          UServer_Base::page_interval;
-uint32_t                          UServer_Base::blocking_period;
-UString*                          UServer_Base::emailAddress;
-UString*                          UServer_Base::whitelist_IP;
-UString*                          UServer_Base::systemCommand;
-UEvasive*                         UServer_Base::evasive_rec;
-USmtpClient*                      UServer_Base::emailClient;
-UVector<UIPAllow*>*               UServer_Base::vwhitelist_IP;
-URDBObjectHandler<UDataStorage*>* UServer_Base::db_evasive;
 #  endif
 #endif
 
@@ -1605,25 +1437,38 @@ UServer_Base::~UServer_Base()
    delete cenvironment;
    delete senvironment;
 
-   if (host) delete host;
+   if (host)              delete host;
+   if (emailClient)       delete emailClient;
+   if (crashEmailAddress) delete crashEmailAddress;
 
 #ifdef USE_LOAD_BALANCE
    if (ifname) delete ifname;
 #endif
 
 #ifdef U_THROTTLING_SUPPORT
-   if (throttling_rec)  delete throttling_rec;
+   if (db_throttling)
+      {
+             db_throttling->close();
+      delete db_throttling;
+      }
+
    if (throttling_mask) delete throttling_mask;
 #endif
 
 #ifdef U_EVASIVE_SUPPORT
-   if (evasive_rec) delete evasive_rec;
+   if (db_evasive)
+      {
+             db_evasive->close();
+      delete db_evasive;
+      }
 
    if (vwhitelist_IP)
       {
       delete  whitelist_IP;
       delete vwhitelist_IP;
       }
+
+   if (dosEmailAddress) delete dosEmailAddress;
 #endif
 
 #ifdef U_WELCOME_SUPPORT
@@ -1881,17 +1726,21 @@ void UServer_Base::loadConfigParam()
    //                                                                     0 - serialize, no forking
    //                                                                     1 - classic, forking after client accept
    //                                                                    >1 - pool of serialized processes plus monitoring process
+   //
+   // CRASH_COUNT         this is the threshold for the number of crash of child server processes
+   // CRASH_EMAIL_NOTIFY  the email address to send a message whenever the number of crash > CRASH_COUNT
    // --------------------------------------------------------------------------------------------------------------------------------------
    // This directive are for evasive action in the event of an HTTP DoS or DDoS attack or brute force attack
    // --------------------------------------------------------------------------------------------------------------------------------------
-   // DOS_PAGE_COUNT      this is the threshhold for the number of requests for the same page (or URI) per page interval
-   // DOS_PAGE_INTERVAL   the interval for the page count threshhold; defaults to 1 second intervals
-   // DOS_SITE_COUNT      this is the threshhold for the total number of requests for any object by the same client per site interval
-   // DOS_SITE_INTERVAL   the interval for the site count threshhold; defaults to 1 second intervals
+   // DOS_PAGE_COUNT      this is the threshold for the number of requests for the same page (or URI) per page interval
+   // DOS_PAGE_INTERVAL   the interval for the page count threshold; defaults to 1 second intervals
+   // DOS_SITE_COUNT      this is the threshold for the total number of requests for any object by the same client per site interval
+   // DOS_SITE_INTERVAL   the interval for the site count threshold; defaults to 1 second intervals
    // DOS_BLOCKING_PERIOD the blocking period is the amount of time (in seconds) that a client will be blocked for if they are added to the blocking list (defaults to 10)
    // DOS_WHITE_LIST      list of comma separated IP addresses of trusted clients can be whitelisted to insure they are never denied (IPADDR[/MASK])
    // DOS_EMAIL_NOTIFY    the email address to send a message whenever an IP address becomes blacklisted
    // DOS_SYSTEM_COMMAND  the system command specified will be executed whenever an IP address becomes blacklisted. Use %v to denote the IP address of the blacklisted IP 
+   // DOS_LOGFILE         the file to write DOS event
    // --------------------------------------------------------------------------------------------------------------------------------------
 
 #ifdef USE_LIBSSL
@@ -2013,6 +1862,22 @@ void UServer_Base::loadConfigParam()
 
    U_INTERNAL_DUMP("min_size_for_sendfile = %u", min_size_for_sendfile)
 
+   crash_count = cfg->readLong(U_CONSTANT_TO_PARAM("CRASH_COUNT"), 5);
+
+   x = cfg->at(U_CONSTANT_TO_PARAM("CRASH_EMAIL_NOTIFY"));
+
+   if (x)
+      {
+      U_INTERNAL_ASSERT_EQUALS(crashEmailAddress, U_NULLPTR)
+
+      U_NEW(UString, crashEmailAddress, UString(x));
+
+      if (emailClient == U_NULLPTR)
+         {
+         U_NEW(USmtpClient, emailClient, USmtpClient(UClientImage_Base::bIPv6));
+         }
+      }
+
    // Instructs server to accept connections from the IP address IPADDR. A CIDR mask length can be
    // supplied optionally after a trailing slash, e.g. 192.168.0.0/24, in which case addresses that
    // match in the most significant MASK bits will be allowed. If no options are specified, all clients
@@ -2055,96 +1920,6 @@ void UServer_Base::loadConfigParam()
       }
 
    enable_rfc1918_filter = cfg->readBoolean(U_CONSTANT_TO_PARAM("ENABLE_RFC1918_FILTER"));
-#endif
-
-#ifdef U_EVASIVE_SUPPORT
-   /**
-    * This is the threshhold for the number of requests for the same page (or URI) per page interval.
-    * Once the threshhold for that interval has been exceeded (defaults to 3), the IP address of the client will be added to the blocking list
-    */
-
-   page_count = cfg->readLong(U_CONSTANT_TO_PARAM("DOS_PAGE_COUNT"), 3);
-
-   /**
-    * The interval for the page count threshhold; defaults to 1 second intervals
-    */
-
-   page_interval = cfg->readLong(U_CONSTANT_TO_PARAM("DOS_PAGE_INTERVAL"), 1);
-
-   /**
-    * This is the threshhold for the total number of requests for any object by the same client per site interval.
-    * Once the threshhold for that interval has been exceeded (defaults to 50), the IP address of the client will be added to the blocking list
-    */
-
-   site_count = cfg->readLong(U_CONSTANT_TO_PARAM("DOS_SITE_COUNT"), 50);
-
-   /**
-    * The interval for the site count threshhold; defaults to 1 second intervals
-    */
-
-   site_interval = cfg->readLong(U_CONSTANT_TO_PARAM("DOS_SITE_INTERVAL"), 1);
-
-   /**
-    * The blocking period is the amount of time (in seconds) that a client will be blocked for if they are added to the blocking list (defaults to 10).
-    * During this time, all subsequent requests from the client will result in a abortive close and the timer being reset (e.g. another 10 seconds).
-    * Since the timer is reset for every subsequent request, it is not necessary to have a long blocking period; in the event of a DoS attack, this
-    * timer will keep getting reset
-    */
-
-   blocking_period = cfg->readLong(U_CONSTANT_TO_PARAM("DOS_BLOCKING_PERIOD"), 10);
-
-   /**
-    * IP addresses of trusted clients can be whitelisted to insure they are never denied. The purpose of whitelisting is to protect software, scripts, local
-    * searchbots, or other automated tools from being denied for requesting large amounts of data from the server. Whitelisting should *not* be used to add
-    * customer lists or anything of the sort, as this will open the server to abuse. This module is very difficult to trigger without performing some type of
-    * malicious attack, and for that reason it is more appropriate to allow the module to decide on its own whether or not an individual customer should be blocked
-    */
-
-   x = cfg->at(U_CONSTANT_TO_PARAM("DOS_WHITE_LIST"));
-
-   if (x)
-      {
-      U_INTERNAL_ASSERT_EQUALS(whitelist_IP, U_NULLPTR)
-
-      U_NEW(UVector<UIPAllow*>, vwhitelist_IP, UVector<UIPAllow*>);
-
-      if (UIPAllow::parseMask(x, *vwhitelist_IP)) U_NEW(UString, whitelist_IP, UString(x));
-      else
-         {
-         delete vwhitelist_IP;
-                vwhitelist_IP = U_NULLPTR;
-         }
-      }
-
-   /**
-    * If this value is set, an email will be sent to the address specified whenever an IP address becomes blacklisted
-    */
-
-   x = cfg->at(U_CONSTANT_TO_PARAM("DOS_EMAIL_NOTIFY"));
-
-   if (x)
-      {
-      U_INTERNAL_ASSERT_EQUALS(emailClient, U_NULLPTR)
-      U_INTERNAL_ASSERT_EQUALS(emailAddress, U_NULLPTR)
-
-      U_NEW(UString, emailAddress, UString(x));
-
-      U_NEW(USmtpClient, emailClient, USmtpClient(UClientImage_Base::bIPv6));
-      }
-
-   /**
-    * If this value is set, the system command specified will be executed whenever an IP address becomes blacklisted.
-    * This is designed to enable system calls to ip filter or other tools. Use %.*s to denote the IP address of the blacklisted IP
-    */
-
-   x = cfg->at(U_CONSTANT_TO_PARAM("DOS_SYSTEM_COMMAND"));
-
-   if (x)
-      {
-      U_INTERNAL_ASSERT_EQUALS(systemCommand, U_NULLPTR)
-
-      U_NEW(UString, systemCommand, UString(x));
-      }
 #endif
 
    // If you want the webserver to run as a process of a defined user, you can do it.
@@ -2243,8 +2018,6 @@ void UServer_Base::loadConfigParam()
       }
 #endif
 
-   // LOAD BALANCE
-
 #ifdef USE_LOAD_BALANCE
    x = cfg->at(U_CONSTANT_TO_PARAM("LOAD_BALANCE_DEVICE_NETWORK"));
 
@@ -2260,6 +2033,107 @@ void UServer_Base::loadConfigParam()
    if (x) loadavg_threshold = u_loadavg(x.data()); // 0.19 => 2, 4.56 => 46, ...
 
    U_INTERNAL_DUMP("loadavg_threshold = %u", loadavg_threshold)
+#endif
+
+#ifdef U_EVASIVE_SUPPORT
+   /**
+    * This is the threshold for the number of requests for the same page (or URI) per page interval.
+    * Once the threshold for that interval has been exceeded (defaults to 3), the IP address of the client will be added to the blocking list
+    */
+
+   page_count = cfg->readLong(U_CONSTANT_TO_PARAM("DOS_PAGE_COUNT"), 3);
+
+   /**
+    * The interval for the page count threshold; defaults to 1 second intervals
+    */
+
+   page_interval = cfg->readLong(U_CONSTANT_TO_PARAM("DOS_PAGE_INTERVAL"), 1);
+
+   /**
+    * This is the threshold for the total number of requests for any object by the same client per site interval.
+    * Once the threshold for that interval has been exceeded (defaults to 50), the IP address of the client will be added to the blocking list
+    */
+
+   site_count = cfg->readLong(U_CONSTANT_TO_PARAM("DOS_SITE_COUNT"), 50);
+
+   /**
+    * The interval for the site count threshold; defaults to 1 second intervals
+    */
+
+   site_interval = cfg->readLong(U_CONSTANT_TO_PARAM("DOS_SITE_INTERVAL"), 1);
+
+   /**
+    * The blocking period is the amount of time (in seconds) that a client will be blocked for if they are added to the blocking list (defaults to 10).
+    * During this time, all subsequent requests from the client will result in a abortive close and the timer being reset (e.g. another 10 seconds).
+    * Since the timer is reset for every subsequent request, it is not necessary to have a long blocking period; in the event of a DoS attack, this
+    * timer will keep getting reset
+    */
+
+   blocking_period = cfg->readLong(U_CONSTANT_TO_PARAM("DOS_BLOCKING_PERIOD"), 10);
+
+   /**
+    * IP addresses of trusted clients can be whitelisted to insure they are never denied. The purpose of whitelisting is to protect software, scripts, local
+    * searchbots, or other automated tools from being denied for requesting large amounts of data from the server. Whitelisting should *not* be used to add
+    * customer lists or anything of the sort, as this will open the server to abuse. This module is very difficult to trigger without performing some type of
+    * malicious attack, and for that reason it is more appropriate to allow the module to decide on its own whether or not an individual customer should be blocked
+    */
+
+   x = cfg->at(U_CONSTANT_TO_PARAM("DOS_WHITE_LIST"));
+
+   if (x)
+      {
+      U_INTERNAL_ASSERT_EQUALS(whitelist_IP, U_NULLPTR)
+
+      U_NEW(UVector<UIPAllow*>, vwhitelist_IP, UVector<UIPAllow*>);
+
+      if (UIPAllow::parseMask(x, *vwhitelist_IP)) U_NEW(UString, whitelist_IP, UString(x));
+      else
+         {
+         delete vwhitelist_IP;
+                vwhitelist_IP = U_NULLPTR;
+         }
+      }
+
+   /**
+    * If this value is set, an email will be sent to the address specified whenever an IP address becomes blacklisted
+    */
+
+   x = cfg->at(U_CONSTANT_TO_PARAM("DOS_EMAIL_NOTIFY"));
+
+   if (x)
+      {
+      U_INTERNAL_ASSERT_EQUALS(dosEmailAddress, U_NULLPTR)
+
+      U_NEW(UString, dosEmailAddress, UString(x));
+
+      if (emailClient == U_NULLPTR)
+         {
+         U_NEW(USmtpClient, emailClient, USmtpClient(UClientImage_Base::bIPv6));
+         }
+      }
+
+   /**
+    * If this value is set, the system command specified will be executed whenever an IP address becomes blacklisted.
+    * This is designed to enable system calls to ip filter or other tools. Use %.*s to denote the IP address of the blacklisted IP
+    */
+
+   x = cfg->at(U_CONSTANT_TO_PARAM("DOS_SYSTEM_COMMAND"));
+
+   if (x)
+      {
+      U_INTERNAL_ASSERT_EQUALS(systemCommand, U_NULLPTR)
+
+      U_NEW(UString, systemCommand, UString(x));
+      }
+
+   x = cfg->at(U_CONSTANT_TO_PARAM("DOS_LOGFILE"));
+
+   if (x)
+      {
+      U_INTERNAL_ASSERT_EQUALS(dos_LOG, U_NULLPTR)
+
+      U_NEW(UFile, dos_LOG, UFile(x));
+      }
 #endif
 
    // load ORM driver modules...
@@ -2911,14 +2785,14 @@ void UServer_Base::init()
    U_INTERNAL_ASSERT_POINTER(ptr_shared_data)
    U_INTERNAL_ASSERT_DIFFERS(ptr_shared_data, MAP_FAILED)
 
-#if defined(U_LINUX) && defined(USE_LIBSSL)
    // For portable use, a shared memory object should be identified by a name of the form /somename; that is, a null-terminated string of
    // up to NAME_MAX (i.e., 255) characters consisting of an initial slash, followed by one or more characters, none of which are slashes
 
+#if defined(U_LINUX) && !defined(U_LOG_DISABLE) && defined(USE_LIBZ)
    ptr_shm_data = (shm_data*) UFile::shm_open("/userver", sizeof(shm_data));
+#endif
 
    U_DEBUG("sizeof(shared_data) = %u sizeof(shm_data) = %u", sizeof(shared_data), sizeof(shm_data));
-#endif
 
 #ifndef U_LOG_DISABLE
    if (isLog() == false)
@@ -3141,39 +3015,6 @@ bool UServer_Base::addLog(UFile* _log, int flags)
    U_RETURN(false);
 }
 
-void UServer_Base::reopenLog()
-{
-   U_TRACE_NO_PARAM(0, "UServer_Base::reopenLog()")
-
-   file_LOG* item;
-
-   for (uint32_t i = 0, n = vlog->size(); i < n; ++i)
-      {
-      item = (*vlog)[i];
-
-      item->LOG->reopen(item->flags);
-      }
-}
-
-U_NO_EXPORT void UServer_Base::logMemUsage(const char* signame)
-{
-   U_TRACE(0, "UServer_Base::logMemUsage(%S)", signame)
-
-   U_INTERNAL_ASSERT(isLog())
-
-#ifndef U_LOG_DISABLE
-   unsigned long vsz, rss;
-
-   u_get_memusage(&vsz, &rss);
-
-   ULog::log(U_CONSTANT_TO_PARAM("%s (Interrupt): "
-             "address space usage: %.2f MBytes - "
-                       "rss usage: %.2f MBytes"), signame,
-             (double)vsz / (1024.0 * 1024.0),
-             (double)rss / (1024.0 * 1024.0));
-#endif
-}
-
 void UServer_Base::sendSignalToAllChildren(int signo, sighandler_t handler)
 {
    U_TRACE(0, "UServer_Base::sendSignalToAllChildren(%d,%p)", signo, handler)
@@ -3221,10 +3062,8 @@ RETSIGTYPE UServer_Base::handlerForSigHUP(int signo)
    if (preforked_num_kids == -1) return;
 #endif
 
-   // NB: for logrotate...
-
 #ifndef U_LOG_DISABLE
-   if (isLog())
+   if (isLog()) // NB: for logrotate...
       {
       logMemUsage("SIGHUP");
 
@@ -3238,14 +3077,11 @@ RETSIGTYPE UServer_Base::handlerForSigHUP(int signo)
 
    sendSignalToAllChildren(SIGTERM, (sighandler_t)UServer_Base::handlerForSigTERM);
 
-#ifndef U_LOG_DISABLE
-   U_SRV_TOT_CONNECTION = 0;
-#endif
-
    if (preforked_num_kids > 1) rkids = 0;
    else                        manageSigHUP();
 }
 
+/*
 RETSIGTYPE UServer_Base::handlerForSigCHLD(int signo)
 {
    U_TRACE(0, "[SIGCHLD] UServer_Base::handlerForSigCHLD(%d)", signo)
@@ -3254,16 +3090,34 @@ RETSIGTYPE UServer_Base::handlerForSigCHLD(int signo)
 
    if (proc->parent()) proc->wait();
 }
+*/
 
-U_NO_EXPORT void UServer_Base::manageSigHUP()
+U_NO_EXPORT void UServer_Base::manageCommand(const char* format, uint32_t fmt_size, ...)
 {
-   U_TRACE_NO_PARAM(0, "UServer_Base::manageSigHUP()")
+   U_TRACE(0, "UServer_Base::manageCommand(%.*S,%u)", fmt_size, format, fmt_size)
 
-   U_INTERNAL_ASSERT_POINTER(proc)
+   U_INTERNAL_ASSERT_POINTER(format)
 
-   (void) proc->waitAll(1);
+   static int fd_stderr;
 
-   if (pluginsHandlerSigHUP() != U_PLUGIN_HANDLER_FINISHED) U_WARNING("Plugins stage SigHUP failed...");
+   if (fd_stderr == 0) fd_stderr = UServices::getDevNull("/tmp/command.err");
+
+   UString cmd(U_CAPACITY);
+
+   va_list argp;
+   va_start(argp, fmt_size);
+
+   cmd.vsnprintf(format, fmt_size, argp);
+
+   va_end(argp);
+
+   UString output = UCommand::outputCommand(cmd, U_NULLPTR, -1, fd_stderr);
+
+   logCommandMsgError(cmd.data(), true);
+
+   if (UCommand::exit_value) U_WARNING("command failed: EXIT_VALUE=%d OUTPUT=%V", UCommand::exit_value, output.rep);
+
+   (void) proc->waitAll();
 }
 
 RETSIGTYPE UServer_Base::handlerForSigTERM(int signo)
@@ -3391,14 +3245,14 @@ loop:
 
    CSOCKET = CLIENT_IMAGE->socket;
 
-   U_INTERNAL_DUMP("----------------------------------------\n"
+   U_INTERNAL_DUMP("\n----------------------------------------\n"
                    "vClientImage[%u].last_event        = %#3D\n"
                    "vClientImage[%u].sfd               = %d\n"
                    "vClientImage[%u].UEventFd::fd      = %d\n"
                    "vClientImage[%u].socket            = %p\n"
                    "vClientImage[%u].socket->flags     = %u %B\n"
-                   "vClientImage[%u].socket->iSockDesc = %d\n"
-                   "----------------------------------------\n",
+                   "vClientImage[%u].socket->iSockDesc = %d"
+                   "\n----------------------------------------\n",
                    (CLIENT_IMAGE - vClientImage), CLIENT_IMAGE->last_event,
                    (CLIENT_IMAGE - vClientImage), CLIENT_IMAGE->sfd,
                    (CLIENT_IMAGE - vClientImage), CLIENT_IMAGE->UEventFd::fd,
@@ -4093,7 +3947,8 @@ void UServer_Base::run()
    init();
 
    int status;
-   bool baffinity = false;
+   uint32_t crash_counter = 0;
+   bool baffinity = false, bmail;
    UTimeVal to_sleep(0L, 500L * 1000L);
    const char* user = (as_user->empty() ? U_NULLPTR : as_user->data());
 
@@ -4195,7 +4050,7 @@ void UServer_Base::run()
 #           endif
                }
 
-#           ifdef HAVE_LIBNUMA
+#          ifdef HAVE_LIBNUMA
             if (U_SYSCALL_NO_PARAM(numa_max_node))
                {
                struct bitmask* bmask = (struct bitmask*) U_SYSCALL(numa_bitmask_alloc, "%u", 16);
@@ -4205,7 +4060,7 @@ void UServer_Base::run()
                U_SYSCALL_VOID(numa_set_membind,  "%p", bmask);
                U_SYSCALL_VOID(numa_bitmask_free, "%p", bmask);
                }
-#           endif
+#          endif
 
             if (set_realtime_priority) u_switch_to_realtime_priority();
 #        endif
@@ -4288,10 +4143,40 @@ void UServer_Base::run()
             {
             char buffer[128];
 
-            ULog::log(U_CONSTANT_TO_PARAM("%sWARNING: child (pid %d) exited with value %d (%s), down to %u children"),
-                        mod_name[0], pid, status, UProcess::exitInfo(buffer, status), rkids);
+            ULog::log(U_CONSTANT_TO_PARAM("%sWARNING: child (pid %d) exited with value %d (%s), down to %u children"), mod_name[0], pid, status, UProcess::exitInfo(buffer, status), rkids);
             }
 #     endif
+
+         U_DEBUG("child (pid %d) exited with value %d, down to %u children - crash_counter = %u", pid, status, rkids, crash_counter+1);
+
+         bmail = false;
+
+         if (crashEmailAddress &&
+             ++crash_counter > crash_count)
+            {
+            if ((u_now->tv_sec - last_time_email_crash) > U_ONE_DAY_IN_SECOND)
+               {
+               bmail                 = true;
+               last_time_email_crash = u_now->tv_sec;
+               }
+            }
+
+         if (bmail)
+            {
+            U_INTERNAL_ASSERT_POINTER(emailClient)
+
+            pid_t lpid = startNewChild();
+
+            if (lpid > 0) continue; // parent
+
+            UString body(200U);
+
+            body.snprintf(U_CONSTANT_TO_PARAM("%N (on %V): number of crashes %u has exceeded the threshold %u since %#5D"), IP_address->rep, crash_counter, crash_count, u_start_time);
+
+            emailClient->sendEmail(*crashEmailAddress, U_STRING_FROM_CONSTANT("number of crashes has exceeded the threshold"), body);
+
+            if (lpid == 0) endNewChild();
+            }
          }
       }
 
@@ -4300,16 +4185,7 @@ void UServer_Base::run()
 stop:
    if (pluginsHandlerStop() != U_PLUGIN_HANDLER_FINISHED) U_WARNING("Plugins stage stop failed");
 
-   status = proc->waitAll(2);
-
-   if (status >= U_FAILED_SOME)
-      {
-      to_sleep.nanosleep();
-
-      UProcess::kill(0, SIGKILL); // SIGKILL is sent to every process in the process group of the calling process...
-
-      (void) proc->waitAll(2);
-      }
+   manageWaitAll();
 
 #ifndef U_LOG_DISABLE
    if (isLog() &&
@@ -4329,21 +4205,6 @@ stop:
 
 #ifdef DEBUG
    pthis->deallocate();
-#endif
-}
-
-void UServer_Base::removeZombies()
-{
-   U_TRACE_NO_PARAM(0, "UServer_Base::removeZombies()")
-
-   U_INTERNAL_ASSERT_POINTER(ptr_shared_data)
-
-#ifdef U_LOG_DISABLE
-         (void) UProcess::removeZombies();
-#else
-   uint32_t n = UProcess::removeZombies();
-
-   if (n) U_SRV_LOG("removed %u zombies - current parallelization (%d)", n, U_SRV_CNT_PARALLELIZATION);
 #endif
 }
 
@@ -4411,45 +4272,18 @@ bool UServer_Base::startParallelization(uint32_t nclient)
          {
          // NB: from now it is responsability of the child to services the request from the client on the same connection...
 
-         U_ClientImage_close = true;
+         pClientImage->close();
+
          U_ClientImage_parallelization = U_PARALLELIZATION_PARENT;
-
-         UClientImage_Base::setRequestProcessed();
-
-         if (U_ClientImage_pipeline) UClientImage_Base::resetPipeline();
-
-         U_ASSERT(isParallelizationParent())
 
          U_RETURN(true);
          }
 
-      if (pid == 0)
-         {
-         U_ClientImage_parallelization = U_PARALLELIZATION_CHILD;
-
-         U_ASSERT(isParallelizationChild())
-         }
+      if (pid == 0) U_ClientImage_parallelization = U_PARALLELIZATION_CHILD;
       }
    }
 
-   U_INTERNAL_DUMP("U_ClientImage_close = %b", U_ClientImage_close)
-
    U_RETURN(false);
-}
-
-void UServer_Base::logCommandMsgError(const char* cmd, bool balways)
-{
-   U_TRACE(0, "UServer_Base::logCommandMsgError(%S,%b)", cmd, balways)
-
-#ifndef U_LOG_DISABLE
-   if (isLog())
-      {
-      if (UCommand::setMsgError(cmd, !balways) || balways) ULog::log(U_CONSTANT_TO_PARAM("%s%.*s"), mod_name[0], u_buffer_len, u_buffer);
-
-      errno        = 0;
-      u_buffer_len = 0;
-      }
-#endif
 }
 
 // DEBUG

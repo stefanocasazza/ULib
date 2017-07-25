@@ -34,7 +34,7 @@ uint32_t URPC::readTokenInt(USocket* s, const char* token, UString& buffer, uint
       {
       const char* ptr = buffer.c_pointer(rstart + U_TOKEN_NM);
 
-      value = u_hex2int(ptr, ptr+8);
+      value = u_hex2int(ptr, 8);
 
       rstart += U_TOKEN_LN;
 

@@ -83,144 +83,19 @@ const char* UInterrupt::BUS_errlist[] = {
    "BUS_OBJERR", "Object specific hardware error"  // BUS_OBJERR 3
 };
 
+int               UInterrupt::event_signal_pending;
 bool              UInterrupt::flag_alarm;
 bool              UInterrupt::syscall_restart; // NB: notify to make certain system calls restartable across signals...
 bool              UInterrupt::exit_loop_wait_event_for_signal;
 jmp_buf           UInterrupt::jbuf;
+sigset_t          UInterrupt::mask_wait_for_signal;
 sigset_t*         UInterrupt::mask_interrupt;
+sig_atomic_t      UInterrupt::event_signal[NSIG];
 sig_atomic_t      UInterrupt::flag_wait_for_signal;
+sighandler_t      UInterrupt::handler_signal[NSIG];
 struct sigaction  UInterrupt::act;
 struct itimerval  UInterrupt::timerval;
 struct sigaction  UInterrupt::old[NSIG];
-
-int               UInterrupt::event_signal_pending;
-sig_atomic_t      UInterrupt::event_signal[NSIG];
-sighandler_t      UInterrupt::handler_signal[NSIG];
-
-void UInterrupt::insert(int signo, sighandler_t handler)
-{
-   U_TRACE(1, "UInterrupt::insert(%d,%p)", signo, handler)
-
-   U_INTERNAL_ASSERT_RANGE(1, signo, NSIG)
-
-   handler_signal[signo] = handler;
-
-   act.sa_handler = handlerEventSignal;
-
-   (void) U_SYSCALL(sigaction, "%d,%p,%p", signo, &act, old + signo);
-}
-
-void UInterrupt::erase(int signo)
-{
-   U_TRACE(1, "UInterrupt::erase(%d)", signo)
-
-   U_INTERNAL_ASSERT_RANGE(1, signo, NSIG)
-   U_INTERNAL_ASSERT_POINTER(handler_signal[signo])
-
-   handler_signal[signo] = U_NULLPTR;
-
-   (void) U_SYSCALL(sigaction, "%d,%p,%p", signo, old + signo, U_NULLPTR);
-}
-
-bool UInterrupt::disable(sigset_t* mask, sigset_t* mask_old)
-{
-   U_TRACE(1, "UInterrupt::disable(%p,%p)", mask, mask_old)
-
-   if (!mask)
-      {
-      if (!mask_interrupt) setMaskInterrupt(U_NULLPTR, 0);
-
-      mask = mask_interrupt;
-      }
-
-   if (U_SYSCALL(sigprocmask, "%d,%p,%p", SIG_BLOCK, mask, mask_old) == 0) U_RETURN(true);
-
-   U_RETURN(false);
-}
-
-bool UInterrupt::enable(sigset_t* mask)
-{
-   U_TRACE(1, "UInterrupt::enable(%p)", mask)
-
-   if (!mask)
-      {
-      if (!mask_interrupt) setMaskInterrupt(U_NULLPTR, 0);
-
-      mask = mask_interrupt;
-      }
-
-   if (U_SYSCALL(sigprocmask, "%d,%p,%p", SIG_BLOCK, mask, U_NULLPTR) == 0) U_RETURN(true);
-
-   U_RETURN(false);
-}
-
-RETSIGTYPE UInterrupt::handlerSignal(int signo)
-{
-   U_TRACE(0, "[SIGNAL] UInterrupt::handlerSignal(%d)", signo)
-
-   flag_wait_for_signal = false;
-}
-
-// Send ourselves the signal: see http://www.cons.org/cracauer/sigint.html
-
-void UInterrupt::sendOurselves(int signo)
-{
-   U_TRACE(0, "UInterrupt::sendOurselves(%d)", signo)
-
-   setHandlerForSignal(signo, (sighandler_t)SIG_DFL);
-
-   u_exit();
-
-   (void) U_SYSCALL(kill, "%d,%d", u_pid, signo);
-}
-
-RETSIGTYPE UInterrupt::handlerInterrupt(int signo)
-{
-   U_TRACE(0, "UInterrupt::handlerInterrupt(%d)", signo)
-
-   U_MESSAGE("(pid %P) program interrupt - %Y", signo);
-
-   if (signo == SIGBUS || //  7
-       signo == SIGSEGV)  // 11 
-      {
-#  ifdef DEBUG
-      u_debug_at_exit(); 
-#  endif
-      }
-
-// U_EXIT(-1);
-
-   sendOurselves(signo);
-}
-
-RETSIGTYPE UInterrupt::handlerEventSignal(int signo)
-{
-#ifdef DEBUG
-   u_trace_unlock();
-#endif
-
-   U_TRACE(0, "[SIGNAL] UInterrupt::handlerEventSignal(%d)", signo)
-
-   ++event_signal[signo];
-
-   event_signal_pending = (event_signal_pending ? NSIG : signo);
-}
-
-void UInterrupt::waitForSignal(int signo)
-{
-   U_TRACE(1, "UInterrupt::waitForSignal(%d)", signo)
-
-   static sigset_t mask_wait_for_signal;
-
-   flag_wait_for_signal = true;
-
-   setHandlerForSignal(signo, (sighandler_t)handlerSignal);
-
-   while (flag_wait_for_signal == true)
-      {
-      (void) U_SYSCALL(sigsuspend, "%p", &mask_wait_for_signal);
-      }
-}
 
 void UInterrupt::callHandlerSignal()
 {
@@ -354,21 +229,6 @@ void UInterrupt::init()
    syscall_restart = true; // NB: notify to make certain system calls restartable across signals...
 
    setHandlerForSignal(SIGALRM, (sighandler_t)handlerAlarm);
-}
-
-RETSIGTYPE UInterrupt::handlerAlarm(int signo)
-{
-   U_TRACE(0, "[SIGALRM] UInterrupt::handlerAlarm(%d)", signo)
-
-   if ((flag_alarm = (signo == SIGALRM)))
-      {
-      timerval.it_value.tv_sec  =
-      timerval.it_value.tv_usec = 0;
-      }
-
-   U_INTERNAL_DUMP("timerval.it_value = { %ld %6ld }", timerval.it_value.tv_sec, timerval.it_value.tv_usec)
-
-   (void) U_SYSCALL(setitimer, "%d,%p,%p", ITIMER_REAL, &timerval, U_NULLPTR);
 }
 
 void UInterrupt::setHandlerForSegv(vPF func, bPF fault)

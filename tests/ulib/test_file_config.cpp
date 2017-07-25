@@ -172,7 +172,7 @@ int U_EXPORT main (int argc, char* argv[], char* env[])
 
    // Time Consumed with num_iteration(10) = 543 ms
 
-   n = (argc > 1 ? atoi(argv[1]) : 5);
+   n = (argc > 1 ? u_atoi(argv[1]) : 5);
 
    UCrono crono;
 

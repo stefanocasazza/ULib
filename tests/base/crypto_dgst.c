@@ -1,5 +1,6 @@
 // crypto_dgst.c
 
+#include <ulib/base/utility.h>
 #include <ulib/base/ssl/dgst.h>
 
 #include <stdlib.h>
@@ -54,7 +55,7 @@ int main(int argc, char** argv)
 
    U_INTERNAL_PRINT("argv[0] = %s\nargv[1] = %s", argv[0], argv[1])
 
-   if (argc == 4) u_do_cipher(atoi(argv[1]), argv[2], atoi(argv[3]));
+   if (argc == 4) u_do_cipher(u_atoi(argv[1]), argv[2], u_atoi(argv[3]));
    else
       {
       fprintf(stderr, "%s", usage);

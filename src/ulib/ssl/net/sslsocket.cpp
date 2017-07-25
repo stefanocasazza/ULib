@@ -930,7 +930,6 @@ bool USSLSocket::askForClientCertificate()
 
 #if OPENSSL_VERSION_NUMBER < 0x10100000L
    ssl->state = SSL_ST_ACCEPT;
-#endif
 
    ret = U_SYSCALL(SSL_do_handshake, "%p", ssl);
 
@@ -942,6 +941,29 @@ bool USSLSocket::askForClientCertificate()
 
       U_RETURN(false);
       }
+#else
+   char peekbuf[1];
+
+   if (U_SYSCALL(SSL_is_init_finished, "%p", ssl) == false)
+      {
+#  ifdef DEBUG
+      dumpStatus(true);
+#  endif
+
+      U_RETURN(false);
+      }
+
+   (void) U_SYSCALL(SSL_peek, "%p,%p,%d", ssl, peekbuf, 0);
+
+   if (U_SYSCALL(SSL_is_init_finished, "%p", ssl) == false)
+      {
+#  ifdef DEBUG
+      dumpStatus(true);
+#  endif
+
+      U_RETURN(false);
+      }
+#endif
 
    U_RETURN(true);
 }
@@ -1537,8 +1559,6 @@ uint32_t USSLSocket::doStapling()
             goto end;
             }
 
-         nextupdate_str = UStringExt::ASN1TimetoString(nextupdate);
-
          if (status != V_OCSP_CERTSTATUS_GOOD)
             {
             result = false;
@@ -1552,17 +1572,19 @@ uint32_t USSLSocket::doStapling()
 
          if (result == false) goto end;
 
-#     if defined(ENABLE_THREAD) && !defined(_MSWINDOWS_)
-         UServer_Base::lock_ocsp_staple->lock();
-#     endif
+         nextupdate_str = UStringExt::ASN1TimetoString(nextupdate);
+
+         U_SRV_VALID_OCSP_STAPLE = UTimeDate::getSecondFromDate(nextupdate_str.data());
 
          U_INTERNAL_ASSERT_POINTER(staple.data)
 
          p = (const unsigned char*) staple.data;
 
-         U_SRV_LEN_OCSP_STAPLE = i2d_OCSP_RESPONSE(ocsp, (unsigned char**)&p);
+#     if defined(ENABLE_THREAD) && !defined(_MSWINDOWS_)
+         UServer_Base::lock_ocsp_staple->lock();
+#     endif
 
-         U_SRV_VALID_OCSP_STAPLE = UTimeDate::getSecondFromTime(nextupdate_str.data(), true);
+         U_SRV_LEN_OCSP_STAPLE = i2d_OCSP_RESPONSE(ocsp, (unsigned char**)&p);
 
 #     if defined(ENABLE_THREAD) && !defined(_MSWINDOWS_)
          UServer_Base::lock_ocsp_staple->unlock();

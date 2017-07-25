@@ -16,7 +16,7 @@ U_EXPORT main (int argc, char* argv[], char* env[])
 
    y.setPrefix(U_CONSTANT_TO_PARAM(U_SERVER_LOG_PREFIX));
 
-   uint32_t i, n = (argc > 1 ? atoi(argv[1]) : 10);
+   uint32_t i, n = (argc > 1 ? u_atoi(argv[1]) : 10);
 
    for (i = 0; i < n; ++i)
       {

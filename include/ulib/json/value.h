@@ -509,7 +509,7 @@ public:
 
       if (jfind(json, query, query_len, x))
          {
-         result = u_strtol(x.data(), x.pend());
+         result = u__strtol(U_STRING_TO_PARAM(x));
 
          U_RETURN(true);
          }
@@ -525,7 +525,7 @@ public:
 
       if (jfind(json, query, query_len, x))
          {
-         result = u_strtoul(x.data(), x.pend());
+         result = u__strtoul(U_STRING_TO_PARAM(x));
 
          U_RETURN(true);
          }
@@ -541,7 +541,7 @@ public:
 
       if (jfind(json, query, query_len, x))
          {
-         result = u_strtoll(x.data(), x.pend());
+         result = u__strtoll(U_STRING_TO_PARAM(x));
 
          U_RETURN(true);
          }
@@ -557,7 +557,7 @@ public:
 
       if (jfind(json, query, query_len, x))
          {
-         result = u_strtoull(x.data(), x.pend());
+         result = u__strtoull(U_STRING_TO_PARAM(x));
 
          U_RETURN(true);
          }

@@ -14,6 +14,8 @@
 #include <ulib/db/rdb.h>
 #include <ulib/net/server/server.h>
 
+ULock*   URDB::plock;
+ULock*   URDB::preclock;
 uint32_t URDB::nerror;
 
 #define U_FOR_EACH_ENTRY1(pcdb,function1)                      \
@@ -527,9 +529,9 @@ U_NO_EXPORT void URDB::copy1(URDB* prdb, uint32_t _offset) // entry present on c
 #  endif
 }
 
-void URDB::setShared(sem_t* psem, char* spinlock)
+void URDB::setShared(sem_t* psem, char* spinlock, bool breclock)
 {
-   U_TRACE(0, "URDB::setShared(%p,%p)", psem, spinlock)
+   U_TRACE(0, "URDB::setShared(%p,%p,%b)", psem, spinlock, breclock)
 
    U_CHECK_MEMORY
 
@@ -552,6 +554,16 @@ void URDB::setShared(sem_t* psem, char* spinlock)
    _lock.init(psem, spinlock);
 
    U_cdb_shared(this) = true;
+
+   if (breclock &&
+       preclock == U_NULLPTR)
+      {
+      U_INTERNAL_ASSERT_POINTER(UServer_Base::ptr_shm_data)
+
+      plock = preclock = new ULock[U_SHM_LOCK_NENTRY];
+
+      for (uint32_t i = 0; i < U_SHM_LOCK_NENTRY; ++i, ++plock) plock->init(U_SHM_LOCK_BASE[i], U_SHM_SPINLOCK_BASE[i]);
+      }
 }
 
 bool URDB::compactionJournal()
@@ -641,7 +653,7 @@ bool URDB::compactionJournal()
    U_RETURN(false);
 }
 
-// open a Reliable DataBase
+// Open a Reliable DataBase
 
 bool URDB::open(uint32_t log_size, bool btruncate, bool cdb_brdonly, bool breference)
 {
@@ -1808,6 +1820,32 @@ int URDB::substitute(const UString& _key, const UString& new_key, const UString&
    U_RETURN(result);
 }
 
+bool     URDBObjectHandler<UDataStorage*>::bsetEntry;
+char*    URDBObjectHandler<UDataStorage*>::data_buffer;
+uint32_t URDBObjectHandler<UDataStorage*>::data_len;
+iPFpvpv  URDBObjectHandler<UDataStorage*>::ds_function_to_call;
+
+URDBObjectHandler<UDataStorage*>::URDBObjectHandler(const UString& pathdb, int _ignore_case, void* ptr, bool _bdirect) : URDB(pathdb, _ignore_case)
+{
+   U_TRACE_REGISTER_OBJECT(0, URDBObjectHandler<UDataStorage*>, "%V,%d,%p,%b", pathdb.rep, _ignore_case, ptr, _bdirect)
+
+   pDataStorage = (UDataStorage*)ptr;
+   brecfound    = false;
+   bdirect      = _bdirect;
+
+#ifdef DEBUG
+   if (ptr &&
+       bdirect == false)
+      {
+      uint32_t sz = pDataStorage->size();
+
+      if (sz) pDataStorage->recdata = (char*) UMemoryPool::_malloc(sz);
+
+      U_INTERNAL_DUMP("pDataStorage->recdata(%u) = %p", sz, pDataStorage->recdata)
+      }
+#endif
+}
+
 bool URDBObjectHandler<UDataStorage*>::getDataStorage()
 {
    U_TRACE(0, "URDBObjectHandler<UDataStorage*>::getDataStorage()")
@@ -1824,7 +1862,22 @@ bool URDBObjectHandler<UDataStorage*>::getDataStorage()
 
    if (brecfound)
       {
-      pDataStorage->fromData(U_STRING_TO_PARAM(recval));
+      uint32_t sz     = recval.size();
+      const char* ptr = recval.data();
+
+#  ifdef DEBUG
+      if (pDataStorage->recdata)
+         {
+         U_INTERNAL_DUMP("pDataStorage->recdata(%u) = %p sz = %u", pDataStorage->size(), pDataStorage->recdata, sz)
+
+         U_INTERNAL_ASSERT(pDataStorage->size() <= sz)
+
+         U_MEMCPY(pDataStorage->recdata, ptr,  sz);
+                  pDataStorage->recdata_size = sz;
+         }
+#  endif
+
+      pDataStorage->fromData(ptr, sz);
 
       U_RETURN(true);
       }
@@ -1832,21 +1885,41 @@ bool URDBObjectHandler<UDataStorage*>::getDataStorage()
    U_RETURN(false);
 }
 
-bool     URDBObjectHandler<UDataStorage*>::bsetEntry;
-char*    URDBObjectHandler<UDataStorage*>::data_buffer;
-uint32_t URDBObjectHandler<UDataStorage*>::data_len;
-iPFpvpv  URDBObjectHandler<UDataStorage*>::ds_function_to_call;
-
-bool URDBObjectHandler<UDataStorage*>::_insertDataStorage(int op)
+bool URDBObjectHandler<UDataStorage*>::getDataStorage(const char* s, uint32_t n)
 {
-   U_TRACE(0, "URDBObjectHandler<UDataStorage*>::_insertDataStorage(%d)", op)
+   U_TRACE(0, "URDBObjectHandler<UDataStorage*>::getDataStorage(%.*S,%u)", n, s, n)
+
+   U_CHECK_MEMORY
 
    U_INTERNAL_ASSERT_POINTER(pDataStorage)
-   U_ASSERT(pDataStorage->isDataSession())
+
+   if (bdirect == false)
+      {
+      pDataStorage->setKeyIdDataSession(s, n);
+
+      return getDataStorage();
+      }
+
+   recval    = URDB::at(s, n);
+   brecfound = (recval.empty() == false);
+
+   if (brecfound)
+      {
+      setPointerToDataStorage();
+
+      U_RETURN(true);
+      }
+
+   U_RETURN(false);
+}
+
+bool URDBObjectHandler<UDataStorage*>::_insertDataStorage(const char* s, uint32_t n, int op)
+{
+   U_TRACE(0, "URDBObjectHandler<UDataStorage*>::_insertDataStorage(%.*S,%u,%d)", n, s, n, op)
 
    lock();
 
-   UCDB::setKey(pDataStorage->keyid);
+   UCDB::setKey(s, n);
    UCDB::setData(data_buffer, data_len);
 
    UCDB::cdb_hash();
@@ -1887,13 +1960,14 @@ bool URDBObjectHandler<UDataStorage*>::_insertDataStorage(int op)
    U_RETURN(true);
 }
 
-bool URDBObjectHandler<UDataStorage*>::putDataStorage()
+bool URDBObjectHandler<UDataStorage*>::putDataStorage(int op)
 {
-   U_TRACE_NO_PARAM(0, "URDBObjectHandler<UDataStorage*>::putDataStorage()")
+   U_TRACE(0, "URDBObjectHandler<UDataStorage*>::putDataStorage(%d)", op)
 
    U_CHECK_MEMORY
 
    U_INTERNAL_ASSERT_POINTER(pDataStorage)
+   U_ASSERT(pDataStorage->isDataSession())
 
    char* ptr   = recval.data();
    uint32_t sz = recval.size();
@@ -1905,6 +1979,23 @@ bool URDBObjectHandler<UDataStorage*>::putDataStorage()
 
    if (data_len <= sz)
       {
+#  ifdef DEBUG
+      if (pDataStorage->recdata)
+         {
+         U_INTERNAL_DUMP("pDataStorage->recdata(%u) = %p sz = %u", pDataStorage->recdata_size, pDataStorage->recdata, sz)
+
+         U_INTERNAL_ASSERT_EQUALS(pDataStorage->recdata_size, sz)
+
+         if (memcmp(ptr, pDataStorage->recdata, sz))
+            {
+            U_WARNING("putDataStorage(%d): db(%.*S) need record locking", op, U_FILE_TO_TRACE(*this));
+            }
+
+         U_MEMCPY(pDataStorage->recdata, data_buffer, data_len);
+                  pDataStorage->recdata_size =        data_len;
+         }
+#  endif
+
       U_MEMCPY(ptr, data_buffer, data_len);
 
       sz -= data_len;
@@ -1916,7 +2007,7 @@ bool URDBObjectHandler<UDataStorage*>::putDataStorage()
       U_RETURN(true);
       }
 
-   return _insertDataStorage(RDB_INSERT_WITH_PADDING);
+   return _insertDataStorage(U_STRING_TO_PARAM(pDataStorage->keyid), op);
 }
 
 void URDBObjectHandler<UDataStorage*>::setEntry(UStringRep* _key, UStringRep* _data)
@@ -1925,14 +2016,18 @@ void URDBObjectHandler<UDataStorage*>::setEntry(UStringRep* _key, UStringRep* _d
 
    U_INTERNAL_ASSERT_POINTER(pDataStorage)
 
-   pDataStorage->clear();
+   if (bdirect) setPointerToDataStorage();
+   else
+      {
+      pDataStorage->clear();
 
-   // NB: in this way now we have the direct reference to mmap memory for the data record and the key...
+      // NB: in this way now we have the direct reference to mmap memory for the data record and the key...
 
-                recval._assign(_data);
-   pDataStorage->keyid._assign(_key);
+                   recval._assign(_data);
+      pDataStorage->keyid._assign(_key);
 
-   pDataStorage->fromData(U_STRING_TO_PARAM(recval));
+      pDataStorage->fromData(U_STRING_TO_PARAM(recval));
+      }
 }
 
 URDBObjectHandler<UDataStorage*>* URDBObjectHandler<UDataStorage*>::pthis;
@@ -2094,7 +2189,8 @@ void URDBObjectHandler<UDataStorage*>::close()
 
    recval.clear();
 
-   if (pDataStorage)
+   if (pDataStorage &&
+       bdirect == false)
       {
       pDataStorage->clear();
       pDataStorage->resetDataSession();
@@ -2148,6 +2244,8 @@ const char* URDB::dump(bool _reset) const
    *UObjectIO::os << "\n"
                   << "node                      " << node            << '\n'
                   << "pnode                     " << (void*)pnode    << '\n'
+                  << "plock                     " << (void*)plock    << '\n'
+                  << "preclock                  " << (void*)preclock << '\n'
                   << "_lock   (ULock            " << (void*)&_lock   << ")\n"
                   << "journal (UFile            " << (void*)&journal << ')';
 
@@ -2166,6 +2264,7 @@ const char* URDBObjectHandler<UDataStorage*>::dump(bool _reset) const
    URDB::dump(false);
 
    *UObjectIO::os << "\n"
+                  << "bdirect                   " << bdirect                     << '\n'
                   << "brecfound                 " << brecfound                   << '\n'
                   << "pDataStorage              " << (void*)pDataStorage         << '\n'
                   << "ds_function_to_call       " << (void*)ds_function_to_call  << '\n'

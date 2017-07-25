@@ -305,7 +305,7 @@ void PEC_report_anomalie::processLine(bool bnew)
       U_INTERNAL_DUMP("flag[U_OUTPUT] = %C", Messaggio::msg->flag[U_OUTPUT])
 
       if (Messaggio::msg->flag[U_OUTPUT] == '0' &&
-          atoi(Messaggio::msg->vdestinatari_domini) == 0)
+          u_atoi(Messaggio::msg->vdestinatari_domini) == 0)
          {
          U_WARNING(U_ERROR_MESSAGE_INCORRECT_MESSAGE, U_STRING_TO_TRACE(*PEC_report::identifier));
          }

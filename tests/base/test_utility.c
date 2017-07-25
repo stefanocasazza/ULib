@@ -303,6 +303,13 @@ int main(int argc, char* argv[])
 
    U_INTERNAL_TRACE("main(%d,%p)", argc, argv)
 
+   U_INTERNAL_ASSERT_EQUALS( u_nextPowerOfTwo64(2), 2 )
+   U_INTERNAL_ASSERT_EQUALS( u_nextPowerOfTwo64(3), 4 )
+   U_INTERNAL_ASSERT_EQUALS( u_nextPowerOfTwo64(4), 4 )
+   U_INTERNAL_ASSERT_EQUALS( u_nextPowerOfTwo64(5), 8 )
+   U_INTERNAL_ASSERT_EQUALS( u_nextPowerOfTwo64(123), 128 )
+   U_INTERNAL_ASSERT_EQUALS( u_nextPowerOfTwo64(222), 256 )
+
    (void) strcpy(path, "../../pippo");
 
    ok = u_canonicalize_pathname(path, strlen(path)) == U_CONSTANT_SIZE( "../../pippo");
@@ -358,6 +365,10 @@ int main(int argc, char* argv[])
       ok = ( (bool)isdigit(i)  == u__isdigit((unsigned char)i) );
 
       if (ok == false) U_WARNING("isdigit(%x) = %b u__isdigit(%x) = %b", i, isdigit(i), i, u__isdigit((unsigned char)i));
+
+      ok = ( (bool)isdigit(i)  == u__isdigitw0((unsigned char)i) );
+
+      if (ok == false) U_WARNING("isdigit(%x) = %b u__isdigitw0(%x) = %b", i, isdigit(i), i, u__isdigitw0((unsigned char)i));
 
       ok = ( (bool)isgraph(i)  == u__isgraph((unsigned char)i) );
 
@@ -465,11 +476,11 @@ int main(int argc, char* argv[])
 
    u_int2hex(buf8, 123456789);
    U_INTERNAL_ASSERT_EQUALS( memcmp(buf8, U_CONSTANT_TO_PARAM("075BCD15")), 0 )
-   U_INTERNAL_ASSERT( u_hex2int(buf8, buf8+8) == 123456789 )
+   U_INTERNAL_ASSERT( u_hex2int(buf8, 8) == 123456789 )
 
    u_int2hex(buf8,  23456789);
    U_INTERNAL_ASSERT_EQUALS( memcmp(buf8, U_CONSTANT_TO_PARAM("0165EC15")), 0 )
-   U_INTERNAL_ASSERT( u_hex2int(buf8, buf8+8) == 23456789 )
+   U_INTERNAL_ASSERT( u_hex2int(buf8, 8) == 23456789 )
 
    check_match1(u_fnmatch);
    check_match1(u_dosmatch);

@@ -125,6 +125,8 @@ public:
    void setMessageSubject(  const UString& subject)   { messageSubject = subject; }
    void setRecipientAddress(const UString& recipient) { rcptoAddress   = recipient; }
 
+   void sendEmail(const UString& emailAddress, const UString& subject, const UString& body);
+
    // DEBUG
 
 #if defined(U_STDCPP_ENABLE) && defined(DEBUG)

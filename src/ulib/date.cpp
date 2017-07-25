@@ -245,9 +245,9 @@ UString UTimeDate::strftime(const char* fmt, uint32_t fmt_size, time_t t, bool b
    U_RETURN_STRING(res);
 }
 
-time_t UTimeDate::getSecondFromTime(const char* str, bool gmt, const char* fmt, struct tm* tm)
+time_t UTimeDate::getSecondFromDate(const char* str, bool gmt, struct tm* tm, const char* fmt)
 {
-   U_TRACE(1, "UTimeDate::getSecondFromTime(%S,%b,%S,%p)", str, gmt, fmt, tm)
+   U_TRACE(1, "UTimeDate::getSecondFromDate(%S,%b,%p,%S)", str, gmt, tm, fmt)
 
    if (tm == U_NULLPTR)
       {
@@ -256,14 +256,10 @@ time_t UTimeDate::getSecondFromTime(const char* str, bool gmt, const char* fmt, 
       tm = &tm_;
       }
 
-   (void) U_SYSCALL(memset, "%p,%d,%u", tm, 0, sizeof(struct tm)); // do not remove this
-
    time_t t;
 
    if (gmt)
       {
-      const char* ptr;
-
       if (str[3] == ',')
          {
          /**
@@ -274,33 +270,27 @@ time_t UTimeDate::getSecondFromTime(const char* str, bool gmt, const char* fmt, 
 
          str += 5;
 
-         ptr = str + (u__isspace(*str) || *str == '0');
+         tm->tm_mday = u_strtoulp(&str);
 
-         U_INTERNAL_ASSERT(u__isdigit(*ptr))
+         ++str;
 
-         while (u__isdigit(*ptr)) ++ptr;
-
-         U_INTERNAL_ASSERT(u__isspace(*ptr))
-
-         tm->tm_mday = u_strtoul(str,ptr);
-
-         tm->tm_mon = u_getMonth(str = ptr+1);
+         tm->tm_mon  = u_getMonth(str);
 
          str += 4;
 
-         tm->tm_year = u_strtoul(str,str+4);
+         tm->tm_year = u__strtoul(str, 4);
 
          str += 5;
 
-         tm->tm_hour = u_strtoul(str, str+2);
+         tm->tm_hour = u__strtoul(str, 2);
 
          str += 3;
 
-         tm->tm_min = u_strtoul(str, str+2);
+         tm->tm_min = u__strtoul(str, 2);
 
          str += 3;
 
-         tm->tm_sec = u_strtoul(str, str+2);
+         tm->tm_sec = u__strtoul(str, 2);
          }
       else if ((tm->tm_mon = u_getMonth(str)))
          {
@@ -312,94 +302,93 @@ time_t UTimeDate::getSecondFromTime(const char* str, bool gmt, const char* fmt, 
 
          str += 4;
 
-         ptr = str + (u__isspace(*str) || *str == '0');
+         tm->tm_mday = u_strtoulp(&str);
 
-         U_INTERNAL_ASSERT(u__isdigit(*ptr))
+         ++str;
 
-         while (u__isdigit(*ptr)) ++ptr;
-
-         U_INTERNAL_ASSERT(u__isspace(*ptr))
-
-         tm->tm_mday = u_strtoul(str,ptr);
-
-         str = ptr+1;
-
-         tm->tm_hour = u_strtoul(str, str+2);
+         tm->tm_hour = u__strtoul(str, 2);
 
          str += 3;
 
-         tm->tm_min = u_strtoul(str, str+2);
+         tm->tm_min = u__strtoul(str, 2);
 
          str += 3;
 
-         tm->tm_sec = u_strtoul(str, str+2);
+         tm->tm_sec = u__strtoul(str, 2);
 
-         str += 4;
+         str += 3;
 
-         tm->tm_year = u_strtoul(str, str+4);
+         tm->tm_year = u__strtoul(str, 4);
          }
       else
          {
-         goto scanf;
+         /**
+          * 100212124550Z (zulu time)
+          * | | | | | |
+          * 0 2 4 6 8 10
+          */
+
+         tm->tm_mday = u__strtoul(str, 2);
+
+         str += 2;
+
+         tm->tm_mon = u__strtoul(str, 2);
+
+         str += 2;
+
+         tm->tm_year = u__strtoul(str, 2) + 2000; // ts.tm_year is number of years since 1900
+
+      // if (tm->tm_year > 2050) tm->tm_year -= 100;
+
+         str += 2;
+
+         tm->tm_hour = u__strtoul(str, 2);
+
+         str += 2;
+
+         tm->tm_min = u__strtoul(str, 2);
+
+         str += 2;
+
+         tm->tm_sec = u__strtoul(str, 2);
+
+         U_INTERNAL_ASSERT_EQUALS(str[2], 'Z')
          }
-      }
-   else
-      {
-scanf:
-      // NB: fmt must be compatible with the sequence "YY MM DD HH MM SS"...
 
-      int n = U_SYSCALL(sscanf, "%S,%S,%p,%p,%p,%p,%p,%p", str, fmt,
-                        &tm->tm_year, &tm->tm_mon, &tm->tm_mday, &tm->tm_hour, &tm->tm_min, &tm->tm_sec);
+      U_INTERNAL_DUMP("tm_year = %u tm_mon = %u tm_mday = %u tm_hour = %d tm_min = %d tm_sec = %d", tm->tm_year, tm->tm_mon, tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec)
 
-      if (n != 6) U_RETURN(-1);
+      U_INTERNAL_ASSERT((tm->tm_mon  >= 0) && (tm->tm_mon  <= 12) &&
+                        (tm->tm_mday >= 1) && (tm->tm_mday <= 31) &&
+                        (tm->tm_hour >= 0) && (tm->tm_hour <= 23) &&
+                        (tm->tm_min  >= 0) && (tm->tm_min  <= 59) &&
+                        (tm->tm_sec  >= 0) && (tm->tm_sec  <= 60))
 
-      // ts.tm_year is number of years since 1900
-
-      if      (tm->tm_year <  50) { tm->tm_year += 2000; }
-      else if (tm->tm_year < 100) { tm->tm_year += 1900; }
-      }
-
-   U_INTERNAL_DUMP("tm_year = %u tm_mon = %u tm_mday = %u tm_hour = %d tm_min = %d tm_sec = %d", tm->tm_year, tm->tm_mon, tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec)
-
-   if ((tm->tm_year < 1900) ||
-       (tm->tm_mon  < 1)    || (tm->tm_mon  > 12) ||
-       (tm->tm_mday < 1)    || (tm->tm_mday > 31) ||
-       (tm->tm_hour < 0)    || (tm->tm_hour > 23) ||
-       (tm->tm_min  < 0)    || (tm->tm_min  > 59) ||
-       (tm->tm_sec  < 0)    || (tm->tm_sec  > 61))
-      {
-      U_RETURN(-1);
-      }
-
-   if (gmt)
-      {
       t = getSecondFromJulian(toJulian(tm->tm_mday, tm->tm_mon, tm->tm_year));
 
 #  if SIZEOF_TIME_T == 8
       if (t < 0L) t  = LONG_MAX;
 #  else
       if (t < 0L) t  =  INT_MAX;
-#endif
-      else        t += tm->tm_sec + (tm->tm_min * 60) + (tm->tm_hour * U_ONE_HOUR_IN_SECOND);
-
-      /*
-#  if defined(DEBUG) && !defined(_MSWINDOWS_)
-      tm->tm_year -= 1900; // tm relative format year  - is number of years since 1900
-      tm->tm_mon  -=    1; // tm relative format month - range from 0-11
-
-      U_INTERNAL_ASSERT_EQUALS(t, timegm(tm))
 #  endif
-      */
+      else        t += tm->tm_sec + (tm->tm_min * 60) + (tm->tm_hour * U_ONE_HOUR_IN_SECOND);
       }
    else
       {
-      /* NB: The timelocal() function is equivalent to the POSIX standard function mktime(3) */
+   // (void) U_SYSCALL(memset, "%p,%d,%u", tm, 0, sizeof(struct tm));
 
-      tm->tm_year -= 1900; /* tm relative format year  - is number of years since 1900 */
-      tm->tm_mon  -=    1; /* tm relative format month - range from 0-11 */
-      tm->tm_isdst =   -1;
+      // NB: format must be compatible with the sequence "YY MM DD HH MM SS"...
 
-      t = U_SYSCALL(mktime, "%p", tm);
+      if (U_SYSCALL(sscanf, "%S,%S,%p,%p,%p,%p,%p,%p", str, fmt, &tm->tm_year, &tm->tm_mon, &tm->tm_mday, &tm->tm_hour, &tm->tm_min, &tm->tm_sec) != 6) U_RETURN(-1);
+
+      tm->tm_mon  -=  1; // tm relative format month - range from 0-11
+   // tm->tm_isdst = -1;
+
+      // ts.tm_year is number of years since 1900
+
+           if (tm->tm_year <   50) { tm->tm_year +=  100; }
+      else if (tm->tm_year > 1900) { tm->tm_year -= 1900; }
+
+      t = U_SYSCALL(mktime, "%p", tm); // NB: The timelocal() function is equivalent to the POSIX standard function mktime(3)
       }
 
    U_RETURN(t);

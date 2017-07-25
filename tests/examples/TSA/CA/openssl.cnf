@@ -114,6 +114,7 @@ crypto_device = builtin
 signer_cert = $dir/tsacert.pem
 certs = $dir/cacert.pem
 signer_key = $dir/private/tsakey.pem
+signer_digest  = sha256 # Signing digest to use. (Optional)
 default_policy = tsa_policy1
 other_policies = tsa_policy2, tsa_policy3
 digests = md5, sha1

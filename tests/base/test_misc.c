@@ -133,7 +133,7 @@ int main(int argc, char* argv[])
    strcpy(buffer, "\"stringa che continua...\"");
    if (strcmp(buf, buffer)) goto failed;
 
-   if (u_rmatch(U_CONSTANT_TO_PARAM("1234567890#Envelope"), U_CONSTANT_TO_PARAM("#Envelope")) == false) goto failed;
+   if (u_endsWith(U_CONSTANT_TO_PARAM("1234567890#Envelope"), U_CONSTANT_TO_PARAM("#Envelope")) == false) goto failed;
 
    if (u_runAsUser("mail", true))
       {

@@ -531,16 +531,29 @@ template <> struct UHashCodeFunctor<int> {
       {
       // http://www.concentric.net/~Ttwang/tech/inthash.htm
 
-      uint32_t key = value, c2 = 0x27d4eb2d; // a prime or an odd constant
+      uint32_t key = value;
 
       key = (key ^ 61) ^ (key >> 16);
       key += key << 3;
       key ^= key >> 4;
-      key *= c2;
+      key *= 0x27d4eb2d; // a prime or an odd constant
       key ^= key >> 15;
 
       return key;
       }
 };
 
+/**
+ * from code.google.com/p/smhasher/wiki/MurmurHash3
+ *
+ * uint32_t integerHash(uint32_t h)
+ * {
+ * h ^= h >> 16;
+ * h *= 0x85ebca6b;
+ * h ^= h >> 13;
+ * h *= 0xc2b2ae35;
+ * h ^= h >> 16;
+ * return h;
+ * }
+ */
 #endif

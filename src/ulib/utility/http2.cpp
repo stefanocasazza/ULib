@@ -1642,7 +1642,7 @@ case_40: // if-modified-since
 
       if (isHpackError()) return;
 
-      U_http_info.if_modified_since = UTimeDate::getSecondFromTime(value.data(), true);
+      U_http_info.if_modified_since = UTimeDate::getSecondFromDate(value.data());
 
       U_INTERNAL_DUMP("If-Modified-Since = %u", U_http_info.if_modified_since)
 

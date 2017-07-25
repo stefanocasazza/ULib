@@ -16,11 +16,11 @@
 bool        UHashMap<void*>::istream_loading;
 UStringRep* UHashMap<void*>::pkey;
 
-UHashMap<void*>::UHashMap(uint32_t n, bPFptpcu _set_index)
+UHashMap<void*>::UHashMap(uint32_t n, bPFptpcu fset_index)
 {
-   U_TRACE_REGISTER_OBJECT(0, UHashMap<void*>, "%u,%p", n, _set_index)
+   U_TRACE_REGISTER_OBJECT(0, UHashMap<void*>, "%u,%p", n, fset_index)
 
-   set_index = _set_index;
+   set_index = fset_index;
 
    init(n);
 }
@@ -39,6 +39,8 @@ void UHashMap<void*>::allocate(uint32_t n)
    U_TRACE(0, "UHashMap<void*>::allocate(%u)", n)
 
    U_CHECK_MEMORY
+
+   U_INTERNAL_ASSERT_EQUALS(n & 1, 0)
 
    if (_capacity) _deallocate();
 
@@ -220,7 +222,7 @@ void UHashMap<void*>::reserve(uint32_t n)
 
    U_INTERNAL_ASSERT_MAJOR(_capacity, 1)
 
-   uint32_t new_capacity = U_GET_NEXT_PRIME_NUMBER(n);
+   uint32_t new_capacity = n << 1; // x 2... 
 
    if (new_capacity == _capacity) return;
 

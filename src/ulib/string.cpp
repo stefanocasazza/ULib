@@ -1819,17 +1819,6 @@ __pure long UStringRep::strtol(bool check_for_suffix) const
 
       long value = u_strtol(s, endptr);
 
-#  ifdef DEBUG
-      {
-      long tmp = ::strtol(s, U_NULLPTR, 10);
-
-      if (value != tmp)
-         {
-         U_WARNING("value(%V) = %ld differs from ::strtol() = %ld", this, value, tmp);
-         }
-      }
-#  endif
-
       if (suffix)
          {
          U_NUMBER_SUFFIX(value, suffix);
@@ -1856,17 +1845,6 @@ __pure unsigned long UStringRep::strtoul(bool check_for_suffix) const
       U_MANAGE_CHECK_FOR_SUFFIX
 
       unsigned long value = u_strtoul(s, endptr);
-
-#  ifdef DEBUG
-      {
-      unsigned long tmp = ::strtoul(s, U_NULLPTR, 10);
-
-      if (value != tmp)
-         {
-         U_WARNING("value(%V) = %lu differs from ::strtoul() = %lu", this, value, tmp);
-         }
-      }
-#  endif
 
       if (suffix)
          {
@@ -1895,17 +1873,6 @@ __pure int64_t UStringRep::strtoll(bool check_for_suffix) const
 
       int64_t value = u_strtoll(s, endptr);
 
-#  if defined(DEBUG) && defined(HAVE_STRTOULL)
-      {
-      int64_t tmp = ::strtoll(s, U_NULLPTR, 10);
-
-      if (value != tmp)
-         {
-         U_WARNING("value(%V) = %lld differs from ::strtol() = %lld", this, value, tmp);
-         }
-      }
-#  endif
-
       if (suffix)
          {
          U_NUMBER_SUFFIX(value, suffix);
@@ -1932,17 +1899,6 @@ __pure uint64_t UStringRep::strtoull(bool check_for_suffix) const
       U_MANAGE_CHECK_FOR_SUFFIX
 
       uint64_t value = u_strtoull(s, endptr);
-
-#  if defined(DEBUG) && defined(HAVE_STRTOULL)
-      {
-      uint64_t tmp = ::strtoull(s, U_NULLPTR, 10);
-
-      if (value != tmp)
-         {
-         U_WARNING("value(%V) = %llu differs from ::strtol() = %llu", this, value, tmp);
-         }
-      }
-#  endif
 
       if (suffix)
          {

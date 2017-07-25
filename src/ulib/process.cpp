@@ -29,31 +29,6 @@ PROCESS_INFORMATION  UProcess::aProcessInformation;
 
 int UProcess::filedes[6];
 
-// services for EXEC
-
-void UProcess::kill(pid_t pid, int sig)
-{
-   U_TRACE(1, "UProcess::kill(%d,%d)", pid, sig)
-
-   (void) U_SYSCALL(kill, "%d,%d", pid, sig);
-}
-
-void UProcess::nice(int inc)
-{
-   U_TRACE(1, "UProcess::nice(%d)", inc)
-
-   (void) U_SYSCALL(nice, "%d", inc);
-}
-
-void UProcess::setProcessGroup(pid_t pid, pid_t pgid)
-{
-   U_TRACE(1, "UProcess::setProcessGroup(%d,%d)", pid, pgid)
-
-#ifndef _MSWINDOWS_
-   (void) U_SYSCALL(setpgid, "%d,%d", pid, pgid);
-#endif
-}
-
 bool UProcess::fork()
 {
    U_TRACE_NO_PARAM(1, "UProcess::fork()")
@@ -235,11 +210,11 @@ void UProcess::pipe(int fdp)
 
    int* fds = filedes + (fdp * 2); // fds[0] is for READING, fds[1] is for WRITING
 
-#  ifndef HAVE_PIPE2
+# ifndef HAVE_PIPE2
    (void) U_SYSCALL(pipe, "%p",     fds);
-#  else
+# else
    (void) U_SYSCALL(pipe2, "%p,%d", fds, O_CLOEXEC);
-#  endif
+# endif
 
    U_INTERNAL_DUMP("filedes[%d,%d] = { %d, %d }", (fdp * 2), (fdp * 2) + 1, fds[0], fds[1])
 }
@@ -259,28 +234,28 @@ pid_t UProcess::execute(const char* pathname, char* argv[], char* envp[], bool f
    (void) U_SYSCALL(memset, "%p,%d,%lu",        &aStartupInfo, 0, sizeof(STARTUPINFO));
    (void) U_SYSCALL(memset, "%p,%d,%lu", &aProcessInformation, 0, sizeof(PROCESS_INFORMATION));
 
-   /*
-   typedef struct _STARTUPINFO {
-   DWORD cb;            // Size of the structure, in bytes
-   LPTSTR lpReserved;
-   LPTSTR lpDesktop;
-   LPTSTR lpTitle;
-   DWORD dwX;
-   DWORD dwY;
-   DWORD dwXSize;
-   DWORD dwYSize;
-   DWORD dwXCountChars;
-   DWORD dwYCountChars;
-   DWORD dwFillAttribute;
-   DWORD dwFlags;
-   WORD wShowWindow;
-   WORD cbReserved2;
-   LPBYTE lpReserved2;
-   HANDLE hStdInput;
-   HANDLE hStdOutput;
-   HANDLE hStdError;
-   } STARTUPINFO, *LPSTARTUPINFO;
-   */
+   /**
+    * typedef struct _STARTUPINFO {
+    * DWORD cb; // Size of the structure, in bytes
+    * LPTSTR lpReserved;
+    * LPTSTR lpDesktop;
+    * LPTSTR lpTitle;
+    * DWORD dwX;
+    * DWORD dwY;
+    * DWORD dwXSize;
+    * DWORD dwYSize;
+    * DWORD dwXCountChars;
+    * DWORD dwYCountChars;
+    * DWORD dwFillAttribute;
+    * DWORD dwFlags;
+    * WORD wShowWindow;
+    * WORD cbReserved2;
+    * LPBYTE lpReserved2;
+    * HANDLE hStdInput;
+    * HANDLE hStdOutput;
+    * HANDLE hStdError;
+    * } STARTUPINFO, *LPSTARTUPINFO;
+    */
 
    aStartupInfo.cb          = sizeof(STARTUPINFO);
    aStartupInfo.dwFlags     = STARTF_USESHOWWINDOW;
@@ -399,14 +374,14 @@ pid_t UProcess::execute(const char* pathname, char* argv[], char* envp[], bool f
 
    if (fRet)
       {
-      /*
-      typedef struct _PROCESS_INFORMATION {
-      HANDLE hProcess;
-      HANDLE hThread;
-      DWORD dwProcessId;
-      DWORD dwThreadId;
-      } PROCESS_INFORMATION;
-      */
+      /**
+       * typedef struct _PROCESS_INFORMATION {
+       * HANDLE hProcess;
+       * HANDLE hThread;
+       * DWORD dwProcessId;
+       * DWORD dwThreadId;
+       * } PROCESS_INFORMATION;
+       */
 
       U_INTERNAL_DUMP("dwProcessId = %p hProcess = %p hThread = %p", aProcessInformation.dwProcessId,
                                                                      aProcessInformation.hProcess,
@@ -528,7 +503,7 @@ pid_t UProcess::execute(const char* pathname, char* argv[], char* envp[], bool f
 # endif
 
    U_RETURN(pid);
-   }
+}
 #endif
 
 /**
@@ -581,45 +556,20 @@ loop:
    U_RETURN(result);
 }
 
-void UProcess::wait()
-{
-   U_TRACE_NO_PARAM(0, "UProcess::wait()")
-
-   U_CHECK_MEMORY
-
-   if (running)
-      {
-      waitpid(_pid, &status, 0);
-
-      running = false;
-      }
-
-#ifdef DEBUG
-   char buffer[128];
-
-   (void) exitInfo(buffer, status);
-
-   U_INTERNAL_DUMP("status = %d, %S", status, buffer)
-#endif
-}
-
 int UProcess::waitAll(int timeoutMS)
 {
    U_TRACE(1, "UProcess::waitAll(%d)", timeoutMS)
 
-   if (timeoutMS) UInterrupt::setAlarm(timeoutMS);
-
-   wait();
+   U_INTERNAL_DUMP("Call   waitAll(%2D)")
 
 #ifdef DEBUG
    char buffer[128];
 #endif
-   int result = (status ? U_FAILED_ALL    // (status != 0) -> failed
-                        : U_FAILED_NONE); // (status == 0) -> success
+   int lpid, result = U_FAILED_NONE;
 
    if (timeoutMS) UInterrupt::setAlarm(timeoutMS);
 
-   while (UProcess::waitpid(-1, &status, 0) > 0)
+   while ((lpid = UProcess::waitpid(-1, &status, 0)) > 0)
       {
       if ((status == 0 && result == U_FAILED_ALL) || // (status == 0) -> success
           (status != 0 && result == U_FAILED_NONE))  // (status != 0) -> failed
@@ -630,7 +580,21 @@ int UProcess::waitAll(int timeoutMS)
       U_DUMP("result = %b status = %d, %S", result, status, exitInfo(buffer))
       }
 
-   if (timeoutMS) UInterrupt::resetAlarm();
+   U_INTERNAL_DUMP("Return waitAll(%2D)")
+
+   if (timeoutMS)
+      {
+      if (lpid == -1     &&
+          errno == EINTR &&
+          UInterrupt::flag_alarm)
+         {
+         U_DEBUG("UProcess::waitAll(%d): alarm expired", timeoutMS);
+
+         U_RETURN(U_FAILED_ALARM);
+         }
+
+      UInterrupt::resetAlarm();
+      }
 
    U_RETURN(result);
 }

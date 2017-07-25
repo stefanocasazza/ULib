@@ -2210,6 +2210,8 @@ bool UValue::jfind(const UString& json, const char* query, uint32_t query_len, U
          U_RETURN(false);
          }
 
+      U_INTERNAL_ASSERT_MAJOR(end, start)
+
       (void) result.assign(start, end-start);
 
       U_RETURN(true);

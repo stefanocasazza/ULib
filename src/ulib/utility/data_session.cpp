@@ -80,6 +80,8 @@ void UDataSession::toStream(ostream& os)
 {
    U_TRACE(0, "UDataSession::toStream(%p)", &os)
 
+   U_INTERNAL_ASSERT_POINTER(vec_var)
+
    os.put('{');
    os.put(' ');
    os << creation;
@@ -93,6 +95,7 @@ void UDataSession::fromStream(istream& is)
 {
    U_TRACE(0, "UDataSession::fromStream(%p)", &is)
 
+   U_INTERNAL_ASSERT_POINTER(vec_var)
    U_INTERNAL_ASSERT_EQUALS(is.peek(), '{')
 
    is.get(); // skip '{'

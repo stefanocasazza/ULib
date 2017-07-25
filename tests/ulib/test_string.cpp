@@ -1811,7 +1811,7 @@ U_EXPORT main(int argc, char* argv[])
 
    vec.clear();
 
-   n = (argc > 1 ? atoi(argv[1]) : 1);
+   n = (argc > 1 ? u_atoi(argv[1]) : 1);
 
    crono.start();
 

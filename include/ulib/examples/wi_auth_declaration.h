@@ -4103,7 +4103,7 @@ static bool checkIfUserConnected()
 
    if (user_exist)
       {
-      U_INTERNAL_ASSERT(u__isdigit(db_user->recval.c_char(0)))
+      U_INTERNAL_ASSERT(u__isdigit(db_user->getRecordValue().c_char(0)))
 
       // NB: db can have different users for the same ip...
 
@@ -7059,7 +7059,7 @@ static void POST_LoginRequest(bool idp)
             {
             // Check 4: Expired validity
 
-            if (UTimeDate::getSecondFromTime(NOT_AFTER.data(), true, "%4u%2u%2u%2u%2u%2uZ") <= u_now->tv_sec)
+            if (UTimeDate::getSecondFromDate(NOT_AFTER.data(), false, U_NULLPTR, "%4u%2u%2u%2u%2u%2uZ") <= u_now->tv_sec)
                {
                USSIPlugIn::setMessagePage(*message_page_template, "Validita' scaduta", "La tua validita' e' scaduta!");
 

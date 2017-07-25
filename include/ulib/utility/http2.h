@@ -528,11 +528,7 @@ protected:
 
    // if (bhash) table->hash = u_hash_ignore_case((unsigned char*)key, length);
 
-      U_INTERNAL_DUMP("table->hash = %u", table->hash)
-
-      U_INTERNAL_ASSERT_MAJOR(table->hash, 0)
-
-      table->index = table->hash % table->_capacity;
+      UHashMap<void*>::_setIndex(table);
 
       U_RETURN(true); // NB: ignore case...
       }

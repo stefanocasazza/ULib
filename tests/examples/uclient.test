@@ -12,7 +12,7 @@ rm -f uclient.log $DOC_ROOT//webserver_uclient.log \
 					 trace.*userver_*.[0-9]*				  object.*userver_*.[0-9]*					 stack.*userver_*.[0-9]*				  mempool.*userver_*.[0-9]* \
 	   $DOC_ROOT/trace.*userver_tcp*.[0-9]* $DOC_ROOT/object.*userver_tcp*.[0-9]* $DOC_ROOT/stack.*userver_tcp*.[0-9]* $DOC_ROOT/mempool.*userver_tcp*.[0-9]*
 
-#UTRACE="0 85M -1"
+#UTRACE="0 85M 0"
 #UOBJDUMP="0 10M 10"
 #USIMERR="error.sim"
  export UTRACE UOBJDUMP USIMERR

@@ -84,7 +84,7 @@ public:
 
             case 'r': resize = true; // resize the dynamic table to <size> bytes
             case 'p':    cut = true; // decode a partial block of <size> bytes
-            case 'd':    len = atoi(++pspec); break;
+            case 'd':    len = u_atoi(++pspec); break;
 
             default: U_ERROR("Invalid spec");
             }

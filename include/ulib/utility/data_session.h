@@ -31,21 +31,38 @@ public:
    UDataStorage()
       {
       U_TRACE_REGISTER_OBJECT(0, UDataStorage, "", 0)
+
+#  ifdef DEBUG
+      recdata      = U_NULLPTR;
+      recdata_size = 0;
+
+      U_INTERNAL_DUMP("this = %p recdata = %p", this, recdata)
+#  endif
       }
 
    UDataStorage(const UString& key) : keyid(key)
       {
       U_TRACE_REGISTER_OBJECT(0, UDataStorage, "%V", key.rep)
+
+#  ifdef DEBUG
+      recdata      = U_NULLPTR;
+      recdata_size = 0;
+
+      U_INTERNAL_DUMP("this = %p recdata = %p", this, recdata)
+#  endif
       }
 
    virtual ~UDataStorage()
       {
       U_TRACE_UNREGISTER_OBJECT(0, UDataStorage)
+
+      U_INTERNAL_DUMP("this = %p recdata = %p", this, recdata)
       }
 
    // method VIRTUAL to define
 
-   virtual void clear() {}
+   virtual void    clear() {}
+   virtual uint32_t size() { return 0; }
 
    // SERVICES
 
@@ -73,9 +90,12 @@ public:
       {
       U_TRACE_NO_PARAM(0, "UDataStorage::resetDataSession()")
 
-      U_INTERNAL_DUMP("keyid = %V", keyid.rep)
+      if (keyid.isNull() == false)
+         {
+         U_INTERNAL_DUMP("keyid = %V", keyid.rep)
 
-      if (keyid.isNull() == false) keyid.clear();
+         keyid.clear();
+         }
       }
 
    void setKeyIdDataSession(const UString& key)
@@ -112,6 +132,10 @@ public:
 
 protected:
    UString keyid;
+# ifdef DEBUG
+   char*    recdata;
+   uint32_t recdata_size;
+# endif
 
    static uint32_t buffer_len;
 
@@ -147,6 +171,8 @@ public:
       {
       U_TRACE_UNREGISTER_OBJECT(0, UDataSession)
 
+      U_INTERNAL_ASSERT_POINTER(vec_var)
+
       delete vec_var;
       }
 
@@ -167,9 +193,9 @@ public:
 
       U_INTERNAL_DUMP("keyid = %V", keyid.rep)
 
-      bool result = ((last_access - creation) > U_ONE_DAY_IN_SECOND);
+      if ((last_access - creation) > U_ONE_DAY_IN_SECOND) U_RETURN(true);
 
-      U_RETURN(result);
+      U_RETURN(false);
       }
 
    UString getSessionCreationTime()
@@ -198,6 +224,8 @@ public:
       {
       U_TRACE(0, "UDataSession::getValueVar(%u,%p)", index, &value)
 
+      U_INTERNAL_ASSERT_POINTER(vec_var)
+
       if (index < vec_var->size()) value = vec_var->at(index);
       else                         value.clear();
 
@@ -207,6 +235,8 @@ public:
    void putValueVar(uint32_t index, const UString& value)
       {
       U_TRACE(0, "UDataSession::putValueVar(%u,%V)", index, value.rep)
+
+      U_INTERNAL_ASSERT_POINTER(vec_var)
 
       if (index < vec_var->size()) vec_var->replace(index, value);
       else
@@ -225,6 +255,8 @@ public:
    virtual void clear() U_DECL_OVERRIDE
       {
       U_TRACE_NO_PARAM(0, "UDataSession::clear()")
+
+      U_INTERNAL_ASSERT_POINTER(vec_var)
 
       vec_var->clear();
       }
@@ -251,9 +283,12 @@ protected:
       {
       U_TRACE_NO_PARAM(0, "UDataSession::init()")
 
-      U_NEW(UVector<UString>, vec_var, UVector<UString>);
+      creation    =
+      last_access = u_now->tv_sec;
 
-      creation = last_access = u_now->tv_sec;
+      U_INTERNAL_ASSERT_EQUALS(vec_var, U_NULLPTR)
+
+      U_NEW(UVector<UString>, vec_var, UVector<UString>);
       }
 
 private:

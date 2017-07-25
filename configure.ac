@@ -257,6 +257,7 @@ AC_MSG_RESULT([$GCC_IS_CLANG])
 AM_CONDITIONAL(CLANG, false)
 if test "$GCC_IS_CLANG" = "yes"; then
 AM_CONDITIONAL(CLANG, true)
+gcc_version=`clang -dumpversion`
 fi
 
 ULIB_LIBS=
