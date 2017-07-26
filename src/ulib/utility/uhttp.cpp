@@ -3973,6 +3973,8 @@ int UHTTP::handlerREAD()
 
    if (UClientImage_Base::bsendGzipBomp)
       {
+      UClientImage_Base::bsendGzipBomp = false;
+
       U_DEBUG("we strike back sending gzip bomb...", 0);
 
       U_SRV_LOG("we strike back sending gzip bomb...", 0);

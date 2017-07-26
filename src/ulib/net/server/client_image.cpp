@@ -1972,7 +1972,9 @@ write:
 
       if (U_ClientImage_parallelization == U_PARALLELIZATION_CHILD)
          {
-wait:    if (UNotifier::waitForWrite(socket->iSockDesc, U_TIMEOUT_MS) == 1) goto write;
+wait:    if (socket->isOpen() == false) goto end;
+
+         if (UNotifier::waitForWrite(socket->iSockDesc, U_TIMEOUT_MS) == 1) goto write;
 
          U_RETURN(U_NOTIFIER_DELETE);
          }
@@ -1986,6 +1988,7 @@ wait:    if (UNotifier::waitForWrite(socket->iSockDesc, U_TIMEOUT_MS) == 1) goto
       U_RETURN(U_NOTIFIER_OK);
       }
 
+end:
    U_SRV_LOG("sendfile failed - sock_fd %d sfd %d count %u U_ClientImage_pclose(this) %d %B", socket->iSockDesc, sfd, count, U_ClientImage_pclose(this), U_ClientImage_pclose(this));
 
    if ((U_ClientImage_pclose(this) & U_CLOSE) != 0) UFile::close(sfd);

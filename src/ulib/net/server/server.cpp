@@ -2038,10 +2038,10 @@ void UServer_Base::loadConfigParam()
 #ifdef U_EVASIVE_SUPPORT
    /**
     * This is the threshold for the number of requests for the same page (or URI) per page interval.
-    * Once the threshold for that interval has been exceeded (defaults to 3), the IP address of the client will be added to the blocking list
+    * Once the threshold for that interval has been exceeded (defaults to 2), the IP address of the client will be added to the blocking list
     */
 
-   page_count = cfg->readLong(U_CONSTANT_TO_PARAM("DOS_PAGE_COUNT"), 3);
+   page_count = cfg->readLong(U_CONSTANT_TO_PARAM("DOS_PAGE_COUNT"), 2);
 
    /**
     * The interval for the page count threshold; defaults to 1 second intervals

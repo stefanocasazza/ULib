@@ -49,7 +49,9 @@ protected:
                {
                x509 = ((USSLSocket*)socket)->getPeerCertificate();
 
+#           if OPENSSL_VERSION_NUMBER < 0x10100000L
                U_INTERNAL_ASSERT_DIFFERS(x509, 0)
+#           endif
                }
 
             if (x509) cerr << UCertificate(x509).print();
