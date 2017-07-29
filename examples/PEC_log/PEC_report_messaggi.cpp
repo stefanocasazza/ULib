@@ -417,7 +417,7 @@ public:
 
       // setting for messaggi
 
-      table = new UHashMap<VCasellaIdCounter*>(u_nextPowerOfTwo64(16 * 1024), true); // ignore case
+      table = new UHashMap<VCasellaIdCounter*>(u_nextPowerOfTwo(16 * 1024), true); // ignore case
 
       PEC_report::parse       = Application::parseLineForMessaggi;
       PEC_report::change_file = Application::reportNumCaselle;

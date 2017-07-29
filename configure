@@ -639,6 +639,7 @@ am__EXEEXT_TRUE
 LTLIBOBJS
 ULIB_SYSCONFDIR
 ULIB_MODULEDIR
+ULIB_PREFIXDIR
 RPM_CONFIGURE
 STD_GNU11
 USP_LDFLAGS
@@ -32833,7 +32834,11 @@ if test -n "$posix4_lib"; then
    ULIB_LIBS="$ULIB_LIBS $posix4_lib";
 fi
 if test -n "$plib"; then
-   ULIB_LIBS="$ULIB_LIBS -Wl,--no-as-needed $plib";
+	if test "$with_gnu_ld" = "yes" -a "$enable_new_ldflags" = "yes"; then
+		ULIB_LIBS="$ULIB_LIBS -Wl,--no-as-needed $plib";
+	else
+		ULIB_LIBS="$ULIB_LIBS $plib";
+	fi
 fi
 if test "$enable_coverage" = "yes"; then
 	ULIB_LIBS="$ULIB_LIBS -lgcov"
@@ -33219,6 +33224,8 @@ cat >>confdefs.h <<_ACEOF
 _ACEOF
 
 
+ULIB_PREFIXDIR="$u_prefixdir"
+
 ULIB_MODULEDIR="$u_libexecdir"
 
 ULIB_SYSCONFDIR="$u_sysconfdir"
@@ -33350,7 +33357,7 @@ See include/ulib/internal/config.h for further configuration information
 
 # SECTION 16: `AC_CONFIG_FILES([FILE...])
 
-ac_config_files="$ac_config_files Makefile rpm.sh ULib.spec m4/Makefile doc/Makefile include/Makefile contrib/Makefile include/ulib/Makefile contrib/HCSP/Makefile contrib/RSIGN/Makefile contrib/signer/Makefile fuzz/Makefile src/ulib/Makefile src/ulib/ULib.rc src/ulib/ULib.pc src/ulib/orm/driver/Makefile src/ulib/net/server/plugin/Makefile src/ulib/net/server/plugin/v8/Makefile src/ulib/net/server/plugin/php/Makefile src/ulib/net/server/plugin/usp/Makefile src/ulib/net/server/plugin/ruby/Makefile src/ulib/net/server/plugin/mod_shib/Makefile src/ulib/net/server/plugin/mod_geoip/Makefile src/ulib/net/server/plugin/usp/usp_compile.sh src/ulib/net/server/plugin/page_speed/Makefile src/ulib/net/server/plugin/python/Makefile examples/Makefile examples/IR/Makefile examples/csp/Makefile examples/lcsp/Makefile examples/rsign/Makefile examples/hello/Makefile examples/WiAuth/Makefile examples/xml2txt/Makefile examples/uclient/Makefile examples/userver/Makefile examples/PEC_log/Makefile examples/workflow/Makefile examples/doc_parse/Makefile examples/lrp_session/Makefile examples/http_header/Makefile examples/test_manager/Makefile examples/doc_classifier/Makefile examples/form_completion/Makefile examples/simple_client_server/Makefile examples/download_accelerator/Makefile examples/XAdES/Makefile examples/XAdES/XAdES.spec examples/xml2txt/xml2txt.spec examples/IR/searchengine-bin.spec examples/lcsp/lcsp.spec examples/lcsp/lcsp_rpc.spec examples/csp/cspclient.spec examples/csp/cspclient_rpc.spec examples/rsign/rsignclient.spec examples/rsign/rsignclient_rpc.spec examples/userver/web_server.spec examples/userver/wagsmserver.spec examples/workflow/workflow.spec examples/PEC_log/PEC_log.spec examples/userver/tsaserver.spec examples/userver/cspserver.spec examples/userver/rsignserver.spec examples/doc_parse/doc_parse.spec tests/Makefile tests/base/Makefile tests/debug/Makefile tests/ulib/Makefile tests/ulib/http2/Makefile tests/examples/Makefile tests/contrib/Makefile"
+ac_config_files="$ac_config_files Makefile rpm.sh ULib.spec userver.service m4/Makefile doc/Makefile include/Makefile contrib/Makefile include/ulib/Makefile contrib/HCSP/Makefile contrib/RSIGN/Makefile contrib/signer/Makefile fuzz/Makefile src/ulib/Makefile src/ulib/ULib.rc src/ulib/ULib.pc src/ulib/orm/driver/Makefile src/ulib/net/server/plugin/Makefile src/ulib/net/server/plugin/v8/Makefile src/ulib/net/server/plugin/php/Makefile src/ulib/net/server/plugin/usp/Makefile src/ulib/net/server/plugin/ruby/Makefile src/ulib/net/server/plugin/mod_shib/Makefile src/ulib/net/server/plugin/mod_geoip/Makefile src/ulib/net/server/plugin/usp/usp_compile.sh src/ulib/net/server/plugin/page_speed/Makefile src/ulib/net/server/plugin/python/Makefile examples/Makefile examples/IR/Makefile examples/csp/Makefile examples/lcsp/Makefile examples/rsign/Makefile examples/hello/Makefile examples/WiAuth/Makefile examples/xml2txt/Makefile examples/uclient/Makefile examples/userver/Makefile examples/PEC_log/Makefile examples/workflow/Makefile examples/doc_parse/Makefile examples/lrp_session/Makefile examples/http_header/Makefile examples/test_manager/Makefile examples/doc_classifier/Makefile examples/form_completion/Makefile examples/simple_client_server/Makefile examples/download_accelerator/Makefile examples/XAdES/Makefile examples/XAdES/XAdES.spec examples/xml2txt/xml2txt.spec examples/IR/searchengine-bin.spec examples/lcsp/lcsp.spec examples/lcsp/lcsp_rpc.spec examples/csp/cspclient.spec examples/csp/cspclient_rpc.spec examples/rsign/rsignclient.spec examples/rsign/rsignclient_rpc.spec examples/userver/web_server.spec examples/userver/wagsmserver.spec examples/workflow/workflow.spec examples/PEC_log/PEC_log.spec examples/userver/tsaserver.spec examples/userver/cspserver.spec examples/userver/rsignserver.spec examples/doc_parse/doc_parse.spec tests/Makefile tests/base/Makefile tests/debug/Makefile tests/ulib/Makefile tests/ulib/http2/Makefile tests/examples/Makefile tests/contrib/Makefile"
 
 
 #	examples/parser/Makefile \
@@ -35200,6 +35207,7 @@ do
     "Makefile") CONFIG_FILES="$CONFIG_FILES Makefile" ;;
     "rpm.sh") CONFIG_FILES="$CONFIG_FILES rpm.sh" ;;
     "ULib.spec") CONFIG_FILES="$CONFIG_FILES ULib.spec" ;;
+    "userver.service") CONFIG_FILES="$CONFIG_FILES userver.service" ;;
     "m4/Makefile") CONFIG_FILES="$CONFIG_FILES m4/Makefile" ;;
     "doc/Makefile") CONFIG_FILES="$CONFIG_FILES doc/Makefile" ;;
     "include/Makefile") CONFIG_FILES="$CONFIG_FILES include/Makefile" ;;

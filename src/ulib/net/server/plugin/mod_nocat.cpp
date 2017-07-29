@@ -87,6 +87,7 @@ UVector<UString>*          UNoCatPlugIn::vroaming_data;
 UVector<UString>*          UNoCatPlugIn::vLoginValidate;
 UVector<UString>*          UNoCatPlugIn::vInternalDevice;
 UVector<UString>*          UNoCatPlugIn::vLocalNetworkLabel;
+UVector<UString>*          UNoCatPlugIn::vLocalNetworkSpec;
 UVector<UIPAllow*>*        UNoCatPlugIn::vLocalNetworkMask;
 UVector<UIPAddress*>**     UNoCatPlugIn::vaddr;
 UHttpClient<UTCPSocket>*   UNoCatPlugIn::client;
@@ -205,6 +206,7 @@ UNoCatPlugIn::UNoCatPlugIn()
    U_NEW(UVector<UString>, vLoginValidate, UVector<UString>);
    U_NEW(UVector<UString>, vInternalDevice, UVector<UString>(64U));
    U_NEW(UVector<UString>, vLocalNetworkLabel, UVector<UString>(64U));
+   U_NEW(UVector<UString>, vLocalNetworkSpec, UVector<UString>(64U));
    U_NEW(UVector<UIPAllow*>, vLocalNetworkMask, UVector<UIPAllow*>);
    U_NEW(UHttpClient<UTCPSocket>, client, UHttpClient<UTCPSocket>(U_NULLPTR));
 
@@ -243,6 +245,7 @@ UNoCatPlugIn::~UNoCatPlugIn()
    delete vroaming_data;
    delete vLoginValidate;
    delete vInternalDevice;
+   delete vLocalNetworkSpec;
    delete vLocalNetworkMask;
    delete vLocalNetworkLabel;
 
@@ -415,7 +418,7 @@ void UNoCatPlugIn::setStatusContent(const UString& ap_label)
 
          if (index < vLocalNetworkMask->size())
             {
-            UString x = (*vLocalNetworkMask)[index]->spec;
+            UString x = (*vLocalNetworkSpec)[index];
 
             label_buffer.snprintf(U_CONSTANT_TO_PARAM("<tr><td>Label (Local Network Mask)</td><td>%v (%v)</td></tr>\n"), ap_label.rep, x.rep);
             }
@@ -453,9 +456,9 @@ void UNoCatPlugIn::getTraffic()
 
    for (uint32_t i = 0, n = vLocalNetworkMask->size(); i < n; ++i)
       {
-      U_INTERNAL_ASSERT((*vLocalNetworkMask)[i]->spec.isNullTerminated())
+      U_INTERNAL_ASSERT((*vLocalNetworkSpec)[i].isNullTerminated())
 
-      const char* table = (*vLocalNetworkMask)[i]->spec.data();
+      const char* table = (*vLocalNetworkSpec)[i].data();
 
       if (ipt->readEntries(table, true))
          {
@@ -2074,7 +2077,7 @@ int UNoCatPlugIn::handlerConfig(UFileConfig& cfg)
          U_SRV_LOG("Autodetected LocalNetwork %S", localnet->data());
          }
 
-      (void) UIPAllow::parseMask(*localnet, *vLocalNetworkMask);
+      (void) UIPAllow::parseMask(*localnet, *vLocalNetworkMask, vLocalNetworkSpec);
 
       (void) vLocalNetworkLabel->split(U_STRING_TO_PARAM(lnetlbl));
 
@@ -2233,7 +2236,7 @@ int UNoCatPlugIn::handlerInit()
  
    U_INTERNAL_DUMP("num_peers_preallocate = %u", num_peers_preallocate)
 
-   U_NEW(UHashMap<UModNoCatPeer*>, peers, UHashMap<UModNoCatPeer*>(u_nextPowerOfTwo64(num_peers_preallocate)));
+   U_NEW(UHashMap<UModNoCatPeer*>, peers, UHashMap<UModNoCatPeer*>(u_nextPowerOfTwo(num_peers_preallocate)));
 
    U_NEW(UString, status_content, UString(U_CAPACITY));
    U_NEW(UVector<UString>, openlist, UVector<UString>);

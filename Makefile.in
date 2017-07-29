@@ -118,7 +118,7 @@ am__CONFIG_DISTCLEAN_FILES = config.status config.cache config.log \
  configure.lineno config.status.lineno
 mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = $(top_builddir)/include/ulib/internal/config.h
-CONFIG_CLEAN_FILES = rpm.sh ULib.spec
+CONFIG_CLEAN_FILES = rpm.sh ULib.spec userver.service
 CONFIG_CLEAN_VPATH_FILES =
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
@@ -207,7 +207,7 @@ ETAGS = etags
 CTAGS = ctags
 CSCOPE = cscope
 am__DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/ULib.spec.in \
-	$(srcdir)/rpm.sh.in \
+	$(srcdir)/rpm.sh.in $(srcdir)/userver.service.in \
 	$(top_srcdir)/include/ulib/internal/config.h.in AUTHORS \
 	ChangeLog INSTALL NEWS README THANKS TODO compile config.guess \
 	config.sub install-sh ltmain.sh missing ylwrap
@@ -371,6 +371,7 @@ ULIB = @ULIB@
 ULIBS = @ULIBS@
 ULIB_LIBS = @ULIB_LIBS@
 ULIB_MODULEDIR = @ULIB_MODULEDIR@
+ULIB_PREFIXDIR = @ULIB_PREFIXDIR@
 ULIB_SYSCONFDIR = @ULIB_SYSCONFDIR@
 ULIB_VERSION = @ULIB_VERSION@
 USP_FLAGS = @USP_FLAGS@
@@ -446,7 +447,9 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 AUTOMAKE_OPTIONS = no-dependencies ## dist-shar dist-zip
 ACLOCAL_AMFLAGS = -I m4
-EXTRA_DIST = cdb configure.help TODO LICENSE* README* *.spec* \
+configfiles = userver.service
+EXTRA_DIST = $(configfiles:%=%.in) \
+				 cdb configure.help TODO LICENSE* README* *.spec* \
 	 			 ULib.m4 rpm.sh rpmpkgreq.lst rpmpkgreq.lst.suse openwrt \
 	 			 doc/Doxyfile doc/readme.txt shtool *.awk .travis.yml autogen.sh nativejson-benchmark \
 				 fuzz/http1-corpus fuzz/http2-corpus fuzz/build_libFuzzer.sh fuzz/Makefile.in fuzz/Makefile.am fuzz/uclient_fuzzer.cpp fuzz/uclient.cfg
@@ -511,6 +514,8 @@ distclean-hdr:
 rpm.sh: $(top_builddir)/config.status $(srcdir)/rpm.sh.in
 	cd $(top_builddir) && $(SHELL) ./config.status $@
 ULib.spec: $(top_builddir)/config.status $(srcdir)/ULib.spec.in
+	cd $(top_builddir) && $(SHELL) ./config.status $@
+userver.service: $(top_builddir)/config.status $(srcdir)/userver.service.in
 	cd $(top_builddir) && $(SHELL) ./config.status $@
 
 mostlyclean-libtool:

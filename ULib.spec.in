@@ -36,9 +36,8 @@ make LDFLAGS="-s"
 %install
 rm -rf %{buildroot}
 %makeinstall
-mkdir -p %{_sysconfdir}/ulib
 mkdir -p %{buildroot}/usr/share/aclocal
-mkdir -p %{buildroot}/usr/libexec/ulib/usp
+mkdir -p %{buildroot}/usr/libexec/usp
 
 %clean
 rm -rf %{buildroot}
@@ -50,9 +49,9 @@ rm -rf %{buildroot}
 %{_bindir}/userver_*
 %{_libdir}/*.so.*
 %{_sysconfdir}/*.cfg*
-%{_libexecdir}/ulib/mod_*.*
-%{_libexecdir}/ulib/usp/*.*
-%dir %{_libexecdir}/ulib/usp
+%{_libexecdir}/mod_*.*
+%{_libexecdir}/usp/*.*
+%dir %{_libexecdir}/usp
 
 %files devel
 %defattr(-,root,root,-)
@@ -74,13 +73,13 @@ rm -rf %{buildroot}
 %{_includedir}/ulib/flex/flexer_head.ll
 %{_datadir}/aclocal/*.m4
 %{_libdir}/pkgconfig/*.pc
-%{_libexecdir}/ulib/mod_*.a
-%{_libexecdir}/ulib/mod_*.so
-%{_libexecdir}/ulib/mod_*.la
-%{_libexecdir}/ulib/usp/*.a
-%{_libexecdir}/ulib/usp/*.so
-%{_libexecdir}/ulib/usp/*.la
-%dir %{_libexecdir}/ulib/usp
+%{_libexecdir}/mod_*.a
+%{_libexecdir}/mod_*.so
+%{_libexecdir}/mod_*.la
+%{_libexecdir}/usp/*.a
+%{_libexecdir}/usp/*.so
+%{_libexecdir}/usp/*.la
+%dir %{_libexecdir}/usp
 
 %post -p /sbin/ldconfig
 

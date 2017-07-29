@@ -63,7 +63,7 @@ public:
     * @param message the payload to send (JSON)
     */
 
-   static bool sendHTTP2Push(const UString& token, const UString& message);
+   static bool sendHTTP2Push(const UString& token, const UString& message, UVector<UString>* pextraHeaders = U_NULLPTR);
 
    UString& getResponse() { return response; }
 

@@ -9,6 +9,9 @@ EXTRA_DIST = inp ok CA CSP LCSP TSA RSIGN XAdES nocat wi-auth WAGSM RA IR/WEB IR
 
 ## DEFS  = -DU_TEST @DEFS@
 
+PRG = bench_http_parser
+bench_http_parser_SOURCES = bench_http_parser.cpp
+
 TESTS = client_server.test test_manager.test IR.test web_server.test web_server_multiclient.test web_socket.test ## workflow.test
 
 if SSL

@@ -1177,7 +1177,7 @@ void UHTTP::init()
 
    sz = n + (15 * (n / 100)) + 32;
 
-   if (sz > cache_file->capacity()) cache_file->reserve(u_nextPowerOfTwo64(sz));
+   if (sz > cache_file->capacity()) cache_file->reserve(u_nextPowerOfTwo(sz));
 
    U_INTERNAL_ASSERT_POINTER(pathname)
 
@@ -1199,7 +1199,6 @@ void UHTTP::init()
          }
       }
 
-#if !defined(U_SERVER_CAPTIVE_PORTAL) && defined(U_STDCPP_ENABLE)
    if (cache_file_store &&
        content_cache.empty())
       {
@@ -1211,46 +1210,12 @@ void UHTTP::init()
 
       if (UFile::writeTo(*cache_file_store, buffer, sz)) U_SRV_LOG("Saved (%u bytes) cache file store: %V", sz, cache_file_store->rep);
       }
-#endif
 
    U_ASSERT(cache_file_check_memory())
 
-   // manage gzip bomb...
-
-   file_gzip_bomb = cache_file->at(U_CONSTANT_TO_PARAM("../__BomB__.gz"));
-
-   if (file_gzip_bomb)
-      {
-      U_INTERNAL_ASSERT_POINTER(file_gzip_bomb->array)
-
-      U_SRV_LOG("File gzip bomb: ../__BomB__.gz loaded");
-      }
-
-   // manage authorization data...
-
-   file_data = cache_file->at(U_CONSTANT_TO_PARAM("../.htpasswd"));
-
-   if (file_data)
-      {
-      U_INTERNAL_ASSERT_POINTER(file_data->array)
-
-      U_NEW(UString, htpasswd, UString(file_data->array->operator[](0)));
-
-      U_SRV_LOG("File data users permission: ../.htpasswd loaded");
-      }
-
-   file_data = cache_file->at(U_CONSTANT_TO_PARAM("../.htdigest"));
-
-   if (file_data)
-      {
-      U_INTERNAL_ASSERT_POINTER(file_data->array)
-
-      U_NEW(UString, htdigest, UString(file_data->array->operator[](0)));
-
-      U_SRV_LOG("File data users permission: ../.htdigest loaded");
-      }
-
    UServices::generateKey(UServices::key, U_NULLPTR); // for ULib facility request TODO session cookies... 
+
+   U_INTERNAL_DUMP("htdigest = %p htpasswd = %p", htdigest, htpasswd)
 
    if (htdigest ||
        htpasswd)
@@ -2009,7 +1974,6 @@ U_NO_EXPORT bool UHTTP::readHeaderRequest()
 
    ptr += U_http_info.startHeader;
 
-   U_ASSERT_EQUALS(UServer_Base::bssl, UServer_Base::csocket->isSSLActive())
    U_INTERNAL_ASSERT_EQUALS(u_get_unalignedp16(ptr), U_MULTICHAR_CONSTANT16('\r','\n'))
 
    if (u_get_unalignedp32(ptr) == U_MULTICHAR_CONSTANT32('\r','\n','\r','\n')) U_RETURN(true);
@@ -3209,6 +3173,36 @@ next: U_INTERNAL_DUMP("char (after cr/newline) = %C U_http_version = %C U_Client
       }
 }
 
+#if !defined(U_LOG_DISABLE) || defined(USE_LIBZ)
+void UHTTP::parserExecute(const char* ptr, uint32_t len)
+{
+   U_TRACE(0, "UHTTP::parserExecute(%.*S,%u)", len, ptr, len)
+
+   UClientImage_Base::request->assign(ptr, len);
+
+   U_HTTP_INFO_RESET(0);
+
+   if (readHeaderRequest())
+      {
+      U_INTERNAL_ASSERT_DIFFERS(U_http_method_type, 0)
+
+      if (U_http_info.endHeader)
+         {
+         checkRequestForHeader();
+
+         U_INTERNAL_DUMP("U_http_version = %C U_http_method_type = %u", U_http_version, U_http_method_type)
+         }
+
+      U_INTERNAL_DUMP("U_HTTP_HOST(%u) = %.*S", U_http_host_len, U_HTTP_HOST_TO_TRACE)
+
+      UClientImage_Base::size_request = (U_http_info.endHeader ? U_http_info.endHeader
+                                                               : U_http_info.startHeader + U_CONSTANT_SIZE(U_CRLF2));
+
+      U_INTERNAL_DUMP("UClientImage_Base::size_request = %u U_http_info.clength = %u", UClientImage_Base::size_request, U_http_info.clength)
+      }
+}
+#endif
+
 // manage dynamic page request (CGI - C/ULib Servlet Page - RUBY - PHP - PYTHON)
 
 bool UHTTP::checkIfSourceHasChangedAndCompileUSP()
@@ -3971,6 +3965,7 @@ int UHTTP::handlerREAD()
 
    U_INTERNAL_DUMP("UClientImage_Base::size_request = %u UClientImage_Base::bsendGzipBomp = %b", UClientImage_Base::size_request, UClientImage_Base::bsendGzipBomp)
 
+#if !defined(U_LOG_DISABLE) || defined(USE_LIBZ)
    if (UClientImage_Base::bsendGzipBomp)
       {
       UClientImage_Base::bsendGzipBomp = false;
@@ -3998,6 +3993,7 @@ int UHTTP::handlerREAD()
 
       U_RETURN(U_PLUGIN_HANDLER_FINISHED);
       }
+#endif
 
    U_ClientImage_state = manageRequest();
 
@@ -4171,7 +4167,6 @@ set_uri: U_http_info.uri     = alias->data();
 
    if (UClientImage_Base::isRequestNotFound())
       {
-#  ifndef U_SERVER_CAPTIVE_PORTAL
       U_INTERNAL_DUMP("U_http_is_nocache_file = %b", U_http_is_nocache_file)
 
       if (U_http_is_nocache_file) goto manage;
@@ -4222,12 +4217,11 @@ set_uri: U_http_info.uri     = alias->data();
 
          if (checkPathName(file->path_relativ_len)) goto manage;
          }
-#  endif
       }
 
    // NB: apply rewrite rule if requested and if status is 'file forbidden or not exist'...
 
-#if !defined(U_SERVER_CAPTIVE_PORTAL) && defined(U_ALIAS) && defined(USE_LIBPCRE)
+#if defined(U_ALIAS) && defined(USE_LIBPCRE)
    if (vRewriteRule &&
        U_ClientImage_request <= UClientImage_Base::FORBIDDEN)
       {
@@ -4245,9 +4239,7 @@ set_uri: U_http_info.uri     = alias->data();
    // 5) the file is not present in FILE CACHE or in DOCUMENT_ROOT and it is already processed
    // ----------------------------------------------------------------------------------------
 
-#ifndef U_SERVER_CAPTIVE_PORTAL
 manage:
-#endif
    U_INTERNAL_DUMP("file_data = %p U_ClientImage_request = %B U_http_info.flag = %.8S", file_data, U_ClientImage_request, U_http_info.flag)
 
 #if defined(DEBUG) && !defined(U_STATIC_ONLY)
@@ -6301,14 +6293,12 @@ void UHTTP::setStatusDescription()
             UClientImage_Base::iov_vec[0].iov_len  = U_CONSTANT_SIZE("HTTP/1.1 505 HTTP Version Not Supported\r\n");
             }
          break;
-#     ifdef U_SERVER_CAPTIVE_PORTAL
          case HTTP_NETWORK_AUTHENTICATION_REQUIRED:
             {
             UClientImage_Base::iov_vec[0].iov_base =       (caddr_t) "HTTP/1.1 511 Network authentication required\r\n";  
             UClientImage_Base::iov_vec[0].iov_len  = U_CONSTANT_SIZE("HTTP/1.1 511 Network authentication required\r\n");
             }
          break;
-#     endif
 
          default:
             {
@@ -7000,9 +6990,11 @@ U_NO_EXPORT bool UHTTP::processAuthorization()
          pos = (ptr + sz) - psuffix;
          }
 
-      buffer.snprintf(U_CONSTANT_TO_PARAM("..%.*s.ht%s"), sz-pos, ptr, digest_authentication ? "digest" : "passwd");
+      buffer.snprintf(U_CONSTANT_TO_PARAM("..%.*s.ht%6s"), sz-pos, ptr, digest_authentication ? "digest" : "passwd");
 
       ptr_file_data = cache_file->at(U_STRING_TO_PARAM(buffer));
+ 
+      U_INTERNAL_DUMP("ptr_file_data = %p htpasswd = %p", ptr_file_data, htpasswd)
 
       if (ptr_file_data) fpasswd = ptr_file_data->array->operator[](0);
       else
@@ -8144,6 +8136,8 @@ U_NO_EXPORT void UHTTP::manageDataForCache(const UString& file_name)
 
    uint32_t    suffix_len;
    const char* suffix_ptr;
+   uint32_t    file_len      = file->getPathRelativLen();
+   const char* file_ptr      = file->getPathRelativ();
    uint32_t    file_name_len = file_name.size();
    const char* file_name_ptr = file_name.data();
 
@@ -8152,11 +8146,11 @@ U_NO_EXPORT void UHTTP::manageDataForCache(const UString& file_name)
    U_INTERNAL_ASSERT_POINTER(pathname)
    U_INTERNAL_ASSERT_POINTER(cache_file)
 
-   U_INTERNAL_DUMP("pathname = %V file = %.*S rpathname = %V", pathname->rep, U_FILE_TO_TRACE(*file), rpathname->rep)
+   U_INTERNAL_DUMP("pathname = %V file = %.*S rpathname = %V", pathname->rep, file_len, file_ptr, rpathname->rep)
 
-   if (pathname->equal(U_FILE_TO_PARAM(*file)) == false) // NB: can happen with inotify...
+   if (pathname->equal(file_ptr, file_len) == false) // NB: can happen with inotify...
       {
-      U_DEBUG("UHTTP::manageDataForCache(%V) pathname(%u) = %.*S file(%u) = %.*S", file_name.rep, pathname->size(), pathname->rep, file->getPathRelativLen(), U_FILE_TO_TRACE(*file))
+      U_DEBUG("UHTTP::manageDataForCache(%V) pathname(%u) = %.*S file(%u) = %.*S", file_name.rep, pathname->size(), pathname->rep, file->getPathRelativLen(), file_len, file_ptr)
       }
 #endif
 
@@ -8263,13 +8257,15 @@ U_NO_EXPORT void UHTTP::manageDataForCache(const UString& file_name)
          {
          UString content = file->getContent(true, false, true);
 
-         if (content) putDataInCache(getHeaderMimeType(content.data(), 0, setMimeIndex(suffix_ptr), U_TIME_FOR_EXPIRE), content);
+         if (content.empty()) goto error;
+
+         putDataInCache(getHeaderMimeType(content.data(), 0, setMimeIndex(suffix_ptr), U_TIME_FOR_EXPIRE), content);
          }
 
       goto end;
       }
 
-   if (u_dosmatch(U_FILE_TO_PARAM(*file), U_CONSTANT_TO_PARAM("*cgi-bin/*"), 0))
+   if (u_dosmatch(file_ptr, file_len, U_CONSTANT_TO_PARAM("*cgi-bin/*"), 0))
       {
       // NB: when a pathfile ends by "cgi-bin/*.[sh|php|pl|py|rb|*]" it is assumed to be a cgi script...
 
@@ -8338,22 +8334,65 @@ U_NO_EXPORT void UHTTP::manageDataForCache(const UString& file_name)
 
       // manage authorization data...
 
-      if (suffix_len == 8                                                                            &&
-          (u_get_unalignedp64(suffix_ptr) == U_MULTICHAR_CONSTANT64('h','t','p','a','s','s','w','d') ||
-           u_get_unalignedp64(suffix_ptr) == U_MULTICHAR_CONSTANT64('h','t','d','i','g','e','s','t')))
+      if (suffix_len == 8)
          {
-         U_NEW(UVector<UString>, file_data->array, UVector<UString>(1U));
+         if (u_get_unalignedp64(suffix_ptr) == U_MULTICHAR_CONSTANT64('h','t','p','a','s','s','w','d'))
+            {
+            UString content = file->getContent(true, false, true);
 
-         file_data->array->push_back(file->getContent(true, false, true));
+            if (u_get_unalignedp32(file_ptr) == U_MULTICHAR_CONSTANT32('.','.','/','.'))
+               {
+               U_INTERNAL_ASSERT_EQUALS(file_len, 12)
+               U_INTERNAL_ASSERT_EQUALS(htpasswd, U_NULLPTR)
 
-         U_SRV_LOG("File cached: %V - %u bytes", pathname->rep, file_data->size);
+               U_NEW(UString, htpasswd, UString(content));
 
-         goto end;
+               U_SRV_LOG("File data users permission: ../.htpasswd loaded - %u bytes", file_data->size);
+
+               goto error;
+               }
+
+            U_NEW(UVector<UString>, file_data->array, UVector<UString>(1U));
+
+            file_data->array->push_back(content);
+
+            U_SRV_LOG("File data users permission: %V loaded - %u bytes", pathname->rep, file_data->size);
+
+            goto end;
+            }
+
+         if (u_get_unalignedp64(suffix_ptr) == U_MULTICHAR_CONSTANT64('h','t','d','i','g','e','s','t'))
+            {
+            UString content = file->getContent(true, false, true);
+
+            if (u_get_unalignedp32(file_ptr) == U_MULTICHAR_CONSTANT32('.','.','/','.'))
+               {
+               U_INTERNAL_ASSERT_EQUALS(file_len, 12)
+               U_INTERNAL_ASSERT_EQUALS(htdigest, U_NULLPTR)
+
+               U_NEW(UString, htdigest, UString(content));
+
+               U_SRV_LOG("File data users permission: ../.htdigest loaded - %u bytes", file_data->size);
+
+               goto error;
+               }
+
+            U_NEW(UVector<UString>, file_data->array, UVector<UString>(1U));
+
+            file_data->array->push_back(content);
+
+            U_SRV_LOG("File data users permission: %V loaded - %u bytes", pathname->rep, file_data->size);
+
+            goto end;
+            }
+
+         goto chk;
          }
 
       // manage gzip bomb...
 
       if (suffix_len == 2                                                      &&
+          file_gzip_bomb == U_NULLPTR                                          &&
           u_get_unalignedp16(   suffix_ptr) == U_MULTICHAR_CONSTANT16('g','z') &&
           u_get_unalignedp64(file_name_ptr) == U_MULTICHAR_CONSTANT64('_','_','B','o','m','B','_','_'))
          {
@@ -8369,9 +8408,11 @@ U_NO_EXPORT void UHTTP::manageDataForCache(const UString& file_name)
                {
                UString header(U_CAPACITY);
 
-               U_NEW(UVector<UString>, file_data->array, UVector<UString>(2U));
+               file_gzip_bomb = file_data;
 
-               file_data->array->push_back(content);
+               U_NEW(UVector<UString>, file_gzip_bomb->array, UVector<UString>(2U));
+
+               file_gzip_bomb->array->push_back(content);
 
                header.snprintf(U_CONSTANT_TO_PARAM("Content-Encoding: gzip\r\n"
                                                    "Content-Type: application/octet-stream\r\n"
@@ -8379,9 +8420,9 @@ U_NO_EXPORT void UHTTP::manageDataForCache(const UString& file_name)
 
                (void) header.shrink();
 
-               file_data->array->push_back(header);
+               file_gzip_bomb->array->push_back(header);
 
-               U_SRV_LOG("File cached: %V - %u bytes", pathname->rep, file_data->size);
+               U_SRV_LOG("File gzip bomb: ../__BomB__.gz loaded - %u bytes", file_gzip_bomb->size);
                }
             }
 
@@ -8410,7 +8451,7 @@ U_NO_EXPORT void UHTTP::manageDataForCache(const UString& file_name)
             uint32_t sz;
             struct stat st;
 #        ifndef U_LOG_DISABLE
-            const char* link;
+            uint32_t link_sz;
 #        endif
             UServletPage* usp_page;
 
@@ -8479,14 +8520,14 @@ check:         if (usp_src) goto end;
             file_data->mime_index = U_usp;
 
 #        ifdef U_LOG_DISABLE
-                    cache_file->callForAllEntry(checkIfUSPLink);
+                cache_file->callForAllEntry(checkIfUSPLink);
 #        else
-            link = (cache_file->callForAllEntry(checkIfUSPLink), file_data->link) ? " (link)" : "";
+            if (cache_file->callForAllEntry(checkIfUSPLink), file_data->link) link_sz = U_CONSTANT_SIZE(" (link)");
 #        endif
 
             (void) pathname->replace(buffer+2, len-1);
 
-            U_SRV_LOG("USP found: %S%s, USP service registered (URI): %V", buffer, link, pathname->rep);
+            U_SRV_LOG("USP found: %.*S%.*s, USP service registered (URI): %V", sz, buffer, link_sz, " (link)", pathname->rep);
 
             if (bcallInitForAllUSP)
                {
@@ -8523,14 +8564,14 @@ check:         if (usp_src) goto end;
 
             (void) pathname->replace(buffer, len - U_CONSTANT_SIZE(".c"));
 
-            U_SRV_LOG("CSP found: %S, CSP service registered (URI): %V", buffer, pathname->rep);
+            U_SRV_LOG("CSP found: %.*S, CSP service registered (URI): %V", len, buffer, pathname->rep);
             }
 #     endif
 
          goto end;
          }
 
-      ctype = u_get_mimetype(suffix_ptr, &file_data->mime_index);
+chk:  ctype = u_get_mimetype(suffix_ptr, &file_data->mime_index);
 
       U_INTERNAL_DUMP("u_is_cacheable(%d) = %b ctype = %S", file_data->mime_index, u_is_cacheable(file_data->mime_index), ctype)
 
@@ -8777,12 +8818,14 @@ U_NO_EXPORT void UHTTP::checkPathName()
 
    file->setPath(*pathname);
 
-   U_INTERNAL_DUMP("file = %.*S", U_FILE_TO_TRACE(*file))
+   len = file->getPathRelativLen();
+   ptr = file->getPathRelativ();
 
-#ifndef U_SERVER_CAPTIVE_PORTAL
+   U_INTERNAL_DUMP("file = %.*S", len, ptr)
+
    if (nocache_file_mask)
       {
-      UString basename = UStringExt::basename(U_FILE_TO_PARAM(*file));
+      UString basename = UStringExt::basename(ptr, len);
 
       if (basename &&
           UServices::dosMatchWithOR(basename, U_STRING_TO_PARAM(*nocache_file_mask), 0))
@@ -8792,9 +8835,8 @@ U_NO_EXPORT void UHTTP::checkPathName()
          U_INTERNAL_DUMP("U_http_is_nocache_file = %b U_http_is_request_nostat = %b", U_http_is_nocache_file, U_http_is_request_nostat)
          }
       }
-#endif
 
-   checkFileInCacheOld(U_FILE_TO_PARAM(*file));
+   checkFileInCacheOld(ptr, len);
 
    if (file_data == U_NULLPTR)
       {
@@ -8807,10 +8849,17 @@ U_NO_EXPORT void UHTTP::checkPathName()
          return;
          }
 
-      // we don't wont to process this kind of request (usually aliased)...
+      // check for zombies...
 
-      len = file->getPathRelativLen();
-      ptr = file->getPathRelativ();
+      if (u_get_unalignedp64(ptr)   == U_MULTICHAR_CONSTANT64('c','h','e','c','k','Z','o','m') &&
+          u_get_unalignedp32(ptr+8) == U_MULTICHAR_CONSTANT32('b','i','e','s'))
+         {
+         UServer_Base::removeZombies();
+
+         goto nocontent;
+         }
+
+      // we don't wont to process this kind of request (usually aliased)...
 
       if (len >= U_PATH_MAX               ||
           u_isFileName(ptr, len) == false ||
@@ -8825,17 +8874,6 @@ nocontent:
 
          return;
          }
-
-      if (U_STREQ(ptr, len, "checkZombies")) // check for zombies...
-         {
-         UServer_Base::removeZombies();
-
-         goto nocontent;
-         }
-
-#  ifdef U_SERVER_CAPTIVE_PORTAL
-      return;
-#  endif
 
 #  ifdef USE_RUBY
       if (ruby_on_rails)
@@ -8930,7 +8968,7 @@ nocontent:
                }
             }
 
-         (void) pathname->replace(U_FILE_TO_PARAM(*file));
+         (void) pathname->replace(ptr, len);
 
          U_INTERNAL_DUMP("U_http_is_nocache_file = %b", U_http_is_nocache_file)
 

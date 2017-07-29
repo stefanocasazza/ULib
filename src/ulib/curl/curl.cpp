@@ -305,28 +305,30 @@ const char* UCURL::apple_cert = "/certificates/samplepush/development.pem"; // t
 const char* UCURL::http2_server = "https://api.development.push.apple.com"; // the Apple server url - "https://api.push.apple.com"
 const char* UCURL::app_bundle_id; // the app bundle id
 
-bool UCURL::sendHTTP2Push(const UString& token, const UString& message)
+bool UCURL::sendHTTP2Push(const UString& token, const UString& message, UVector<UString>* pextraHeaders)
 {
-   U_TRACE(0, "UCURL::sendHTTP2Push(%V,%V)", token.rep, message.rep)
+   U_TRACE(0, "UCURL::sendHTTP2Push(%V,%V,%p)", token.rep, message.rep, pextraHeaders)
 
+   UCURL curl;
    char url[1024],
         buf[1024];
 
-   (void) u__snprintf(url, sizeof(url), U_CONSTANT_TO_PARAM("%s/3/device/%v"), http2_server, token.rep); // url (endpoint)
-   (void) u__snprintf(buf, sizeof(buf), U_CONSTANT_TO_PARAM("apns-topic: %s"), app_bundle_id);
-
-   UCURL curl;
-
    curl.setHTTP2();
    curl.setHeader();
-   curl.setURL(url);
    curl.setPort(443);
    curl.setInsecure();
-   curl.addHeader(buf);
    curl.setMaxTime(30);
    curl.setPostMode(message);
    curl.setUserAgent("ULib");
    curl.setCertificate(apple_cert);
+
+   (void) u__snprintf(url, sizeof(url), U_CONSTANT_TO_PARAM("%s/3/device/%v"), http2_server, token.rep); // url (endpoint)
+   (void) u__snprintf(buf, sizeof(buf), U_CONSTANT_TO_PARAM("apns-topic: %s"), app_bundle_id);
+
+   curl.setURL(url);
+   curl.addHeader(buf);
+
+   if (pextraHeaders) curl.addHeader(*pextraHeaders); // Ex: [ "apns-collapse-id: cCI1QJ1mdNvbTyr1q7PvUV3I8OeB4Uygl", "apns-expiration: 0" ]
 
    if (curl.performWait()) U_RETURN(true); 
 

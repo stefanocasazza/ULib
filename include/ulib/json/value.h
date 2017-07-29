@@ -627,8 +627,8 @@ protected:
       {
       U_TRACE_NO_PARAM(0, "UValue::initParser()")
 
-        o = {0ULL};
-      pos = -1;
+      pos    = -1;
+      o.ival = 0ULL;
       }
 
    static void nextParser();
@@ -1039,7 +1039,13 @@ public:
 
       U_INTERNAL_ASSERT_MINOR(UValue::pos, U_JSON_PARSE_STACK_SIZE)
 
-      UValue::sd[UValue::pos] = {0, U_NULLPTR, true};
+#     ifndef HAVE_OLD_IOSTREAM
+         UValue::sd[UValue::pos] = {0, U_NULLPTR, true};
+#     else
+         UValue::sd[UValue::pos].keys  = 0;
+         UValue::sd[UValue::pos].tails = U_NULLPTR;
+         UValue::sd[UValue::pos].tags  = true;
+#     endif
 
       ((T*)pval)->toJSON();
 
@@ -1848,7 +1854,13 @@ public:
 
          U_INTERNAL_ASSERT_MINOR(UValue::pos, U_JSON_PARSE_STACK_SIZE)
 
+#     ifndef HAVE_OLD_IOSTREAM
          UValue::sd[UValue::pos] = {0, U_NULLPTR, false};
+#     else
+         UValue::sd[UValue::pos].keys  = 0;
+         UValue::sd[UValue::pos].tails = U_NULLPTR;
+         UValue::sd[UValue::pos].tags  = false;
+#     endif
 
          do { UJsonTypeHandler<T>(*(T*)(*ptr)).toJSON(); } while (++ptr < end);
 
@@ -1943,7 +1955,13 @@ public:
 
          U_INTERNAL_ASSERT_MINOR(UValue::pos, U_JSON_PARSE_STACK_SIZE)
 
+#     ifndef HAVE_OLD_IOSTREAM
          UValue::sd[UValue::pos] = {0, U_NULLPTR, false};
+#     else
+         UValue::sd[UValue::pos].keys  = 0;
+         UValue::sd[UValue::pos].tails = U_NULLPTR;
+         UValue::sd[UValue::pos].tags  = false;
+#     endif
 
          do { UValue::addString(U_STRING_TO_PARAM(*(const UStringRep*)(*ptr))); } while (++ptr < end);
 
@@ -2003,7 +2021,9 @@ public:
          {
          json.push_back('{');
 
+#     ifndef HAVE_OLD_IOSTREAM
          do { json.toJSON<T>(pmap->getKey(), UJsonTypeHandler<T>(*(pmap->elem()))); } while (pmap->next());
+#     endif
 
          json.setLastChar('}');
          }
@@ -2024,7 +2044,13 @@ public:
 
          U_INTERNAL_ASSERT_MINOR(UValue::pos, U_JSON_PARSE_STACK_SIZE)
 
+#     ifndef HAVE_OLD_IOSTREAM
          UValue::sd[UValue::pos] = {0, U_NULLPTR, true};
+#     else
+         UValue::sd[UValue::pos].keys  = 0;
+         UValue::sd[UValue::pos].tails = U_NULLPTR;
+         UValue::sd[UValue::pos].tags  = true;
+#     endif
 
          do { UValue::toJSON<T>(pmap->getKey(), *(pmap->elem())); } while (pmap->next());
 
@@ -2114,7 +2140,13 @@ public:
 
          U_INTERNAL_ASSERT_MINOR(UValue::pos, U_JSON_PARSE_STACK_SIZE)
 
+#     ifndef HAVE_OLD_IOSTREAM
          UValue::sd[UValue::pos] = {0, U_NULLPTR, true};
+#     else
+         UValue::sd[UValue::pos].keys  = 0;
+         UValue::sd[UValue::pos].tails = U_NULLPTR;
+         UValue::sd[UValue::pos].tags  = true;
+#     endif
 
          do {
             UValue::addString(pmap->getKey());
@@ -2216,7 +2248,13 @@ public:
 
          U_INTERNAL_ASSERT_MINOR(UValue::pos, U_JSON_PARSE_STACK_SIZE)
 
+#     ifndef HAVE_OLD_IOSTREAM
          UValue::sd[UValue::pos] = {0, U_NULLPTR, false};
+#     else
+         UValue::sd[UValue::pos].keys  = 0;
+         UValue::sd[UValue::pos].tails = U_NULLPTR;
+         UValue::sd[UValue::pos].tags  = false;
+#     endif
 
          for (uint32_t i = 0; i < n; ++i) UJsonTypeHandler<T>(pvec->at(i)).toJSON();
 

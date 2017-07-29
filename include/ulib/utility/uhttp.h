@@ -277,6 +277,10 @@ public:
    static bool manageRequestOnRemoteServer();
 #endif
 
+#if !defined(U_LOG_DISABLE) || defined(USE_LIBZ)
+   static void parserExecute(const char* ptr, uint32_t len);
+#endif
+
    static void setHostname(const char* ptr, uint32_t len);
 
    static void setHostname(const UString& name) { setHostname(U_STRING_TO_PARAM(name)); }

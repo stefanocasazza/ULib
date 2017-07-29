@@ -145,13 +145,37 @@ static inline uint8_t u_loadavg(const char* buffer)
    return (((buffer[0]-'0') * 10) + (buffer[2]-'0') + (buffer[3] > '5')); // 0.19 => 2, 4.56 => 46, ...
 }
 
-static inline uint64_t u_nextPowerOfTwo64(uint64_t n)
+/**
+ * Return the smallest power of two value greater than n
+ *
+ *  Input range: [2..2147483648]
+ * Output range: [2..2147483648]
+ */
+
+static inline uint64_t u_nextPowerOfTwo(uint32_t n)
 {
-   U_INTERNAL_TRACE("u_nextPowerOfTwo64(%llu)", n)
+   U_INTERNAL_TRACE("u_nextPowerOfTwo(%u)", n)
 
    U_INTERNAL_ASSERT_MAJOR(n, 1)
+   U_INTERNAL_ASSERT(n <= ((UINT32_MAX/2)+1))
 
-   return 1ULL << (sizeof(uint64_t) * 8 - __builtin_clzll(n-1));
+#if (defined(__GNUC__) || defined(__clang__)) && !defined(HAVE_OLD_IOSTREAM)
+   return 1U << (sizeof(uint32_t) * 8 - __builtin_clz(n-1));
+#else
+   /* @https://web.archive.org/web/20170704200003/https://graphics.stanford.edu/~seander/bithacks.html#RoundUpPowerOf2 */
+
+   --n;
+
+   n |= n >>  1;
+   n |= n >>  2;
+   n |= n >>  4;
+   n |= n >>  8;
+   n |= n >> 16;
+
+   U_INTERNAL_PRINT("n+1 = %u", n+1)
+
+   return n+1;
+#endif
 }
 
 /* Random number generator */ 

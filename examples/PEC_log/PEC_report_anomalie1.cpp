@@ -323,7 +323,7 @@ public:
 
       // setting for anomalie
 
-      table = new UHashMap<Messaggio*>(u_nextPowerOfTwo64(max_size_table + MARGINE), true); // ignore case
+      table = new UHashMap<Messaggio*>(u_nextPowerOfTwo(max_size_table + MARGINE), true); // ignore case
 
       rdbname               = new UString(100U);
       Messaggio::id_max_ttl = new UString;

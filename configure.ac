@@ -2512,7 +2512,11 @@ if test -n "$posix4_lib"; then
    ULIB_LIBS="$ULIB_LIBS $posix4_lib";
 fi
 if test -n "$plib"; then
-   ULIB_LIBS="$ULIB_LIBS -Wl,--no-as-needed $plib";
+	if test "$with_gnu_ld" = "yes" -a "$enable_new_ldflags" = "yes"; then
+		ULIB_LIBS="$ULIB_LIBS -Wl,--no-as-needed $plib";
+	else
+		ULIB_LIBS="$ULIB_LIBS $plib";
+	fi
 fi
 if test "$enable_coverage" = "yes"; then
 	ULIB_LIBS="$ULIB_LIBS -lgcov"
@@ -2674,6 +2678,8 @@ AC_DEFINE_UNQUOTED(U_LIBEXECDIR, "$u_libexecdir", [install directory for plugins
 # Config dir - read-only single-machine data [PREFIX/etc]
 AC_DEFINE_UNQUOTED(U_SYSCONFDIR, "$u_sysconfdir", [install directory for configuration data])
 
+ULIB_PREFIXDIR="$u_prefixdir"
+AC_SUBST(ULIB_PREFIXDIR)
 ULIB_MODULEDIR="$u_libexecdir"
 AC_SUBST(ULIB_MODULEDIR)
 ULIB_SYSCONFDIR="$u_sysconfdir"
@@ -2745,7 +2751,7 @@ See include/ulib/internal/config.h for further configuration information
 # SECTION 16: `AC_CONFIG_FILES([FILE...])
 
 AC_CONFIG_FILES([
-	Makefile rpm.sh ULib.spec m4/Makefile doc/Makefile include/Makefile contrib/Makefile
+	Makefile rpm.sh ULib.spec userver.service m4/Makefile doc/Makefile include/Makefile contrib/Makefile
 	include/ulib/Makefile contrib/HCSP/Makefile contrib/RSIGN/Makefile contrib/signer/Makefile fuzz/Makefile
 	src/ulib/Makefile src/ulib/ULib.rc src/ulib/ULib.pc src/ulib/orm/driver/Makefile src/ulib/net/server/plugin/Makefile
 	src/ulib/net/server/plugin/v8/Makefile src/ulib/net/server/plugin/php/Makefile src/ulib/net/server/plugin/usp/Makefile

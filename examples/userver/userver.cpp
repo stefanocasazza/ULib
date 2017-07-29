@@ -84,6 +84,7 @@ public:
       // CLIENT_THRESHOLD           min number of clients to active polling
       // CLIENT_FOR_PARALLELIZATION minum number of clients to active parallelization 
       //
+      // LOAD_BALANCE_CLUSTER           list of comma separated IP address (IPADDR[/MASK]) to define the load balance cluster
       // LOAD_BALANCE_DEVICE_NETWORK    network interface name of cluster of physical server
       // LOAD_BALANCE_LOADAVG_THRESHOLD system load threshold to proxies the request on other userver on the network cluster ([0-9].[0-9])
       //
@@ -130,6 +131,7 @@ public:
       // DOS_WHITE_LIST      list of comma separated IP addresses of trusted clients can be whitelisted to insure they are never denied (IPADDR[/MASK])
       // DOS_EMAIL_NOTIFY    the email address to send a message whenever an IP address becomes blacklisted
       // DOS_SYSTEM_COMMAND  the system command specified will be executed whenever an IP address becomes blacklisted. Use %v to denote the IP address of the blacklisted IP 
+      // DOS_LOGFILE         the file to write DOS event
       // ---------------------------------------------------------------------------------------------------------------------------------------
 
 #  ifdef U_SSL_SOCKET

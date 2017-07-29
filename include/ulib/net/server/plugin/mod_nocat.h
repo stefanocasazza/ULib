@@ -190,6 +190,7 @@ protected:
    static UVector<UString>* vLoginValidate;
    static UVector<UString>* vInternalDevice;
    static UVector<UString>* vLocalNetworkLabel;
+   static UVector<UString>* vLocalNetworkSpec;
    static UVector<UIPAllow*>* vLocalNetworkMask;
 
    static void* pdata;

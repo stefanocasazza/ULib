@@ -156,7 +156,8 @@ public:
    // CLIENT_THRESHOLD           min number of clients to active polling
    // CLIENT_FOR_PARALLELIZATION min number of clients to active parallelization 
    //
-   // LOAD_BALANCE_DEVICE_NETWORK    network interface name of cluster of physical server
+   // LOAD_BALANCE_CLUSTER           list of comma separated IP address (IPADDR[/MASK]) to define the load balance cluster
+   // LOAD_BALANCE_DEVICE_NETWORK    network interface name of the cluster of physical server
    // LOAD_BALANCE_LOADAVG_THRESHOLD system load threshold to proxies the request on other userver on the network cluster ([0-9].[0-9])
    //
    // PID_FILE      write pid on file indicated
@@ -203,6 +204,7 @@ public:
    // DOS_WHITE_LIST      list of comma separated IP addresses of trusted clients can be whitelisted to insure they are never denied (IPADDR[/MASK])
    // DOS_EMAIL_NOTIFY    the email address to send a message whenever an IP address becomes blacklisted
    // DOS_SYSTEM_COMMAND  the system command specified will be executed whenever an IP address becomes blacklisted. Use %v to denote the IP address of the blacklisted IP
+   // DOS_LOGFILE         the file to write DOS event
    // --------------------------------------------------------------------------------------------------------------------------------------
 
    static void run(); // loop waiting for connection
@@ -409,6 +411,7 @@ public:
 #ifdef USE_LOAD_BALANCE
    static UString* ifname;
    static uint8_t loadavg_threshold;
+   static UVector<UIPAllow*>* vallow_cluster;
 #endif
 
    static void setLockUser1()
@@ -674,12 +677,10 @@ protected:
 #endif
 
 #ifdef U_ACL_SUPPORT
-   static UString* allow_IP;
    static UVector<UIPAllow*>* vallow_IP;
 #endif
 
 #ifdef U_RFC1918_SUPPORT
-   static UString* allow_IP_prv;
    static bool enable_rfc1918_filter;
    static UVector<UIPAllow*>* vallow_IP_prv;
 #endif
@@ -720,7 +721,6 @@ protected:
 
    static UFile* dos_LOG;
    static bool bwhitelist;
-   static UString* whitelist_IP;
    static uevasive* evasive_rec;
    static UString* systemCommand;
    static UString* dosEmailAddress;

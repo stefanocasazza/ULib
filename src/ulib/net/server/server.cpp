@@ -159,16 +159,15 @@ UVector<UServer_Base::file_LOG*>* UServer_Base::vlog;
 UString* UServer_Base::msg_welcome;
 #endif
 #ifdef USE_LOAD_BALANCE
-UString*      UServer_Base::ifname;
-unsigned char UServer_Base::loadavg_threshold = 45; // => 4.5
+UString*            UServer_Base::ifname;
+unsigned char       UServer_Base::loadavg_threshold = 45; // => 4.5
+UVector<UIPAllow*>* UServer_Base::vallow_cluster;
 #endif
 #ifdef U_ACL_SUPPORT
-UString*            UServer_Base::allow_IP;
 UVector<UIPAllow*>* UServer_Base::vallow_IP;
 #endif
 #ifdef U_RFC1918_SUPPORT
 bool                UServer_Base::enable_rfc1918_filter;
-UString*            UServer_Base::allow_IP_prv;
 UVector<UIPAllow*>* UServer_Base::vallow_IP_prv;
 #endif
 
@@ -816,7 +815,6 @@ uint32_t                          UServer_Base::site_interval;
 uint32_t                          UServer_Base::page_interval;
 uint32_t                          UServer_Base::blocking_period;
 UString*                          UServer_Base::dosEmailAddress;
-UString*                          UServer_Base::whitelist_IP;
 UString*                          UServer_Base::systemCommand;
 UVector<UIPAllow*>*               UServer_Base::vwhitelist_IP;
 UServer_Base::uevasive*           UServer_Base::evasive_rec;
@@ -861,7 +859,7 @@ bool UServer_Base::checkHold(in_addr_t client, const char* client_address, uint3
 
    bool result = false;
 
-   if ((bwhitelist = (whitelist_IP && UIPAllow::isAllowed(client, *vwhitelist_IP))) == false) // Check whitelist
+   if ((bwhitelist = (vwhitelist_IP && UIPAllow::isAllowed(client, *vwhitelist_IP))) == false) // Check whitelist
       {
       U_gettimeofday // NB: optimization if it is enough a time resolution of one second...
 
@@ -1147,11 +1145,12 @@ public:
 #       ifdef USE_LOAD_BALANCE
          if (fd_sock > 0)
             {
-            uint8_t my_loadavg = u_get_loadavg();
+            U_SRV_MY_LOAD         = u_get_loadavg();
+            U_SRV_MIN_LOAD_REMOTE = 255;
 
-            U_INTERNAL_DUMP("U_SRV_MY_LOAD = %u", my_loadavg)
+            U_INTERNAL_DUMP("U_SRV_MY_LOAD = %u", U_SRV_MY_LOAD)
 
-            int iBytesTransferred = U_SYSCALL(sendto, "%d,%p,%u,%u,%p,%d", fd_sock, &my_loadavg, sizeof(char), MSG_DONTROUTE, (sockaddr*)&(addr.psaGeneric), sizeof(addr));
+            int iBytesTransferred = U_SYSCALL(sendto, "%d,%p,%u,%u,%p,%d", fd_sock, &U_SRV_MY_LOAD, sizeof(char), MSG_DONTROUTE, (sockaddr*)&(addr.psaGeneric), sizeof(addr));
 
             if (iBytesTransferred == sizeof(char))
                {
@@ -1169,8 +1168,8 @@ public:
 
                   if (iBytesTransferred == 1)
                      {
-                     if (saddr.psaIP4Addr.sin_addr.s_addr == laddr &&
-                         ntohs(saddr.psaIP4Addr.sin_port) == UServer_Base::port)
+                     if ((saddr.psaIP4Addr.sin_addr.s_addr == laddr && ntohs(saddr.psaIP4Addr.sin_port) == UServer_Base::port) ||
+                         (UServer_Base::vallow_cluster && UIPAllow::isAllowed(saddr.psaIP4Addr.sin_addr.s_addr, *UServer_Base::vallow_cluster) == false))
                         {
                         continue;
                         }
@@ -1184,7 +1183,6 @@ public:
                      }
                   }
 
-               U_SRV_MY_LOAD         =  my_loadavg;
                U_SRV_MIN_LOAD_REMOTE = min_loadavg_remote;
 
                u_put_unalignedp32(&U_SRV_MIN_LOAD_REMOTE_IP, min_loadavg_remote_ip);
@@ -1442,7 +1440,8 @@ UServer_Base::~UServer_Base()
    if (crashEmailAddress) delete crashEmailAddress;
 
 #ifdef USE_LOAD_BALANCE
-   if (ifname) delete ifname;
+   if (ifname)         delete ifname;
+   if (vallow_cluster) delete vallow_cluster;
 #endif
 
 #ifdef U_THROTTLING_SUPPORT
@@ -1462,12 +1461,7 @@ UServer_Base::~UServer_Base()
       delete db_evasive;
       }
 
-   if (vwhitelist_IP)
-      {
-      delete  whitelist_IP;
-      delete vwhitelist_IP;
-      }
-
+   if (vwhitelist_IP)   delete vwhitelist_IP;
    if (dosEmailAddress) delete dosEmailAddress;
 #endif
 
@@ -1476,19 +1470,11 @@ UServer_Base::~UServer_Base()
 #endif
 
 #ifdef U_ACL_SUPPORT
-   if (vallow_IP)
-      {
-      delete  allow_IP;
-      delete vallow_IP;
-      }
+   if (vallow_IP) delete vallow_IP;
 #endif
 
 #ifdef U_RFC1918_SUPPORT
-   if (vallow_IP_prv)
-      {
-      delete  allow_IP_prv;
-      delete vallow_IP_prv;
-      }
+   if (vallow_IP_prv) delete vallow_IP_prv;
 #endif
 
 #ifdef U_LINUX
@@ -1690,6 +1676,7 @@ void UServer_Base::loadConfigParam()
    // CLIENT_THRESHOLD           min number of clients to active polling
    // CLIENT_FOR_PARALLELIZATION min number of clients to active parallelization
    //
+   // LOAD_BALANCE_CLUSTER           list of comma separated IP address (IPADDR[/MASK]) to define the load balance cluster
    // LOAD_BALANCE_DEVICE_NETWORK    network interface name of cluster of physical server
    // LOAD_BALANCE_LOADAVG_THRESHOLD system load threshold to proxies the request on other userver on the network cluster ([0-9].[0-9])
    //
@@ -1889,12 +1876,11 @@ void UServer_Base::loadConfigParam()
 
    if (x)
       {
-      U_INTERNAL_ASSERT_EQUALS(allow_IP, U_NULLPTR)
+      U_INTERNAL_ASSERT_EQUALS(vallow_IP, U_NULLPTR)
 
       U_NEW(UVector<UIPAllow*>, vallow_IP, UVector<UIPAllow*>);
 
-      if (UIPAllow::parseMask(x, *vallow_IP)) U_NEW(UString,   allow_IP, UString(x));
-      else
+      if (UIPAllow::parseMask(x, *vallow_IP) == 0)
          {
          delete vallow_IP;
                 vallow_IP = U_NULLPTR;
@@ -1907,12 +1893,11 @@ void UServer_Base::loadConfigParam()
 
    if (x)
       {
-      U_INTERNAL_ASSERT_EQUALS(allow_IP_prv, U_NULLPTR)
+      U_INTERNAL_ASSERT_EQUALS(vallow_IP_prv, U_NULLPTR)
 
       U_NEW(UVector<UIPAllow*>, vallow_IP_prv, UVector<UIPAllow*>);
 
-      if (UIPAllow::parseMask(x, *vallow_IP_prv)) U_NEW(UString, allow_IP_prv, UString(x));
-      else
+      if (UIPAllow::parseMask(x, *vallow_IP_prv) == 0)
          {
          delete vallow_IP_prv;
                 vallow_IP_prv = U_NULLPTR;
@@ -2033,6 +2018,21 @@ void UServer_Base::loadConfigParam()
    if (x) loadavg_threshold = u_loadavg(x.data()); // 0.19 => 2, 4.56 => 46, ...
 
    U_INTERNAL_DUMP("loadavg_threshold = %u", loadavg_threshold)
+
+   x = cfg->at(U_CONSTANT_TO_PARAM("LOAD_BALANCE_CLUSTER"));
+
+   if (x)
+      {
+      U_INTERNAL_ASSERT_EQUALS(vallow_cluster, U_NULLPTR)
+
+      U_NEW(UVector<UIPAllow*>, vallow_cluster, UVector<UIPAllow*>);
+
+      if (UIPAllow::parseMask(x, *vallow_cluster) == 0)
+         {
+         delete vallow_cluster;
+                vallow_cluster = U_NULLPTR;
+         }
+      }
 #endif
 
 #ifdef U_EVASIVE_SUPPORT
@@ -2082,12 +2082,11 @@ void UServer_Base::loadConfigParam()
 
    if (x)
       {
-      U_INTERNAL_ASSERT_EQUALS(whitelist_IP, U_NULLPTR)
+      U_INTERNAL_ASSERT_EQUALS(vwhitelist_IP, U_NULLPTR)
 
       U_NEW(UVector<UIPAllow*>, vwhitelist_IP, UVector<UIPAllow*>);
 
-      if (UIPAllow::parseMask(x, *vwhitelist_IP)) U_NEW(UString, whitelist_IP, UString(x));
-      else
+      if (UIPAllow::parseMask(x, *vwhitelist_IP) == 0)
          {
          delete vwhitelist_IP;
                 vwhitelist_IP = U_NULLPTR;
@@ -3416,8 +3415,7 @@ try_accept:
 #endif
 
 #ifdef U_ACL_SUPPORT
-   if (vallow_IP &&
-       UIPAllow::isAllowed(CSOCKET->remoteIPAddress().getInAddr(), *vallow_IP) == false)
+   if (vallow_IP && UIPAllow::isAllowed(CSOCKET->remoteIPAddress().getInAddr(), *vallow_IP) == false)
       {
       CSOCKET->abortive_close();
 
@@ -3449,7 +3447,7 @@ try_accept:
    if (public_address                         &&
        enable_rfc1918_filter                  &&
        CSOCKET->remoteIPAddress().isPrivate() &&
-       (vallow_IP_prv == U_NULLPTR ||
+       (vallow_IP_prv == U_NULLPTR            ||
         UIPAllow::isAllowed(CSOCKET->remoteIPAddress().getInAddr(), *vallow_IP_prv) == false))
       {
       CSOCKET->abortive_close();
@@ -4305,9 +4303,6 @@ const char* UServer_Base::dump(bool reset) const
                   << "dh_file       (UString    " << (void*)dh_file             << ")\n"
                   << "ca_file       (UString    " << (void*)ca_file             << ")\n"
                   << "ca_path       (UString    " << (void*)ca_path             << ")\n"
-#              ifdef U_ACL_SUPPORT
-                  << "allow_IP      (UString    " << (void*)allow_IP            << ")\n"
-#              endif
                   << "key_file      (UString    " << (void*)key_file            << ")\n"
                   << "password      (UString    " << (void*)password            << ")\n"
                   << "cert_file     (UString    " << (void*)cert_file           << ")\n"

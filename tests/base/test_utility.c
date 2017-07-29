@@ -280,7 +280,7 @@ int main(int argc, char* argv[])
    char buf8[9];
    const char* ptr;
    char* sargv[128];
-   uint32_t path_len;
+   uint32_t x, path_len;
    const char* path_rel;
    char path[PATH_MAX + 1];
 
@@ -303,12 +303,41 @@ int main(int argc, char* argv[])
 
    U_INTERNAL_TRACE("main(%d,%p)", argc, argv)
 
-   U_INTERNAL_ASSERT_EQUALS( u_nextPowerOfTwo64(2), 2 )
-   U_INTERNAL_ASSERT_EQUALS( u_nextPowerOfTwo64(3), 4 )
-   U_INTERNAL_ASSERT_EQUALS( u_nextPowerOfTwo64(4), 4 )
-   U_INTERNAL_ASSERT_EQUALS( u_nextPowerOfTwo64(5), 8 )
-   U_INTERNAL_ASSERT_EQUALS( u_nextPowerOfTwo64(123), 128 )
-   U_INTERNAL_ASSERT_EQUALS( u_nextPowerOfTwo64(222), 256 )
+   x = u_nextPowerOfTwo(2);
+
+   U_INTERNAL_PRINT("x = %u", x)
+
+   U_INTERNAL_ASSERT_EQUALS( x, 2 )
+
+   x = u_nextPowerOfTwo(3);
+
+   U_INTERNAL_PRINT("x = %u", x)
+
+   U_INTERNAL_ASSERT_EQUALS( x, 4 )
+
+   x = u_nextPowerOfTwo(4);
+
+   U_INTERNAL_PRINT("x = %u", x)
+
+   U_INTERNAL_ASSERT_EQUALS( x, 4 )
+
+   x = u_nextPowerOfTwo(5);
+
+   U_INTERNAL_PRINT("x = %u", x)
+
+   U_INTERNAL_ASSERT_EQUALS( x, 8 )
+
+   x = u_nextPowerOfTwo(123);
+
+   U_INTERNAL_PRINT("x = %u", x)
+
+   U_INTERNAL_ASSERT_EQUALS( x, 128 )
+
+   x = u_nextPowerOfTwo(222);
+
+   U_INTERNAL_PRINT("x = %u", x)
+
+   U_INTERNAL_ASSERT_EQUALS( x, 256 )
 
    (void) strcpy(path, "../../pippo");
 
@@ -501,19 +530,19 @@ int main(int argc, char* argv[])
 
    qsort(vec, 13, sizeof(const char*), compare_str);
 
-// U_INTERNAL_ASSERT( strcmp(vec[0],  "libpng-1.0.3.tar.gz") == 0 )
-// U_INTERNAL_ASSERT( strcmp(vec[1],  "libpng-1.0.5.tar.gz") == 0 )
-// U_INTERNAL_ASSERT( strcmp(vec[2],  "libpng-1.0.6-patch-a.txt.gz") == 0 )
-// U_INTERNAL_ASSERT( strcmp(vec[3],  "libpng-1.0.6-patch-b.txt.gz") == 0 )
-// U_INTERNAL_ASSERT( strcmp(vec[4],  "libpng-1.0.6-patch-c.txt.gz") == 0 )
-// U_INTERNAL_ASSERT( strcmp(vec[5],  "libpng-1.0.6.tar.gz") == 0 )
-// U_INTERNAL_ASSERT( strcmp(vec[6],  "libpng-1.0.7.tar.gz") == 0 )
-// U_INTERNAL_ASSERT( strcmp(vec[7],  "libpng-1.0.8.tar.gz") == 0 )
-// U_INTERNAL_ASSERT( strcmp(vec[8],  "libpng-1.0.9.tar.gz") == 0 )
-// U_INTERNAL_ASSERT( strcmp(vec[9],  "libpng-1.0.10.tar.gz") == 0 )
-// U_INTERNAL_ASSERT( strcmp(vec[10], "libpng-1.0.11.tar.gz") == 0 )
-// U_INTERNAL_ASSERT( strcmp(vec[11], "libpng-1.0.12.tar.gz") == 0 )
-// U_INTERNAL_ASSERT( strcmp(vec[12], "libpng-1.2.0.tar.gz") == 0 )
+   // U_INTERNAL_ASSERT( strcmp(vec[0],  "libpng-1.0.3.tar.gz") == 0 )
+   // U_INTERNAL_ASSERT( strcmp(vec[1],  "libpng-1.0.5.tar.gz") == 0 )
+   // U_INTERNAL_ASSERT( strcmp(vec[2],  "libpng-1.0.6-patch-a.txt.gz") == 0 )
+   // U_INTERNAL_ASSERT( strcmp(vec[3],  "libpng-1.0.6-patch-b.txt.gz") == 0 )
+   // U_INTERNAL_ASSERT( strcmp(vec[4],  "libpng-1.0.6-patch-c.txt.gz") == 0 )
+   // U_INTERNAL_ASSERT( strcmp(vec[5],  "libpng-1.0.6.tar.gz") == 0 )
+   // U_INTERNAL_ASSERT( strcmp(vec[6],  "libpng-1.0.7.tar.gz") == 0 )
+   // U_INTERNAL_ASSERT( strcmp(vec[7],  "libpng-1.0.8.tar.gz") == 0 )
+   // U_INTERNAL_ASSERT( strcmp(vec[8],  "libpng-1.0.9.tar.gz") == 0 )
+   // U_INTERNAL_ASSERT( strcmp(vec[9],  "libpng-1.0.10.tar.gz") == 0 )
+   // U_INTERNAL_ASSERT( strcmp(vec[10], "libpng-1.0.11.tar.gz") == 0 )
+   // U_INTERNAL_ASSERT( strcmp(vec[11], "libpng-1.0.12.tar.gz") == 0 )
+   // U_INTERNAL_ASSERT( strcmp(vec[12], "libpng-1.2.0.tar.gz") == 0 )
 
    for (i = 0; i < 13; ++i) puts(vec[i]);
 
@@ -551,4 +580,4 @@ int main(int argc, char* argv[])
    U_VAR_UNUSED(buffer)
 
    return 0;
-}
+   }
