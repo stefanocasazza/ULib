@@ -98,10 +98,6 @@ UHTTP2::HpackError UHTTP2::hpack_error[8];
    "\x01"                  \
    "\x00\x00\x00\x00"
 
-#ifndef UINT32_MAX
-#define UINT32_MAX 4294967295U
-#endif
-
 #define u_http2_parse_sid(p)    (u_parse_unalignedp32(p) & 0x7fffffff)
 #define u_http2_parse_type(p)   ((p) & 0xff)
 #define u_http2_parse_length(p) ((p) >> 8)
@@ -2682,7 +2678,7 @@ void UHTTP2::handlerResponse()
 
    if (dyntbl->num_entries == 0)
       {
-#  if defined(U_LINUX) && defined(ENABLE_THREAD) && defined(U_LOG_DISABLE) && !defined(USE_LIBZ)
+#  if defined(U_LINUX) && defined(ENABLE_THREAD)
       U_INTERNAL_ASSERT_POINTER(u_pthread_time)
       U_INTERNAL_ASSERT_EQUALS(UClientImage_Base::iov_vec[1].iov_base, ULog::ptr_shared_date->date3)
 #  else
@@ -2712,7 +2708,7 @@ void UHTTP2::handlerResponse()
 
       char* ptr_date = entry->value->data();
 
-#  if defined(U_LINUX) && defined(ENABLE_THREAD) && defined(U_LOG_DISABLE) && !defined(USE_LIBZ)
+#  if defined(U_LINUX) && defined(ENABLE_THREAD)
       U_INTERNAL_ASSERT_POINTER(u_pthread_time)
       U_INTERNAL_ASSERT_EQUALS(UClientImage_Base::iov_vec[1].iov_base, ULog::ptr_shared_date->date3)
 #  else

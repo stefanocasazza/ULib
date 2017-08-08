@@ -29,7 +29,6 @@
  * @brief Handles a connections with a server
  */
 
-class ULog;
 class UHTTP;
 class USSLSocket;
 class UHttpPlugIn;
@@ -156,22 +155,6 @@ public:
 
    // LOG 
 
-   static void closeLog()
-      {
-      U_TRACE_NO_PARAM(0, "UClient_Base::closeLog()")
-
-#  ifndef U_LOG_DISABLE
-      if (log &&
-          log_shared_with_server == false)
-         {
-         u_unatexit(&ULog::close); // unregister function of close at exit()...
-                     ULog::close();
-
-         log = U_NULLPTR;
-         }
-#  endif
-      }
-
    void clearData()
       {
       U_TRACE_NO_PARAM(0, "UClient_Base::clearData()")
@@ -179,6 +162,8 @@ public:
         buffer.setEmpty();
       response.setEmpty();
       }
+
+   static void closeLog();
 
    static void setLogShared()
       {
@@ -247,7 +232,7 @@ public:
    // Transmit token name (4 characters) and value (32-bit int, as 8 hex characters)
 
    bool sendTokenInt(   const char* token, uint32_t value)        { buffer.setEmpty(); return URPC::sendTokenInt(   socket, token, value, buffer); }
-   bool sendTokenString(const char* token, const UString& data)   { buffer.setEmpty(); return URPC::sendTokenString(socket, token,  data, buffer); } // Write token, then the string data
+   bool sendTokenString(const char* token, const UString& data)   { buffer.setEmpty(); return URPC::sendTokenString(socket, token,  data, buffer); } // Write token and string data
    bool sendTokenVector(const char* token, UVector<UString>& vec) { buffer.setEmpty(); return URPC::sendTokenVector(socket, token,   vec, buffer); } // Transmit an vector of string
 
    // DEBUG

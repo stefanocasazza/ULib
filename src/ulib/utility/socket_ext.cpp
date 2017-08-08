@@ -206,7 +206,7 @@ error:   U_INTERNAL_DUMP("errno = %d", errno)
    if (UNotifier::bepollet == false)
 #endif
    {
-#if !defined(U_LINUX) || !defined(ENABLE_THREAD) || !defined(U_LOG_DISABLE) || defined(USE_LIBZ)
+#if !defined(ENABLE_THREAD) || !defined(U_LOG_DISABLE) || defined(USE_LIBZ)
    if (sk->isBlocking() == false)
       {
       /**

@@ -111,11 +111,11 @@ void UClientImage_Base::logRequest()
 
    U_INTERNAL_DUMP("u_printf_string_max_length = %d U_ClientImage_pipeline = %b", u_printf_string_max_length, U_ClientImage_pipeline)
 
-   ULog::log(U_CONSTANT_TO_PARAM("%sreceived request (%u bytes) %.*s%.*s%#.*S from %v"),
-               UServer_Base::mod_name[0], sz,
-               (U_ClientImage_pipeline ? U_CONSTANT_SIZE("[pipeline] ") : 0), "[pipeline] ",
-               str_partial_len, str_partial,
-               sz, ptr, logbuf->rep);
+   UServer_Base::log->log(U_CONSTANT_TO_PARAM("%sreceived request (%u bytes) %.*s%.*s%#.*S from %v"),
+                          UServer_Base::mod_name[0], sz,
+                          (U_ClientImage_pipeline ? U_CONSTANT_SIZE("[pipeline] ") : 0), "[pipeline] ",
+                          str_partial_len, str_partial,
+                          sz, ptr, logbuf->rep);
 
    u_printf_string_max_length = u_printf_string_max_length_save;
 }
@@ -485,7 +485,7 @@ void UClientImage_Base::handlerDelete()
       uint32_t len = UServer_Base::setNumConnection(buffer);
       const char* agent = (bsocket_open == false || UServer_Base::isParallelizationParent() ? "Server" : "Client");
 
-      ULog::log(U_CONSTANT_TO_PARAM("%s%.6s close connection from %v, %.*s clients still connected"), UServer_Base::mod_name[0], agent, logbuf->rep, len, buffer);
+      UServer_Base::log->log(U_CONSTANT_TO_PARAM("%s%.6s close connection from %v, %.*s clients still connected"), UServer_Base::mod_name[0], agent, logbuf->rep, len, buffer);
 
 #  ifdef DEBUG
       int fd_logbuf = ::strtoul(logbuf->data(), U_NULLPTR, 10);
@@ -505,10 +505,11 @@ void UClientImage_Base::handlerDelete()
       }
 #endif
 
-   uint32_t u_srv_tot_connection = U_SRV_TOT_CONNECTION-1;
-                                   U_SRV_TOT_CONNECTION = u_srv_tot_connection;
+#ifndef U_LOG_DISABLE
+   ULock::atomicDecrement(U_SRV_TOT_CONNECTION);
 
-   U_INTERNAL_DUMP("U_SRV_TOT_CONNECTION = %u", u_srv_tot_connection)
+   U_INTERNAL_DUMP("U_SRV_TOT_CONNECTION = %u", U_SRV_TOT_CONNECTION)
+#endif
 
 #ifdef U_CLASSIC_SUPPORT
    if (UServer_Base::isClassic()) U_EXIT(0);
@@ -529,7 +530,7 @@ void UClientImage_Base::handlerDelete()
       {
       logbuf->setEmpty();
 
-      if (UNotifier::num_connection == UNotifier::min_connection) ULog::log(U_CONSTANT_TO_PARAM("Waiting for connection on port %u"), UServer_Base::port);
+      if (UNotifier::num_connection == UNotifier::min_connection) UServer_Base::log->log(U_CONSTANT_TO_PARAM("Waiting for connection on port %u"), UServer_Base::port);
       }
 #endif
 
@@ -819,7 +820,6 @@ void UClientImage_Base::endRequest()
          if (time_run > 0L) ptr1 += u__snprintf(ptr1, sizeof(buffer1)-(ptr1-buffer1), U_CONSTANT_TO_PARAM("%ld ms"), time_run);
          else               ptr1 += u__snprintf(ptr1, sizeof(buffer1)-(ptr1-buffer1), U_CONSTANT_TO_PARAM( "%g ms"), chronometer->getTimeElapsed());
 
-#     ifndef U_SERVER_CAPTIVE_PORTAL
          if (UServer_Base::csocket->isOpen())
             {
             uint32_t len = 0;
@@ -838,13 +838,12 @@ void UClientImage_Base::endRequest()
 
             U_INTERNAL_DUMP("USocket::incoming_cpu = %d USocket::bincoming_cpu = %b sched cpu = %d socket cpu = %d", USocket::incoming_cpu, USocket::bincoming_cpu, cpu, scpu)
 
-            if (len) ptr1 += u__snprintf(ptr1, sizeof(buffer1)-(ptr1-buffer1), U_CONSTANT_TO_PARAM(", CPU: %d sched(%d) socket(%d)%.*s"), USocket::incoming_cpu, cpu, scpu, len, " [DIFFER]");
+            if (len) ptr1 += u__snprintf(ptr1,sizeof(buffer1)-(ptr1-buffer1),U_CONSTANT_TO_PARAM(", CPU: %d sched(%d) socket(%d)%.*s"),USocket::incoming_cpu,cpu,scpu,len," [DIFFER]");
             }
-#     endif
 
          U_INTERNAL_ASSERT_MINOR((ptrdiff_t)(ptr1-buffer1), (ptrdiff_t)sizeof(buffer1))
 
-         ULog::write(buffer1, ptr1-buffer1);
+         UServer_Base::log->write(buffer1, ptr1-buffer1);
          }
 #  endif
       }
@@ -1472,6 +1471,9 @@ write:
          {
          // NB: we are managing a sendfile() request...
 
+         U_INTERNAL_DUMP("U_http_sendfile = %b", U_http_sendfile)
+
+         U_INTERNAL_ASSERT(U_http_sendfile)
          U_INTERNAL_ASSERT_EQUALS(nrequest, 0)
          U_INTERNAL_ASSERT_DIFFERS(U_http_version, '2')
          U_INTERNAL_ASSERT_EQUALS(UEventFd::op_mask, EPOLLIN | EPOLLRDHUP | EPOLLET)
@@ -1594,7 +1596,7 @@ bool UClientImage_Base::writeResponse()
 
       U_INTERNAL_ASSERT_MAJOR(iov_sav[0].iov_len, 0)
 
-#  if defined(U_LINUX) && defined(ENABLE_THREAD) && defined(U_LOG_DISABLE) && !defined(USE_LIBZ)
+#  if defined(U_LINUX) && defined(ENABLE_THREAD)
       U_INTERNAL_ASSERT_POINTER(u_pthread_time)
       U_INTERNAL_ASSERT_EQUALS(iov_vec[1].iov_base, ULog::ptr_shared_date->date3)
 #  else
@@ -1604,7 +1606,7 @@ bool UClientImage_Base::writeResponse()
 #  endif
 
 #  ifndef U_LOG_DISABLE
-      if (logbuf) ULog::log(iov_vec+idx, UServer_Base::mod_name[0], "response", ncount, "[pipeline] ", msg_len, U_CONSTANT_TO_PARAM(" to %v"), logbuf->rep);
+      if (logbuf) UServer_Base::log->log(iov_vec+idx, UServer_Base::mod_name[0], "response", ncount, "[pipeline] ", msg_len, U_CONSTANT_TO_PARAM(" to %v"), logbuf->rep);
 #  endif
       }
 

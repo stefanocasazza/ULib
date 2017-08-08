@@ -1806,6 +1806,7 @@ public:
    // STREAM
 
 #ifdef U_STDCPP_ENABLE
+
    istream& getline(istream& is, unsigned char delim = '\n');
 
    friend U_EXPORT istream& operator>>(istream& is,       UString& str);
@@ -1937,6 +1938,9 @@ public:
 
    void setBuffer(uint32_t n);
    void moveToBeginDataInBuffer(uint32_t n);
+
+   static vpFpcu printValueToBuffer;
+
    void printKeyValue(const char* key, uint32_t keylen, const char* data, uint32_t datalen);
 
    void snprintf(const char* format, uint32_t fmt_size, ...)

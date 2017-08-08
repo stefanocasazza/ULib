@@ -14,6 +14,8 @@
 #ifndef ULIB_MEMORY_POOL_H
 #define ULIB_MEMORY_POOL_H 1
 
+#include <ulib/internal/common.h>
+
 // ---------------------------------------------------------------------------------------------------------------
 
 // U_STACK_TYPE_[0-9] 'type' stack for which the request is serviced with preallocation

@@ -55,17 +55,9 @@ UClient_Base::~UClient_Base()
 {
    U_TRACE_UNREGISTER_OBJECT(0, UClient_Base)
 
+   closeLog();
+
    U_INTERNAL_ASSERT_POINTER(socket)
-
-#ifndef U_LOG_DISABLE
-   if (log &&
-       log_shared_with_server == false)
-      {
-      u_unatexit(&ULog::close); // unregister function of close at exit()...
-
-      delete log;
-      }
-#endif
 
    delete socket;
 
@@ -75,6 +67,22 @@ UClient_Base::~UClient_Base()
         uri.clear(); // uri can depend on url...
         url.clear(); // url can depend on response... (Location: xxx)
    response.clear(); // NB: to avoid DEAD OF SOURCE STRING WITH CHILD ALIVE... (response may be substr of buffer)
+#endif
+}
+
+void UClient_Base::closeLog()
+{
+   U_TRACE_NO_PARAM(0, "UClient_Base::closeLog()")
+
+#ifndef U_LOG_DISABLE
+   if (log &&
+       log_shared_with_server == false)
+      {
+      log->closeLog();
+
+      delete log;
+             log = U_NULLPTR;
+      }
 #endif
 }
 
@@ -214,9 +222,9 @@ void UClient_Base::loadConfigParam()
          }
       else
          {
-         U_NEW(ULog, log, ULog(x, cfg->readLong(U_CONSTANT_TO_PARAM("LOG_FILE_SZ"))));
+         U_INTERNAL_ASSERT_EQUALS(log, U_NULLPTR)
 
-         u_atexit(&ULog::close); // register function of close at exit()...
+         U_NEW(ULog, log, ULog(x, cfg->readLong(U_CONSTANT_TO_PARAM("LOG_FILE_SZ"))));
 
          log->setPrefix(U_CONSTANT_TO_PARAM(U_SERVER_LOG_PREFIX));
          }
@@ -272,7 +280,7 @@ bool UClient_Base::connect()
    response.snprintf(U_CONSTANT_TO_PARAM("Sorry, couldn't connect to server %v%R"), host_port.rep, 0); // NB: the last argument (0) is necessary...
 
 #ifndef U_LOG_DISABLE
-   if (log) ULog::log(U_CONSTANT_TO_PARAM("%s%v"), log_shared_with_server ? UServer_Base::mod_name[0] : "", response.rep);
+   if (log) log->log(U_CONSTANT_TO_PARAM("%s%v"), log_shared_with_server ? UServer_Base::mod_name[0] : "", response.rep);
 #endif
 
    U_RETURN(false);
@@ -386,7 +394,7 @@ bool UClient_Base::setUrl(const char* str, uint32_t len)
 
    // NB: return if it has modified host or port...
 
-   if (setHostPort(url.getHost(), url.getPort())) U_RETURN(true);
+   if (setHostPort(url.getHost(), url.getPortNumber())) U_RETURN(true);
 
    U_RETURN(false);
 }
@@ -424,7 +432,7 @@ resend:
    if (connect())
       {
 #  ifndef U_LOG_DISABLE
-      if (log) ULog::log(iov, name, "request", ncount, "", 0, U_CONSTANT_TO_PARAM(" to %v"), host_port.rep);
+      if (log) log->log(iov,  name, "request", ncount, "", 0, U_CONSTANT_TO_PARAM(" to %v"), host_port.rep);
 #  endif
 
       ok = (USocketExt::writev(socket, iov, iovcnt, ncount, timeoutMS, 1) == ncount);
@@ -436,7 +444,7 @@ resend:
          if (++counter <= 2) goto resend;
 
 #     ifndef U_LOG_DISABLE
-         if (log) ULog::log(U_CONSTANT_TO_PARAM("%serror on sending data to %V%R"), name, host_port.rep, 0); // NB: the last argument (0) is necessary...
+         if (log) log->log(U_CONSTANT_TO_PARAM("%serror on sending data to %V%R"), name, host_port.rep, 0); // NB: the last argument (0) is necessary...
 #     endif
 
          goto end;
@@ -458,7 +466,7 @@ resend:
             }
 
 #     ifndef U_LOG_DISABLE
-         if (log) ULog::log(U_CONSTANT_TO_PARAM("%serror on reading data from %V%R"), name, host_port.rep, 0); // NB: the last argument (0) is necessary...
+         if (log) log->log(U_CONSTANT_TO_PARAM("%serror on reading data from %V%R"), name, host_port.rep, 0); // NB: the last argument (0) is necessary...
 #     endif
 
          goto end;
@@ -468,7 +476,7 @@ resend:
       if (log &&
           response)
          {
-         ULog::logResponse(response, name, U_CONSTANT_TO_PARAM(" from %v"), host_port.rep);
+         log->logResponse(response, name, U_CONSTANT_TO_PARAM(" from %v"), host_port.rep);
          }
 #  endif
 
@@ -534,7 +542,7 @@ bool UClient_Base::readResponse(uint32_t count)
       if (log &&
           response)
          {
-         ULog::logResponse(response, (log_shared_with_server ? UServer_Base::mod_name[0] : ""), U_CONSTANT_TO_PARAM(" from %V"), host_port.rep);
+         log->logResponse(response, (log_shared_with_server ? UServer_Base::mod_name[0] : ""), U_CONSTANT_TO_PARAM(" from %V"), host_port.rep);
          }
 #  endif
 
@@ -554,34 +562,20 @@ bool UClient_Base::readHTTPResponse()
 
    if (UHTTP::readHeaderResponse(socket, buffer))
       {
-      uint32_t pos = U_STRING_FIND_EXT(buffer, U_http_info.startHeader, "Content-Length", U_http_info.endHeader - U_CONSTANT_SIZE(U_CRLF2) - U_http_info.startHeader);
-
-      if (pos != U_NOT_FOUND)
+      if (UHTTP::checkContentLength(buffer))
          {
-         uint32_t end = buffer.findWhiteSpace(pos += U_CONSTANT_SIZE("Content-Length") + 2);
+         if (UHTTP::readBodyResponse(socket, &buffer, response) == false) U_RETURN(false);
 
-         U_http_info.clength = (end != U_NOT_FOUND ? u__strtoul(buffer.c_pointer(pos), end-pos) : 0);
-
-         if (U_http_info.clength == 0)
+#     ifndef U_LOG_DISABLE
+         if (log &&
+             response)
             {
-            U_http_flag &= ~HTTP_IS_DATA_CHUNKED;
-
-            U_INTERNAL_DUMP("U_http_data_chunked = %b", U_http_data_chunked)
+            log->logResponse(response, (log_shared_with_server ? UServer_Base::mod_name[0] : ""), U_CONSTANT_TO_PARAM(" from %V"), host_port.rep);
             }
-
-         if (UHTTP::readBodyResponse(socket, &buffer, response))
-            {
-#        ifndef U_LOG_DISABLE
-            if (log &&
-                response)
-               {
-               ULog::logResponse(response, (log_shared_with_server ? UServer_Base::mod_name[0] : ""), U_CONSTANT_TO_PARAM(" from %V"), host_port.rep);
-               }
-#        endif
-
-            U_RETURN(true);
-            }
+#     endif
          }
+
+      U_RETURN(true);
       }
 
    U_RETURN(false);

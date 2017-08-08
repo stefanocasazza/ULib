@@ -47,7 +47,7 @@ int U_EXPORT main(int argc, char* argv[])
       check(dati, filename);
       }
 
-    Url url[20] = {
+    Url url[22] = {
        Url(U_STRING_FROM_CONSTANT("http://www.cs.wustl.edu/")),
        Url(U_STRING_FROM_CONSTANT("http://www.cs.wustl.edu/index.html")),
        Url(U_STRING_FROM_CONSTANT("http://www.cs.wustl.edu/form?var=foo")),
@@ -67,23 +67,26 @@ int U_EXPORT main(int argc, char* argv[])
        Url(U_STRING_FROM_CONSTANT("mailto:nobody")),
        Url(U_STRING_FROM_CONSTANT("http://www.cs.wustl.edu")),
        Url(U_STRING_FROM_CONSTANT("file:/etc/passwd")),
-       Url(U_STRING_FROM_CONSTANT("http://www.cs.wustl.edu/form?var=foo&url=http%3a//www/%3fkkk//"))
+       Url(U_STRING_FROM_CONSTANT("http://www.cs.wustl.edu/form?var=foo&url=http%3a//www/%3fkkk//")),
+       Url(U_STRING_FROM_CONSTANT("http://a:b@host.com:8080/p/a/t/h?query=string#hash")),
+       Url(U_STRING_FROM_CONSTANT("https://tools.ietf.org/id/draft-snell-link-method-01.html#rfc.section.5"))
     };
 
    uint32_t i;
 
-   for (i = 0; i < 20; ++i)
+   for (i = 0; i < 22; ++i)
       {
-      cout  << '"' << url[i]              << "\" "
-            << '"' << url[i].getService() << "\" "
-            << '"' << url[i].getUser()    << "\" "
-            << '"' << url[i].getHost()    << "\" "
-            << '"' << url[i].getPort()    << "\" " 
-            << '"' << url[i].getPath()    << "\" "
-            << '"' << url[i].getQuery()   << "\"\n";
+      cout  << '"' << url[i]               << "\" "
+            << '"' << url[i].getService()  << "\" "
+            << '"' << url[i].getUser()     << "\" "
+            << '"' << url[i].getHost()     << "\" "
+            << '"' << url[i].getPort()     << "\" " 
+            << '"' << url[i].getPath()     << "\" "
+            << '"' << url[i].getQuery()    << "\" "
+            << '"' << url[i].getFragment() << "\"\n";
       }
 
-   for (i = 0; i < 20; ++i)
+   for (i = 0; i < 22; ++i)
       {
       url[i].eraseUser();
       url[i].eraseQuery();
@@ -265,7 +268,7 @@ int U_EXPORT main(int argc, char* argv[])
    U_ASSERT( u.getService() == UString( u.getService(buffer, sizeof(buffer)) ) )
    U_ASSERT( u.getUser()    == UString( u.getUser(buffer, sizeof(buffer)) ) )
    U_ASSERT( u.getHost()    == UString( u.getHost(buffer, sizeof(buffer)) ) )
-   U_ASSERT( u.getPort()    == 8080 )
+   U_ASSERT( u.getPortNumber() == 8080 )
    U_ASSERT( u.getPath()    == UString( u.getPath(buffer, sizeof(buffer)) ) )
    U_ASSERT( u.getQuery()   == UString( u.getQuery(buffer, sizeof(buffer)) ) )
    */

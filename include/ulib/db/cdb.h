@@ -225,6 +225,8 @@ public:
    UString print();
 
 #ifdef U_STDCPP_ENABLE
+   static vpFpcu getValueFromBuffer;
+
    friend U_EXPORT istream& operator>>(istream& is, UCDB& cdb);
    friend U_EXPORT ostream& operator<<(ostream& os, UCDB& cdb);
 

@@ -106,11 +106,9 @@ ULog*         UServer_Base::apache_like_log;
 char*         UServer_Base::client_address;
 ULock*        UServer_Base::lock_user1;
 ULock*        UServer_Base::lock_user2;
-uint32_t      UServer_Base::map_size;
 uint32_t      UServer_Base::vplugin_size;
 uint32_t      UServer_Base::nClientIndex;
 uint32_t      UServer_Base::crash_count;
-uint32_t      UServer_Base::shared_data_add;
 uint32_t      UServer_Base::client_address_len;
 uint32_t      UServer_Base::document_root_size;
 uint32_t      UServer_Base::num_client_threshold;
@@ -144,15 +142,21 @@ USmtpClient*  UServer_Base::emailClient;
 UFileConfig*  UServer_Base::cfg;
 UServer_Base* UServer_Base::pthis;
 
+uint32_t                   UServer_Base::map_size;
+uint32_t                   UServer_Base::shared_data_add;
+UServer_Base::shared_data* UServer_Base::ptr_shared_data;
+
+uint32_t                   UServer_Base::shm_size;
+uint32_t                   UServer_Base::shm_data_add;
+UServer_Base::shm_data*    UServer_Base::ptr_shm_data;
+
 UVector<UString>*                 UServer_Base::vplugin_name;
 UVector<UString>*                 UServer_Base::vplugin_name_static;
 UClientImage_Base*                UServer_Base::vClientImage;
 UClientImage_Base*                UServer_Base::pClientImage;
 UClientImage_Base*                UServer_Base::eClientImage;
-UServer_Base::shm_data*           UServer_Base::ptr_shm_data;
 UVector<UServerPlugIn*>*          UServer_Base::vplugin;
 UVector<UServerPlugIn*>*          UServer_Base::vplugin_static;
-UServer_Base::shared_data*        UServer_Base::ptr_shared_data;
 UVector<UServer_Base::file_LOG*>* UServer_Base::vlog;
 
 #ifdef U_WELCOME_SUPPORT
@@ -263,8 +267,6 @@ public:
    virtual int handlerTime() U_DECL_FINAL
       {
       U_TRACE_NO_PARAM(0, "UTimeoutConnection::handlerTime()")
-
-      U_INTERNAL_ASSERT_POINTER(UServer_Base::ptr_shared_data)
 
       // there are idle connection... (timeout)
 
@@ -437,17 +439,17 @@ public:
             {
             if (UServer_Base::throttling_rec->krate > UServer_Base::throttling_rec->max_limit)
                {
-               ULog::log(U_CONSTANT_TO_PARAM("throttle %V: krate %u %sexceeding limit %u; %u sending"), UServer_Base::db_throttling->getKeyID().rep,
-                            UServer_Base::throttling_rec->krate,
-                           (UServer_Base::throttling_rec->krate > UServer_Base::throttling_rec->max_limit * 2  ? "greatly " : ""),
-                            UServer_Base::throttling_rec->max_limit, UServer_Base::throttling_rec->num_sending);
+               UServer_Base::log->log(U_CONSTANT_TO_PARAM("throttle %V: krate %u %sexceeding limit %u; %u sending"), UServer_Base::db_throttling->getKeyID().rep,
+                                      UServer_Base::throttling_rec->krate,
+                                     (UServer_Base::throttling_rec->krate > UServer_Base::throttling_rec->max_limit * 2  ? "greatly " : ""),
+                                      UServer_Base::throttling_rec->max_limit, UServer_Base::throttling_rec->num_sending);
                }
 
             if (UServer_Base::throttling_rec->krate < UServer_Base::throttling_rec->min_limit)
                {
-               ULog::log(U_CONSTANT_TO_PARAM("throttle %V: krate %u lower than minimum %u; %u sending"), UServer_Base::db_throttling->getKeyID().rep,
-                            UServer_Base::throttling_rec->krate,
-                            UServer_Base::throttling_rec->min_limit, UServer_Base::throttling_rec->num_sending);
+               UServer_Base::log->log(U_CONSTANT_TO_PARAM("throttle %V: krate %u lower than minimum %u; %u sending"), UServer_Base::db_throttling->getKeyID().rep,
+                                      UServer_Base::throttling_rec->krate,
+                                      UServer_Base::throttling_rec->min_limit, UServer_Base::throttling_rec->num_sending);
                }
             }
          }
@@ -1008,7 +1010,7 @@ bool UServer_Base::checkHitStats(const char* key, uint32_t key_len, uint32_t int
 
 bool UServer_Base::checkHitSiteStats()
 {
-   U_TRACE_NO_PARAM(0, "UServer_Base::checkHitSiteStats()")
+   U_TRACE_NO_PARAM(0+256, "UServer_Base::checkHitSiteStats()")
 
    U_INTERNAL_ASSERT_POINTER(db_evasive)
 
@@ -1026,7 +1028,7 @@ bool UServer_Base::checkHitSiteStats()
 
 bool UServer_Base::checkHitUriStats()
 {
-   U_TRACE_NO_PARAM(0, "UServer_Base::checkHitUriStats()")
+   U_TRACE_NO_PARAM(0+256, "UServer_Base::checkHitUriStats()")
 
    U_INTERNAL_ASSERT_POINTER(db_evasive)
 
@@ -1137,7 +1139,7 @@ public:
             continue;
             }
             
-#       if !defined(U_LOG_DISABLE) && defined(USE_LIBZ)
+#       ifndef U_SERVER_CAPTIVE_PORTAL
          if (UServer_Base::log)                         UServer_Base::log->checkForLogRotateDataToWrite();
          if (UServer_Base::apache_like_log) UServer_Base::apache_like_log->checkForLogRotateDataToWrite();
 #       endif
@@ -1200,7 +1202,7 @@ public:
 
          sec = u_now->tv_sec;
 
-#       if !defined(U_LOG_DISABLE) && defined(USE_LIBZ)
+#       ifndef U_SERVER_CAPTIVE_PORTAL
          if (daylight &&
              (sec % U_ONE_HOUR_IN_SECOND) == 0)
             {
@@ -1210,7 +1212,7 @@ public:
 
          if (UServer_Base::update_date)
             {
-#        if !defined(U_LOG_DISABLE) && defined(USE_LIBZ)
+#        ifndef U_SERVER_CAPTIVE_PORTAL
             (void) U_SYSCALL(pthread_rwlock_wrlock, "%p", ULog::prwlock);
 #        endif
 
@@ -1229,7 +1231,7 @@ public:
                if (UServer_Base::update_date3) (void) u_strftime2(ULog::ptr_shared_date->date3+6, 29-4, U_CONSTANT_TO_PARAM("%a, %d %b %Y %T"), sec);
                }
 
-#        if !defined(U_LOG_DISABLE) && defined(USE_LIBZ)
+#        ifndef U_SERVER_CAPTIVE_PORTAL
             (void) U_SYSCALL(pthread_rwlock_unlock, "%p", ULog::prwlock);
 #        endif
             }
@@ -1423,9 +1425,7 @@ UServer_Base::~UServer_Base()
 
    delete socket;
    delete vplugin_name;
-#ifndef U_SERVER_CAPTIVE_PORTAL
    delete vplugin;
-#endif
 
    UOrmDriver::clear();
 
@@ -1500,7 +1500,7 @@ UServer_Base::~UServer_Base()
    if (lock_user1) delete lock_user1;
    if (lock_user2) delete lock_user2;
 
-   UFile::munmap(ptr_shared_data, map_size);
+   if (ptr_shared_data) UFile::munmap(ptr_shared_data, map_size);
 
    delete as_user;
    delete dh_file;
@@ -1530,7 +1530,7 @@ void UServer_Base::closeLog()
    if (log &&
        log->isOpen())
       {
-      ULog::close();
+      log->closeLog();
 
 #  ifdef DEBUG
       delete log;
@@ -1758,21 +1758,45 @@ void UServer_Base::loadConfigParam()
    if ((port == 80 || port == 443) &&
        UServices::isSetuidRoot() == false)
       {
-      port = 8080;
+      unsigned int _port = (port == 80 ? 8080 : 4433);
 
-      U_WARNING("Sorry, it is required root privilege to listen on port 80 but I am not setuid root, I must try 8080");
+      U_WARNING("Sorry, it is required root privilege to listen on port %u but I am not setuid root, I must try %u", port, _port);
+
+      port = _port;
       }
 
    set_tcp_keep_alive    = cfg->readBoolean(U_CONSTANT_TO_PARAM("TCP_KEEP_ALIVE"));
    set_realtime_priority = cfg->readBoolean(U_CONSTANT_TO_PARAM("SET_REALTIME_PRIORITY"), true);
 
+   crash_count                    = cfg->readLong(U_CONSTANT_TO_PARAM("CRASH_COUNT"), 5);
    tcp_linger_set                 = cfg->readLong(U_CONSTANT_TO_PARAM("TCP_LINGER_SET"), -2);
    USocket::iBackLog              = cfg->readLong(U_CONSTANT_TO_PARAM("LISTEN_BACKLOG"), SOMAXCONN);
+   min_size_for_sendfile          = cfg->readLong(U_CONSTANT_TO_PARAM("MIN_SIZE_FOR_SENDFILE"), 500 * 1024); // 500k: for major size we assume is better to use sendfile()
    UNotifier::max_connection      = cfg->readLong(U_CONSTANT_TO_PARAM("MAX_KEEP_ALIVE"));
    u_printf_string_max_length     = cfg->readLong(U_CONSTANT_TO_PARAM("LOG_MSG_SIZE"));
 
    num_client_threshold           = cfg->readLong(U_CONSTANT_TO_PARAM("CLIENT_THRESHOLD"));
    num_client_for_parallelization = cfg->readLong(U_CONSTANT_TO_PARAM("CLIENT_FOR_PARALLELIZATION"));
+
+   x = cfg->at(U_CONSTANT_TO_PARAM("CRASH_EMAIL_NOTIFY"));
+
+   if (x)
+      {
+      U_INTERNAL_ASSERT_EQUALS(crashEmailAddress, U_NULLPTR)
+
+      U_NEW(UString, crashEmailAddress, UString(x));
+
+      if (emailClient == U_NULLPTR)
+         {
+         U_NEW(USmtpClient, emailClient, USmtpClient(UClientImage_Base::bIPv6));
+         }
+      }
+
+#ifdef U_WELCOME_SUPPORT
+   x = cfg->at(U_CONSTANT_TO_PARAM("WELCOME_MSG"));
+
+   if (x) setMsgWelcome(x);
+#endif
 
    x = cfg->at(U_CONSTANT_TO_PARAM("PREFORK_CHILD"));
 
@@ -1780,7 +1804,7 @@ void UServer_Base::loadConfigParam()
       {
       preforked_num_kids = x.strtol();
 
-#  ifdef U_SERVER_CAPTIVE_PORTAL
+#  if defined(U_SERVER_CAPTIVE_PORTAL) && !defined(ENABLE_THREAD)
       if (x.c_char(0) == '0') monitoring_process = true;
 #  endif
 
@@ -1824,16 +1848,6 @@ void UServer_Base::loadConfigParam()
 
    if (preforked_num_kids > 1) monitoring_process = true;
 
-#ifdef U_WELCOME_SUPPORT
-   x = cfg->at(U_CONSTANT_TO_PARAM("WELCOME_MSG"));
-
-   if (x) setMsgWelcome(x);
-#endif
-
-   min_size_for_sendfile = cfg->readLong(U_CONSTANT_TO_PARAM("MIN_SIZE_FOR_SENDFILE"));
-
-   if (min_size_for_sendfile == 0) min_size_for_sendfile = 500 * 1024; // 500k: for major size we assume is better to use sendfile()
-
 #ifdef USE_LIBSSL
    *password   = cfg->at(U_CONSTANT_TO_PARAM("PASSWORD"));
    *ca_file    = cfg->at(U_CONSTANT_TO_PARAM("CA_FILE"));
@@ -1848,22 +1862,6 @@ void UServer_Base::loadConfigParam()
 #endif
 
    U_INTERNAL_DUMP("min_size_for_sendfile = %u", min_size_for_sendfile)
-
-   crash_count = cfg->readLong(U_CONSTANT_TO_PARAM("CRASH_COUNT"), 5);
-
-   x = cfg->at(U_CONSTANT_TO_PARAM("CRASH_EMAIL_NOTIFY"));
-
-   if (x)
-      {
-      U_INTERNAL_ASSERT_EQUALS(crashEmailAddress, U_NULLPTR)
-
-      U_NEW(UString, crashEmailAddress, UString(x));
-
-      if (emailClient == U_NULLPTR)
-         {
-         U_NEW(USmtpClient, emailClient, USmtpClient(UClientImage_Base::bIPv6));
-         }
-      }
 
    // Instructs server to accept connections from the IP address IPADDR. A CIDR mask length can be
    // supplied optionally after a trailing slash, e.g. 192.168.0.0/24, in which case addresses that
@@ -1951,37 +1949,9 @@ void UServer_Base::loadConfigParam()
 #  endif
       }
 
-   x = cfg->at(U_CONSTANT_TO_PARAM("PID_FILE"));
-
-   if (x)
-      {
-      // write pid on file
-
-      U_INTERNAL_ASSERT(x.isNullTerminated())
-
-      int old_pid = (int) UFile::getSysParam(x.data());
-
-      if (old_pid > 0)
-         {
-#     ifndef U_LOG_DISABLE
-         if (isLog()) ULog::log(U_CONSTANT_TO_PARAM("Trying to kill another instance of userver that is running with pid %d"), old_pid);
-#     endif
-
-         U_INTERNAL_ASSERT_DIFFERS(old_pid, u_pid)
-
-         UProcess::kill(old_pid, SIGTERM); // SIGTERM is sent to every process in the process group of the calling process...
-         }
-
-      UString pid_str = UString(u_pid_str, u_pid_str_len);
-
-      (void) UFile::writeTo(x, pid_str);
-
-      U_DEBUG("We have %s the PID_FILE %V with content: %V", (old_pid > 0 ? "updated" : "created"), x.rep, pid_str.rep);
-      }
-
    // DOCUMENT_ROOT: The directory out of which we will serve your documents
 
-   if (setDocumentRoot(cfg->at(U_CONSTANT_TO_PARAM("DOCUMENT_ROOT"))) == false) U_ERROR("Setting DOCUMENT ROOT %V failed", document_root->rep);
+   if (setDocumentRoot(cfg->at(U_CONSTANT_TO_PARAM("DOCUMENT_ROOT"))) == false) U_ERROR("Setting DOCUMENT ROOT to %V failed", document_root->rep);
 
 #ifndef U_LOG_DISABLE
    x = cfg->at(U_CONSTANT_TO_PARAM("LOG_FILE"));
@@ -2002,6 +1972,30 @@ void UServer_Base::loadConfigParam()
       if (bmsg) U_SRV_LOG("WARNING: the \"RUN_AS_USER\" directive makes sense only if the master process runs with super-user privileges, ignored");
       }
 #endif
+
+   x = cfg->at(U_CONSTANT_TO_PARAM("PID_FILE"));
+
+   if (x)
+      {
+      // write pid on file
+
+      U_INTERNAL_ASSERT(x.isNullTerminated())
+
+      int old_pid = (int) UFile::getSysParam(x.data());
+
+      if (old_pid > 0)
+         {
+         U_SRV_LOG("Trying to kill another instance of userver that is running with pid %d", old_pid);
+
+         U_INTERNAL_ASSERT_DIFFERS(old_pid, u_pid)
+
+         UProcess::kill(old_pid, SIGTERM); // SIGTERM is sent to every process in the process group of the calling process...
+         }
+
+      (void) UFile::writeTo(x, u_pid_str, u_pid_str_len);
+
+      U_DEBUG("We have %s the PID_FILE %V with content: %P", (old_pid > 0 ? "updated" : "created"), x.rep);
+      }
 
 #ifdef USE_LOAD_BALANCE
    x = cfg->at(U_CONSTANT_TO_PARAM("LOAD_BALANCE_DEVICE_NETWORK"));
@@ -2159,14 +2153,14 @@ U_NO_EXPORT void UServer_Base::loadStaticLinkedModules(const char* name)
    U_INTERNAL_ASSERT_POINTER(vplugin_name)
    U_INTERNAL_ASSERT_MAJOR(vplugin_size, 0)
 
-   UString x(name, u__strlen(name, __PRETTY_FUNCTION__));
+   uint32_t name_len;
+   UString x(name, (name_len = u__strlen(name, __PRETTY_FUNCTION__)));
 
    if (vplugin_name->find(x) != U_NOT_FOUND) // NB: we load only the plugin that we want from configuration (PLUGIN var)...
       {
 #  ifndef U_LOG_DISABLE
-      const char* fmt = "WARNING: Link phase of static plugin %s failed\n";
+      bool ok = false;
 #  endif
-
 #if defined(U_STATIC_HANDLER_RPC)    || defined(U_STATIC_HANDLER_SHIB)   || defined(U_STATIC_HANDLER_ECHO)  || \
     defined(U_STATIC_HANDLER_STREAM) || defined(U_STATIC_HANDLER_SOCKET) || defined(U_STATIC_HANDLER_SCGI)  || \
     defined(U_STATIC_HANDLER_FCGI)   || defined(U_STATIC_HANDLER_GEOIP)  || defined(U_STATIC_HANDLER_PROXY) || \
@@ -2217,18 +2211,22 @@ U_NO_EXPORT void UServer_Base::loadStaticLinkedModules(const char* name)
 #  endif
 next: if (_plugin)
          {
+#     ifndef U_LOG_DISABLE
+         ok = true;
+#     endif
+
          vplugin_name_static->push_back(x);
 
          vplugin_static->push_back(_plugin);
-
-#     ifndef U_LOG_DISABLE
-         fmt = "Link phase of static plugin %s success";
-#     endif
          }
 #endif
 
 #  ifndef U_LOG_DISABLE
-      if (isLog()) ULog::log(fmt, strlen(fmt), name);
+      if (isLog())
+         {
+         if (ok) log->log(U_CONSTANT_TO_PARAM(         "Link phase of static plugin %.*s success"), name_len, name);
+         else    log->log(U_CONSTANT_TO_PARAM("WARNING: Link phase of static plugin %.*s failed"),  name_len, name);
+         }
 #  endif
       }
 }
@@ -2255,7 +2253,7 @@ int UServer_Base::loadPlugins(UString& plugin_dir, const UString& plugin_list)
    U_NEW(UVector<UServerPlugIn*>, vplugin,        UVector<UServerPlugIn*>(10U));
    U_NEW(UVector<UServerPlugIn*>, vplugin_static, UVector<UServerPlugIn*>(10U));
 
-   uint32_t i;
+   uint32_t i, pos = 0;
    UString item, _name;
    UServerPlugIn* _plugin;
    int result = U_PLUGIN_HANDLER_ERROR;
@@ -2280,7 +2278,7 @@ int UServer_Base::loadPlugins(UString& plugin_dir, const UString& plugin_list)
       {
       item = vplugin_name->at(i);
 
-      uint32_t pos = vplugin_name_static->find(item);
+      pos = vplugin_name_static->find(item);
 
       U_INTERNAL_DUMP("i = %u pos = %u item = %V", i, pos, item.rep)
 
@@ -2304,10 +2302,10 @@ int UServer_Base::loadPlugins(UString& plugin_dir, const UString& plugin_list)
 #  ifndef U_LOG_DISABLE
       if (isLog())
          {
-         (void) u__snprintf(mod_name[0], sizeof(mod_name[0]), U_CONSTANT_TO_PARAM("[%v] "), item.rep);
+         pos = u__snprintf(mod_name[0], sizeof(mod_name[0]), U_CONSTANT_TO_PARAM("[%v] "), item.rep);
 
-         if (_plugin == U_NULLPTR) ULog::log(U_CONSTANT_TO_PARAM("%sWARNING: Load phase of plugin %v failed"), mod_name[0], item.rep);
-         else                      ULog::log(U_CONSTANT_TO_PARAM("%sLoad phase of plugin %v success"),         mod_name[0], item.rep);
+         if (_plugin) log->log(U_CONSTANT_TO_PARAM(         "%.*sLoad phase of plugin %v success"), pos, mod_name[0], item.rep);
+         else         log->log(U_CONSTANT_TO_PARAM("%.*sWARNING: Load phase of plugin %v failed"),  pos, mod_name[0], item.rep);
 
          mod_name[0][0] = '\0';
          }
@@ -2338,7 +2336,7 @@ int UServer_Base::loadPlugins(UString& plugin_dir, const UString& plugin_list)
             _plugin = vplugin->at(i);
 
 #        ifndef U_LOG_DISABLE
-            if (isLog()) (void) u__snprintf(mod_name[0], sizeof(mod_name[0]), U_CONSTANT_TO_PARAM("[%v] "), item.rep);
+            if (isLog()) pos = u__snprintf(mod_name[0], sizeof(mod_name[0]), U_CONSTANT_TO_PARAM("[%v] "), item.rep);
 #        endif
 
             result = _plugin->handlerConfig(*cfg);
@@ -2348,11 +2346,8 @@ int UServer_Base::loadPlugins(UString& plugin_dir, const UString& plugin_list)
                {
                if ((result & (U_PLUGIN_HANDLER_ERROR | U_PLUGIN_HANDLER_PROCESSED)) != 0)
                   {
-                  const char* fmt = ((result & U_PLUGIN_HANDLER_ERROR) == 0
-                                       ? "%sConfiguration phase of plugin %v success"
-                                       : "%sWARNING: Configuration phase of plugin %v failed");
-
-                  ULog::log(fmt, strlen(fmt), mod_name[0], item.rep);
+                  if ((result & U_PLUGIN_HANDLER_ERROR) == 0) log->log(U_CONSTANT_TO_PARAM(         "%.*sConfiguration phase of plugin %v success"), pos, mod_name[0], item.rep);
+                  else                                        log->log(U_CONSTANT_TO_PARAM("%.*sWARNING: Configuration phase of plugin %v failed"),  pos, mod_name[0], item.rep);
                   }
 
                mod_name[0][0] = '\0';
@@ -2404,9 +2399,8 @@ int UServer_Base::pluginsHandler##xxx()                                         
    U_INTERNAL_ASSERT_POINTER(vplugin)                                              \
    U_INTERNAL_ASSERT_MAJOR(vplugin_size, 0)                                        \
                                                                                    \
-   int result;                                                                     \
-   uint32_t i = 0;                                                                 \
-   const char* fmt;                                                                \
+   int result, ilog;                                                               \
+   uint32_t i = 0, sz;                                                             \
    UServerPlugIn* _plugin;                                                         \
                                                                                    \
    do {                                                                            \
@@ -2417,29 +2411,39 @@ int UServer_Base::pluginsHandler##xxx()                                         
          {                                                                         \
          UString name = vplugin_name->at(i);                                       \
                                                                                    \
-         (void) u__snprintf(mod_name[0],sizeof(mod_name[0]),                       \
-                            U_CONSTANT_TO_PARAM("[%v] "),name.rep);                \
+         sz = u__snprintf(mod_name[0], sizeof(mod_name[0]), U_CONSTANT_TO_PARAM("[%v] "), name.rep); \
                                                                                    \
          result = _plugin->handler##xxx();                                         \
                                                                                    \
          if ((result & (U_PLUGIN_HANDLER_ERROR |                                   \
                         U_PLUGIN_HANDLER_PROCESSED)) != 0)                         \
             {                                                                      \
+            ilog = 0;                                                              \
+                                                                                   \
             if ((result & U_PLUGIN_HANDLER_ERROR) != 0)                            \
                {                                                                   \
-               fmt = ((result & U_PLUGIN_HANDLER_FINISHED) != 0                    \
-                  ? U_NULLPTR                                                      \
-                  : "%sWARNING: "#xxx" phase of plugin %v failed");                \
+               if ((result & U_PLUGIN_HANDLER_FINISHED) != 0) ilog = 2;            \
                }                                                                   \
             else                                                                   \
                {                                                                   \
-               fmt = (U_ClientImage_parallelization == U_PARALLELIZATION_PARENT || \
-                      (result & U_PLUGIN_HANDLER_PROCESSED) == 0                   \
-                        ? U_NULLPTR                                                \
-                        : "%s"#xxx" phase of plugin %v success");                  \
+               if ((result & U_PLUGIN_HANDLER_PROCESSED) == 0  ||                  \
+                   U_ClientImage_parallelization == U_PARALLELIZATION_PARENT)      \
+                  {                                                                \
+                  ilog = 1;                                                        \
+                  }                                                                \
                }                                                                   \
                                                                                    \
-            if (fmt) ULog::log(fmt, strlen(fmt), mod_name[0], name.rep);           \
+            if (ilog)                                                              \
+               {                                                                   \
+               if (ilog == 1)                                                      \
+                  {                                                                \
+                  log->log(U_CONSTANT_TO_PARAM("%.*s"#xxx" phase of plugin %v success"), sz, mod_name[0], name.rep); \
+                  }                                                                \
+               else                                                                \
+                  {                                                                \
+                  log->log(U_CONSTANT_TO_PARAM("%.*sWARNING: "#xxx" phase of plugin %v failed"), sz, mod_name[0], name.rep); \
+                  }                                                                \
+               }                                                                   \
             }                                                                      \
                                                                                    \
          mod_name[0][0] = '\0';                                                    \
@@ -2488,8 +2492,8 @@ int UServer_Base::pluginsHandler##xxx()                                         
    U_INTERNAL_ASSERT_POINTER(vplugin)                                              \
    U_INTERNAL_ASSERT_MAJOR(vplugin_size, 0)                                        \
                                                                                    \
-   int result;                                                                     \
-   const char* fmt;                                                                \
+   uint32_t sz;                                                                    \
+   int result, ilog;                                                               \
    UServerPlugIn* _plugin;                                                         \
    uint32_t i = vplugin_size;                                                      \
                                                                                    \
@@ -2501,29 +2505,39 @@ int UServer_Base::pluginsHandler##xxx()                                         
          {                                                                         \
          UString name = vplugin_name->at(i);                                       \
                                                                                    \
-         (void) u__snprintf(mod_name[0],sizeof(mod_name[0]),                       \
-                            U_CONSTANT_TO_PARAM("[%v] "),name.rep);                \
+         sz = u__snprintf(mod_name[0], sizeof(mod_name[0]), U_CONSTANT_TO_PARAM("[%v] "), name.rep); \
                                                                                    \
          result = _plugin->handler##xxx();                                         \
                                                                                    \
          if ((result & (U_PLUGIN_HANDLER_ERROR |                                   \
                         U_PLUGIN_HANDLER_PROCESSED)) != 0)                         \
             {                                                                      \
+            ilog = 0;                                                              \
+                                                                                   \
             if ((result & U_PLUGIN_HANDLER_ERROR) != 0)                            \
                {                                                                   \
-               fmt = ((result & U_PLUGIN_HANDLER_FINISHED) != 0                    \
-                  ? U_NULLPTR                                                      \
-                  : "%sWARNING: "#xxx" phase of plugin %v failed");                \
+               if ((result & U_PLUGIN_HANDLER_FINISHED) != 0) ilog = 2;            \
                }                                                                   \
             else                                                                   \
                {                                                                   \
-               fmt = (U_ClientImage_parallelization == U_PARALLELIZATION_PARENT || \
-                      (result & U_PLUGIN_HANDLER_PROCESSED) == 0                   \
-                        ? U_NULLPTR                                                \
-                        : "%s"#xxx" phase of plugin %v success");                  \
+               if ((result & U_PLUGIN_HANDLER_PROCESSED) == 0 ||                   \
+                   U_ClientImage_parallelization == U_PARALLELIZATION_PARENT)      \
+                  {                                                                \
+                  ilog = 1;                                                        \
+                  }                                                                \
                }                                                                   \
                                                                                    \
-            if (fmt) ULog::log(fmt, strlen(fmt), mod_name[0], name.rep);           \
+            if (ilog)                                                              \
+               {                                                                   \
+               if (ilog == 1)                                                      \
+                  {                                                                \
+                  log->log(U_CONSTANT_TO_PARAM("%.*s"#xxx" phase of plugin %v success"), sz, mod_name[0], name.rep); \
+                  }                                                                \
+               else                                                                \
+                  {                                                                \
+                  log->log(U_CONSTANT_TO_PARAM("%.*sWARNING: "#xxx" phase of plugin %v failed"), sz, mod_name[0], name.rep); \
+                  }                                                                \
+               }                                                                   \
             }                                                                      \
                                                                                    \
          mod_name[0][0] = '\0';                                                    \
@@ -2752,21 +2766,15 @@ void UServer_Base::init()
 
    proc->setProcessGroup();
 
-#ifndef U_LOG_DISABLE
-   uint32_t log_rotate_size = 0;
-
-# ifdef USE_LIBZ
-   if (isLog())
+#if !defined(U_LOG_DISABLE) && defined(USE_LIBZ)
+   if (isLog() &&
+       log->isMemoryMapped())
       {
-      // The zlib documentation states that destination buffer size must be at least 0.1% larger than avail_in plus 12 bytes
+      U_INTERNAL_ASSERT_EQUALS(shared_data_add, 0)
 
-      log_rotate_size =
-      shared_data_add = log->UFile::st_size + (log->UFile::st_size / 10) + 12U;
+      shared_data_add = log->getSizeLogRotateData();
       }
 # endif
-
-   U_INTERNAL_DUMP("log_rotate_size = %u", log_rotate_size)
-#endif
 
    // init plugin modules, must run after the setting for shared log
 
@@ -2774,32 +2782,36 @@ void UServer_Base::init()
 
    // manage shared data...
 
-   U_INTERNAL_DUMP("shared_data_add = %u", shared_data_add)
+   U_INTERNAL_DUMP("shared_data_add = %u shm_data_add = %u", shared_data_add, shm_data_add)
 
+   U_INTERNAL_ASSERT_EQUALS(ptr_shm_data, U_NULLPTR)
    U_INTERNAL_ASSERT_EQUALS(ptr_shared_data, U_NULLPTR)
 
-   map_size        = sizeof(shared_data) + shared_data_add;
-   ptr_shared_data = (shared_data*) UFile::mmap(&map_size);
-
-   U_INTERNAL_ASSERT_POINTER(ptr_shared_data)
-   U_INTERNAL_ASSERT_DIFFERS(ptr_shared_data, MAP_FAILED)
+   U_DEBUG("sizeof(shared_data) = %u sizeof(shm_data) = %u shared_data_add = %u shm_data_add = %u", sizeof(shared_data), sizeof(shm_data), shared_data_add, shm_data_add);
 
    // For portable use, a shared memory object should be identified by a name of the form /somename; that is, a null-terminated string of
    // up to NAME_MAX (i.e., 255) characters consisting of an initial slash, followed by one or more characters, none of which are slashes
 
-#if defined(U_LINUX) && !defined(U_LOG_DISABLE) && defined(USE_LIBZ)
-   ptr_shm_data = (shm_data*) UFile::shm_open("/userver", sizeof(shm_data));
-#endif
+#ifndef U_SERVER_CAPTIVE_PORTAL
+   shm_size     = sizeof(shm_data) + shm_data_add;
+   ptr_shm_data = (shm_data*) UFile::shm_open("/userver", shm_size);
 
-   U_DEBUG("sizeof(shared_data) = %u sizeof(shm_data) = %u", sizeof(shared_data), sizeof(shm_data));
+   U_INTERNAL_ASSERT_POINTER(ptr_shm_data)
+#endif
 
 #ifndef U_LOG_DISABLE
    if (isLog() == false)
 #endif
    ULog::initDate();
 
+   flag_loop = true; // NB: UTimeThread loop depend on this setting...
+
 #if defined(U_LINUX) && defined(ENABLE_THREAD)
+   map_size        = sizeof(shared_data) + shared_data_add;
+   ptr_shared_data = (shared_data*) UFile::mmap(&map_size);
+
    U_INTERNAL_ASSERT_POINTER(ptr_shared_data)
+   U_INTERNAL_ASSERT_DIFFERS(ptr_shared_data, MAP_FAILED)
    U_INTERNAL_ASSERT_EQUALS(ULog::ptr_shared_date, U_NULLPTR)
 
    bool _daylight    = *u_pdaylight;
@@ -2813,9 +2825,7 @@ void UServer_Base::init()
    ULog::ptr_shared_date = &(ptr_shared_data->log_date_shared);
 
    U_MEMCPY(ULog::ptr_shared_date, &ULog::date, sizeof(ULog::log_date));
-#endif
 
-#if defined(U_LINUX) && defined(ENABLE_THREAD)
    // NB: we block SIGHUP and SIGTERM; the threads created will inherit a copy of the signal mask...
 # ifdef sigemptyset
                     sigemptyset(&mask);
@@ -2832,11 +2842,7 @@ void UServer_Base::init()
 # endif
 
    (void) U_SYSCALL(pthread_sigmask, "%d,%p,%p", SIG_BLOCK, &mask, U_NULLPTR);
-#endif
 
-   flag_loop = true; // NB: UTimeThread loop depend on this setting...
-
-#if defined(U_LINUX) && defined(ENABLE_THREAD)
    U_INTERNAL_ASSERT_EQUALS(ULog::prwlock,  U_NULLPTR)
    U_INTERNAL_ASSERT_EQUALS(u_pthread_time, U_NULLPTR)
 
@@ -2847,20 +2853,29 @@ void UServer_Base::init()
    ((UTimeThread*)u_pthread_time)->start(50);
 #endif
 
-#ifndef U_LOG_DISABLE
-   if (isLog())
+#if !defined(U_LOG_DISABLE) && defined(USE_LIBZ)
+   if (isLog() &&
+       log->isMemoryMapped())
       {
-      // NB: if log is mapped must be always shared because the possibility of fork() by parallelization...
+      log->setLogRotate();
 
-      if (log->isMemoryMapped()) log->setShared(&(ptr_shared_data->log_data_shared), log_rotate_size);
+      log->setShared(&(ptr_shared_data->log_data_shared)); // NB: if log is memory mapped must be shared because the possibility of fork() by parallelization
 
       U_SRV_LOG("Mapped %u bytes (%u KB) of shared memory for %d preforked process", sizeof(shared_data) + shared_data_add, map_size / 1024, preforked_num_kids);
       }
+
+   if (apache_like_log &&
+       apache_like_log->isMemoryMapped())
+      {
+      apache_like_log->setLogRotate();
+
+      apache_like_log->setShared(&(ptr_shm_data->log_data_shared)); // NB: if apache like log is memory mapped must be shared because the possibility of condivision with userver_ssl
+
+      U_SRV_LOG("Mapped %u bytes (%u KB) of shared memory for apache like log", apache_like_log->getSizeLogRotateData(), apache_like_log->getSizeLogRotateData() / 1024);
+      }
 #endif
 
-#ifndef U_LOG_DISABLE
    U_INTERNAL_ASSERT_EQUALS(U_SRV_TOT_CONNECTION, 0)
-#endif
 
 #ifdef DEBUG
    UEventTime* pstat;
@@ -3159,9 +3174,10 @@ RETSIGTYPE UServer_Base::handlerForSigTERM(int signo)
 #       endif
 #     endif
 
-#  ifndef U_LOG_DISABLE
+#     ifndef U_LOG_DISABLE
          if (isLog()) logMemUsage("SIGTERM");
-#  endif
+#     endif
+
          U_EXIT(0);
          }
       }
@@ -3216,7 +3232,6 @@ int UServer_Base::handlerRead()
 
    U_INTERNAL_DUMP("nClientIndex = %u", nClientIndex)
 
-   U_INTERNAL_ASSERT_POINTER(ptr_shared_data)
    U_INTERNAL_ASSERT_MINOR(nClientIndex, UNotifier::max_connection)
 
    // This loops until the accept() fails, trying to start new connections as fast as possible so we don't overrun the listen queue
@@ -3230,9 +3245,6 @@ int UServer_Base::handlerRead()
    UClientImage_Base* lClientIndex = pClientImage;
 #endif
    int cround = 0;
-#ifndef U_LOG_DISABLE
-   uint32_t u_srv_tot_connection;
-#endif
 #ifdef DEBUG
    CLIENT_ADDRESS_LEN = 0;
    uint32_t numc, nothing = 0;
@@ -3362,7 +3374,7 @@ try_accept:
 
          if (u_buffer_len)
             {
-            ULog::log(U_CONSTANT_TO_PARAM("WARNING: accept new client failed %.*S"), u_buffer_len, u_buffer);
+            log->log(U_CONSTANT_TO_PARAM("WARNING: accept new client failed %.*S"), u_buffer_len, u_buffer);
 
             u_buffer_len = 0;
             }
@@ -3471,10 +3483,9 @@ try_accept:
 #endif
 
 #ifndef U_LOG_DISABLE
-   u_srv_tot_connection = U_SRV_TOT_CONNECTION+1;
-                          U_SRV_TOT_CONNECTION = u_srv_tot_connection;
+   ULock::atomicIncrement(U_SRV_TOT_CONNECTION);
 
-   U_INTERNAL_DUMP("U_SRV_TOT_CONNECTION = %u", u_srv_tot_connection)
+   U_INTERNAL_DUMP("U_SRV_TOT_CONNECTION = %u", U_SRV_TOT_CONNECTION)
 #endif
 
    ++UNotifier::num_connection;
@@ -3523,17 +3534,15 @@ retry:   pid = UProcess::waitpid(-1, &status, WNOHANG); // NB: to avoid too much
                {
                char buffer[128];
 
-               ULog::log(U_CONSTANT_TO_PARAM("%sChild (pid %d) exited with value %d (%s), down to %u children"),
-                         UServer_Base::mod_name[0], pid, status, UProcess::exitInfo(buffer, status), UNotifier::num_connection - UNotifier::min_connection);
+               log->log(U_CONSTANT_TO_PARAM("%sChild (pid %d) exited with value %d (%s), down to %u children"),
+                        mod_name[0], pid, status, UProcess::exitInfo(buffer, status), UNotifier::num_connection - UNotifier::min_connection);
                }
 #        endif
 
             goto retry;
             }
 
-#     ifndef U_LOG_DISABLE
-         if (isLog()) ULog::log(U_CONSTANT_TO_PARAM("Waiting for connection on port %u"), port);
-#     endif
+         U_SRV_LOG("Waiting for connection on port %u", port);
 
          U_RETURN(U_NOTIFIER_OK);
          }
@@ -3569,10 +3578,10 @@ retry:   pid = UProcess::waitpid(-1, &status, WNOHANG); // NB: to avoid too much
       char buffer[32];
       uint32_t len = setNumConnection(buffer);
 
-      ULog::log(U_CONSTANT_TO_PARAM("New client connected from %v, %.*s clients currently connected"), CLIENT_IMAGE->logbuf->rep, len, buffer);
+      log->log(U_CONSTANT_TO_PARAM("New client connected from %v, %.*s clients currently connected"), CLIENT_IMAGE->logbuf->rep, len, buffer);
 
 #  ifdef U_WELCOME_SUPPORT
-      if (msg_welcome) ULog::log(U_CONSTANT_TO_PARAM("Sending welcome message to %v"), CLIENT_IMAGE->logbuf->rep);
+      if (msg_welcome) log->log(U_CONSTANT_TO_PARAM("Sending welcome message to %v"), CLIENT_IMAGE->logbuf->rep);
 #  endif
       }
 #endif
@@ -3594,7 +3603,7 @@ retry:   pid = UProcess::waitpid(-1, &status, WNOHANG); // NB: to avoid too much
    else
 #endif
    {
-#if defined(DEBUG) && !defined(U_SERVER_CAPTIVE_PORTAL)
+#if defined(DEBUG) && (!defined(U_SERVER_CAPTIVE_PORTAL) || defined(ENABLE_THREAD))
    uint32_t len = 0;
    int cpu = U_SYSCALL_NO_PARAM(sched_getcpu), scpu = -1;
 
@@ -3737,13 +3746,13 @@ bool UServer_Base::handlerTimeoutConnection(void* cimg)
          {
          if (called_from_handlerTime)
             {
-            ULog::log(U_CONSTANT_TO_PARAM("%shandlerTime: client connected didn't send any request in %u secs (timeout), close connection %v"),
-                        UServer_Base::mod_name[0], ptime->UTimeVal::tv_sec, ((UClientImage_Base*)cimg)->logbuf->rep);
+            log->log(U_CONSTANT_TO_PARAM("%shandlerTime: client connected didn't send any request in %u secs (timeout), close connection %v"),
+                     mod_name[0], ptime->UTimeVal::tv_sec, ((UClientImage_Base*)cimg)->logbuf->rep);
             }
          else
             {
-            ULog::log(U_CONSTANT_TO_PARAM("%shandlerTimeoutConnection: client connected didn't send any request in %u secs, close connection %v"),
-                        UServer_Base::mod_name[0], UNotifier::last_event - ((UClientImage_Base*)cimg)->last_event, ((UClientImage_Base*)cimg)->logbuf->rep);
+            log->log(U_CONSTANT_TO_PARAM("%shandlerTimeoutConnection: client connected didn't send any request in %u secs, close connection %v"),
+                     mod_name[0], UNotifier::last_event - ((UClientImage_Base*)cimg)->last_event, ((UClientImage_Base*)cimg)->logbuf->rep);
             }
          }
 #  endif
@@ -3752,17 +3761,17 @@ bool UServer_Base::handlerTimeoutConnection(void* cimg)
          {
          U_DEBUG("%shandlerTime: client connected didn't send any request in %u secs (timeout %u sec) - "
                  "UEventFd::fd = %d socket->iSockDesc = %d UNotifier::num_connection = %d UNotifier::min_connection = %d",
-                 UServer_Base::mod_name[0], UNotifier::last_event - ((UClientImage_Base*)cimg)->last_event, ptime->UTimeVal::tv_sec,
-                                               ((UClientImage_Base*)cimg)->UEventFd::fd,
-                                               ((UClientImage_Base*)cimg)->socket->iSockDesc, UNotifier::num_connection, UNotifier::min_connection)
+                 mod_name[0], UNotifier::last_event - ((UClientImage_Base*)cimg)->last_event, ptime->UTimeVal::tv_sec,
+                                                      ((UClientImage_Base*)cimg)->UEventFd::fd,
+                                                      ((UClientImage_Base*)cimg)->socket->iSockDesc, UNotifier::num_connection, UNotifier::min_connection)
          }
       else
          {
          U_DEBUG("%shandlerTimeoutConnection: client connected didn't send any request in %u secs - "
                  "UEventFd::fd = %d socket->iSockDesc = %d UNotifier::num_connection = %d UNotifier::min_connection = %d",
-                 UServer_Base::mod_name[0], UNotifier::last_event - ((UClientImage_Base*)cimg)->last_event,
-                                                           ((UClientImage_Base*)cimg)->UEventFd::fd,
-                                                           ((UClientImage_Base*)cimg)->socket->iSockDesc, UNotifier::num_connection, UNotifier::min_connection)
+                 mod_name[0], UNotifier::last_event - ((UClientImage_Base*)cimg)->last_event,
+                                                      ((UClientImage_Base*)cimg)->UEventFd::fd,
+                                                      ((UClientImage_Base*)cimg)->socket->iSockDesc, UNotifier::num_connection, UNotifier::min_connection)
          }
 #  endif
 
@@ -3812,7 +3821,7 @@ void UServer_Base::runLoop(const char* user)
        * (This is a one-time option)
        */
 
-#  if defined(U_LINUX) && !defined(U_SERVER_CAPTIVE_PORTAL)
+#  if defined(U_LINUX) && (!defined(U_SERVER_CAPTIVE_PORTAL) || defined(ENABLE_THREAD))
                                socket->setTcpNoDelay();
                                socket->setTcpFastOpen();
                                socket->setTcpDeferAccept();
@@ -3853,15 +3862,13 @@ void UServer_Base::runLoop(const char* user)
       if (handler_inotify) UNotifier::insert(handler_inotify, EPOLLEXCLUSIVE | EPOLLROUNDROBIN); // NB: we ask to be notified for change of file system (=> inotify)
       }
 
-#ifndef U_LOG_DISABLE
-   if (isLog()) ULog::log(U_CONSTANT_TO_PARAM("Waiting for connection on port %u"), port);
-#endif
+   U_SRV_LOG("Waiting for connection on port %u", port);
 
 #if defined(ENABLE_THREAD) && !defined(USE_LIBEVENT) && defined(U_SERVER_THREAD_APPROACH_SUPPORT)
+   U_INTERNAL_ASSERT_EQUALS(UNotifier::pthread, U_NULLPTR)
+
    if (preforked_num_kids == -1)
       {
-      U_INTERNAL_ASSERT_EQUALS(UNotifier::pthread, U_NULLPTR)
-
       U_NEW(UClientThread, UNotifier::pthread, UClientThread);
 
 #  ifdef _MSWINDOWS_
@@ -3874,12 +3881,6 @@ void UServer_Base::runLoop(const char* user)
 
       U_ASSERT(proc->parent())
       }
-#  ifdef DEBUG
-   else
-      {
-      U_INTERNAL_ASSERT_EQUALS(UNotifier::pthread, U_NULLPTR)
-      }
-#  endif
 #endif
 
 #if defined(U_LINUX) && defined(ENABLE_THREAD)
@@ -3977,7 +3978,7 @@ void UServer_Base::run()
    cpu_set_t cpuset;
    pid_t pid, pid_to_wait;
 
-#if defined(HAVE_SCHED_GETAFFINITY) && !defined(U_SERVER_CAPTIVE_PORTAL)
+#if defined(HAVE_SCHED_GETAFFINITY) && (!defined(U_SERVER_CAPTIVE_PORTAL) || defined(ENABLE_THREAD))
    if (u_get_num_cpu() > 1 &&
        (preforked_num_kids % u_num_cpu) == 0)
       {
@@ -4015,7 +4016,7 @@ void UServer_Base::run()
             {
             U_INTERNAL_DUMP("child = %P UNotifier::num_connection = %d", UNotifier::num_connection)
 
-#        ifndef U_SERVER_CAPTIVE_PORTAL
+#        if defined(HAVE_SCHED_GETAFFINITY) && (!defined(U_SERVER_CAPTIVE_PORTAL) || defined(ENABLE_THREAD))
             if (baffinity)
                {
                CPU_ZERO(&cpuset);
@@ -4043,7 +4044,7 @@ void UServer_Base::run()
 #              endif
                   sz = 0;
 
-                  ULog::log(U_CONSTANT_TO_PARAM("%sNew child started, affinity mask: %x, cpu: %d%.*s"),  mod_name[0], CPUSET_BITS(&cpuset)[0], cpu, sz, buffer);
+                  log->log(U_CONSTANT_TO_PARAM("%sNew child started, affinity mask: %x, cpu: %d%.*s"),  mod_name[0], CPUSET_BITS(&cpuset)[0], cpu, sz, buffer);
                   }
 #           endif
                }
@@ -4089,7 +4090,7 @@ void UServer_Base::run()
 
          to_sleep.nanosleep();
 
-#     ifdef U_SERVER_CAPTIVE_PORTAL
+#     if defined(U_SERVER_CAPTIVE_PORTAL) && !defined(ENABLE_THREAD)
          if (proc->_pid == -1) // If the child don't start (not enough memory) we disable the monitoring process...
             {
             monitoring_process = false;
@@ -4141,7 +4142,8 @@ void UServer_Base::run()
             {
             char buffer[128];
 
-            ULog::log(U_CONSTANT_TO_PARAM("%sWARNING: child (pid %d) exited with value %d (%s), down to %u children"), mod_name[0], pid, status, UProcess::exitInfo(buffer, status), rkids);
+            log->log(U_CONSTANT_TO_PARAM("%sWARNING: child (pid %d) exited with value %d (%s), down to %u children"),
+                     mod_name[0], pid, status, UProcess::exitInfo(buffer, status), rkids);
             }
 #     endif
 
@@ -4222,11 +4224,11 @@ pid_t UServer_Base::startNewChild()
 #  ifdef U_LOG_DISABLE
             (void) UProcess::removeZombies();
 #  else
-      uint32_t n = UProcess::removeZombies(),
-               u_srv_cnt_parallelization = U_SRV_CNT_PARALLELIZATION+1;
-                                           U_SRV_CNT_PARALLELIZATION = u_srv_cnt_parallelization;
+      uint32_t n = UProcess::removeZombies();
 
-      U_SRV_LOG("Started new child (pid %d) for parallelization (%d) - removed %u zombies", pid, u_srv_cnt_parallelization, n);
+      ULock::atomicIncrement(U_SRV_TOT_CONNECTION);
+
+      U_SRV_LOG("Started new child (pid %d) for parallelization (%d) - removed %u zombies", pid, U_SRV_TOT_CONNECTION, n);
 #  endif
 
       U_RETURN(pid); // parent
@@ -4242,13 +4244,11 @@ __noreturn void UServer_Base::endNewChild()
    U_TRACE_NO_PARAM(0, "UServer_Base::endNewChild()")
 
 #ifndef U_LOG_DISABLE
-   uint32_t u_srv_cnt_parallelization = U_SRV_CNT_PARALLELIZATION;
+   ULock::atomicDecrement(U_SRV_TOT_CONNECTION);
 
-   if (LIKELY(u_srv_cnt_parallelization)) U_SRV_CNT_PARALLELIZATION = --u_srv_cnt_parallelization;
+   U_INTERNAL_DUMP("cnt_parallelization = %u U_SRV_FLAG_SIGTERM = %b", U_SRV_TOT_CONNECTION, U_SRV_FLAG_SIGTERM)
 
-   U_INTERNAL_DUMP("cnt_parallelization = %u U_SRV_FLAG_SIGTERM = %b", u_srv_cnt_parallelization, U_SRV_FLAG_SIGTERM)
-
-   if (U_SRV_FLAG_SIGTERM == false) U_SRV_LOG("child for parallelization ended (%u)", u_srv_cnt_parallelization);
+   if (U_SRV_FLAG_SIGTERM == false) U_SRV_LOG("child for parallelization ended (%u)", U_SRV_TOT_CONNECTION);
 #endif
 
    U_EXIT(0);

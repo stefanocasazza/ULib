@@ -220,7 +220,7 @@ int UProxyPlugIn::handlerRequest()
                }
             }
 #     ifndef U_LOG_DISABLE
-         else if (UServer_Base::isLog()) ULog::logResponse(*UClientImage_Base::wbuffer, UServer_Base::mod_name[0], U_CONSTANT_TO_PARAM(""), 0);
+         else if (UServer_Base::isLog()) UServer_Base::log->logResponse(*UClientImage_Base::wbuffer, UServer_Base::mod_name[0], U_CONSTANT_TO_PARAM(""), 0);
 #     endif
 
          client_http->reset(); // reset reference to request...

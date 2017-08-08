@@ -16,6 +16,7 @@
 #include <ulib/utility/escape.h>
 #include <ulib/internal/chttp.h>
 
+vpFpcu      UString::printValueToBuffer;
 UString*    UString::string_null        = ULib::uustringnull.p2;
 UStringRep* UStringRep::string_rep_null = ULib::uustringrepnull.p2;
 
@@ -1315,7 +1316,8 @@ void UString::_reserve(UString& buffer, uint32_t n)
    else if (need > U_CAPACITY)
       {
       if (need < 2*1024*1024) need  = (need * 2) + (PAGESIZE * 2);
-                              need += PAGESIZE; // NB: to avoid duplication on realloc...
+
+      need += PAGESIZE; // NB: to avoid duplication on realloc...
       }
 
    buffer._set(UStringRep::create(rep->_length, need, rep->str));
@@ -1956,7 +1958,7 @@ long double UStringRep::strtold() const
       if (isNullTerminated() == false && writeable()) *eos = '\0';
 
 #  ifndef DEBUG
-      long double result = ::strtold(str, 0);
+      long double result = ::strtold(str, U_NULLPTR);
 #  else
       char* endptr;
       long double result = ::strtold(str, &endptr);
@@ -2062,9 +2064,21 @@ double UString::strtod() const
 
 void UString::printKeyValue(const char* key, uint32_t keylen, const char* _data, uint32_t datalen)
 {
-   U_TRACE(0, "UString::printKeyValue(%.*S,%u,%.*S,%u,%d)", keylen, key, keylen, datalen, _data, datalen)
+   U_TRACE(0, "UString::printKeyValue(%.*S,%u,%.*S,%u)", keylen, key, keylen, datalen, _data, datalen)
 
-   uint32_t n = 5 + 18 + keylen + datalen; 
+   uint32_t n = 5 + 18 + keylen; 
+
+   if (printValueToBuffer == U_NULLPTR) n += datalen;
+   else
+      {
+      U_INTERNAL_ASSERT_EQUALS(u_buffer_len, 0)
+
+      printValueToBuffer(_data, datalen);
+
+      U_INTERNAL_ASSERT_MINOR(u_buffer_len, U_BUFFER_SIZE)
+
+      n += u_buffer_len;
+      }
 
    if (rep->space() < n) _reserve(*this, n);
 
@@ -2078,8 +2092,17 @@ void UString::printKeyValue(const char* key, uint32_t keylen, const char* _data,
    U_MEMCPY(ptr, "->", U_CONSTANT_SIZE("->"));
             ptr +=     U_CONSTANT_SIZE("->");
 
-   U_MEMCPY(ptr, _data, datalen);
-            ptr +=      datalen;
+   if (printValueToBuffer)
+      {
+      U_MEMCPY(ptr, u_buffer, u_buffer_len);
+               ptr +=         u_buffer_len;
+                              u_buffer_len = 0;
+      }
+   else
+      {
+      U_MEMCPY(ptr, _data, datalen);
+               ptr +=      datalen;
+      }
 
    u_put_unalignedp16(ptr, U_MULTICHAR_CONSTANT16('\n','\0'));
 
@@ -2327,8 +2350,9 @@ void UStringRep::write(ostream& os) const
          os.write(s, p - s);
 
          if (*(p-1) == '\\') os.put('\\');
-                             os.put('\\');
-                             os.put('"');
+
+         os.put('\\');
+         os.put('"');
 
          s = p + 1;
          }

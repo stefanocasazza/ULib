@@ -2411,7 +2411,11 @@ int UNoCatPlugIn::handlerFork()
    U_INTERNAL_ASSERT_EQUALS(dirwalk, U_NULLPTR)
 
 #if !defined(U_LOG_DISABLE) && defined(USE_LIBZ)
-   if (UServer_Base::isLog()) U_NEW(UDirWalk, dirwalk, UDirWalk(ULog::getDirLogGz(), U_CONSTANT_TO_PARAM("*.gz")));
+   if (UServer_Base::isLog() &&
+       UServer_Base::log->isMemoryMapped())
+      {
+      U_NEW(UDirWalk, dirwalk, UDirWalk(UServer_Base::log->getDirLogGz(), U_CONSTANT_TO_PARAM("*.gz")));
+      }
 #endif
 
    U_RETURN(U_PLUGIN_HANDLER_PROCESSED | U_PLUGIN_HANDLER_GO_ON);
@@ -2789,7 +2793,7 @@ next:       (void) getARPCache();
 
             UEscape::encode(data, printable);
 
-            ULog::log(U_CONSTANT_TO_PARAM("%sauth message: %v"), UServer_Base::mod_name[0], printable.rep);
+            UServer_Base::log->log(U_CONSTANT_TO_PARAM("%sauth message: %v"), UServer_Base::mod_name[0], printable.rep);
             }
 #     endif
 

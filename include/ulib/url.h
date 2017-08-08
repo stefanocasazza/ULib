@@ -101,7 +101,13 @@ public:
       {
       U_TRACE_REGISTER_OBJECT(0, Url, "", 0)
 
-      service_end = user_begin = user_end = host_begin = host_end = path_begin = path_end = query = -1;
+      service_end =
+       user_begin =
+         user_end =
+       host_begin =
+         host_end =
+       path_begin =
+         path_end = -1;
       }
 
    /**
@@ -154,7 +160,6 @@ public:
          host_end = u.host_end;
        path_begin = u.path_begin;
          path_end = u.path_end;
-            query = u.query;
       }
 
    Url(const Url& u) : url(u.url)
@@ -204,8 +209,7 @@ public:
        host_begin =
          host_end =
        path_begin =
-         path_end =
-            query = -1;
+         path_end = -1;
       }
 
    /**
@@ -217,7 +221,16 @@ public:
     * @return str
     */
 
-   UString getService() const;
+   UString getService() const
+      {
+      U_TRACE_NO_PARAM(0, "Url::getService()")
+
+      UString srv;
+
+      if (service_end > 0) srv = url.substr(0U, (uint32_t)service_end);
+
+      U_RETURN_STRING(srv);
+      }
 
    bool isHTTP() const
       {
@@ -283,7 +296,16 @@ public:
     * @return str
     */
 
-   UString getUser();
+   UString getUser()
+      {
+      U_TRACE_NO_PARAM(0, "Url::getUser()")
+
+      UString usr;
+
+      if (user_begin < user_end) usr = url.substr(user_begin, user_end - user_begin);
+
+      U_RETURN_STRING(usr);
+      }
 
    /**
     * This methode set the user of the url
@@ -339,7 +361,16 @@ public:
     * @return str
     */
 
-   UString getHost();
+   UString getHost()
+      {
+      U_TRACE_NO_PARAM(0, "Url::getHost()")
+
+      UString host;
+
+      if (host_begin < host_end) host = url.substr(host_begin, host_end - host_begin);
+
+      U_RETURN_STRING(host);
+      }
 
    /**
     * This methode set the host
@@ -362,7 +393,8 @@ public:
     * @retval        0 no port specified
     */
 
-   unsigned int getPort();
+   UString  getPort();
+   uint32_t getPortNumber();
 
    /**
     * Set the port number
@@ -399,7 +431,19 @@ public:
     * @return str
     */
 
-   UString getPath();
+   UString getPath()
+      {
+      U_TRACE_NO_PARAM(0, "Url::getPath()")
+
+      UString path(U_CAPACITY);
+
+      if (path_begin < path_end) decode(url.c_pointer(path_begin), path_end - path_begin, path);
+      else                       path.push_back('/');
+
+      (void) path.shrink();
+
+      U_RETURN_STRING(path);
+      }
 
    /**
     * This methode set the path of the url
@@ -418,7 +462,17 @@ public:
     * @c http://www.google.com/search?q=xml
     */
 
-   UString getPathAndQuery();
+   UString getPathAndQuery()
+      {
+      U_TRACE_NO_PARAM(0, "Url::getPathAndQuery()")
+
+      UString file;
+
+      if (path_begin < path_end) file = url.substr(path_begin);
+      else                       file.push_back('/');
+
+      U_RETURN_STRING(file);
+      }
 
    /**
     * This methode check the existence of the query from the url
@@ -461,17 +515,7 @@ public:
     * This methode erase the query from the url
     */
 
-   void eraseQuery()
-      {
-      U_TRACE_NO_PARAM(0, "Url::eraseQuery()")
-
-      if (path_end < (int)url.size())
-         {
-         (void) url.erase(path_end);
-
-         query = path_end;
-         }
-      }
+   void eraseQuery();
 
    /**
     * This methode add's a new entry to the query
@@ -486,6 +530,19 @@ public:
     */
 
    void addQuery(const char* entry, uint32_t entry_len, const char* value, uint32_t value_len);
+
+   enum UrlFieldType {
+      U_SCHEMA   = 0x0001,
+      U_HOST     = 0x0002,
+      U_PORT     = 0x0004,
+      U_PATH     = 0x0008,
+      U_QUERY    = 0x0010,
+      U_FRAGMENT = 0x0020,
+      U_USERINFO = 0x0040
+   };
+
+   UString getFragment();
+   UString getFieldValue(int field_type);
 
    /**
     * Converts a Unicode string into the MIME @c x-www-form-urlencoded format
@@ -546,20 +603,26 @@ public:
 #endif
 
 protected:
-   UString url;      // content string
-   int service_end,  // End position of the service
-       user_begin,   // begin position of the user
-       user_end,     // end position of the user
-       host_begin,   // begin position of the host
-       host_end,     // end position of the host
-       path_begin,   // begin position of the path
-       path_end,     // end position of the path
-       query;        // start position of the last readed query entry
+   UString url;     // content string
+   int service_end, // End position of the service
+       user_begin,  // begin position of the user
+       user_end,    // end position of the user
+       host_begin,  // begin position of the host
+       host_end,    // end position of the host
+       path_begin,  // begin position of the path
+       path_end;    // end position of the path
 
-   void findpos();   // scans the structure of the url and is updating the position attributs of the class
+#ifdef DEBUG
+   uint32_t field_mask;
+#endif
+
+   void findpos(); // scans the structure of the url and is updating the position attributs of the class
 
 private:
-   bool prepareForQuery() U_NO_EXPORT; // prepare the string to add a query
+   uint32_t getPosQuery() U_NO_EXPORT __pure;
+   uint32_t getPosFragment() U_NO_EXPORT __pure;
+   bool     prepareForQuery() U_NO_EXPORT; // prepare the string to add a query
+   uint32_t getSizeQuery(uint32_t pos) U_NO_EXPORT __pure;
 };
 
 #endif

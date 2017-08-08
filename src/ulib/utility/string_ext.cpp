@@ -473,7 +473,8 @@ UString UStringExt::prepareForEnvironmentVar(const char* s, uint32_t n)
       sz += len;
 
       if (quoted) str[sz++] = '\'';
-                  str[sz++] = '\n';
+
+      str[sz++] = '\n';
       }
 
 end:

@@ -200,6 +200,7 @@ public:
    static bool callService(const UString& path);
    static bool isUriRequestNeedCertificate() __pure;
    static bool isValidMethod(const char* ptr) __pure;
+   static bool checkContentLength(const UString& response);
    static bool manageSendfile(const char* ptr, uint32_t len);
    static bool checkContentLength(uint32_t length, uint32_t pos);
    static bool scanfHeaderRequest(const char* ptr, uint32_t size);
@@ -277,15 +278,12 @@ public:
    static bool manageRequestOnRemoteServer();
 #endif
 
-#if !defined(U_LOG_DISABLE) || defined(USE_LIBZ)
-   static void parserExecute(const char* ptr, uint32_t len);
-#endif
-
    static void setHostname(const char* ptr, uint32_t len);
 
    static void setHostname(const UString& name) { setHostname(U_STRING_TO_PARAM(name)); }
 
    static const char* getStatusDescription(uint32_t* plen = U_NULLPTR);
+   static uint32_t    parserExecute(const char* ptr, uint32_t len, bool response = false);
 
    static uint32_t getUserAgent()
       {
@@ -1323,6 +1321,7 @@ private:
    static        void setAcceptEncoding(const char* ptr) U_NO_EXPORT;
    static inline void setContentLength(const char* ptr1, const char* ptr2) U_NO_EXPORT;
 
+   static inline bool checkDataChunked(UString* pbuffer) U_NO_EXPORT;
    static inline void setRange(const char* ptr, uint32_t len) U_NO_EXPORT;
    static inline void setCookie(const char* ptr, uint32_t len) U_NO_EXPORT;
    static inline void setUserAgent(const char* ptr, uint32_t len) U_NO_EXPORT;

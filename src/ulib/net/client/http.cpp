@@ -667,14 +667,7 @@ loop: if (UClient_Base::isOpen() == false) UClient_Base::socket->_socket();
          }
 
 #  ifndef U_LOG_DISABLE
-      if (log_msg)
-         {
-         uint32_t sz = strlen(log_msg);
-         const char* str = (num_attempts < U_MAX_ATTEMPTS ? "success" : "FAILED");
-
-         if (log_fd == -1) ULog::log(        log_msg, sz, str, num_attempts);
-         else              ULog::log(log_fd, log_msg, sz, str, num_attempts);
-         }
+      if (log_msg) ULog::log(log_fd, log_msg, u__strlen(log_msg, __PRETTY_FUNCTION__), (num_attempts < U_MAX_ATTEMPTS ? "success" : "FAILED"), num_attempts);
 #  endif
       }
 

@@ -13,7 +13,7 @@
 
    if (log.isOpen())
       {
-      log.setShared(0, 0);
+      log.setShared(0);
 
       log.init("%P|%4D|");
       }

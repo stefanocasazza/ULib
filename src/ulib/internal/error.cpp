@@ -96,7 +96,7 @@ void UError::stackDump()
 
    char name[128];
 
-#ifndef U_SERVER_CAPTIVE_PORTAL
+#if defined(U_LINUX) && (!defined(U_SERVER_CAPTIVE_PORTAL) || defined(ENABLE_THREAD))
    (void) u__snprintf(name, sizeof(name), U_CONSTANT_TO_PARAM("stack.%N.%P"), 0);
 #else
    (void) u__snprintf(name, sizeof(name), U_CONSTANT_TO_PARAM("/tmp/stack.%N.%P"), 0);

@@ -370,22 +370,18 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
          UServer_Base::update_date  =
          UServer_Base::update_date2 = true;
 
-         uint32_t size = cfg.readLong(U_CONSTANT_TO_PARAM("LOG_FILE_SIZE"));
-
          U_INTERNAL_ASSERT_EQUALS(UServer_Base::apache_like_log, U_NULLPTR)
+
+         uint32_t size = cfg.readLong(U_CONSTANT_TO_PARAM("LOG_FILE_SZ"));
 
          U_NEW(ULog, UServer_Base::apache_like_log, ULog(x, size));
 
-#     ifdef USE_LIBZ
          if (size)
             {
-            uint32_t log_rotate_size = size + (size / 10) + 12U;
+            U_INTERNAL_ASSERT_EQUALS(UServer_Base::shm_data_add, 0)
 
-            UServer_Base::apache_like_log->setShared(U_NULLPTR, log_rotate_size, (UServer_Base::bssl == false));
-
-            U_SRV_LOG("Mapped %u bytes (%u KB) of shared memory for apache like log", log_rotate_size, log_rotate_size / 1024);
+            UServer_Base::shm_data_add += UServer_Base::apache_like_log->getSizeLogRotateData();
             }
-#     endif
          }
 #   endif
 
@@ -539,8 +535,9 @@ int UHttpPlugIn::handlerRun() // NB: we use this method instead of handlerInit()
       UClientImage_Base::iov_vec[1].iov_len  = 6+29+2+12+2+17+2;
       UClientImage_Base::iov_vec[1].iov_base = (caddr_t)ULog::date.date3; // Date: Wed, 20 Jun 2012 11:43:17 GMT\r\nServer: ULib\r\nConnection: close\r\n
 
-#  if defined(U_LINUX) && defined(ENABLE_THREAD) && defined(U_LOG_DISABLE) && !defined(USE_LIBZ)
+#  if defined(U_LINUX) && defined(ENABLE_THREAD)
       U_INTERNAL_ASSERT_POINTER(u_pthread_time)
+      U_INTERNAL_ASSERT_POINTER(UServer_Base::ptr_shared_data)
 
       UClientImage_Base::iov_vec[1].iov_base = (caddr_t)UServer_Base::ptr_shared_data->log_date_shared.date3;
 #  endif

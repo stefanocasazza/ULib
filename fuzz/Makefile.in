@@ -89,7 +89,8 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 target_triplet = @target@
-@CLANG_TRUE@noinst_PROGRAMS = uclient_fuzzer$(EXEEXT)
+@CLANG_TRUE@noinst_PROGRAMS = uclient_fuzzer$(EXEEXT) \
+@CLANG_TRUE@	uhttp_parser_fuzzer$(EXEEXT)
 subdir = fuzz
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/ac_check_package.m4 \
@@ -129,6 +130,14 @@ uclient_fuzzer_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(uclient_fuzzer_CXXFLAGS) $(CXXFLAGS) \
 	$(uclient_fuzzer_LDFLAGS) $(LDFLAGS) -o $@
+am_uhttp_parser_fuzzer_OBJECTS =  \
+	uhttp_parser_fuzzer-uhttp_parser_fuzzer.$(OBJEXT)
+uhttp_parser_fuzzer_OBJECTS = $(am_uhttp_parser_fuzzer_OBJECTS)
+uhttp_parser_fuzzer_DEPENDENCIES = $(am__DEPENDENCIES_1) libFuzzer.a
+uhttp_parser_fuzzer_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
+	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
+	$(uhttp_parser_fuzzer_CXXFLAGS) $(CXXFLAGS) \
+	$(uhttp_parser_fuzzer_LDFLAGS) $(LDFLAGS) -o $@
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
 am__v_P_0 = false
@@ -162,8 +171,9 @@ AM_V_CXXLD = $(am__v_CXXLD_@AM_V@)
 am__v_CXXLD_ = $(am__v_CXXLD_@AM_DEFAULT_V@)
 am__v_CXXLD_0 = @echo "  CXXLD   " $@;
 am__v_CXXLD_1 = 
-SOURCES = $(uclient_fuzzer_SOURCES)
-DIST_SOURCES = $(uclient_fuzzer_SOURCES)
+SOURCES = $(uclient_fuzzer_SOURCES) $(uhttp_parser_fuzzer_SOURCES)
+DIST_SOURCES = $(uclient_fuzzer_SOURCES) \
+	$(uhttp_parser_fuzzer_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -392,6 +402,14 @@ uclient_fuzzer_LDADD = $(ulib_la) libFuzzer.a
 uclient_fuzzer_CFLAGS = -fno-omit-frame-pointer -fsanitize=address -fsanitize-coverage=edge,indirect-calls,8bit-counters
 uclient_fuzzer_CXXFLAGS = -fno-omit-frame-pointer -fsanitize=address -fsanitize-coverage=edge,indirect-calls,8bit-counters
 uclient_fuzzer_LDFLAGS = -fsanitize=address
+uhttp_parser_fuzzer_CC = clang
+uhttp_parser_fuzzer_CXX = clang++
+uhttp_parser_fuzzer_CPPFLAGS = -D_GLIBCXX_GCC_GTHR_H
+uhttp_parser_fuzzer_SOURCES = uhttp_parser_fuzzer.cpp
+uhttp_parser_fuzzer_LDADD = $(ulib_la) libFuzzer.a
+uhttp_parser_fuzzer_CFLAGS = -fno-omit-frame-pointer -fsanitize=address -fsanitize-coverage=edge,indirect-calls,8bit-counters
+uhttp_parser_fuzzer_CXXFLAGS = -fno-omit-frame-pointer -fsanitize=address -fsanitize-coverage=edge,indirect-calls,8bit-counters
+uhttp_parser_fuzzer_LDFLAGS = -fsanitize=address
 all: all-am
 
 .SUFFIXES:
@@ -439,6 +457,10 @@ uclient_fuzzer$(EXEEXT): $(uclient_fuzzer_OBJECTS) $(uclient_fuzzer_DEPENDENCIES
 	@rm -f uclient_fuzzer$(EXEEXT)
 	$(AM_V_CXXLD)$(uclient_fuzzer_LINK) $(uclient_fuzzer_OBJECTS) $(uclient_fuzzer_LDADD) $(LIBS)
 
+uhttp_parser_fuzzer$(EXEEXT): $(uhttp_parser_fuzzer_OBJECTS) $(uhttp_parser_fuzzer_DEPENDENCIES) $(EXTRA_uhttp_parser_fuzzer_DEPENDENCIES) 
+	@rm -f uhttp_parser_fuzzer$(EXEEXT)
+	$(AM_V_CXXLD)$(uhttp_parser_fuzzer_LINK) $(uhttp_parser_fuzzer_OBJECTS) $(uhttp_parser_fuzzer_LDADD) $(LIBS)
+
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
 
@@ -446,6 +468,7 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/uclient_fuzzer-uclient_fuzzer.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/uhttp_parser_fuzzer-uhttp_parser_fuzzer.Po@am__quote@
 
 .cpp.o:
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.o$$||'`;\
@@ -484,6 +507,20 @@ uclient_fuzzer-uclient_fuzzer.obj: uclient_fuzzer.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='uclient_fuzzer.cpp' object='uclient_fuzzer-uclient_fuzzer.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(uclient_fuzzer_CPPFLAGS) $(CPPFLAGS) $(uclient_fuzzer_CXXFLAGS) $(CXXFLAGS) -c -o uclient_fuzzer-uclient_fuzzer.obj `if test -f 'uclient_fuzzer.cpp'; then $(CYGPATH_W) 'uclient_fuzzer.cpp'; else $(CYGPATH_W) '$(srcdir)/uclient_fuzzer.cpp'; fi`
+
+uhttp_parser_fuzzer-uhttp_parser_fuzzer.o: uhttp_parser_fuzzer.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(uhttp_parser_fuzzer_CPPFLAGS) $(CPPFLAGS) $(uhttp_parser_fuzzer_CXXFLAGS) $(CXXFLAGS) -MT uhttp_parser_fuzzer-uhttp_parser_fuzzer.o -MD -MP -MF $(DEPDIR)/uhttp_parser_fuzzer-uhttp_parser_fuzzer.Tpo -c -o uhttp_parser_fuzzer-uhttp_parser_fuzzer.o `test -f 'uhttp_parser_fuzzer.cpp' || echo '$(srcdir)/'`uhttp_parser_fuzzer.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/uhttp_parser_fuzzer-uhttp_parser_fuzzer.Tpo $(DEPDIR)/uhttp_parser_fuzzer-uhttp_parser_fuzzer.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='uhttp_parser_fuzzer.cpp' object='uhttp_parser_fuzzer-uhttp_parser_fuzzer.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(uhttp_parser_fuzzer_CPPFLAGS) $(CPPFLAGS) $(uhttp_parser_fuzzer_CXXFLAGS) $(CXXFLAGS) -c -o uhttp_parser_fuzzer-uhttp_parser_fuzzer.o `test -f 'uhttp_parser_fuzzer.cpp' || echo '$(srcdir)/'`uhttp_parser_fuzzer.cpp
+
+uhttp_parser_fuzzer-uhttp_parser_fuzzer.obj: uhttp_parser_fuzzer.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(uhttp_parser_fuzzer_CPPFLAGS) $(CPPFLAGS) $(uhttp_parser_fuzzer_CXXFLAGS) $(CXXFLAGS) -MT uhttp_parser_fuzzer-uhttp_parser_fuzzer.obj -MD -MP -MF $(DEPDIR)/uhttp_parser_fuzzer-uhttp_parser_fuzzer.Tpo -c -o uhttp_parser_fuzzer-uhttp_parser_fuzzer.obj `if test -f 'uhttp_parser_fuzzer.cpp'; then $(CYGPATH_W) 'uhttp_parser_fuzzer.cpp'; else $(CYGPATH_W) '$(srcdir)/uhttp_parser_fuzzer.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/uhttp_parser_fuzzer-uhttp_parser_fuzzer.Tpo $(DEPDIR)/uhttp_parser_fuzzer-uhttp_parser_fuzzer.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='uhttp_parser_fuzzer.cpp' object='uhttp_parser_fuzzer-uhttp_parser_fuzzer.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(uhttp_parser_fuzzer_CPPFLAGS) $(CPPFLAGS) $(uhttp_parser_fuzzer_CXXFLAGS) $(CXXFLAGS) -c -o uhttp_parser_fuzzer-uhttp_parser_fuzzer.obj `if test -f 'uhttp_parser_fuzzer.cpp'; then $(CYGPATH_W) 'uhttp_parser_fuzzer.cpp'; else $(CYGPATH_W) '$(srcdir)/uhttp_parser_fuzzer.cpp'; fi`
 
 mostlyclean-libtool:
 	-rm -f *.lo

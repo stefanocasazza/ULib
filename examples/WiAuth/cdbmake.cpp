@@ -1,6 +1,7 @@
 // cdbmake.cpp
 
 #include <ulib/db/cdb.h>
+#include <ulib/net/server/server.h>
 #include <ulib/utility/string_ext.h>
 
 #undef  PACKAGE
@@ -27,9 +28,20 @@ public:
 
       UApplication::run(argc, argv, env);
 
-      UString records = UFile::contentOf(UString(argv[optind]));
+      uint32_t len;
+      const char* path_of_record_file = argv[optind];
+
+      if (path_of_record_file == U_NULLPTR ||
+          (len = u__strlen(path_of_record_file, __PRETTY_FUNCTION__)) == 0)
+         {
+         U_ERROR("missing <path_of_record_file> argument");
+         }
+
+      UString filename = UString(path_of_record_file, len);
 
 #  ifdef U_STDCPP_ENABLE
+      UString records = UFile::contentOf(filename);
+
       if (records)
          {
          UCDB x(false);
@@ -38,9 +50,7 @@ public:
              x.UFile::ftruncate(UCDB::sizeFor(1) + records.size() * 2)  &&
              x.UFile::memmap(PROT_READ | PROT_WRITE))
             {
-            const char* bcheck = argv[++optind];
-
-            if (bcheck)
+            if (argv[++optind])
                {
                // +11,10:74@10.8.1.5->0 10.8.1.5
                // ....
@@ -85,6 +95,17 @@ public:
 
                records = output;
                }
+
+            UString basename = UStringExt::basename(filename);
+
+            const char* p = basename.data();
+
+#           ifdef U_EVASIVE_SUPPORT
+               if (memcmp(p, U_CONSTANT_TO_PARAM("Evasive")) == 0) UCDB::getValueFromBuffer = UServer_Base::getEvasiveRecFromBuffer;
+#           endif
+#           ifdef U_THROTTLING_SUPPORT
+               if (memcmp(p, U_CONSTANT_TO_PARAM("BandWidthThrottling")) == 0) UCDB::getValueFromBuffer = UServer_Base::getThrottlingRecFromBuffer;
+#           endif
 
             istrstream is(U_STRING_TO_PARAM(records));
 

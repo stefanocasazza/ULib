@@ -3,7 +3,6 @@
 #include <ulib/base/error.h>
 #include <ulib/base/utility.h>
 
-#include <ulib/log.h>
 #include <ulib/process.h>
 #include <ulib/file_config.h>
 #include <ulib/utility/services.h>

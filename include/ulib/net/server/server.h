@@ -90,9 +90,9 @@ vClientImage = new client_type[UNotifier::max_connection]; } }
 #  define   U_SET_MODULE_NAME(name)        { if (UServer_Base::isLog()) { (void) strcpy(UServer_Base::mod_name[1], UServer_Base::mod_name[0]); \
                                                                           (void) strcpy(UServer_Base::mod_name[0], "["#name"] "); } }
 
-#  define U_SRV_LOG(          fmt,args...) { if (UServer_Base::isLog()) ULog::log(U_CONSTANT_TO_PARAM("%s" fmt),       UServer_Base::mod_name[0] , ##args); }
-#  define U_SRV_LOG_WITH_ADDR(fmt,args...) { if (UServer_Base::isLog()) ULog::log(U_CONSTANT_TO_PARAM("%s" fmt " %v"), UServer_Base::mod_name[0] , ##args, \
-                                                                                  UServer_Base::pClientImage->logbuf->rep); }
+#  define U_SRV_LOG(          fmt,args...) { if (UServer_Base::isLog()) UServer_Base::log->log(U_CONSTANT_TO_PARAM("%s" fmt),       UServer_Base::mod_name[0] , ##args); }
+#  define U_SRV_LOG_WITH_ADDR(fmt,args...) { if (UServer_Base::isLog()) UServer_Base::log->log(U_CONSTANT_TO_PARAM("%s" fmt " %v"), UServer_Base::mod_name[0] , ##args, \
+                                                                                               UServer_Base::pClientImage->logbuf->rep); }
 #endif
 
 class UHTTP;
@@ -337,7 +337,6 @@ public:
       bool daylight_shared;
 #  endif
       ULog::log_data log_data_shared;
-      char buffer[1];
    // -> maybe unnamed array of char for gzip compression (log rotate)
    // --------------------------------------------------------------------------------
    } shared_data;
@@ -396,10 +395,12 @@ public:
       char spinlock_evasive[1];
       char spinlock_db_not_found[1];
       char spinlock_base[U_SHM_LOCK_NENTRY];
-      char buffer[1];
+      ULog::log_data log_data_shared;
+   // -> maybe unnamed array of char for gzip compression (apache log like rotate)
    } shm_data;
 
    static shm_data* ptr_shm_data;
+   static uint32_t shm_data_add, shm_size;
 
 #define U_SHM_LOCK_EVASIVE        &(UServer_Base::ptr_shm_data->lock_evasive)
 #define U_SHM_LOCK_DB_NOT_FOUND   &(UServer_Base::ptr_shm_data->lock_db_not_found)
@@ -448,6 +449,16 @@ public:
       U_RETURN_POINTER(offset, void);
       }
 
+   static void* getOffsetToDataShm(uint32_t shm_data_size)
+      {
+      U_TRACE(0, "UServer_Base::getOffsetToDataShm(%u)", shm_data_size)
+
+      long offset = sizeof(shm_data) + shm_data_add;
+                                       shm_data_add += shm_data_size;
+
+      U_RETURN_POINTER(offset, void);
+      }
+
    static void* getPointerToDataShare(void* shared_data_ptr)
       {
       U_TRACE(0, "UServer_Base::getPointerToDataShare(%p)", shared_data_ptr)
@@ -457,6 +468,17 @@ public:
       shared_data_ptr = (void*)((ptrdiff_t)ptr_shared_data + (ptrdiff_t)shared_data_ptr);
 
       U_RETURN_POINTER(shared_data_ptr, void);
+      }
+
+   static void* getPointerToDataShm(void* shm_data_ptr)
+      {
+      U_TRACE(0, "UServer_Base::getPointerToDataShm(%p)", shm_data_ptr)
+
+      U_INTERNAL_ASSERT_POINTER(ptr_shm_data)
+
+      shm_data_ptr = (void*)((ptrdiff_t)ptr_shm_data + (ptrdiff_t)shm_data_ptr);
+
+      U_RETURN_POINTER(shm_data_ptr, void);
       }
 
    static uint32_t           nClientIndex;
@@ -587,7 +609,7 @@ public:
 #  ifndef U_LOG_DISABLE
       if (isLog())
          {
-         if (UCommand::setMsgError(cmd, !balways) || balways) ULog::log(U_CONSTANT_TO_PARAM("%s%.*s"), mod_name[0], u_buffer_len, u_buffer);
+         if (UCommand::setMsgError(cmd, !balways) || balways) log->log(U_CONSTANT_TO_PARAM("%s%.*s"), mod_name[0], u_buffer_len, u_buffer);
 
          errno        = 0;
          u_buffer_len = 0;
@@ -701,6 +723,40 @@ protected:
       uint32_t krate, min_limit, max_limit, num_sending;
    } uthrottling;
 
+   static void getThrottlingRecFromBuffer(const char* data, uint32_t datalen)
+      {
+      U_TRACE(0, "UServer_Base::getThrottlingRecFromBuffer(%.*S,%u)", datalen, data, datalen)
+
+      throttling_rec = (uthrottling*)u_buffer;
+
+      u_buffer_len = sizeof(uthrottling);
+
+      const char* ptr = data;
+
+      throttling_rec->bytes_since_avg = u_strtoullp(&ptr);
+      throttling_rec->krate           = u_strtoulp(&ptr);
+      throttling_rec->min_limit       = u_strtoulp(&ptr);
+      throttling_rec->max_limit       = u_strtoulp(&ptr);
+      throttling_rec->num_sending     = u_strtoulp(&ptr);
+
+      U_INTERNAL_DUMP("throttling_rec = { %llu %u %u %u %u }", throttling_rec->bytes_since_avg, throttling_rec->krate,
+                                                               throttling_rec->min_limit, throttling_rec->max_limit, throttling_rec->num_sending)
+
+      U_INTERNAL_ASSERT_EQUALS(ptr, data+datalen+1)
+      }
+
+   static void printThrottlingRecToBuffer(const char* data, uint32_t datalen)
+      {
+      U_TRACE(0, "UServer_Base::printThrottlingRecToBuffer(%.*S,%u)", datalen, data, datalen)
+
+      U_INTERNAL_ASSERT_EQUALS(datalen, sizeof(uthrottling))
+
+      throttling_rec = (uthrottling*)data;
+
+      u_buffer_len = u__snprintf(u_buffer, U_BUFFER_SIZE, U_CONSTANT_TO_PARAM("%llu %u %u %u %u"), throttling_rec->bytes_since_avg,
+                                 throttling_rec->krate, throttling_rec->min_limit, throttling_rec->max_limit, throttling_rec->num_sending);
+      }
+
    static bool         throttling_chk;
    static UString*     throttling_mask;
    static uthrottling* throttling_rec;
@@ -718,6 +774,35 @@ protected:
    typedef struct uevasive {
       uint32_t timestamp, count;
    } uevasive;
+
+   static void getEvasiveRecFromBuffer(const char* data, uint32_t datalen)
+      {
+      U_TRACE(0, "UServer_Base::getEvasiveRecFromBuffer(%.*S,%u)", datalen, data, datalen)
+
+      evasive_rec = (uevasive*)u_buffer;
+
+      u_buffer_len = sizeof(uevasive);
+
+      const char* ptr = data;
+
+      evasive_rec->timestamp = u_strtoulp(&ptr);
+      evasive_rec->count     = u_strtoulp(&ptr);
+
+      U_INTERNAL_DUMP("evasive_rec->timestamp = %u evasive_rec->count = %u", evasive_rec->timestamp, evasive_rec->count)
+
+      U_INTERNAL_ASSERT_EQUALS(ptr, data+datalen+1)
+      }
+
+   static void printEvasiveRecToBuffer(const char* data, uint32_t datalen)
+      {
+      U_TRACE(0, "UServer_Base::printEvasiveRecToBuffer(%.*S,%u)", datalen, data, datalen)
+
+      U_INTERNAL_ASSERT_EQUALS(datalen, sizeof(uevasive))
+
+      evasive_rec = (uevasive*)data;
+
+      u_buffer_len = u__snprintf(u_buffer, U_BUFFER_SIZE, U_CONSTANT_TO_PARAM("%u %u"), evasive_rec->timestamp, evasive_rec->count);
+      }
 
    static UFile* dos_LOG;
    static bool bwhitelist;
@@ -787,7 +872,7 @@ protected:
       U_INTERNAL_DUMP("U_ClientImage_pipeline = %b U_ClientImage_parallelization = %d UNotifier::num_connection - UNotifier::min_connection = %d",
                        U_ClientImage_pipeline,     U_ClientImage_parallelization,     UNotifier::num_connection - UNotifier::min_connection)
 
-#  ifndef U_SERVER_CAPTIVE_PORTAL
+#  if defined(U_LINUX) && (!defined(U_SERVER_CAPTIVE_PORTAL) || defined(ENABLE_THREAD))
       if (U_ClientImage_parallelization != U_PARALLELIZATION_CHILD &&
           (UNotifier::num_connection - UNotifier::min_connection) >= nclient)
          {
@@ -840,7 +925,7 @@ private:
 
       u_get_memusage(&vsz, &rss);
 
-      ULog::log(U_CONSTANT_TO_PARAM("%s (Interrupt): "
+      log->log(U_CONSTANT_TO_PARAM("%s (Interrupt): "
                 "address space usage: %.2f MBytes - "
                           "rss usage: %.2f MBytes"), signame,
                 (double)vsz / (1024.0 * 1024.0),

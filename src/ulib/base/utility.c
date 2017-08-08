@@ -161,6 +161,62 @@ __pure uint64_t u__strtoull(const char* restrict s, uint32_t len)
    return val;
 }
 
+unsigned long u_strtoulp(const char** restrict s)
+{
+   const char* restrict ptr;
+   const char* restrict p = *s;
+
+   U_INTERNAL_TRACE("u_strtolp(%p)", s)
+
+   U_INTERNAL_ASSERT_POINTER(s)
+
+   if (u__isdigitw0(*p) == false &&
+       u__isspace(*++p))
+      {
+      /* NB: we have something as '0 12 ..' */
+
+      *s = p+1;
+
+      return 0UL;
+      }
+
+   ptr = p;
+
+   while (u__isdigit(*p)) ++p; 
+
+   *s = p+1;
+
+   return u_strtoul(ptr, p);
+}
+
+uint64_t u_strtoullp(const char** restrict s)
+{
+   const char* restrict ptr;
+   const char* restrict p = *s;
+
+   U_INTERNAL_TRACE("u_strtollp(%p)", s)
+
+   U_INTERNAL_ASSERT_POINTER(s)
+
+   if (u__isdigitw0(*p) == false &&
+       u__isspace(*++p))
+      {
+      /* NB: we have something as '0 12 ..' */
+
+      *s = p+1;
+
+      return 0ULL;
+      }
+
+   ptr = p;
+
+   while (u__isdigit(*p)) ++p; 
+
+   *s = p+1;
+
+   return u_strtoull(ptr, p);
+}
+
 __pure long u__strtol(const char* restrict s, uint32_t len)
 {
    int sign = 1;
@@ -2248,7 +2304,7 @@ static const char* u_check_for_suffix_exe(const char* restrict program)
 bool u_pathfind(char* restrict result, const char* restrict path, uint32_t path_len, const char* restrict filename, int mode)
 {
    uint32_t p_index = 0;
-   char zPath[PATH_MAX + 1];
+   char zPath[U_PATH_MAX + 1];
 
    U_INTERNAL_TRACE("u_pathfind(%p,%.*s,%u,%s,%d)", result, path_len, path, path_len, filename, mode)
 

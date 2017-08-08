@@ -272,8 +272,6 @@ time_t UTimeDate::getSecondFromDate(const char* str, bool gmt, struct tm* tm, co
 
          tm->tm_mday = u_strtoulp(&str);
 
-         ++str;
-
          tm->tm_mon  = u_getMonth(str);
 
          str += 4;
@@ -303,8 +301,6 @@ time_t UTimeDate::getSecondFromDate(const char* str, bool gmt, struct tm* tm, co
          str += 4;
 
          tm->tm_mday = u_strtoulp(&str);
-
-         ++str;
 
          tm->tm_hour = u__strtoul(str, 2);
 

@@ -312,6 +312,8 @@ void ULib::init(const char* mempool, char** argv)
 
 void ULib::end()
 {
+   U_INTERNAL_ASSERT_EQUALS(ULog::first, U_NULLPTR)
+
 #if defined(U_STDCPP_ENABLE) && defined(DEBUG)
    UApplication::printMemUsage();
 #endif

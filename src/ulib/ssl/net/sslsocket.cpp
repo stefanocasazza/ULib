@@ -37,7 +37,7 @@ int      USSLSocket::session_cache_index;
 SSL_CTX* USSLSocket::cctx; // client
 SSL_CTX* USSLSocket::sctx; // server
 
-#if !defined(OPENSSL_NO_OCSP) && defined(SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB)
+#if defined(ENABLE_THREAD) && !defined(OPENSSL_NO_OCSP) && defined(SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB)
 bool                 USSLSocket::ocsp_nonce;
 USSLSocket::stapling USSLSocket::staple;
 #endif
@@ -539,7 +539,7 @@ bool USSLSocket::setContext(const char* dh_file, const char* cert_file, const ch
 
       if (result == 0) U_RETURN(false);
 
-#  if !defined(OPENSSL_NO_OCSP) && defined(SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB)
+#  if defined(ENABLE_THREAD) && !defined(OPENSSL_NO_OCSP) && defined(SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB)
       UString str(cert_file, u__strlen(cert_file, __PRETTY_FUNCTION__));
 
       staple.cert = UCertificate::readX509(UFile::contentOf(str), "PEM");
@@ -587,7 +587,7 @@ bool USSLSocket::setContext(const char* dh_file, const char* cert_file, const ch
 
       if (result == 0) U_RETURN(false);
 
-#  if !defined(OPENSSL_NO_OCSP) && defined(SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB)
+#  if defined(ENABLE_THREAD) && !defined(OPENSSL_NO_OCSP) && defined(SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB)
    // staple.pkey = UServices::loadKey(UFile::contentOf(UString(private_key_file, u__strlen(private_key_file, __PRETTY_FUNCTION__))), "PEM", true, passwd, 0);
 
       U_INTERNAL_DUMP("staple.pkey = %p", staple.pkey)
@@ -1206,11 +1206,10 @@ end:
    U_RETURN(iBytesWrite);
 }
 
-#if !defined(OPENSSL_NO_TLSEXT) && defined(SSL_set_tlsext_host_name)
-
 // This callback function is executed when OpenSSL encounters an extended
 // client hello with a server name indication extension ("SNI", cf. RFC 6066)
 
+#if !defined(OPENSSL_NO_TLSEXT) && defined(SSL_set_tlsext_host_name)
 int USSLSocket::callback_ServerNameIndication(SSL* _ssl, int* alert, void* data)
 {
    U_TRACE(1, "USSLSocket::callback_ServerNameIndication(%p,%p,%p)", _ssl, alert, data)
@@ -1256,7 +1255,7 @@ int USSLSocket::callback_ServerNameIndication(SSL* _ssl, int* alert, void* data)
  * downloading OCSP responses
  */
 
-#if !defined(OPENSSL_NO_OCSP) && defined(SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB)
+#if defined(ENABLE_THREAD) && !defined(OPENSSL_NO_OCSP) && defined(SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB)
 bool USSLSocket::setDataForStapling()
 {
    U_TRACE_NO_PARAM(1, "USSLSocket::setDataForStapling()")

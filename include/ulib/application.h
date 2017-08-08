@@ -14,6 +14,7 @@
 #ifndef ULIB_APPLICATION_H
 #define ULIB_APPLICATION_H 1
 
+#include <ulib/log.h>
 #include <ulib/options.h>
 
 #define U_PRINT_MEM_USAGE
@@ -35,6 +36,7 @@ int U_EXPORT main(int argc, char* argv[], char* env[]) \
    U_TRACE(5, "::main(%d,%p,%p)", argc, argv, env) \
    Application application; \
    application.run(argc, argv, env); \
+   U_INTERNAL_ASSERT_EQUALS(ULog::first, U_NULLPTR) \
    U_PRINT_MEM_USAGE \
    U_MAIN_END(UApplication::exit_value); \
 }
@@ -50,6 +52,8 @@ int WINAPI WinMain (HINSTANCE hinstance, HINSTANCE hPrevInstance, LPSTR command_
    U_TRACE(5, "::main(%d,%p,%p)", argc, __argv, 0) \
    _class application; \
    application.run(argc, argv, 0); \
+   U_INTERNAL_ASSERT_EQUALS(ULog::first, U_NULLPTR) \
+   U_PRINT_MEM_USAGE \
    U_MAIN_END(UApplication::exit_value); \
 }
 */
@@ -130,6 +134,8 @@ public:
 
          num_args = opt.getopt(argc, argv, &optind);
          }
+
+      U_INTERNAL_DUMP("optind = %d argv[optind] = %S", optind, argv[optind])
       }
 
    static bool isOptions()

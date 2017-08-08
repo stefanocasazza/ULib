@@ -510,7 +510,7 @@ void* UMemoryPool::_malloc(uint32_t* pnum, uint32_t type_size, bool bzero)
    U_RETURN(ptr);
 }
 
-#if defined(ENABLE_MEMPOOL) && !defined(U_SERVER_CAPTIVE_PORTAL)
+#if defined(ENABLE_MEMPOOL) && (!defined(U_SERVER_CAPTIVE_PORTAL) || defined(ENABLE_THREAD))
 void UMemoryPool::deallocate(void* ptr, uint32_t length)
 {
    U_TRACE(1, "UMemoryPool::deallocate(%p,%u)", ptr, length)

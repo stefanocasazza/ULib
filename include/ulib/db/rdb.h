@@ -199,6 +199,7 @@ public:
    bool find(const UString& _key)                   { return find(U_STRING_TO_PARAM(_key)); }
    bool find(const char*    _key, uint32_t keylen);
 
+   UFile&   getJournal()            { return journal; }
    uint32_t getCapacity() const     { return RDB_capacity(this); }
    uint32_t getDataSize() const     { return RDB_node_data_sz(this); }
    void*    getDataPointer() const  { return RDB_node_data(this); }

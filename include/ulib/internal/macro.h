@@ -21,7 +21,6 @@
 // NB: to avoid mis-aligned we use 4 bytes...
 #define U_MINIZ_COMPRESS "\x89MNZ" // "\211MNZ" "\x89\x4d\x4e\x5a"
 
-#define U_PATH_MAX (1024U - (1 + sizeof(ustringrep)))
 // ---------------------------------------------------------------------------------
 // NB: the value must be a stack type boundary, see UStringRep::checkIfMReserve()...
 // ---------------------------------------------------------------------------------

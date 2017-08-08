@@ -16,7 +16,9 @@
 
 #include <ulib/file.h>
 #include <ulib/utility/lock.h>
+#include <ulib/utility/string_ext.h>
 
+class ULib;
 class UHTTP;
 class UHTTP2;
 class Application;
@@ -51,7 +53,6 @@ public:
       // --------------> maybe unnamed array of char for gzip compression...
    } log_data;
 
-   static ULog* pthis;
    static log_date date;
    static const char* prefix;
    static uint32_t prefix_len;
@@ -61,8 +62,20 @@ public:
    static pthread_rwlock_t* prwlock;
 #endif
 
-    ULog(const UString& path, uint32_t size, const char* dir_log_gz = U_NULLPTR);
-   ~ULog();
+   ULog(const UString& path, uint32_t size);
+
+   ~ULog()
+      {
+      U_TRACE_UNREGISTER_OBJECT(0, ULog)
+
+      if (lock) delete lock;
+
+#  ifdef USE_LIBZ
+      if (buf_path_compress) delete buf_path_compress;
+#  endif
+      }
+
+   void closeLog();
 
    void reopen()
       {
@@ -86,78 +99,155 @@ public:
       ptr_log_data->file_page = ptr_log_data->file_ptr;
       }
 
-   void closeLog();
-   void setShared(log_data* ptr, uint32_t size, bool breference = true);
+   void init(const char* _prefix, uint32_t _prefix_len) // server
+      {
+      U_TRACE(0, "ULog::init(%.*S,%u)", _prefix_len, _prefix, _prefix_len)
 
-   void      init(const char* prefix, uint32_t prefix_len); // server
-   void setPrefix(const char* prefix, uint32_t prefix_len); // client
+      U_INTERNAL_ASSERT_EQUALS(U_Log_syslog(this), false)
+
+      prefix                     = _prefix;
+      prefix_len                 = _prefix_len;
+      U_Log_start_stop_msg(this) = true;
+
+      startup();
+      }
+
+   void setPrefix(const char* _prefix, uint32_t _prefix_len) // client
+      {
+      U_TRACE(0, "ULog::setPrefix(%.*S,%u)", _prefix_len, _prefix, _prefix_len)
+
+      if (U_Log_syslog(this) == false)
+         {
+         prefix                     = _prefix;
+         prefix_len                 = _prefix_len;
+         U_Log_start_stop_msg(this) = true;
+
+         startup();
+         }
+      }
 
    // manage shared log
 
-   static bool isMemoryMapped()
+   bool isMemoryMapped()
       {
       U_TRACE_NO_PARAM(0, "ULog::isMemoryMapped()")
 
-      U_INTERNAL_ASSERT_POINTER(pthis)
-
-      if (pthis->log_file_sz == 0) U_RETURN(false);
+      if (log_file_sz == 0) U_RETURN(false);
 
       U_RETURN(true);
       }
 
+   uint32_t getSizeLogRotateData()
+      {
+      U_TRACE_NO_PARAM(0, "ULog::getSizeLogRotateData()")
+
+      U_INTERNAL_DUMP("log_file_sz = %u", log_file_sz)
+
+      U_ASSERT(isMemoryMapped())
+
+      uint32_t x = log_file_sz + (log_file_sz / 10) + 12U; // The zlib documentation states that destination buffer size must be at least 0.1% larger than avail_in plus 12 bytes
+
+      U_RETURN(x);
+      }
+
+#ifdef USE_LIBZ
+   void setShared(log_data* ptr);
+   void checkForLogRotateDataToWrite();
+   void setLogRotate(const char* dir_log_gz = U_NULLPTR);
+#endif
+
+   UString getDirLogGz()
+      {
+      U_TRACE_NO_PARAM(0, "ULog::getDirLogGz()")
+
+      U_ASSERT(isMemoryMapped())
+
+      UString result;
+
+#  ifdef USE_LIBZ
+      U_INTERNAL_ASSERT_POINTER(buf_path_compress)
+
+      result = UStringExt::dirname(*buf_path_compress);
+#  endif
+
+      U_RETURN_STRING(result);
+      }
+
    // write with prefix
 
-   static void write(const char* msg, uint32_t len);
-   static void log(const char* format, uint32_t fmt_size, ...);   // (buffer write == 8196)
+   void write(const char* msg, uint32_t len);
+
+   void log(const char* fmt, uint32_t fmt_size, ...)
+      {
+      U_TRACE(0, "ULog::log(%.*S,%u)", fmt_size, fmt, fmt_size)
+
+      uint32_t len;
+      char buffer[8196];
+
+      va_list argp;
+      va_start(argp, fmt_size);
+
+      len = u__vsnprintf(buffer, sizeof(buffer), fmt, fmt_size, argp);
+
+      va_end(argp);
+
+      write(buffer, len);
+      }
 
    // write without prefix
 
-   static void log(int _fd, const char* format, uint32_t fmt_size, ...);   // (buffer write == 8196)
+   static void log(int _fd, const char* format, uint32_t fmt_size, ...); // (buffer write == 8196)
 
    // logger
 
+   void logger(const char* ident, int priority, const char* format, uint32_t fmt_size, ...); // (buffer write == 4096)
+
    static int getPriorityForLogger(const char* s) __pure; // decode a symbolic name to a numeric value
 
-   static void logger(const char* ident, int priority, const char* format, uint32_t fmt_size, ...); // (buffer write == 4096)
-
-#if defined(U_STDCPP_ENABLE) && defined(DEBUG)
+#ifdef DEBUG
+   static ULog* first; // active list 
+# ifdef U_STDCPP_ENABLE
    const char* dump(bool reset) const;
+# endif
 #endif
 
 protected:
    ULock* lock;
    log_data* ptr_log_data;
-   uint32_t log_file_sz, log_gzip_sz;
+   uint32_t log_file_sz,
+            log_data_sz,
+            log_gzip_sz;
    unsigned char flag[4];
+
+#ifdef DEBUG
+   ULog* next;
+   static void close();
+#endif
+
+   void startup();
+   void closeLogInternal();
+   void write(const struct iovec* iov, int n);
+   void logResponse(const UString& data,  const char* name,                                                                  const char* format, uint32_t fmt_size, ...);
+   void log(const struct iovec* iov,      const char* name, const char* type, int ncount, const char* msg, uint32_t msg_len, const char* format, uint32_t fmt_size, ...);
+
 #ifdef USE_LIBZ
    UString*   buf_path_compress;
    uint32_t index_path_compress;
-   void checkForLogRotateDataToWrite();
 #endif
 
-   static uint32_t log_data_sz;
    static long tv_sec_old_1, tv_sec_old_2, tv_sec_old_3;
 
-   void write(const struct iovec* iov, int n);
-
-#ifdef USE_LIBZ
-   static UString getDirLogGz();
-#endif
-
-   static void close();
-   static void startup();
    static void initDate();
    static void updateDate1();
    static void updateDate2();
    static void updateDate3(char* ptr_date);
-   static void logResponse(const UString& data, const char* name,                                                                  const char* format, uint32_t fmt_size, ...);
-   static void log(const struct iovec* iov,     const char* name, const char* type, int ncount, const char* msg, uint32_t msg_len, const char* format, uint32_t fmt_size, ...);
 
 private:
    static int decode(const char* name, uint32_t len, bool bfacility) __pure U_NO_EXPORT;
 
    U_DISALLOW_COPY_AND_ASSIGN(ULog)
 
+   friend class ULib;
    friend class UHTTP;
    friend class UHTTP2;
    friend class Application;
@@ -168,6 +258,8 @@ private:
    friend class UClient_Base;
    friend class UHttpClient_Base;
    friend class UClientImage_Base;
+
+// friend int main(int, char**, char**);
 };
 
 #endif

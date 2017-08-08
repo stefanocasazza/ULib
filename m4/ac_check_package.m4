@@ -386,7 +386,8 @@ AC_DEFUN([AC_CHECK_PACKAGE],[
 		with_curl="no";
 	fi
 
-   AC_ARG_ENABLE(curl-staticlib-deps, [  --enable-curl-staticlib-deps link with dependencies of    cURL's static libraries. Must be specified in addition to --with-curl [[default=no]]])
+   AC_ARG_ENABLE(curl-staticlib-deps,
+		[  --enable-curl-staticlib-deps link with dependencies of    cURL's static libraries. Must be specified in addition to --with-curl [[default=no]]])
    if test -z "$enable_curl_staticlib_deps"; then
       enable_curl_staticlib_deps="no"
    fi
@@ -934,7 +935,7 @@ else
 		MYSQL_INCLUDE=`mysql_config --include`
 		libmysql_version=$(grep LIBMYSQL_VERSION     /usr/include/mysql/mysql_version.h 2>/dev/null | head -n1 | cut -d'"' -f2)
 	else
-		MYSQL_INCLUDE=-I$ac_mysql_incdir
+		MYSQL_INCLUDE=$ac_mysql_incdir
 		libmysql_version=$(grep LIBMYSQL_VERSION $ac_mysql_incdir/mysql/mysql_version.h 2>/dev/null | head -n1 | cut -d'"' -f2)
 	fi
 	if test "$ac_mysql_libdir" = "no"; then

@@ -69,7 +69,7 @@ static int bench(int iter_count, int silent)
    return 0;
 }
 
-int main(int argc, char** argv)
+int main(int argc, char** argv, char** env)
 {
    U_ULIB_INIT(argv);
 

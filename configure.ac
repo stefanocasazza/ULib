@@ -2001,7 +2001,7 @@ AC_ARG_ENABLE(static-server-plugin,
 				  AS_HELP_STRING([--enable-static-server-plugin=MODULES],[ rpc shib stream socket scgi fcgi geoip proxy soap ssi tsa nocat http echo ]),
 				  [use_static_module="$enableval"])
 
-for mod in $modules; do
+for mod in $use_static_module; do
 	AC_MSG_CHECKING([server plugin "$mod"])
 
 	if echo $use_static_module | grep -w $mod >/dev/null || echo $use_static_module | grep all >/dev/null; then
@@ -2103,10 +2103,11 @@ static_handler_mysql=""
 static_handler_sqlite=""
 static_handler_pgsql=""
 
-AC_ARG_ENABLE(static-orm-driver, AS_HELP_STRING([--enable-static-orm-driver=DRIVERS],[ sqlite mysql pgsql ]),
+AC_ARG_ENABLE(static-orm-driver,
+				  AS_HELP_STRING([--enable-static-orm-driver=DRIVERS],[ sqlite mysql pgsql ]),
 				  [use_static_driver="$enableval"])
 
-for drv in $drivers; do
+for drv in $use_static_driver; do
 	AC_MSG_CHECKING([ORM driver "$drv"])
 
 	if echo $use_static_driver | grep -w $drv >/dev/null || echo $use_static_driver | grep all >/dev/null; then
@@ -2117,20 +2118,20 @@ for drv in $drivers; do
 			static_handler_sqlite="yes"
          ULIB_LIBS="$ULIB_LIBS $SQLITE3_LIBS"
 			LDFLAGS="$SQLITE3_LDFLAGS $LDFLAGS"
-			CPPFLAGS="$SQLITE3_INCLUDE $CPPFLAGS"
+			CXXFLAGS="$SQLITE3_INCLUDE $CXXFLAGS"
 			AC_DEFINE(U_STATIC_ORM_DRIVER_SQLITE,, [STATIC_ORM_DRIVER_SQLITE])
-		elif test "$drv" = "mysql"; then
-			static_handler_mysql="yes"
-         ULIB_LIBS="$ULIB_LIBS $MYSQL_LIBS"
-			LDFLAGS="$MYSQL_LDFLAGS $LDFLAGS"
-			CPPFLAGS="$MYSQL_INCLUDE $CPPFLAGS"
-			AC_DEFINE(U_STATIC_ORM_DRIVER_MYSQL,, [STATIC_ORM_DRIVER_MYSQL])
 		elif test "$drv" = "pgsql"; then
 			static_handler_pgsql="yes"
          ULIB_LIBS="$ULIB_LIBS $POSTGRESQL_LIBS"
 			LDFLAGS="$POSTGRESQL_LDFLAGS $LDFLAGS"
-			CPPFLAGS="$POSTGRESQL_CPPFLAGS $CPPFLAGS"
+			CXXFLAGS="$POSTGRESQL_CPPFLAGS $CXXFLAGS"
 			AC_DEFINE(U_STATIC_ORM_DRIVER_PGSQL,, [STATIC_ORM_DRIVER_PGSQL])
+		elif test "$drv" = "mysql"; then
+			static_handler_mysql="yes"
+         ULIB_LIBS="$ULIB_LIBS $MYSQL_LIBS"
+			LDFLAGS="$MYSQL_LDFLAGS $LDFLAGS"
+			CXXFLAGS="$MYSQL_INCLUDE $CXXFLAGS"
+			AC_DEFINE(U_STATIC_ORM_DRIVER_MYSQL,, [STATIC_ORM_DRIVER_MYSQL])
 		fi
 
 	   AC_MSG_RESULT([static])
@@ -2253,6 +2254,8 @@ CXXFLAGS="$CXXFLAGS -fno-exceptions -fno-rtti"
 
 if test "$ac_cv_c_compiler_gnu" = "yes" -a "x$GCC_IS_CLANG" = xno -a "x$OPERATINGSYSTEM" = xlinux; then
 
+	TWOCAN_CONF_MSG(Checking for gcc compiler flags)
+
 	AC_MSG_CHECKING([whether to use libgcc])
 	AC_ARG_ENABLE(libgcc,
 	AC_HELP_STRING([--enable-libgcc],[use libgcc when linking]),
@@ -2266,8 +2269,6 @@ if test "$ac_cv_c_compiler_gnu" = "yes" -a "x$GCC_IS_CLANG" = xno -a "x$OPERATIN
 		  esac ],
 			 AC_MSG_RESULT(no)
 		)
-
-	TWOCAN_CONF_MSG(Checking for gcc compiler flags)
 
 	AC_CC_TRY_FLAG
 

@@ -28,7 +28,7 @@ int U_EXPORT main(int argc, char* argv[], char* env[])
       cout.write(content.data(), content.size());
       }
 #else
-   (void) http.setHostPort(url.getHost(), url.getPort());
+   (void) http.setHostPort(url.getHost(), url.getPortNumber());
 
 #  define AB_REQUEST(ver) "GET /usp/benchmarking.usp?name=stefano HTTP/1."#ver"\r\n" \
                           "Host: stefano\r\n" \

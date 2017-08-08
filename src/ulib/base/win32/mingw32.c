@@ -198,7 +198,7 @@ char* realpath(const char* name, char* resolved_path)
 
 char* u_slashify(const char* src, char slash_from, char slash_to)
 {
-   static char u_slashify_buffer[PATH_MAX];
+   static char u_slashify_buffer[U_PATH_MAX];
 
    char* dst = u_slashify_buffer;
 

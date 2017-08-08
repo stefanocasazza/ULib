@@ -7,14 +7,14 @@
 #DOC_ROOT=ruby/blog
  DOC_ROOT=benchmark/docroot
 
-rm -f tmp/usp_compile.sh.err /tmp/*.hpack.* /var/log/httpd/access_log \
+rm -f tmp/usp_compile.sh.err /tmp/*.hpack.* \
 		$DOC_ROOT/web_server.log* \
       out/userver_*.out err/userver_*.err \
 					 trace.*userver_*.[0-9]*			  object.*userver_*.[0-9]*				 stack.*userver_*.[0-9]*			  mempool.*userver_*.[0-9]* \
       $DOC_ROOT/trace.*userver_*.[0-9]* $DOC_ROOT/object.*userver_*.[0-9]* $DOC_ROOT/stack.*userver_*.[0-9]* $DOC_ROOT/mempool.*userver_*.[0-9]*
 
- UTRACE="0 50M -1"
- UTRACE_SIGNAL="0 50M -1"
+ UTRACE="0 50M 0"
+ UTRACE_SIGNAL="0 50M 0"
 #UOBJDUMP="0 10M 100"
 #USIMERR="error.sim"
  UMEMUSAGE=yes
@@ -57,7 +57,7 @@ cat <<EOF >inp/webserver.cfg
 userver {
  PORT 8080
  RUN_AS_USER nobody
-#MIN_SIZE_FOR_SENDFILE 2k
+ MIN_SIZE_FOR_SENDFILE 2k
  LOG_FILE web_server.log
  LOG_FILE_SZ 10M
 #LOG_FILE_SZ 20k
@@ -76,8 +76,8 @@ userver {
 #PLUGIN "ssi http"
 #ORM_DRIVER "sqlite mysql"
  ORM_DRIVER sqlite
-#DOCUMENT_ROOT  JONATHAN/docroot
- DOCUMENT_ROOT  benchmark/docroot
+ DOCUMENT_ROOT  JONATHAN/docroot
+#DOCUMENT_ROOT  benchmark/docroot
  PLUGIN_DIR     ../../../../src/ulib/net/server/plugin/.libs
  ORM_DRIVER_DIR ../../../../src/ulib/orm/driver/.libs
 #DOCUMENT_ROOT  .
@@ -97,6 +97,7 @@ ALIAS "[ / /100.html ]"
  LIMIT_REQUEST_BODY 3M
  REQUEST_READ_TIMEOUT 30
  APACHE_LIKE_LOG /var/log/httpd/access_log
+ LOG_FILE_SZ 10M
 #DIGEST_AUTHENTICATION yes
 #CACHE_FILE_STORE nocat/webif.gz
 #CACHE_FILE_MASK inp/http/data/file1|*.flv|*.svgz
@@ -116,6 +117,7 @@ DIR_CMD="../../examples/userver"
 
 #STRACE=$TRUSS
 start_prg_background userver_tcp -c inp/webserver.cfg
+											 # /srv/userver_orm.cfg
 											 # RA/RA.cfg
 											 # deployment.properties
 

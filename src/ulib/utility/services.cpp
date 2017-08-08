@@ -157,7 +157,7 @@ read:
 
    if (value == (ssize_t)ncount)
       {
-#  ifndef U_SERVER_CAPTIVE_PORTAL
+#  if defined(U_LINUX) && (!defined(U_SERVER_CAPTIVE_PORTAL) || defined(ENABLE_THREAD))
       U_DEBUG("UServices::read(%u) ran out of buffer space(%u)", count, ncount)
 #  endif
 

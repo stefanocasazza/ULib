@@ -157,6 +157,8 @@ target_triplet = @target@
 @STATIC_HANDLER_TSA_TRUE@am__append_59 = net/server/plugin/mod_tsa.cpp
 @STATIC_HANDLER_HTTP_TRUE@am__append_60 = net/server/plugin/mod_http.cpp
 @STATIC_HANDLER_ECHO_TRUE@am__append_61 = net/server/plugin/mod_echo.cpp
+
+# Handler static orm driver
 @STATIC_ORM_DRIVER_SQLITE_TRUE@am__append_62 = orm/driver/orm_driver_sqlite.cpp
 @STATIC_ORM_DRIVER_MYSQL_TRUE@am__append_63 = orm/driver/orm_driver_mysql.cpp
 @STATIC_ORM_DRIVER_PGSQL_TRUE@am__append_64 = orm/driver/orm_driver_pgsql.cpp
@@ -767,8 +769,6 @@ SRC_CPP = internal/common.cpp internal/error.cpp ui/dialog.cpp \
 	$(am__append_58) $(am__append_59) $(am__append_60) \
 	$(am__append_61) $(am__append_62) $(am__append_63) \
 	$(am__append_64) $(am__append_65)
-
-# Handler static orm driver
 
 #lib@ULIB@_la_CXXFLAGS =
 lib@ULIB@_la_LDFLAGS = @ULIB_LIBS@ -version-info 1:0:0 -release \

@@ -79,9 +79,7 @@ next:
       vdriver->push_back(_driver);
       vdriver_name_static->push_back(x);
 
-#  ifndef U_LOG_DISABLE
-      if (UServer_Base::isLog()) ULog::log(U_CONSTANT_TO_PARAM("[%s] Link of static driver ok"), name);
-#  endif
+      U_SRV_LOG("[%s] Link of static driver ok", name);
       }
 #endif
 }
@@ -169,9 +167,7 @@ bool UOrmDriver::loadDriver(const UString& dir, const UString& driver_list)
             vdriver->push_back(_driver);
             vdriver_name_static->push_back(item);
 
-#        ifndef U_LOG_DISABLE
-            if (UServer_Base::isLog()) ULog::log(U_CONSTANT_TO_PARAM("[%v] Load of driver success"), item.rep);
-#        endif
+            U_SRV_LOG("[%v] Load of driver success", item.rep);
             }
          }
 

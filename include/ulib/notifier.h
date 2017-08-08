@@ -44,8 +44,7 @@
 #define EPOLLROUNDROBIN 0 // (1 << 27)
 #endif
 
-#if defined(HAVE_EPOLL_WAIT) && !defined(USE_LIBEVENT) && !defined(U_SERVER_CAPTIVE_PORTAL) && \
-      (!defined(U_LINUX) || !defined(ENABLE_THREAD) || !defined(U_LOG_DISABLE) || defined(USE_LIBZ))
+#if defined(HAVE_EPOLL_WAIT) && !defined(USE_LIBEVENT) && !defined(U_SERVER_CAPTIVE_PORTAL)
 #  define U_EPOLLET_POSTPONE_STRATEGY
 #endif
 

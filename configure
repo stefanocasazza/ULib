@@ -26244,7 +26244,9 @@ if test "${enable_CRPWS+set}" = set; then :
 fi
 
 	if test -z "$enable_CRPWS"; then
-		if test "$enable_debug" = "yes"; then
+		if test "$USP_FLAGS" = "-DAS_cpoll_cppsp_DO"; then
+			enable_CRPWS="no"
+		elif test "$enable_debug" = "yes"; then
 			enable_CRPWS="yes"
 		else
 			enable_CRPWS="no"
@@ -26266,7 +26268,11 @@ if test "${enable_captive_portal+set}" = set; then :
 fi
 
 	if test -z "$enable_captive_portal"; then
-		enable_captive_portal="no"
+		if test "$USP_FLAGS" = "-DAS_cpoll_cppsp_DO"; then
+			enable_captive_portal="yes"
+		else
+			enable_captive_portal="no"
+		fi
 	fi
 	if test "$enable_captive_portal" = "yes"; then
 
@@ -26302,7 +26308,9 @@ if test "${enable_HIS+set}" = set; then :
 fi
 
 	if test -z "$enable_HIS" ; then
-		if test "$enable_debug" = "yes"; then
+		if test "$USP_FLAGS" = "-DAS_cpoll_cppsp_DO"; then
+			enable_HIS="no"
+		elif test "$enable_debug" = "yes"; then
 			enable_HIS="yes"
 		else
 			enable_HIS="no"
@@ -26346,7 +26354,9 @@ if test "${enable_GSDS+set}" = set; then :
 fi
 
 	if test -z "$enable_GSDS"; then
-		if test "$enable_debug" = "yes"; then
+		if test "$USP_FLAGS" = "-DAS_cpoll_cppsp_DO"; then
+			enable_GSDS="no"
+		elif test "$enable_debug" = "yes"; then
 			enable_GSDS="yes"
 		else
 			enable_GSDS="no"
@@ -26430,7 +26440,9 @@ if test "${enable_check_time+set}" = set; then :
 fi
 
 	if test -z "$enable_check_time"; then
-		if test "$enable_debug" = "yes" -a "$enable_http2" != "yes"; then
+		if test "$USP_FLAGS" = "-DAS_cpoll_cppsp_DO"; then
+			enable_check_time="no"
+		elif test "$enable_debug" = "yes" -a "$enable_http2" != "yes"; then
 			enable_check_time="yes"
 		else
 			enable_check_time="no"
@@ -26582,7 +26594,9 @@ if test "${enable_HSTS+set}" = set; then :
 fi
 
 	if test -z "$enable_HSTS"; then
-		if test "$enable_debug" = "yes"; then
+		if test "$USP_FLAGS" = "-DAS_cpoll_cppsp_DO"; then
+			enable_HSTS="no"
+		elif test "$enable_debug" = "yes"; then
 			enable_HSTS="yes"
 		else
 			enable_HSTS="no"
@@ -28342,7 +28356,7 @@ fi
 		MYSQL_INCLUDE=`mysql_config --include`
 		libmysql_version=$(grep LIBMYSQL_VERSION     /usr/include/mysql/mysql_version.h 2>/dev/null | head -n1 | cut -d'"' -f2)
 	else
-		MYSQL_INCLUDE=-I$ac_mysql_incdir
+		MYSQL_INCLUDE=$ac_mysql_incdir
 		libmysql_version=$(grep LIBMYSQL_VERSION $ac_mysql_incdir/mysql/mysql_version.h 2>/dev/null | head -n1 | cut -d'"' -f2)
 	fi
 	if test "$ac_mysql_libdir" = "no"; then
@@ -28471,10 +28485,17 @@ fi
             { $as_echo "$as_me:${as_lineno-$LINENO}: checking for PostgreSQL libraries" >&5
 $as_echo_n "checking for PostgreSQL libraries... " >&6; }
 
-            POSTGRESQL_CPPFLAGS="`$PG_CONFIG --includedir` -I`$PG_CONFIG --includedir-server`"
-            POSTGRESQL_LDFLAGS=-L"`$PG_CONFIG --libdir`"
-            POSTGRESQL_LIBS="-lpq"
+            postgresql_libdir=`$PG_CONFIG --libdir`
+
+            POSTGRESQL_LDFLAGS=-L"$postgresql_libdir"
+            POSTGRESQL_CPPFLAGS="-I`$PG_CONFIG --includedir` -I`$PG_CONFIG --includedir-server`"
             POSTGRESQL_VERSION=`$PG_CONFIG --version | sed -e 's#PostgreSQL ##'`
+
+				if test -f "$postgresql_libdir/libpgport.a"; then
+					POSTGRESQL_LIBS="-lpq -lpgport"
+				else
+					POSTGRESQL_LIBS="-lpq"
+				fi
 
 
 $as_echo "#define HAVE_POSTGRESQL 1" >>confdefs.h
@@ -31537,7 +31558,7 @@ if test "${enable_static_server_plugin+set}" = set; then :
 fi
 
 
-for mod in $modules; do
+for mod in $use_static_module; do
 	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking server plugin \"$mod\"" >&5
 $as_echo_n "checking server plugin \"$mod\"... " >&6; }
 
@@ -31781,7 +31802,7 @@ if test "${enable_static_orm_driver+set}" = set; then :
 fi
 
 
-for drv in $drivers; do
+for drv in $use_static_driver; do
 	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking ORM driver \"$drv\"" >&5
 $as_echo_n "checking ORM driver \"$drv\"... " >&6; }
 
@@ -31793,25 +31814,25 @@ $as_echo_n "checking ORM driver \"$drv\"... " >&6; }
 			static_handler_sqlite="yes"
          ULIB_LIBS="$ULIB_LIBS $SQLITE3_LIBS"
 			LDFLAGS="$SQLITE3_LDFLAGS $LDFLAGS"
-			CPPFLAGS="$SQLITE3_INCLUDE $CPPFLAGS"
+			CXXFLAGS="$SQLITE3_INCLUDE $CXXFLAGS"
 
 $as_echo "#define U_STATIC_ORM_DRIVER_SQLITE /**/" >>confdefs.h
-
-		elif test "$drv" = "mysql"; then
-			static_handler_mysql="yes"
-         ULIB_LIBS="$ULIB_LIBS $MYSQL_LIBS"
-			LDFLAGS="$MYSQL_LDFLAGS $LDFLAGS"
-			CPPFLAGS="$MYSQL_INCLUDE $CPPFLAGS"
-
-$as_echo "#define U_STATIC_ORM_DRIVER_MYSQL /**/" >>confdefs.h
 
 		elif test "$drv" = "pgsql"; then
 			static_handler_pgsql="yes"
          ULIB_LIBS="$ULIB_LIBS $POSTGRESQL_LIBS"
 			LDFLAGS="$POSTGRESQL_LDFLAGS $LDFLAGS"
-			CPPFLAGS="$POSTGRESQL_CPPFLAGS $CPPFLAGS"
+			CXXFLAGS="$POSTGRESQL_CPPFLAGS $CXXFLAGS"
 
 $as_echo "#define U_STATIC_ORM_DRIVER_PGSQL /**/" >>confdefs.h
+
+		elif test "$drv" = "mysql"; then
+			static_handler_mysql="yes"
+         ULIB_LIBS="$ULIB_LIBS $MYSQL_LIBS"
+			LDFLAGS="$MYSQL_LDFLAGS $LDFLAGS"
+			CXXFLAGS="$MYSQL_INCLUDE $CXXFLAGS"
+
+$as_echo "#define U_STATIC_ORM_DRIVER_MYSQL /**/" >>confdefs.h
 
 		fi
 
@@ -32087,6 +32108,13 @@ CXXFLAGS="$CXXFLAGS -fno-exceptions -fno-rtti"
 
 if test "$ac_cv_c_compiler_gnu" = "yes" -a "x$GCC_IS_CLANG" = xno -a "x$OPERATINGSYSTEM" = xlinux; then
 
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: " >&5
+$as_echo "" >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: ${T_MD}Checking for gcc compiler flags:${T_ME}" >&5
+$as_echo "${T_MD}Checking for gcc compiler flags:${T_ME}" >&6; }
+
+
 	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether to use libgcc" >&5
 $as_echo_n "checking whether to use libgcc... " >&6; }
 	# Check whether --enable-libgcc was given.
@@ -32106,13 +32134,6 @@ else
 $as_echo "no" >&6; }
 
 fi
-
-
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: " >&5
-$as_echo "" >&6; }
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: ${T_MD}Checking for gcc compiler flags:${T_ME}" >&5
-$as_echo "${T_MD}Checking for gcc compiler flags:${T_ME}" >&6; }
 
 
 		{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether $CC supports " >&5

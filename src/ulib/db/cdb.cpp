@@ -913,6 +913,13 @@ U_NO_EXPORT void UCDB::checkForAllEntry()
 // STREAM
 
 #ifdef U_STDCPP_ENABLE
+vpFpcu UCDB::getValueFromBuffer;
+
+class mystreambuf : public streambuf {
+public:
+   char* gptr() { return streambuf::gptr(); } // expose the terribly named cur pointer
+};
+
 U_EXPORT istream& operator>>(istream& is, UCDB& cdb)
 {
    U_TRACE(0+256, "UCDB::operator>>(%p,%p)", &is, &cdb)
@@ -950,7 +957,6 @@ U_EXPORT istream& operator>>(istream& is, UCDB& cdb)
       U_INTERNAL_DUMP("hr = { %u, %u }", klen, dlen)
 
       u_put_unaligned32(hr->klen, klen);
-      u_put_unaligned32(hr->dlen, dlen);
 
       ptr += sizeof(UCDB::cdb_record_header);
 
@@ -965,13 +971,30 @@ U_EXPORT istream& operator>>(istream& is, UCDB& cdb)
 
       ptr += klen;
 
-#  ifndef U_COVERITY_FALSE_POSITIVE /* TAINTED_SCALAR */
-      is.read(ptr, dlen);
-#  endif
+      if (UCDB::getValueFromBuffer == U_NULLPTR)
+         {
+         u_put_unaligned32(hr->dlen, dlen);
 
-      U_INTERNAL_DUMP("data = %.*S", dlen, ptr)
+         is.read(ptr, dlen);
 
-      ptr += dlen;
+         U_INTERNAL_DUMP("data = %.*S", dlen, ptr)
+
+         ptr += dlen;
+         }
+      else
+         {
+         streambuf* sb = is.rdbuf();
+
+         UCDB::getValueFromBuffer(((mystreambuf*)sb)->gptr(), dlen);
+
+         is.seekg(dlen, ios::cur);
+
+         u_put_unaligned32(hr->dlen, u_buffer_len);
+
+         U_MEMCPY(ptr, u_buffer, u_buffer_len);
+                  ptr +=         u_buffer_len;
+                                 u_buffer_len = 0;
+         }
 
       cdb.nrecord++;
 

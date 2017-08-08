@@ -209,6 +209,7 @@ typedef int   (*iPFpv)   (void*);
 typedef bool  (*bPFpc)   (const char*);
 typedef void  (*vPFpc)   (const char*);
 typedef void* (*pvPFpv)  (void*);
+typedef void  (*vpFpcu)  (const char*,uint32_t);
 typedef bool  (*bPFpcu)  (const char*,uint32_t);
 typedef void  (*vPFpvu)  (void*,uint32_t);
 typedef int   (*iPFpvpv) (void*,void*);
@@ -253,6 +254,8 @@ typedef struct ustringrep {
 } ustringrep;
 
 typedef struct ustring { struct ustringrep* rep; } ustring;
+
+#define U_PATH_MAX (1024U - (1 + sizeof(ustringrep)))
 
 /* Internal buffer */
 

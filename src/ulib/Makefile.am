@@ -288,9 +288,6 @@ endif
 
 # Handler static orm driver
 
-#lib@ULIB@_la_CXXFLAGS =
-lib@ULIB@_la_LDFLAGS = @ULIB_LIBS@ -version-info 1:0:0 -release @ULIB_VERSION@
-
 if STATIC_ORM_DRIVER_SQLITE
 SRC_CPP += orm/driver/orm_driver_sqlite.cpp
 endif
@@ -313,6 +310,9 @@ endif
 ##SRC_CPP += ../../examples/WiAuth/wi_auth.cpp
 ##endif
 endif
+
+#lib@ULIB@_la_CXXFLAGS =
+lib@ULIB@_la_LDFLAGS = @ULIB_LIBS@ -version-info 1:0:0 -release @ULIB_VERSION@
 
 if FINAL
 lib@ULIB@_la_SOURCES = all_c.c base/xxhash/xxhash.c all_cpp.cpp

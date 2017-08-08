@@ -507,7 +507,7 @@ void USocket::reusePort(int _flags)
 
    U_CHECK_MEMORY
 
-#if !defined(U_SERVER_CAPTIVE_PORTAL) && defined(U_LINUX)
+#if defined(U_LINUX) && (!defined(U_SERVER_CAPTIVE_PORTAL) || defined(ENABLE_THREAD))
    U_INTERNAL_DUMP("breuseport = %b", breuseport)
 
    if (breuseport)
@@ -784,7 +784,7 @@ void USocket::_close_socket()
 
    U_INTERNAL_ASSERT(isOpen())
 
-#ifdef U_SERVER_CAPTIVE_PORTAL
+#if defined(U_LINUX) && (defined(U_SERVER_CAPTIVE_PORTAL) && !defined(ENABLE_THREAD))
    (void) U_SYSCALL(shutdown, "%d,%d", iSockDesc, SHUT_WR);
 #endif
 

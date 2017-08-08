@@ -78,6 +78,10 @@ typedef uint64_t cpu_set_t;
 #  define CPUSET_BITS(set) (set)
 #endif
 
+#ifndef UINT32_MAX
+#define UINT32_MAX 4294967295U
+#endif
+
 /**
  * TOKEN ID
  */
@@ -623,23 +627,8 @@ static inline uint64_t u_strtoull(const char* restrict s, const char* restrict e
 #endif
 }
 
-static inline unsigned long u_strtoulp(const char** restrict s)
-{
-   const char* restrict ptr;
-   const char* restrict p = *s;
-
-   U_INTERNAL_TRACE("u_strtolp(%p)", s)
-
-   U_INTERNAL_ASSERT_POINTER(s)
-
-   while (u__isdigitw0(*p) == false) ++p;
-
-   ptr = p;
-
-   while (u__isdigit(*p)) ++p;
-
-   return u_strtoul(ptr, *s = p);
-}
+extern U_EXPORT unsigned long u_strtoulp( const char** restrict s);
+extern U_EXPORT uint64_t      u_strtoullp(const char** restrict s);
 
 extern U_EXPORT unsigned long u__atoi(const char* restrict s) __pure;
 

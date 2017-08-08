@@ -282,7 +282,7 @@ int main(int argc, char* argv[])
    char* sargv[128];
    uint32_t x, path_len;
    const char* path_rel;
-   char path[PATH_MAX + 1];
+   char path[U_PATH_MAX + 1];
 
    const char* vec[] = {
       "libpng-1.0.10.tar.gz",

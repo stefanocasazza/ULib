@@ -382,7 +382,7 @@ bool ULDAP::init(const char* url)
    ludpp = (LDAPURLDesc*) calloc(1, sizeof(LDAPURLDesc));
 
    ludpp->lud_host  = _url.getHost().c_strdup();
-   ludpp->lud_port  = _url.getPort();
+   ludpp->lud_port  = _url.getPortNumber();
    ludpp->lud_dn    = _url.getPath().c_strndup(1);
    ludpp->lud_scope = LDAP_SCOPE_BASE;
 

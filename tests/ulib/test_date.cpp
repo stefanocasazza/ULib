@@ -30,8 +30,7 @@ static void checkForDaylightSavingTime(const char* tz, const char* start, const 
    U_INTERNAL_ASSERT_EQUALS(res2, -1)
 }
 
-int
-U_EXPORT main(int argc, char* argv[])
+int U_EXPORT main(int argc, char* argv[], char** env)
 {
    U_ULIB_INIT(argv);
 

@@ -13,8 +13,17 @@ uclient_fuzzer_CFLAGS 	= -fno-omit-frame-pointer -fsanitize=address -fsanitize-c
 uclient_fuzzer_CXXFLAGS = -fno-omit-frame-pointer -fsanitize=address -fsanitize-coverage=edge,indirect-calls,8bit-counters
 uclient_fuzzer_LDFLAGS  = -fsanitize=address
 
+uhttp_parser_fuzzer_CC 		  = clang
+uhttp_parser_fuzzer_CXX 	  = clang++
+uhttp_parser_fuzzer_CPPFLAGS = -D_GLIBCXX_GCC_GTHR_H
+uhttp_parser_fuzzer_SOURCES  = uhttp_parser_fuzzer.cpp
+uhttp_parser_fuzzer_LDADD    = $(ulib_la) libFuzzer.a
+uhttp_parser_fuzzer_CFLAGS   = -fno-omit-frame-pointer -fsanitize=address -fsanitize-coverage=edge,indirect-calls,8bit-counters
+uhttp_parser_fuzzer_CXXFLAGS = -fno-omit-frame-pointer -fsanitize=address -fsanitize-coverage=edge,indirect-calls,8bit-counters
+uhttp_parser_fuzzer_LDFLAGS  = -fsanitize=address
+
 if CLANG
-noinst_PROGRAMS = uclient_fuzzer
+noinst_PROGRAMS = uclient_fuzzer uhttp_parser_fuzzer
 endif
 
 clean-local:

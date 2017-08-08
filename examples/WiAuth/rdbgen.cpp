@@ -1,6 +1,7 @@
 // rdbgen.cpp
 
 #include <ulib/db/rdb.h>
+#include <ulib/net/server/server.h>
 
 #undef  PACKAGE
 #define PACKAGE "rdbgen"
@@ -43,18 +44,16 @@ public:
 
       UApplication::run(argc, argv, env);
 
-      const char* p = argv[optind++]; 
+      uint32_t plen;
+      const char* p = argv[optind++];
 
-      UString path_of_db_file(p, strlen(p)); 
-
-      if (path_of_db_file.empty()) U_ERROR("missing <path_of_db_file> argument");
-
-      URDB x(path_of_db_file, false);
-
-      if (x.UFile::getSuffix().equal(U_CONSTANT_TO_PARAM("jnl")))
+      if (p == U_NULLPTR ||
+          (plen = u__strlen(p, __PRETTY_FUNCTION__)) == 0)
          {
-         U_ERROR("you must avoid the jnl suffix, exiting");
+         U_ERROR("missing <path_of_db_file> argument");
          }
+
+      U_INTERNAL_DUMP("optind = %d argv[optind] = %S", optind, argv[optind])
 
       const char* method = argv[optind++];
 
@@ -63,11 +62,41 @@ public:
       if (u__isdigit(*method) == false) U_ERROR("<number_of_command> argument is not numeric");
 
       int op = method[0] - '0';
+      bool bjournal2remove = false;
+      const char* suffix = u_getsuffix(p, plen);
 
-      if (x.open(10 * 1024 * 1024, false, op == 6, true)) // bool open(uint32_t log_size, bool btruncate, bool cdb_brdonly, bool breference)
+      if (suffix)
          {
-         if (method[1] == 's') x.setShared(U_NULLPTR,U_NULLPTR); // POSIX shared memory object (interprocess - can be used by unrelated processes)
+         U_INTERNAL_DUMP("suffix = %S", suffix)
+
+         if (memcmp(suffix+1, U_CONSTANT_TO_PARAM("cdb")) == 0)
+            {
+            char buffer[U_PATH_MAX];
+
+            (void) memcmp(buffer, p, plen);
+            (void) memcmp(buffer+plen, ".jnl", sizeof(".jnl"));
+
+            if (UFile::access(buffer, R_OK) == false) bjournal2remove = true;
+            }
+         else if (memcmp(suffix+1, U_CONSTANT_TO_PARAM("jnl")) == 0)
+            {
+            plen -= U_CONSTANT_SIZE(".jnl");
+
+            U_WARNING("you must avoid the jnl suffix");
+            }
+         }
+
+      URDB x(UString(p, plen), false);
+
+      if (x.open(10 * 1024 * 1024, false, (op == 6), true)) // bool open(uint32_t log_size, bool btruncate, bool cdb_brdonly, bool breference)
+         {
+         if (bjournal2remove) (void) x.getJournal()._unlink(); // NB: we have only the constant db
+         if (x.UFile::st_size == 0) (void) x.UFile::_unlink(); // NB: we have only the journal
+
+         if (method[1] == 's') x.setShared(U_NULLPTR, U_NULLPTR); // POSIX shared memory object (interprocess - can be used by unrelated processes)
          else                  x.resetReference();
+
+         U_INTERNAL_DUMP("optind = %d argv[optind] = %S", optind, argv[optind])
 
          switch (op)
             {
@@ -127,10 +156,21 @@ public:
 
             case 5: // dump
                {
-               UString value = x.print();
+               UString y = x.UFile::getName();
 
-               if (value.empty()) (void) UFile::_unlink(U_DIR_OUTPUT U_FILE_OUTPUT);
-               else               (void) UFile::writeToTmp(U_STRING_TO_PARAM(value), O_RDWR | O_TRUNC, U_CONSTANT_TO_PARAM(U_FILE_OUTPUT), 0);
+               p = y.data();
+
+#           ifdef U_EVASIVE_SUPPORT
+               if (memcmp(p, U_CONSTANT_TO_PARAM("Evasive")) == 0) UString::printValueToBuffer = UServer_Base::printEvasiveRecToBuffer;
+#           endif
+#           ifdef U_THROTTLING_SUPPORT
+               if (memcmp(p, U_CONSTANT_TO_PARAM("BandWidthThrottling")) == 0) UString::printValueToBuffer = UServer_Base::printThrottlingRecToBuffer;
+#           endif
+
+               y = x.print();
+
+               if (y.empty()) (void) UFile::_unlink(U_DIR_OUTPUT U_FILE_OUTPUT);
+               else           (void) UFile::writeToTmp(U_STRING_TO_PARAM(y), O_RDWR | O_TRUNC, U_CONSTANT_TO_PARAM(U_FILE_OUTPUT), 0);
                }
             break;
 

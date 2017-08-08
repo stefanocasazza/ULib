@@ -68,27 +68,31 @@ public:
 
    // ATOMIC COUNTER
 
-   static long atomicIncrement(long* pvalue, long offset)
+   static void atomicIncrement(long* pvalue, long offset)
       {
-      U_TRACE(0, "ULock::atomicIncrement(%ld,%ld)", *pvalue, offset)
+      U_TRACE(0, "ULock::atomicIncrement(%p,%ld)", pvalue, offset)
 
 #  if defined(HAVE_GCC_ATOMICS) && defined(ENABLE_THREAD)
-      return __sync_add_and_fetch(pvalue, offset);
+      (void) __sync_add_and_fetch(pvalue, offset);
 #  else
-      return (*pvalue += offset);
+      *pvalue += offset;
 #  endif
       }
 
-   static long atomicDecrement(long* pvalue, long offset)
+   static void atomicIncrement(sig_atomic_t& value) { atomicIncrement((long*)&value, 1L); }
+
+   static void atomicDecrement(long* pvalue, long offset)
       {
-      U_TRACE(0, "ULock::atomicDecrement(%ld,%ld)", *pvalue, offset)
+      U_TRACE(0, "ULock::atomicDecrement(%p,%ld)", pvalue, offset)
 
 #  if defined(HAVE_GCC_ATOMICS) && defined(ENABLE_THREAD)
-      return __sync_sub_and_fetch(pvalue, offset);
+      (void) __sync_sub_and_fetch(pvalue, offset);
 #  else
-      return (*pvalue -= offset);
+      *pvalue -= offset;
 #  endif
       }
+
+   static void atomicDecrement(sig_atomic_t& value) { atomicDecrement((long*)&value, 1L); }
 
    // STREAM
 

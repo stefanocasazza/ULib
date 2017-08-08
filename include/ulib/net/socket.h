@@ -515,7 +515,7 @@ public:
       {
       U_TRACE_NO_PARAM(0, "USocket::setTcpFastOpen()")
 
-#  if !defined(U_SERVER_CAPTIVE_PORTAL) && defined(U_LINUX) // && LINUX_VERSION_CODE >= KERNEL_VERSION(3,6,0)
+#  if defined(U_LINUX) && (!defined(U_SERVER_CAPTIVE_PORTAL) || defined(ENABLE_THREAD)) // && LINUX_VERSION_CODE >= KERNEL_VERSION(3,6,0)
 #    ifndef TCP_FASTOPEN
 #    define TCP_FASTOPEN 23 /* Enable FastOpen on listeners */
 #    endif
@@ -756,7 +756,7 @@ protected:
        * distributes datagrams evenly across all of the receiving threads
        */
 
-#  if defined(U_LINUX) && !defined(U_SERVER_CAPTIVE_PORTAL) // && LINUX_VERSION_CODE >= KERNEL_VERSION(3,9,0)
+#  if defined(U_LINUX) && (!defined(U_SERVER_CAPTIVE_PORTAL) || defined(ENABLE_THREAD)) // && LINUX_VERSION_CODE >= KERNEL_VERSION(3,9,0)
 #   ifndef SO_REUSEPORT
 #   define SO_REUSEPORT 15
 #   endif

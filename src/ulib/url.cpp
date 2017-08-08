@@ -16,17 +16,6 @@
 
 // gcc: call is unlikely and code size would grow
 
-UString Url::getService() const
-{
-   U_TRACE_NO_PARAM(0, "Url::getService()")
-
-   UString srv;
-
-   if (service_end > 0) srv = url.substr(0U, (uint32_t)service_end);
-
-   U_RETURN_STRING(srv);
-}
-
 void Url::setService(const char* service, uint32_t n)
 {
    U_TRACE(0, "Url::setService(%S,%u)", service, n)
@@ -44,17 +33,6 @@ void Url::setService(const char* service, uint32_t n)
    findpos();
 }
 
-UString Url::getUser()
-{
-   U_TRACE_NO_PARAM(0, "Url::getUser()")
-
-   UString usr;
-
-   if (user_begin < user_end) usr = url.substr(user_begin, user_end - user_begin);
-
-   U_RETURN_STRING(usr);
-}
-
 bool Url::setUser(const char* user, uint32_t n)
 {
    U_TRACE(0, "Url::setUser(%S,%u)", user, n)
@@ -65,7 +43,7 @@ bool Url::setUser(const char* user, uint32_t n)
 
    if (host_begin < host_end)
       {
-      if (user_begin < user_end) (void) url.replace(user_begin, user_end - user_begin, user, n);
+      if (user_begin < user_end) (void) url.replace(user_begin, user_end-user_begin, user, n);
       else
          {
          char buffer[128];
@@ -81,48 +59,49 @@ bool Url::setUser(const char* user, uint32_t n)
    U_RETURN(false);
 }
 
-UString Url::getHost()
+void Url::setHost(const char* lhost, uint32_t n)
 {
-   U_TRACE_NO_PARAM(0, "Url::getHost()")
+   U_TRACE(0, "Url::setHost(%S,%u)", lhost, n)
 
-   UString host;
+   U_INTERNAL_ASSERT_POINTER(lhost)
 
-   if (host_begin < host_end) host = url.substr(host_begin, host_end - host_begin);
-
-   U_RETURN_STRING(host);
-}
-
-void Url::setHost(const char* _host, uint32_t n)
-{
-   U_TRACE(0, "Url::setHost(%S,%u)", _host, n)
-
-   U_INTERNAL_ASSERT_POINTER(_host)
-
-   if (host_begin < host_end) (void) url.replace(host_begin, host_end - host_begin, _host, n);
-   else                       (void) url.insert( host_begin,                        _host, n);
+   if (host_begin < host_end) (void) url.replace(host_begin, host_end-host_begin, lhost, n);
+   else                       (void) url.insert( host_begin,                      lhost, n);
 
    findpos();
 }
 
-unsigned int Url::getPort()
+UString Url::getPort()
 {
    U_TRACE_NO_PARAM(0, "Url::getPort()")
 
    if (host_end < path_begin)
       {
-      int size = path_begin - host_end - 1;
+      int size = path_begin-host_end-1;
 
       if (size > 0 &&
           size <= 5)
          {
-         char buffer[6];
+         UString port = url.substr(host_end+1, size);
 
-         url.copy(buffer, size, host_end + 1);
-
-         unsigned int port = u_atoi(buffer);
-
-         U_RETURN(port);
+         U_RETURN_STRING(port);
          }
+      }
+
+   return UString::getStringNull();
+}
+
+uint32_t Url::getPortNumber()
+{
+   U_TRACE_NO_PARAM(0, "Url::getPortNumber()")
+
+   UString _port = getPort();
+
+   if (_port)
+      {
+      uint32_t port = _port.strtoul();
+
+      U_RETURN(port);
       }
 
    if (service_end > 0)
@@ -179,7 +158,7 @@ bool Url::setPort(unsigned int port)
 
       char* ptr = buffer+1;
 
-      (void) url.replace(host_end, path_begin - host_end, buffer, u_num2str32(port, ptr) - ptr);
+      (void) url.replace(host_end, path_begin-host_end, buffer, u_num2str32(port, ptr) - ptr);
 
       findpos();
 
@@ -199,7 +178,7 @@ void Url::setPath(const char* path, uint32_t n)
       {
       if (*path != '/') ++path_begin;
 
-      (void) url.replace(path_begin, path_end - path_begin, path, n);
+      (void) url.replace(path_begin, path_end-path_begin, path, n);
       }
    else
       {
@@ -216,35 +195,173 @@ void Url::setPath(const char* path, uint32_t n)
    findpos();
 }
 
-UString Url::getPath()
+void Url::findpos()
 {
-   U_TRACE_NO_PARAM(0, "Url::getPath()")
+   U_TRACE_NO_PARAM(0, "Url::findpos()")
 
-   UString path(U_CAPACITY);
+#ifdef DEBUG
+   field_mask = 0;
+#endif
 
-   if (path_begin < path_end) decode(url.c_pointer(path_begin), path_end - path_begin, path);
-   else                       path.push_back('/');
+   // proto://[user[:password]@]hostname[:port]/[path]?[query]
 
-   (void) path.shrink();
+   service_end = U_STRING_FIND(url, 0, "//");
 
-   U_RETURN_STRING(path);
+   if (service_end < 0)
+      {
+      service_end =
+       user_begin =
+         user_end =
+       host_begin =
+         host_end =
+       path_begin =
+         path_end = 0;
+
+      return;
+      }
+
+   U_INTERNAL_ASSERT(u_isUrlScheme(U_STRING_TO_PARAM(url)))
+
+   user_begin = service_end+2;
+
+   --service_end; // cut ':'
+
+   path_begin = url.find('/', user_begin);
+
+   if (path_begin < 0)
+      {
+      path_begin = url.find('?', user_begin);
+
+      if (path_begin < 0) path_begin = url.size();
+      }
+
+   int temp;
+
+   if (service_end == 0 &&
+       path_begin       &&
+       (url.c_char(path_begin-1) == ':'))
+      {
+      temp = url.find('.');
+
+      if (temp < 0 ||
+          temp > path_begin)
+         {
+         service_end = path_begin-1;
+         user_begin  = service_end;
+         user_end    = user_begin;
+         }
+      }
+
+   user_end = url.find('@', user_begin);
+
+   if (user_end < 0 ||
+       user_end > path_begin)
+      {
+      user_end   = user_begin;
+      host_begin = user_end;
+      }
+   else
+      {
+      host_begin = user_end+1;
+      }
+
+   // find ipv6 adresses
+
+   temp = url.find('[', host_begin);
+
+   if (temp >= 0 &&
+       temp < path_begin)
+      {
+      host_end = url.find(']', temp);
+
+      if (host_end < path_begin) ++host_end;
+      else                         host_end = host_begin;
+      }
+   else
+      {
+      host_end = url.find(':', host_begin);
+
+      if (host_end < 0 ||
+          host_end > path_begin)
+         {
+         host_end = path_begin;
+         }
+      }
+
+   path_end = url.find('?', path_begin);
+
+   if (path_end < path_begin)
+      {
+      path_end = url.find('#', path_begin);
+
+      if (path_end < path_begin) path_end = url.size();
+      }
+
+   U_INTERNAL_DUMP("service_end = %u user_begin = %u user_end = %u host_begin = %u host_end = %u path_begin = %u path_end = %u",
+                    service_end,     user_begin,     user_end,     host_begin,     host_end,     path_begin,     path_end)
+
+#ifdef DEBUG
+   if (service_end > 0)          field_mask |= U_SCHEMA;
+   if (host_begin  < host_end)   field_mask |= U_HOST;
+   if (user_begin  < user_end)   field_mask |= U_USERINFO;
+   if (host_end    < path_begin) field_mask |= U_PORT;
+   if (path_begin  < path_end)   field_mask |= U_PATH;
+
+   if (getPosQuery()    != U_NOT_FOUND) field_mask |= U_QUERY;
+   if (getPosFragment() != U_NOT_FOUND) field_mask |= U_FRAGMENT;
+
+   U_INTERNAL_DUMP("field_mask = %u %B", field_mask, field_mask)
+
+   if (user_begin == user_end       &&
+       (field_mask | U_SCHEMA) != 0 &&
+       strncmp(url.data(), U_CONSTANT_TO_PARAM("http")) == 0)
+      {
+      U_ASSERT(u_isURL(U_STRING_TO_PARAM(url)))
+      }
+#endif
+}
+
+U_NO_EXPORT __pure uint32_t Url::getPosQuery()
+{
+   U_TRACE_NO_PARAM(0, "Url::getPosQuery()")
+
+   int lend = url.size()-1;
+
+   if (path_end < lend &&
+       url.c_char(path_end) == '?')
+      {
+      U_RETURN(path_end+1);
+      }
+
+   U_RETURN(U_NOT_FOUND);
+}
+
+U_NO_EXPORT __pure uint32_t Url::getSizeQuery(uint32_t pos)
+{
+   U_TRACE(0, "Url::getSizeQuery(%u)", pos)
+
+   U_INTERNAL_ASSERT_EQUALS(url.c_char(pos-1), '?')
+
+   uint32_t fpos = url.find('#', pos),
+            size = (fpos != U_NOT_FOUND ? fpos : url.size()) - pos;
+
+   U_RETURN(size);
 }
 
 UString Url::getQuery()
 {
    U_TRACE_NO_PARAM(0, "Url::getQuery()")
 
-   int _end = url.size() - 1;
+   uint32_t pos = getPosQuery();
 
-   if (path_end < _end)
+   if (pos != U_NOT_FOUND)
       {
-      uint32_t sz = _end - path_end;
+      uint32_t sz;
+      UString lquery(sz = getSizeQuery(pos));
 
-      UString _query(sz);
+      decode(url.c_pointer(pos), sz, lquery);
 
-      decode(url.c_pointer(path_end + 1), sz, _query);
-
-      U_RETURN_STRING(_query);
+      U_RETURN_STRING(lquery);
       }
 
    return UString::getStringNull();
@@ -254,24 +371,33 @@ uint32_t Url::getQuery(UVector<UString>& vec)
 {
    U_TRACE(0, "Url::getQuery(%p)", &vec)
 
-   int _end = url.size() - 1;
+   uint32_t pos = getPosQuery();
 
-   if (path_end < _end) return UStringExt::getNameValueFromData(url.substr(path_end + 1, _end - path_end), vec, U_CONSTANT_TO_PARAM("&"));
+   if (pos != U_NOT_FOUND) return UStringExt::getNameValueFromData(url.substr(pos, getSizeQuery(pos)), vec, U_CONSTANT_TO_PARAM("&"));
 
    U_RETURN(0);
 }
 
-bool Url::setQuery(const char* query_, uint32_t query_len)
+void Url::eraseQuery()
 {
-   U_TRACE(0, "Url::setQuery(%S,%u)", query_, query_len)
+   U_TRACE_NO_PARAM(0, "Url::eraseQuery()")
 
-   U_INTERNAL_ASSERT_POINTER(query_)
+   uint32_t pos = getPosQuery();
+
+   if (pos != U_NOT_FOUND) (void) url.erase(path_end);
+}
+
+bool Url::setQuery(const char* lquery, uint32_t lquery_len)
+{
+   U_TRACE(0, "Url::setQuery(%S,%u)", lquery, lquery_len)
+
+   U_INTERNAL_ASSERT_POINTER(lquery)
 
    if (prepareForQuery())
       {
-      if (*query_ == '?') ++query_;
+      if (*lquery == '?') ++lquery;
 
-      (void) url.replace(path_end + 1, url.size() - path_end - 1, query_, query_len);
+      (void) url.replace(path_end+1, url.size()-path_end-1, lquery, lquery_len);
 
       U_RETURN(true);
       }
@@ -311,146 +437,25 @@ UString Url::getQueryBody(UVector<UString>& vec)
 
    char buffer[4096];
    uint32_t sz, value_sz;
-   UString name, value, query(U_CAPACITY);
+   UString name, value, lquery(U_CAPACITY);
 
    for (int32_t i = 0, n = vec.size(); i < n; ++i)
       {
       name  = vec[i++];
       value = vec[i];
 
-      (void) query.reserve(3U +         name.size()  +
-                           (      sz = query.size()) +
-                           (value_sz = value.size()));
+      (void) lquery.reserve(3U +         name.size()  +
+                           (      sz = lquery.size()) +
+                           (value_sz =  value.size()));
 
       uint32_t encoded_sz = u_url_encode((const unsigned char*)value.data(), value_sz, (unsigned char*)buffer);
 
       U_INTERNAL_ASSERT_MINOR(encoded_sz, sizeof(buffer))
 
-      query.snprintf_add(U_CONSTANT_TO_PARAM("%.*s%v=%.*s"), (sz > 0), "&", name.rep, encoded_sz, buffer);
+      lquery.snprintf_add(U_CONSTANT_TO_PARAM("%.*s%v=%.*s"), (sz > 0), "&", name.rep, encoded_sz, buffer);
       }
 
-   U_RETURN_STRING(query);
-}
-
-UString Url::getPathAndQuery()
-{
-   U_TRACE_NO_PARAM(0, "Url::getPathAndQuery()")
-
-   UString file;
-
-   if (path_begin < path_end) file = url.substr(path_begin);
-   else                       file.push_back('/');
-
-   U_RETURN_STRING(file);
-}
-
-void Url::findpos()
-{
-   U_TRACE_NO_PARAM(0, "Url::findpos()")
-
-   // proto://[user[:password]@]hostname[:port]/[path]?[query]
-
-   service_end = U_STRING_FIND(url, 0, "//");
-
-   if (service_end < 0)
-      {
-      service_end =
-       user_begin =
-         user_end =
-       host_begin =
-         host_end =
-       path_begin =
-         path_end =
-            query = 0;
-
-      return;
-      }
-
-   U_INTERNAL_ASSERT(u_isUrlScheme(U_STRING_TO_PARAM(url)))
-
-   user_begin = service_end + 2;
-
-   --service_end; // cut ':'
-
-   path_begin = url.find('/', user_begin);
-
-   if (path_begin < 0)
-      {
-      path_begin = url.find('?', user_begin);
-
-      if (path_begin < 0) path_begin = url.size();
-      }
-
-   int temp;
-
-   if (service_end == 0 &&
-       path_begin       &&
-       (url.c_char(path_begin-1) == ':'))
-      {
-      temp = url.find('.');
-
-      if (temp < 0 ||
-          temp > path_begin)
-         {
-         service_end = path_begin - 1;
-         user_begin  = service_end;
-         user_end    = user_begin;
-         }
-      }
-
-   user_end = url.find('@', user_begin);
-
-   if (user_end < 0 ||
-       user_end > path_begin)
-      {
-      user_end   = user_begin;
-      host_begin = user_end;
-      }
-   else
-      {
-      host_begin = user_end + 1;
-      }
-
-   // find ipv6 adresses
-
-   temp = url.find('[', host_begin);
-
-   if (temp >= 0 &&
-       temp < path_begin)
-      {
-      host_end = url.find(']', temp);
-
-      if (host_end < path_begin) ++host_end;
-      else                         host_end = host_begin;
-      }
-   else
-      {
-      host_end = url.find(':', host_begin);
-
-      if (host_end < 0 ||
-          host_end > path_begin)
-         {
-         host_end = path_begin;
-         }
-      }
-
-   path_end = url.find('?', path_begin);
-
-   if (path_end < path_begin) path_end = url.size();
-
-   query = path_end;
-
-   U_INTERNAL_DUMP("service_end = %d user_begin = %d user_end = %d host_begin = %d host_end = %d path_begin = %d path_end = %d query = %d",
-                    service_end,     user_begin,     user_end,     host_begin,     host_end,     path_begin,     path_end,     query)
-
-#ifdef DEBUG
-   if (service_end > 0        &&
-       user_begin == user_end &&
-       strncmp(url.data(), U_CONSTANT_TO_PARAM("http")) == 0)
-      {
-      U_ASSERT(u_isURL(U_STRING_TO_PARAM(url)))
-      }
-#endif
+   U_RETURN_STRING(lquery);
 }
 
 U_NO_EXPORT bool Url::prepareForQuery()
@@ -521,6 +526,63 @@ void Url::addQuery(const char* entry, uint32_t entry_len, const char* value, uin
       }
 }
 
+U_NO_EXPORT __pure uint32_t Url::getPosFragment()
+{
+   U_TRACE_NO_PARAM(0, "Url::getPosFragment()")
+
+   /**
+    * https://tools.ietf.org/id/draft-snell-link-method-01.html#rfc.section.5 (len = 71)
+    *
+    * service_end = 5 user_begin = 8 user_end = 8 host_begin = 8 host_end = 22 path_begin = 22 path_end = 57
+    *
+    * http://a:b@host.com:8080/p/a/t/h?query=string#hash (len = 50)
+    *
+    * service_end = 4 user_begin = 7 user_end = 10 host_begin = 11 host_end = 19 path_begin = 24 path_end = 32
+    */
+
+   U_INTERNAL_DUMP("url = %V service_end = %u user_begin = %u user_end = %u host_begin = %u host_end = %u path_begin = %u path_end = %u",
+                    url.rep, service_end,     user_begin,     user_end,     host_begin,     host_end,     path_begin,     path_end)
+
+   int lend = url.size()-1;
+
+   if (path_end < lend)
+      {
+      char c = url.c_char(path_end);
+
+      if (c == '#') U_RETURN(path_end);
+
+      if (c == '?') return url.find('#', path_end+1);
+      }
+
+   U_RETURN(U_NOT_FOUND);
+}
+
+UString Url::getFragment()
+{
+   U_TRACE_NO_PARAM(0, "Url::getFragment()")
+
+   uint32_t pos = getPosFragment();
+
+   if (pos != U_NOT_FOUND) return url.substr(pos+1);
+
+   return UString::getStringNull();
+}
+
+UString Url::getFieldValue(int field_type)
+{
+   U_TRACE(0, "Url::getFieldValue(%u)", field_type)
+
+   UString result = (field_type == U_SCHEMA   ? getService()  :
+                     field_type == U_HOST     ? getHost()     :
+                     field_type == U_USERINFO ? getUser()     :
+                     field_type == U_PORT     ? getPort()     :
+                     field_type == U_PATH     ? getPath()     :
+                     field_type == U_QUERY    ? getQuery()    :
+                     field_type == U_FRAGMENT ? getFragment() : url);
+
+   U_RETURN_STRING(result);
+}
+
 // STREAM
 
 #ifdef U_STDCPP_ENABLE
@@ -554,7 +616,6 @@ const char* Url::dump(bool reset) const
                   << "host_end     " << host_end    << '\n'
                   << "path_begin   " << path_begin  << '\n'
                   << "path_end     " << path_end    << '\n'
-                  << "query        " << query       << '\n'
                   << "url (UString " << (void*)&url << ')';
 
    if (reset)

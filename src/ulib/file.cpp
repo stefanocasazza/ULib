@@ -570,7 +570,7 @@ char* UFile::mmap(uint32_t* plength, int _fd, int prot, int flags, uint32_t offs
 
    if (*plength >= rlimit_memalloc) // NB: we try to avoid strong swap pressure...
       {
-#ifndef U_SERVER_CAPTIVE_PORTAL
+#if defined(U_LINUX) && (!defined(U_SERVER_CAPTIVE_PORTAL) || defined(ENABLE_THREAD))
 try_from_file_system:
 #endif
       *plength = (*plength + U_PAGEMASK) & ~U_PAGEMASK;
@@ -606,7 +606,7 @@ try_from_file_system:
          }
       }
 
-#ifdef U_SERVER_CAPTIVE_PORTAL
+#if !defined(U_LINUX) || (defined(U_SERVER_CAPTIVE_PORTAL) && !defined(ENABLE_THREAD))
    _ptr = (char*) U_SYSCALL(malloc, "%u", *plength);
 
    return _ptr;

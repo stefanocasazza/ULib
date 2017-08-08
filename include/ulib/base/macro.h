@@ -70,7 +70,7 @@
 #endif
 
 #if defined(DEBUG) || defined(U_TEST)
-#  if !defined(U_LINUX) || defined(U_SERVER_CAPTIVE_PORTAL)
+#  if !defined(U_LINUX) || (defined(U_SERVER_CAPTIVE_PORTAL) && !defined(ENABLE_THREAD))
 #     define U_NULL_POINTER (const void*)0
 #  else
 #     define U_NULL_POINTER (const void*)0x0000ffff
@@ -463,7 +463,7 @@ static inline void     u_put_unalignedp64(      void* p, uint64_t val) {       s
 
 /* Memory alignment for pointer */
 
-#define U_MEMORY_ALIGNMENT(ptr, alignment)  ptr += alignment - ((long)ptr & (alignment - 1))
+#define U_MEMORY_ALIGNMENT(ptr, alignment) ptr += alignment-((long)ptr & (alignment-1))
 
 /* Manage number suffix */
 
@@ -478,8 +478,8 @@ static inline void     u_put_unalignedp64(      void* p, uint64_t val) {       s
 /* Optimization if it is enough a resolution of one second */
 
 #if defined(U_LINUX) && defined(ENABLE_THREAD)
-#  if defined(U_LOG_DISABLE) && !defined(USE_LIBZ)
-#     define U_gettimeofday
+#  ifdef U_SERVER_CAPTIVE_PORTAL
+#     define U_gettimeofday U_INTERNAL_ASSERT(u_pthread_time)
 #  else
 #     define U_gettimeofday { if (u_pthread_time == U_NULLPTR) u_now->tv_sec = time(U_NULLPTR); }
 #  endif

@@ -125,8 +125,8 @@ UVector<UModProxyService*>*       UHTTP::vservice;
 URDBObjectHandler<UDataStorage*>* UHTTP::db_session;
 
          UHTTP::UFileCacheData*   UHTTP::file_data;
-         UHTTP::UFileCacheData*   UHTTP::file_not_in_cache_data;
          UHTTP::UFileCacheData*   UHTTP::file_gzip_bomb;
+         UHTTP::UFileCacheData*   UHTTP::file_not_in_cache_data;
 UHashMap<UHTTP::UFileCacheData*>* UHTTP::cache_file;
 
 #ifdef USE_PHP
@@ -1958,9 +1958,7 @@ U_NO_EXPORT bool UHTTP::readHeaderRequest()
          {
 #     ifndef U_HTTP2_DISABLE
          if (ptr[3] <= UHTTP2::CONTINUATION) U_http_version = '2';
-         else
 #     endif
-         UClientImage_Base::abortive_close();
          }
 
       U_RETURN(false);
@@ -2012,11 +2010,46 @@ next:
    U_RETURN(true);
 }
 
+bool UHTTP::checkContentLength(const UString& response)
+{
+   U_TRACE(0, "UHTTP::checkContentLength(%V)", response.rep)
+
+   uint32_t pos = U_STRING_FIND_EXT(response, U_http_info.startHeader, "Content-Length", U_http_info.endHeader-U_CONSTANT_SIZE(U_CRLF2)-U_http_info.startHeader);
+
+   if (pos != U_NOT_FOUND)
+      {
+      uint32_t end = response.findWhiteSpace(pos += U_CONSTANT_SIZE("Content-Length") + 2);
+
+      if (end != U_NOT_FOUND)
+         {
+         uint32_t len = end - pos;
+
+         U_INTERNAL_DUMP("len = %u", len)
+
+         if (len <= U_CONSTANT_SIZE("1844674407370955160"))
+            {
+            U_http_info.clength = u__strtoul(response.c_pointer(pos), len);
+
+            U_INTERNAL_DUMP("len = %u U_http_info.clength = %u", len, U_http_info.clength)
+
+            if (U_http_info.clength == 0)
+               {
+               U_http_flag &= ~HTTP_IS_DATA_CHUNKED;
+
+               U_INTERNAL_DUMP("U_http_data_chunked = %b", U_http_data_chunked)
+               }
+
+            U_RETURN(true);
+            }
+         }
+      }
+
+   U_RETURN(false);
+}
+
 bool UHTTP::readHeaderResponse(USocket* sk, UString& buffer)
 {
    U_TRACE(0, "UHTTP::readHeaderResponse(%p,%V)", sk, buffer.rep)
-
-   U_INTERNAL_ASSERT_POINTER(sk)
 
    void* p;
    const char* ptr;
@@ -2135,11 +2168,10 @@ const char* UHTTP::getHeaderValuePtr(const char* name, uint32_t name_len, bool n
 }
 #endif
 
-U_NO_EXPORT bool UHTTP::readDataChunked(USocket* sk, UString* pbuffer, UString& body)
+U_NO_EXPORT inline bool UHTTP::checkDataChunked(UString* pbuffer)
 {
-   U_TRACE(0, "UHTTP::readDataChunked(%p,%V,%V)", sk, pbuffer->rep, body.rep)
+   U_TRACE(0, "UHTTP::checkDataChunked(%V)", pbuffer->rep)
 
-   U_ASSERT(body.empty())
    U_INTERNAL_ASSERT_EQUALS(U_line_terminator_len, 2)
 
    U_INTERNAL_DUMP("U_http_data_chunked = %b", U_http_data_chunked)
@@ -2156,7 +2188,18 @@ U_NO_EXPORT bool UHTTP::readDataChunked(USocket* sk, UString* pbuffer, UString& 
          }
       }
 
-   if (U_http_data_chunked)
+   if (U_http_data_chunked) U_RETURN(true);
+
+   U_RETURN(false);
+}
+
+U_NO_EXPORT bool UHTTP::readDataChunked(USocket* sk, UString* pbuffer, UString& body)
+{
+   U_TRACE(0, "UHTTP::readDataChunked(%p,%V,%V)", sk, pbuffer->rep, body.rep)
+
+   U_ASSERT(body.empty())
+
+   if (checkDataChunked(pbuffer))
       {
             char* out;
       const char* inp;
@@ -3173,35 +3216,55 @@ next: U_INTERNAL_DUMP("char (after cr/newline) = %C U_http_version = %C U_Client
       }
 }
 
-#if !defined(U_LOG_DISABLE) || defined(USE_LIBZ)
-void UHTTP::parserExecute(const char* ptr, uint32_t len)
+uint32_t UHTTP::parserExecute(const char* ptr, uint32_t len, bool bresponse)
 {
-   U_TRACE(0, "UHTTP::parserExecute(%.*S,%u)", len, ptr, len)
+   U_TRACE(0, "UHTTP::parserExecute(%.*S,%u,%b)", len, ptr, len, bresponse)
 
-   UClientImage_Base::request->assign(ptr, len);
+   U_INTERNAL_ASSERT_POINTER(UClientImage_Base::request)
 
    U_HTTP_INFO_RESET(0);
 
-   if (readHeaderRequest())
+   u_clientimage_info.flag.u = 0;
+
+   (void) UClientImage_Base::request->assign(ptr, len);
+
+   if (bresponse)
       {
-      U_INTERNAL_ASSERT_DIFFERS(U_http_method_type, 0)
-
-      if (U_http_info.endHeader)
+      if (readHeaderResponse(U_NULLPTR, *UClientImage_Base::request) &&
+          (checkContentLength(*UClientImage_Base::request)           ||
+           checkDataChunked(UClientImage_Base::request)))
          {
-         checkRequestForHeader();
+         U_RETURN(len);
+         }
+      }
+   else
+      {
+      if (readHeaderRequest())
+         {
+         U_INTERNAL_ASSERT_DIFFERS(U_http_method_type, 0)
 
-         U_INTERNAL_DUMP("U_http_version = %C U_http_method_type = %u", U_http_version, U_http_method_type)
+         if (U_http_info.endHeader)
+            {
+            checkRequestForHeader();
+
+            U_INTERNAL_DUMP("U_http_version = %C U_http_method_type = %u", U_http_version, U_http_method_type)
+            }
+
+         U_INTERNAL_DUMP("U_HTTP_HOST(%u) = %.*S", U_http_host_len, U_HTTP_HOST_TO_TRACE)
+
+         UClientImage_Base::size_request = (U_http_info.endHeader ? U_http_info.endHeader
+                                                                  : U_http_info.startHeader + U_CONSTANT_SIZE(U_CRLF2));
+
+         U_INTERNAL_DUMP("UClientImage_Base::size_request = %u U_http_info.clength = %u", UClientImage_Base::size_request, U_http_info.clength)
+
+         U_RETURN(len);
          }
 
-      U_INTERNAL_DUMP("U_HTTP_HOST(%u) = %.*S", U_http_host_len, U_HTTP_HOST_TO_TRACE)
-
-      UClientImage_Base::size_request = (U_http_info.endHeader ? U_http_info.endHeader
-                                                               : U_http_info.startHeader + U_CONSTANT_SIZE(U_CRLF2));
-
-      U_INTERNAL_DUMP("UClientImage_Base::size_request = %u U_http_info.clength = %u", UClientImage_Base::size_request, U_http_info.clength)
+      U_INTERNAL_DUMP("U_http_version = %C U_ClientImage_data_missing = %b", U_http_version, U_ClientImage_data_missing)
       }
+
+   U_RETURN(0);
 }
-#endif
 
 // manage dynamic page request (CGI - C/ULib Servlet Page - RUBY - PHP - PYTHON)
 
@@ -3895,8 +3958,8 @@ int UHTTP::handlerREAD()
          U_RETURN(U_PLUGIN_HANDLER_FINISHED);
          }
       }
-#ifndef U_LOG_DISABLE
-   else if (UServer_Base::public_address && // NB: as protection from DNS rebinding attack web servers can reject HTTP requests with an unrecognized Host header...
+#ifndef U_SERVER_CAPTIVE_PORTAL
+   else if (UServer_Base::public_address                    && // NB: as protection from DNS rebinding attack web servers can reject HTTP requests with an unrecognized Host header
             ((U_http_host_len - U_http_host_vlen) > (1 + 5) || // NB: ':' + 0-65536
              u_isHostName(U_HTTP_VHOST_TO_PARAM) == false))
       {
@@ -3965,7 +4028,7 @@ int UHTTP::handlerREAD()
 
    U_INTERNAL_DUMP("UClientImage_Base::size_request = %u UClientImage_Base::bsendGzipBomp = %b", UClientImage_Base::size_request, UClientImage_Base::bsendGzipBomp)
 
-#if !defined(U_LOG_DISABLE) || defined(USE_LIBZ)
+#ifndef U_SERVER_CAPTIVE_PORTAL
    if (UClientImage_Base::bsendGzipBomp)
       {
       UClientImage_Base::bsendGzipBomp = false;
@@ -3987,7 +4050,7 @@ int UHTTP::handlerREAD()
 
       U_http_info.nResponseCode = HTTP_OK;
 
-      *ext = file_gzip_bomb->array->operator[](1);
+      *ext = file_gzip_bomb->array->operator[](0);
 
       handlerResponse();
 
@@ -4927,8 +4990,6 @@ check_file: // now we check the file...
       {
       if (file_data->size)
          {
-         U_INTERNAL_ASSERT_EQUALS(U_http_sendfile, false)
-
          processGetRequest();
 
          U_INTERNAL_DUMP("U_http_is_nocache_file = %b", U_http_is_nocache_file)
@@ -5596,7 +5657,8 @@ remove:     removeCookieSession();
       else if (cookie)
          {
          if (*cookie) (void) cookie->append(U_CONSTANT_TO_PARAM("; "));
-                      (void) cookie->append(item);
+
+         (void) cookie->append(item);
          }
       }
 
@@ -6897,7 +6959,7 @@ end:
          }
       else
          {
-#     if defined(U_LINUX) && defined(ENABLE_THREAD) && defined(U_LOG_DISABLE) && !defined(USE_LIBZ)
+#     ifdef U_SERVER_CAPTIVE_PORTAL
          u_put_unalignedp64(ptr1, U_MULTICHAR_CONSTANT64('/','p','l','a','i','n','\r','\n'));
 
          sz += U_CONSTANT_SIZE("Content-Type: text/plain\r\n");
@@ -7629,7 +7691,8 @@ UString UHTTP::getHeaderMimeType(const char* content, uint32_t size, const char*
       if (u__isdigit(mime_index)) goto next; // NB: check for dynamic page...
 
       if (expire) header.snprintf_add(U_CONSTANT_TO_PARAM("Expires: %#8D\r\n"), expire);
-                  header.snprintf_add(U_CONSTANT_TO_PARAM("Last-Modified: %#8D\r\n"), file->st_mtime);
+
+      header.snprintf_add(U_CONSTANT_TO_PARAM("Last-Modified: %#8D\r\n"), file->st_mtime);
       }
 
    U_INTERNAL_DUMP("u_is_css(%d) = %b u_is_js(%d) = %b", mime_index, u_is_css(mime_index), mime_index, u_is_js(mime_index))
@@ -7701,7 +7764,8 @@ U_NO_EXPORT void UHTTP::putDataInCache(const UString& fmt, UString& content)
    int ratio = 100;
    bool gzip = false;
    UString header(U_CAPACITY);
-   const char* motivation = U_NULLPTR;
+   const char* motivation = (file_data->size <= U_MIN_SIZE_FOR_DEFLATE              ? " (size too small)" :
+                             file_data->size >= UServer_Base::min_size_for_sendfile ? " (size exceeded)"  : ""); // NB: for major size we assume is better to use sendfile()
 
    U_NEW(UVector<UString>, file_data->array, UVector<UString>(4U));
 #ifndef U_HTTP2_DISABLE
@@ -7727,6 +7791,8 @@ U_NO_EXPORT void UHTTP::putDataInCache(const UString& fmt, UString& content)
    file_data->http2->push_back(hpack);
 #endif
 
+   if (content.empty()) goto end;
+
    if (u_is_img(mime_index))
       {
       U_INTERNAL_ASSERT(u_endsWith(U_FILE_TO_PARAM(*file), U_CONSTANT_TO_PARAM(".gif")) ||
@@ -7735,13 +7801,13 @@ U_NO_EXPORT void UHTTP::putDataInCache(const UString& fmt, UString& content)
                         u_endsWith(U_FILE_TO_PARAM(*file), U_CONSTANT_TO_PARAM(".jpg")) ||
                         u_endsWith(U_FILE_TO_PARAM(*file), U_CONSTANT_TO_PARAM(".jpeg")))
 
-#if defined(USE_PAGE_SPEED) && defined(DEBUG)
+#  if defined(USE_PAGE_SPEED) && defined(DEBUG)
            if (u_is_gif(mime_index)) page_speed->optimize_gif(content);
       else if (u_is_png(mime_index)) page_speed->optimize_png(content);
       else                           page_speed->optimize_jpg(content);
 
-      if (content.size() < file_data->size) U_SRV_LOG("WARNING: found not optimized image: %V", pathname->rep);
-#endif
+      if (content.size() < file_data->size) U_SRV_LOG("WARNING: found image not optimized: %V", pathname->rep);
+#  endif
 
       goto next2;
       }
@@ -7774,8 +7840,6 @@ U_NO_EXPORT void UHTTP::putDataInCache(const UString& fmt, UString& content)
          }
 
       content = UStringExt::minifyCssJs(content); // minifies CSS/JS by removing comments and whitespaces...
-
-      if (content.empty()) goto end;
       }
 #ifdef USE_PAGE_SPEED
    else if (u_is_html(mime_index))
@@ -7790,11 +7854,10 @@ U_NO_EXPORT void UHTTP::putDataInCache(const UString& fmt, UString& content)
 #endif
 
 next1:
-        if (file_data->size >= UServer_Base::min_size_for_sendfile) motivation = " (size exceeded)";  // NB: for major size we assume is better to use sendfile()
-   else if (file_data->size <= U_MIN_SIZE_FOR_DEFLATE)              motivation = " (size too small)";
 #ifdef USE_LIBZ
-   else if (u_is_ssi(mime_index) == false &&
-            u_is_gz( mime_index) == false)
+   if (*motivation == '\0'           &&
+       u_is_ssi(mime_index) == false &&
+       u_is_gz( mime_index) == false)
       {
       /**
        * http://zoompf.com/blog/2012/02/lose-the-wait-http-compression
@@ -7840,14 +7903,15 @@ next2:
       // NB: we accept new data only if ratio compression is better than 15%...
 
       if (ratio < 85 &&
-          motivation == U_NULLPTR)
+          *motivation == '\0')
          {
-         file_data->array->push_back(content);
+         file_data->array->push_back(content); // compressed... 
 
          header.setBuffer(U_CAPACITY);
 
-         if (gzip) (void) header.assign(U_CONSTANT_TO_PARAM("Content-Encoding: gzip\r\n"));
-                          header.snprintf_add(U_STRING_TO_PARAM(fmt), size);
+         if (gzip) (void) header.replace(U_CONSTANT_TO_PARAM("Content-Encoding: gzip\r\n"));
+
+         header.snprintf_add(U_STRING_TO_PARAM(fmt), size);
 
          (void) header.shrink();
 
@@ -7868,7 +7932,7 @@ next2:
       }
 
 end:
-   U_SRV_LOG("File cached: %V - %u bytes - (%d%%) compression ratio%s", pathname->rep, file_data->size, 100 - ratio, (motivation ? motivation : ""));
+   U_SRV_LOG("File cached: %V - %u bytes - (%d%%) compression ratio%s", pathname->rep, file_data->size, 100-ratio, motivation);
 }
 
 bool UHTTP::callInitForAllUSP(UStringRep* key, void* value)
@@ -8088,7 +8152,7 @@ U_NO_EXPORT bool UHTTP::compileUSP(const char* path, uint32_t len)
       {
       UServer_Base::logCommandMsgError(cmd.getCommand(), false);
 
-      if (ok == false) ULog::log(U_CONSTANT_TO_PARAM("%sWARNING: USP compile failed: %.*S"), UServer_Base::mod_name[0], path, len);
+      if (ok == false) UServer_Base::log->log(U_CONSTANT_TO_PARAM("%sWARNING: USP compile failed: %.*S"), UServer_Base::mod_name[0], path, len);
       }
 #endif
 
@@ -8255,11 +8319,22 @@ U_NO_EXPORT void UHTTP::manageDataForCache(const UString& file_name)
          }
       else if (file->open())
          {
-         UString content = file->getContent(true, false, true);
+         UString content;
 
-         if (content.empty()) goto error;
+         if (file_data->size >= UServer_Base::min_size_for_sendfile) // NB: for major size we assume is better to use sendfile()
+            {
+            file_data->fd = file->fd;
 
-         putDataInCache(getHeaderMimeType(content.data(), 0, setMimeIndex(suffix_ptr), U_TIME_FOR_EXPIRE), content);
+            putDataInCache(getHeaderMimeType(U_NULLPTR, 0, setMimeIndex(suffix_ptr), U_TIME_FOR_EXPIRE), content);
+            }
+         else
+            {
+            content = file->getContent(true, false, true);
+
+            if (content.empty()) goto error;
+
+            putDataInCache(getHeaderMimeType(content.data(), 0, setMimeIndex(suffix_ptr), U_TIME_FOR_EXPIRE), content);
+            }
          }
 
       goto end;
@@ -8386,44 +8461,35 @@ U_NO_EXPORT void UHTTP::manageDataForCache(const UString& file_name)
             goto end;
             }
 
-         goto chk;
+         goto chk2;
          }
 
       // manage gzip bomb...
 
       if (suffix_len == 2                                                      &&
-          file_gzip_bomb == U_NULLPTR                                          &&
           u_get_unalignedp16(   suffix_ptr) == U_MULTICHAR_CONSTANT16('g','z') &&
           u_get_unalignedp64(file_name_ptr) == U_MULTICHAR_CONSTANT64('_','_','B','o','m','B','_','_'))
          {
+         U_INTERNAL_ASSERT_EQUALS(file_gzip_bomb, U_NULLPTR)
+
          if (file->open())
             {
-            UString content;
+            file_gzip_bomb = file_data;
 
-            file_data->fd         = file->fd;
-            file_data->size       = file->st_size;
-            file_data->mime_index = U_gz;
+            file_gzip_bomb->fd         = file->fd;
+            file_gzip_bomb->mime_index = U_gz;
 
-            if (file->memmap(PROT_READ, &content))
-               {
-               UString header(U_CAPACITY);
+            U_NEW(UVector<UString>, file_gzip_bomb->array, UVector<UString>(1U));
 
-               file_gzip_bomb = file_data;
+            UString header(100U);
 
-               U_NEW(UVector<UString>, file_gzip_bomb->array, UVector<UString>(2U));
+            header.snprintf(U_CONSTANT_TO_PARAM("Content-Encoding: gzip\r\n"
+                                                "Content-Type: application/octet-stream\r\n"
+                                                "Content-Length: %u\r\n\r\n"), file_data->size);
 
-               file_gzip_bomb->array->push_back(content);
+            file_gzip_bomb->array->push_back(header);
 
-               header.snprintf(U_CONSTANT_TO_PARAM("Content-Encoding: gzip\r\n"
-                                                   "Content-Type: application/octet-stream\r\n"
-                                                   "Content-Length: %u\r\n\r\n"), file_data->size);
-
-               (void) header.shrink();
-
-               file_gzip_bomb->array->push_back(header);
-
-               U_SRV_LOG("File gzip bomb: ../__BomB__.gz loaded - %u bytes", file_gzip_bomb->size);
-               }
+            U_SRV_LOG("Find gzip bomb: %V - %u bytes", pathname->rep, file_gzip_bomb->size);
             }
 
          goto end;
@@ -8450,9 +8516,6 @@ U_NO_EXPORT void UHTTP::manageDataForCache(const UString& file_name)
             bool exist;
             uint32_t sz;
             struct stat st;
-#        ifndef U_LOG_DISABLE
-            uint32_t link_sz;
-#        endif
             UServletPage* usp_page;
 
             ptr = file->getPathRelativ();
@@ -8472,7 +8535,7 @@ U_NO_EXPORT void UHTTP::manageDataForCache(const UString& file_name)
                   (usp_src && (!exist || st.st_mtime < file->st_mtime))) &&
                  compileUSP(ptr, len-1) == false))
                {
-               goto check;
+               goto chk1;
                }
 
             // NB: dlopen() fail if the name of the module is not prefixed with "./"...
@@ -8487,12 +8550,12 @@ fail:          U_SRV_LOG("WARNING: USP load failed: %.*S", sz, buffer);
 
                delete usp_page;
 
-check:         if (usp_src) goto end;
+chk1:          if (usp_src) goto end;
 
                goto error;
                }
 
-            (void) u__snprintf(run_dynamic_page, sizeof(run_dynamic_page), U_CONSTANT_TO_PARAM("runDynamicPage_%.*s"), file_name_len - suffix_len - 1, file_name_ptr);
+            (void) u__snprintf(run_dynamic_page, sizeof(run_dynamic_page), U_CONSTANT_TO_PARAM("runDynamicPage_%.*s"), file_name_len-suffix_len-1, file_name_ptr);
 
             usp_page->runDynamicPage = (vPFi)(*usp_page)[run_dynamic_page];
 
@@ -8516,18 +8579,14 @@ check:         if (usp_src) goto end;
                }
 #        endif
 
+            (void) pathname->replace(buffer+2, len-1);
+
             file_data->ptr        = usp_page;
             file_data->mime_index = U_usp;
 
-#        ifdef U_LOG_DISABLE
-                cache_file->callForAllEntry(checkIfUSPLink);
-#        else
-            if (cache_file->callForAllEntry(checkIfUSPLink), file_data->link) link_sz = U_CONSTANT_SIZE(" (link)");
-#        endif
+            cache_file->callForAllEntry(checkIfUSPLink);
 
-            (void) pathname->replace(buffer+2, len-1);
-
-            U_SRV_LOG("USP found: %.*S%.*s, USP service registered (URI): %V", sz, buffer, link_sz, " (link)", pathname->rep);
+            U_SRV_LOG("USP found: %.*S%.*s, USP service registered (URI): %V", sz, buffer, (file_data->link ? U_CONSTANT_SIZE(" (link)") : 0), " (link)", pathname->rep);
 
             if (bcallInitForAllUSP)
                {
@@ -8548,7 +8607,7 @@ check:         if (usp_src) goto end;
             if (program.empty()            == false &&
                 csp_page->compile(program) == false)
                {
-               U_SRV_LOG("WARNING: CSP load failed: %.*S", U_FILE_TO_TRACE(*file));
+               U_SRV_LOG("WARNING: CSP load failed: %.*S", file_len, file_ptr);
 
                delete csp_page;
 
@@ -8560,34 +8619,45 @@ check:         if (usp_src) goto end;
             file_data->ptr        = csp_page;
             file_data->mime_index = U_csp;
 
-            len = u__snprintf(buffer, sizeof(buffer), U_CONSTANT_TO_PARAM("%.*s"), U_FILE_TO_TRACE(*file));
+            (void) pathname->replace(file_ptr, file_len - U_CONSTANT_SIZE(".c"));
 
-            (void) pathname->replace(buffer, len - U_CONSTANT_SIZE(".c"));
-
-            U_SRV_LOG("CSP found: %.*S, CSP service registered (URI): %V", len, buffer, pathname->rep);
+            U_SRV_LOG("CSP found: %.*S, CSP service registered (URI): %V", file_len, file_ptr, pathname->rep);
             }
 #     endif
 
          goto end;
          }
 
-chk:  ctype = u_get_mimetype(suffix_ptr, &file_data->mime_index);
+chk2: ctype = u_get_mimetype(suffix_ptr, &file_data->mime_index);
 
       U_INTERNAL_DUMP("u_is_cacheable(%d) = %b ctype = %S", file_data->mime_index, u_is_cacheable(file_data->mime_index), ctype)
 
       if (u_is_cacheable(file_data->mime_index))
          {
-         UString content = file->getContent(true, false, true);
-
-         if (content.empty())
+         if (file_data->size == 0)
             {
             U_SRV_LOG("WARNING: found empty file: %V", pathname->rep);
             }
-         else
+         else if (file->open())
             {
+            UString content;
+
             mime_index = file_data->mime_index;
 
-            putDataInCache(getHeaderMimeType(content.data(), 0, ctype, U_TIME_FOR_EXPIRE), content);
+            if (file_data->size >= UServer_Base::min_size_for_sendfile) // NB: for major size we assume is better to use sendfile()
+               {
+               file_data->fd = file->fd;
+
+               putDataInCache(getHeaderMimeType(U_NULLPTR, 0, ctype, U_TIME_FOR_EXPIRE), content);
+               }
+            else
+               {
+               content = file->getContent(true, false, true);
+
+               if (content.empty()) goto error;
+
+               putDataInCache(getHeaderMimeType(content.data(), 0, ctype, U_TIME_FOR_EXPIRE), content);
+               }
             }
          }
       }
@@ -8621,9 +8691,7 @@ void UHTTP::renewFileDataInCache()
 
    U_INTERNAL_DUMP("file_data->fd = %d cache_file->key = %V", file_data->fd, key)
 
-   pathname->setBuffer(key->size());
-
-   pathname->snprintf(U_CONSTANT_TO_PARAM("%v"), key);
+   (void) pathname->replace(U_STRING_TO_PARAM(*key));
 
    U_DEBUG("renewFileDataInCache() called for file: %V - inotify %s enabled, expired=%b", pathname->rep,
                UServer_Base::handler_inotify ? "is" : "NOT", (u_now->tv_sec > file_data->expire))
@@ -8672,12 +8740,7 @@ U_NO_EXPORT bool UHTTP::processFileCache()
    U_INTERNAL_ASSERT_POINTER(file_data)
    U_ASSERT(UClientImage_Base::isRequestInFileCache())
 
-   if (checkGetRequestIfModified() == false)
-      {
-      UClientImage_Base::setRequestFileCacheProcessed();
-
-      U_RETURN(true);
-      }
+   if (checkGetRequestIfModified() == false) goto end;
 
 #ifdef USE_LIBZ
    U_INTERNAL_DUMP("U_http_is_accept_gzip = %b", U_http_is_accept_gzip)
@@ -8693,9 +8756,7 @@ U_NO_EXPORT bool UHTTP::processFileCache()
 
       *UClientImage_Base::body = getBodyCompressFromCache();
 
-      UClientImage_Base::setRequestFileCacheProcessed();
-
-      U_RETURN(true);
+      goto end;
       }
 #endif
 
@@ -8709,18 +8770,13 @@ U_NO_EXPORT bool UHTTP::processFileCache()
    // Range: bytes=0-31
    // --------------------------------------------------------------------------------------------------------------
 
-   range_size  = sz = file_data->size;
    range_start = 0;
+   sz = (range_size = file_data->size);
 
    if (U_http_range_len &&
        checkGetRequestIfRange())
       {
-      if (checkGetRequestForRange(getBodyFromCache()) != U_PARTIAL)
-         {
-         UClientImage_Base::setRequestFileCacheProcessed();
-
-         U_RETURN(true);
-         }
+      if (checkGetRequestForRange(getBodyFromCache()) != U_PARTIAL) goto end;
 
       // NB: range_start is modified only if we have as response U_PARTIAL from checkGetRequestForRange()...
 
@@ -8729,22 +8785,22 @@ U_NO_EXPORT bool UHTTP::processFileCache()
       U_http_info.nResponseCode = HTTP_PARTIAL;
       }
 
-   if (isSizeForSendfile(sz) == false)
+   if (isSizeForSendfile(sz) == false) *UClientImage_Base::body = getBodyFromCache().substr(range_start, range_size);
+   else
       {
-      UClientImage_Base::setRequestFileCacheProcessed();
+      U_INTERNAL_ASSERT_DIFFERS(U_http_version, '2')
 
-      *UClientImage_Base::body = getBodyFromCache().substr(range_start, range_size);
+      U_http_flag |= HTTP_IS_SENDFILE;
 
-      U_RETURN(true);
+      U_INTERNAL_DUMP("U_http_sendfile = %b", U_http_sendfile)
+
+      UClientImage_Base::setSendfile(file_data->fd, range_start, range_size);
       }
 
-   U_INTERNAL_ASSERT_DIFFERS(U_http_version, '2')
+end:
+   UClientImage_Base::setRequestFileCacheProcessed();
 
-   U_http_flag |= HTTP_IS_SENDFILE;
-
-   U_INTERNAL_DUMP("U_http_sendfile = %b", U_http_sendfile)
-
-   U_RETURN(false);
+   U_RETURN(true);
 }
 
 U_NO_EXPORT bool UHTTP::checkPathName(uint32_t len)
@@ -8849,30 +8905,39 @@ U_NO_EXPORT void UHTTP::checkPathName()
          return;
          }
 
-      // check for zombies...
-
-      if (u_get_unalignedp64(ptr)   == U_MULTICHAR_CONSTANT64('c','h','e','c','k','Z','o','m') &&
-          u_get_unalignedp32(ptr+8) == U_MULTICHAR_CONSTANT32('b','i','e','s'))
+      if (len >= 9)
          {
-         UServer_Base::removeZombies();
+         // check for zombies...
 
-         goto nocontent;
-         }
+         if (u_get_unalignedp64(ptr)   == U_MULTICHAR_CONSTANT64('c','h','e','c','k','Z','o','m') &&
+             u_get_unalignedp32(ptr+8) == U_MULTICHAR_CONSTANT32('b','i','e','s'))
+            {
+            UServer_Base::removeZombies();
 
-      // we don't wont to process this kind of request (usually aliased)...
+            goto nocontent;
+            }
 
-      if (len >= U_PATH_MAX               ||
-          u_isFileName(ptr, len) == false ||
-          UStringExt::endsWith(ptr, len, U_CONSTANT_TO_PARAM("nocontent")))
-         {
-nocontent:
-         UClientImage_Base::setCloseConnection();
+         // we don't wont to process this kind of request (usually aliased)...
 
-         U_http_info.nResponseCode = HTTP_NO_CONTENT;
+         if (                   ptr[len-9] == 'n' &&
+             u_get_unalignedp64(ptr+len-8) == U_MULTICHAR_CONSTANT64('o','c','o','n','t','e','n','t'))
+            {
+            U_ASSERT(UStringExt::endsWith(ptr, len, U_CONSTANT_TO_PARAM("nocontent")))
 
-         setResponse();
+            goto nocontent;
+            }
 
-         return;
+         if (len >= U_PATH_MAX ||
+             u_isFileName(ptr, len) == false)
+            {
+nocontent:  UClientImage_Base::setCloseConnection();
+
+            U_http_info.nResponseCode = HTTP_NO_CONTENT;
+
+            setResponse();
+
+            return;
+            }
          }
 
 #  ifdef USE_RUBY
@@ -8902,51 +8967,47 @@ nocontent:
          }
 #  endif
 
+      U_INTERNAL_DUMP("U_http_is_nocache_file = %b", U_http_is_nocache_file)
+
 #  if defined(HAVE_SYS_INOTIFY_H) && defined(U_HTTP_INOTIFY_SUPPORT)
       bool bstat = false;
 
-      if (db_not_found)
+      if (db_not_found &&
+          U_http_is_nocache_file == false)
          {
-         U_INTERNAL_ASSERT_EQUALS(UServer_Base::bssl, false)
+         db_not_found->lock();
 
-         U_INTERNAL_DUMP("U_http_is_nocache_file = %b", U_http_is_nocache_file)
+         db_not_found->UCDB::setKey(ptr, len);
 
-         if (U_http_is_nocache_file == false)
+#     ifndef USE_HARDWARE_CRC32
+         db_not_found->UCDB::setHash(ptr, len);
+#     else
+         db_not_found->UCDB::setHash(cache_file->hash);
+#     endif
+
+         if (db_not_found->_fetch())
             {
-            db_not_found->lock();
+            db_not_found->unlock();
 
-            db_not_found->UCDB::setKey(ptr, len);
+            return;
+            }
 
-#        ifndef USE_HARDWARE_CRC32
-            db_not_found->UCDB::setHash(ptr, len);
-#        else
-            db_not_found->UCDB::setHash(cache_file->hash);
-#        endif
+         if (file->stat() == false)
+            {
+            db_not_found->UCDB::setData(U_CLIENT_ADDRESS_TO_PARAM);
 
-            if (db_not_found->_fetch())
-               {
-               db_not_found->unlock();
-
-               return;
-               }
-
-            if (file->stat() == false)
-               {
-               db_not_found->UCDB::setData(U_CLIENT_ADDRESS_TO_PARAM);
-
-               int ko = db_not_found->_store(RDB_INSERT, false);
-
-               db_not_found->unlock();
-
-               if (ko) U_WARNING("Insert data on db %.*S failed with error %d", U_FILE_TO_TRACE(*db_not_found), ko);
-
-               return;
-               }
+            int ko = db_not_found->_store(RDB_INSERT, false);
 
             db_not_found->unlock();
 
-            bstat = true;
+            if (ko) U_WARNING("Insert data on db %.*S failed with error %d", U_FILE_TO_TRACE(*db_not_found), ko);
+
+            return;
             }
+
+         db_not_found->unlock();
+
+         bstat = true;
          }
 
       if (bstat ||
