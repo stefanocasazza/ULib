@@ -101,3 +101,9 @@ Comments and suggestions are welcome.
 	stefano casazza <stefano.casazza@gmail.com>
 
 Please, excuse me for my bad english, it's not my natural language, if some parts of this page seems wrong to you, feel free to suggest me better ones.
+
+## Donation
+
+If this project help you reduce time to develop, you can give me a cup of coffee :)
+
+[![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://paypal.me/stefanocasazza)
