@@ -74,7 +74,6 @@ const UString* UString::str_cgi;
 const UString* UString::str_var;
 // HTTP
 const UString* UString::str_origin;
-const UString* UString::str_indexhtml;
 const UString* UString::str_ctype_tsa;
 const UString* UString::str_ctype_txt;
 const UString* UString::str_ctype_html;
@@ -177,9 +176,9 @@ const UString* UString::str_ULib;
 #endif
 
 #ifdef U_HTTP2_DISABLE
-static ustringrep stringrep_storage[71] = {
+static ustringrep stringrep_storage[70] = {
 #else
-static ustringrep stringrep_storage[136] = {
+static ustringrep stringrep_storage[135] = {
 #endif
    { U_STRINGREP_FROM_CONSTANT("host") },
    { U_STRINGREP_FROM_CONSTANT("chunked") },
@@ -226,7 +225,6 @@ static ustringrep stringrep_storage[136] = {
    { U_STRINGREP_FROM_CONSTANT("without_label") },
    { U_STRINGREP_FROM_CONSTANT("/etc/nodog.allowed") },
    // HTTP
-   { U_STRINGREP_FROM_CONSTANT("index.html") },
    { U_STRINGREP_FROM_CONSTANT("application/timestamp-reply\r\n") },
    { U_STRINGREP_FROM_CONSTANT(U_CTYPE_TEXT_WITH_CHARSET U_CRLF) },
    { U_STRINGREP_FROM_CONSTANT(U_CTYPE_HTML U_CRLF) },
@@ -444,7 +442,6 @@ void UString::str_allocate(int which)
       }
    else if ((which & STR_ALLOCATE_HTTP) != 0)
       {
-      U_INTERNAL_ASSERT_EQUALS(str_indexhtml, U_NULLPTR)
       U_INTERNAL_ASSERT_EQUALS(str_ctype_tsa, U_NULLPTR)
       U_INTERNAL_ASSERT_EQUALS(str_ctype_txt, U_NULLPTR)
       U_INTERNAL_ASSERT_EQUALS(str_ctype_html, U_NULLPTR)
@@ -455,16 +452,15 @@ void UString::str_allocate(int which)
       U_INTERNAL_ASSERT_EQUALS(str_websocket_key, U_NULLPTR)
       U_INTERNAL_ASSERT_EQUALS(str_websocket_prot, U_NULLPTR)
 
-      U_NEW_ULIB_OBJECT(UString, str_indexhtml,      UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP+0));
-      U_NEW_ULIB_OBJECT(UString, str_ctype_tsa,      UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP+1));
-      U_NEW_ULIB_OBJECT(UString, str_ctype_txt,      UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP+2));
-      U_NEW_ULIB_OBJECT(UString, str_ctype_html,     UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP+3));
-      U_NEW_ULIB_OBJECT(UString, str_ctype_soap,     UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP+4));
-      U_NEW_ULIB_OBJECT(UString, str_origin,         UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP+5));
-      U_NEW_ULIB_OBJECT(UString, str_ulib_header,    UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP+6));
-      U_NEW_ULIB_OBJECT(UString, str_storage_keyid,  UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP+7));
-      U_NEW_ULIB_OBJECT(UString, str_websocket_key,  UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP+8));
-      U_NEW_ULIB_OBJECT(UString, str_websocket_prot, UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP+9));
+      U_NEW_ULIB_OBJECT(UString, str_ctype_tsa,      UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP+0));
+      U_NEW_ULIB_OBJECT(UString, str_ctype_txt,      UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP+1));
+      U_NEW_ULIB_OBJECT(UString, str_ctype_html,     UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP+2));
+      U_NEW_ULIB_OBJECT(UString, str_ctype_soap,     UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP+3));
+      U_NEW_ULIB_OBJECT(UString, str_origin,         UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP+4));
+      U_NEW_ULIB_OBJECT(UString, str_ulib_header,    UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP+5));
+      U_NEW_ULIB_OBJECT(UString, str_storage_keyid,  UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP+6));
+      U_NEW_ULIB_OBJECT(UString, str_websocket_key,  UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP+7));
+      U_NEW_ULIB_OBJECT(UString, str_websocket_prot, UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP+8));
       }
    else if ((which & STR_ALLOCATE_QUERY_PARSER) != 0)
       {
@@ -518,7 +514,7 @@ void UString::str_allocate(int which)
    else if ((which & STR_ALLOCATE_HTTP2) != 0)
       {
       U_INTERNAL_ASSERT_EQUALS(str_authority, U_NULLPTR)
-      U_INTERNAL_ASSERT_EQUALS(U_NUM_ELEMENTS(stringrep_storage), 136)
+      U_INTERNAL_ASSERT_EQUALS(U_NUM_ELEMENTS(stringrep_storage), 135)
 
       U_NEW_ULIB_OBJECT(UString, str_authority,                   UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+0));
       U_NEW_ULIB_OBJECT(UString, str_method,                      UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+1));
@@ -587,7 +583,7 @@ void UString::str_allocate(int which)
       U_NEW_ULIB_OBJECT(UString, str_ULib,                        UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+64));
       }
 #else
-   U_INTERNAL_ASSERT_EQUALS(U_NUM_ELEMENTS(stringrep_storage), 71)
+   U_INTERNAL_ASSERT_EQUALS(U_NUM_ELEMENTS(stringrep_storage), 70)
 #endif
 }
 

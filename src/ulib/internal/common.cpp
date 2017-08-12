@@ -117,11 +117,11 @@ static struct ustring u_empty_string_storage = { &u_empty_string_rep_storage };
 uustring    ULib::uustringnull    = { &u_empty_string_storage };
 uustringrep ULib::uustringrepnull = { &u_empty_string_rep_storage };
 
-void ULib::init(const char* mempool, char** argv)
+void ULib::init(char** argv, const char* mempool)
 {
    u_init_ulib(argv);
 
-   U_TRACE(1, "ULib::init(%S,%p)", mempool, argv)
+   U_TRACE(1, "ULib::init(%p,%S)", argv, mempool)
 
    // conversion number => string
 
@@ -313,6 +313,7 @@ void ULib::init(const char* mempool, char** argv)
 void ULib::end()
 {
    U_INTERNAL_ASSERT_EQUALS(ULog::first, U_NULLPTR)
+   U_INTERNAL_ASSERT_EQUALS(USemaphore::first, U_NULLPTR)
 
 #if defined(U_STDCPP_ENABLE) && defined(DEBUG)
    UApplication::printMemUsage();

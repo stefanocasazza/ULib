@@ -335,9 +335,9 @@ bool USqliteStatement::setBindParam(UOrmDriver* pdrv)
 
       switch (param->type)
          {
-         case NULL_VALUE: pdrv->errcode = U_SYSCALL(sqlite3_bind_null, "%p,%d", (sqlite3_stmt*)pHandle, i+1); break;
+         case U_NULL_VALUE: pdrv->errcode = U_SYSCALL(sqlite3_bind_null, "%p,%d", (sqlite3_stmt*)pHandle, i+1); break;
 
-         case BOOLEAN_VALUE:
+         case U_BOOLEAN_VALUE:
             {
             int_value = *(bool*)param->buffer;
 
@@ -345,7 +345,7 @@ bool USqliteStatement::setBindParam(UOrmDriver* pdrv)
             }
          break;
 
-         case CHAR_VALUE:
+         case U_CHAR_VALUE:
             {
             int_value = *(char*)param->buffer;
 
@@ -353,7 +353,7 @@ bool USqliteStatement::setBindParam(UOrmDriver* pdrv)
             }
          break;
 
-         case SHORT_VALUE:
+         case U_SHORT_VALUE:
             {
             int_value = *(short*)param->buffer;
 
@@ -361,7 +361,7 @@ bool USqliteStatement::setBindParam(UOrmDriver* pdrv)
             }
          break;
 
-         case INT_VALUE:
+         case U_INT_VALUE:
             {
             int_value = *(int*)param->buffer;
 
@@ -369,7 +369,7 @@ bool USqliteStatement::setBindParam(UOrmDriver* pdrv)
             }
          break;
 
-         case LLONG_VALUE:
+         case U_LLONG_VALUE:
             {
             long_long_value = *(long long*)param->buffer;
 
@@ -377,7 +377,7 @@ bool USqliteStatement::setBindParam(UOrmDriver* pdrv)
             }
          break;
 
-         case FLOAT_VALUE:
+         case U_FLOAT_VALUE:
             {
             double_value = *(float*)param->buffer;
 
@@ -385,7 +385,7 @@ bool USqliteStatement::setBindParam(UOrmDriver* pdrv)
             }
          break;
 
-         case REAL_VALUE:
+         case U_REAL_VALUE:
             {
             double_value = *(double*)param->buffer;
 
@@ -393,7 +393,7 @@ bool USqliteStatement::setBindParam(UOrmDriver* pdrv)
             }
          break;
 
-         case STRING_VALUE:
+         case U_STRING_VALUE:
             {
             /**
              * The fourth argument is the number of bytes in the parameter. To be clear: the value is the number of bytes
@@ -474,14 +474,14 @@ bool USqliteStatement::setBindResult(UOrmDriver* pdrv)
 
       switch (result->type)
          {
-         case BOOLEAN_VALUE:      *(bool*)result->buffer = U_SYSCALL(sqlite3_column_int,    "%p,%d", (sqlite3_stmt*)pHandle, i); break;
-         case    CHAR_VALUE:      *(char*)result->buffer = U_SYSCALL(sqlite3_column_int,    "%p,%d", (sqlite3_stmt*)pHandle, i); break;
-         case   SHORT_VALUE:     *(short*)result->buffer = U_SYSCALL(sqlite3_column_int,    "%p,%d", (sqlite3_stmt*)pHandle, i); break;
-         case     INT_VALUE:       *(int*)result->buffer = U_SYSCALL(sqlite3_column_int,    "%p,%d", (sqlite3_stmt*)pHandle, i); break;
-         case   LLONG_VALUE: *(long long*)result->buffer = U_SYSCALL(sqlite3_column_int64,  "%p,%d", (sqlite3_stmt*)pHandle, i); break;
-         case   FLOAT_VALUE:     *(float*)result->buffer = U_SYSCALL(sqlite3_column_double, "%p,%d", (sqlite3_stmt*)pHandle, i); break;
-         case    REAL_VALUE:    *(double*)result->buffer = U_SYSCALL(sqlite3_column_double, "%p,%d", (sqlite3_stmt*)pHandle, i); break;
-         case  STRING_VALUE:
+         case U_BOOLEAN_VALUE: *(bool*)result->buffer      = U_SYSCALL(sqlite3_column_int,    "%p,%d", (sqlite3_stmt*)pHandle, i); break;
+         case    U_CHAR_VALUE: *(char*)result->buffer      = U_SYSCALL(sqlite3_column_int,    "%p,%d", (sqlite3_stmt*)pHandle, i); break;
+         case   U_SHORT_VALUE: *(short*)result->buffer     = U_SYSCALL(sqlite3_column_int,    "%p,%d", (sqlite3_stmt*)pHandle, i); break;
+         case     U_INT_VALUE: *(int*)result->buffer       = U_SYSCALL(sqlite3_column_int,    "%p,%d", (sqlite3_stmt*)pHandle, i); break;
+         case   U_LLONG_VALUE: *(long long*)result->buffer = U_SYSCALL(sqlite3_column_int64,  "%p,%d", (sqlite3_stmt*)pHandle, i); break;
+         case   U_FLOAT_VALUE: *(float*)result->buffer     = U_SYSCALL(sqlite3_column_double, "%p,%d", (sqlite3_stmt*)pHandle, i); break;
+         case    U_REAL_VALUE: *(double*)result->buffer    = U_SYSCALL(sqlite3_column_double, "%p,%d", (sqlite3_stmt*)pHandle, i); break;
+         case  U_STRING_VALUE:
             {
             U_INTERNAL_ASSERT_POINTER(result->pstr)
 

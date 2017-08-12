@@ -13,9 +13,9 @@
 
    if (log.isOpen())
       {
-      log.setShared(0);
-
       log.init("%P|%4D|");
+
+      log.setShared(U_NULLPTR);
       }
 
    time_t tm_session = u_now->tv_sec;

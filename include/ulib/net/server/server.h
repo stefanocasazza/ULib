@@ -306,27 +306,20 @@ public:
       sig_atomic_t tot_connection;
       sig_atomic_t cnt_parallelization;
    // ---------------------------------
-      long last_time_email_dos;
-   // ---------------------------------
       sem_t lock_user1;
       sem_t lock_user2;
       sem_t lock_throttling;
       sem_t lock_rdb_server;
       sem_t lock_data_session;
-      char spinlock_user1[1];
-      char spinlock_user2[1];
-      char spinlock_throttling[1];
-      char spinlock_rdb_server[1];
-      char spinlock_data_session[1];
 #  ifdef USE_LIBSSL
-      sem_t    lock_ssl_session;
-      char spinlock_ssl_session[1];
+      sem_t lock_ssl_session;
+   // ------------------------------------------------------------------------------
 #    if defined(ENABLE_THREAD) && !defined(OPENSSL_NO_OCSP) && defined(SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB)
       uint32_t   len_ocsp_staple;
       uint32_t valid_ocsp_staple;
       sem_t     lock_ocsp_staple;
-      char  spinlock_ocsp_staple[1];
 #    endif
+   // ------------------------------------------------------------------------------
 #  endif
    // ------------------------------------------------------------------------------
 #  if defined(U_LINUX) && defined(ENABLE_THREAD)
@@ -337,6 +330,7 @@ public:
       bool daylight_shared;
 #  endif
       ULog::log_data log_data_shared;
+   // ---------------------------------
    // -> maybe unnamed array of char for gzip compression (log rotate)
    // --------------------------------------------------------------------------------
    } shared_data;
@@ -359,7 +353,6 @@ public:
 #define U_SRV_CNT_USR9              UServer_Base::ptr_shared_data->cnt_usr9
 #define U_SRV_MY_LOAD               UServer_Base::ptr_shared_data->my_load
 #define U_SRV_FLAG_SIGTERM          UServer_Base::ptr_shared_data->flag_sigterm
-#define U_SRV_LAST_TIME_EMAIL_DOS   UServer_Base::ptr_shared_data->last_time_email_dos
 #define U_SRV_LEN_OCSP_STAPLE       UServer_Base::ptr_shared_data->len_ocsp_staple
 #define U_SRV_VALID_OCSP_STAPLE     UServer_Base::ptr_shared_data->valid_ocsp_staple
 #define U_SRV_MIN_LOAD_REMOTE       UServer_Base::ptr_shared_data->min_load_remote
@@ -372,12 +365,6 @@ public:
 #define U_SRV_LOCK_RDB_SERVER     &(UServer_Base::ptr_shared_data->lock_rdb_server)
 #define U_SRV_LOCK_SSL_SESSION    &(UServer_Base::ptr_shared_data->lock_ssl_session)
 #define U_SRV_LOCK_DATA_SESSION   &(UServer_Base::ptr_shared_data->lock_data_session)
-#define U_SRV_SPINLOCK_USER1        UServer_Base::ptr_shared_data->spinlock_user1
-#define U_SRV_SPINLOCK_USER2        UServer_Base::ptr_shared_data->spinlock_user2
-#define U_SRV_SPINLOCK_THROTTLING   UServer_Base::ptr_shared_data->spinlock_throttling
-#define U_SRV_SPINLOCK_RDB_SERVER   UServer_Base::ptr_shared_data->spinlock_rdb_server
-#define U_SRV_SPINLOCK_SSL_SESSION  UServer_Base::ptr_shared_data->spinlock_ssl_session
-#define U_SRV_SPINLOCK_DATA_SESSION UServer_Base::ptr_shared_data->spinlock_data_session
 
    static ULock* lock_user1;
    static ULock* lock_user2;
@@ -386,16 +373,19 @@ public:
    static uint32_t shared_data_add, map_size;
    static bool update_date, update_date1, update_date2, update_date3;
 
-#define U_SHM_LOCK_NENTRY 128
+#define U_SHM_LOCK_NENTRY 512
 
    typedef struct shm_data {
+   // ---------------------------------
+      long last_time_email_dos;
+   // ---------------------------------
       sem_t lock_evasive;
       sem_t lock_db_not_found;
+   // ---------------------------------
       sem_t lock_base[U_SHM_LOCK_NENTRY];
-      char spinlock_evasive[1];
-      char spinlock_db_not_found[1];
-      char spinlock_base[U_SHM_LOCK_NENTRY];
+   // ---------------------------------
       ULog::log_data log_data_shared;
+   // ---------------------------------
    // -> maybe unnamed array of char for gzip compression (apache log like rotate)
    } shm_data;
 
@@ -405,9 +395,7 @@ public:
 #define U_SHM_LOCK_EVASIVE        &(UServer_Base::ptr_shm_data->lock_evasive)
 #define U_SHM_LOCK_DB_NOT_FOUND   &(UServer_Base::ptr_shm_data->lock_db_not_found)
 #define U_SHM_LOCK_BASE           &(UServer_Base::ptr_shm_data->lock_base)
-#define U_SHM_SPINLOCK_BASE       &(UServer_Base::ptr_shm_data->spinlock_base)
-#define U_SHM_SPINLOCK_EVASIVE      UServer_Base::ptr_shm_data->spinlock_evasive
-#define U_SHM_SPINLOCK_DB_NOT_FOUND UServer_Base::ptr_shm_data->spinlock_db_not_found
+#define U_SHM_LAST_TIME_EMAIL_DOS   UServer_Base::ptr_shm_data->last_time_email_dos
 
 #ifdef USE_LOAD_BALANCE
    static UString* ifname;
@@ -423,7 +411,7 @@ public:
 
       U_NEW(ULock, lock_user1, ULock);
 
-      lock_user1->init(U_SRV_LOCK_USER1, U_SRV_SPINLOCK_USER1);
+      lock_user1->init(U_SRV_LOCK_USER1);
       }
 
    static void setLockUser2()
@@ -434,7 +422,7 @@ public:
 
       U_NEW(ULock, lock_user2, ULock);
 
-      lock_user2->init(U_SRV_LOCK_USER2, U_SRV_SPINLOCK_USER2);
+      lock_user2->init(U_SRV_LOCK_USER2);
       }
 
    // NB: two step shared memory acquisition - first we get the offset, after the pointer...
@@ -642,7 +630,7 @@ public:
 
       U_NEW(ULock, lock_ocsp_staple, ULock);
 
-      lock_ocsp_staple->init(&(ptr_shared_data->lock_ocsp_staple), ptr_shared_data->spinlock_ocsp_staple);
+      lock_ocsp_staple->init(&(ptr_shared_data->lock_ocsp_staple));
       }
 #endif
 

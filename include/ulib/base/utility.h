@@ -670,6 +670,85 @@ U_EXPORT bool u_isIPv6Addr(const char* restrict s, uint32_t n) __pure;
 static inline bool u_isIPAddr(bool IPv6, const char* restrict p, uint32_t n) { return (IPv6 ? u_isIPv6Addr(p, n)
                                                                                             : u_isIPv4Addr(p, n)); }
 
+/**
+ * sign
+ * |  exponent
+ * |  |
+ * [0][11111111111][yyyyxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx]
+ *                  |   |
+ *                  tag |
+ *                      payload
+ *
+ * 48 bits payload [enough](http://en.wikipedia.org/wiki/X86-64#Virtual_address_space_details)
+ * for store any pointer on x64. Double use zero tag, so infinity and nan are accessible
+ */
+
+#define U_VALUE_TAG_MASK     0xF
+#define U_VALUE_TAG_SHIFT    47
+#define U_VALUE_NAN_MASK     0x7FF8000000000000ULL
+#define U_VALUE_PAYLOAD_MASK 0x00007FFFFFFFFFFFULL
+
+typedef enum ValueType {
+   U_REAL_VALUE =  0, // double value
+    U_INT_VALUE =  1, //   signed integer value
+   U_UINT_VALUE =  2, // unsigned integer value
+   U_TRUE_VALUE =  3, // bool value
+  U_FALSE_VALUE =  4, // bool value
+ U_STRING_VALUE =  5, // string value
+    U_UTF_VALUE =  6, // string value (need to be emitted)
+  U_ARRAY_VALUE =  7, // array value (ordered list)
+ U_OBJECT_VALUE =  8, // object value (collection of name/value pairs)
+   U_NULL_VALUE =  9, // null value
+U_BOOLEAN_VALUE = 10, // bool value
+   U_CHAR_VALUE = 11, //   signed char value
+  U_UCHAR_VALUE = 12, // unsigned char value
+  U_SHORT_VALUE = 13, //   signed short integer value
+ U_USHORT_VALUE = 14, // unsigned short integer value
+   U_LONG_VALUE = 15, //   signed long value
+  U_ULONG_VALUE = 16, // unsigned      long value
+  U_LLONG_VALUE = 17, //   signed long long value
+ U_ULLONG_VALUE = 18, // unsigned long long value
+  U_FLOAT_VALUE = 19, // float value
+  U_LREAL_VALUE = 20  // long double value
+} ValueType;
+
+static inline uint64_t u_getPayload(uint64_t val)
+{
+#ifndef HAVE_ARCH64
+   return (val & 0x00000000FFFFFFFFULL);
+#else
+   return (val & U_VALUE_PAYLOAD_MASK);
+#endif
+}
+
+static inline uint32_t u_getTag(uint64_t val)
+{
+#ifndef HAVE_ARCH64
+   return u_getPayload(val >> 32);
+#else
+   if ((int64_t)val <= (int64_t)U_VALUE_NAN_MASK) return U_REAL_VALUE;
+
+   return (val >> U_VALUE_TAG_SHIFT) & U_VALUE_TAG_MASK;
+#endif
+}
+
+static inline uint64_t u_getValue(uint16_t tag, void* payload)
+{
+   U_INTERNAL_TRACE("u_getValue(%hu,%p)", tag, payload)
+
+#ifndef HAVE_ARCH64
+   return ((uint64_t)tag << 32) | u_getPayload((uint64_t)payload);
+#else
+   U_INTERNAL_ASSERT(payload <= (void*)U_VALUE_PAYLOAD_MASK)
+
+   return                   U_VALUE_NAN_MASK   |
+          ((uint64_t)tag << U_VALUE_TAG_SHIFT) |
+           (uint64_t)payload;
+#endif
+}
+
+static inline void u_setTag(uint16_t tag, uint64_t* pval) { uint64_t payload = u_getPayload(*pval); *pval = u_getValue(tag, (void*)payload); }
+
 #ifdef __cplusplus
 }
 #endif

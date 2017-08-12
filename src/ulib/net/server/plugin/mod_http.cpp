@@ -550,13 +550,25 @@ int UHttpPlugIn::handlerRun() // NB: we use this method instead of handlerInit()
 
       // NB: we can shortcut the http request processing...
 
-      UClientImage_Base::callerHandlerRead       = UHTTP::handlerREAD;
       UClientImage_Base::callerHandlerCache      = UHTTP::handlerCache;
       UClientImage_Base::callerIsValidMethod     = UHTTP::isValidMethod;
       UClientImage_Base::callerIsValidRequest    = UHTTP::isValidRequest;
       UClientImage_Base::callerIsValidRequestExt = UHTTP::isValidRequestExt;
 
-      if (UServer_Base::vplugin_size == 1) UClientImage_Base::callerHandlerRequest = UHTTP::processRequest;
+#  ifdef U_LOG_DISABLE
+      UClientImage_Base::callerHandlerRead = UHTTP::handlerREAD;
+#  else
+      UClientImage_Base::callerHandlerRead = UHTTP::handlerREADWithLog;
+#  endif
+
+      if (UServer_Base::vplugin_size == 1)
+         {
+#     ifdef U_LOG_DISABLE
+         UClientImage_Base::callerHandlerRequest = UHTTP::processRequest;
+#     else
+         UClientImage_Base::callerHandlerRequest = UHTTP::processRequestWithLog;
+#     endif
+         }
       }
 
    U_ASSERT(UHTTP::cache_file_check_memory())

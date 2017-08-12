@@ -1527,18 +1527,18 @@ if test "$use_php" = "yes" ; then
 	AC_SUBST(PHPCONFIG)
 
 	USE_PHP=yes
-	php_prefix=`$PHPCONFIG --prefix`
+   php_prefix=`$PHPCONFIG --prefix`
 	php_version=$(php-config --version)
 	AC_DEFINE(USE_PHP, 1, [Define if enable php support])
 
 	# List of php-config include paths
 	AC_ARG_WITH(php-includes,
-		 [  --with-php-includes=PATHS  php-config include locations],
+		 [  --with-php-includes=PATHS  php-config include list],
 		 [PHPCONFIGINCLUDES="$withval"],
 		 [PHPCONFIGINCLUDES=""])
 
 	if test -z "$PHPCONFIGINCLUDES"; then
-		PHPCONFIGINCLUDES="-I${php_prefix}/include/php5/sapi/embed `$PHPCONFIG --includes`"
+		PHPCONFIGINCLUDES="`$PHPCONFIG --includes`"
 	fi
 
 	AC_SUBST(PHPCONFIGINCLUDES)
@@ -1549,7 +1549,7 @@ if test "$use_php" = "yes" ; then
 	CPPFLAGS="$CPPFLAGS $PHPCONFIGINCLUDES"
 
 	AC_MSG_CHECKING([whether php_embed.h actually works])
-	AC_COMPILE_IFELSE([AC_LANG_SOURCE([[#include <php_embed.h>]], [[return 0;]])],
+	AC_COMPILE_IFELSE([AC_LANG_SOURCE([[#include <sapi/embed/php_embed.h>]], [[return 0;]])],
 						 [AC_MSG_RESULT([php_embed.h exists and works correctly])],
 						 [AC_MSG_ERROR([Cannot find php_embed.h. Check if php was compiled with the --enable-embed option.])])
 
@@ -1563,19 +1563,27 @@ if test "$use_php" = "yes" ; then
 		 [PHPCONFIGLDFLAGS=""])
 
 	if test -z "$PHPCONFIGLDFLAGS"; then
-		PHPCONFIGLDFLAGS="-L${php_prefix}/lib -L${php_prefix}/lib32 -L${php_prefix}/lib64 `$PHPCONFIG --ldflags`"
+		PHPCONFIGLDFLAGS="`$PHPCONFIG --ldflags`"
 	fi
 
 	AC_SUBST(PHPCONFIGLDFLAGS)
 
 	# List of php-config lib paths
 	AC_ARG_WITH(php-libs,
-		 [  --with-php-libs=LIBS       php-config lib locations],
+		 [  --with-php-libs=LIBS       php-config lib list],
 		 [PHPCONFIGLIBS="$withval"],
 		 [PHPCONFIGLIBS=""])
 
 	if test -z "$PHPCONFIGLIBS"; then
-		PHPCONFIGLIBS="-lphp5 `$PHPCONFIG --libs`"
+		PHPCONFIGLIBS="`$PHPCONFIG --libs`"
+
+		if test -f "${php_prefix}/lib/libphp5.so"; then
+			PHPCONFIGLIBS="-lphp5 $PHPCONFIGLIBS"
+		elif test -f "${php_prefix}/lib/libphp7.so"; then
+			PHPCONFIGLIBS="-lphp7 $PHPCONFIGLIBS"
+		else
+			AC_MSG_ERROR([libphp[5/7] not found. Required for further processing. Use --with-php-libs=list to specify the libs dependencies.])
+		fi
 	fi
 
 	AC_SUBST(PHPCONFIGLIBS)

@@ -16,7 +16,7 @@
 #include <ulib/json/value.h>
 #undef HAVE_CONFIG_H
 
-static ULib ulib("167193,0,0,0,-30,-31,-30,-31,0");
+static ULib ulib(U_NULLPTR, "167193,0,0,0,-30,-31,-30,-31,0");
 
 static void GenStat(Stat& stat, const union UValue::jval val)
 {

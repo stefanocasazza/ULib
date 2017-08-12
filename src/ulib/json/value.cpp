@@ -39,8 +39,8 @@ UValue::~UValue()
 
    switch (getTag())
       {
-      case STRING_VALUE:
-      case    UTF_VALUE:
+      case U_STRING_VALUE:
+      case    U_UTF_VALUE:
          {
          UStringRep* rep = (UStringRep*)getPayload();
 
@@ -50,7 +50,7 @@ UValue::~UValue()
          }
       break;
 
-      case ARRAY_VALUE:
+      case U_ARRAY_VALUE:
          {
          UValue* element = toNode();
 
@@ -67,7 +67,7 @@ UValue::~UValue()
          }
       break;
 
-      case OBJECT_VALUE:
+      case U_OBJECT_VALUE:
          {
          UValue* element = toNode();
 
@@ -77,7 +77,7 @@ UValue::~UValue()
 
             U_ASSERT(isStringOrUTF(element->pkey.ival))
 
-            UStringRep* rep = (UStringRep*)getPayload(element->pkey.ival);
+            UStringRep* rep = (UStringRep*)u_getPayload(element->pkey.ival);
 
             U_INTERNAL_DUMP("element->pkey(%p) = %V", rep, rep)
 
@@ -164,7 +164,7 @@ case_object:
 
       U_ASSERT(isStringOrUTF(element->pkey.ival))
 
-      UStringRep* rep = (UStringRep*)getPayload(element->pkey.ival);
+      UStringRep* rep = (UStringRep*)u_getPayload(element->pkey.ival);
 
       U_INTERNAL_DUMP("element->pkey(%p) = %V", rep, rep)
 
@@ -185,7 +185,7 @@ __pure UValue* UValue::at(uint32_t pos) const
 {
    U_TRACE(0, "UValue::at(%u)", pos)
 
-   if (getTag() == ARRAY_VALUE)
+   if (getTag() == U_ARRAY_VALUE)
       {
       uint32_t i = 0;
       UValue* element = toNode();
@@ -207,7 +207,7 @@ __pure UValue* UValue::at(const char* key, uint32_t key_len) const
 {
    U_TRACE(0, "UValue::at(%.*S,%u)", key_len, key, key_len)
 
-   if (getTag() == OBJECT_VALUE)
+   if (getTag() == U_OBJECT_VALUE)
       {
       UValue* element = toNode();
 
@@ -217,7 +217,7 @@ __pure UValue* UValue::at(const char* key, uint32_t key_len) const
 
          U_ASSERT(isStringOrUTF(element->pkey.ival))
 
-         UStringRep* rep = (UStringRep*)getPayload(element->pkey.ival);
+         UStringRep* rep = (UStringRep*)u_getPayload(element->pkey.ival);
 
          U_INTERNAL_DUMP("element->pkey(%p) = %V", rep, rep)
 
@@ -234,7 +234,7 @@ uint32_t UValue::getMemberNames(UVector<UString>& members) const
 {
    U_TRACE(0, "UValue::getMemberNames(%p)", &members)
 
-   if (getTag() == OBJECT_VALUE)
+   if (getTag() == U_OBJECT_VALUE)
       {
       UValue* element = toNode();
       uint32_t len, n = members.size();
@@ -245,7 +245,7 @@ uint32_t UValue::getMemberNames(UVector<UString>& members) const
 
          U_ASSERT(isStringOrUTF(element->pkey.ival))
 
-         UStringRep* rep = (UStringRep*)getPayload(element->pkey.ival);
+         UStringRep* rep = (UStringRep*)u_getPayload(element->pkey.ival);
 
          U_INTERNAL_DUMP("element->pkey(%p) = %V", rep, rep)
 
@@ -268,20 +268,18 @@ UString UValue::getString(uint64_t value)
 
    U_ASSERT(isStringOrUTF(value))
 
-   UStringRep* rep = (UStringRep*)getPayload(value);
+   UStringRep* rep = (UStringRep*)u_getPayload(value);
 
    U_INTERNAL_ASSERT_POINTER(rep)
 
-   int type = getTag(value);
-
-   if (type == STRING_VALUE)
+   if (u_getTag(value) == U_STRING_VALUE)
       {
       UString str(rep);
 
       U_RETURN_STRING(str);
       }
 
-   U_INTERNAL_ASSERT_EQUALS(type, UTF_VALUE)
+   U_INTERNAL_ASSERT_EQUALS(u_getTag(value), U_UTF_VALUE)
 
    uint32_t len = rep->size();
 
@@ -816,7 +814,7 @@ loop: while (u__isspace(*s)) ++s;
       goto *((char*)&&cdefault + dispatch_table[*start-'!']);
 
 case_dquote:
-      type = STRING_VALUE;
+      type = U_STRING_VALUE;
 
       if ((jsonParseFlags & CHECK_FOR_UTF) == 0)
          {
@@ -832,10 +830,10 @@ dquote:
 
       if (c == '"') goto dquote_assign;
 
-           if (c > 0x7F) type = UTF_VALUE; // 00..7F
+           if (c > 0x7F) type = U_UTF_VALUE; // 00..7F
       else if (c == '\\')
          {
-         type = UTF_VALUE;
+         type = U_UTF_VALUE;
 
          switch ((c = *++s))
             {
@@ -884,7 +882,7 @@ dquote_assign:
             {
             U_NEW(UStringRep, rep, UStringRep(start, sz));
 
-            o.ival = getJsonValue(type, rep);
+            o.ival = u_getValue(type, rep);
             }
          else
             {
@@ -892,14 +890,14 @@ dquote_assign:
 
             str.hold();
 
-            o.ival = getJsonValue(type, str.rep);
+            o.ival = u_getValue(type, str.rep);
             }
          }
       else
          {
          UStringRep::string_rep_null->hold();
 
-         o.ival = getJsonValue(STRING_VALUE, UStringRep::string_rep_null);
+         o.ival = u_getValue(U_STRING_VALUE, UStringRep::string_rep_null);
          }
 
       goto next;
@@ -987,7 +985,7 @@ case_zero:
          {
 zero:    if (c == '.') goto case_number;
 
-         o.ival = getJsonValue(UINT_VALUE, U_NULLPTR);
+         o.ival = u_getValue(U_UINT_VALUE, U_NULLPTR);
 
          goto next;
          }
@@ -1173,7 +1171,7 @@ noreal:
             goto mreal1;
             }
 
-         o.ival = getJsonValue(UINT_VALUE, (void*)(integerPart & 0x00000000FFFFFFFFULL));
+         o.ival = u_getValue(U_UINT_VALUE, (void*)(integerPart & 0x00000000FFFFFFFFULL));
 
          U_INTERNAL_DUMP("value(%.*S) = %u", s-start, start, (uint32_t)integerPart)
 
@@ -1190,7 +1188,7 @@ noreal:
 
          minus = false;
 
-         o.ival = getJsonValue(INT_VALUE, (void*)(-integerPart & 0x00000000FFFFFFFFULL));
+         o.ival = u_getValue(U_INT_VALUE, (void*)(-integerPart & 0x00000000FFFFFFFFULL));
 
          U_INTERNAL_DUMP("value(%.*S) = %d", s-(start-1), start-1, -(int32_t)integerPart)
 
@@ -1279,7 +1277,7 @@ case_svector:
 
       ++s;
 
-      o.ival = listToValue(ARRAY_VALUE, U_NULLPTR);
+      o.ival = listToValue(U_ARRAY_VALUE, U_NULLPTR);
 
       goto next;
 
@@ -1293,14 +1291,14 @@ case_evector:
          break;
          }
 
-      o.ival = listToValue(ARRAY_VALUE, sd[pos--].tails);
+      o.ival = listToValue(U_ARRAY_VALUE, sd[pos--].tails);
 
       goto next;
 
 case_false:
       if (u_get_unalignedp32(s) == U_MULTICHAR_CONSTANT32('a','l','s','e'))
          {
-         o.ival = getJsonValue(FALSE_VALUE, U_NULLPTR);
+         o.ival = u_getValue(U_FALSE_VALUE, U_NULLPTR);
 
          s = start+U_CONSTANT_SIZE("false");
 
@@ -1312,7 +1310,7 @@ case_false:
 case_null:
       if (u_get_unalignedp32(start) == U_MULTICHAR_CONSTANT32('n','u','l','l'))
          {
-         o.ival = getJsonValue(NULL_VALUE, U_NULLPTR);
+         o.ival = u_getValue(U_NULL_VALUE, U_NULLPTR);
 
          s = start+U_CONSTANT_SIZE("null");
 
@@ -1324,7 +1322,7 @@ case_null:
 case_true:
       if (u_get_unalignedp32(start) == U_MULTICHAR_CONSTANT32('t','r','u','e'))
          {
-         o.ival = getJsonValue(TRUE_VALUE, U_NULLPTR);
+         o.ival = u_getValue(U_TRUE_VALUE, U_NULLPTR);
 
          s = start+U_CONSTANT_SIZE("true");
 
@@ -1354,7 +1352,7 @@ case_sobject:
 
       ++s;
 
-      o.ival = listToValue(OBJECT_VALUE, U_NULLPTR);
+      o.ival = listToValue(U_OBJECT_VALUE, U_NULLPTR);
 
       goto next;
 
@@ -1369,7 +1367,7 @@ case_eobject:
          break;
          }
 
-      o.ival = listToValue(OBJECT_VALUE, sd[pos--].tails);
+      o.ival = listToValue(U_OBJECT_VALUE, sd[pos--].tails);
 
 next: U_INTERNAL_DUMP("next: comma = %b pos = %d colon = %b separator = %b s = %.10S", comma, pos, colon, separator, s)
 
@@ -1392,8 +1390,8 @@ next: U_INTERNAL_DUMP("next: comma = %b pos = %d colon = %b separator = %b s = %
       comma     =
       separator = false;
 
-      U_DUMP("sd[%d].tags = (%d,%S) sd[%d].tails = %p", pos, (sd[pos].tags ? OBJECT_VALUE : ARRAY_VALUE),
-                                      getDataTypeDescription((sd[pos].tags ? OBJECT_VALUE : ARRAY_VALUE)), pos, sd[pos].tails)
+      U_DUMP("sd[%d].tags = (%d,%S) sd[%d].tails = %p", pos, (sd[pos].tags ? U_OBJECT_VALUE : U_ARRAY_VALUE),
+                                      getDataTypeDescription((sd[pos].tags ? U_OBJECT_VALUE : U_ARRAY_VALUE)), pos, sd[pos].tails)
 
       if (sd[pos].tags == false) sd[pos].tails = insertAfter(sd[pos].tails, o.ival);
       else
@@ -1423,16 +1421,16 @@ cdefault:
 
    if (pos >= 0)
       {
-      if (sd[0].tags == false) value.ival = (sd[0].tails ? listToValue(ARRAY_VALUE, sd[0].tails) : o.ival);
+      if (sd[0].tags == false) value.ival = (sd[0].tails ? listToValue(U_ARRAY_VALUE, sd[0].tails) : o.ival);
       else
          {
-         if (sd[0].tails) value.ival = listToValue(OBJECT_VALUE, sd[0].tails);
+         if (sd[0].tails) value.ival = listToValue(U_OBJECT_VALUE, sd[0].tails);
          else
             {
             if (sd[0].keys &&
                 isStringOrUTF(sd[0].keys))
                {
-               rep = (UStringRep*)getPayload(sd[0].keys);
+               rep = (UStringRep*)u_getPayload(sd[0].keys);
 
                U_INTERNAL_DUMP("rep(%p) = %V", rep, rep)
 
@@ -1453,8 +1451,8 @@ void UValue::nextParser()
 
    U_INTERNAL_ASSERT_DIFFERS(UValue::pos, -1)
 
-   U_DUMP("sd[%d].tags = (%d,%S) sd[%d].tails = %p sd[%d].keys = 0x%x", pos, (sd[pos].tags ? OBJECT_VALUE : ARRAY_VALUE),
-                                   getDataTypeDescription((sd[pos].tags ? OBJECT_VALUE : ARRAY_VALUE)), pos, sd[pos].tails, pos, sd[pos].keys)
+   U_DUMP("sd[%d].tags = (%d,%S) sd[%d].tails = %p sd[%d].keys = 0x%x", pos, (sd[pos].tags ? U_OBJECT_VALUE : U_ARRAY_VALUE),
+                                   getDataTypeDescription((sd[pos].tags ? U_OBJECT_VALUE : U_ARRAY_VALUE)), pos, sd[pos].tails, pos, sd[pos].keys)
 
    if (sd[pos].tags == false) sd[pos].tails = insertAfter(sd[pos].tails, o.ival);
    else
@@ -1463,7 +1461,7 @@ void UValue::nextParser()
          {
          sd[pos].keys = o.ival;
 
-         U_INTERNAL_DUMP("sd[%d].keys = %V",  pos, getPayload(sd[pos].keys))
+         U_INTERNAL_DUMP("sd[%d].keys = %V",  pos, u_getPayload(sd[pos].keys))
 
          return;
          }
@@ -1498,7 +1496,7 @@ void UValue::nextParser()
 //
 // would return:
 //    value -> "one"
-//    dataType = STRING_VALUE;
+//    dataType = U_STRING_VALUE;
 //
 // The query string simply defines the route to the required data item as an arbitary list of object or array specifiers:
 //    object element = "{'keyname'"
@@ -1510,25 +1508,25 @@ void UValue::nextParser()
 //
 // in this case would return:
 //    value -> "[ "one", 2, {"descripton":"element 3"}, null ]"
-//    dataType = ARRAY_VALUE;
+//    dataType = U_ARRAY_VALUE;
 //
 // allowing jread() to be called again on the array:
 //    dataType = jread(value, U_STRING_FROM_CONSTANT("[3"), value); // get 4th element - the null value
 //
 // in this case would return:
 //    value -> ""
-//    dataType = NULL_VALUE;
+//    dataType = U_NULL_VALUE;
 //
 // Note that jread() never modifies the source JSON and does not allocate any memory. i.e. elements are assigned as
 // substring of the source json string
 // =======================================================================================================================
 
-#define U_JR_EOL     (NULL_VALUE+1) // 10 end of input string (ptr at '\0')
-#define U_JR_COLON   (NULL_VALUE+2) // 11 ":"
-#define U_JR_COMMA   (NULL_VALUE+3) // 12 ","
-#define U_JR_EARRAY  (NULL_VALUE+4) // 13 "]"
-#define U_JR_QPARAM  (NULL_VALUE+5) // 14 "*" query string parameter
-#define U_JR_EOBJECT (NULL_VALUE+6) // 15 "}"
+#define U_JR_EOL     (U_NULL_VALUE+1) // 10 end of input string (ptr at '\0')
+#define U_JR_COLON   (U_NULL_VALUE+2) // 11 ":"
+#define U_JR_COMMA   (U_NULL_VALUE+3) // 12 ","
+#define U_JR_EARRAY  (U_NULL_VALUE+4) // 13 "]"
+#define U_JR_QPARAM  (U_NULL_VALUE+5) // 14 "*" query string parameter
+#define U_JR_EOBJECT (U_NULL_VALUE+6) // 15 "}"
 
 int      UValue::jread_error;
 uint32_t UValue::jread_pos;
@@ -1555,21 +1553,21 @@ U_NO_EXPORT int UValue::jreadFindToken(UTokenizer& tok)
       case '6':
       case '7':
       case '8':
-      case '9': U_RETURN(REAL_VALUE);
+      case '9': U_RETURN(U_REAL_VALUE);
 
-      case 't': U_RETURN( TRUE_VALUE);
-      case 'f': U_RETURN(FALSE_VALUE);
+      case 't': U_RETURN( U_TRUE_VALUE);
+      case 'f': U_RETURN(U_FALSE_VALUE);
 
-      case 'n': U_RETURN(NULL_VALUE);
+      case 'n': U_RETURN(U_NULL_VALUE);
 
-      case '[': U_RETURN(ARRAY_VALUE);
+      case '[': U_RETURN(U_ARRAY_VALUE);
       case ']': U_RETURN(U_JR_EARRAY);
 
-      case '{': U_RETURN(OBJECT_VALUE);
+      case '{': U_RETURN(U_OBJECT_VALUE);
       case '}': U_RETURN(U_JR_EOBJECT);
 
       case '"':
-      case '\'': U_RETURN(STRING_VALUE);
+      case '\'': U_RETURN(U_STRING_VALUE);
 
       case ':': U_RETURN(U_JR_COLON);
       case ',': U_RETURN(U_JR_COMMA);
@@ -1585,13 +1583,13 @@ U_NO_EXPORT int UValue::jread_skip(UTokenizer& tok)
 
    tok.skipSpaces();
 
-   if (tok.atEnd()) U_RETURN(NULL_VALUE);
+   if (tok.atEnd()) U_RETURN(U_NULL_VALUE);
 
    switch (tok.next())
       {
-      case 'n': (void) tok.skipToken(U_CONSTANT_TO_PARAM("ull"));  U_RETURN( NULL_VALUE);
-      case 't': (void) tok.skipToken(U_CONSTANT_TO_PARAM("rue"));  U_RETURN( TRUE_VALUE);
-      case 'f': (void) tok.skipToken(U_CONSTANT_TO_PARAM("alse")); U_RETURN(FALSE_VALUE);
+      case 'n': (void) tok.skipToken(U_CONSTANT_TO_PARAM("ull"));  U_RETURN( U_NULL_VALUE);
+      case 't': (void) tok.skipToken(U_CONSTANT_TO_PARAM("rue"));  U_RETURN( U_TRUE_VALUE);
+      case 'f': (void) tok.skipToken(U_CONSTANT_TO_PARAM("alse")); U_RETURN(U_FALSE_VALUE);
 
       case '+':
       case '-':
@@ -1608,7 +1606,7 @@ U_NO_EXPORT int UValue::jread_skip(UTokenizer& tok)
          {
          tok.skipNumber();
 
-         U_RETURN(REAL_VALUE);
+         U_RETURN(U_REAL_VALUE);
          }
 
       case '"':
@@ -1621,7 +1619,7 @@ U_NO_EXPORT int UValue::jread_skip(UTokenizer& tok)
             {
             tok.setPointer(last+1);
 
-            U_RETURN(STRING_VALUE);
+            U_RETURN(U_STRING_VALUE);
             }
          }
       break;
@@ -1642,7 +1640,7 @@ U_NO_EXPORT int UValue::jread_skip(UTokenizer& tok)
             if (jread_skip(tok) == -1) U_RETURN(-1);
             }
 
-         U_RETURN(ARRAY_VALUE);
+         U_RETURN(U_ARRAY_VALUE);
          }
 
       case '{':
@@ -1666,7 +1664,7 @@ U_NO_EXPORT int UValue::jread_skip(UTokenizer& tok)
 
             if (tok.atEnd()       || 
                 tok.next() != ':' ||
-                dataType != STRING_VALUE)
+                dataType != U_STRING_VALUE)
                {
                U_RETURN(-1);
                }
@@ -1674,7 +1672,7 @@ U_NO_EXPORT int UValue::jread_skip(UTokenizer& tok)
             if (jread_skip(tok) == -1) U_RETURN(-1);
             }
 
-         U_RETURN(OBJECT_VALUE);
+         U_RETURN(U_OBJECT_VALUE);
          }
       }
 
@@ -1721,7 +1719,7 @@ U_NO_EXPORT UString UValue::jread_object(UTokenizer& tok)
       dataType = jread_skip(++tok);
 
       if (dataType == -1 ||
-          dataType != STRING_VALUE)
+          dataType != U_STRING_VALUE)
          {
          jread_error = 3; // Expected "key"
 
@@ -1876,7 +1874,7 @@ int UValue::jread(const UString& json, const UString& query, UString& result, ui
          U_RETURN(-1);
          }
 
-      case STRING_VALUE: // "string" 
+      case U_STRING_VALUE: // "string" 
          {
          jread_elements = 1;
 
@@ -1884,10 +1882,10 @@ int UValue::jread(const UString& json, const UString& query, UString& result, ui
          }
       break;
 
-      case  NULL_VALUE: // null
-      case  REAL_VALUE: // number
-      case  TRUE_VALUE: // true
-      case FALSE_VALUE: // false
+      case  U_NULL_VALUE: // null
+      case  U_REAL_VALUE: // number
+      case  U_TRUE_VALUE: // true
+      case U_FALSE_VALUE: // false
          {
          const char* ptr =  start = tok1.getPointer();
                char    c = *start;
@@ -1904,11 +1902,11 @@ int UValue::jread(const UString& json, const UString& query, UString& result, ui
          }
       break;
 
-      case OBJECT_VALUE: // "{"
+      case U_OBJECT_VALUE: // "{"
          {
          if (qTok == U_JR_EOL)
             {
-            jTok   = OBJECT_VALUE;
+            jTok   = U_OBJECT_VALUE;
             result = jread_object(tok1); 
 
             goto end;
@@ -1918,13 +1916,13 @@ int UValue::jread(const UString& json, const UString& query, UString& result, ui
 
          U_DUMP("qTok = (%d,%S)", qTok, getDataTypeDescription(qTok))
 
-         if (qTok != STRING_VALUE)
+         if (qTok != U_STRING_VALUE)
             {
             index = 0;
 
             switch (qTok)
                {
-               case REAL_VALUE: // index value
+               case U_REAL_VALUE: // index value
                   {
                   start = tok2.getPointer();
 
@@ -1948,7 +1946,7 @@ int UValue::jread(const UString& json, const UString& query, UString& result, ui
                   }
                }
 
-            jTok   = OBJECT_VALUE;
+            jTok   = U_OBJECT_VALUE;
             result = jread_object(tok1, index); 
 
             goto end;
@@ -2023,7 +2021,7 @@ int UValue::jread(const UString& json, const UString& query, UString& result, ui
          }
       break;
 
-      case ARRAY_VALUE: // "[NUMBER" or "[*"
+      case U_ARRAY_VALUE:  // "[NUMBER" or "[*"
          {
          // read index, skip values 'til index
 
@@ -2060,7 +2058,7 @@ int UValue::jread(const UString& json, const UString& query, UString& result, ui
                   }
                }
 
-            jTok   = ARRAY_VALUE;
+            jTok   = U_ARRAY_VALUE;
             result = tok1.substr(start);
 
             goto end;
@@ -2078,7 +2076,7 @@ int UValue::jread(const UString& json, const UString& query, UString& result, ui
 
             index = (queryParams ? *queryParams++ : 0); // substitute parameter
             }
-         else if (qTok == REAL_VALUE)
+         else if (qTok == U_REAL_VALUE)
             {
             // get array index   
 
@@ -2236,8 +2234,8 @@ int UValue::jreadArrayStep(const UString& jarray, UString& result)
 
    switch (jTok)
       {
-      case U_JR_COMMA:  // element separator
-      case ARRAY_VALUE: // start of array
+      case U_JR_COMMA:    // element separator
+      case U_ARRAY_VALUE: // start of array
          {
          ++tok;
 
@@ -2292,16 +2290,16 @@ const char* UValue::getDataTypeDescription(int type)
    };
 
    static const struct data_type_info data_type_table[] = {
-      U_ENTRY(REAL_VALUE),
-      U_ENTRY(INT_VALUE),
-      U_ENTRY(UINT_VALUE),
-      U_ENTRY(TRUE_VALUE),
-      U_ENTRY(FALSE_VALUE),
-      U_ENTRY(STRING_VALUE),
-      U_ENTRY(UTF_VALUE),
-      U_ENTRY(ARRAY_VALUE),
-      U_ENTRY(OBJECT_VALUE),
-      U_ENTRY(NULL_VALUE),
+      U_ENTRY(U_REAL_VALUE),
+      U_ENTRY(U_INT_VALUE),
+      U_ENTRY(U_UINT_VALUE),
+      U_ENTRY(U_TRUE_VALUE),
+      U_ENTRY(U_FALSE_VALUE),
+      U_ENTRY(U_STRING_VALUE),
+      U_ENTRY(U_UTF_VALUE),
+      U_ENTRY(U_ARRAY_VALUE),
+      U_ENTRY(U_OBJECT_VALUE),
+      U_ENTRY(U_NULL_VALUE),
       U_ENTRY(U_JR_EOL),
       U_ENTRY(U_JR_COLON),
       U_ENTRY(U_JR_COMMA),

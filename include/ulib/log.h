@@ -49,7 +49,6 @@ public:
       uint32_t file_page;
       uint32_t gzip_len;
       sem_t lock_shared;
-      char spinlock_shared[1];
       // --------------> maybe unnamed array of char for gzip compression...
    } log_data;
 
@@ -68,14 +67,10 @@ public:
       {
       U_TRACE_UNREGISTER_OBJECT(0, ULog)
 
-      if (lock) delete lock;
-
 #  ifdef USE_LIBZ
       if (buf_path_compress) delete buf_path_compress;
 #  endif
       }
-
-   void closeLog();
 
    void reopen()
       {
@@ -90,9 +85,8 @@ public:
       {
       U_TRACE_NO_PARAM(0, "ULog::msync()")
 
+      U_ASSERT(isMemoryMapped())
       U_INTERNAL_ASSERT_EQUALS(U_Log_syslog(this), false)
-
-      U_INTERNAL_ASSERT_POINTER(ptr_log_data)
 
       UFile::msync(UFile::map + ptr_log_data->file_ptr, UFile::map + ptr_log_data->file_page, MS_SYNC);
 
@@ -125,6 +119,8 @@ public:
          startup();
          }
       }
+
+   void closeLog();
 
    // manage shared log
 
@@ -173,6 +169,11 @@ public:
       U_RETURN_STRING(result);
       }
 
+   // LOCK
+
+   void   lock() { if (_lock.sem) _lock.lock(); }
+   void unlock() { if (_lock.sem) _lock.unlock(); }
+
    // write with prefix
 
    void write(const char* msg, uint32_t len);
@@ -196,7 +197,7 @@ public:
 
    // write without prefix
 
-   static void log(int _fd, const char* format, uint32_t fmt_size, ...); // (buffer write == 8196)
+   static void log(int lfd, const char* format, uint32_t fmt_size, ...); // (buffer write == 8196)
 
    // logger
 
@@ -212,10 +213,9 @@ public:
 #endif
 
 protected:
-   ULock* lock;
+   ULock _lock;
    log_data* ptr_log_data;
    uint32_t log_file_sz,
-            log_data_sz,
             log_gzip_sz;
    unsigned char flag[4];
 
@@ -227,8 +227,8 @@ protected:
    void startup();
    void closeLogInternal();
    void write(const struct iovec* iov, int n);
-   void logResponse(const UString& data,  const char* name,                                                                  const char* format, uint32_t fmt_size, ...);
-   void log(const struct iovec* iov,      const char* name, const char* type, int ncount, const char* msg, uint32_t msg_len, const char* format, uint32_t fmt_size, ...);
+   void logResponse(const UString& data,  const char* format, uint32_t fmt_size, ...);
+   void log(const struct iovec* iov, const char* type, int ncount, const char* msg, uint32_t msg_len, const char* format, uint32_t fmt_size, ...);
 
 #ifdef USE_LIBZ
    UString*   buf_path_compress;

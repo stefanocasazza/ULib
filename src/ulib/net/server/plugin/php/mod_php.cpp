@@ -29,8 +29,7 @@
 #undef HAVE_SNPRINTF
 #endif
 
-#include <php_embed.h>
-//#include <php/Zend/zend_stream.h>
+#include <sapi/embed/php_embed.h>
 
 #ifdef snprintf
 #undef snprintf
@@ -42,14 +41,14 @@ static void UPHP_set_environment(void* env, char* name, char* value)
 {
    U_TRACE(0, "UPHP_set_environment(%p,%S,%S)", env, name, value)
 
-   php_register_variable_safe(name, value, strlen(value), track_vars_array TSRMLS_CC);
+   php_register_variable_safe(name, value, strlen(value), 0);
 }
 
-static void register_server_variables(zval* track_vars_array TSRMLS_DC)
+static void register_server_variables(zval* track_vars_array)
 {
    U_TRACE(0, "PHP::register_server_variables(%p)", track_vars_array)
 
-   php_import_environment_variables(track_vars_array TSRMLS_CC);
+   php_import_environment_variables(track_vars_array);
 
    (void) UHTTP::setEnvironmentForLanguageProcessing(U_PHP, 0, UPHP_set_environment);
 }
@@ -86,7 +85,7 @@ static int send_headers(sapi_headers_struct* sapi_headers)
    return SAPI_HEADER_SENT_SUCCESSFULLY;
 }
 
-static int ub_write(const char* str, unsigned int strlen TSRMLS_DC) // this is the stdout output of a PHP script
+static size_t ub_write(const char* str, size_t strlen) // this is the stdout output of a PHP script
 {
    U_TRACE(0, "PHP::ub_write(%.*S,%u)", strlen, str, strlen)
 
@@ -111,7 +110,7 @@ static void log_message(char* message)
    U_SRV_LOG("%s", message);
 }
 
-extern U_EXPORT bool initPHP()
+extern U_EXPORT bool initPHP();
        U_EXPORT bool initPHP()
 {
    U_TRACE(0, "::initPHP()")
@@ -124,7 +123,7 @@ extern U_EXPORT bool initPHP()
     * {
     * PG(during_request_startup) = 0;
     * snprintf(str, sizeof(str), "include (\"%s\");", UHTTP::file->getPathRelativ());
-    * zend_eval_string(str, &ret_value, str TSRMLS_CC);
+    * zend_eval_string(str, &ret_value, str);
     * exit_status = Z_LVAL(ret_value);
     * } zend_catch
     * {
@@ -166,15 +165,15 @@ extern U_EXPORT bool initPHP()
    // void (*block_interruptions)(void);
    // void (*unblock_interruptions)(void);
    // void (*default_post_reader)(TSRMLS_D);
-   // void (*treat_data)(int arg, char* str, zval* destArray TSRMLS_DC);
+   // void (*treat_data)(int arg, char* str, zval* destArray);
    // char* executable_location;
    // int php_ini_ignore;
    // int php_ini_ignore_cwd; /* don't look for php.ini in the current directory */
-   // int (*get_fd)(int* fd TSRMLS_DC);
+   // int (*get_fd)(int* fd);
    // int (*force_http_10)(TSRMLS_D);
-   // int (*get_target_uid)(uid_t* TSRMLS_DC);
-   // int (*get_target_gid)(gid_t* TSRMLS_DC);
-   // unsigned int (*input_filter)(int arg, char* var, char** val, unsigned int val_len, unsigned int* new_val_len TSRMLS_DC);
+   // int (*get_target_uid)(uid_t*);
+   // int (*get_target_gid)(gid_t*);
+   // unsigned int (*input_filter)(int arg, char* var, char** val, unsigned int val_len, unsigned int* new_val_len);
    // void (*ini_defaults)(HashTable *configuration_hash);
    // int phpinfo_as_text;
    // char* ini_entries;
@@ -201,7 +200,6 @@ extern U_EXPORT bool initPHP()
 
    U_SRV_LOG("PHP(%s) initialized", PHP_VERSION);
 
-end:
    U_RESET_MODULE_NAME;
 
    U_RETURN(true);
@@ -220,7 +218,7 @@ extern U_EXPORT bool runPHP();
     * {
     * PG(during_request_startup) = 0;
     * snprintf(str, sizeof(str), "include (\"%s\");", UHTTP::file->getPathRelativ());
-    * zend_eval_string(str, &ret_value, str TSRMLS_CC);
+    * zend_eval_string(str, &ret_value, str);
     * exit_status = Z_LVAL(ret_value);
     * } zend_catch
     * {
@@ -241,14 +239,14 @@ extern U_EXPORT bool runPHP();
    file_handle.free_filename = 0;
    file_handle.opened_path   = 0;
 
-   if (php_request_startup(TSRMLS_C))
+   if (php_request_startup())
       {
       esito = false;
 
       goto end;
       }
 
-   php_execute_script(&file_handle TSRMLS_CC);
+   php_execute_script(&file_handle);
 
    php_request_shutdown(0);
 
@@ -266,8 +264,9 @@ extern U_EXPORT void endPHP();
    U_TRACE_NO_PARAM(0, "endPHP()")
 
    TSRMLS_FETCH();
-   php_module_shutdown(TSRMLS_C);
-   sapi_shutdown();
+
+   php_module_shutdown();
+         sapi_shutdown();
 
    if (php_embed_module.ini_entries)
       {

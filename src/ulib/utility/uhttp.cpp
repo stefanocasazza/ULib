@@ -875,7 +875,7 @@ void UHTTP::init()
 #endif
 
 #if defined(USE_PAGE_SPEED) || defined(USE_LIBV8) || defined(USE_RUBY) || defined(USE_PHP) || defined(USE_PYTHON)
-   const char* msg;
+   bool bok;
 #endif
 
 #ifdef USE_PAGE_SPEED
@@ -883,17 +883,17 @@ void UHTTP::init()
 
    U_NEW(UHTTP::UPageSpeed, page_speed, UHTTP::UPageSpeed);
 
-   msg = "WARNING: load of plugin pagespeed failed";
+   bok = page_speed->load(U_CONSTANT_TO_PARAM("server_plugin_pagespeed"));
 
-   if (page_speed->load(U_CONSTANT_TO_PARAM("server_plugin_pagespeed")) == false)
+   if (bok == false)
       {
       delete page_speed;
              page_speed = U_NULLPTR;
+
+      U_SRV_LOG("%.*s", U_CONSTANT_TO_TRACE("WARNING: load of plugin pagespeed failed"));
       }
    else
       {
-      msg = "Load of plugin pagespeed success";
-
       page_speed->minify_html  = (vPFpcstr)(*page_speed)["minify_html"];
       page_speed->optimize_gif = (vPFstr)  (*page_speed)["optimize_gif"];
       page_speed->optimize_png = (vPFstr)  (*page_speed)["optimize_png"];
@@ -903,9 +903,9 @@ void UHTTP::init()
       U_INTERNAL_ASSERT_POINTER(page_speed->optimize_gif)
       U_INTERNAL_ASSERT_POINTER(page_speed->optimize_png)
       U_INTERNAL_ASSERT_POINTER(page_speed->optimize_jpg)
-      }
 
-   U_SRV_LOG("%s", msg);
+      U_SRV_LOG("%.*s", U_CONSTANT_TO_TRACE("Load of plugin pagespeed success"));
+      }
 #endif
 
 #ifdef USE_LIBV8
@@ -913,23 +913,23 @@ void UHTTP::init()
 
    U_NEW(UHTTP::UV8JavaScript, v8_javascript, UHTTP::UV8JavaScript);
 
-   msg = "WARNING: load of plugin v8 failed";
+   bok = v8_javascript->load(U_CONSTANT_TO_PARAM("server_plugin_v8"));
 
-   if (v8_javascript->load(U_CONSTANT_TO_PARAM("server_plugin_v8")) == false)
+   if (bok == false)
       {
       delete v8_javascript;
              v8_javascript = U_NULLPTR;
+
+      U_SRV_LOG("%.*s", U_CONSTANT_TO_TRACE("WARNING: load of plugin v8 failed"));
       }
    else
       {
-      msg = "Load of plugin v8 success";
-
       v8_javascript->runv8 = (vPFstr)(*v8_javascript)["runv8"];
 
       U_INTERNAL_ASSERT_POINTER(v8_javascript->runv8)
-      }
 
-   U_SRV_LOG("%s", msg);
+      U_SRV_LOG("%.*s", U_CONSTANT_TO_TRACE("Load of plugin v8 success"));
+      }
 #endif
 
 #ifdef USE_RUBY
@@ -937,18 +937,20 @@ void UHTTP::init()
 
    U_NEW(UHTTP::URUBY, ruby_embed, UHTTP::URUBY);
 
-   msg = "WARNING: load of plugin ruby failed";
+   bok = ruby_embed->load(U_CONSTANT_TO_PARAM("server_plugin_ruby"));
 
-   if (ruby_embed->load(U_CONSTANT_TO_PARAM("server_plugin_ruby")) == false)
+   if (bok == false)
       {
       delete ruby_embed;
              ruby_embed = U_NULLPTR;
+
+      U_SRV_LOG("%.*s", U_CONSTANT_TO_TRACE("WARNING: load of plugin ruby failed"));
       }
    else
       {
       ruby_embed->initRUBY = (bPF)(*ruby_embed)["initRUBY"];
-      ruby_embed->runRUBY  = (bPF)(*ruby_embed)["runRUBY"];
-      ruby_embed->endRUBY  = (vPF)(*ruby_embed)["endRUBY"];
+      ruby_embed->runRUBY  = (bPF)(*ruby_embed)[ "runRUBY"];
+      ruby_embed->endRUBY  = (vPF)(*ruby_embed)[ "endRUBY"];
 
       U_INTERNAL_ASSERT_POINTER(ruby_embed->initRUBY)
       U_INTERNAL_ASSERT_POINTER(ruby_embed->runRUBY)
@@ -959,7 +961,7 @@ void UHTTP::init()
       if (UStringExt::endsWith(u_cwd, u_cwd_len, U_CONSTANT_TO_PARAM("public")) == false ||
           UFile::access("../config.ru", R_OK) == false)
          {
-         if (ruby_embed->initRUBY()) msg = "Load of plugin ruby success";
+         if (ruby_embed->initRUBY()) U_SRV_LOG("%.*s", U_CONSTANT_TO_TRACE("Load of plugin ruby success"));
          }
       else
          {
@@ -971,14 +973,11 @@ void UHTTP::init()
 
          ruby_on_rails = ruby_embed->initRUBY();
 
-         if (ruby_on_rails) msg = U_NULLPTR;
-         else               msg = "WARNING: load of Ruby on Rails application failed";
+         if (ruby_on_rails == false) U_SRV_LOG("%.*s", U_CONSTANT_TO_TRACE("WARNING: load of Ruby on Rails application failed"));
 
          (void) UFile::chdir(U_NULLPTR, true);
          }
       }
-
-   if (msg) { U_SRV_LOG("%s", msg); }
 #endif
 
 #ifdef USE_PYTHON
@@ -986,64 +985,31 @@ void UHTTP::init()
 
    U_NEW(UHTTP::UPYTHON, python_embed, UHTTP::UPYTHON);
 
-   msg = "WARNING: load of plugin python failed";
+   bok = python_embed->load(U_CONSTANT_TO_PARAM("server_plugin_python"));
 
-   if (python_embed->load(U_CONSTANT_TO_PARAM("server_plugin_python")) == false)
+   if (bok == false)
       {
       delete python_embed;
              python_embed = U_NULLPTR;
+
+      U_SRV_LOG("%.*s", U_CONSTANT_TO_TRACE("WARNING: load of plugin python failed"));
       }
    else
       {
       python_embed->initPYTHON = (bPF)(*python_embed)["initPYTHON"];
-      python_embed->runPYTHON  = (bPF)(*python_embed)["runPYTHON"];
-      python_embed->endPYTHON  = (vPF)(*python_embed)["endPYTHON"];
+      python_embed->runPYTHON  = (bPF)(*python_embed)[ "runPYTHON"];
+      python_embed->endPYTHON  = (vPF)(*python_embed)[ "endPYTHON"];
 
       U_INTERNAL_ASSERT_POINTER(python_embed->initPYTHON)
       U_INTERNAL_ASSERT_POINTER(python_embed->runPYTHON)
       U_INTERNAL_ASSERT_POINTER(python_embed->endPYTHON)
 
-      if (py_project_app == U_NULLPTR) msg = U_NULLPTR; // python wsgi app not specified; skipping python initialization...
-      else
+      if (py_project_app && // NB: if python app not specified we skipping python initialization...
+          python_embed->initPYTHON())
          {
-         if (python_embed->initPYTHON()) msg = "Load of plugin python success";
+         U_SRV_LOG("%.*s", U_CONSTANT_TO_TRACE("Load of plugin python success"));
          }
       }
-
-   if (msg) { U_SRV_LOG("%s", msg); }
-#endif
-
-#ifdef USE_PHP
-   U_INTERNAL_ASSERT_EQUALS(php_embed, U_NULLPTR)
-
-   U_NEW(UHTTP::UPHP, php_embed, UHTTP::UPHP);
-
-   msg = "WARNING: load of plugin php failed";
-
-   if (php_embed->load(U_CONSTANT_TO_PARAM("server_plugin_php")) == false)
-      {
-      delete php_embed;
-             php_embed = U_NULLPTR;
-      }
-   else
-      {
-      php_embed->initPHP = (bPF)(*php_embed)["initPHP"];
-      php_embed->runPHP  = (bPF)(*php_embed)["runPHP"];
-      php_embed->endPHP  = (vPF)(*php_embed)["endPHP"];
-
-      U_INTERNAL_ASSERT_POINTER(php_embed->initPHP)
-      U_INTERNAL_ASSERT_POINTER(php_embed->runPHP)
-      U_INTERNAL_ASSERT_POINTER(php_embed->endPHP)
-
-      if (php_embed->initPHP())
-         {
-         msg = U_NULLPTR;
-
-         if (UFile::access("index.php", R_OK)) npathinfo = U_CONSTANT_SIZE("/index.php"); // check for some CMS (Ex: Drupal)
-         }
-      }
-
-   if (msg) { U_SRV_LOG("%s", msg); }
 #endif
 
 #ifdef USE_LOAD_BALANCE
@@ -1181,7 +1147,7 @@ void UHTTP::init()
 
    U_INTERNAL_ASSERT_POINTER(pathname)
 
-   for (uint32_t i = 0, v = vec.size(); i < v; ++i)
+   for (uint32_t i = 0, j = vec.size(); i < j; ++i)
       {
       item = vec[i];
 
@@ -1210,6 +1176,39 @@ void UHTTP::init()
 
       if (UFile::writeTo(*cache_file_store, buffer, sz)) U_SRV_LOG("Saved (%u bytes) cache file store: %V", sz, cache_file_store->rep);
       }
+
+#ifdef USE_PHP
+   U_INTERNAL_ASSERT_EQUALS(php_embed, U_NULLPTR)
+
+   U_NEW(UHTTP::UPHP, php_embed, UHTTP::UPHP);
+
+   bok = php_embed->load(U_CONSTANT_TO_PARAM("server_plugin_php"));
+
+   if (bok == false)
+      {
+      delete php_embed;
+             php_embed = U_NULLPTR;
+
+      U_SRV_LOG("%.*s", U_CONSTANT_TO_TRACE("WARNING: load of plugin php failed"));
+      }
+   else
+      {
+      php_embed->initPHP = (bPF)(*php_embed)["initPHP"];
+      php_embed->runPHP  = (bPF)(*php_embed)[ "runPHP"];
+      php_embed->endPHP  = (vPF)(*php_embed)[ "endPHP"];
+
+      U_INTERNAL_ASSERT_POINTER(php_embed->initPHP)
+      U_INTERNAL_ASSERT_POINTER(php_embed->runPHP)
+      U_INTERNAL_ASSERT_POINTER(php_embed->endPHP)
+
+      if (php_embed->initPHP())
+         {
+         U_SRV_LOG("%.*s", U_CONSTANT_TO_TRACE("Load of plugin php success"));
+
+         if (cache_file->at(U_CONSTANT_TO_PARAM("index.php"))) npathinfo = U_CONSTANT_SIZE("/index.php"); // check for some CMS (Ex: Drupal)
+         }
+      }
+#endif
 
    U_ASSERT(cache_file_check_memory())
 
@@ -1432,7 +1431,7 @@ void UHTTP::dtor()
 #  endif
 
 #  ifdef USE_PHP
-      if (php_embed)       delete php_embed;
+      if (php_embed) delete php_embed;
 #  endif
       if (php_mount_point) delete php_mount_point;
 #  ifdef USE_RUBY
@@ -3448,6 +3447,7 @@ U_NO_EXPORT bool UHTTP::runDynamicPage()
 #ifdef USE_PHP
    if (u_is_php(mime_index))
       {
+      U_INTERNAL_ASSERT_POINTER(php_embed)
       U_INTERNAL_ASSERT_POINTER(php_embed->runPHP)
 
       (void) php_embed->runPHP();
@@ -3458,6 +3458,7 @@ U_NO_EXPORT bool UHTTP::runDynamicPage()
 #ifdef USE_RUBY
    if (u_is_ruby(mime_index))
       {
+      U_INTERNAL_ASSERT_POINTER(ruby_embed)
       U_INTERNAL_ASSERT_POINTER(ruby_embed->runRUBY)
 
       (void) ruby_embed->runRUBY();
@@ -3468,6 +3469,7 @@ U_NO_EXPORT bool UHTTP::runDynamicPage()
 #ifdef USE_PYTHON
    if (u_is_python(mime_index))
       {
+      U_INTERNAL_ASSERT_POINTER(python_embed)
       U_INTERNAL_ASSERT_POINTER(python_embed->runPYTHON)
 
       (void) python_embed->runPYTHON();
@@ -3748,6 +3750,8 @@ next2:
 
    if (UClientImage_Base::csfd > 0)
       {
+      U_INTERNAL_DUMP("U_http_sendfile = %b", U_http_sendfile)
+
       U_INTERNAL_ASSERT(U_http_sendfile)
 
       UClientImage_Base::setSendfile(UClientImage_Base::csfd, range_start, range_size);
@@ -4031,6 +4035,8 @@ int UHTTP::handlerREAD()
 #ifndef U_SERVER_CAPTIVE_PORTAL
    if (UClientImage_Base::bsendGzipBomp)
       {
+      U_INTERNAL_ASSERT_EQUALS(UServer_Base::bssl, false) // NB: we can't use sendfile with SSL...
+
       UClientImage_Base::bsendGzipBomp = false;
 
       U_DEBUG("we strike back sending gzip bomb...", 0);
@@ -4212,20 +4218,35 @@ set_uri: U_http_info.uri     = alias->data();
 
    old_path_len = U_http_info.uri_len-1;
 
-   if (old_path_len == 0) file_data = U_NULLPTR;
-   else
+        if (old_path_len == 0) file_data = U_NULLPTR;
+   else if (checkFileInCache(U_http_info.uri+1, old_path_len))
       {
-      checkFileInCache(U_http_info.uri+1, old_path_len);
+      U_INTERNAL_ASSERT_POINTER(file_data)
 
-      if (file_data)
-         {
-         UClientImage_Base::setRequestInFileCache();
+      UClientImage_Base::setRequestInFileCache();
 
-         goto file_in_cache;
-         }
+      goto file_in_cache;
       }
 
-     setPathName();
+   setPathName();
+
+#ifdef USE_RUBY
+   if (ruby_on_rails == false)
+#endif
+   {
+   if (U_http_info.uri[0] == '/' &&
+       U_http_info.uri_len == 1)
+      {
+      // NB: we have the special case: '/' aka '.'
+
+      file->setRoot();
+
+      UClientImage_Base::setRequestNeedProcessing();
+
+      U_RETURN(U_PLUGIN_HANDLER_FINISHED);
+      }
+   }
+
    checkPathName();
 
    if (UClientImage_Base::isRequestNotFound())
@@ -4652,14 +4673,50 @@ void UHTTP::writeUploadData(const char* ptr, uint32_t sz)
    UClientImage_Base::body->clear(); // clean body to avoid writev() in response...
 }
 
+bool UHTTP::getFileInCache(const char* name, uint32_t len)
+{
+   U_TRACE(0, "UHTTP::getFileInCache(%.*S,%u)", len, name, len)
+
+   uint32_t sz     = file->getPathRelativLen();
+   const char* ptr = file->getPathRelativ();
+
+   U_INTERNAL_ASSERT_MAJOR(sz, 0)
+
+   pathname->setBuffer(sz + 1 + len);
+
+   if (sz == 1 &&
+       ptr[0] == '/')
+      {
+      pathname->snprintf(U_CONSTANT_TO_PARAM("%.*s"), len, name);
+      }
+   else
+      {
+      pathname->snprintf(U_CONSTANT_TO_PARAM("%.*s/%.*s"), sz, ptr, len, name);
+      }
+
+   file_data = cache_file->at(*pathname);
+
+   if (file_data) U_RETURN(true);
+
+   U_RETURN(false);
+}
+
 int UHTTP::processRequest()
 {
    U_TRACE_NO_PARAM(1, "UHTTP::processRequest()")
 
    U_ASSERT(UClientImage_Base::isRequestNeedProcessing())
 
-   if (isGETorHEADorPOST() == false)
+   if (isGETorHEAD() == false)
       {
+      if (isPOST())
+         {
+         if (UClientImage_Base::isRequestNotFound()) setNotFound();
+         else                                        setBadRequest();
+
+         U_RETURN(U_PLUGIN_HANDLER_FINISHED);
+         }
+
       if (isPUT())
          {
          uint32_t sz;
@@ -4747,61 +4804,43 @@ int UHTTP::processRequest()
       U_RETURN(U_PLUGIN_HANDLER_FINISHED);
       }
 
-   U_INTERNAL_DUMP("U_http_is_nocache_file = %b", U_http_is_nocache_file)
-
-   if ((*UClientImage_Base::body         ||
-        U_http_is_nocache_file == false) &&
-       UClientImage_Base::isRequestNotFound())
-      {
-      setNotFound();
-
-      U_RETURN(U_PLUGIN_HANDLER_FINISHED);
-      }
-
-   if (isPOST())
-      {
-      setBadRequest();
-
-      U_RETURN(U_PLUGIN_HANDLER_FINISHED);
-      }
-
 #ifdef U_HTTP2_DISABLE
    U_INTERNAL_ASSERT(*UClientImage_Base::request)
 #endif
-
-   ext->setBuffer(U_CAPACITY);
 
    /**
     * If the browser has to validate a component, it uses the If-None-Match header to pass the ETag back to
     * the origin server. If the ETags match, a 304 status code is returned reducing the response...
     *
     * For me it's enough Last-Modified: ...
+    *
+    * *etag = file->etag();
+    *
+    * const char* ptr = getHeaderValuePtr(U_CONSTANT_TO_PARAM("If-None-Match"), false);
+    *
+    * if (ptr)
+    *    {
+    *    U_INTERNAL_ASSERT_EQUALS(*ptr, '"') // entity-tag
+    *
+    *    uint32_t sz = etag->size();
+    *
+    *    if (sz &&
+    *        etag->equal(ptr, sz))
+    *       {
+    *       U_http_info.nResponseCode = HTTP_NOT_MODIFIED;
+    *
+    *       handlerResponse();
+    *
+    *       U_RETURN(U_PLUGIN_HANDLER_FINISHED);
+    *       }
+    *    }
+    *
+    * ext->snprintf(U_CONSTANT_TO_PARAM("Etag: %v\r\n"), etag->rep);
     */
 
-// *etag = file->etag();
-//
-// const char* ptr = getHeaderValuePtr(U_CONSTANT_TO_PARAM("If-None-Match"), false);
-//
-// if (ptr)
-//    {
-//    U_INTERNAL_ASSERT_EQUALS(*ptr, '"') // entity-tag
-//
-//    uint32_t sz = etag->size();
-//
-//    if (sz &&
-//        etag->equal(ptr, sz))
-//       {
-//       U_http_info.nResponseCode = HTTP_NOT_MODIFIED;
-//
-//       handlerResponse();
-//
-//       U_RETURN(U_PLUGIN_HANDLER_FINISHED);
-//       }
-//    }
-//
-// ext->snprintf(U_CONSTANT_TO_PARAM("Etag: %v\r\n"), etag->rep));
-
    bool result;
+
+   U_ASSERT(ext->empty())
 
    if (file->dir())
       {
@@ -4811,74 +4850,76 @@ int UHTTP::processRequest()
       if (u_fnmatch(U_FILE_TO_PARAM(*file), U_CONSTANT_TO_PARAM("servlet"), 0))
          {
          setForbidden(); // set forbidden error response...
-   
+
          U_RETURN(U_PLUGIN_HANDLER_FINISHED);
          }
 #  endif
 
-      // Check if there is an index file (index.html) in the directory... (we check in the CACHE FILE SYSTEM)
-
       U_INTERNAL_DUMP("query = %.*S", U_HTTP_QUERY_TO_TRACE)
 
-      if (U_http_info.query_len == 0)
+      if (U_http_info.query_len == 0 &&
+          getFileInCache(U_CONSTANT_TO_PARAM("index.html"))) // Check if there is an index file (index.html) in the directory... (we check in the CACHE FILE SYSTEM)
          {
-         uint32_t sz      = file->getPathRelativLen(), len = UString::str_indexhtml->size();
-         const char* ptr  = file->getPathRelativ();
-         const char* ptr1 = UString::str_indexhtml->data();
+         // NB: we have an index file (index.html) in the directory...
 
-         U_INTERNAL_ASSERT_MAJOR(sz, 0)
-
-         pathname->setBuffer(sz + 1 + len);
-
-         bool broot = (sz == 1 && ptr[0] == '/');
-
-         if (broot) pathname->snprintf(U_CONSTANT_TO_PARAM(     "%.*s"),          len, ptr1);
-         else       pathname->snprintf(U_CONSTANT_TO_PARAM("%.*s/%.*s"), sz, ptr, len, ptr1);
-
-         file_data = cache_file->at(*pathname);
-
-         if (file_data)
+         if (isDataFromCache()) // NB: check if we have the content of the index file in cache...
             {
-            // NB: we have an index file (index.html) in the directory...
+            U_http_info.nResponseCode = HTTP_OK;
 
-            if (isDataFromCache()) // NB: check if we have the content of the index file in cache...
+#        ifdef USE_LIBZ
+            if (U_http_is_accept_gzip &&
+                isDataCompressFromCache())
                {
-               U_http_info.nResponseCode = HTTP_OK;
+               U_http_flag |= HTTP_IS_RESPONSE_GZIP;
 
-#           ifdef USE_LIBZ
-               if (U_http_is_accept_gzip &&
-                   isDataCompressFromCache())
-                  {
-                  U_http_flag |= HTTP_IS_RESPONSE_GZIP;
+               U_INTERNAL_DUMP("U_http_is_response_gzip = %b", U_http_is_response_gzip)
 
-                  U_INTERNAL_DUMP("U_http_is_response_gzip = %b", U_http_is_response_gzip)
+               *ext = getHeaderCompressFromCache();
 
-                  *ext = getHeaderCompressFromCache();
+               *UClientImage_Base::body = getBodyCompressFromCache();
+               }
+            else
+               {
+               *ext = getHeaderFromCache();
 
-                  *UClientImage_Base::body = getBodyCompressFromCache();
-                  }
-               else
-                  {
-                  *ext = getHeaderFromCache();
-
-                  *UClientImage_Base::body = getBodyFromCache();
-                  }
-
-               handlerResponse();
-#           endif
-
-               U_RETURN(U_PLUGIN_HANDLER_FINISHED);
+               *UClientImage_Base::body = getBodyFromCache();
                }
 
-            file->setPath(*pathname);
+            handlerResponse();
+#        endif
 
-            file->st_size  = file_data->size;
-            file->st_mode  = file_data->mode;
-            file->st_mtime = file_data->mtime;
-
-            goto check_file;
+            U_RETURN(U_PLUGIN_HANDLER_FINISHED);
             }
+
+         file->setPath(*pathname);
+
+         file->st_size  = file_data->size;
+         file->st_mode  = file_data->mode;
+         file->st_mtime = file_data->mtime;
+
+         goto check_file;
          }
+
+#  ifdef USE_PHP
+      if (getFileInCache(U_CONSTANT_TO_PARAM("index.php"))) // Check if there is an index file (index.php) in the directory... (we check in the CACHE FILE SYSTEM)
+         {
+         // NB: we have an index file (index.php) in the directory...
+
+         U_INTERNAL_ASSERT_EQUALS(file_data->mime_index, U_php)
+
+         mime_index = U_php;
+
+         (void) pathname->replace(U_CONSTANT_TO_PARAM("index.php"));
+
+         file->setPath(*pathname);
+
+         (void) runDynamicPage();
+
+         UClientImage_Base::setRequestNoCache();
+
+         U_RETURN(U_PLUGIN_HANDLER_FINISHED);
+         }
+#  endif
 
       // now we check the directory...
 
@@ -4891,6 +4932,8 @@ int UHTTP::processRequest()
          if (processAuthorization() == false) U_RETURN(U_PLUGIN_HANDLER_FINISHED);
 
          *UClientImage_Base::body = getHTMLDirectoryList();
+
+         ext->setBuffer(U_CAPACITY);
 
 #     ifdef USE_LIBZ
          if (U_http_is_accept_gzip)
@@ -5300,12 +5343,11 @@ void UHTTP::initDbNotFound()
 
    U_NEW(URDB, db_not_found, URDB(U_STRING_FROM_CONSTANT("../db/NotFound.http"), -1));
 
-   if (db_not_found->open(4096 * 4096, false, true)) // NB: we don't want truncate (we have only the journal)...
+   // POSIX shared memory object: interprocess - can be used by unrelated processes (userver_tcp and userver_ssl)
+
+   if (db_not_found->open(4096 * 4096, false, true, true, U_SHM_LOCK_DB_NOT_FOUND)) // NB: we don't want truncate (we have only the journal)...
       {
       U_SRV_LOG("db NotFound initialization success: size(%u)", db_not_found->size());
-
-      // POSIX shared memory object: interprocess - can be used by unrelated processes (userver_tcp and userver_ssl)
-      db_not_found->setShared(U_SHM_LOCK_DB_NOT_FOUND, U_SHM_SPINLOCK_DB_NOT_FOUND);
       }
    else
       {
@@ -5328,14 +5370,12 @@ void UHTTP::initSession()
 
       U_NEW(URDBObjectHandler<UDataStorage*>, db_session, URDBObjectHandler<UDataStorage*>(U_STRING_FROM_CONSTANT("../db/session.http"), -1, U_NULLPTR));
 
-      if (db_session->open(4096 * 4096, false, true)) // NB: we don't want truncate (we have only the journal)...
+      if (db_session->open(4096 * 4096, false, true, true, U_SRV_LOCK_DATA_SESSION)) // NB: we don't want truncate (we have only the journal)...
          {
          U_SRV_LOG("db initialization of HTTP session success");
 
               if (data_session) db_session->setPointerToDataStorage(data_session);
          else if (data_storage) db_session->setPointerToDataStorage(data_storage);
-
-         db_session->setShared(U_SRV_LOCK_DATA_SESSION, U_SRV_SPINLOCK_DATA_SESSION);
          }
       else
          {
@@ -5373,11 +5413,9 @@ void UHTTP::initSessionSSL()
    U_NEW(USSLSession, data_session_ssl, USSLSession);
    U_NEW(URDBObjectHandler<UDataStorage*>, db_session_ssl, URDBObjectHandler<UDataStorage*>(U_STRING_FROM_CONSTANT("../db/session.ssl"), -1, data_session_ssl));
 
-   if (db_session_ssl->open(4096 * 4096, false, true)) // NB: we don't want truncate (we have only the journal)...
+   if (db_session_ssl->open(4096 * 4096, false, true, true, U_SRV_LOCK_SSL_SESSION)) // NB: we don't want truncate (we have only the journal)...
       {
       U_SRV_LOG("db initialization of SSL session success");
-
-      db_session_ssl->setShared(U_SRV_LOCK_SSL_SESSION, U_SRV_SPINLOCK_SSL_SESSION);
 
       db_session_ssl->reset(); // Initialize the cache to contain no entries
 
@@ -7764,8 +7802,8 @@ U_NO_EXPORT void UHTTP::putDataInCache(const UString& fmt, UString& content)
    int ratio = 100;
    bool gzip = false;
    UString header(U_CAPACITY);
-   const char* motivation = (file_data->size <= U_MIN_SIZE_FOR_DEFLATE              ? " (size too small)" :
-                             file_data->size >= UServer_Base::min_size_for_sendfile ? " (size exceeded)"  : ""); // NB: for major size we assume is better to use sendfile()
+   const char* motivation = (file_data->size <= U_MIN_SIZE_FOR_DEFLATE ? " (size too small)" :
+                             isSizeForSendfile(file_data->size)        ? " (size exceeded)"  : ""); // NB: for major size we assume is better to use sendfile()
 
    U_NEW(UVector<UString>, file_data->array, UVector<UString>(4U));
 #ifndef U_HTTP2_DISABLE
@@ -8152,7 +8190,7 @@ U_NO_EXPORT bool UHTTP::compileUSP(const char* path, uint32_t len)
       {
       UServer_Base::logCommandMsgError(cmd.getCommand(), false);
 
-      if (ok == false) UServer_Base::log->log(U_CONSTANT_TO_PARAM("%sWARNING: USP compile failed: %.*S"), UServer_Base::mod_name[0], path, len);
+      if (ok == false) UServer_Base::log->log(U_CONSTANT_TO_PARAM("[http] WARNING: USP compile failed: %.*S"), path, len);
       }
 #endif
 
@@ -8310,36 +8348,6 @@ U_NO_EXPORT void UHTTP::manageDataForCache(const UString& file_name)
    suffix_len = (*suffix = file->getSuffix()).size();
    suffix_ptr = (suffix_len ? suffix->data() : U_NULLPTR);
 
-   if (cache_file_mask &&
-       UServices::dosMatchWithOR(file_name_ptr, file_name_len, U_STRING_TO_PARAM(*cache_file_mask), 0))
-      {
-      if (file_data->size == 0)
-         {
-         U_SRV_LOG("WARNING: found empty file: %V", pathname->rep);
-         }
-      else if (file->open())
-         {
-         UString content;
-
-         if (file_data->size >= UServer_Base::min_size_for_sendfile) // NB: for major size we assume is better to use sendfile()
-            {
-            file_data->fd = file->fd;
-
-            putDataInCache(getHeaderMimeType(U_NULLPTR, 0, setMimeIndex(suffix_ptr), U_TIME_FOR_EXPIRE), content);
-            }
-         else
-            {
-            content = file->getContent(true, false, true);
-
-            if (content.empty()) goto error;
-
-            putDataInCache(getHeaderMimeType(content.data(), 0, setMimeIndex(suffix_ptr), U_TIME_FOR_EXPIRE), content);
-            }
-         }
-
-      goto end;
-      }
-
    if (u_dosmatch(file_ptr, file_len, U_CONSTANT_TO_PARAM("*cgi-bin/*"), 0))
       {
       // NB: when a pathfile ends by "cgi-bin/*.[sh|php|pl|py|rb|*]" it is assumed to be a cgi script...
@@ -8467,6 +8475,7 @@ U_NO_EXPORT void UHTTP::manageDataForCache(const UString& file_name)
       // manage gzip bomb...
 
       if (suffix_len == 2                                                      &&
+          UServer_Base::bssl != false                                          && // NB: we can't use sendfile with SSL...
           u_get_unalignedp16(   suffix_ptr) == U_MULTICHAR_CONSTANT16('g','z') &&
           u_get_unalignedp64(file_name_ptr) == U_MULTICHAR_CONSTANT64('_','_','B','o','m','B','_','_'))
          {
@@ -8628,6 +8637,19 @@ chk1:          if (usp_src) goto end;
          goto end;
          }
 
+#  ifdef USE_PHP
+      if (suffix_len == 3      &&
+          suffix_ptr[2] == 'p' &&
+          u_get_unalignedp16(suffix_ptr) == U_MULTICHAR_CONSTANT16('p','h'))
+         {
+         file_data->mime_index = U_php;
+
+         U_SRV_LOG("Find php file: %V - %u bytes", pathname->rep, file_data->size);
+
+         goto end;
+         }
+#  endif
+
 chk2: ctype = u_get_mimetype(suffix_ptr, &file_data->mime_index);
 
       U_INTERNAL_DUMP("u_is_cacheable(%d) = %b ctype = %S", file_data->mime_index, u_is_cacheable(file_data->mime_index), ctype)
@@ -8644,9 +8666,9 @@ chk2: ctype = u_get_mimetype(suffix_ptr, &file_data->mime_index);
 
             mime_index = file_data->mime_index;
 
-            if (file_data->size >= UServer_Base::min_size_for_sendfile) // NB: for major size we assume is better to use sendfile()
+            if (isSizeForSendfile(file_data->size)) // NB: for major size we assume is better to use sendfile()
                {
-               file_data->fd = file->fd;
+               file_data->fd = file->getFd();
 
                putDataInCache(getHeaderMimeType(U_NULLPTR, 0, ctype, U_TIME_FOR_EXPIRE), content);
                }
@@ -8658,6 +8680,36 @@ chk2: ctype = u_get_mimetype(suffix_ptr, &file_data->mime_index);
 
                putDataInCache(getHeaderMimeType(content.data(), 0, ctype, U_TIME_FOR_EXPIRE), content);
                }
+            }
+
+         goto end;
+         }
+      }
+
+   if (cache_file_mask &&
+       UServices::dosMatchWithOR(file_name_ptr, file_name_len, U_STRING_TO_PARAM(*cache_file_mask), 0))
+      {
+      if (file_data->size == 0)
+         {
+         U_SRV_LOG("WARNING: found empty file: %V", pathname->rep);
+         }
+      else if (file->open())
+         {
+         UString content;
+
+         if (isSizeForSendfile(file_data->size)) // NB: for major size we assume is better to use sendfile()
+            {
+            file_data->fd = file->fd;
+
+            putDataInCache(getHeaderMimeType(U_NULLPTR, 0, setMimeIndex(suffix_ptr), U_TIME_FOR_EXPIRE), content);
+            }
+         else
+            {
+            content = file->getContent(true, false, true);
+
+            if (content.empty()) goto error;
+
+            putDataInCache(getHeaderMimeType(content.data(), 0, setMimeIndex(suffix_ptr), U_TIME_FOR_EXPIRE), content);
             }
          }
       }
@@ -8788,11 +8840,7 @@ U_NO_EXPORT bool UHTTP::processFileCache()
    if (isSizeForSendfile(sz) == false) *UClientImage_Base::body = getBodyFromCache().substr(range_start, range_size);
    else
       {
-      U_INTERNAL_ASSERT_DIFFERS(U_http_version, '2')
-
       U_http_flag |= HTTP_IS_SENDFILE;
-
-      U_INTERNAL_DUMP("U_http_sendfile = %b", U_http_sendfile)
 
       UClientImage_Base::setSendfile(file_data->fd, range_start, range_size);
       }
@@ -8852,25 +8900,7 @@ U_NO_EXPORT void UHTTP::checkPathName()
       return;
       }
 
-   if (len1 != len) pathname->rep->_length = len = len1; // NB: pathname can be referenced by file obj...
-
-#ifdef USE_RUBY
-   if (ruby_on_rails == false)
-#endif
-   {
-   if (len == u_cwd_len)
-      {
-      // NB: we have the special case: '/' alias '.'...
-
-      U_INTERNAL_ASSERT_EQUALS(U_http_info.uri[0], '/')
-
-      file->setRoot();
-
-      UClientImage_Base::setRequestNeedProcessing();
-
-      return;
-      }
-   }
+   if (len1 != len) pathname->rep->_length = len1; // NB: pathname can be referenced by file obj...
 
    file->setPath(*pathname);
 
@@ -8892,10 +8922,10 @@ U_NO_EXPORT void UHTTP::checkPathName()
          }
       }
 
-   checkFileInCacheOld(ptr, len);
-
-   if (file_data == U_NULLPTR)
+   if (checkFileInCacheOld(ptr, len) == false)
       {
+      U_INTERNAL_ASSERT_EQUALS(file_data, U_NULLPTR)
+
       U_INTERNAL_DUMP("U_http_is_request_nostat = %b", U_http_is_request_nostat)
 
       if (U_http_is_request_nostat)
@@ -10873,8 +10903,6 @@ next:
       {
       U_http_flag |= HTTP_IS_SENDFILE;
 
-      U_INTERNAL_DUMP("U_http_sendfile = %b", U_http_sendfile)
-
 sendfile:
       UClientImage_Base::setSendfile(file->fd, range_start, range_size);
 
@@ -11104,7 +11132,7 @@ U_EXPORT istream& operator>>(istream& is, UHTTP::UFileCacheData& d)
 
             if (UHTTP::isSizeForSendfile(d.size))
                {
-               // NB: we can't use sendfile() for this...
+               // NB: we can't use sendfile() for this file...
 
                U_SRV_LOG("WARNING: we must change the value of MIN_SIZE_FOR_SENDFILE option (%u=>%u)", UServer_Base::min_size_for_sendfile, d.size+1);
 

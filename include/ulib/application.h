@@ -17,29 +17,33 @@
 #include <ulib/log.h>
 #include <ulib/options.h>
 
-#define U_PRINT_MEM_USAGE
-
-#ifdef DEBUG
-#  define U_MAIN_END(value) return value
-#  ifdef U_STDCPP_ENABLE
-#     undef  U_PRINT_MEM_USAGE
+#ifndef DEBUG
+#  define U_MAIN \
+int U_EXPORT main(int argc, char* argv[], char* env[]) \
+{ \
+   ULib::init(argv, U_NULLPTR); \
+   Application app; \
+   app.run(argc, argv, env); \
+   ::exit(UApplication::exit_value); \
+}
+#else
+#  ifndef U_STDCPP_ENABLE
+#     define U_PRINT_MEM_USAGE
+#  else
 #     define U_PRINT_MEM_USAGE UApplication::printMemUsage();
 #  endif
-#else
-#  define U_MAIN_END(value) ::exit(value)
-#endif
-
-#define U_MAIN \
+#  define U_MAIN \
 int U_EXPORT main(int argc, char* argv[], char* env[]) \
 { \
    U_ULIB_INIT(argv); \
    U_TRACE(5, "::main(%d,%p,%p)", argc, argv, env) \
-   Application application; \
-   application.run(argc, argv, env); \
+   Application().run(argc, argv, env); \
    U_INTERNAL_ASSERT_EQUALS(ULog::first, U_NULLPTR) \
+   U_INTERNAL_ASSERT_EQUALS(USemaphore::first, U_NULLPTR) \
    U_PRINT_MEM_USAGE \
-   U_MAIN_END(UApplication::exit_value); \
+   return UApplication::exit_value; \
 }
+#endif
 
 /*
 #define U_MAIN(_class) \
@@ -50,11 +54,9 @@ int WINAPI WinMain (HINSTANCE hinstance, HINSTANCE hPrevInstance, LPSTR command_
    char** _argv = __argv; \
    while (*_argv++) ++argc; \
    U_TRACE(5, "::main(%d,%p,%p)", argc, __argv, 0) \
-   _class application; \
-   application.run(argc, argv, 0); \
-   U_INTERNAL_ASSERT_EQUALS(ULog::first, U_NULLPTR) \
-   U_PRINT_MEM_USAGE \
-   U_MAIN_END(UApplication::exit_value); \
+   _class app;
+   app.run(argc, argv, 0); \
+   ::exit(UApplication::exit_value); \
 }
 */
 

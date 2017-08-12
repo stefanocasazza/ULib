@@ -14,7 +14,7 @@
 #include <ulib/db/rdb.h>
 #include <ulib/net/server/server.h>
 
-ULock*   URDB::plock;
+sem_t    URDB::nolock;
 ULock*   URDB::preclock;
 uint32_t URDB::nerror;
 
@@ -529,41 +529,28 @@ U_NO_EXPORT void URDB::copy1(URDB* prdb, uint32_t _offset) // entry present on c
 #  endif
 }
 
-void URDB::setShared(sem_t* psem, char* spinlock, bool breclock)
+void URDB::initRecordLock()
 {
-   U_TRACE(0, "URDB::setShared(%p,%p,%b)", psem, spinlock, breclock)
+   U_TRACE_NO_PARAM(0+256, "URDB::initRecordLock()")
 
-   U_CHECK_MEMORY
-
-   if (psem == U_NULLPTR)
-      {
-      char somename[256];
-
-      // For portable use, a shared memory object should be identified by a name of the form /somename; that is,
-      // a null-terminated string of up to NAME_MAX (i.e., 255) characters consisting of an initial slash,
-      // followed by one or more characters, none of which are slashes
-
-      UString basename = UFile::getName();
-
-      (void) u__snprintf(somename, sizeof(somename), U_CONSTANT_TO_PARAM("/%v"), basename.rep);
-
-      psem     = (sem_t*) UFile::shm_open(somename, sizeof(sem_t) + 1);
-      spinlock = (char*)psem + sizeof(sem_t) + 1;
-      }
-
-   _lock.init(psem, spinlock);
-
-   U_cdb_shared(this) = true;
-
-   if (breclock &&
-       preclock == U_NULLPTR)
+   if (preclock == U_NULLPTR)
       {
       U_INTERNAL_ASSERT_POINTER(UServer_Base::ptr_shm_data)
 
-      plock = preclock = new ULock[U_SHM_LOCK_NENTRY];
+      ULock* plock = preclock = new ULock[U_SHM_LOCK_NENTRY];
 
-      for (uint32_t i = 0; i < U_SHM_LOCK_NENTRY; ++i, ++plock) plock->init(U_SHM_LOCK_BASE[i], U_SHM_SPINLOCK_BASE[i]);
+      for (uint32_t i = 0; i < U_SHM_LOCK_NENTRY; ++i, ++plock) plock->init(U_SHM_LOCK_BASE[i]);
       }
+}
+
+void URDB::lockRecord()
+{
+   U_TRACE_NO_PARAM(0, "URDB::lockRecord()")
+
+   U_INTERNAL_ASSERT_POINTER(preclock)
+   U_INTERNAL_ASSERT_MAJOR(UCDB::khash, 0)
+
+   (plock = (preclock+(UCDB::khash & (U_SHM_LOCK_NENTRY-1))))->lock();
 }
 
 bool URDB::compactionJournal()
@@ -655,11 +642,11 @@ bool URDB::compactionJournal()
 
 // Open a Reliable DataBase
 
-bool URDB::open(uint32_t log_size, bool btruncate, bool cdb_brdonly, bool breference)
+bool URDB::open(uint32_t log_size, bool btruncate, bool cdb_brdonly, bool breference, sem_t* psem)
 {
-   U_TRACE(0, "URDB::open(%u,%b,%b,%b)", log_size, btruncate, cdb_brdonly, breference)
+   U_TRACE(0, "URDB::open(%u,%b,%b,%b,%p)", log_size, btruncate, cdb_brdonly, breference, psem)
 
-   bool result = false;
+   U_CHECK_MEMORY
 
    (void) UCDB::open(cdb_brdonly);
 
@@ -670,8 +657,6 @@ bool URDB::open(uint32_t log_size, bool btruncate, bool cdb_brdonly, bool brefer
 
    if (journal.creat(flags))
       {
-      lock();
-
       uint32_t journal_sz     = journal.size(),
                journal_sz_new = (journal_sz >= log_size ? journal_sz : log_size);
 
@@ -703,14 +688,34 @@ bool URDB::open(uint32_t log_size, bool btruncate, bool cdb_brdonly, bool brefer
 
             if (breference) RDB_reference(this)++;
 
-            result = true;
+            if (psem != &nolock)
+               {
+               if (psem == U_NULLPTR)
+                  {
+                  char somename[256];
+
+                  // For portable use, a shared memory object should be identified by a name of the form /somename; that is,
+                  // a null-terminated string of up to NAME_MAX (i.e., 255) characters consisting of an initial slash,
+                  // followed by one or more characters, none of which are slashes
+
+                  UString basename = UFile::getName();
+
+                  (void) u__snprintf(somename, sizeof(somename), U_CONSTANT_TO_PARAM("/%v"), basename.rep);
+
+                  psem = (sem_t*) UFile::shm_open(somename, sizeof(sem_t) + 1);
+                  }
+
+               _lock.init(psem);
+
+               U_cdb_shared(this) = true;
+               }
+
+            U_RETURN(true);
             }
          }
-
-      unlock();
       }
 
-   U_RETURN(result);
+   U_RETURN(false);
 }
 
 void URDB::close(bool breference)
@@ -1393,28 +1398,23 @@ bool URDB::_fetch()
 {
    U_TRACE_NO_PARAM(0, "URDB::_fetch()")
 
-   bool result;
-
    // Search one key/data pair in the cache or in the cdb
 
    if (htLookup(this) == false)
       {
       U_INTERNAL_ASSERT_EQUALS(node, 0)
 
-      result = cdbLookup();
-      }
-   else
-      {
-      if (isDeleted()) result = false;
-      else
-         {
-         result           = true;
-         UCDB::data.dptr  = RDB_node_data(this);
-         UCDB::data.dsize = RDB_node_data_sz(this);
-         }
+      if (cdbLookup()) U_RETURN(true);
+
+      U_RETURN(false);
       }
 
-   U_RETURN(result);
+   if (isDeleted()) U_RETURN(false);
+
+   UCDB::data.dptr  = RDB_node_data(this);
+   UCDB::data.dsize = RDB_node_data_sz(this);
+
+   U_RETURN(true);
 }
 
 // --------------------------------------------------------------------
@@ -1640,19 +1640,6 @@ end:
    U_RETURN(result);
 }
 
-// inlining failed in call to 'URDB::remove(UString const&)': call is unlikely and code size would grow
-
-int URDB::remove(const UString& _key)
-{
-   U_TRACE(0, "URDB::remove(%V)", _key.rep)
-
-   UCDB::setKey(_key);
-
-   int result = remove();
-
-   U_RETURN(result);
-}
-
 // ---------------------------------------------------------------------
 // Substitute a key/value with a new key/value (remove+store)
 // ---------------------------------------------------------------------
@@ -1725,7 +1712,7 @@ int URDB::substitute(UCDB::datum* key2, int _flag)
             }
          else
             {
-            U_INTERNAL_ASSERT_EQUALS(result,0)
+            U_INTERNAL_ASSERT_EQUALS(result, 0)
 
             htAlloc(this);
             }
@@ -1803,19 +1790,6 @@ int URDB::store(const char* _key, uint32_t keylen, const char* _data, uint32_t d
    int result = _store(_flag, htLookup(this));
 
    unlock();
-
-   U_RETURN(result);
-}
-
-int URDB::substitute(const UString& _key, const UString& new_key, const UString& _data, int _flag)
-{
-   U_TRACE(0, "URDB::substitute(%V,%V,%V,%d)", _key.rep, new_key.rep, _data.rep, _flag)
-
-   UCDB::setKey(_key);
-   UCDB::setData(_data);
-   UCDB::datum key2 = { (void*) new_key.data(), new_key.size() };
-
-   int result = substitute(&key2, _flag);
 
    U_RETURN(result);
 }
@@ -2165,9 +2139,7 @@ void URDBObjectHandler<UDataStorage*>::callForAllEntry(iPFprpr function, vPF fun
 
             pthis->setEntry(_key, _data);
 
-            int result = ds_function_to_call((void*)-1, (void*)function_no_lock);
-
-            if (result == 2) // remove
+            if (ds_function_to_call((void*)-1, (void*)function_no_lock) == 2) // remove
                {
                UCDB::setKey(_key);
 

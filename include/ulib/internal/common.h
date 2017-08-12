@@ -109,28 +109,6 @@ extern U_EXPORT void  operator delete[](void*);
 #include <ulib/internal/objectIO.h>
 #include <ulib/internal/memory_pool.h>
 
-enum StringAllocationType {
-   STR_ALLOCATE_SOAP         = 0x00000001,
-   STR_ALLOCATE_IMAP         = 0x00000002,
-   STR_ALLOCATE_SSI          = 0x00000004,
-   STR_ALLOCATE_NOCAT        = 0x00000008,
-   STR_ALLOCATE_HTTP         = 0x00000010,
-   STR_ALLOCATE_QUERY_PARSER = 0x00000020,
-   STR_ALLOCATE_ORM          = 0x00000040,
-   STR_ALLOCATE_HTTP2        = 0x00000080
-};
-
-enum StringAllocationIndex {
-   STR_ALLOCATE_INDEX_SOAP         = 18,
-   STR_ALLOCATE_INDEX_IMAP         = STR_ALLOCATE_INDEX_SOAP+14,
-   STR_ALLOCATE_INDEX_SSI          = STR_ALLOCATE_INDEX_IMAP+4,
-   STR_ALLOCATE_INDEX_NOCAT        = STR_ALLOCATE_INDEX_SSI+2,
-   STR_ALLOCATE_INDEX_HTTP         = STR_ALLOCATE_INDEX_NOCAT+2,
-   STR_ALLOCATE_INDEX_QUERY_PARSER = STR_ALLOCATE_INDEX_HTTP+10,
-   STR_ALLOCATE_INDEX_ORM          = STR_ALLOCATE_INDEX_QUERY_PARSER+5,
-   STR_ALLOCATE_INDEX_HTTP2        = STR_ALLOCATE_INDEX_ORM+15
-};
-
 struct null {}; // Special type to bind a NULL value to column using operator,() - syntactic sugar
 
 using namespace std;
@@ -143,11 +121,11 @@ union uustringrep { ustringrep* p1; UStringRep* p2; };
 
 class U_EXPORT ULib {
 public:
-    ULib(const char* mempool) { init(mempool, U_NULLPTR); }
+    ULib(const char* mempool) { init(U_NULLPTR, mempool); }
    ~ULib()                    { end(); }
 
    static void end();
-   static void init(const char* mempool, char** argv);
+   static void init(char** argv, const char* mempool = U_NULLPTR);
 
 private:
    static uustring uustringnull;
@@ -186,6 +164,6 @@ static_assert( U_SIZE_TO_STACK_INDEX(U_MAX_SIZE_PREALLOCATE) == 9, "should be 9"
 
 // Init library
 
-#define U_ULIB_INIT(argv) U_SET_LOCATION_INFO, ULib::init(U_NULLPTR, argv)
+#define U_ULIB_INIT(argv) U_SET_LOCATION_INFO, ULib::init(argv, U_NULLPTR)
 
 #endif

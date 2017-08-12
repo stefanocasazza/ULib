@@ -17,25 +17,6 @@
 #include <ulib/dynamic/plugin.h>
 #include <ulib/container/vector.h>
 
-typedef enum ParamType {
-      NULL_VALUE =  0, // null value
-   BOOLEAN_VALUE =  1, // bool value
-      CHAR_VALUE =  2, //   signed char value
-     UCHAR_VALUE =  3, // unsigned char value
-     SHORT_VALUE =  4, //   signed short integer value
-    USHORT_VALUE =  5, // unsigned short integer value
-       INT_VALUE =  6, //   signed integer value
-      UINT_VALUE =  7, // unsigned integer value
-      LONG_VALUE =  8, //   signed long value
-     ULONG_VALUE =  9, // unsigned long value
-     LLONG_VALUE = 10, //   signed long long value
-    ULLONG_VALUE = 11, // unsigned long long value
-     FLOAT_VALUE = 12, // float value
-      REAL_VALUE = 13, // double value
-     LREAL_VALUE = 14, // long double value
-    STRING_VALUE = 15, // UTF-8 string value
-} ParamType;
-
 class U_EXPORT USqlStatementBindParam {
 public:
 

@@ -88,13 +88,16 @@ public:
 
       URDB x(UString(p, plen), false);
 
-      if (x.open(10 * 1024 * 1024, false, (op == 6), true)) // bool open(uint32_t log_size, bool btruncate, bool cdb_brdonly, bool breference)
+      bool bshm  = (method[1] == 's'),
+           bopen = (bshm ? x.open(10 * 1024 * 1024, false, (op == 6), true, U_NULLPTR)
+                         : x.open(10 * 1024 * 1024, false, (op == 6), true));
+
+      if (bopen)
          {
          if (bjournal2remove) (void) x.getJournal()._unlink(); // NB: we have only the constant db
          if (x.UFile::st_size == 0) (void) x.UFile::_unlink(); // NB: we have only the journal
 
-         if (method[1] == 's') x.setShared(U_NULLPTR, U_NULLPTR); // POSIX shared memory object (interprocess - can be used by unrelated processes)
-         else                  x.resetReference();
+         if (bshm == false) x.resetReference();
 
          U_INTERNAL_DUMP("optind = %d argv[optind] = %S", optind, argv[optind])
 

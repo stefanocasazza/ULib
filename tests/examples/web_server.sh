@@ -113,7 +113,7 @@ export UMEMPOOL="750,0,123,251,305,53,-6,-26,52"
 
 DIR_CMD="../../examples/userver"
 
-#compile_usp
+prepare_usp
 
 #STRACE=$TRUSS
 start_prg_background userver_tcp -c inp/webserver.cfg

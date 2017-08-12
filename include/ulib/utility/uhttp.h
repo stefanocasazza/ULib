@@ -188,12 +188,10 @@ public:
    static bool enable_caching_by_proxy_servers, skip_check_cookie_ip_address;
    static uint32_t limit_request_body, request_read_timeout, range_start, range_size;
 
-   static int  handlerREAD();
    static bool readRequest();
    static void setPathName();
    static bool handlerCache();
    static int  manageRequest();
-   static int  processRequest();
    static void initDbNotFound();
    static void setStatusDescription();
    static void setEndRequestProcessing();
@@ -312,13 +310,18 @@ public:
       {
       U_TRACE(0, "UHTTP::isSizeForSendfile(%u)", sz)
 
-      U_INTERNAL_DUMP("U_http_version = %C UServer_Base::min_size_for_sendfile = %u", U_http_version, UServer_Base::min_size_for_sendfile)
+      U_INTERNAL_DUMP("U_http_version = %C UServer_Base::min_size_for_sendfile = %u UServer_Base::bssl = %b", U_http_version, UServer_Base::min_size_for_sendfile, UServer_Base::bssl)
 
 #  ifndef U_HTTP2_DISABLE
-      if (U_http_version != '2')
+      if (U_http_version != '2') // NB: within HTTP/2 we can't use sendfile...
 #  endif
       {
-      if (sz >= UServer_Base::min_size_for_sendfile) U_RETURN(true);
+      if (sz >= UServer_Base::min_size_for_sendfile)
+         {
+         U_INTERNAL_ASSERT_EQUALS(UServer_Base::bssl, false) // NB: we can't use sendfile with SSL...
+
+         U_RETURN(true);
+         }
       }
 
       U_RETURN(false);
@@ -1132,7 +1135,8 @@ public:
    static void checkFileForCache();
    static void renewFileDataInCache();
 
-   static void checkFileInCache(const char* path, uint32_t len)
+   static bool   getFileInCache(const char* path, uint32_t len);
+   static bool checkFileInCache(const char* path, uint32_t len)
       {
       U_TRACE(0, "UHTTP::checkFileInCache(%.*S,%u)", len, path, len)
 
@@ -1145,29 +1149,33 @@ public:
          file->st_mtime = file_data->mtime;
 
          U_INTERNAL_DUMP("file_data->fd = %d st_size = %I st_mtime = %ld dir() = %b", file_data->fd, file->st_size, file->st_mtime, file->dir())
+
+         U_RETURN(true);
          }
+
+      U_RETURN(false);
       }
 
    static bool isFileInCache()
       {
       U_TRACE_NO_PARAM(0, "UHTTP::isFileInCache()")
 
-      checkFileInCache(U_FILE_TO_PARAM(*file));
-
-      if (file_data) U_RETURN(true);
-
-      U_RETURN(false);
+      return checkFileInCache(U_FILE_TO_PARAM(*file));
       }
 
    static uint32_t old_path_len;
 
-   static void checkFileInCacheOld(const char* path, uint32_t len)
+   static bool checkFileInCacheOld(const char* path, uint32_t len)
       {
       U_TRACE(0, "UHTTP::checkFileInCacheOld(%.*S,%u)", len, path, len)
 
       U_INTERNAL_DUMP("old_path_len = %u", old_path_len)
 
-      if (old_path_len != len) checkFileInCache(path, (old_path_len = len));
+      if (old_path_len != len) return checkFileInCache(path, (old_path_len = len));
+
+      if (file_data) U_RETURN(true);
+
+      U_RETURN(false);
       }
 
    static UString getDataFromCache(int idx);
@@ -1255,7 +1263,37 @@ private:
       return ctype;
       }
 
+   static int handlerREAD();
+   static int processRequest();
    static void handlerResponse();
+
+#ifndef U_LOG_DISABLE
+   static int handlerREADWithLog()
+      {
+      U_TRACE_NO_PARAM(0, "UHTTP::handlerREADWithLog()")
+
+      (void) strcpy(UServer_Base::mod_name[0], "[http] ");
+
+      U_ClientImage_state = handlerREAD();
+
+      UServer_Base::mod_name[0][0] = '\0';
+
+      U_RETURN(U_ClientImage_state);
+      }
+
+   static int processRequestWithLog()
+      {
+      U_TRACE_NO_PARAM(0, "UHTTP::processRequestWithLog()")
+
+      (void) strcpy(UServer_Base::mod_name[0], "[http] ");
+
+      U_ClientImage_state = processRequest();
+
+      UServer_Base::mod_name[0][0] = '\0';
+
+      U_RETURN(U_ClientImage_state);
+      }
+#endif
 
    static UString getHTMLDirectoryList() U_NO_EXPORT;
 

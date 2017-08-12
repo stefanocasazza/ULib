@@ -79,7 +79,7 @@ next:
       vdriver->push_back(_driver);
       vdriver_name_static->push_back(x);
 
-      U_SRV_LOG("[%s] Link of static driver ok", name);
+      U_SRV_LOG("[orm] Link of static driver %V ok", x.rep);
       }
 #endif
 }
@@ -159,7 +159,7 @@ bool UOrmDriver::loadDriver(const UString& dir, const UString& driver_list)
 
             if (_driver == U_NULLPTR)
                {
-               U_SRV_LOG("WARNING: load of driver %v failed", item.rep);
+               U_SRV_LOG("[orm] WARNING: load of driver %V failed", item.rep);
 
                continue;
                }
@@ -167,7 +167,7 @@ bool UOrmDriver::loadDriver(const UString& dir, const UString& driver_list)
             vdriver->push_back(_driver);
             vdriver_name_static->push_back(item);
 
-            U_SRV_LOG("[%v] Load of driver success", item.rep);
+            U_SRV_LOG("[orm] Load of driver %V success", item.rep);
             }
          }
 

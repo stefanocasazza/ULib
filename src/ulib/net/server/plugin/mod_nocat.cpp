@@ -667,7 +667,7 @@ loop:
 
       if (UCommand::setMsgError(fw->getCommand(), true))
          {
-         U_WARNING("%s%.*s", UServer_Base::mod_name[0], u_buffer_len, u_buffer);
+         U_WARNING("[nocat] %.*s", u_buffer_len, u_buffer);
          }
 
       errno        = 0;
@@ -2793,7 +2793,7 @@ next:       (void) getARPCache();
 
             UEscape::encode(data, printable);
 
-            UServer_Base::log->log(U_CONSTANT_TO_PARAM("%sauth message: %v"), UServer_Base::mod_name[0], printable.rep);
+            UServer_Base::log->log(U_CONSTANT_TO_PARAM("[nocat] auth message: %v"), printable.rep);
             }
 #     endif
 

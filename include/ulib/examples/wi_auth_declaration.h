@@ -3596,9 +3596,11 @@ static void db_open()
 
    bool no_ssl = (UServer_Base::bssl == false);
 
-   bool result1 = db_nodog->open(10 * 1024 * 1024, false, false, no_ssl); // 10M
-   bool result2 =  db_user->open(10 * 1024 * 1024, false, false, no_ssl); // 10M
-   bool result3 =    db_ap->open(10 * 1024 * 1024, false, false, no_ssl); // 10M
+   // POSIX shared memory object: interprocess - can be used by unrelated processes (userver_tcp and userver_ssl)
+
+   bool result1 = db_nodog->open(10 * 1024 * 1024, false, false, no_ssl, U_NULLPTR); // 10M
+   bool result2 =  db_user->open(10 * 1024 * 1024, false, false, no_ssl, U_NULLPTR); // 10M
+   bool result3 =    db_ap->open(10 * 1024 * 1024, false, false, no_ssl, U_NULLPTR); // 10M
 
    num_ap              =
    num_users           =
@@ -3905,12 +3907,6 @@ static void usp_init_wi_auth()
    U_NEW(URDBObjectHandler<UDataStorage*>, db_user,  URDBObjectHandler<UDataStorage*>(U_STRING_FROM_CONSTANT("../db/WiAuthUser.cdb"),               -1,  user_rec));
    U_NEW(URDBObjectHandler<UDataStorage*>, db_nodog, URDBObjectHandler<UDataStorage*>(U_STRING_FROM_CONSTANT("../db/WiAuthAccessPoint.cdb"),        -1, nodog_rec));
    U_NEW(URDBObjectHandler<UDataStorage*>, db_ap,    URDBObjectHandler<UDataStorage*>(U_STRING_FROM_CONSTANT("../db/WiAuthVirtualAccessPoint.cdb"), -1,   vap_rec));
-
-   // POSIX shared memory object: interprocess - can be used by unrelated processes (userver_tcp and userver_ssl)
-
-      db_ap->setShared(U_NULLPTR, U_NULLPTR);
-    db_user->setShared(U_NULLPTR, U_NULLPTR);
-   db_nodog->setShared(U_NULLPTR, U_NULLPTR);
 
    (void) UFile::mkfifo(NAMED_PIPE, PERM_FILE);
 

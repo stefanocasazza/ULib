@@ -49,8 +49,7 @@ U_NO_EXPORT void URingBuffer::checkLocking()
 
    // If there is exactly one reader and one writer, there is no need to lock read or write operations
 
-                           _lock.destroy();
-   if (ptr->readd_cnt > 1) _lock.init(&(ptr->lock_readers), ptr->spinlock_readers);
+   _lock.init(ptr->readd_cnt > 1 ? &(ptr->lock_readers) : U_NULLPTR);
 }
 
 // Returns a read descriptor

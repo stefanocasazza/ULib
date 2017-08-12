@@ -111,8 +111,7 @@ void UClientImage_Base::logRequest()
 
    U_INTERNAL_DUMP("u_printf_string_max_length = %d U_ClientImage_pipeline = %b", u_printf_string_max_length, U_ClientImage_pipeline)
 
-   UServer_Base::log->log(U_CONSTANT_TO_PARAM("%sreceived request (%u bytes) %.*s%.*s%#.*S from %v"),
-                          UServer_Base::mod_name[0], sz,
+   UServer_Base::log->log(U_CONSTANT_TO_PARAM("received request (%u bytes) %.*s%.*s%#.*S from %v"), sz,
                           (U_ClientImage_pipeline ? U_CONSTANT_SIZE("[pipeline] ") : 0), "[pipeline] ",
                           str_partial_len, str_partial,
                           sz, ptr, logbuf->rep);
@@ -266,7 +265,7 @@ void UClientImage_Base::init()
    U_NEW(UString, wbuffer, UString(U_CAPACITY));
    U_NEW(UString, request, UString);
    U_NEW(UString, request_uri, UString);
-   U_NEW(UString, environment, UString);
+   U_NEW(UString, environment, UString(U_CAPACITY));
 
    // NB: these are for ULib Servlet Page (USP) - USP_PRINTF...
 
@@ -391,19 +390,19 @@ bool UClientImage_Base::askForClientCertificate()
    U_RETURN(false);
 }
 
-void UClientImage_Base::setSendfile(int _sfd, uint32_t _start, uint32_t _count)
+void UClientImage_Base::setSendfile(int fd, uint32_t lstart, uint32_t lcount)
 {
-   U_TRACE(0, "UClientImage_Base::setSendfile(%d,%u,%u)", _sfd, _start, _count)
+   U_TRACE(0, "UClientImage_Base::setSendfile(%d,%u,%u)", fd, lstart, lcount)
 
    U_INTERNAL_DUMP("U_http_version = %C", U_http_version)
 
-   U_INTERNAL_ASSERT_MAJOR(_count, 0)
-   U_INTERNAL_ASSERT_DIFFERS(_sfd, -1)
+   U_INTERNAL_ASSERT_DIFFERS(fd, -1)
+   U_INTERNAL_ASSERT_MAJOR(lcount, 0)
    U_INTERNAL_ASSERT_DIFFERS(U_http_version, '2')
 
-   UServer_Base::pClientImage->start = _start;
-   UServer_Base::pClientImage->count = _count;
-   UServer_Base::pClientImage->sfd   = _sfd;
+   UServer_Base::pClientImage->start = lstart;
+   UServer_Base::pClientImage->count = lcount;
+   UServer_Base::pClientImage->sfd   = fd;
 }
 
 // NB: we have default to true to manage pipeline for protocol as RPC...
@@ -485,7 +484,7 @@ void UClientImage_Base::handlerDelete()
       uint32_t len = UServer_Base::setNumConnection(buffer);
       const char* agent = (bsocket_open == false || UServer_Base::isParallelizationParent() ? "Server" : "Client");
 
-      UServer_Base::log->log(U_CONSTANT_TO_PARAM("%s%.6s close connection from %v, %.*s clients still connected"), UServer_Base::mod_name[0], agent, logbuf->rep, len, buffer);
+      UServer_Base::log->log(U_CONSTANT_TO_PARAM("%.6s close connection from %v, %.*s clients still connected"), agent, logbuf->rep, len, buffer);
 
 #  ifdef DEBUG
       int fd_logbuf = ::strtoul(logbuf->data(), U_NULLPTR, 10);
@@ -1606,7 +1605,7 @@ bool UClientImage_Base::writeResponse()
 #  endif
 
 #  ifndef U_LOG_DISABLE
-      if (logbuf) UServer_Base::log->log(iov_vec+idx, UServer_Base::mod_name[0], "response", ncount, "[pipeline] ", msg_len, U_CONSTANT_TO_PARAM(" to %v"), logbuf->rep);
+      if (logbuf) UServer_Base::log->log(iov_vec+idx, "response", ncount, "[pipeline] ", msg_len, U_CONSTANT_TO_PARAM(" to %v"), logbuf->rep);
 #  endif
       }
 

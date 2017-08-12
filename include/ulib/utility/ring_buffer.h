@@ -33,7 +33,6 @@ public:
       fd_set readers; // bitmask
       int pwrite, readd_cnt;
       sem_t lock_readers;
-      char spinlock_readers[1];
       int pread[FD_SETSIZE];
    } rbuf_data;
 

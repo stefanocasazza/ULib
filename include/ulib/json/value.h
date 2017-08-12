@@ -45,23 +45,18 @@
  *                      payload
  *
  * 48 bits payload [enough](http://en.wikipedia.org/wiki/X86-64#Virtual_address_space_details) for store any pointer on x64.
- * double use zero tag, so infinity and nan are accessible.
+ * Double use zero tag, so infinity and nan are accessible.
  *
  * The type of the held value is represented by a #ValueType and can be obtained using method getTag().
- * Values of an #OBJECT_VALUE or #ARRAY_VALUE can be accessed using operator[]() methods.
- * It is possible to iterate over the list of a #OBJECT_VALUE values using the getMemberNames() method
+ * Values of an #U_OBJECT_VALUE or #U_ARRAY_VALUE can be accessed using operator[]() methods.
+ * It is possible to iterate over the list of a #U_OBJECT_VALUE values using the getMemberNames() method
  */
-
-#define U_JSON_VALUE_TAG_MASK     0xF
-#define U_JSON_VALUE_TAG_SHIFT    47
-#define U_JSON_VALUE_NAN_MASK     0x7FF8000000000000ULL
-#define U_JSON_VALUE_PAYLOAD_MASK 0x00007FFFFFFFFFFFULL
-
-#define U_JFIND(json,str,result) UValue::jfind(json,#str,U_CONSTANT_SIZE(#str),result)
 
 #ifndef U_JSON_PARSE_STACK_SIZE
 #define U_JSON_PARSE_STACK_SIZE 256
 #endif
+
+#define U_JFIND(json,str,result) UValue::jfind(json,#str,U_CONSTANT_SIZE(#str),result)
 
 class UTokenizer;
 class UValueIter;
@@ -81,19 +76,6 @@ public:
       uint64_t ival;
         double real;
    };
-
-   typedef enum ValueType {
-      REAL_VALUE = 0, // double value
-       INT_VALUE = 1, //   signed integer value
-      UINT_VALUE = 2, // unsigned integer value
-      TRUE_VALUE = 3, //   bool value
-     FALSE_VALUE = 4, //   bool value
-    STRING_VALUE = 5, // string value
-       UTF_VALUE = 6, // string value (need to be emitted)
-     ARRAY_VALUE = 7, //  array value (ordered list)
-    OBJECT_VALUE = 8, // object value (collection of name/value pairs)
-      NULL_VALUE = 9  //   null value
-   } ValueType;
 
    static int jsonParseFlags;
 
@@ -124,7 +106,7 @@ public:
       pkey.ival = 0ULL;
 #  endif
 
-      value.ival = getJsonValue(tag, payload);
+      value.ival = u_getValue(tag, payload);
 
       U_INTERNAL_DUMP("this = %p", this)
       }
@@ -137,13 +119,13 @@ public:
 
       U_NEW(UValue, node, UValue((UValue*)U_NULLPTR));
 
-      value.ival = getJsonValue(OBJECT_VALUE, node);
+      value.ival = u_getValue(U_OBJECT_VALUE, node);
 
       key.hold();
       val.hold();
 
-      node->pkey.ival  = getJsonValue(STRING_VALUE, key.rep);
-      node->value.ival = getJsonValue(STRING_VALUE, val.rep);
+      node->pkey.ival  = u_getValue(U_STRING_VALUE, key.rep);
+      node->value.ival = u_getValue(U_STRING_VALUE, val.rep);
 
       U_INTERNAL_DUMP("this = %p", this)
       }
@@ -231,17 +213,6 @@ public:
 
    void clear();
 
-   static int getTag(uint64_t val)
-      {
-      U_TRACE(0, "UValue::getTag(0x%x)", val)
-
-      if ((int64_t)val <= (int64_t)U_JSON_VALUE_NAN_MASK) U_RETURN(REAL_VALUE);
-      
-      int type = (val >> U_JSON_VALUE_TAG_SHIFT) & U_JSON_VALUE_TAG_MASK;
-
-      U_RETURN(type);
-      }
-
    bool empty() const
       {
       U_TRACE_NO_PARAM(0, "UValue::empty()")
@@ -255,7 +226,7 @@ public:
       {
       U_TRACE_NO_PARAM(0, "UValue::isNull()")
 
-      if (getTag() == NULL_VALUE) U_RETURN(true);
+      if (getTag() == U_NULL_VALUE) U_RETURN(true);
 
       U_RETURN(false);
       }
@@ -266,8 +237,8 @@ public:
 
       int type = getTag();
 
-      if (type ==  TRUE_VALUE ||
-          type == FALSE_VALUE)
+      if (type ==  U_TRUE_VALUE ||
+          type == U_FALSE_VALUE)
          {
          U_RETURN(true);
          }
@@ -279,7 +250,7 @@ public:
       {
       U_TRACE_NO_PARAM(0, "UValue::isInt()")
 
-      if (getTag() == INT_VALUE) U_RETURN(true);
+      if (getTag() == U_INT_VALUE) U_RETURN(true);
 
       U_RETURN(false);
       }
@@ -288,7 +259,7 @@ public:
       {
       U_TRACE_NO_PARAM(0, "UValue::isUInt()")
 
-      if (getTag() == UINT_VALUE) U_RETURN(true);
+      if (getTag() == U_UINT_VALUE) U_RETURN(true);
 
       U_RETURN(false);
       }
@@ -297,7 +268,7 @@ public:
       {
       U_TRACE_NO_PARAM(0, "UValue::isDouble()")
 
-      if (value.ival <= (int64_t)U_JSON_VALUE_NAN_MASK) U_RETURN(true);
+      if (value.ival <= (int64_t)U_VALUE_NAN_MASK) U_RETURN(true);
 
       U_RETURN(false);
       }
@@ -306,7 +277,7 @@ public:
       {
       U_TRACE_NO_PARAM(0, "UValue::isNumeric()")
 
-      if (getTag() <= UINT_VALUE) U_RETURN(true);
+      if (getTag() <= U_UINT_VALUE) U_RETURN(true);
 
       U_RETURN(false);
       }
@@ -315,7 +286,7 @@ public:
       {
       U_TRACE_NO_PARAM(0, "UValue::isString()")
 
-      if (getTag() == STRING_VALUE) U_RETURN(true);
+      if (getTag() == U_STRING_VALUE) U_RETURN(true);
 
       U_RETURN(false);
       }
@@ -324,7 +295,7 @@ public:
       {
       U_TRACE_NO_PARAM(0, "UValue::isArray()")
 
-      if (getTag() == ARRAY_VALUE) U_RETURN(true);
+      if (getTag() == U_ARRAY_VALUE) U_RETURN(true);
 
       U_RETURN(false);
       }
@@ -333,7 +304,7 @@ public:
       {
       U_TRACE_NO_PARAM(0, "UValue::isObject()")
 
-      if (getTag() == OBJECT_VALUE) U_RETURN(true);
+      if (getTag() == U_OBJECT_VALUE) U_RETURN(true);
 
       U_RETURN(false);
       }
@@ -346,8 +317,8 @@ public:
 
    UString getString() { return getString(value.ival); }
 
-   int    getTag() const    { return getTag(value.ival); }
-   bool   getBool() const   { return (getTag() == TRUE_VALUE); }
+   int    getTag() const    { return u_getTag(value.ival); }
+   bool   getBool() const   { return (getTag() == U_TRUE_VALUE); }
    double getDouble() const { return value.real; }
 
    bool isStringUTF() const     { return isStringUTF(value.ival); }
@@ -377,8 +348,8 @@ public:
    /**
     * \brief Return a list of the member names.
     *
-    * \pre getTag() is OBJECT_VALUE
-    * \post if getTag() was NULL_VALUE, it remains NULL_VALUE 
+    * \pre getTag() is U_OBJECT_VALUE
+    * \post if getTag() was U_NULL_VALUE, it remains U_NULL_VALUE 
     */
 
    uint32_t getMemberNames(UVector<UString>& members) const;
@@ -643,13 +614,13 @@ protected:
 
          U_NEW(UStringRep, rep, UStringRep(ptr, sz));
 
-         o.ival = getJsonValue(STRING_VALUE, rep);
+         o.ival = u_getValue(U_STRING_VALUE, rep);
          }
       else
          {
          UStringRep::string_rep_null->hold();
 
-         o.ival = getJsonValue(STRING_VALUE, UStringRep::string_rep_null);
+         o.ival = u_getValue(U_STRING_VALUE, UStringRep::string_rep_null);
          }
 
       nextParser();
@@ -734,24 +705,15 @@ protected:
       {
       U_TRACE_NO_PARAM(0, "UValue::emitKey()")
 
-      int type = getTag(pkey.ival);
+      int type = u_getTag(pkey.ival);
 
-      if (type == STRING_VALUE) emitString((UStringRep*)getPayload(pkey.ival));
+      if (type == U_STRING_VALUE) emitString((UStringRep*)u_getPayload(pkey.ival));
       else
          {
-         U_INTERNAL_ASSERT_EQUALS(type, UTF_VALUE)
+         U_INTERNAL_ASSERT_EQUALS(type, U_UTF_VALUE)
 
-         emitUTF((UStringRep*)getPayload(pkey.ival));
+         emitUTF((UStringRep*)u_getPayload(pkey.ival));
          }
-      }
-
-   void setTag(int tag)
-      {
-      U_TRACE(0, "UValue::setTag(%d)", tag)
-
-   // U_ASSERT_EQUALS(isArrayOrObject(), false)
-
-      value.ival = getJsonValue(tag, (void*)getPayload());
       }
 
    void stringify() const;
@@ -759,29 +721,22 @@ protected:
 
    UValue* toNode() const { return toNode(value.ival); }
 
-   uint64_t getPayload() const { return getPayload(value.ival); }
+   uint64_t getPayload() const { return u_getPayload(value.ival); }
 
    static UValue* toNode(uint64_t val)
       {
       U_TRACE(0, "UValue::toNode(0x%x)", val)
 
-      UValue* ptr = (UValue*)getPayload(val);
+      UValue* ptr = (UValue*)u_getPayload(val);
 
       U_RETURN_POINTER(ptr, UValue);
-      }
-
-   static uint64_t getPayload(uint64_t val)
-      {
-      U_TRACE(0, "UValue::getPayload(0x%x)", val)
-
-      return ((uint64_t)(val & U_JSON_VALUE_PAYLOAD_MASK));
       }
 
    static bool isStringUTF(uint64_t value)
       {
       U_TRACE(0+256, "UValue::isStringUTF(0x%x)", value)
 
-      if (getTag(value) == UTF_VALUE) U_RETURN(true);
+      if (u_getTag(value) == U_UTF_VALUE) U_RETURN(true);
 
       U_RETURN(false);
       }
@@ -790,10 +745,10 @@ protected:
       {
       U_TRACE(0+256, "UValue::isStringOrUTF(0x%x)", value)
 
-      int type = getTag(value);
+      int type = u_getTag(value);
 
-      if (type == STRING_VALUE ||
-          type ==    UTF_VALUE)
+      if (type == U_STRING_VALUE ||
+          type ==    U_UTF_VALUE)
          {
          U_RETURN(true);
          }
@@ -805,26 +760,15 @@ protected:
       {
       U_TRACE(0+256, "UValue::isArrayOrObject(0x%x)", value)
 
-      int type = getTag(value);
+      int type = u_getTag(value);
 
-      if (type ==  ARRAY_VALUE ||
-          type == OBJECT_VALUE)
+      if (type ==  U_ARRAY_VALUE ||
+          type == U_OBJECT_VALUE)
          {
          U_RETURN(true);
          }
 
       U_RETURN(false);
-      }
-
-   static uint64_t getJsonValue(int tag, void* payload)
-      {
-      U_TRACE(0, "UValue::getJsonValue(%d,%p)", tag, payload)
-
-      U_INTERNAL_ASSERT(payload <= (void*)U_JSON_VALUE_PAYLOAD_MASK)
-
-      return                   U_JSON_VALUE_NAN_MASK   |
-             ((uint64_t)tag << U_JSON_VALUE_TAG_SHIFT) |
-              (uint64_t)payload;
       }
 
    static uint64_t listToValue(ValueType tag, UValue* tail)
@@ -836,10 +780,10 @@ protected:
          UValue* head = tail->next;
                         tail->next = U_NULLPTR;
 
-         return getJsonValue(tag, head);
+         return u_getValue(tag, head);
          }
 
-      return getJsonValue(tag, U_NULLPTR);
+      return u_getValue(tag, U_NULLPTR);
       }
 
    static UValue* insertAfter(UValue* tail, uint64_t value)
@@ -869,7 +813,7 @@ protected:
 
       rep->hold();
 
-      value.ival = getJsonValue(STRING_VALUE, rep);
+      value.ival = u_getValue(U_STRING_VALUE, rep);
       }
 
    static UString getString(uint64_t value);
@@ -1056,7 +1000,7 @@ public:
       U_INTERNAL_ASSERT(UValue::sd[UValue::pos].tags)
       U_INTERNAL_ASSERT_EQUALS(UValue::sd[UValue::pos].keys, 0)
 
-      UValue::o.ival = UValue::listToValue(UValue::OBJECT_VALUE, UValue::sd[UValue::pos--].tails);
+      UValue::o.ival = UValue::listToValue(U_OBJECT_VALUE, UValue::sd[UValue::pos--].tails);
 
       if (UValue::pos != -1) UValue::nextParser();
       }
@@ -1138,7 +1082,7 @@ public:
       {
       U_TRACE_NO_PARAM(0, "UJsonTypeHandler<null>::toJSON()")
 
-      UValue::o.ival = UValue::getJsonValue(UValue::NULL_VALUE, U_NULLPTR);
+      UValue::o.ival = u_getValue(U_NULL_VALUE, U_NULLPTR);
 
       UValue::nextParser();
       }
@@ -1175,7 +1119,7 @@ public:
       {
       U_TRACE_NO_PARAM(0, "UJsonTypeHandler<bool>::toJSON()")
 
-      UValue::o.ival = UValue::getJsonValue(*(bool*)pval ? UValue::TRUE_VALUE : UValue::FALSE_VALUE, U_NULLPTR);
+      UValue::o.ival = u_getValue(*(bool*)pval ? U_TRUE_VALUE : U_FALSE_VALUE, U_NULLPTR);
 
       UValue::nextParser();
       }
@@ -1212,7 +1156,7 @@ public:
       {
       U_TRACE_NO_PARAM(0, "UJsonTypeHandler<char>::toJSON()")
 
-      UValue::o.ival = UValue::getJsonValue(UValue::UINT_VALUE, (void*)(*(char*)pval & 0x00000000FFFFFFFFULL));
+      UValue::o.ival = u_getValue(U_UINT_VALUE, (void*)(*(char*)pval & 0x00000000FFFFFFFFULL));
 
       UValue::nextParser();
       }
@@ -1249,7 +1193,7 @@ public:
       {
       U_TRACE_NO_PARAM(0, "UJsonTypeHandler<unsigned char>::toJSON()")
 
-      UValue::o.ival = UValue::getJsonValue(UValue::UINT_VALUE, (void*)(*(unsigned char*)pval & 0x00000000FFFFFFFFULL));
+      UValue::o.ival = u_getValue(U_UINT_VALUE, (void*)(*(unsigned char*)pval & 0x00000000FFFFFFFFULL));
 
       UValue::nextParser();
       }
@@ -1286,7 +1230,7 @@ public:
       {
       U_TRACE_NO_PARAM(0, "UJsonTypeHandler<short>::toJSON()")
 
-      UValue::o.ival = UValue::getJsonValue(UValue::INT_VALUE, (void*)(*(short*)pval & 0x00000000FFFFFFFFULL));
+      UValue::o.ival = u_getValue(U_INT_VALUE, (void*)(*(short*)pval & 0x00000000FFFFFFFFULL));
 
       UValue::nextParser();
       }
@@ -1323,7 +1267,7 @@ public:
       {
       U_TRACE_NO_PARAM(0, "UJsonTypeHandler<unsigned short>::toJSON()")
 
-      UValue::o.ival = UValue::getJsonValue(UValue::UINT_VALUE, (void*)(*(unsigned short*)pval & 0x00000000FFFFFFFFULL));
+      UValue::o.ival = u_getValue(U_UINT_VALUE, (void*)(*(unsigned short*)pval & 0x00000000FFFFFFFFULL));
 
       UValue::nextParser();
       }
@@ -1360,7 +1304,7 @@ public:
       {
       U_TRACE_NO_PARAM(0, "UJsonTypeHandler<int>::toJSON()")
 
-      UValue::o.ival = UValue::getJsonValue(UValue::INT_VALUE, (void*)(*(int*)pval & 0x00000000FFFFFFFFULL));
+      UValue::o.ival = u_getValue(U_INT_VALUE, (void*)(*(int*)pval & 0x00000000FFFFFFFFULL));
 
       UValue::nextParser();
       }
@@ -1397,7 +1341,7 @@ public:
       {
       U_TRACE_NO_PARAM(0, "UJsonTypeHandler<unsigned int>::toJSON()")
 
-      UValue::o.ival = UValue::getJsonValue(UValue::UINT_VALUE, (void*)(*(unsigned int*)pval & 0x00000000FFFFFFFFULL));
+      UValue::o.ival = u_getValue(U_UINT_VALUE, (void*)(*(unsigned int*)pval & 0x00000000FFFFFFFFULL));
 
       UValue::nextParser();
       }
@@ -1443,13 +1387,13 @@ public:
       U_INTERNAL_DUMP("pval = %ld", *(long*)pval)
 
 #  if SIZEOF_LONG == 4
-      int type = UValue::INT_VALUE; 
+      int type = U_INT_VALUE; 
 #  else
-      int type = (l > UINT_MAX || l < INT_MIN ? UValue::REAL_VALUE :
-                  l > 0                       ? UValue::UINT_VALUE : UValue::INT_VALUE);
+      int type = (l > UINT_MAX || l < INT_MIN ? U_REAL_VALUE :
+                  l > 0                       ? U_UINT_VALUE : U_INT_VALUE);
 #  endif
 
-      UValue::o.ival = UValue::getJsonValue(type, (void*)(l & 0x00000000FFFFFFFFULL));
+      UValue::o.ival = u_getValue(type, (void*)(l & 0x00000000FFFFFFFFULL));
 
       UValue::nextParser();
       }
@@ -1495,12 +1439,12 @@ public:
       unsigned long l = *(unsigned long*)pval;
 
 #  if SIZEOF_LONG == 4
-      int type = UValue::UINT_VALUE; 
+      int type = U_UINT_VALUE; 
 #  else
-      int type = (l > UINT_MAX ? UValue::REAL_VALUE : UValue::UINT_VALUE);
+      int type = (l > UINT_MAX ? U_REAL_VALUE : U_UINT_VALUE);
 #  endif
 
-      UValue::o.ival = UValue::getJsonValue(type, (void*)(l & 0x00000000FFFFFFFFULL));
+      UValue::o.ival = u_getValue(type, (void*)(l & 0x00000000FFFFFFFFULL));
 
       UValue::nextParser();
       }
@@ -1539,10 +1483,10 @@ public:
 
       long long l = *(long long*)pval;
 
-      int type = (l > UINT_MAX || l < INT_MIN ? UValue::REAL_VALUE :
-                  l > 0                       ? UValue::UINT_VALUE : UValue::INT_VALUE);
+      int type = (l > UINT_MAX || l < INT_MIN ? U_REAL_VALUE :
+                  l > 0                       ? U_UINT_VALUE : U_INT_VALUE);
 
-      UValue::o.ival = UValue::getJsonValue(type, (void*)(l & 0x00000000FFFFFFFFULL));
+      UValue::o.ival = u_getValue(type, (void*)(l & 0x00000000FFFFFFFFULL));
 
       UValue::nextParser();
       }
@@ -1581,7 +1525,7 @@ public:
 
       unsigned long long l = *(unsigned long long*)pval;
 
-      UValue::o.ival = UValue::getJsonValue(l > UINT_MAX ? UValue::REAL_VALUE : UValue::UINT_VALUE, (void*)(l & 0x00000000FFFFFFFFULL));
+      UValue::o.ival = u_getValue(l > UINT_MAX ? U_REAL_VALUE : U_UINT_VALUE, (void*)(l & 0x00000000FFFFFFFFULL));
 
       UValue::nextParser();
       }
@@ -1618,7 +1562,7 @@ public:
       {
       U_TRACE_NO_PARAM(0, "UJsonTypeHandler<float>::toJSON()")
 
-      UValue::o.ival = UValue::getJsonValue(UValue::REAL_VALUE, (void*)lrintf(*(float*)pval));
+      UValue::o.ival = u_getValue(U_REAL_VALUE, (void*)lrintf(*(float*)pval));
 
       UValue::nextParser();
       }
@@ -1655,7 +1599,7 @@ public:
       {
       U_TRACE_NO_PARAM(0, "UJsonTypeHandler<double>::toJSON()")
 
-      UValue::o.ival = UValue::getJsonValue(UValue::REAL_VALUE, (void*)lrint(*(double*)pval));
+      UValue::o.ival = u_getValue(U_REAL_VALUE, (void*)lrint(*(double*)pval));
 
       UValue::nextParser();
       }
@@ -1693,9 +1637,9 @@ public:
       U_TRACE_NO_PARAM(0, "UJsonTypeHandler<long double>::toJSON()")
 
 #  ifdef HAVE_LRINTL
-      UValue::o.ival = UValue::getJsonValue(UValue::REAL_VALUE, (void*)lrintl(*(long double*)pval));
+      UValue::o.ival = u_getValue(U_REAL_VALUE, (void*)lrintl(*(long double*)pval));
 #  else
-      UValue::o.ival = UValue::getJsonValue(UValue::REAL_VALUE, (void*)lrint(*(      double*)pval));
+      UValue::o.ival = u_getValue(U_REAL_VALUE, (void*)lrint(*(       double*)pval));
 #  endif
 
       UValue::nextParser();
@@ -1844,7 +1788,7 @@ public:
 
       uvector* pvec = (uvector*)pval;
 
-      if (pvec->_length == 0) UValue::o.ival = UValue::listToValue(UValue::ARRAY_VALUE, U_NULLPTR);
+      if (pvec->_length == 0) UValue::o.ival = UValue::listToValue(U_ARRAY_VALUE, U_NULLPTR);
       else
          {
          const void** ptr = pvec->vec;
@@ -1867,7 +1811,7 @@ public:
          U_INTERNAL_ASSERT_DIFFERS(UValue::pos, -1)
          U_INTERNAL_ASSERT_EQUALS(UValue::sd[UValue::pos].tags, false)
 
-         UValue::o.ival = UValue::listToValue(UValue::ARRAY_VALUE, UValue::sd[UValue::pos--].tails);
+         UValue::o.ival = UValue::listToValue(U_ARRAY_VALUE, UValue::sd[UValue::pos--].tails);
          }
 
       if (UValue::pos != -1) UValue::nextParser();
@@ -1945,7 +1889,7 @@ public:
 
       uvectorbase* pvec = (uvectorbase*)pval;
 
-      if (pvec->_length == 0) UValue::o.ival = UValue::listToValue(UValue::ARRAY_VALUE, U_NULLPTR);
+      if (pvec->_length == 0) UValue::o.ival = UValue::listToValue(U_ARRAY_VALUE, U_NULLPTR);
       else
          {
          const void** ptr = pvec->vec;
@@ -1968,7 +1912,7 @@ public:
          U_INTERNAL_ASSERT_DIFFERS(UValue::pos, -1)
          U_INTERNAL_ASSERT_EQUALS(UValue::sd[UValue::pos].tags, false)
 
-         UValue::o.ival = UValue::listToValue(UValue::ARRAY_VALUE, UValue::sd[UValue::pos--].tails);
+         UValue::o.ival = UValue::listToValue(U_ARRAY_VALUE, UValue::sd[UValue::pos--].tails);
          }
 
       if (UValue::pos != -1) UValue::nextParser();
@@ -2037,7 +1981,7 @@ public:
 
       uhashmap* pmap = (uhashmap*)pval;
 
-      if (pmap->first() == U_NULLPTR) UValue::o.ival = UValue::listToValue(UValue::OBJECT_VALUE, U_NULLPTR);
+      if (pmap->first() == U_NULLPTR) UValue::o.ival = UValue::listToValue(U_OBJECT_VALUE, U_NULLPTR);
       else
          {
          ++UValue::pos;
@@ -2058,7 +2002,7 @@ public:
          U_INTERNAL_ASSERT(UValue::sd[UValue::pos].tags)
          U_INTERNAL_ASSERT_EQUALS(UValue::sd[UValue::pos].keys, 0)
 
-         UValue::o.ival = UValue::listToValue(UValue::OBJECT_VALUE, UValue::sd[UValue::pos--].tails);
+         UValue::o.ival = UValue::listToValue(U_OBJECT_VALUE, UValue::sd[UValue::pos--].tails);
          }
 
       if (UValue::pos != -1) UValue::nextParser();
@@ -2082,7 +2026,7 @@ public:
 
          UJsonTypeHandler<T>(*pitem).fromJSON(*pelement);
 
-         UStringRep* rep = (UStringRep*)UValue::getPayload(pelement->pkey.ival);
+         UStringRep* rep = (UStringRep*)u_getPayload(pelement->pkey.ival);
 
          U_INTERNAL_DUMP("pelement->pkey(%p) = %V", rep, rep)
 
@@ -2133,7 +2077,7 @@ public:
 
       UHashMap<UString>* pmap = (UHashMap<UString>*)pval;
 
-      if (pmap->first() == U_NULLPTR) UValue::o.ival = UValue::listToValue(UValue::OBJECT_VALUE, U_NULLPTR);
+      if (pmap->first() == U_NULLPTR) UValue::o.ival = UValue::listToValue(U_OBJECT_VALUE, U_NULLPTR);
       else
          {
          ++UValue::pos;
@@ -2159,7 +2103,7 @@ public:
          U_INTERNAL_ASSERT(UValue::sd[UValue::pos].tags)
          U_INTERNAL_ASSERT_EQUALS(UValue::sd[UValue::pos].keys, 0)
 
-         UValue::o.ival = UValue::listToValue(UValue::OBJECT_VALUE, UValue::sd[UValue::pos--].tails);
+         UValue::o.ival = UValue::listToValue(U_OBJECT_VALUE, UValue::sd[UValue::pos--].tails);
          }
 
       if (UValue::pos != -1) UValue::nextParser();
@@ -2181,7 +2125,7 @@ public:
 
          UJsonTypeHandler<UString>(item).fromJSON(*pelement);
 
-         UStringRep* rep = (UStringRep*)UValue::getPayload(pelement->pkey.ival);
+         UStringRep* rep = (UStringRep*)u_getPayload(pelement->pkey.ival);
 
          U_INTERNAL_DUMP("pelement->pkey(%p) = %V", rep, rep)
 
@@ -2241,7 +2185,7 @@ public:
 
       uint32_t n = pvec->size();
 
-      if (n == 0) UValue::o.ival = UValue::listToValue(UValue::ARRAY_VALUE, U_NULLPTR);
+      if (n == 0) UValue::o.ival = UValue::listToValue(U_ARRAY_VALUE, U_NULLPTR);
       else
          {
          ++UValue::pos;
@@ -2261,7 +2205,7 @@ public:
          U_INTERNAL_ASSERT_DIFFERS(UValue::pos, -1)
          U_INTERNAL_ASSERT_EQUALS(UValue::sd[UValue::pos].tags, false)
 
-         UValue::o.ival = UValue::listToValue(UValue::ARRAY_VALUE, UValue::sd[UValue::pos--].tails);
+         UValue::o.ival = UValue::listToValue(U_ARRAY_VALUE, UValue::sd[UValue::pos--].tails);
          }
 
       if (UValue::pos != -1) UValue::nextParser();

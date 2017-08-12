@@ -185,7 +185,7 @@ void UClient_Base::loadConfigParam()
    // PID_FILE      write pid on file indicated
    // RES_TIMEOUT   timeout for response from server
    //
-   // LOG_FILE      locations for file log
+   // LOG_FILE        locations for file log
    // LOG_FILE_SZ   memory size for file log
    //
    // CERT_FILE     certificate of client
@@ -280,7 +280,7 @@ bool UClient_Base::connect()
    response.snprintf(U_CONSTANT_TO_PARAM("Sorry, couldn't connect to server %v%R"), host_port.rep, 0); // NB: the last argument (0) is necessary...
 
 #ifndef U_LOG_DISABLE
-   if (log) log->log(U_CONSTANT_TO_PARAM("%s%v"), log_shared_with_server ? UServer_Base::mod_name[0] : "", response.rep);
+   if (log) log->log(U_CONSTANT_TO_PARAM("%v"), response.rep);
 #endif
 
    U_RETURN(false);
@@ -424,15 +424,11 @@ bool UClient_Base::sendRequest(bool bread_response)
 
    for (int i = 0; i < iovcnt; ++i) ncount += iov[i].iov_len;
 
-#ifndef U_LOG_DISABLE
-   const char* name = (log_shared_with_server ? UServer_Base::mod_name[0] : "");
-#endif
-
 resend:
    if (connect())
       {
 #  ifndef U_LOG_DISABLE
-      if (log) log->log(iov,  name, "request", ncount, "", 0, U_CONSTANT_TO_PARAM(" to %v"), host_port.rep);
+      if (log) log->log(iov, "request", ncount, "", 0, U_CONSTANT_TO_PARAM(" to %v"),  host_port.rep);
 #  endif
 
       ok = (USocketExt::writev(socket, iov, iovcnt, ncount, timeoutMS, 1) == ncount);
@@ -444,7 +440,7 @@ resend:
          if (++counter <= 2) goto resend;
 
 #     ifndef U_LOG_DISABLE
-         if (log) log->log(U_CONSTANT_TO_PARAM("%serror on sending data to %V%R"), name, host_port.rep, 0); // NB: the last argument (0) is necessary...
+         if (log) log->log(U_CONSTANT_TO_PARAM("error on sending data to %V%R"), host_port.rep, 0); // NB: the last argument (0) is necessary...
 #     endif
 
          goto end;
@@ -466,7 +462,7 @@ resend:
             }
 
 #     ifndef U_LOG_DISABLE
-         if (log) log->log(U_CONSTANT_TO_PARAM("%serror on reading data from %V%R"), name, host_port.rep, 0); // NB: the last argument (0) is necessary...
+         if (log) log->log(U_CONSTANT_TO_PARAM("error on reading data from %V%R"), host_port.rep, 0); // NB: the last argument (0) is necessary...
 #     endif
 
          goto end;
@@ -476,7 +472,7 @@ resend:
       if (log &&
           response)
          {
-         log->logResponse(response, name, U_CONSTANT_TO_PARAM(" from %v"), host_port.rep);
+         log->logResponse(response, U_CONSTANT_TO_PARAM(" from %v"), host_port.rep);
          }
 #  endif
 
@@ -542,7 +538,7 @@ bool UClient_Base::readResponse(uint32_t count)
       if (log &&
           response)
          {
-         log->logResponse(response, (log_shared_with_server ? UServer_Base::mod_name[0] : ""), U_CONSTANT_TO_PARAM(" from %V"), host_port.rep);
+         log->logResponse(response, U_CONSTANT_TO_PARAM(" from %V"), host_port.rep);
          }
 #  endif
 
@@ -570,7 +566,7 @@ bool UClient_Base::readHTTPResponse()
          if (log &&
              response)
             {
-            log->logResponse(response, (log_shared_with_server ? UServer_Base::mod_name[0] : ""), U_CONSTANT_TO_PARAM(" from %V"), host_port.rep);
+            log->logResponse(response, U_CONSTANT_TO_PARAM(" from %V"), host_port.rep);
             }
 #     endif
          }

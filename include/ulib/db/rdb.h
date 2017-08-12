@@ -74,6 +74,7 @@ public:
       {
       U_TRACE_REGISTER_OBJECT(0, URDB, "%d", _ignore_case)
 
+      plock = U_NULLPTR;
       pnode = U_NULLPTR;
        node = 0;
 
@@ -85,6 +86,7 @@ public:
       {
       U_TRACE_REGISTER_OBJECT(0, URDB, "%V,%d", pathdb.rep, _ignore_case)
 
+      plock = U_NULLPTR;
       pnode = U_NULLPTR;
        node = 0;
 
@@ -109,14 +111,14 @@ public:
 
    // Open a Reliable DataBase
 
-   bool open(                       uint32_t log_size = 1024 * 1024, bool btruncate = false, bool cdb_brdonly = true, bool breference = true);
-   bool open(const UString& pathdb, uint32_t log_size = 1024 * 1024, bool btruncate = false, bool cdb_brdonly = true, bool breference = true)
+   bool open(                       uint32_t log_size = 1024 * 1024, bool btruncate = false, bool cdb_brdonly = true, bool breference = true, sem_t* psem = &nolock);
+   bool open(const UString& pathdb, uint32_t log_size = 1024 * 1024, bool btruncate = false, bool cdb_brdonly = true, bool breference = true, sem_t* psem = &nolock)
       {
       U_TRACE(0, "URDB::open(%V,%u,%b,%b,%b)", pathdb.rep, log_size, btruncate, cdb_brdonly, breference)
 
       UFile::setPath(pathdb);
 
-      return URDB::open(log_size, btruncate, cdb_brdonly, breference);
+      return URDB::open(log_size, btruncate, cdb_brdonly, breference, psem);
       }
 
    void reset();
@@ -170,7 +172,14 @@ public:
    // -3: there is not enough (virtual) memory available on writing journal
    // ---------------------------------------------------------------------
 
-   int remove(const UString& _key);
+   int remove(const UString& _key)
+      {
+      U_TRACE(0, "URDB::remove(%V)", _key.rep)
+
+      UCDB::setKey(_key);
+
+      return remove();
+      }
 
    int remove(const char* _key, uint32_t keylen)
       {
@@ -193,7 +202,16 @@ public:
    // -4: flag was RDB_INSERT and the new key already existed
    // ----------------------------------------------------------------------
 
-   int substitute(const UString& _key, const UString& new_key, const UString& _data, int flag = RDB_INSERT);
+   int substitute(const UString& _key, const UString& new_key, const UString& _data, int _flag = RDB_INSERT)
+      {
+      U_TRACE(0, "URDB::substitute(%V,%V,%V,%d)", _key.rep, new_key.rep, _data.rep, _flag)
+
+      UCDB::setKey(_key);
+      UCDB::setData(_data);
+      UCDB::datum key2 = { (void*) new_key.data(), new_key.size() };
+
+      return substitute(&key2, _flag);
+      }
 
    bool fetch();
    bool find(const UString& _key)                   { return find(U_STRING_TO_PARAM(_key)); }
@@ -243,22 +261,8 @@ public:
 
    // LOCK
 
-   void   lock() { _lock.lock(); }
-   void unlock() { _lock.unlock(); }
-
-   void setShared(sem_t* psem, char* spinlock, bool breclock = false);
-
-   void lockRecord()
-      {
-      U_TRACE_NO_PARAM(0, "URDB::lockRecord()")
-
-      U_INTERNAL_ASSERT_POINTER(preclock)
-      U_INTERNAL_ASSERT_MAJOR(UCDB::khash, 0)
-
-      (plock = (preclock+(UCDB::khash & (64-1))))->lock();
-      }
-
-   static void unlockRecord()
+   void   lockRecord();
+   void unlockRecord()
       {
       U_TRACE_NO_PARAM(0, "URDB::unlockRecord()")
 
@@ -266,6 +270,11 @@ public:
 
       plock->unlock();
       }
+
+   static void initRecordLock();
+
+   void   lock() { if (_lock.sem) _lock.lock(); }
+   void unlock() { if (_lock.sem) _lock.unlock(); }
 
    // TRANSACTION
 
@@ -300,6 +309,7 @@ public:
 
 protected:
    ULock _lock;
+   ULock* plock;
    UFile journal;
 
    // ----------------------------------------------------------------------------------------------------------------
@@ -376,7 +386,7 @@ protected:
 
           char* parseLine(const char* ptr) { return parseLine(ptr, &key, &data); }
 
-   static ULock* plock;
+   static sem_t nolock;
    static ULock* preclock;
 
 private:

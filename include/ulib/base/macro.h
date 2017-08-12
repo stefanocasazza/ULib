@@ -489,7 +489,7 @@ static inline void     u_put_unalignedp64(      void* p, uint64_t val) {       s
 
 /* To print size of class */
 
-#define U_PRINT_SIZEOF(class) printf("%u sizeof(%s)\n", sizeof(class), #class)
+#define U_PRINT_SIZEOF(class) printf("%lu sizeof(%s)\n", sizeof(class), #class)
 
 /* Avoid "unused parameter" warnings */
 

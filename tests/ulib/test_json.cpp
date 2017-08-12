@@ -1294,7 +1294,7 @@ U_EXPORT main (int argc, char* argv[], char* env[])
       {
       result1.clear();
 
-      if (UValue::jreadArrayStep(array, result1) != UValue::OBJECT_VALUE)
+      if (UValue::jreadArrayStep(array, result1) != U_OBJECT_VALUE)
          {
          U_ERROR("Array element wasn't an object! i = %d UValue::jread_pos = %u", i, UValue::jread_pos);
          }

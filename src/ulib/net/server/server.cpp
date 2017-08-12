@@ -628,23 +628,13 @@ void UServer_Base::initThrottlingServer()
       {
       U_NEW(URDBObjectHandler<UDataStorage*>, db_throttling, URDBObjectHandler<UDataStorage*>(U_STRING_FROM_CONSTANT("../db/BandWidthThrottling"), -1, &throttling_rec, true));
 
-      if (isPreForked())
-         {
-         U_INTERNAL_ASSERT_POINTER(ptr_shared_data)
-         U_INTERNAL_ASSERT_DIFFERS(ptr_shared_data, MAP_FAILED)
-
-         db_throttling->setShared(U_SRV_LOCK_THROTTLING, U_SRV_SPINLOCK_THROTTLING);
-         }
-
-      if (db_throttling->open(32 * 1024, false, true)) // NB: we don't want truncate (we have only the journal)...
+      if (db_throttling->open(32 * 1024, false, true, true, U_SRV_LOCK_THROTTLING)) // NB: we don't want truncate (we have only the journal)...
          {
          char* ptr;
          UString pattern, number;
          UVector<UString> vec(*throttling_mask);
 
          U_SRV_LOG("db initialization of BandWidthThrottling success: size(%u)", db_throttling->size());
-
-         min_size_for_sendfile = 4096; // 4k
 
          db_throttling->reset(); // Initialize the db to contain no entries
 
@@ -660,6 +650,8 @@ void UServer_Base::initThrottlingServer()
 
             (void) db_throttling->insertDataStorage(&rec, sizeof(uthrottling), U_STRING_TO_PARAM(pattern), RDB_INSERT);
             }
+
+         min_size_for_sendfile = 4096; // 4k
          }
       else
          {
@@ -830,15 +822,13 @@ void UServer_Base::initEvasive()
 
    U_NEW(URDBObjectHandler<UDataStorage*>, db_evasive, URDBObjectHandler<UDataStorage*>(U_STRING_FROM_CONSTANT("../db/Evasive"), -1, &evasive_rec, true));
 
-   if (db_evasive->open(4096 * 4096, false, true)) // NB: we don't want truncate (we have only the journal)...
+   // POSIX shared memory object: interprocess - can be used by unrelated processes (userver_tcp and userver_ssl)
+
+   if (db_evasive->open(4096 * 4096, false, true, true, U_SHM_LOCK_EVASIVE)) // NB: we don't want truncate (we have only the journal)...
       {
       U_SRV_LOG("db Evasive initialization success: size(%u)", db_evasive->size());
 
-      U_INTERNAL_ASSERT_POINTER(ptr_shared_data)
-      U_INTERNAL_ASSERT_DIFFERS(ptr_shared_data, MAP_FAILED)
-
-      // POSIX shared memory object: interprocess - can be used by unrelated processes (userver_tcp and userver_ssl)
-      db_evasive->setShared(U_SHM_LOCK_EVASIVE, U_SHM_SPINLOCK_EVASIVE, true);
+      URDB::initRecordLock();
 
       db_evasive->reset(); // Initialize the db to contain no entries
 
@@ -954,10 +944,10 @@ bool UServer_Base::checkHitStats(const char* key, uint32_t key_len, uint32_t int
 
       if (dosEmailAddress)
          {
-         if ((u_now->tv_sec - U_SRV_LAST_TIME_EMAIL_DOS) > U_ONE_DAY_IN_SECOND)
+         if ((u_now->tv_sec - U_SHM_LAST_TIME_EMAIL_DOS) > U_ONE_DAY_IN_SECOND)
             {
             bmail                     = true;
-            U_SRV_LAST_TIME_EMAIL_DOS = u_now->tv_sec;
+            U_SHM_LAST_TIME_EMAIL_DOS = u_now->tv_sec;
             }
          }
       }
@@ -1198,8 +1188,6 @@ public:
 
          U_INTERNAL_DUMP("u_now->tv_sec = %ld u_now->tv_usec = %ld", u_now->tv_sec, u_now->tv_usec)
 
-         U_INTERNAL_ASSERT_DIFFERS(sec, u_now->tv_sec)
-
          sec = u_now->tv_sec;
 
 #       ifndef U_SERVER_CAPTIVE_PORTAL
@@ -1399,12 +1387,11 @@ UServer_Base::~UServer_Base()
 # endif
 
 # ifdef U_LINUX
-   if (u_pthread_time)
-      {
-      delete (UTimeThread*)u_pthread_time;
+   U_INTERNAL_ASSERT_POINTER(u_pthread_time)
 
-      (void) pthread_rwlock_destroy(ULog::prwlock);
-      }
+   delete (UTimeThread*)u_pthread_time;
+
+   (void) pthread_rwlock_destroy(ULog::prwlock);
 
 #  if defined(USE_LIBSSL) && !defined(OPENSSL_NO_OCSP) && defined(SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB)
    if (bssl)
@@ -2224,8 +2211,8 @@ next: if (_plugin)
 #  ifndef U_LOG_DISABLE
       if (isLog())
          {
-         if (ok) log->log(U_CONSTANT_TO_PARAM(         "Link phase of static plugin %.*s success"), name_len, name);
-         else    log->log(U_CONSTANT_TO_PARAM("WARNING: Link phase of static plugin %.*s failed"),  name_len, name);
+         if (ok) log->log(U_CONSTANT_TO_PARAM(         "Link phase of static plugin %V success"), x.rep);
+         else    log->log(U_CONSTANT_TO_PARAM("WARNING: Link phase of static plugin %V failed"),  x.rep);
          }
 #  endif
       }
@@ -2302,12 +2289,8 @@ int UServer_Base::loadPlugins(UString& plugin_dir, const UString& plugin_list)
 #  ifndef U_LOG_DISABLE
       if (isLog())
          {
-         pos = u__snprintf(mod_name[0], sizeof(mod_name[0]), U_CONSTANT_TO_PARAM("[%v] "), item.rep);
-
-         if (_plugin) log->log(U_CONSTANT_TO_PARAM(         "%.*sLoad phase of plugin %v success"), pos, mod_name[0], item.rep);
-         else         log->log(U_CONSTANT_TO_PARAM("%.*sWARNING: Load phase of plugin %v failed"),  pos, mod_name[0], item.rep);
-
-         mod_name[0][0] = '\0';
+         if (_plugin) log->log(U_CONSTANT_TO_PARAM(         "Load phase of plugin %V success"), item.rep);
+         else         log->log(U_CONSTANT_TO_PARAM("WARNING: Load phase of plugin %V failed"),  item.rep);
          }
 #  endif
 
@@ -2335,10 +2318,6 @@ int UServer_Base::loadPlugins(UString& plugin_dir, const UString& plugin_list)
 
             _plugin = vplugin->at(i);
 
-#        ifndef U_LOG_DISABLE
-            if (isLog()) pos = u__snprintf(mod_name[0], sizeof(mod_name[0]), U_CONSTANT_TO_PARAM("[%v] "), item.rep);
-#        endif
-
             result = _plugin->handlerConfig(*cfg);
 
 #        ifndef U_LOG_DISABLE
@@ -2346,11 +2325,9 @@ int UServer_Base::loadPlugins(UString& plugin_dir, const UString& plugin_list)
                {
                if ((result & (U_PLUGIN_HANDLER_ERROR | U_PLUGIN_HANDLER_PROCESSED)) != 0)
                   {
-                  if ((result & U_PLUGIN_HANDLER_ERROR) == 0) log->log(U_CONSTANT_TO_PARAM(         "%.*sConfiguration phase of plugin %v success"), pos, mod_name[0], item.rep);
-                  else                                        log->log(U_CONSTANT_TO_PARAM("%.*sWARNING: Configuration phase of plugin %v failed"),  pos, mod_name[0], item.rep);
+                  if ((result & U_PLUGIN_HANDLER_ERROR) == 0) log->log(U_CONSTANT_TO_PARAM(         "Configuration phase of plugin %V success"), item.rep);
+                  else                                        log->log(U_CONSTANT_TO_PARAM("WARNING: Configuration phase of plugin %V failed"),  item.rep);
                   }
-
-               mod_name[0][0] = '\0';
                }
 #        endif
 
@@ -2370,25 +2347,25 @@ int UServer_Base::loadPlugins(UString& plugin_dir, const UString& plugin_list)
 // manage plugin handler hooks...
 
 #ifdef U_LOG_DISABLE
-#  define U_PLUGIN_HANDLER(xxx)                                               \
-int UServer_Base::pluginsHandler##xxx()                                       \
-{                                                                             \
-   U_TRACE_NO_PARAM(0, "UServer_Base::pluginsHandler"#xxx"()")                \
-                                                                              \
-   U_INTERNAL_ASSERT_POINTER(vplugin)                                         \
-   U_INTERNAL_ASSERT_MAJOR(vplugin_size, 0)                                   \
-                                                                              \
-   int result;                                                                \
-   uint32_t i = 0;                                                            \
-                                                                              \
-   do {                                                                       \
-      result = vplugin->at(i)->handler##xxx();                                \
-                                                                              \
-      if ((result & U_PLUGIN_HANDLER_GO_ON) == 0) U_RETURN(result);           \
-      }                                                                       \
-   while (++i < vplugin_size);                                                \
-                                                                              \
-   U_RETURN(U_PLUGIN_HANDLER_FINISHED);                                       \
+#  define U_PLUGIN_HANDLER(xxx)                                                    \
+int UServer_Base::pluginsHandler##xxx()                                            \
+{                                                                                  \
+   U_TRACE_NO_PARAM(0, "UServer_Base::pluginsHandler"#xxx"()")                     \
+                                                                                   \
+   U_INTERNAL_ASSERT_POINTER(vplugin)                                              \
+   U_INTERNAL_ASSERT_MAJOR(vplugin_size, 0)                                        \
+                                                                                   \
+   int result;                                                                     \
+   uint32_t i = 0;                                                                 \
+                                                                                   \
+   do {                                                                            \
+      result = vplugin->at(i)->handler##xxx();                                     \
+                                                                                   \
+      if ((result & U_PLUGIN_HANDLER_GO_ON) == 0) U_RETURN(result);                \
+      }                                                                            \
+   while (++i < vplugin_size);                                                     \
+                                                                                   \
+   U_RETURN(U_PLUGIN_HANDLER_FINISHED);                                            \
 }
 #else
 #  define U_PLUGIN_HANDLER(xxx)                                                    \
@@ -2399,8 +2376,8 @@ int UServer_Base::pluginsHandler##xxx()                                         
    U_INTERNAL_ASSERT_POINTER(vplugin)                                              \
    U_INTERNAL_ASSERT_MAJOR(vplugin_size, 0)                                        \
                                                                                    \
+   uint32_t i = 0;                                                                 \
    int result, ilog;                                                               \
-   uint32_t i = 0, sz;                                                             \
    UServerPlugIn* _plugin;                                                         \
                                                                                    \
    do {                                                                            \
@@ -2411,7 +2388,7 @@ int UServer_Base::pluginsHandler##xxx()                                         
          {                                                                         \
          UString name = vplugin_name->at(i);                                       \
                                                                                    \
-         sz = u__snprintf(mod_name[0], sizeof(mod_name[0]), U_CONSTANT_TO_PARAM("[%v] "), name.rep); \
+         (void) u__snprintf(mod_name[0], sizeof(mod_name[0]), U_CONSTANT_TO_PARAM("[%v] "), name.rep); \
                                                                                    \
          result = _plugin->handler##xxx();                                         \
                                                                                    \
@@ -2422,12 +2399,12 @@ int UServer_Base::pluginsHandler##xxx()                                         
                                                                                    \
             if ((result & U_PLUGIN_HANDLER_ERROR) != 0)                            \
                {                                                                   \
-               if ((result & U_PLUGIN_HANDLER_FINISHED) != 0) ilog = 2;            \
+               if ((result & U_PLUGIN_HANDLER_FINISHED) == 0) ilog = 2;            \
                }                                                                   \
             else                                                                   \
                {                                                                   \
-               if ((result & U_PLUGIN_HANDLER_PROCESSED) == 0  ||                  \
-                   U_ClientImage_parallelization == U_PARALLELIZATION_PARENT)      \
+               if ((result & U_PLUGIN_HANDLER_PROCESSED) != 0  &&                  \
+                   U_ClientImage_parallelization != U_PARALLELIZATION_PARENT)      \
                   {                                                                \
                   ilog = 1;                                                        \
                   }                                                                \
@@ -2437,11 +2414,11 @@ int UServer_Base::pluginsHandler##xxx()                                         
                {                                                                   \
                if (ilog == 1)                                                      \
                   {                                                                \
-                  log->log(U_CONSTANT_TO_PARAM("%.*s"#xxx" phase of plugin %v success"), sz, mod_name[0], name.rep); \
+                  log->log(U_CONSTANT_TO_PARAM(#xxx" phase of plugin %V success"), name.rep); \
                   }                                                                \
                else                                                                \
                   {                                                                \
-                  log->log(U_CONSTANT_TO_PARAM("%.*sWARNING: "#xxx" phase of plugin %v failed"), sz, mod_name[0], name.rep); \
+                  log->log(U_CONSTANT_TO_PARAM("WARNING: "#xxx" phase of plugin %V failed"), name.rep); \
                   }                                                                \
                }                                                                   \
             }                                                                      \
@@ -2463,25 +2440,25 @@ U_PLUGIN_HANDLER(Request)
 // NB: we call the various handlerXXX() in reverse order respect to the content of config var PLUGIN...
 
 #ifdef U_LOG_DISABLE
-#  define U_PLUGIN_HANDLER_REVERSE(xxx)                                       \
-int UServer_Base::pluginsHandler##xxx()                                       \
-{                                                                             \
-   U_TRACE_NO_PARAM(0, "UServer_Base::pluginsHandler"#xxx"()")                \
-                                                                              \
-   U_INTERNAL_ASSERT_POINTER(vplugin)                                         \
-   U_INTERNAL_ASSERT_MAJOR(vplugin_size, 0)                                   \
-                                                                              \
-   int result;                                                                \
-   uint32_t i = vplugin_size;                                                 \
-                                                                              \
-   do {                                                                       \
-      result = vplugin->at(--i)->handler##xxx();                              \
-                                                                              \
-      if ((result & U_PLUGIN_HANDLER_GO_ON) == 0) U_RETURN(result);           \
-                                                                              \
-      if (i == 0) U_RETURN(U_PLUGIN_HANDLER_FINISHED);                        \
-      }                                                                       \
-   while (true);                                                              \
+#  define U_PLUGIN_HANDLER_REVERSE(xxx)                                            \
+int UServer_Base::pluginsHandler##xxx()                                            \
+{                                                                                  \
+   U_TRACE_NO_PARAM(0, "UServer_Base::pluginsHandler"#xxx"()")                     \
+                                                                                   \
+   U_INTERNAL_ASSERT_POINTER(vplugin)                                              \
+   U_INTERNAL_ASSERT_MAJOR(vplugin_size, 0)                                        \
+                                                                                   \
+   int result;                                                                     \
+   uint32_t i = vplugin_size;                                                      \
+                                                                                   \
+   do {                                                                            \
+      result = vplugin->at(--i)->handler##xxx();                                   \
+                                                                                   \
+      if ((result & U_PLUGIN_HANDLER_GO_ON) == 0) U_RETURN(result);                \
+                                                                                   \
+      if (i == 0) U_RETURN(U_PLUGIN_HANDLER_FINISHED);                             \
+      }                                                                            \
+   while (true);                                                                   \
 }
 #else
 #  define U_PLUGIN_HANDLER_REVERSE(xxx)                                            \
@@ -2492,7 +2469,6 @@ int UServer_Base::pluginsHandler##xxx()                                         
    U_INTERNAL_ASSERT_POINTER(vplugin)                                              \
    U_INTERNAL_ASSERT_MAJOR(vplugin_size, 0)                                        \
                                                                                    \
-   uint32_t sz;                                                                    \
    int result, ilog;                                                               \
    UServerPlugIn* _plugin;                                                         \
    uint32_t i = vplugin_size;                                                      \
@@ -2505,7 +2481,7 @@ int UServer_Base::pluginsHandler##xxx()                                         
          {                                                                         \
          UString name = vplugin_name->at(i);                                       \
                                                                                    \
-         sz = u__snprintf(mod_name[0], sizeof(mod_name[0]), U_CONSTANT_TO_PARAM("[%v] "), name.rep); \
+         (void) u__snprintf(mod_name[0], sizeof(mod_name[0]), U_CONSTANT_TO_PARAM("[%v] "), name.rep); \
                                                                                    \
          result = _plugin->handler##xxx();                                         \
                                                                                    \
@@ -2520,8 +2496,8 @@ int UServer_Base::pluginsHandler##xxx()                                         
                }                                                                   \
             else                                                                   \
                {                                                                   \
-               if ((result & U_PLUGIN_HANDLER_PROCESSED) == 0 ||                   \
-                   U_ClientImage_parallelization == U_PARALLELIZATION_PARENT)      \
+               if ((result & U_PLUGIN_HANDLER_PROCESSED) != 0  &&                  \
+                   U_ClientImage_parallelization != U_PARALLELIZATION_PARENT)      \
                   {                                                                \
                   ilog = 1;                                                        \
                   }                                                                \
@@ -2531,11 +2507,11 @@ int UServer_Base::pluginsHandler##xxx()                                         
                {                                                                   \
                if (ilog == 1)                                                      \
                   {                                                                \
-                  log->log(U_CONSTANT_TO_PARAM("%.*s"#xxx" phase of plugin %v success"), sz, mod_name[0], name.rep); \
+                  log->log(U_CONSTANT_TO_PARAM(#xxx" phase of plugin %V success"), name.rep); \
                   }                                                                \
                else                                                                \
                   {                                                                \
-                  log->log(U_CONSTANT_TO_PARAM("%.*sWARNING: "#xxx" phase of plugin %v failed"), sz, mod_name[0], name.rep); \
+                  log->log(U_CONSTANT_TO_PARAM("WARNING: "#xxx" phase of plugin %V failed"), name.rep); \
                   }                                                                \
                }                                                                   \
             }                                                                      \
@@ -3038,7 +3014,9 @@ void UServer_Base::sendSignalToAllChildren(int signo, sighandler_t handler)
    U_INTERNAL_ASSERT(proc->parent())
 
 #if defined(U_LINUX) && defined(ENABLE_THREAD)
-   if (u_pthread_time) ((UTimeThread*)u_pthread_time)->suspend();
+   U_INTERNAL_ASSERT_POINTER(u_pthread_time)
+
+   ((UTimeThread*)u_pthread_time)->suspend();
 
 # if defined(USE_LIBSSL) && !defined(OPENSSL_NO_OCSP) && defined(SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB)
    if (pthread_ocsp) pthread_ocsp->suspend();
@@ -3060,7 +3038,9 @@ void UServer_Base::sendSignalToAllChildren(int signo, sighandler_t handler)
 #endif
 
 #if defined(U_LINUX) && defined(ENABLE_THREAD)
-   if (u_pthread_time) ((UTimeThread*)u_pthread_time)->resume();
+   U_INTERNAL_ASSERT_POINTER(u_pthread_time)
+
+   ((UTimeThread*)u_pthread_time)->resume();
 
 #  if defined(USE_LIBSSL) && !defined(OPENSSL_NO_OCSP) && defined(SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB)
    if (pthread_ocsp) pthread_ocsp->resume();
@@ -3148,7 +3128,9 @@ RETSIGTYPE UServer_Base::handlerForSigTERM(int signo)
    if (proc->parent())
       {
 #  if defined(U_LINUX) && defined(ENABLE_THREAD)
-      if (u_pthread_time) ((UTimeThread*)u_pthread_time)->suspend();
+      U_INTERNAL_ASSERT_POINTER(u_pthread_time)
+
+      ((UTimeThread*)u_pthread_time)->suspend();
 #  endif
 
       // NB: we can't use UInterrupt::erase() because it restore the old action (UInterrupt::init)...
@@ -3534,8 +3516,8 @@ retry:   pid = UProcess::waitpid(-1, &status, WNOHANG); // NB: to avoid too much
                {
                char buffer[128];
 
-               log->log(U_CONSTANT_TO_PARAM("%sChild (pid %d) exited with value %d (%s), down to %u children"),
-                        mod_name[0], pid, status, UProcess::exitInfo(buffer, status), UNotifier::num_connection - UNotifier::min_connection);
+               log->log(U_CONSTANT_TO_PARAM("Child (pid %d) exited with value %d (%s), down to %u children"),
+                        pid, status, UProcess::exitInfo(buffer, status), UNotifier::num_connection - UNotifier::min_connection);
                }
 #        endif
 
@@ -3746,32 +3728,32 @@ bool UServer_Base::handlerTimeoutConnection(void* cimg)
          {
          if (called_from_handlerTime)
             {
-            log->log(U_CONSTANT_TO_PARAM("%shandlerTime: client connected didn't send any request in %u secs (timeout), close connection %v"),
-                     mod_name[0], ptime->UTimeVal::tv_sec, ((UClientImage_Base*)cimg)->logbuf->rep);
+            log->log(U_CONSTANT_TO_PARAM("handlerTime: client connected didn't send any request in %u secs (timeout), close connection %v"),
+                     ptime->UTimeVal::tv_sec, ((UClientImage_Base*)cimg)->logbuf->rep);
             }
          else
             {
-            log->log(U_CONSTANT_TO_PARAM("%shandlerTimeoutConnection: client connected didn't send any request in %u secs, close connection %v"),
-                     mod_name[0], UNotifier::last_event - ((UClientImage_Base*)cimg)->last_event, ((UClientImage_Base*)cimg)->logbuf->rep);
+            log->log(U_CONSTANT_TO_PARAM("handlerTimeoutConnection: client connected didn't send any request in %u secs, close connection %v"),
+                     UNotifier::last_event - ((UClientImage_Base*)cimg)->last_event, ((UClientImage_Base*)cimg)->logbuf->rep);
             }
          }
 #  endif
 #  if !defined(USE_LIBEVENT) && defined(HAVE_EPOLL_WAIT) && defined(DEBUG)
       if (called_from_handlerTime)
          {
-         U_DEBUG("%shandlerTime: client connected didn't send any request in %u secs (timeout %u sec) - "
+         U_DEBUG("handlerTime: client connected didn't send any request in %u secs (timeout %u sec) - "
                  "UEventFd::fd = %d socket->iSockDesc = %d UNotifier::num_connection = %d UNotifier::min_connection = %d",
-                 mod_name[0], UNotifier::last_event - ((UClientImage_Base*)cimg)->last_event, ptime->UTimeVal::tv_sec,
-                                                      ((UClientImage_Base*)cimg)->UEventFd::fd,
-                                                      ((UClientImage_Base*)cimg)->socket->iSockDesc, UNotifier::num_connection, UNotifier::min_connection)
+                 UNotifier::last_event - ((UClientImage_Base*)cimg)->last_event, ptime->UTimeVal::tv_sec,
+                                         ((UClientImage_Base*)cimg)->UEventFd::fd,
+                                         ((UClientImage_Base*)cimg)->socket->iSockDesc, UNotifier::num_connection, UNotifier::min_connection)
          }
       else
          {
-         U_DEBUG("%shandlerTimeoutConnection: client connected didn't send any request in %u secs - "
+         U_DEBUG("handlerTimeoutConnection: client connected didn't send any request in %u secs - "
                  "UEventFd::fd = %d socket->iSockDesc = %d UNotifier::num_connection = %d UNotifier::min_connection = %d",
-                 mod_name[0], UNotifier::last_event - ((UClientImage_Base*)cimg)->last_event,
-                                                      ((UClientImage_Base*)cimg)->UEventFd::fd,
-                                                      ((UClientImage_Base*)cimg)->socket->iSockDesc, UNotifier::num_connection, UNotifier::min_connection)
+                 UNotifier::last_event - ((UClientImage_Base*)cimg)->last_event,
+                                         ((UClientImage_Base*)cimg)->UEventFd::fd,
+                                         ((UClientImage_Base*)cimg)->socket->iSockDesc, UNotifier::num_connection, UNotifier::min_connection)
          }
 #  endif
 
@@ -4044,7 +4026,7 @@ void UServer_Base::run()
 #              endif
                   sz = 0;
 
-                  log->log(U_CONSTANT_TO_PARAM("%sNew child started, affinity mask: %x, cpu: %d%.*s"),  mod_name[0], CPUSET_BITS(&cpuset)[0], cpu, sz, buffer);
+                  log->log(U_CONSTANT_TO_PARAM("New child started, affinity mask: %x, cpu: %d%.*s"),  CPUSET_BITS(&cpuset)[0], cpu, sz, buffer);
                   }
 #           endif
                }
@@ -4142,8 +4124,8 @@ void UServer_Base::run()
             {
             char buffer[128];
 
-            log->log(U_CONSTANT_TO_PARAM("%sWARNING: child (pid %d) exited with value %d (%s), down to %u children"),
-                     mod_name[0], pid, status, UProcess::exitInfo(buffer, status), rkids);
+            log->log(U_CONSTANT_TO_PARAM("WARNING: child (pid %d) exited with value %d (%s), down to %u children"),
+                     pid, status, UProcess::exitInfo(buffer, status), rkids);
             }
 #     endif
 
