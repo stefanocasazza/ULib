@@ -53,8 +53,7 @@ static void setAccessPointReference(const char* s, uint32_t n)
 }
 */
 
-int
-U_EXPORT main (int argc, char* argv[])
+int U_EXPORT main(int argc, char* argv[])
 {
    U_ULIB_INIT(argv);
 
@@ -72,10 +71,8 @@ U_EXPORT main (int argc, char* argv[])
    if (b2 == 0) cout << "object with key " << argv[3] << " cannot be created" << endl;
    else         cout << *b2 << endl;
 
-   U_ASSERT(UPlugIn<Product*>::empty() == false)
-
    delete b2;
    delete b1;
 
-   // UPlugIn<void*>::clear();
+// UPlugIn<void*>::clear();
 }

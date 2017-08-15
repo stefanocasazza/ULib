@@ -89,25 +89,25 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 target_triplet = @target@
-@STATIC_HANDLER_RPC_FALSE@am__append_1 = server_plugin_rpc.la
-@STATIC_HANDLER_STREAM_FALSE@am__append_2 = server_plugin_stream.la
-@STATIC_HANDLER_NOCAT_FALSE@am__append_3 = server_plugin_nocat.la
-@STATIC_HANDLER_SOCKET_FALSE@am__append_4 = server_plugin_socket.la
-@STATIC_HANDLER_SCGI_FALSE@am__append_5 = server_plugin_scgi.la
-@STATIC_HANDLER_FCGI_FALSE@am__append_6 = server_plugin_fcgi.la
-@PCRE_TRUE@@STATIC_HANDLER_PROXY_FALSE@am__append_7 = server_plugin_proxy.la
-@EXPAT_TRUE@@STATIC_HANDLER_SOAP_FALSE@am__append_8 = server_plugin_soap.la
-@STATIC_HANDLER_SSI_FALSE@am__append_9 = server_plugin_ssi.la
-@STATIC_HANDLER_TSA_FALSE@am__append_10 = server_plugin_tsa.la
-@STATIC_HANDLER_HTTP_FALSE@am__append_11 = server_plugin_http.la
-@STATIC_HANDLER_ECHO_FALSE@am__append_12 = server_plugin_echo.la
-@PAGE_SPEED_TRUE@am__append_13 = page_speed
-@V8_TRUE@am__append_14 = v8
-@PHP_TRUE@am__append_15 = php
-@RUBY_TRUE@am__append_16 = ruby
-@PYTHON_TRUE@am__append_17 = python
-@GEOIP_TRUE@@STATIC_HANDLER_GEOIP_FALSE@am__append_18 = mod_geoip
-@MOD_SHIB_TRUE@@PCRE_TRUE@@SSL_TRUE@@STATIC_HANDLER_SHIB_FALSE@am__append_19 = mod_shib
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@@STATIC_HANDLER_RPC_FALSE@am__append_1 = server_plugin_rpc.la
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@@STATIC_HANDLER_STREAM_FALSE@am__append_2 = server_plugin_stream.la
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@@STATIC_HANDLER_NOCAT_FALSE@am__append_3 = server_plugin_nocat.la
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@@STATIC_HANDLER_SOCKET_FALSE@am__append_4 = server_plugin_socket.la
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@@STATIC_HANDLER_SCGI_FALSE@am__append_5 = server_plugin_scgi.la
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@@STATIC_HANDLER_FCGI_FALSE@am__append_6 = server_plugin_fcgi.la
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@@PCRE_TRUE@@STATIC_HANDLER_PROXY_FALSE@am__append_7 = server_plugin_proxy.la
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@@EXPAT_TRUE@@STATIC_HANDLER_SOAP_FALSE@am__append_8 = server_plugin_soap.la
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@@STATIC_HANDLER_SSI_FALSE@am__append_9 = server_plugin_ssi.la
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@@STATIC_HANDLER_TSA_FALSE@am__append_10 = server_plugin_tsa.la
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@@STATIC_HANDLER_HTTP_FALSE@am__append_11 = server_plugin_http.la
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@@STATIC_HANDLER_ECHO_FALSE@am__append_12 = server_plugin_echo.la
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@@PAGE_SPEED_TRUE@am__append_13 = page_speed
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@@V8_TRUE@am__append_14 = v8
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@@PHP_TRUE@am__append_15 = php
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@@RUBY_TRUE@am__append_16 = ruby
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@@PYTHON_TRUE@am__append_17 = python
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@@GEOIP_TRUE@@STATIC_HANDLER_GEOIP_FALSE@am__append_18 = mod_geoip
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@@MOD_SHIB_TRUE@@PCRE_TRUE@@SSL_TRUE@@STATIC_HANDLER_SHIB_FALSE@am__append_19 = mod_shib
 subdir = src/ulib/net/server/plugin
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/ac_check_package.m4 \
@@ -163,11 +163,9 @@ am__uninstall_files_from_dir = { \
   }
 am__installdirs = "$(DESTDIR)$(moduledir)"
 LTLIBRARIES = $(module_LTLIBRARIES)
-@STATIC_HANDLER_ECHO_FALSE@server_plugin_echo_la_DEPENDENCIES =  \
-@STATIC_HANDLER_ECHO_FALSE@	$(ulib_la)
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@@STATIC_HANDLER_ECHO_FALSE@server_plugin_echo_la_DEPENDENCIES = $(ulib_la)
 am__server_plugin_echo_la_SOURCES_DIST = mod_echo.cpp
-@STATIC_HANDLER_ECHO_FALSE@am_server_plugin_echo_la_OBJECTS =  \
-@STATIC_HANDLER_ECHO_FALSE@	mod_echo.lo
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@@STATIC_HANDLER_ECHO_FALSE@am_server_plugin_echo_la_OBJECTS = mod_echo.lo
 server_plugin_echo_la_OBJECTS = $(am_server_plugin_echo_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
@@ -177,142 +175,120 @@ server_plugin_echo_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) $(server_plugin_echo_la_LDFLAGS) \
 	$(LDFLAGS) -o $@
-@STATIC_HANDLER_ECHO_FALSE@am_server_plugin_echo_la_rpath = -rpath \
-@STATIC_HANDLER_ECHO_FALSE@	$(moduledir)
-@STATIC_HANDLER_FCGI_FALSE@server_plugin_fcgi_la_DEPENDENCIES =  \
-@STATIC_HANDLER_FCGI_FALSE@	$(ulib_la)
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@@STATIC_HANDLER_ECHO_FALSE@am_server_plugin_echo_la_rpath = -rpath \
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@@STATIC_HANDLER_ECHO_FALSE@	$(moduledir)
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@@STATIC_HANDLER_FCGI_FALSE@server_plugin_fcgi_la_DEPENDENCIES = $(ulib_la)
 am__server_plugin_fcgi_la_SOURCES_DIST = mod_fcgi.cpp
-@STATIC_HANDLER_FCGI_FALSE@am_server_plugin_fcgi_la_OBJECTS =  \
-@STATIC_HANDLER_FCGI_FALSE@	mod_fcgi.lo
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@@STATIC_HANDLER_FCGI_FALSE@am_server_plugin_fcgi_la_OBJECTS = mod_fcgi.lo
 server_plugin_fcgi_la_OBJECTS = $(am_server_plugin_fcgi_la_OBJECTS)
 server_plugin_fcgi_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) $(server_plugin_fcgi_la_LDFLAGS) \
 	$(LDFLAGS) -o $@
-@STATIC_HANDLER_FCGI_FALSE@am_server_plugin_fcgi_la_rpath = -rpath \
-@STATIC_HANDLER_FCGI_FALSE@	$(moduledir)
-@STATIC_HANDLER_HTTP_FALSE@server_plugin_http_la_DEPENDENCIES =  \
-@STATIC_HANDLER_HTTP_FALSE@	$(ulib_la)
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@@STATIC_HANDLER_FCGI_FALSE@am_server_plugin_fcgi_la_rpath = -rpath \
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@@STATIC_HANDLER_FCGI_FALSE@	$(moduledir)
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@@STATIC_HANDLER_HTTP_FALSE@server_plugin_http_la_DEPENDENCIES = $(ulib_la)
 am__server_plugin_http_la_SOURCES_DIST = mod_http.cpp
-@STATIC_HANDLER_HTTP_FALSE@am_server_plugin_http_la_OBJECTS =  \
-@STATIC_HANDLER_HTTP_FALSE@	mod_http.lo
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@@STATIC_HANDLER_HTTP_FALSE@am_server_plugin_http_la_OBJECTS = mod_http.lo
 server_plugin_http_la_OBJECTS = $(am_server_plugin_http_la_OBJECTS)
 server_plugin_http_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) $(server_plugin_http_la_LDFLAGS) \
 	$(LDFLAGS) -o $@
-@STATIC_HANDLER_HTTP_FALSE@am_server_plugin_http_la_rpath = -rpath \
-@STATIC_HANDLER_HTTP_FALSE@	$(moduledir)
-@STATIC_HANDLER_NOCAT_FALSE@server_plugin_nocat_la_DEPENDENCIES =  \
-@STATIC_HANDLER_NOCAT_FALSE@	$(ulib_la)
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@@STATIC_HANDLER_HTTP_FALSE@am_server_plugin_http_la_rpath = -rpath \
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@@STATIC_HANDLER_HTTP_FALSE@	$(moduledir)
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@@STATIC_HANDLER_NOCAT_FALSE@server_plugin_nocat_la_DEPENDENCIES = $(ulib_la)
 am__server_plugin_nocat_la_SOURCES_DIST = mod_nocat.cpp
-@STATIC_HANDLER_NOCAT_FALSE@am_server_plugin_nocat_la_OBJECTS =  \
-@STATIC_HANDLER_NOCAT_FALSE@	mod_nocat.lo
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@@STATIC_HANDLER_NOCAT_FALSE@am_server_plugin_nocat_la_OBJECTS = mod_nocat.lo
 server_plugin_nocat_la_OBJECTS = $(am_server_plugin_nocat_la_OBJECTS)
 server_plugin_nocat_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) $(server_plugin_nocat_la_LDFLAGS) \
 	$(LDFLAGS) -o $@
-@STATIC_HANDLER_NOCAT_FALSE@am_server_plugin_nocat_la_rpath = -rpath \
-@STATIC_HANDLER_NOCAT_FALSE@	$(moduledir)
-@PCRE_TRUE@@STATIC_HANDLER_PROXY_FALSE@server_plugin_proxy_la_DEPENDENCIES =  \
-@PCRE_TRUE@@STATIC_HANDLER_PROXY_FALSE@	$(ulib_la)
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@@STATIC_HANDLER_NOCAT_FALSE@am_server_plugin_nocat_la_rpath = -rpath \
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@@STATIC_HANDLER_NOCAT_FALSE@	$(moduledir)
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@@PCRE_TRUE@@STATIC_HANDLER_PROXY_FALSE@server_plugin_proxy_la_DEPENDENCIES = $(ulib_la)
 am__server_plugin_proxy_la_SOURCES_DIST = mod_proxy.cpp
-@PCRE_TRUE@@STATIC_HANDLER_PROXY_FALSE@am_server_plugin_proxy_la_OBJECTS =  \
-@PCRE_TRUE@@STATIC_HANDLER_PROXY_FALSE@	mod_proxy.lo
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@@PCRE_TRUE@@STATIC_HANDLER_PROXY_FALSE@am_server_plugin_proxy_la_OBJECTS = mod_proxy.lo
 server_plugin_proxy_la_OBJECTS = $(am_server_plugin_proxy_la_OBJECTS)
 server_plugin_proxy_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) $(server_plugin_proxy_la_LDFLAGS) \
 	$(LDFLAGS) -o $@
-@PCRE_TRUE@@STATIC_HANDLER_PROXY_FALSE@am_server_plugin_proxy_la_rpath =  \
-@PCRE_TRUE@@STATIC_HANDLER_PROXY_FALSE@	-rpath $(moduledir)
-@STATIC_HANDLER_RPC_FALSE@server_plugin_rpc_la_DEPENDENCIES =  \
-@STATIC_HANDLER_RPC_FALSE@	$(ulib_la)
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@@PCRE_TRUE@@STATIC_HANDLER_PROXY_FALSE@am_server_plugin_proxy_la_rpath = -rpath \
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@@PCRE_TRUE@@STATIC_HANDLER_PROXY_FALSE@	$(moduledir)
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@@STATIC_HANDLER_RPC_FALSE@server_plugin_rpc_la_DEPENDENCIES = $(ulib_la)
 am__server_plugin_rpc_la_SOURCES_DIST = mod_rpc.cpp
-@STATIC_HANDLER_RPC_FALSE@am_server_plugin_rpc_la_OBJECTS =  \
-@STATIC_HANDLER_RPC_FALSE@	mod_rpc.lo
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@@STATIC_HANDLER_RPC_FALSE@am_server_plugin_rpc_la_OBJECTS = mod_rpc.lo
 server_plugin_rpc_la_OBJECTS = $(am_server_plugin_rpc_la_OBJECTS)
 server_plugin_rpc_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) $(server_plugin_rpc_la_LDFLAGS) \
 	$(LDFLAGS) -o $@
-@STATIC_HANDLER_RPC_FALSE@am_server_plugin_rpc_la_rpath = -rpath \
-@STATIC_HANDLER_RPC_FALSE@	$(moduledir)
-@STATIC_HANDLER_SCGI_FALSE@server_plugin_scgi_la_DEPENDENCIES =  \
-@STATIC_HANDLER_SCGI_FALSE@	$(ulib_la)
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@@STATIC_HANDLER_RPC_FALSE@am_server_plugin_rpc_la_rpath = -rpath \
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@@STATIC_HANDLER_RPC_FALSE@	$(moduledir)
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@@STATIC_HANDLER_SCGI_FALSE@server_plugin_scgi_la_DEPENDENCIES = $(ulib_la)
 am__server_plugin_scgi_la_SOURCES_DIST = mod_scgi.cpp
-@STATIC_HANDLER_SCGI_FALSE@am_server_plugin_scgi_la_OBJECTS =  \
-@STATIC_HANDLER_SCGI_FALSE@	mod_scgi.lo
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@@STATIC_HANDLER_SCGI_FALSE@am_server_plugin_scgi_la_OBJECTS = mod_scgi.lo
 server_plugin_scgi_la_OBJECTS = $(am_server_plugin_scgi_la_OBJECTS)
 server_plugin_scgi_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) $(server_plugin_scgi_la_LDFLAGS) \
 	$(LDFLAGS) -o $@
-@STATIC_HANDLER_SCGI_FALSE@am_server_plugin_scgi_la_rpath = -rpath \
-@STATIC_HANDLER_SCGI_FALSE@	$(moduledir)
-@EXPAT_TRUE@@STATIC_HANDLER_SOAP_FALSE@server_plugin_soap_la_DEPENDENCIES =  \
-@EXPAT_TRUE@@STATIC_HANDLER_SOAP_FALSE@	$(ulib_la)
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@@STATIC_HANDLER_SCGI_FALSE@am_server_plugin_scgi_la_rpath = -rpath \
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@@STATIC_HANDLER_SCGI_FALSE@	$(moduledir)
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@@EXPAT_TRUE@@STATIC_HANDLER_SOAP_FALSE@server_plugin_soap_la_DEPENDENCIES = $(ulib_la)
 am__server_plugin_soap_la_SOURCES_DIST = mod_soap.cpp
-@EXPAT_TRUE@@STATIC_HANDLER_SOAP_FALSE@am_server_plugin_soap_la_OBJECTS =  \
-@EXPAT_TRUE@@STATIC_HANDLER_SOAP_FALSE@	mod_soap.lo
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@@EXPAT_TRUE@@STATIC_HANDLER_SOAP_FALSE@am_server_plugin_soap_la_OBJECTS = mod_soap.lo
 server_plugin_soap_la_OBJECTS = $(am_server_plugin_soap_la_OBJECTS)
 server_plugin_soap_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) $(server_plugin_soap_la_LDFLAGS) \
 	$(LDFLAGS) -o $@
-@EXPAT_TRUE@@STATIC_HANDLER_SOAP_FALSE@am_server_plugin_soap_la_rpath =  \
-@EXPAT_TRUE@@STATIC_HANDLER_SOAP_FALSE@	-rpath $(moduledir)
-@STATIC_HANDLER_SOCKET_FALSE@server_plugin_socket_la_DEPENDENCIES =  \
-@STATIC_HANDLER_SOCKET_FALSE@	$(ulib_la)
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@@EXPAT_TRUE@@STATIC_HANDLER_SOAP_FALSE@am_server_plugin_soap_la_rpath = -rpath \
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@@EXPAT_TRUE@@STATIC_HANDLER_SOAP_FALSE@	$(moduledir)
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@@STATIC_HANDLER_SOCKET_FALSE@server_plugin_socket_la_DEPENDENCIES = $(ulib_la)
 am__server_plugin_socket_la_SOURCES_DIST = mod_socket.cpp
-@STATIC_HANDLER_SOCKET_FALSE@am_server_plugin_socket_la_OBJECTS =  \
-@STATIC_HANDLER_SOCKET_FALSE@	mod_socket.lo
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@@STATIC_HANDLER_SOCKET_FALSE@am_server_plugin_socket_la_OBJECTS = mod_socket.lo
 server_plugin_socket_la_OBJECTS =  \
 	$(am_server_plugin_socket_la_OBJECTS)
 server_plugin_socket_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) $(server_plugin_socket_la_LDFLAGS) \
 	$(LDFLAGS) -o $@
-@STATIC_HANDLER_SOCKET_FALSE@am_server_plugin_socket_la_rpath =  \
-@STATIC_HANDLER_SOCKET_FALSE@	-rpath $(moduledir)
-@STATIC_HANDLER_SSI_FALSE@server_plugin_ssi_la_DEPENDENCIES =  \
-@STATIC_HANDLER_SSI_FALSE@	$(ulib_la)
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@@STATIC_HANDLER_SOCKET_FALSE@am_server_plugin_socket_la_rpath = -rpath \
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@@STATIC_HANDLER_SOCKET_FALSE@	$(moduledir)
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@@STATIC_HANDLER_SSI_FALSE@server_plugin_ssi_la_DEPENDENCIES = $(ulib_la)
 am__server_plugin_ssi_la_SOURCES_DIST = mod_ssi.cpp
-@STATIC_HANDLER_SSI_FALSE@am_server_plugin_ssi_la_OBJECTS =  \
-@STATIC_HANDLER_SSI_FALSE@	mod_ssi.lo
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@@STATIC_HANDLER_SSI_FALSE@am_server_plugin_ssi_la_OBJECTS = mod_ssi.lo
 server_plugin_ssi_la_OBJECTS = $(am_server_plugin_ssi_la_OBJECTS)
 server_plugin_ssi_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) $(server_plugin_ssi_la_LDFLAGS) \
 	$(LDFLAGS) -o $@
-@STATIC_HANDLER_SSI_FALSE@am_server_plugin_ssi_la_rpath = -rpath \
-@STATIC_HANDLER_SSI_FALSE@	$(moduledir)
-@STATIC_HANDLER_STREAM_FALSE@server_plugin_stream_la_DEPENDENCIES =  \
-@STATIC_HANDLER_STREAM_FALSE@	$(ulib_la)
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@@STATIC_HANDLER_SSI_FALSE@am_server_plugin_ssi_la_rpath = -rpath \
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@@STATIC_HANDLER_SSI_FALSE@	$(moduledir)
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@@STATIC_HANDLER_STREAM_FALSE@server_plugin_stream_la_DEPENDENCIES = $(ulib_la)
 am__server_plugin_stream_la_SOURCES_DIST = mod_stream.cpp
-@STATIC_HANDLER_STREAM_FALSE@am_server_plugin_stream_la_OBJECTS =  \
-@STATIC_HANDLER_STREAM_FALSE@	mod_stream.lo
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@@STATIC_HANDLER_STREAM_FALSE@am_server_plugin_stream_la_OBJECTS = mod_stream.lo
 server_plugin_stream_la_OBJECTS =  \
 	$(am_server_plugin_stream_la_OBJECTS)
 server_plugin_stream_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) $(server_plugin_stream_la_LDFLAGS) \
 	$(LDFLAGS) -o $@
-@STATIC_HANDLER_STREAM_FALSE@am_server_plugin_stream_la_rpath =  \
-@STATIC_HANDLER_STREAM_FALSE@	-rpath $(moduledir)
-@STATIC_HANDLER_TSA_FALSE@server_plugin_tsa_la_DEPENDENCIES =  \
-@STATIC_HANDLER_TSA_FALSE@	$(ulib_la)
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@@STATIC_HANDLER_STREAM_FALSE@am_server_plugin_stream_la_rpath = -rpath \
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@@STATIC_HANDLER_STREAM_FALSE@	$(moduledir)
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@@STATIC_HANDLER_TSA_FALSE@server_plugin_tsa_la_DEPENDENCIES = $(ulib_la)
 am__server_plugin_tsa_la_SOURCES_DIST = mod_tsa.cpp
-@STATIC_HANDLER_TSA_FALSE@am_server_plugin_tsa_la_OBJECTS =  \
-@STATIC_HANDLER_TSA_FALSE@	mod_tsa.lo
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@@STATIC_HANDLER_TSA_FALSE@am_server_plugin_tsa_la_OBJECTS = mod_tsa.lo
 server_plugin_tsa_la_OBJECTS = $(am_server_plugin_tsa_la_OBJECTS)
 server_plugin_tsa_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) $(server_plugin_tsa_la_LDFLAGS) \
 	$(LDFLAGS) -o $@
-@STATIC_HANDLER_TSA_FALSE@am_server_plugin_tsa_la_rpath = -rpath \
-@STATIC_HANDLER_TSA_FALSE@	$(moduledir)
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@@STATIC_HANDLER_TSA_FALSE@am_server_plugin_tsa_la_rpath = -rpath \
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@@STATIC_HANDLER_TSA_FALSE@	$(moduledir)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
 am__v_P_0 = false
@@ -642,50 +618,50 @@ EXTRA_DIST = *.cpp Makefile.* \
 MAINTAINERCLEANFILES = Makefile.in
 DEFAULT_INCLUDES = -I. -I$(top_srcdir)/include
 ulib_la = $(top_builddir)/src/ulib/lib@ULIB@.la
+SUBDIRS = usp $(am__append_13) $(am__append_14) $(am__append_15) \
+	$(am__append_16) $(am__append_17) $(am__append_18) \
+	$(am__append_19)
 moduledir = @ULIB_MODULEDIR@
 module_LTLIBRARIES = $(am__append_1) $(am__append_2) $(am__append_3) \
 	$(am__append_4) $(am__append_5) $(am__append_6) \
 	$(am__append_7) $(am__append_8) $(am__append_9) \
 	$(am__append_10) $(am__append_11) $(am__append_12)
-@STATIC_HANDLER_RPC_FALSE@server_plugin_rpc_la_SOURCES = mod_rpc.cpp
-@STATIC_HANDLER_RPC_FALSE@server_plugin_rpc_la_LIBADD = $(ulib_la) @ULIB_LIBS@
-@STATIC_HANDLER_RPC_FALSE@server_plugin_rpc_la_LDFLAGS = -module @MODULE_LIBTOOL_OPTIONS@
-@STATIC_HANDLER_STREAM_FALSE@server_plugin_stream_la_SOURCES = mod_stream.cpp
-@STATIC_HANDLER_STREAM_FALSE@server_plugin_stream_la_LIBADD = $(ulib_la) @ULIB_LIBS@
-@STATIC_HANDLER_STREAM_FALSE@server_plugin_stream_la_LDFLAGS = -module @MODULE_LIBTOOL_OPTIONS@
-@STATIC_HANDLER_NOCAT_FALSE@server_plugin_nocat_la_SOURCES = mod_nocat.cpp
-@STATIC_HANDLER_NOCAT_FALSE@server_plugin_nocat_la_LIBADD = $(ulib_la) @ULIB_LIBS@
-@STATIC_HANDLER_NOCAT_FALSE@server_plugin_nocat_la_LDFLAGS = -module @MODULE_LIBTOOL_OPTIONS@
-@STATIC_HANDLER_SOCKET_FALSE@server_plugin_socket_la_SOURCES = mod_socket.cpp
-@STATIC_HANDLER_SOCKET_FALSE@server_plugin_socket_la_LIBADD = $(ulib_la) @ULIB_LIBS@
-@STATIC_HANDLER_SOCKET_FALSE@server_plugin_socket_la_LDFLAGS = -module @MODULE_LIBTOOL_OPTIONS@
-@STATIC_HANDLER_SCGI_FALSE@server_plugin_scgi_la_SOURCES = mod_scgi.cpp
-@STATIC_HANDLER_SCGI_FALSE@server_plugin_scgi_la_LIBADD = $(ulib_la) @ULIB_LIBS@
-@STATIC_HANDLER_SCGI_FALSE@server_plugin_scgi_la_LDFLAGS = -module @MODULE_LIBTOOL_OPTIONS@
-@STATIC_HANDLER_FCGI_FALSE@server_plugin_fcgi_la_SOURCES = mod_fcgi.cpp
-@STATIC_HANDLER_FCGI_FALSE@server_plugin_fcgi_la_LIBADD = $(ulib_la) @ULIB_LIBS@
-@STATIC_HANDLER_FCGI_FALSE@server_plugin_fcgi_la_LDFLAGS = -module @MODULE_LIBTOOL_OPTIONS@
-@PCRE_TRUE@@STATIC_HANDLER_PROXY_FALSE@server_plugin_proxy_la_SOURCES = mod_proxy.cpp
-@PCRE_TRUE@@STATIC_HANDLER_PROXY_FALSE@server_plugin_proxy_la_LIBADD = $(pkg_cv_LIBNETFILTER_CONNTRACK_LIBS) $(ulib_la) @ULIB_LIBS@
-@PCRE_TRUE@@STATIC_HANDLER_PROXY_FALSE@server_plugin_proxy_la_LDFLAGS = -module @MODULE_LIBTOOL_OPTIONS@
-@EXPAT_TRUE@@STATIC_HANDLER_SOAP_FALSE@server_plugin_soap_la_SOURCES = mod_soap.cpp
-@EXPAT_TRUE@@STATIC_HANDLER_SOAP_FALSE@server_plugin_soap_la_LIBADD = $(ulib_la) @ULIB_LIBS@
-@EXPAT_TRUE@@STATIC_HANDLER_SOAP_FALSE@server_plugin_soap_la_LDFLAGS = -module @MODULE_LIBTOOL_OPTIONS@
-@STATIC_HANDLER_SSI_FALSE@server_plugin_ssi_la_SOURCES = mod_ssi.cpp
-@STATIC_HANDLER_SSI_FALSE@server_plugin_ssi_la_LIBADD = $(ulib_la) @ULIB_LIBS@
-@STATIC_HANDLER_SSI_FALSE@server_plugin_ssi_la_LDFLAGS = -module @MODULE_LIBTOOL_OPTIONS@
-@STATIC_HANDLER_TSA_FALSE@server_plugin_tsa_la_SOURCES = mod_tsa.cpp
-@STATIC_HANDLER_TSA_FALSE@server_plugin_tsa_la_LIBADD = $(ulib_la) @ULIB_LIBS@
-@STATIC_HANDLER_TSA_FALSE@server_plugin_tsa_la_LDFLAGS = -module @MODULE_LIBTOOL_OPTIONS@
-@STATIC_HANDLER_HTTP_FALSE@server_plugin_http_la_SOURCES = mod_http.cpp
-@STATIC_HANDLER_HTTP_FALSE@server_plugin_http_la_LIBADD = $(ulib_la) @ULIB_LIBS@
-@STATIC_HANDLER_HTTP_FALSE@server_plugin_http_la_LDFLAGS = -module @MODULE_LIBTOOL_OPTIONS@
-@STATIC_HANDLER_ECHO_FALSE@server_plugin_echo_la_SOURCES = mod_echo.cpp
-@STATIC_HANDLER_ECHO_FALSE@server_plugin_echo_la_LIBADD = $(ulib_la) @ULIB_LIBS@
-@STATIC_HANDLER_ECHO_FALSE@server_plugin_echo_la_LDFLAGS = -module @MODULE_LIBTOOL_OPTIONS@
-SUBDIRS = usp $(am__append_13) $(am__append_14) $(am__append_15) \
-	$(am__append_16) $(am__append_17) $(am__append_18) \
-	$(am__append_19)
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@@STATIC_HANDLER_RPC_FALSE@server_plugin_rpc_la_SOURCES = mod_rpc.cpp
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@@STATIC_HANDLER_RPC_FALSE@server_plugin_rpc_la_LIBADD = $(ulib_la) @ULIB_LIBS@
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@@STATIC_HANDLER_RPC_FALSE@server_plugin_rpc_la_LDFLAGS = -module @MODULE_LIBTOOL_OPTIONS@
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@@STATIC_HANDLER_STREAM_FALSE@server_plugin_stream_la_SOURCES = mod_stream.cpp
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@@STATIC_HANDLER_STREAM_FALSE@server_plugin_stream_la_LIBADD = $(ulib_la) @ULIB_LIBS@
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@@STATIC_HANDLER_STREAM_FALSE@server_plugin_stream_la_LDFLAGS = -module @MODULE_LIBTOOL_OPTIONS@
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@@STATIC_HANDLER_NOCAT_FALSE@server_plugin_nocat_la_SOURCES = mod_nocat.cpp
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@@STATIC_HANDLER_NOCAT_FALSE@server_plugin_nocat_la_LIBADD = $(ulib_la) @ULIB_LIBS@
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@@STATIC_HANDLER_NOCAT_FALSE@server_plugin_nocat_la_LDFLAGS = -module @MODULE_LIBTOOL_OPTIONS@
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@@STATIC_HANDLER_SOCKET_FALSE@server_plugin_socket_la_SOURCES = mod_socket.cpp
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@@STATIC_HANDLER_SOCKET_FALSE@server_plugin_socket_la_LIBADD = $(ulib_la) @ULIB_LIBS@
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@@STATIC_HANDLER_SOCKET_FALSE@server_plugin_socket_la_LDFLAGS = -module @MODULE_LIBTOOL_OPTIONS@
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@@STATIC_HANDLER_SCGI_FALSE@server_plugin_scgi_la_SOURCES = mod_scgi.cpp
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@@STATIC_HANDLER_SCGI_FALSE@server_plugin_scgi_la_LIBADD = $(ulib_la) @ULIB_LIBS@
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@@STATIC_HANDLER_SCGI_FALSE@server_plugin_scgi_la_LDFLAGS = -module @MODULE_LIBTOOL_OPTIONS@
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@@STATIC_HANDLER_FCGI_FALSE@server_plugin_fcgi_la_SOURCES = mod_fcgi.cpp
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@@STATIC_HANDLER_FCGI_FALSE@server_plugin_fcgi_la_LIBADD = $(ulib_la) @ULIB_LIBS@
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@@STATIC_HANDLER_FCGI_FALSE@server_plugin_fcgi_la_LDFLAGS = -module @MODULE_LIBTOOL_OPTIONS@
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@@PCRE_TRUE@@STATIC_HANDLER_PROXY_FALSE@server_plugin_proxy_la_SOURCES = mod_proxy.cpp
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@@PCRE_TRUE@@STATIC_HANDLER_PROXY_FALSE@server_plugin_proxy_la_LIBADD = $(pkg_cv_LIBNETFILTER_CONNTRACK_LIBS) $(ulib_la) @ULIB_LIBS@
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@@PCRE_TRUE@@STATIC_HANDLER_PROXY_FALSE@server_plugin_proxy_la_LDFLAGS = -module @MODULE_LIBTOOL_OPTIONS@
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@@EXPAT_TRUE@@STATIC_HANDLER_SOAP_FALSE@server_plugin_soap_la_SOURCES = mod_soap.cpp
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@@EXPAT_TRUE@@STATIC_HANDLER_SOAP_FALSE@server_plugin_soap_la_LIBADD = $(ulib_la) @ULIB_LIBS@
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@@EXPAT_TRUE@@STATIC_HANDLER_SOAP_FALSE@server_plugin_soap_la_LDFLAGS = -module @MODULE_LIBTOOL_OPTIONS@
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@@STATIC_HANDLER_SSI_FALSE@server_plugin_ssi_la_SOURCES = mod_ssi.cpp
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@@STATIC_HANDLER_SSI_FALSE@server_plugin_ssi_la_LIBADD = $(ulib_la) @ULIB_LIBS@
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@@STATIC_HANDLER_SSI_FALSE@server_plugin_ssi_la_LDFLAGS = -module @MODULE_LIBTOOL_OPTIONS@
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@@STATIC_HANDLER_TSA_FALSE@server_plugin_tsa_la_SOURCES = mod_tsa.cpp
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@@STATIC_HANDLER_TSA_FALSE@server_plugin_tsa_la_LIBADD = $(ulib_la) @ULIB_LIBS@
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@@STATIC_HANDLER_TSA_FALSE@server_plugin_tsa_la_LDFLAGS = -module @MODULE_LIBTOOL_OPTIONS@
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@@STATIC_HANDLER_HTTP_FALSE@server_plugin_http_la_SOURCES = mod_http.cpp
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@@STATIC_HANDLER_HTTP_FALSE@server_plugin_http_la_LIBADD = $(ulib_la) @ULIB_LIBS@
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@@STATIC_HANDLER_HTTP_FALSE@server_plugin_http_la_LDFLAGS = -module @MODULE_LIBTOOL_OPTIONS@
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@@STATIC_HANDLER_ECHO_FALSE@server_plugin_echo_la_SOURCES = mod_echo.cpp
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@@STATIC_HANDLER_ECHO_FALSE@server_plugin_echo_la_LIBADD = $(ulib_la) @ULIB_LIBS@
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@@STATIC_HANDLER_ECHO_FALSE@server_plugin_echo_la_LDFLAGS = -module @MODULE_LIBTOOL_OPTIONS@
 all: all-recursive
 
 .SUFFIXES:

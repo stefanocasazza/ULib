@@ -22,7 +22,6 @@
 #include <ulib/utility/interrupt.h>
 #include <ulib/utility/socket_ext.h>
 #include <ulib/net/server/client_image.h>
-#include <ulib/net/server/server_plugin.h>
 
 #ifndef SIGWINCH
 #define SIGWINCH 28

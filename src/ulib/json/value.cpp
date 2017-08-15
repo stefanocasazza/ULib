@@ -1932,7 +1932,7 @@ int UValue::jread(const UString& json, const UString& query, UString& result, ui
 
                   U_INTERNAL_DUMP("index = %u", index)
 
-                  U_INTERNAL_ASSERT_EQUALS(index, ::strtol(start, U_NULLPTR, 10))
+                  U_INTERNAL_ASSERT_EQUALS(index, (uint32_t)::strtol(start, U_NULLPTR, 10))
                   }
                break;
 
@@ -2086,7 +2086,7 @@ int UValue::jread(const UString& json, const UString& query, UString& result, ui
 
             U_INTERNAL_DUMP("index = %u", index)
 
-            U_INTERNAL_ASSERT_EQUALS(index, ::strtol(start, U_NULLPTR, 10))
+            U_INTERNAL_ASSERT_EQUALS(index, (uint32_t)::strtol(start, U_NULLPTR, 10))
             }
 
          count = 0;

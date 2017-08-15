@@ -1500,13 +1500,13 @@ UServer_Base::~UServer_Base()
    delete IP_address;
    delete document_root;
 
+   UDynamic::clear();
+
    UEventFd::fd = -1; // NB: to avoid to delete itself...
 
    UNotifier::num_connection = 0;
 
-         UDynamic::clear();
-        UNotifier::clear();
-   UPlugIn<void*>::clear();
+   UNotifier::clear();
 }
 
 void UServer_Base::closeLog()

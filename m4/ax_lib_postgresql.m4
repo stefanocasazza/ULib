@@ -50,6 +50,8 @@
 
 AC_DEFUN([AX_LIB_POSTGRESQL],
 [
+	AC_MSG_CHECKING(for PostgreSQL support)
+
     AC_ARG_WITH([pgsql],
         AS_HELP_STRING([--with-pgsql=@<:@ARG@:>@],
             [use PostgreSQL library @<:@default=no@:>@, optionally specify path to pg_config]
@@ -76,20 +78,21 @@ AC_DEFUN([AX_LIB_POSTGRESQL],
     dnl Check PostgreSQL libraries (libpq)
     dnl
 
-    if test "$want_postgresql" = "yes"; then
+    if test "$want_postgresql" != "yes"; then
+		  AC_MSG_RESULT(no)
+	 else
+		  AC_MSG_RESULT(yes)
 
-        if test -z "$PG_CONFIG" -o test; then
+        if test -z "$PG_CONFIG"; then
             AC_PATH_PROG([PG_CONFIG], [pg_config], [])
         fi
 
         if test ! -x "$PG_CONFIG"; then
-            AC_MSG_ERROR([$PG_CONFIG does not exist or it is not an executable file])
-            PG_CONFIG="no"
             found_postgresql="no"
-        fi
-
-        if test "$PG_CONFIG" != "no"; then
-            AC_MSG_CHECKING([for PostgreSQL libraries])
+            AC_MSG_ERROR([$PG_CONFIG does not exist or it is not an executable file])
+		  else
+            found_postgresql="yes"
+            AC_MSG_CHECKING([for PostgreSQL client libraries])
 
             postgresql_libdir=`$PG_CONFIG --libdir`
 
@@ -97,7 +100,7 @@ AC_DEFUN([AX_LIB_POSTGRESQL],
             POSTGRESQL_CPPFLAGS="-I`$PG_CONFIG --includedir` -I`$PG_CONFIG --includedir-server`"
             POSTGRESQL_VERSION=`$PG_CONFIG --version | sed -e 's#PostgreSQL ##'`
 
-				if test -f "$postgresql_libdir/libpgport.a"; then
+				if test -f "$postgresql_libdir/libpgport.a" -o -f "$postgresql_libdir/libpgport.so"; then
 					POSTGRESQL_LIBS="-lpq -lpgport"
 				else
 					POSTGRESQL_LIBS="-lpq"
@@ -106,18 +109,13 @@ AC_DEFUN([AX_LIB_POSTGRESQL],
             AC_DEFINE([HAVE_POSTGRESQL], [1],
                 [Define to 1 if PostgreSQL libraries are available])
 
-            found_postgresql="yes"
-            AC_MSG_RESULT([yes])
-        else
-            found_postgresql="no"
-            AC_MSG_RESULT([no])
+            AC_MSG_RESULT([$POSTGRESQL_LIBS])
         fi
     fi
 
     dnl
     dnl Check if required version of PostgreSQL is available
     dnl
-
 
     postgresql_version_req=ifelse([$1], [], [], [$1])
 

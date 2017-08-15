@@ -15,9 +15,9 @@ MAINTAINERCLEANFILES = configure aclocal.m4 libtool Makefile.in Makefile INSTALL
 
 moduledir = @ULIB_MODULEDIR@
 
-SUBDIRS  = include src/ulib
-if PLUGIN
-SUBDIRS += src/ulib/net/server/plugin src/ulib/orm/driver
+SUBDIRS = include src/ulib src/ulib/net/server/plugin
+if ENABLE_SHARED
+SUBDIRS += src/ulib/orm/driver
 endif
 if ENABLE_EXAMPLES
 SUBDIRS += examples

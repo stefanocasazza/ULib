@@ -1022,11 +1022,11 @@ uint32_t UVector<UString>::loadFromData(const char* ptr, uint32_t sz)
       push(str);
       }
 
-   U_INTERNAL_DUMP("ptr - _start = %lu", ptr - _start)
+   U_INTERNAL_ASSERT((uint32_t)(ptr-_start) <= sz)
 
-   U_INTERNAL_ASSERT((ptr - _start) <= sz)
+   sz = ptr-_start;
 
-   sz = ptr - _start;
+   U_INTERNAL_DUMP("ptr-_start = %u", sz)
 
    U_RETURN(sz);
 }

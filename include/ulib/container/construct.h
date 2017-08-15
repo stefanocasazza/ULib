@@ -53,7 +53,12 @@ template <class T> inline void u_destroy(const T** ptr, uint32_t n)
 
 // coverity[RESOURCE_LEAK]
 #ifndef U_COVERITY_FALSE_POSITIVE
-   for (uint32_t i = 0; i < n; ++i) delete ptr[i];
+   for (uint32_t i = 0; i < n; ++i)
+      {
+      U_INTERNAL_DUMP("ptr[%u] = %p", i, ptr[i])
+
+      delete ptr[i];
+      }
 #endif
 }
 

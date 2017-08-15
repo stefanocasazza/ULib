@@ -22,7 +22,7 @@
 # CLIENT_THRESHOLD           min number of clients to active polling
 # CLIENT_FOR_PARALLELIZATION min number of clients to active parallelization (dedicated process)
 #
-# LOAD_BALANCE_CLUSTER				list of comma separated IP address (IPADDR[/MASK]) to define the load balance cluster
+# LOAD_BALANCE_CLUSTER           list of comma separated IP address (IPADDR[/MASK]) to define the load balance cluster
 # LOAD_BALANCE_DEVICE_NETWORK    network interface name of cluster of physical server
 # LOAD_BALANCE_LOADAVG_THRESHOLD system load threshold to proxies the request on other userver on the network cluster ([0-9].[0-9])
 #
@@ -59,8 +59,8 @@
 # how to verify peer certificates. The possible values of this setting are:
 #
 # SSL_VERIFY_NONE                 - do not verify anything
-# SSL_VERIFY_PEER                 - verify the peer certificate,      if one is     presented
-# SSL_VERIFY_FAIL_IF_NO_PEER_CERT -  require a peer certificate, fail if one is not presented
+# SSL_VERIFY_PEER                 - verify the peer certificate,     if one is     presented
+# SSL_VERIFY_FAIL_IF_NO_PEER_CERT - require a peer certificate, fail if one is not presented
 #
 # SSL/TLS servers will usually set VERIFY_MODE to SSL_VERIFY_NONE
 # SSL/TLS clients will usually set VERIFY_MODE to SSL_VERIFY_FAIL_IF_NO_PEER_CERT
@@ -85,7 +85,7 @@
 # DOS_WHITE_LIST      list of comma separated IP addresses of trusted clients can be whitelisted to insure they are never denied (IPADDR[/MASK])
 # DOS_EMAIL_NOTIFY    the email address to send a message whenever an IP address becomes blacklisted
 # DOS_SYSTEM_COMMAND  the system command specified will be executed whenever an IP address becomes blacklisted. Use %v to denote the IP address of the blacklisted IP 
-# DOS_LOGFILE			 the file to write DOS event
+# DOS_LOGFILE         the file to write DOS event
 # ----------------------------------------------------------------------------------------------------------------------------------------
 
 userver {
@@ -195,8 +195,8 @@ userver {
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # PYTHON
 # ------------------------------------------------------------------------------------------------------------------------------------------------
-# PY_PROJECT_APP	   full python name of WSGI entry point expected in form <module>.<app>
-# PY_PROJECT_ROOT	   python module search root; relative to workdir
+# PY_PROJECT_APP     full python name of WSGI entry point expected in form <module>.<app>
+# PY_PROJECT_ROOT    python module search root; relative to workdir
 # PY_VIRTUALENV_PATH
 # ----------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -560,50 +560,50 @@ http {
    #               ]
 
    # Service_WAYF {
-	#
+   #
    #  URI  ^/(WAYF/?|SWITCHaai/images/.*\.gif$)
    #  HOST localhost:444
-	#
+   #
    #  METHOD_NAME GET|POST
-	#
+   #
    #  PORT   80
    #  SERVER localhost
-	#
+   #
    #  CLIENT_CERTIFICATE yes
-	#
+   #
    #  la redirect chiede di nuovo al proxy (444)...!!!
    #  FOLLOW_REDIRECTS  no
    # }
    #
    # Service_IDP {
-	#
+   #
    #  URI ^/shibboleth-idp/SSO
    #  HOST localhost:444
-	#
+   #
    #  METHOD_NAME GET
-	#
+   #
    #  PORT   80
    #  SERVER laptop
-	#
+   #
    #  FOLLOW_REDIRECTS yes
-	#
+   #
    #  In response to a HTTP_UNAUTHORISED response from the HTTP server,
    #  obtain a user and password for the scheme/realm returned from the HTTP server
-	#
+   #
    #  USER     user01
    #  PASSWORD stefano1
    # }
    #
    # Service_webmail {
-	#
+   #
    #  URI  /webmail
    #  HOST localhost
-	#
+   #
    #  METHOD_NAME GET|POST
-	#
+   #
    #  PORT   80
    #  SERVER ca.eraclito.unirel.test
-	#
+   #
    #  only if NOT manage to follow redirects
    #  REPLACE_RESPONSE [
    #                   "^Location: http:" "Location: https:"

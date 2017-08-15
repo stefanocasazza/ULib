@@ -707,8 +707,6 @@ MOD_SHIB_FALSE
 MOD_SHIB_TRUE
 GEOIP_FALSE
 GEOIP_TRUE
-PLUGIN_FALSE
-PLUGIN_TRUE
 PYTHON_FALSE
 PYTHON_TRUE
 CARES_FALSE
@@ -801,6 +799,10 @@ YFLAGS
 YACC
 USE_PARSER_FALSE
 USE_PARSER_TRUE
+ENABLE_PLUGINS_FALSE
+ENABLE_PLUGINS_TRUE
+ENABLE_SHARED_FALSE
+ENABLE_SHARED_TRUE
 ENABLE_EXAMPLES_FALSE
 ENABLE_EXAMPLES_TRUE
 POW_LIB
@@ -899,6 +901,8 @@ LINUX_FALSE
 LINUX_TRUE
 CLANG_FALSE
 CLANG_TRUE
+INTEL_FALSE
+INTEL_TRUE
 LN_S
 am__fastdepCXX_FALSE
 am__fastdepCXX_TRUE
@@ -1034,6 +1038,7 @@ enable_thread
 enable_pth
 with_ipv6
 enable_examples
+enable_plugins
 enable_memory_pool
 enable_LFS
 enable_coverage
@@ -1776,6 +1781,7 @@ Optional Features:
   --enable-thread           enable build of thread support [default=yes]
   --enable-pth              always use GNU pth for threading [default=no]
   --enable-examples         enable building of examples [default=yes]
+  --enable-plugins          enable building of plugins for userver [default=yes]
   --enable-memory-pool      enable memory pool features [default=yes]
   --enable-LFS              enable Large File Support [default=yes]
   --enable-coverage         enable coverage [default=no]
@@ -6053,7 +6059,7 @@ $as_echo_n "checking which architecture the target is... " >&6; }
 
 TARGET_ARCH=
 case $target in
-	x86_64)				TARGET_ARCH=x86_64 ;;
+	x86_64*)				TARGET_ARCH=x86_64 ;;
 	i*86)					TARGET_ARCH=i386 ;;
 	sh*)					TARGET_ARCH=sh ;;
 	mips*)				TARGET_ARCH=mips ;;
@@ -7674,6 +7680,55 @@ esac
 
 
 # clang is mostly GCC-compatible, but its version is much lower, so we have to check for it
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if compiling with Intel C++" >&5
+$as_echo_n "checking if compiling with Intel C++... " >&6; }
+
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+#ifndef __INTEL_COMPILER
+not intel
+#endif
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_cxx_try_compile "$LINENO"; then :
+  GCC_IS_INTEL=yes
+else
+  GCC_IS_INTEL=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $GCC_IS_INTEL" >&5
+$as_echo "$GCC_IS_INTEL" >&6; }
+#AC_SUBST(GCC_IS_INTEL)
+
+ if false; then
+  INTEL_TRUE=
+  INTEL_FALSE='#'
+else
+  INTEL_TRUE='#'
+  INTEL_FALSE=
+fi
+
+if test "$GCC_IS_INTEL" = "yes"; then
+ if true; then
+  INTEL_TRUE=
+  INTEL_FALSE='#'
+else
+  INTEL_TRUE='#'
+  INTEL_FALSE=
+fi
+
+gcc_version=`icc -dumpversion`
+fi
+
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking if compiling with clang" >&5
 $as_echo_n "checking if compiling with clang... " >&6; }
 
@@ -7722,6 +7777,7 @@ fi
 
 gcc_version=`clang -dumpversion`
 fi
+
 
 ULIB_LIBS=
 MODULE_LIBTOOL_OPTIONS="-shared -export-dynamic -avoid-version"
@@ -8609,7 +8665,7 @@ fi
 
 # Check for the compiler support
 gcc_major_4_1="no"
-if test "$ac_cv_c_compiler_gnu" = "yes" -a "x$GCC_IS_CLANG" = xno; then
+if test "$ac_cv_c_compiler_gnu" = "yes" -a "x$GCC_IS_CLANG" = xno -a "x$GCC_IS_INTEL" = xno; then
 	# We don't want gcc 2.7
 	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for a supported version of gcc" >&5
 $as_echo_n "checking for a supported version of gcc... " >&6; }
@@ -25915,6 +25971,7 @@ ulib_pagespeed_msg="no (--with-page-speed)"
       ulib_zip_msg="no (--enable-zip)"
      ulib_memp_msg="no (--enable-memory-pool)"
     ulib_cares_msg="no (--enable-libares)"
+	   ulib_plugins="no (--enable-plugins)"
 	  ulib_examples="no (--enable-examples)"
 #  ulib_manual_msg="no (--enable-manual)"
 
@@ -26045,12 +26102,12 @@ fi
 
 if test -z "$enable_examples" -a "$enable_shared" = "yes"; then
 	enable_examples="yes"
-	ulib_examples="enabled"
 fi
 
 if test "$enable_examples" = "yes"; then
    { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
+	ulib_examples="enabled"
 	 if true; then
   ENABLE_EXAMPLES_TRUE=
   ENABLE_EXAMPLES_FALSE='#'
@@ -26070,6 +26127,66 @@ else
   ENABLE_EXAMPLES_FALSE=
 fi
 
+fi
+
+ if false; then
+  ENABLE_SHARED_TRUE=
+  ENABLE_SHARED_FALSE='#'
+else
+  ENABLE_SHARED_TRUE='#'
+  ENABLE_SHARED_FALSE=
+fi
+
+ if false; then
+  ENABLE_PLUGINS_TRUE=
+  ENABLE_PLUGINS_FALSE='#'
+else
+  ENABLE_PLUGINS_TRUE='#'
+  ENABLE_PLUGINS_FALSE=
+fi
+
+
+if test "$enable_shared" = "yes"; then # NB: if not don't build .so object...
+	 if true; then
+  ENABLE_SHARED_TRUE=
+  ENABLE_SHARED_FALSE='#'
+else
+  ENABLE_SHARED_TRUE='#'
+  ENABLE_SHARED_FALSE=
+fi
+
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if you want to enable build of plugins" >&5
+$as_echo_n "checking if you want to enable build of plugins... " >&6; }
+	# Check whether --enable-plugins was given.
+if test "${enable_plugins+set}" = set; then :
+  enableval=$enable_plugins;
+fi
+
+
+	if test -z "$enable_plugins"; then
+      if test "$USP_FLAGS" = "-DAS_cpoll_cppsp_DO"; then
+         enable_plugins="no"
+      else
+         enable_plugins="yes"
+      fi
+   fi
+
+	if test "$enable_plugins" != "yes"; then
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+	else
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+		ulib_plugins="enabled"
+		 if true; then
+  ENABLE_PLUGINS_TRUE=
+  ENABLE_PLUGINS_FALSE='#'
+else
+  ENABLE_PLUGINS_TRUE='#'
+  ENABLE_PLUGINS_FALSE=
+fi
+
+	fi
 fi
 
 
@@ -27083,7 +27200,7 @@ $as_echo "yes" >&6; }
 			fi
 		done
 		if test x_$found_libz != x_yes; then
-			msg="Cannot find LIBZ library";
+			msg="Cannot find libz library";
 			if test $wanted = 1; then
 				as_fn_error $? "$msg" "$LINENO" 5
 			else
@@ -27221,7 +27338,7 @@ $as_echo "yes" >&6; }
 			fi
 		done
 		if test x_$found_magic != x_yes; then
-			msg="Cannot find MAGIC library"
+			msg="Cannot find libmagic library"
 			if test $wanted = 1; then
 				as_fn_error $? "$msg" "$LINENO" 5
 			else
@@ -27296,7 +27413,7 @@ $as_echo "yes" >&6; }
 			fi
 		done
 		if test x_$found_ssl != x_yes; then
-			msg="Cannot find SSL library";
+			msg="Cannot find libssl library";
 			if test $wanted = 1; then
 				as_fn_error $? "$msg" "$LINENO" 5
 			else
@@ -27378,7 +27495,7 @@ $as_echo "yes" >&6; }
 			fi
 		done
 		if test x_$found_pcre != x_yes; then
-			msg="Cannot find PCRE library";
+			msg="Cannot find libpcre library";
 			if test $wanted = 1; then
 				as_fn_error $? "$msg" "$LINENO" 5
 			else
@@ -27438,7 +27555,7 @@ $as_echo "yes" >&6; }
 			fi
 		done
 		if test x_$found_expat != x_yes; then
-			msg="Cannot find EXPAT library"
+			msg="Cannot find libexpat library"
 			if test $wanted = 1; then
 				as_fn_error $? "$msg" "$LINENO" 5
 			else
@@ -27501,7 +27618,7 @@ $as_echo "yes" >&6; }
 			fi
 		done
 		if test x_$found_libuuid != x_yes; then
-			msg="Cannot find LIBUUID library";
+			msg="Cannot find libuuid library";
 			if test $wanted = 1; then
 				as_fn_error $? "$msg" "$LINENO" 5
 			else
@@ -27569,7 +27686,7 @@ $as_echo "yes" >&6; }
 			fi
 		done
 		if test x_$found_curl != x_yes; then
-			as_fn_error $? "Cannot find cURL library" "$LINENO" 5
+			as_fn_error $? "Cannot find libcurl library" "$LINENO" 5
 		else
 			echo "${T_MD}libcurl found in $curldir${T_ME}"
 			USE_LIBCURL=yes
@@ -27689,7 +27806,7 @@ $as_echo "yes" >&6; }
 			fi
 		done
 		if test x_$found_cares != x_yes; then
-			msg="Cannot find c-ares library";
+			msg="Cannot find libcares library";
 			if test $wanted = 1; then
 				as_fn_error $? "$msg" "$LINENO" 5
 			else
@@ -27747,7 +27864,7 @@ $as_echo "yes" >&6; }
 			fi
 		done
 		if test x_$found_ssh != x_yes; then
-			as_fn_error $? "Cannot find SSH library" "$LINENO" 5
+			as_fn_error $? "Cannot find libssh library" "$LINENO" 5
 		else
 			echo "${T_MD}libssh found in $sshdir${T_ME}"
 			USE_LIBSSH=yes
@@ -27815,7 +27932,7 @@ $as_echo "yes" >&6; }
 			fi
 		done
 		if test x_$found_ldap != x_yes; then
-			as_fn_error $? "Cannot find LDAP include" "$LINENO" 5
+			as_fn_error $? "Cannot find libldap include" "$LINENO" 5
 		else
 			echo "${T_MD}libldap found in $ldapdir${T_ME}"
 			USE_LIBLDAP=yes
@@ -27868,7 +27985,7 @@ $as_echo "yes" >&6; }
 			fi
 		done
 		if test x_$found_dbi != x_yes; then
-			as_fn_error $? "Cannot find DBI library" "$LINENO" 5
+			as_fn_error $? "Cannot find libdbi library" "$LINENO" 5
 		else
 			echo "${T_MD}libdbi found in $dbidir${T_ME}"
 			USE_LIBDBI=yes
@@ -27923,7 +28040,7 @@ $as_echo "yes" >&6; }
 			fi
 		done
 		if test x_$found_libevent != x_yes; then
-			as_fn_error $? "Cannot find LIBEVENT library" "$LINENO" 5
+			as_fn_error $? "Cannot find libevent library" "$LINENO" 5
 		else
 			echo "${T_MD}libevent found in $libeventdir${T_ME}"
 			USE_LIBEVENT=yes
@@ -27973,7 +28090,7 @@ $as_echo "yes" >&6; }
 			fi
 		done
 		if test x_$found_libxml2 != x_yes; then
-			as_fn_error $? "Cannot find LIBXML2 library" "$LINENO" 5
+			as_fn_error $? "Cannot find libxml2 library" "$LINENO" 5
 		else
 			echo "${T_MD}libxml2 found in $libxml2dir${T_ME}"
 			USE_LIBXML2=yes
@@ -28354,10 +28471,8 @@ fi
 
 	if test "$ac_mysql_incdir" = "no"; then
 		MYSQL_INCLUDE=`mysql_config --include`
-		libmysql_version=$(grep LIBMYSQL_VERSION     /usr/include/mysql/mysql_version.h 2>/dev/null | head -n1 | cut -d'"' -f2)
 	else
 		MYSQL_INCLUDE=$ac_mysql_incdir
-		libmysql_version=$(grep LIBMYSQL_VERSION $ac_mysql_incdir/mysql/mysql_version.h 2>/dev/null | head -n1 | cut -d'"' -f2)
 	fi
 	if test "$ac_mysql_libdir" = "no"; then
 	   	if test "$ac_mysql_threadsafe" = "YES"; then
@@ -28366,7 +28481,7 @@ fi
 			MYSQL_LIBS="`mysql_config --libs`"
 		fi
 	else
-	   	if test "$ac_mysql_threadsafe" = "YES"; then
+	  	if test "$ac_mysql_threadsafe" = "YES"; then
 			MYSQL_LIBS="-L$ac_mysql_libdir -lmysqlclient_r"
 		else
 			MYSQL_LIBS="-L$ac_mysql_libdir -lmysqlclient"
@@ -28376,6 +28491,8 @@ fi
 	USE_MYSQL=yes
 
 $as_echo "#define USE_MYSQL 1" >>confdefs.h
+
+	libmysql_version=`mysql_config --version`
 
 	if test -z "${libmysql_version}"; then
 		libmysql_version="unknown"
@@ -28405,6 +28522,9 @@ fi
 fi
 
 
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for PostgreSQL support" >&5
+$as_echo_n "checking for PostgreSQL support... " >&6; }
+
 
 # Check whether --with-pgsql was given.
 if test "${with_pgsql+set}" = set; then :
@@ -28430,9 +28550,14 @@ fi
     POSTGRESQL_VERSION=""
 
 
-    if test "$want_postgresql" = "yes"; then
+    if test "$want_postgresql" != "yes"; then
+		  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+	 else
+		  { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
 
-        if test -z "$PG_CONFIG" -o test; then
+        if test -z "$PG_CONFIG"; then
             # Extract the first word of "pg_config", so it can be a program name with args.
 set dummy pg_config; ac_word=$2
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
@@ -28476,14 +28601,12 @@ fi
         fi
 
         if test ! -x "$PG_CONFIG"; then
-            as_fn_error $? "$PG_CONFIG does not exist or it is not an executable file" "$LINENO" 5
-            PG_CONFIG="no"
             found_postgresql="no"
-        fi
-
-        if test "$PG_CONFIG" != "no"; then
-            { $as_echo "$as_me:${as_lineno-$LINENO}: checking for PostgreSQL libraries" >&5
-$as_echo_n "checking for PostgreSQL libraries... " >&6; }
+            as_fn_error $? "$PG_CONFIG does not exist or it is not an executable file" "$LINENO" 5
+		  else
+            found_postgresql="yes"
+            { $as_echo "$as_me:${as_lineno-$LINENO}: checking for PostgreSQL client libraries" >&5
+$as_echo_n "checking for PostgreSQL client libraries... " >&6; }
 
             postgresql_libdir=`$PG_CONFIG --libdir`
 
@@ -28491,7 +28614,7 @@ $as_echo_n "checking for PostgreSQL libraries... " >&6; }
             POSTGRESQL_CPPFLAGS="-I`$PG_CONFIG --includedir` -I`$PG_CONFIG --includedir-server`"
             POSTGRESQL_VERSION=`$PG_CONFIG --version | sed -e 's#PostgreSQL ##'`
 
-				if test -f "$postgresql_libdir/libpgport.a"; then
+				if test -f "$postgresql_libdir/libpgport.a" -o -f "$postgresql_libdir/libpgport.so"; then
 					POSTGRESQL_LIBS="-lpq -lpgport"
 				else
 					POSTGRESQL_LIBS="-lpq"
@@ -28501,16 +28624,10 @@ $as_echo_n "checking for PostgreSQL libraries... " >&6; }
 $as_echo "#define HAVE_POSTGRESQL 1" >>confdefs.h
 
 
-            found_postgresql="yes"
-            { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
-        else
-            found_postgresql="no"
-            { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
+            { $as_echo "$as_me:${as_lineno-$LINENO}: result: $POSTGRESQL_LIBS" >&5
+$as_echo "$POSTGRESQL_LIBS" >&6; }
         fi
     fi
-
 
 
     postgresql_version_req=
@@ -31399,17 +31516,6 @@ fi
 
 # SECTION 14: Checks for aggregated features
 
-# UServer plugin
-
- if test "$enable_shared"	= "yes"; then
-  PLUGIN_TRUE=
-  PLUGIN_FALSE='#'
-else
-  PLUGIN_TRUE='#'
-  PLUGIN_FALSE=
-fi
- # NB: if not don't build .so object...
-
 modules="rpc shib stream nocat socket scgi fcgi geoip proxy soap ssi tsa http echo"
 
 if test "$USE_LIBPCRE" = "yes"; then
@@ -32114,29 +32220,35 @@ CXXFLAGS="$CXXFLAGS -fno-exceptions -fno-rtti"
 
 # If gcc compiler add values to *FLAGS...
 
-if test "$ac_cv_c_compiler_gnu" = "yes" -a "x$GCC_IS_CLANG" = xno -a "x$OPERATINGSYSTEM" = xlinux; then
+if test "$ac_cv_c_compiler_gnu" = "yes" -a "x$OPERATINGSYSTEM" = xlinux; then
 
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: " >&5
 $as_echo "" >&6; }
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: ${T_MD}Checking for gcc compiler flags:${T_ME}" >&5
-$as_echo "${T_MD}Checking for gcc compiler flags:${T_ME}" >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: ${T_MD}Checking for $CC compiler flags:${T_ME}" >&5
+$as_echo "${T_MD}Checking for $CC compiler flags:${T_ME}" >&6; }
 
 
-	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether to use libgcc" >&5
+	  if test "x$GCC_IS_INTEL" = xyes; then
+		MAYBE_FLAGS="-fno-check-new -fno-stack-protector -fno-stack-protector-all -Ofast -march=native -mtune=native"
+	elif test "x$GCC_IS_CLANG" = xyes; then
+		MAYBE_FLAGS="-fno-check-new -fno-stack-protector -fno-stack-protector-all -Ofast -march=native -mtune=native \
+						 -ffast-math -ftree-vectorize -fno-crossjumping -fpartial-inlining"
+	else
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether to use libgcc" >&5
 $as_echo_n "checking whether to use libgcc... " >&6; }
-	# Check whether --enable-libgcc was given.
+		# Check whether --enable-libgcc was given.
 if test "${enable_libgcc+set}" = set; then :
   enableval=$enable_libgcc;  case "$enableval" in
-		  yes)
-			 LIBS="-lgcc $LIBS"
-			 { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+			  yes)
+				 LIBS="-lgcc $LIBS"
+				 { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
-			 ;;
-		  *) { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+				 ;;
+			  *) { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
-			 ;;
-		  esac
+				 ;;
+			  esac
 else
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
@@ -32144,112 +32256,87 @@ $as_echo "no" >&6; }
 fi
 
 
-		{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether $CC supports " >&5
-$as_echo_n "checking whether $CC supports ... " >&6; }
+		MAYBE_FLAGS="-Wstrict-aliasing=2 -Wall -Wextra -Wsign-compare -Wpointer-arith -Wwrite-strings \
+						 -Wmissing-declarations -Wpacked -Wswitch-enum -Wmissing-format-attribute -Winit-self -Wformat \
+						 -Wformat-extra-args -Wenum-compare -Wlogical-not-parentheses -Wsizeof-array-argument -Wbool-compare"
 
-	_save_cppflags="$CPPFLAGS"
-	CPPFLAGS="$CPPFLAGS -Werror "
-	cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
+		# -------------------------------------------------------------------------------------
+		# to turn various gcc/glibc-specific preprocessor checks
+		# -------------------------------------------------------------------------------------
+		# -Wno-format -Wno-format-extra-args
+		# -Wsuggest-final-methods -Wsuggest-final-types
+		# -------------------------------------------------------------------------------------
+		# -Wcast-qual
+		# -------------------------------------------------------------------------------------
 
-_ACEOF
-if ac_fn_cxx_try_compile "$LINENO"; then :
-  ulib_cc_flag=yes
-else
-  ulib_cc_flag=no
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-	CPPFLAGS="$_save_cppflags"
+		 CC_MAYBE_FLAGS="-Werror-implicit-function-declaration -Wstrict-prototypes -Wc++-compat \
+							  -Wmissing-prototypes -Wnested-externs -Wdeclaration-after-statement -Wold-style-definition -Wsizeof-pointer-memaccess"
+		CXX_MAYBE_FLAGS="-fno-check-new -fno-enforce-eh-specs -Wno-deprecated -Wdelete-non-virtual-dtor -Wodr"
 
-	if test "x$ulib_cc_flag" = "xyes"; then
-		:
-	else
-		:
-	fi
-	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ulib_cc_flag" >&5
-$as_echo "$ulib_cc_flag" >&6; }
+			 MAYBE_FLAGS_MODERN=""
+		CXX_MAYBE_FLAGS_MODERN=""
 
+		case "$gcc_version" in
+			2*|3*|4.0*|4.1*|4.2*)
+			;;
+			4.3*) # openWRT backfire: ... c++/4.3.3/tr1_impl/boost_shared_ptr.h:630: error: cannot use typeid with -fno-rtti
+			;;
+			4.4*) # centOS 64: ... c++/4.4.7/bits/shared_ptr.h:1005: error: cannot use typeid with -fno-rtti
+			;;
+			4.5*) # openwrt: SIGSEGV
+			;;
+			4.6*|4.7*|4.8*|4.9*|5*)
+				 MAYBE_FLAGS_MODERN="-Wno-unused-result -Wshadow -Wsuggest-attribute=pure -Wsuggest-attribute=noreturn" # -Wsuggest-attribute=const
+			;;
+			6.1.0|*)
+				 MAYBE_FLAGS_MODERN="-Wno-unused-result -Wshadow -Wsuggest-attribute=pure -Wsuggest-attribute=noreturn \
+											-Wlogical-op -Wduplicated-cond -Wtautological-compare -Wswitch-bool -Wshift-negative-value \
+											-Wshift-overflow -Wshift-overflow=2 -Wnull-dereference -Wnonnull"
+			CXX_MAYBE_FLAGS_MODERN="-Wterminate -Wlto-type-mismatch -Wsubobject-linkage -Wplacement-new -Woverride-init-side-effects \
+											-Wvirtual-inheritance -Wnamespaces" # -Wnamespaces -Wtemplates -Wmultiple-inheritance
+			;;
+		esac
 
-	MAYBE_FLAGS="-Wstrict-aliasing=2 -Wall -Wextra -Wsign-compare -Wpointer-arith -Wwrite-strings \
-					 -Wmissing-declarations -Wpacked -Wswitch-enum -Wmissing-format-attribute -Winit-self -Wformat \
-					 -Wformat-extra-args -Wenum-compare -Wlogical-not-parentheses -Wsizeof-array-argument -Wbool-compare"
+			 MAYBE_FLAGS="    $MAYBE_FLAGS     $MAYBE_FLAGS_MODERN"
+		CXX_MAYBE_FLAGS="$CXX_MAYBE_FLAGS $CXX_MAYBE_FLAGS_MODERN"
 
-	# -------------------------------------------------------------------------------------
-	# to turn various gcc/glibc-specific preprocessor checks
-	# -------------------------------------------------------------------------------------
-	# -Wno-format -Wno-format-extra-args
-	# -Wsuggest-final-methods -Wsuggest-final-types
-	# -------------------------------------------------------------------------------------
-	# -Wcast-qual
-	# -------------------------------------------------------------------------------------
+		if test "$enable_gcc_optimized" = "yes" -a "$enable_coverage" != "yes"; then
+			## ----------------------------------------------------------------------------------------------------------------------------------
+			## -fgcse Perform a global common subexpression elimination pass. This pass also performs global constant and copy propagation. When
+			##			 compiling a program using computed gotos, a GCC extension, you may get better runtime performance if you disable the global
+			##			 common subexpression elimination pass by adding -fno-gcse to the command line
+			## ----------------------------------------------------------------------------------------------------------------------------------
+			## -ffunction-sections -fdata-sections
+			## ----------------------------------------------------------------------------------------------------------------------------------
+			MAYBE_FLAGS="$MAYBE_FLAGS -fno-stack-protector -fno-stack-protector-all -ffast-math -ftree-vectorize -fno-crossjumping -fno-gcse -fpartial-inlining -Ofast"
 
-	 CC_MAYBE_FLAGS="-Werror-implicit-function-declaration -Wstrict-prototypes -Wc++-compat \
-						  -Wmissing-prototypes -Wnested-externs -Wdeclaration-after-statement -Wold-style-definition -Wsizeof-pointer-memaccess"
-	CXX_MAYBE_FLAGS="-fno-check-new -fno-enforce-eh-specs -Wno-deprecated -Wdelete-non-virtual-dtor -Wodr"
+			if test "$use_distcc" != "yes" -a "$cross_compiling" != "yes"; then
+				MAYBE_FLAGS="$MAYBE_FLAGS -flto -ffat-lto-objects -fuse-linker-plugin -march=native -mtune=native" # NB: distcc don't work with this...
+			fi
+		fi
 
-		 MAYBE_FLAGS_MODERN=""
-	CXX_MAYBE_FLAGS_MODERN=""
+		## -------------------------------------------------------------------------------------
+		##	-fno-common
+		## -Wno-missing-field-initializers -Wno-attributes -Wno-long-long
+		## -------------------------------------------------------------------------------------
+		##	-fwhole-program
+		## -------------------------------------------------------------------------------------
+		## Assume that the current compilation unit represents the whole program being compiled.
+		## All public functions and variables with the exception of main and those merged by attribute
+		## externally_visible become static functions
+		## -------------------------------------------------------------------------------------
 
-	case "$gcc_version" in
-		2*|3*|4.0*|4.1*|4.2*)
-		;;
-		4.3*) # openWRT backfire: ... c++/4.3.3/tr1_impl/boost_shared_ptr.h:630: error: cannot use typeid with -fno-rtti
-		;;
-		4.4*) # centOS 64: ... c++/4.4.7/bits/shared_ptr.h:1005: error: cannot use typeid with -fno-rtti
-		;;
-		4.5*) # openwrt: SIGSEGV
-		;;
-		4.6*|4.7*|4.8*|4.9*|5*)
-			 MAYBE_FLAGS_MODERN="-Wno-unused-result -Wshadow -Wsuggest-attribute=pure -Wsuggest-attribute=noreturn" # -Wsuggest-attribute=const
-		;;
-		6.1.0|*)
-			 MAYBE_FLAGS_MODERN="-Wno-unused-result -Wshadow -Wsuggest-attribute=pure -Wsuggest-attribute=noreturn \
-									   -Wlogical-op -Wduplicated-cond -Wtautological-compare -Wswitch-bool -Wshift-negative-value \
-									   -Wshift-overflow -Wshift-overflow=2 -Wnull-dereference -Wnonnull"
-		CXX_MAYBE_FLAGS_MODERN="-Wterminate -Wlto-type-mismatch -Wsubobject-linkage -Wplacement-new -Woverride-init-side-effects \
-										-Wvirtual-inheritance -Wnamespaces" # -Wnamespaces -Wtemplates -Wmultiple-inheritance
-		;;
-	esac
-
-		 MAYBE_FLAGS="    $MAYBE_FLAGS     $MAYBE_FLAGS_MODERN"
-	CXX_MAYBE_FLAGS="$CXX_MAYBE_FLAGS $CXX_MAYBE_FLAGS_MODERN"
-
-	if test "$enable_gcc_optimized" = "yes" -a "$enable_coverage" != "yes"; then
-		## ----------------------------------------------------------------------------------------------------------------------------------
-		## -fgcse Perform a global common subexpression elimination pass. This pass also performs global constant and copy propagation. When
-		##			 compiling a program using computed gotos, a GCC extension, you may get better runtime performance if you disable the global
-		##			 common subexpression elimination pass by adding -fno-gcse to the command line
-		## ----------------------------------------------------------------------------------------------------------------------------------
-		## -ffunction-sections -fdata-sections
-		## ----------------------------------------------------------------------------------------------------------------------------------
-		MAYBE_FLAGS="$MAYBE_FLAGS -fno-stack-protector -fno-stack-protector-all -ffast-math -ftree-vectorize -fno-crossjumping -fno-gcse -fpartial-inlining -Ofast"
-
-		if test "$use_distcc" != "yes" -a "$cross_compiling" != "yes"; then
-			MAYBE_FLAGS="$MAYBE_FLAGS -flto -ffat-lto-objects -fuse-linker-plugin -march=native -mtune=native" # NB: distcc don't work with this...
+		if test "$enable_debug" != "yes"; then
+			MAYBE_FLAGS="$MAYBE_FLAGS -Winline -Wno-unused-parameter -Wno-unused-variable"
+		else
+			## _FORTIFY_SOURCE is enabled by default from g++ 4.7.2
+			MAYBE_FLAGS="$MAYBE_FLAGS -Wunsafe-loop-optimizations -Wno-unused-parameter -rdynamic -fdiagnostics-color=auto -Wmisleading-indentation"
+			CXX_MAYBE_FLAGS="$CXX_MAYBE_FLAGS -Wc++11-compat -Wzero-as-null-pointer-constant -Wno-implicit-fallthrough"
 		fi
 	fi
 
-	## -------------------------------------------------------------------------------------
-	##	-fno-common
-	## -Wno-missing-field-initializers -Wno-attributes -Wno-long-long
-	## -------------------------------------------------------------------------------------
-	##	-fwhole-program
-	## -------------------------------------------------------------------------------------
-	## Assume that the current compilation unit represents the whole program being compiled.
-	## All public functions and variables with the exception of main and those merged by attribute
-	## externally_visible become static functions
-	## -------------------------------------------------------------------------------------
-
-	if test "$enable_debug" != "yes"; then
-		MAYBE_FLAGS="$MAYBE_FLAGS -Winline -Wno-unused-parameter -Wno-unused-variable"
-	else
-		## _FORTIFY_SOURCE is enabled by default from g++ 4.7.2
-		MAYBE_FLAGS="$MAYBE_FLAGS -Wunsafe-loop-optimizations -Wno-unused-parameter -rdynamic -fdiagnostics-color=auto -Wmisleading-indentation"
-		CXX_MAYBE_FLAGS="$CXX_MAYBE_FLAGS -Wc++11-compat -Wzero-as-null-pointer-constant -Wno-implicit-fallthrough"
-	fi
-
-	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for gcc supported flags" >&5
-$as_echo_n "checking for gcc supported flags... " >&6; }
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $CC supported flags" >&5
+$as_echo_n "checking for $CC supported flags... " >&6; }
 if ${ulib_cv_flags+:} false; then :
   $as_echo_n "(cached) " >&6
 else
@@ -32376,8 +32463,8 @@ $as_echo "$ulib_cc_flag" >&6; }
 		ulib_cv_CXX_flags=$CXX_FLAGS
 		# ------------------------------------------------
 
-		{ $as_echo "$as_me:${as_lineno-$LINENO}: checking which gcc flags were supported" >&5
-$as_echo_n "checking which gcc flags were supported... " >&6; }
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: checking which $CC flags were supported" >&5
+$as_echo_n "checking which $CC flags were supported... " >&6; }
 
 fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ulib_cv_flags" >&5
@@ -32387,36 +32474,37 @@ $as_echo "$ulib_cv_flags" >&6; }
 	SANITIZE_THREAD=""
 	SANITIZE_ADDRESS=""
 
-	case "$gcc_version" in
-		2.9*|3*|4.0*|4.1*|4.2*|4.3*|4.4*|4.5*|4.6*|4.7*|4.8*)
-		;;
-		*)
-		## -------------------------------------------------------------------------------------------------------------------------
-		## FATAL: ThreadSanitizer can not mmap the shadow memory (something is mapped at 0x400000 < 0x7cf000000000)
-		## echo 2 >/proc/sys/kernel/randomize_va_space
-		## This may be fixed in future kernels, see https://bugzilla.kernel.org/show_bug.cgi?id=66721
-		## -------------------------------------------------------------------------------------------------------------------------
-		##	if test "$enable_debug" = "yes"; then
-		##		AC_CC_TRY_FLAG(["-fsanitize=thread"], [SANITIZE_THREAD="-fsanitize=thread"])
-		##		if test "$SANITIZE_THREAD" != ""; then
-      ##			ULIB_LIBS="$ULIB_LIBS -ltsan"
-		##			SANITIZE_FLAGS="-fPIE -pie"
-		##		fi
-		## -------------------------------------------------------------------------------------------------------------------------
-	   ##		AC_CC_TRY_FLAG(["-fsanitize=address"], [SANITIZE_ADDRESS="-fsanitize=address"])
-		##		if test "$SANITIZE_ADDRESS" != ""; then
-      ##			ULIB_LIBS="$ULIB_LIBS -lasan"
-		##			SANITIZE_FLAGS="-fPIE -pie"
-		##		fi
-		##	fi
-		## -------------------------------------------------------------------------------------------------------------------------
+	if test "x$GCC_IS_CLANG" = xno -a "x$GCC_IS_INTEL" = xno; then
+		case "$gcc_version" in
+			2.9*|3*|4.0*|4.1*|4.2*|4.3*|4.4*|4.5*|4.6*|4.7*|4.8*)
+			;;
+			*)
+			## -------------------------------------------------------------------------------------------------------------------------
+			## FATAL: ThreadSanitizer can not mmap the shadow memory (something is mapped at 0x400000 < 0x7cf000000000)
+			## echo 2 >/proc/sys/kernel/randomize_va_space
+			## This may be fixed in future kernels, see https://bugzilla.kernel.org/show_bug.cgi?id=66721
+			## -------------------------------------------------------------------------------------------------------------------------
+			##	if test "$enable_debug" = "yes"; then
+			##		AC_CC_TRY_FLAG(["-fsanitize=thread"], [SANITIZE_THREAD="-fsanitize=thread"])
+			##		if test "$SANITIZE_THREAD" != ""; then
+			##			ULIB_LIBS="$ULIB_LIBS -ltsan"
+			##			SANITIZE_FLAGS="-fPIE -pie"
+			##		fi
+			## -------------------------------------------------------------------------------------------------------------------------
+			##		AC_CC_TRY_FLAG(["-fsanitize=address"], [SANITIZE_ADDRESS="-fsanitize=address"])
+			##		if test "$SANITIZE_ADDRESS" != ""; then
+			##			ULIB_LIBS="$ULIB_LIBS -lasan"
+			##			SANITIZE_FLAGS="-fPIE -pie"
+			##		fi
+			##	fi
+			## -------------------------------------------------------------------------------------------------------------------------
 
-		{ $as_echo "$as_me:${as_lineno-$LINENO}: checking sanitize support request" >&5
+			{ $as_echo "$as_me:${as_lineno-$LINENO}: checking sanitize support request" >&5
 $as_echo_n "checking sanitize support request... " >&6; }
-		if echo $CPPFLAGS | grep fsanitize >/dev/null; then
-			{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+			if echo $CPPFLAGS | grep fsanitize >/dev/null; then
+				{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
-			 if true; then
+				 if true; then
   SANITIZE_TRUE=
   SANITIZE_FALSE='#'
 else
@@ -32424,18 +32512,18 @@ else
   SANITIZE_FALSE=
 fi
 
-		else
-			{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+			else
+				{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
-		fi
+			fi
 
-		# When using a linker plugin, compiling with the -flto option now generates slim object files (.o) which only contain intermediate
-		# language representation for LTO. Use -ffat-lto-objects to create files which contain additionally the object code. To generate
-		# static libraries suitable for LTO processing, use gcc-ar and gcc-ranlib; to list symbols from a slim object file use gcc-nm.
-		# (This requires that ar, ranlib and nm have been compiled with plugin support)
+			# When using a linker plugin, compiling with the -flto option now generates slim object files (.o) which only contain intermediate
+			# language representation for LTO. Use -ffat-lto-objects to create files which contain additionally the object code. To generate
+			# static libraries suitable for LTO processing, use gcc-ar and gcc-ranlib; to list symbols from a slim object file use gcc-nm.
+			# (This requires that ar, ranlib and nm have been compiled with plugin support)
 
-		if test "$cross_compiling" != "yes"; then
-			# Extract the first word of "gcc-ar", so it can be a program name with args.
+			if test "$cross_compiling" != "yes"; then
+				# Extract the first word of "gcc-ar", so it can be a program name with args.
 set dummy gcc-ar; ac_word=$2
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
 $as_echo_n "checking for $ac_word... " >&6; }
@@ -32476,14 +32564,15 @@ $as_echo "no" >&6; }
 fi
 
 
-			if test "$GCC_AR" != "no"; then
-				AR=gcc-ar
-				NM=gcc-nm
-				RANLIB=gcc-ranlib
+				if test "$GCC_AR" != "no"; then
+					AR=gcc-ar
+					NM=gcc-nm
+					RANLIB=gcc-ranlib
+				fi
 			fi
-		fi
-		;;
-	esac
+			;;
+		esac
+	fi
 
 	CFLAGS="$CFLAGS $ulib_cv_CC_flags"
 	CXXFLAGS="$CXXFLAGS $ulib_cv_CXX_flags"
@@ -32945,7 +33034,7 @@ if test "x$ac_cv_crc32_intrinsics" = xyes; then
 fi
 ##########################
 
-if test "$ac_cv_c_compiler_gnu" = "yes" -a "x$GCC_IS_CLANG" = xno; then
+if test "$ac_cv_c_compiler_gnu" = "yes" -a "x$GCC_IS_CLANG" = xno -a "x$GCC_IS_INTEL" = xno; then
 	if test "$enable_static" = "yes" -a "$enable_shared" = "no" -a "$enable_stdcpp" = "yes"; then
 
 ##		if test -f "$gcc_dir/libstdc++.a"; then
@@ -33314,7 +33403,8 @@ ULIB_SYSCONFDIR="$u_sysconfdir"
   RUBY language support: ${ulib_ruby_msg}
 PYTHON language support: ${ulib_python_msg}
 
-       Examples:         ${ulib_examples}
+                Plugins: ${ulib_plugins}
+               Examples: ${ulib_examples}
        LEX/YACC support: ${ulib_parser_msg}
        Lexical analyzer: ${LEX} ( ${flex_version} )
        Parser generator: ${YACC} ( ${bison_version} )
@@ -33375,7 +33465,8 @@ $as_echo "$as_me: Configured to build src/ulib/lib${ULIB}:
   RUBY language support: ${ulib_ruby_msg}
 PYTHON language support: ${ulib_python_msg}
 
-       Examples:         ${ulib_examples}
+                Plugins: ${ulib_plugins}
+               Examples: ${ulib_examples}
        LEX/YACC support: ${ulib_parser_msg}
        Lexical analyzer: ${LEX} ( ${flex_version} )
        Parser generator: ${YACC} ( ${bison_version} )
@@ -33544,6 +33635,14 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${am__fastdepCC_TRUE}" && test -z "${am__fastdepCC_FALSE}"; then
   as_fn_error $? "conditional \"am__fastdepCC\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${INTEL_TRUE}" && test -z "${INTEL_FALSE}"; then
+  as_fn_error $? "conditional \"INTEL\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${INTEL_TRUE}" && test -z "${INTEL_FALSE}"; then
+  as_fn_error $? "conditional \"INTEL\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${CLANG_TRUE}" && test -z "${CLANG_FALSE}"; then
@@ -33982,6 +34081,22 @@ if test -z "${ENABLE_EXAMPLES_TRUE}" && test -z "${ENABLE_EXAMPLES_FALSE}"; then
   as_fn_error $? "conditional \"ENABLE_EXAMPLES\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
+if test -z "${ENABLE_SHARED_TRUE}" && test -z "${ENABLE_SHARED_FALSE}"; then
+  as_fn_error $? "conditional \"ENABLE_SHARED\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${ENABLE_PLUGINS_TRUE}" && test -z "${ENABLE_PLUGINS_FALSE}"; then
+  as_fn_error $? "conditional \"ENABLE_PLUGINS\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${ENABLE_SHARED_TRUE}" && test -z "${ENABLE_SHARED_FALSE}"; then
+  as_fn_error $? "conditional \"ENABLE_SHARED\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${ENABLE_PLUGINS_TRUE}" && test -z "${ENABLE_PLUGINS_FALSE}"; then
+  as_fn_error $? "conditional \"ENABLE_PLUGINS\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
 if test -z "${USE_PARSER_TRUE}" && test -z "${USE_PARSER_FALSE}"; then
   as_fn_error $? "conditional \"USE_PARSER\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
@@ -34112,10 +34227,6 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${PYTHON_TRUE}" && test -z "${PYTHON_FALSE}"; then
   as_fn_error $? "conditional \"PYTHON\" was never defined.
-Usually this means the macro was only invoked conditionally." "$LINENO" 5
-fi
-if test -z "${PLUGIN_TRUE}" && test -z "${PLUGIN_FALSE}"; then
-  as_fn_error $? "conditional \"PLUGIN\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${GEOIP_TRUE}" && test -z "${GEOIP_FALSE}"; then

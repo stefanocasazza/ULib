@@ -80,33 +80,6 @@
 #  endif
 #endif
 
-#ifdef __clang__
-#  ifdef  NULL
-#  undef  NULL
-#  endif
-#  define NULL 0
-#  include <wchar.h>
-#  ifdef ENABLE_THREAD
-/*typedef pthread_t        __gthread_t;*/
-/*typedef pthread_key_t    __gthread_key_t;*/
-/*typedef pthread_once_t   __gthread_once_t;*/
-  typedef pthread_mutex_t  __gthread_mutex_t;
-/*typedef pthread_mutex_t  __gthread_recursive_mutex_t;*/
-/*typedef pthread_cond_t   __gthread_cond_t;*/
-/*typedef struct timespec  __gthread_time_t;*/
-#  endif
-#  define U_DO_PRAGMA(x)
-#  define U_DUMP_KERNEL_VERSION(x)
-#  define CLANG_VERSION_NUM (__clang_major__  * 10000 + \
-                             __clang_minor__  *   100)
-#elif defined(U_CSP_INTERFACE)
-#  define U_DO_PRAGMA(x)
-#  define U_DUMP_KERNEL_VERSION(x)
-#else
-#  define U_DO_PRAGMA(x) _Pragma (#x)
-#  define U_DUMP_KERNEL_VERSION(x) U_DO_PRAGMA(message (#x " = " U_STRINGIFY(x)))
-#endif
-
 /* Checks define */
 
 #ifdef USE_LOAD_BALANCE

@@ -737,7 +737,7 @@ static inline uint64_t u_getValue(uint16_t tag, void* payload)
    U_INTERNAL_TRACE("u_getValue(%hu,%p)", tag, payload)
 
 #ifndef HAVE_ARCH64
-   return ((uint64_t)tag << 32) | u_getPayload((uint64_t)payload);
+   return ((uint64_t)tag << 32) | u_getPayload((uint64_t)(long)payload);
 #else
    U_INTERNAL_ASSERT(payload <= (void*)U_VALUE_PAYLOAD_MASK)
 
@@ -747,7 +747,7 @@ static inline uint64_t u_getValue(uint16_t tag, void* payload)
 #endif
 }
 
-static inline void u_setTag(uint16_t tag, uint64_t* pval) { uint64_t payload = u_getPayload(*pval); *pval = u_getValue(tag, (void*)payload); }
+static inline void u_setTag(uint16_t tag, uint64_t* pval) { uint64_t payload = u_getPayload(*pval); *pval = u_getValue(tag, (void*)(long)payload); }
 
 #ifdef __cplusplus
 }

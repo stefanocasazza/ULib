@@ -26,7 +26,7 @@ AC_DEFUN([AC_CHECK_PACKAGE],[
 			fi
 		done
 		if test x_$found_libz != x_yes; then
-			msg="Cannot find LIBZ library";
+			msg="Cannot find libz library";
 			if test $wanted = 1; then
 				AC_MSG_ERROR($msg)
 			else
@@ -131,7 +131,7 @@ AC_DEFUN([AC_CHECK_PACKAGE],[
 			fi
 		done
 		if test x_$found_magic != x_yes; then
-			msg="Cannot find MAGIC library"
+			msg="Cannot find libmagic library"
 			if test $wanted = 1; then
 				AC_MSG_ERROR($msg)
 			else
@@ -189,7 +189,7 @@ AC_DEFUN([AC_CHECK_PACKAGE],[
 			fi
 		done
 		if test x_$found_ssl != x_yes; then
-			msg="Cannot find SSL library";
+			msg="Cannot find libssl library";
 			if test $wanted = 1; then
 				AC_MSG_ERROR($msg)
 			else
@@ -256,7 +256,7 @@ AC_DEFUN([AC_CHECK_PACKAGE],[
 			fi
 		done
 		if test x_$found_pcre != x_yes; then
-			msg="Cannot find PCRE library";
+			msg="Cannot find libpcre library";
 			if test $wanted = 1; then
 				AC_MSG_ERROR($msg)
 			else
@@ -303,7 +303,7 @@ AC_DEFUN([AC_CHECK_PACKAGE],[
 			fi
 		done
 		if test x_$found_expat != x_yes; then
-			msg="Cannot find EXPAT library"
+			msg="Cannot find libexpat library"
 			if test $wanted = 1; then
 				AC_MSG_ERROR($msg)
 			else
@@ -353,7 +353,7 @@ AC_DEFUN([AC_CHECK_PACKAGE],[
 			fi
 		done
 		if test x_$found_libuuid != x_yes; then
-			msg="Cannot find LIBUUID library";
+			msg="Cannot find libuuid library";
 			if test $wanted = 1; then
 				AC_MSG_ERROR($msg)
 			else
@@ -405,7 +405,7 @@ AC_DEFUN([AC_CHECK_PACKAGE],[
 			fi
 		done
 		if test x_$found_curl != x_yes; then
-			AC_MSG_ERROR(Cannot find cURL library)
+			AC_MSG_ERROR(Cannot find libcurl library)
 		else
 			echo "${T_MD}libcurl found in $curldir${T_ME}"
 			USE_LIBCURL=yes
@@ -498,7 +498,7 @@ AC_DEFUN([AC_CHECK_PACKAGE],[
 			fi
 		done
 		if test x_$found_cares != x_yes; then
-			msg="Cannot find c-ares library";
+			msg="Cannot find libcares library";
 			if test $wanted = 1; then
 				AC_MSG_ERROR($msg)
 			else
@@ -543,7 +543,7 @@ AC_DEFUN([AC_CHECK_PACKAGE],[
 			fi
 		done
 		if test x_$found_ssh != x_yes; then
-			AC_MSG_ERROR(Cannot find SSH library)
+			AC_MSG_ERROR(Cannot find libssh library)
 		else
 			echo "${T_MD}libssh found in $sshdir${T_ME}"
 			USE_LIBSSH=yes
@@ -600,7 +600,7 @@ dnl		libssh_version=$(grep LIBSFTP_VERSION $sshdir/include/libssh/sftp.h | cut -
 			fi
 		done
 		if test x_$found_ldap != x_yes; then
-			AC_MSG_ERROR(Cannot find LDAP include)
+			AC_MSG_ERROR(Cannot find libldap include)
 		else
 			echo "${T_MD}libldap found in $ldapdir${T_ME}"
 			USE_LIBLDAP=yes
@@ -643,7 +643,7 @@ dnl		ldap_version=$(ldapsearch -VV 2>&1 | tail -n1 | cut -d':' -f2 | cut -d')' -
 			fi
 		done
 		if test x_$found_dbi != x_yes; then
-			AC_MSG_ERROR(Cannot find DBI library)
+			AC_MSG_ERROR(Cannot find libdbi library)
 		else
 			echo "${T_MD}libdbi found in $dbidir${T_ME}"
 			USE_LIBDBI=yes
@@ -686,7 +686,7 @@ dnl		ldap_version=$(ldapsearch -VV 2>&1 | tail -n1 | cut -d':' -f2 | cut -d')' -
 			fi
 		done
 		if test x_$found_libevent != x_yes; then
-			AC_MSG_ERROR(Cannot find LIBEVENT library)
+			AC_MSG_ERROR(Cannot find libevent library)
 		else
 			echo "${T_MD}libevent found in $libeventdir${T_ME}"
 			USE_LIBEVENT=yes
@@ -724,7 +724,7 @@ dnl		ldap_version=$(ldapsearch -VV 2>&1 | tail -n1 | cut -d':' -f2 | cut -d')' -
 			fi
 		done
 		if test x_$found_libxml2 != x_yes; then
-			AC_MSG_ERROR(Cannot find LIBXML2 library)
+			AC_MSG_ERROR(Cannot find libxml2 library)
 		else
 			echo "${T_MD}libxml2 found in $libxml2dir${T_ME}"
 			USE_LIBXML2=yes
@@ -933,10 +933,8 @@ else
 
 	if test "$ac_mysql_incdir" = "no"; then
 		MYSQL_INCLUDE=`mysql_config --include`
-		libmysql_version=$(grep LIBMYSQL_VERSION     /usr/include/mysql/mysql_version.h 2>/dev/null | head -n1 | cut -d'"' -f2)
 	else
 		MYSQL_INCLUDE=$ac_mysql_incdir
-		libmysql_version=$(grep LIBMYSQL_VERSION $ac_mysql_incdir/mysql/mysql_version.h 2>/dev/null | head -n1 | cut -d'"' -f2)
 	fi
 	if test "$ac_mysql_libdir" = "no"; then
 	   	if test "$ac_mysql_threadsafe" = "YES"; then
@@ -945,7 +943,7 @@ else
 			MYSQL_LIBS="`mysql_config --libs`"
 		fi
 	else
-	   	if test "$ac_mysql_threadsafe" = "YES"; then
+	  	if test "$ac_mysql_threadsafe" = "YES"; then
 			MYSQL_LIBS="-L$ac_mysql_libdir -lmysqlclient_r"
 		else
 			MYSQL_LIBS="-L$ac_mysql_libdir -lmysqlclient"
@@ -954,6 +952,8 @@ else
 
 	USE_MYSQL=yes
 	AC_DEFINE(USE_MYSQL, 1, [Define if enable MySQL database support])
+	libmysql_version=`mysql_config --version`
+
 	if test -z "${libmysql_version}"; then
 		libmysql_version="unknown"
 	fi

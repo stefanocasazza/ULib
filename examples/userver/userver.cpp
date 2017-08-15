@@ -53,8 +53,6 @@ public:
 
       // manage options
 
-      UString cfg_str;
-
       if (UApplication::isOptions()) cfg_str = opt['c'];
 
       // manage file configuration
@@ -146,7 +144,9 @@ public:
 
 private:
    Server* server;
-   UFileConfig cfg; // NB: we put this here to avoid unnecessary destructor at runtime...
+   // NB: we put this here to avoid unnecessary destructor at runtime...
+   UString cfg_str;
+   UFileConfig cfg;
 
 #ifndef U_COVERITY_FALSE_POSITIVE
    U_DISALLOW_COPY_AND_ASSIGN(Application)

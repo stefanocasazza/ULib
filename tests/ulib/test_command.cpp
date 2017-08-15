@@ -7,13 +7,13 @@
                      \"RSIGN_CMD=./rsaprivenc.sh -c rsa_priv_enc.cfg -k INKEY < DIGEST\" \
                      \"MSG_LOG=***** LCSP-CA *****\""
 
-int
-U_EXPORT main (int argc, char* argv[])
+int U_EXPORT main(int argc, char* argv[])
 {
    U_ULIB_INIT(argv);
 
    U_TRACE(5,"main(%d)",argc)
 
+   bool result;
    UCommand cmd;
    UString result1, result2, result3;
    UString env = U_STRING_FROM_CONSTANT(ENVIRONMENT);
@@ -22,17 +22,17 @@ U_EXPORT main (int argc, char* argv[])
    cmd.set(U_STRING_FROM_CONSTANT("ls test_command.cpp"));
    cmd.setEnvironment(&env);
 
-   bool result = cmd.execute(0, &result1, -1, fd_stderr);
+   result = cmd.execute(0, &result1, -1, fd_stderr);
 
-   U_ASSERT( result == true )
-   U_ASSERT( result1.empty() == false )
+   U_INTERNAL_ASSERT(result)
+   U_ASSERT_EQUALS(result1.empty(), false)
 
    cmd.set(U_STRING_FROM_CONSTANT("cat test_command.cpp"));
 
    result = cmd.execute(0, &result2, -1, fd_stderr);
 
-   U_ASSERT( result == true )
-   U_ASSERT( result2.empty() == false )
+   U_INTERNAL_ASSERT(result)
+   U_ASSERT_EQUALS(result2.empty(), false)
 
    cout.write(result2.data(), result2.size());
 
@@ -40,8 +40,8 @@ U_EXPORT main (int argc, char* argv[])
 
    result = cmd.execute(0, &result3, -1, fd_stderr);
 
-   U_ASSERT( result == false )
-   U_ASSERT( result3.empty() )
+   U_ASSERT(result3.empty())
+   U_INTERNAL_ASSERT_EQUALS(result, false)
 
    UCommand::setMsgError(cmd.getCommand(), false);
    UCommand::printMsgError();

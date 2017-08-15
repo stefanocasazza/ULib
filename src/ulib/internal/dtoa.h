@@ -103,7 +103,7 @@ struct DiyFp {
 #endif
     }
 
-    DiyFp NormalizeBoundary() const {
+    DiyFp NormalizeBoundary() const __pure {
         DiyFp res = *this;
         while (!(res.f & (kDpHiddenBit << 1))) {
             res.f <<= 1;

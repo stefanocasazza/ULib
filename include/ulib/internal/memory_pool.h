@@ -28,6 +28,7 @@
  * -------------------------
  *    1 sizeof(UMagic)
  *    1 sizeof(UNotifier)
+ *    1 sizeof(UPlugIn<void*>)
  *    8 sizeof(UCrl)
  *    8 sizeof(ULock)
  *    8 sizeof(UPKCS10)
@@ -75,7 +76,6 @@
  *   48 sizeof(USOAPGenericMethod)
  *   56 sizeof(UOptions)
  *   56 sizeof(UIPAddress)
- *   56 sizeof(UPlugIn<void*>)
  *   56 sizeof(UHTTP::UFileCacheData) <==
  * -------------------------
  * U_STACK_TYPE_3
@@ -119,7 +119,9 @@
  * =========================
  * DEBUG (64 bit)
  * -------------------------
+ *    1 sizeof(UMagic)
  *    1 sizeof(UNotifier)
+ *    1 sizeof(UPlugIn<void*>)
  *    8 sizeof(UMagic)
  *    8 sizeof(UString) <==
  * -------------------------
@@ -161,7 +163,6 @@
  *   64 sizeof(UMimeHeader)
  *   64 sizeof(UQueryParser)
  *   64 sizeof(USOAPEncoder)
- *   64 sizeof(UPlugIn<void*>)
  *   64 sizeof(UHTTP::UFileCacheData) <==
  * -------------------------
  * U_STACK_TYPE_3
@@ -213,6 +214,7 @@
  * -------------------------
  *    1 sizeof(UMagic)
  *    1 sizeof(UNotifier)
+ *    1 sizeof(UPlugIn<void*>)
  *    4 sizeof(UCrl)
  *    4 sizeof(UPKCS10)
  *    4 sizeof(UString) <==
@@ -248,7 +250,6 @@
  *   28 sizeof(UDialog)
  *   28 sizeof(UMimeEntity)
  *   28 sizeof(USOAPEncoder)
- *   28 sizeof(UPlugIn<void*>)
  *   28 sizeof(UHashMap<UString>)
  *   32 sizeof(Url)
  *   32 sizeof(UOptions)
@@ -309,6 +310,7 @@
  *    8 sizeof(UCrl)
  *    8 sizeof(UPKCS10)
  *    8 sizeof(UCertificate)
+ *    8 sizeof(UPlugIn<void*>)
  *   12 sizeof(ULock)
  *   12 sizeof(UTimer)
  *   12 sizeof(UPKCS7)
@@ -334,7 +336,6 @@
  *   32 sizeof(UDialog)
  *   32 sizeof(UMimeEntity)
  *   32 sizeof(UQueryParser)
- *   32 sizeof(UPlugIn<void*>)
  *   32 sizeof(UHashMap<UString>)
  *   36 sizeof(UOptions)
  *   36 sizeof(USOAPEncoder)

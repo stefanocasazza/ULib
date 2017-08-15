@@ -478,11 +478,7 @@ static inline void     u_put_unalignedp64(      void* p, uint64_t val) {       s
 /* Optimization if it is enough a resolution of one second */
 
 #if defined(U_LINUX) && defined(ENABLE_THREAD)
-#  ifdef U_SERVER_CAPTIVE_PORTAL
-#     define U_gettimeofday U_INTERNAL_ASSERT(u_pthread_time)
-#  else
-#     define U_gettimeofday { if (u_pthread_time == U_NULLPTR) u_now->tv_sec = time(U_NULLPTR); }
-#  endif
+#  define U_gettimeofday { if (u_pthread_time == U_NULLPTR) u_now->tv_sec = time(U_NULLPTR); }
 #else
 #  define U_gettimeofday u_now->tv_sec = time(U_NULLPTR);
 #endif

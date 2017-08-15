@@ -656,9 +656,9 @@ int UHttpPlugIn::handlerRequest()
 
    U_INTERNAL_DUMP("method_type = %C uri = %.*S", U_http_method_type, U_HTTP_URI_TO_TRACE)
 
-   return (UClientImage_Base::isRequestNeedProcessing()
-               ? UHTTP::processRequest()
-               : U_PLUGIN_HANDLER_FINISHED);
+   if (UClientImage_Base::isRequestNeedProcessing()) return UHTTP::processRequest();
+
+   U_RETURN(U_PLUGIN_HANDLER_FINISHED);
 }
 
 // SigHUP hook

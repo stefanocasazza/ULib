@@ -156,7 +156,7 @@ AC_MSG_CHECKING([which architecture the target is])
 
 TARGET_ARCH=
 case $target in
-	x86_64)				TARGET_ARCH=x86_64 ;;
+	x86_64*)				TARGET_ARCH=x86_64 ;;
 	i*86)					TARGET_ARCH=i386 ;;
 	sh*)					TARGET_ARCH=sh ;;
 	mips*)				TARGET_ARCH=mips ;;
@@ -241,6 +241,25 @@ AC_C_VOLATILE
 AC_C_INLINE
 
 # clang is mostly GCC-compatible, but its version is much lower, so we have to check for it
+AC_MSG_CHECKING([if compiling with Intel C++])
+
+AC_COMPILE_IFELSE(
+[AC_LANG_PROGRAM([], [[
+#ifndef __INTEL_COMPILER 
+not intel
+#endif
+]])],
+[GCC_IS_INTEL=yes], [GCC_IS_INTEL=no])
+
+AC_MSG_RESULT([$GCC_IS_INTEL])
+#AC_SUBST(GCC_IS_INTEL)
+
+AM_CONDITIONAL(INTEL, false)
+if test "$GCC_IS_INTEL" = "yes"; then
+AM_CONDITIONAL(INTEL, true)
+gcc_version=`icc -dumpversion`
+fi
+
 AC_MSG_CHECKING([if compiling with clang])
 
 AC_COMPILE_IFELSE(
@@ -259,6 +278,7 @@ if test "$GCC_IS_CLANG" = "yes"; then
 AM_CONDITIONAL(CLANG, true)
 gcc_version=`clang -dumpversion`
 fi
+
 
 ULIB_LIBS=
 MODULE_LIBTOOL_OPTIONS="-shared -export-dynamic -avoid-version"
@@ -462,7 +482,7 @@ AM_CONDITIONAL(MS_LIB_AVAILABLE, test x$ms_librarian = xyes)
 
 # Check for the compiler support
 gcc_major_4_1="no"
-if test "$ac_cv_c_compiler_gnu" = "yes" -a "x$GCC_IS_CLANG" = xno; then
+if test "$ac_cv_c_compiler_gnu" = "yes" -a "x$GCC_IS_CLANG" = xno -a "x$GCC_IS_INTEL" = xno; then
 	# We don't want gcc 2.7
 	AC_MSG_CHECKING([for a supported version of gcc])
 	gcc_version=`$CC -dumpversion`
@@ -1205,6 +1225,7 @@ ulib_pagespeed_msg="no (--with-page-speed)"
       ulib_zip_msg="no (--enable-zip)"
      ulib_memp_msg="no (--enable-memory-pool)"
     ulib_cares_msg="no (--enable-libares)"
+	   ulib_plugins="no (--enable-plugins)"
 	  ulib_examples="no (--enable-examples)"
 #  ulib_manual_msg="no (--enable-manual)"
 
@@ -1228,15 +1249,40 @@ AC_ARG_ENABLE(examples,[  --enable-examples         enable building of examples 
 
 if test -z "$enable_examples" -a "$enable_shared" = "yes"; then
 	enable_examples="yes"
-	ulib_examples="enabled"
 fi
 
 if test "$enable_examples" = "yes"; then
    AC_MSG_RESULT(yes)
+	ulib_examples="enabled"
 	AM_CONDITIONAL(ENABLE_EXAMPLES, true)
 else
    AC_MSG_RESULT(no)
 	AM_CONDITIONAL(ENABLE_EXAMPLES, false)
+fi
+
+AM_CONDITIONAL(ENABLE_SHARED, false)
+AM_CONDITIONAL(ENABLE_PLUGINS, false)
+
+if test "$enable_shared" = "yes"; then # NB: if not don't build .so object...
+	AM_CONDITIONAL(ENABLE_SHARED, true)
+	AC_MSG_CHECKING(if you want to enable build of plugins)
+	AC_ARG_ENABLE(plugins,[  --enable-plugins          enable building of plugins for userver [[default=yes]]])
+
+	if test -z "$enable_plugins"; then
+      if test "$USP_FLAGS" = "-DAS_cpoll_cppsp_DO"; then
+         enable_plugins="no"
+      else
+         enable_plugins="yes"
+      fi
+   fi
+
+	if test "$enable_plugins" != "yes"; then
+		AC_MSG_RESULT(no)
+	else
+		AC_MSG_RESULT(yes)
+		ulib_plugins="enabled"
+		AM_CONDITIONAL(ENABLE_PLUGINS, true)
+	fi
 fi
 
 AC_COMPILATION_OPTIONS
@@ -1884,10 +1930,6 @@ fi
 
 # SECTION 14: Checks for aggregated features
 
-# UServer plugin
-
-AM_CONDITIONAL(PLUGIN, test "$enable_shared"	= "yes") # NB: if not don't build .so object...
-
 modules="rpc shib stream nocat socket scgi fcgi geoip proxy soap ssi tsa http echo"
 
 if test "$USE_LIBPCRE" = "yes"; then
@@ -2260,105 +2302,110 @@ CXXFLAGS="$CXXFLAGS -fno-exceptions -fno-rtti"
 
 # If gcc compiler add values to *FLAGS...
 
-if test "$ac_cv_c_compiler_gnu" = "yes" -a "x$GCC_IS_CLANG" = xno -a "x$OPERATINGSYSTEM" = xlinux; then
+if test "$ac_cv_c_compiler_gnu" = "yes" -a "x$OPERATINGSYSTEM" = xlinux; then
 
-	TWOCAN_CONF_MSG(Checking for gcc compiler flags)
+	TWOCAN_CONF_MSG(Checking for $CC compiler flags)
 
-	AC_MSG_CHECKING([whether to use libgcc])
-	AC_ARG_ENABLE(libgcc,
-	AC_HELP_STRING([--enable-libgcc],[use libgcc when linking]),
-		[ case "$enableval" in
-		  yes)
-			 LIBS="-lgcc $LIBS"
-			 AC_MSG_RESULT(yes)
-			 ;;
-		  *) AC_MSG_RESULT(no)
-			 ;;
-		  esac ],
-			 AC_MSG_RESULT(no)
-		)
+	  if test "x$GCC_IS_INTEL" = xyes; then
+		MAYBE_FLAGS="-fno-check-new -fno-stack-protector -fno-stack-protector-all -Ofast -march=native -mtune=native"
+	elif test "x$GCC_IS_CLANG" = xyes; then
+		MAYBE_FLAGS="-fno-check-new -fno-stack-protector -fno-stack-protector-all -Ofast -march=native -mtune=native \
+						 -ffast-math -ftree-vectorize -fno-crossjumping -fpartial-inlining"
+	else
+		AC_MSG_CHECKING([whether to use libgcc])
+		AC_ARG_ENABLE(libgcc,
+		AC_HELP_STRING([--enable-libgcc],[use libgcc when linking]),
+			[ case "$enableval" in
+			  yes)
+				 LIBS="-lgcc $LIBS"
+				 AC_MSG_RESULT(yes)
+				 ;;
+			  *) AC_MSG_RESULT(no)
+				 ;;
+			  esac ],
+				 AC_MSG_RESULT(no)
+			)
 
-	AC_CC_TRY_FLAG
+		MAYBE_FLAGS="-Wstrict-aliasing=2 -Wall -Wextra -Wsign-compare -Wpointer-arith -Wwrite-strings \
+						 -Wmissing-declarations -Wpacked -Wswitch-enum -Wmissing-format-attribute -Winit-self -Wformat \
+						 -Wformat-extra-args -Wenum-compare -Wlogical-not-parentheses -Wsizeof-array-argument -Wbool-compare"
 
-	MAYBE_FLAGS="-Wstrict-aliasing=2 -Wall -Wextra -Wsign-compare -Wpointer-arith -Wwrite-strings \
-					 -Wmissing-declarations -Wpacked -Wswitch-enum -Wmissing-format-attribute -Winit-self -Wformat \
-					 -Wformat-extra-args -Wenum-compare -Wlogical-not-parentheses -Wsizeof-array-argument -Wbool-compare"
+		# -------------------------------------------------------------------------------------
+		# to turn various gcc/glibc-specific preprocessor checks
+		# -------------------------------------------------------------------------------------
+		# -Wno-format -Wno-format-extra-args
+		# -Wsuggest-final-methods -Wsuggest-final-types
+		# -------------------------------------------------------------------------------------
+		# -Wcast-qual
+		# -------------------------------------------------------------------------------------
 
-	# -------------------------------------------------------------------------------------
-	# to turn various gcc/glibc-specific preprocessor checks
-	# -------------------------------------------------------------------------------------
-	# -Wno-format -Wno-format-extra-args
-	# -Wsuggest-final-methods -Wsuggest-final-types
-	# -------------------------------------------------------------------------------------
-	# -Wcast-qual
-	# -------------------------------------------------------------------------------------
+		 CC_MAYBE_FLAGS="-Werror-implicit-function-declaration -Wstrict-prototypes -Wc++-compat \
+							  -Wmissing-prototypes -Wnested-externs -Wdeclaration-after-statement -Wold-style-definition -Wsizeof-pointer-memaccess"
+		CXX_MAYBE_FLAGS="-fno-check-new -fno-enforce-eh-specs -Wno-deprecated -Wdelete-non-virtual-dtor -Wodr"
 
-	 CC_MAYBE_FLAGS="-Werror-implicit-function-declaration -Wstrict-prototypes -Wc++-compat \
-						  -Wmissing-prototypes -Wnested-externs -Wdeclaration-after-statement -Wold-style-definition -Wsizeof-pointer-memaccess"
-	CXX_MAYBE_FLAGS="-fno-check-new -fno-enforce-eh-specs -Wno-deprecated -Wdelete-non-virtual-dtor -Wodr"
+			 MAYBE_FLAGS_MODERN=""
+		CXX_MAYBE_FLAGS_MODERN=""
 
-		 MAYBE_FLAGS_MODERN=""
-	CXX_MAYBE_FLAGS_MODERN=""
+		case "$gcc_version" in
+			2*|3*|4.0*|4.1*|4.2*)
+			;;
+			4.3*) # openWRT backfire: ... c++/4.3.3/tr1_impl/boost_shared_ptr.h:630: error: cannot use typeid with -fno-rtti
+			;;
+			4.4*) # centOS 64: ... c++/4.4.7/bits/shared_ptr.h:1005: error: cannot use typeid with -fno-rtti
+			;;
+			4.5*) # openwrt: SIGSEGV
+			;;
+			4.6*|4.7*|4.8*|4.9*|5*)
+				 MAYBE_FLAGS_MODERN="-Wno-unused-result -Wshadow -Wsuggest-attribute=pure -Wsuggest-attribute=noreturn" # -Wsuggest-attribute=const
+			;;
+			6.1.0|*)
+				 MAYBE_FLAGS_MODERN="-Wno-unused-result -Wshadow -Wsuggest-attribute=pure -Wsuggest-attribute=noreturn \
+											-Wlogical-op -Wduplicated-cond -Wtautological-compare -Wswitch-bool -Wshift-negative-value \
+											-Wshift-overflow -Wshift-overflow=2 -Wnull-dereference -Wnonnull"
+			CXX_MAYBE_FLAGS_MODERN="-Wterminate -Wlto-type-mismatch -Wsubobject-linkage -Wplacement-new -Woverride-init-side-effects \
+											-Wvirtual-inheritance -Wnamespaces" # -Wnamespaces -Wtemplates -Wmultiple-inheritance
+			;;
+		esac
 
-	case "$gcc_version" in
-		2*|3*|4.0*|4.1*|4.2*)
-		;;
-		4.3*) # openWRT backfire: ... c++/4.3.3/tr1_impl/boost_shared_ptr.h:630: error: cannot use typeid with -fno-rtti
-		;;
-		4.4*) # centOS 64: ... c++/4.4.7/bits/shared_ptr.h:1005: error: cannot use typeid with -fno-rtti
-		;;
-		4.5*) # openwrt: SIGSEGV
-		;;
-		4.6*|4.7*|4.8*|4.9*|5*)
-			 MAYBE_FLAGS_MODERN="-Wno-unused-result -Wshadow -Wsuggest-attribute=pure -Wsuggest-attribute=noreturn" # -Wsuggest-attribute=const
-		;;
-		6.1.0|*)
-			 MAYBE_FLAGS_MODERN="-Wno-unused-result -Wshadow -Wsuggest-attribute=pure -Wsuggest-attribute=noreturn \
-									   -Wlogical-op -Wduplicated-cond -Wtautological-compare -Wswitch-bool -Wshift-negative-value \
-									   -Wshift-overflow -Wshift-overflow=2 -Wnull-dereference -Wnonnull"
-		CXX_MAYBE_FLAGS_MODERN="-Wterminate -Wlto-type-mismatch -Wsubobject-linkage -Wplacement-new -Woverride-init-side-effects \
-										-Wvirtual-inheritance -Wnamespaces" # -Wnamespaces -Wtemplates -Wmultiple-inheritance
-		;;
-	esac
+			 MAYBE_FLAGS="    $MAYBE_FLAGS     $MAYBE_FLAGS_MODERN"
+		CXX_MAYBE_FLAGS="$CXX_MAYBE_FLAGS $CXX_MAYBE_FLAGS_MODERN"
 
-		 MAYBE_FLAGS="    $MAYBE_FLAGS     $MAYBE_FLAGS_MODERN"
-	CXX_MAYBE_FLAGS="$CXX_MAYBE_FLAGS $CXX_MAYBE_FLAGS_MODERN"
+		if test "$enable_gcc_optimized" = "yes" -a "$enable_coverage" != "yes"; then
+			## ----------------------------------------------------------------------------------------------------------------------------------
+			## -fgcse Perform a global common subexpression elimination pass. This pass also performs global constant and copy propagation. When
+			##			 compiling a program using computed gotos, a GCC extension, you may get better runtime performance if you disable the global
+			##			 common subexpression elimination pass by adding -fno-gcse to the command line
+			## ----------------------------------------------------------------------------------------------------------------------------------
+			## -ffunction-sections -fdata-sections
+			## ----------------------------------------------------------------------------------------------------------------------------------
+			MAYBE_FLAGS="$MAYBE_FLAGS -fno-stack-protector -fno-stack-protector-all -ffast-math -ftree-vectorize -fno-crossjumping -fno-gcse -fpartial-inlining -Ofast"
 
-	if test "$enable_gcc_optimized" = "yes" -a "$enable_coverage" != "yes"; then
-		## ----------------------------------------------------------------------------------------------------------------------------------
-		## -fgcse Perform a global common subexpression elimination pass. This pass also performs global constant and copy propagation. When
-		##			 compiling a program using computed gotos, a GCC extension, you may get better runtime performance if you disable the global
-		##			 common subexpression elimination pass by adding -fno-gcse to the command line
-		## ----------------------------------------------------------------------------------------------------------------------------------
-		## -ffunction-sections -fdata-sections
-		## ----------------------------------------------------------------------------------------------------------------------------------
-		MAYBE_FLAGS="$MAYBE_FLAGS -fno-stack-protector -fno-stack-protector-all -ffast-math -ftree-vectorize -fno-crossjumping -fno-gcse -fpartial-inlining -Ofast"
+			if test "$use_distcc" != "yes" -a "$cross_compiling" != "yes"; then
+				MAYBE_FLAGS="$MAYBE_FLAGS -flto -ffat-lto-objects -fuse-linker-plugin -march=native -mtune=native" # NB: distcc don't work with this...
+			fi
+		fi
 
-		if test "$use_distcc" != "yes" -a "$cross_compiling" != "yes"; then
-			MAYBE_FLAGS="$MAYBE_FLAGS -flto -ffat-lto-objects -fuse-linker-plugin -march=native -mtune=native" # NB: distcc don't work with this...
+		## -------------------------------------------------------------------------------------
+		##	-fno-common
+		## -Wno-missing-field-initializers -Wno-attributes -Wno-long-long
+		## -------------------------------------------------------------------------------------
+		##	-fwhole-program
+		## -------------------------------------------------------------------------------------
+		## Assume that the current compilation unit represents the whole program being compiled.
+		## All public functions and variables with the exception of main and those merged by attribute
+		## externally_visible become static functions
+		## -------------------------------------------------------------------------------------
+
+		if test "$enable_debug" != "yes"; then
+			MAYBE_FLAGS="$MAYBE_FLAGS -Winline -Wno-unused-parameter -Wno-unused-variable"
+		else
+			## _FORTIFY_SOURCE is enabled by default from g++ 4.7.2
+			MAYBE_FLAGS="$MAYBE_FLAGS -Wunsafe-loop-optimizations -Wno-unused-parameter -rdynamic -fdiagnostics-color=auto -Wmisleading-indentation"
+			CXX_MAYBE_FLAGS="$CXX_MAYBE_FLAGS -Wc++11-compat -Wzero-as-null-pointer-constant -Wno-implicit-fallthrough"
 		fi
 	fi
 
-	## -------------------------------------------------------------------------------------
-	##	-fno-common
-	## -Wno-missing-field-initializers -Wno-attributes -Wno-long-long
-	## -------------------------------------------------------------------------------------
-	##	-fwhole-program
-	## -------------------------------------------------------------------------------------
-	## Assume that the current compilation unit represents the whole program being compiled.
-	## All public functions and variables with the exception of main and those merged by attribute
-	## externally_visible become static functions
-	## -------------------------------------------------------------------------------------
-
-	if test "$enable_debug" != "yes"; then
-		MAYBE_FLAGS="$MAYBE_FLAGS -Winline -Wno-unused-parameter -Wno-unused-variable"
-	else
-		## _FORTIFY_SOURCE is enabled by default from g++ 4.7.2
-		MAYBE_FLAGS="$MAYBE_FLAGS -Wunsafe-loop-optimizations -Wno-unused-parameter -rdynamic -fdiagnostics-color=auto -Wmisleading-indentation"
-		CXX_MAYBE_FLAGS="$CXX_MAYBE_FLAGS -Wc++11-compat -Wzero-as-null-pointer-constant -Wno-implicit-fallthrough"
-	fi
-
-	AC_CACHE_CHECK([for gcc supported flags], ulib_cv_flags, [
+	AC_CACHE_CHECK([for $CC supported flags], ulib_cv_flags, [
 		echo
 		FLAGS=""
 		CC_FLAGS=""
@@ -2399,60 +2446,62 @@ if test "$ac_cv_c_compiler_gnu" = "yes" -a "x$GCC_IS_CLANG" = xno -a "x$OPERATIN
 		ulib_cv_CXX_flags=$CXX_FLAGS
 		# ------------------------------------------------
 
-		AC_MSG_CHECKING([which gcc flags were supported])
+		AC_MSG_CHECKING([which $CC flags were supported])
 	])
 
 	SANITIZE_FLAGS=""
 	SANITIZE_THREAD=""
 	SANITIZE_ADDRESS=""
 
-	case "$gcc_version" in
-		2.9*|3*|4.0*|4.1*|4.2*|4.3*|4.4*|4.5*|4.6*|4.7*|4.8*)
-		;;
-		*)
-		## -------------------------------------------------------------------------------------------------------------------------
-		## FATAL: ThreadSanitizer can not mmap the shadow memory (something is mapped at 0x400000 < 0x7cf000000000)
-		## echo 2 >/proc/sys/kernel/randomize_va_space
-		## This may be fixed in future kernels, see https://bugzilla.kernel.org/show_bug.cgi?id=66721 
-		## -------------------------------------------------------------------------------------------------------------------------
-		##	if test "$enable_debug" = "yes"; then
-		##		AC_CC_TRY_FLAG(["-fsanitize=thread"], [SANITIZE_THREAD="-fsanitize=thread"])
-		##		if test "$SANITIZE_THREAD" != ""; then
-      ##			ULIB_LIBS="$ULIB_LIBS -ltsan"
-		##			SANITIZE_FLAGS="-fPIE -pie"
-		##		fi
-		## -------------------------------------------------------------------------------------------------------------------------
-	   ##		AC_CC_TRY_FLAG(["-fsanitize=address"], [SANITIZE_ADDRESS="-fsanitize=address"])
-		##		if test "$SANITIZE_ADDRESS" != ""; then
-      ##			ULIB_LIBS="$ULIB_LIBS -lasan"
-		##			SANITIZE_FLAGS="-fPIE -pie"
-		##		fi
-		##	fi
-		## -------------------------------------------------------------------------------------------------------------------------
+	if test "x$GCC_IS_CLANG" = xno -a "x$GCC_IS_INTEL" = xno; then
+		case "$gcc_version" in
+			2.9*|3*|4.0*|4.1*|4.2*|4.3*|4.4*|4.5*|4.6*|4.7*|4.8*)
+			;;
+			*)
+			## -------------------------------------------------------------------------------------------------------------------------
+			## FATAL: ThreadSanitizer can not mmap the shadow memory (something is mapped at 0x400000 < 0x7cf000000000)
+			## echo 2 >/proc/sys/kernel/randomize_va_space
+			## This may be fixed in future kernels, see https://bugzilla.kernel.org/show_bug.cgi?id=66721 
+			## -------------------------------------------------------------------------------------------------------------------------
+			##	if test "$enable_debug" = "yes"; then
+			##		AC_CC_TRY_FLAG(["-fsanitize=thread"], [SANITIZE_THREAD="-fsanitize=thread"])
+			##		if test "$SANITIZE_THREAD" != ""; then
+			##			ULIB_LIBS="$ULIB_LIBS -ltsan"
+			##			SANITIZE_FLAGS="-fPIE -pie"
+			##		fi
+			## -------------------------------------------------------------------------------------------------------------------------
+			##		AC_CC_TRY_FLAG(["-fsanitize=address"], [SANITIZE_ADDRESS="-fsanitize=address"])
+			##		if test "$SANITIZE_ADDRESS" != ""; then
+			##			ULIB_LIBS="$ULIB_LIBS -lasan"
+			##			SANITIZE_FLAGS="-fPIE -pie"
+			##		fi
+			##	fi
+			## -------------------------------------------------------------------------------------------------------------------------
 
-		AC_MSG_CHECKING([sanitize support request])
-		if echo $CPPFLAGS | grep fsanitize >/dev/null; then
-			AC_MSG_RESULT(yes)
-			AM_CONDITIONAL(SANITIZE, true)
-		else
-			AC_MSG_RESULT(no)
-		fi
-
-		# When using a linker plugin, compiling with the -flto option now generates slim object files (.o) which only contain intermediate
-		# language representation for LTO. Use -ffat-lto-objects to create files which contain additionally the object code. To generate
-		# static libraries suitable for LTO processing, use gcc-ar and gcc-ranlib; to list symbols from a slim object file use gcc-nm.
-		# (This requires that ar, ranlib and nm have been compiled with plugin support)
-
-		if test "$cross_compiling" != "yes"; then
-			AC_PATH_PROG(GCC_AR, gcc-ar, no)
-			if test "$GCC_AR" != "no"; then
-				AR=gcc-ar
-				NM=gcc-nm
-				RANLIB=gcc-ranlib
+			AC_MSG_CHECKING([sanitize support request])
+			if echo $CPPFLAGS | grep fsanitize >/dev/null; then
+				AC_MSG_RESULT(yes)
+				AM_CONDITIONAL(SANITIZE, true)
+			else
+				AC_MSG_RESULT(no)
 			fi
-		fi
-		;;
-	esac
+
+			# When using a linker plugin, compiling with the -flto option now generates slim object files (.o) which only contain intermediate
+			# language representation for LTO. Use -ffat-lto-objects to create files which contain additionally the object code. To generate
+			# static libraries suitable for LTO processing, use gcc-ar and gcc-ranlib; to list symbols from a slim object file use gcc-nm.
+			# (This requires that ar, ranlib and nm have been compiled with plugin support)
+
+			if test "$cross_compiling" != "yes"; then
+				AC_PATH_PROG(GCC_AR, gcc-ar, no)
+				if test "$GCC_AR" != "no"; then
+					AR=gcc-ar
+					NM=gcc-nm
+					RANLIB=gcc-ranlib
+				fi
+			fi
+			;;
+		esac
+	fi
 
 	CFLAGS="$CFLAGS $ulib_cv_CC_flags"
 	CXXFLAGS="$CXXFLAGS $ulib_cv_CXX_flags"
@@ -2564,7 +2613,7 @@ if test "x$ac_cv_crc32_intrinsics" = xyes; then
 fi
 ##########################
 
-if test "$ac_cv_c_compiler_gnu" = "yes" -a "x$GCC_IS_CLANG" = xno; then
+if test "$ac_cv_c_compiler_gnu" = "yes" -a "x$GCC_IS_CLANG" = xno -a "x$GCC_IS_INTEL" = xno; then
 	if test "$enable_static" = "yes" -a "$enable_shared" = "no" -a "$enable_stdcpp" = "yes"; then
 
 ##		if test -f "$gcc_dir/libstdc++.a"; then
@@ -2748,7 +2797,8 @@ AC_MSG_NOTICE([Configured to build src/ulib/lib${ULIB}:
   RUBY language support: ${ulib_ruby_msg}
 PYTHON language support: ${ulib_python_msg}
 
-       Examples:         ${ulib_examples}
+                Plugins: ${ulib_plugins}
+               Examples: ${ulib_examples}
        LEX/YACC support: ${ulib_parser_msg}
        Lexical analyzer: ${LEX} ( ${flex_version} )
        Parser generator: ${YACC} ( ${bison_version} )

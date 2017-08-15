@@ -10577,7 +10577,7 @@ U_NO_EXPORT int UHTTP::checkGetRequestForRange(const UString& data)
 
       if (cur_start <= cur_end)
          {
-         U_INTERNAL_ASSERT_RANGE(cur_start, cur_end, range_size-1)
+         U_INTERNAL_ASSERT_RANGE(cur_start, cur_end, (long)range_size-1L)
 
          cur = new HTTPRange;
 

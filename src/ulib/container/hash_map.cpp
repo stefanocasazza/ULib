@@ -793,11 +793,11 @@ uint32_t UHashMap<UString>::loadFromData(const char* ptr, uint32_t sz)
       U_WARNING("UHashMap<UString>::loadFromData() has found a key(%u) = %V without value", _key.size(), _key.rep);
       }
 
-   U_INTERNAL_DUMP("ptr - _start = %lu", ptr - _start)
+   U_INTERNAL_ASSERT((uint32_t)(ptr-_start) <= sz)
 
-   U_INTERNAL_ASSERT((ptr - _start) <= sz)
+   sz = ptr-_start;
 
-   sz = ptr - _start;
+   U_INTERNAL_DUMP("ptr-_start = %u", sz)
 
    U_RETURN(sz);
 }

@@ -89,45 +89,45 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 target_triplet = @target@
-@SSH_TRUE@am__append_1 = test_ssh_client
-@LDAP_TRUE@am__append_2 = test_ldap
-@MONGODB_TRUE@am__append_3 = test_mongodb
-@PTHREAD_TRUE@am__append_4 = test_thread
-@PTHREAD_TRUE@am__append_5 = thread.test
-@ZIP_TRUE@am__append_6 = test_zip
-@ZIP_TRUE@am__append_7 = zip.test
-@LIBTDB_TRUE@am__append_8 = test_tdb
-@LIBTDB_TRUE@am__append_9 = tdb.test
-@PCRE_TRUE@am__append_10 = test_pcre
-@PCRE_TRUE@am__append_11 = pcre.test
-@SSL_TRUE@am__append_12 = test_des3 test_digest test_certificate test_crl test_pkcs10 test_ssl_client test_ssl_server test_https test_pkcs7 test_url
-@SSL_TRUE@am__append_13 = des3.test digest.test certificate.test crl.test pkcs10.test ssl_client_server.test https.test pkcs7.test url.test
-@SSL_TRUE@@SSL_TS_TRUE@am__append_14 = test_timestamp
-@SSL_TRUE@@SSL_TS_TRUE@am__append_15 = timestamp.test
-@SSH_TRUE@am__append_16 = test_ssh_client
-@SSH_TRUE@am__append_17 = ssh_client.test
-@LDAP_TRUE@am__append_18 = test_ldap
-@LDAP_TRUE@am__append_19 = ldap.test
-@CURL_TRUE@am__append_20 = test_curl
-@CURL_TRUE@am__append_21 = curl.test
-@MAGIC_TRUE@am__append_22 = test_magic
-@MAGIC_TRUE@am__append_23 = magic.test
-@EXPAT_TRUE@am__append_24 = test_expat test_soap_server test_soap_client
-@EXPAT_TRUE@am__append_25 = expat.test soap_server.test soap_client.test
-@MEMORY_POOL_TRUE@am__append_26 = test_memory_pool
-@MEMORY_POOL_TRUE@am__append_27 = memory_pool.test
-@DBI_TRUE@am__append_28 = test_dbi
-@DBI_TRUE@am__append_29 = dbi.test
-@HAVE_SQLITE3_TRUE@am__append_30 = test_orm
-@HAVE_SQLITE3_TRUE@am__append_31 = orm.test
-@LIBEVENT_TRUE@am__append_32 = test_event
-@LIBEVENT_TRUE@am__append_33 = event.test
-@LINUX_TRUE@am__append_34 = test_process test_interrupt test_unixsocket_client test_unixsocket_server test_arping
-@LINUX_TRUE@am__append_35 = process.test interrupt.test unixsocket.test
-@LINUX_TRUE@@SANITIZE_TRUE@am__append_36 = -lubsan
-@LINUX_TRUE@@SANITIZE_TRUE@am__append_37 = -lubsan
-@PLUGIN_TRUE@@STDCPP_TRUE@am__append_38 = test_plugin
-@PLUGIN_TRUE@@STDCPP_TRUE@am__append_39 = plugin.test
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@am__append_1 = test_server test_rdb_server test_plugin
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@am__append_2 = server.test server_rpc.test rdb_client_server.test plugin.test
+@SSH_TRUE@am__append_3 = test_ssh_client
+@LDAP_TRUE@am__append_4 = test_ldap
+@MONGODB_TRUE@am__append_5 = test_mongodb
+@PTHREAD_TRUE@am__append_6 = test_thread
+@PTHREAD_TRUE@am__append_7 = thread.test
+@ZIP_TRUE@am__append_8 = test_zip
+@ZIP_TRUE@am__append_9 = zip.test
+@LIBTDB_TRUE@am__append_10 = test_tdb
+@LIBTDB_TRUE@am__append_11 = tdb.test
+@PCRE_TRUE@am__append_12 = test_pcre
+@PCRE_TRUE@am__append_13 = pcre.test
+@SSL_TRUE@am__append_14 = test_des3 test_digest test_certificate test_crl test_pkcs10 test_ssl_client test_ssl_server test_https test_pkcs7 test_url
+@SSL_TRUE@am__append_15 = des3.test digest.test certificate.test crl.test pkcs10.test ssl_client_server.test https.test pkcs7.test url.test
+@SSL_TRUE@@SSL_TS_TRUE@am__append_16 = test_timestamp
+@SSL_TRUE@@SSL_TS_TRUE@am__append_17 = timestamp.test
+@SSH_TRUE@am__append_18 = test_ssh_client
+@SSH_TRUE@am__append_19 = ssh_client.test
+@LDAP_TRUE@am__append_20 = test_ldap
+@LDAP_TRUE@am__append_21 = ldap.test
+@CURL_TRUE@am__append_22 = test_curl
+@CURL_TRUE@am__append_23 = curl.test
+@MAGIC_TRUE@am__append_24 = test_magic
+@MAGIC_TRUE@am__append_25 = magic.test
+@EXPAT_TRUE@am__append_26 = test_expat test_soap_server test_soap_client
+@EXPAT_TRUE@am__append_27 = expat.test soap_server.test soap_client.test
+@MEMORY_POOL_TRUE@am__append_28 = test_memory_pool
+@MEMORY_POOL_TRUE@am__append_29 = memory_pool.test
+@DBI_TRUE@am__append_30 = test_dbi
+@DBI_TRUE@am__append_31 = dbi.test
+@HAVE_SQLITE3_TRUE@am__append_32 = test_orm
+@HAVE_SQLITE3_TRUE@am__append_33 = orm.test
+@LIBEVENT_TRUE@am__append_34 = test_event
+@LIBEVENT_TRUE@am__append_35 = event.test
+@LINUX_TRUE@am__append_36 = test_process test_interrupt test_unixsocket_client test_unixsocket_server test_arping
+@LINUX_TRUE@am__append_37 = process.test interrupt.test unixsocket.test
+@LINUX_TRUE@@SANITIZE_TRUE@am__append_38 = -lubsan
+@LINUX_TRUE@@SANITIZE_TRUE@am__append_39 = -lubsan
 check_PROGRAMS = $(am__EXEEXT_19)
 subdir = tests/ulib
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -157,11 +157,11 @@ CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 LTLIBRARIES = $(noinst_LTLIBRARIES)
 am__DEPENDENCIES_1 = $(top_builddir)/src/ulib/lib@ULIB@.la
-@PLUGIN_TRUE@@STDCPP_TRUE@product1_la_DEPENDENCIES =  \
-@PLUGIN_TRUE@@STDCPP_TRUE@	$(am__DEPENDENCIES_1)
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@product1_la_DEPENDENCIES = $(am__DEPENDENCIES_1)
 am__product1_la_SOURCES_DIST = plugin/product1.cpp
 am__dirstamp = $(am__leading_dot)dirstamp
-@PLUGIN_TRUE@@STDCPP_TRUE@am_product1_la_OBJECTS = plugin/product1.lo
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@am_product1_la_OBJECTS =  \
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@	plugin/product1.lo
 product1_la_OBJECTS = $(am_product1_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
@@ -170,44 +170,47 @@ am__v_lt_1 =
 product1_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CXXLD) $(AM_CXXFLAGS) \
 	$(CXXFLAGS) $(product1_la_LDFLAGS) $(LDFLAGS) -o $@
-@PLUGIN_TRUE@@STDCPP_TRUE@am_product1_la_rpath =
-@PLUGIN_TRUE@@STDCPP_TRUE@product2_la_DEPENDENCIES =  \
-@PLUGIN_TRUE@@STDCPP_TRUE@	$(am__DEPENDENCIES_1)
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@am_product1_la_rpath =
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@product2_la_DEPENDENCIES = $(am__DEPENDENCIES_1)
 am__product2_la_SOURCES_DIST = plugin/product2.cpp
-@PLUGIN_TRUE@@STDCPP_TRUE@am_product2_la_OBJECTS = plugin/product2.lo
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@am_product2_la_OBJECTS =  \
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@	plugin/product2.lo
 product2_la_OBJECTS = $(am_product2_la_OBJECTS)
 product2_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CXXLD) $(AM_CXXFLAGS) \
 	$(CXXFLAGS) $(product2_la_LDFLAGS) $(LDFLAGS) -o $@
-@PLUGIN_TRUE@@STDCPP_TRUE@am_product2_la_rpath =
-@SSH_TRUE@am__EXEEXT_1 = test_ssh_client$(EXEEXT)
-@LDAP_TRUE@am__EXEEXT_2 = test_ldap$(EXEEXT)
-@MONGODB_TRUE@am__EXEEXT_3 = test_mongodb$(EXEEXT)
-@PTHREAD_TRUE@am__EXEEXT_4 = test_thread$(EXEEXT)
-@ZIP_TRUE@am__EXEEXT_5 = test_zip$(EXEEXT)
-@LIBTDB_TRUE@am__EXEEXT_6 = test_tdb$(EXEEXT)
-@PCRE_TRUE@am__EXEEXT_7 = test_pcre$(EXEEXT)
-@SSL_TRUE@am__EXEEXT_8 = test_des3$(EXEEXT) test_digest$(EXEEXT) \
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@am_product2_la_rpath =
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@am__EXEEXT_1 =  \
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@	test_server$(EXEEXT) \
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@	test_rdb_server$(EXEEXT) \
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@	test_plugin$(EXEEXT)
+@SSH_TRUE@am__EXEEXT_2 = test_ssh_client$(EXEEXT)
+@LDAP_TRUE@am__EXEEXT_3 = test_ldap$(EXEEXT)
+@MONGODB_TRUE@am__EXEEXT_4 = test_mongodb$(EXEEXT)
+@PTHREAD_TRUE@am__EXEEXT_5 = test_thread$(EXEEXT)
+@ZIP_TRUE@am__EXEEXT_6 = test_zip$(EXEEXT)
+@LIBTDB_TRUE@am__EXEEXT_7 = test_tdb$(EXEEXT)
+@PCRE_TRUE@am__EXEEXT_8 = test_pcre$(EXEEXT)
+@SSL_TRUE@am__EXEEXT_9 = test_des3$(EXEEXT) test_digest$(EXEEXT) \
 @SSL_TRUE@	test_certificate$(EXEEXT) test_crl$(EXEEXT) \
 @SSL_TRUE@	test_pkcs10$(EXEEXT) test_ssl_client$(EXEEXT) \
 @SSL_TRUE@	test_ssl_server$(EXEEXT) test_https$(EXEEXT) \
 @SSL_TRUE@	test_pkcs7$(EXEEXT) test_url$(EXEEXT)
-@SSL_TRUE@@SSL_TS_TRUE@am__EXEEXT_9 = test_timestamp$(EXEEXT)
-@CURL_TRUE@am__EXEEXT_10 = test_curl$(EXEEXT)
-@MAGIC_TRUE@am__EXEEXT_11 = test_magic$(EXEEXT)
-@EXPAT_TRUE@am__EXEEXT_12 = test_expat$(EXEEXT) \
+@SSL_TRUE@@SSL_TS_TRUE@am__EXEEXT_10 = test_timestamp$(EXEEXT)
+@CURL_TRUE@am__EXEEXT_11 = test_curl$(EXEEXT)
+@MAGIC_TRUE@am__EXEEXT_12 = test_magic$(EXEEXT)
+@EXPAT_TRUE@am__EXEEXT_13 = test_expat$(EXEEXT) \
 @EXPAT_TRUE@	test_soap_server$(EXEEXT) \
 @EXPAT_TRUE@	test_soap_client$(EXEEXT)
-@MEMORY_POOL_TRUE@am__EXEEXT_13 = test_memory_pool$(EXEEXT)
-@DBI_TRUE@am__EXEEXT_14 = test_dbi$(EXEEXT)
-@HAVE_SQLITE3_TRUE@am__EXEEXT_15 = test_orm$(EXEEXT)
-@LIBEVENT_TRUE@am__EXEEXT_16 = test_event$(EXEEXT)
-@LINUX_TRUE@am__EXEEXT_17 = test_process$(EXEEXT) \
+@MEMORY_POOL_TRUE@am__EXEEXT_14 = test_memory_pool$(EXEEXT)
+@DBI_TRUE@am__EXEEXT_15 = test_dbi$(EXEEXT)
+@HAVE_SQLITE3_TRUE@am__EXEEXT_16 = test_orm$(EXEEXT)
+@LIBEVENT_TRUE@am__EXEEXT_17 = test_event$(EXEEXT)
+@LINUX_TRUE@am__EXEEXT_18 = test_process$(EXEEXT) \
 @LINUX_TRUE@	test_interrupt$(EXEEXT) \
 @LINUX_TRUE@	test_unixsocket_client$(EXEEXT) \
 @LINUX_TRUE@	test_unixsocket_server$(EXEEXT) \
 @LINUX_TRUE@	test_arping$(EXEEXT)
-@PLUGIN_TRUE@@STDCPP_TRUE@am__EXEEXT_18 = test_plugin$(EXEEXT)
 am__EXEEXT_19 = test_timeval$(EXEEXT) test_timer$(EXEEXT) \
 	test_notifier$(EXEEXT) test_string$(EXEEXT) test_file$(EXEEXT) \
 	test_cdb$(EXEEXT) test_rdb$(EXEEXT) test_file_config$(EXEEXT) \
@@ -220,14 +223,13 @@ am__EXEEXT_19 = test_timeval$(EXEEXT) test_timer$(EXEEXT) \
 	test_http$(EXEEXT) test_rdb_client$(EXEEXT) \
 	test_tokenizer$(EXEEXT) test_query_parser$(EXEEXT) \
 	test_multipart$(EXEEXT) test_command$(EXEEXT) \
-	test_dialog$(EXEEXT) test_rdb_server$(EXEEXT) \
-	test_json$(EXEEXT) test_server$(EXEEXT) test_redis$(EXEEXT) \
+	test_dialog$(EXEEXT) test_json$(EXEEXT) test_redis$(EXEEXT) \
 	test_elasticsearch$(EXEEXT) test_smtp$(EXEEXT) \
 	test_pop3$(EXEEXT) test_imap$(EXEEXT) $(am__EXEEXT_1) \
 	$(am__EXEEXT_2) $(am__EXEEXT_3) $(am__EXEEXT_4) \
 	$(am__EXEEXT_5) $(am__EXEEXT_6) $(am__EXEEXT_7) \
-	$(am__EXEEXT_8) $(am__EXEEXT_9) $(am__EXEEXT_1) \
-	$(am__EXEEXT_2) $(am__EXEEXT_10) $(am__EXEEXT_11) \
+	$(am__EXEEXT_8) $(am__EXEEXT_9) $(am__EXEEXT_10) \
+	$(am__EXEEXT_2) $(am__EXEEXT_3) $(am__EXEEXT_11) \
 	$(am__EXEEXT_12) $(am__EXEEXT_13) $(am__EXEEXT_14) \
 	$(am__EXEEXT_15) $(am__EXEEXT_16) $(am__EXEEXT_17) \
 	$(am__EXEEXT_18)
@@ -421,8 +423,7 @@ test_pkcs7_OBJECTS = $(am_test_pkcs7_OBJECTS)
 test_pkcs7_LDADD = $(LDADD)
 test_pkcs7_DEPENDENCIES = $(top_builddir)/src/ulib/lib@ULIB@.la
 am__test_plugin_SOURCES_DIST = test_plugin.cpp
-@PLUGIN_TRUE@@STDCPP_TRUE@am_test_plugin_OBJECTS =  \
-@PLUGIN_TRUE@@STDCPP_TRUE@	test_plugin.$(OBJEXT)
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@am_test_plugin_OBJECTS = test_plugin.$(OBJEXT)
 test_plugin_OBJECTS = $(am_test_plugin_OBJECTS)
 test_plugin_LDADD = $(LDADD)
 test_plugin_DEPENDENCIES = $(top_builddir)/src/ulib/lib@ULIB@.la
@@ -1107,28 +1108,35 @@ PRG = test_timeval test_timer test_notifier test_string test_file \
 	test_compress test_cache test_date test_services test_base64 \
 	test_header test_entity test_ipaddress test_socket test_ftp \
 	test_http test_rdb_client test_tokenizer test_query_parser \
-	test_multipart test_command test_dialog test_rdb_server \
-	test_json test_server test_redis test_elasticsearch test_smtp \
-	test_pop3 test_imap $(am__append_1) $(am__append_2) \
-	$(am__append_3) $(am__append_4) $(am__append_6) \
-	$(am__append_8) $(am__append_10) $(am__append_12) \
-	$(am__append_14) $(am__append_16) $(am__append_18) \
-	$(am__append_20) $(am__append_22) $(am__append_24) \
-	$(am__append_26) $(am__append_28) $(am__append_30) \
-	$(am__append_32) $(am__append_34) $(am__append_38)
+	test_multipart test_command test_dialog test_json test_redis \
+	test_elasticsearch test_smtp test_pop3 test_imap \
+	$(am__append_1) $(am__append_3) $(am__append_4) \
+	$(am__append_5) $(am__append_6) $(am__append_8) \
+	$(am__append_10) $(am__append_12) $(am__append_14) \
+	$(am__append_16) $(am__append_18) $(am__append_20) \
+	$(am__append_22) $(am__append_24) $(am__append_26) \
+	$(am__append_28) $(am__append_30) $(am__append_32) \
+	$(am__append_34) $(am__append_36)
 TST = timeval.test timer.test notifier.test string.test file.test \
 	cdb.test rdb.test file_config.test log.test vector.test \
 	options.test application.test tree.test compress.test \
 	cache.test date.test services.test base64.test header.test \
 	entity.test ipaddress.test socket.test ftp.test http.test \
-	tokenizer.test query_parser.test multipart.test \
-	rdb_client_server.test command.test json.test server.test \
-	server_rpc.test $(am__append_5) $(am__append_7) \
-	$(am__append_9) $(am__append_11) $(am__append_13) \
-	$(am__append_15) $(am__append_17) $(am__append_19) \
-	$(am__append_21) $(am__append_23) $(am__append_25) \
-	$(am__append_27) $(am__append_29) $(am__append_31) \
-	$(am__append_33) $(am__append_35) $(am__append_39)
+	tokenizer.test query_parser.test multipart.test command.test \
+	json.test $(am__append_2) $(am__append_7) $(am__append_9) \
+	$(am__append_11) $(am__append_13) $(am__append_15) \
+	$(am__append_17) $(am__append_19) $(am__append_21) \
+	$(am__append_23) $(am__append_25) $(am__append_27) \
+	$(am__append_29) $(am__append_31) $(am__append_33) \
+	$(am__append_35) $(am__append_37)
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@test_plugin_SOURCES = test_plugin.cpp
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@product1_la_SOURCES = plugin/product1.cpp
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@product1_la_LIBADD = $(LDADD)
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@product1_la_LDFLAGS = -module -rpath /nowhere @MODULE_LIBTOOL_OPTIONS@
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@product2_la_SOURCES = plugin/product2.cpp
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@product2_la_LIBADD = $(LDADD)
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@product2_la_LDFLAGS = -module -rpath /nowhere @MODULE_LIBTOOL_OPTIONS@
+@ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@noinst_LTLIBRARIES = product1.la product2.la
 test_smtp_SOURCES = test_smtp.cpp
 test_pop3_SOURCES = test_pop3.cpp
 test_imap_SOURCES = test_imap.cpp
@@ -1200,16 +1208,8 @@ test_elasticsearch_SOURCES = test_elasticsearch.cpp
 @LINUX_TRUE@test_interrupt_SOURCES = test_interrupt.cpp
 @LINUX_TRUE@test_unixsocket_client_SOURCES = test_unixsocket_client.cpp
 @LINUX_TRUE@test_unixsocket_server_SOURCES = test_unixsocket_server.cpp
-@LINUX_TRUE@test_process_LDADD = $(LDADD) $(am__append_36)
-@LINUX_TRUE@test_interrupt_LDADD = $(LDADD) $(am__append_37)
-@PLUGIN_TRUE@@STDCPP_TRUE@test_plugin_SOURCES = test_plugin.cpp
-@PLUGIN_TRUE@@STDCPP_TRUE@product1_la_SOURCES = plugin/product1.cpp
-@PLUGIN_TRUE@@STDCPP_TRUE@product1_la_LIBADD = $(LDADD)
-@PLUGIN_TRUE@@STDCPP_TRUE@product1_la_LDFLAGS = -module -rpath /nowhere @MODULE_LIBTOOL_OPTIONS@
-@PLUGIN_TRUE@@STDCPP_TRUE@product2_la_SOURCES = plugin/product2.cpp
-@PLUGIN_TRUE@@STDCPP_TRUE@product2_la_LIBADD = $(LDADD)
-@PLUGIN_TRUE@@STDCPP_TRUE@product2_la_LDFLAGS = -module -rpath /nowhere @MODULE_LIBTOOL_OPTIONS@
-@PLUGIN_TRUE@@STDCPP_TRUE@noinst_LTLIBRARIES = product1.la product2.la
+@LINUX_TRUE@test_process_LDADD = $(LDADD) $(am__append_38)
+@LINUX_TRUE@test_interrupt_LDADD = $(LDADD) $(am__append_39)
 TESTS = $(TST) ../reset.color
 all: all-am
 

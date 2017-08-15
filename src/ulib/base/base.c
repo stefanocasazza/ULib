@@ -1035,7 +1035,8 @@ uint32_t u_strftime1(char* restrict buffer, uint32_t maxsize, const char* restri
    U_INTERNAL_ASSERT_MAJOR(fmt_size, 0)
 
    do {
-      U_INTERNAL_ERROR((bp-buffer) <= maxsize, "BUFFER OVERFLOW at u_strftime1() ret = %lu maxsize = %u format = \"%.*s\"", (bp-buffer), maxsize, format_size_save, format);
+      U_INTERNAL_ERROR((uint32_t)(bp-buffer) <= maxsize, "BUFFER OVERFLOW at u_strftime1() ret = %u maxsize = %u format = \"%.*s\"",
+                       (uint32_t)(bp-buffer),   maxsize, format_size_save, format);
 
       /* Scan the format for conversions ('%' character) */
 
@@ -1102,9 +1103,9 @@ case_B: /* %B The full name of the month */
       continue;
 
 case_H: /* %H The hour (on a 24-hour clock), formatted with two digits */
-      U_INTERNAL_ASSERT((bp-buffer) <= (maxsize-2))
+      U_INTERNAL_ASSERT((uint32_t)(bp-buffer) <= (maxsize-2))
 
-   /* if ((bp-buffer) >= (maxsize-2)) return 0; */
+   /* if ((uint32_t)(bp-buffer) >= (maxsize-2)) return 0; */
 
       U_NUM2STR16(bp, u_strftime_tm.tm_hour);
 
@@ -1113,9 +1114,9 @@ case_H: /* %H The hour (on a 24-hour clock), formatted with two digits */
       continue;
 
 case_I: /* %I The hour (on a 12-hour clock), formatted with two digits */
-      U_INTERNAL_ASSERT((bp-buffer) <= (maxsize-2))
+      U_INTERNAL_ASSERT((uint32_t)(bp-buffer) <= (maxsize-2))
 
-   /* if ((bp-buffer) >= (maxsize-2)) return 0; */
+   /* if ((uint32_t)(bp-buffer) >= (maxsize-2)) return 0; */
 
       if (u_strftime_tm.tm_hour == 0 ||
           u_strftime_tm.tm_hour == 12)
@@ -1135,9 +1136,9 @@ case_I: /* %I The hour (on a 12-hour clock), formatted with two digits */
       continue;
 
 case_M: /* %M The minute, formatted with two digits */
-      U_INTERNAL_ASSERT((bp-buffer) <= (maxsize-2))
+      U_INTERNAL_ASSERT((uint32_t)(bp-buffer) <= (maxsize-2))
 
-   /* if ((bp-buffer) >= (maxsize-2)) return 0; */
+   /* if ((uint32_t)(bp-buffer) >= (maxsize-2)) return 0; */
 
       U_NUM2STR16(bp, u_strftime_tm.tm_min);
 
@@ -1146,9 +1147,9 @@ case_M: /* %M The minute, formatted with two digits */
       continue;
 
 case_S: /* %S The second, formatted with two digits */
-      U_INTERNAL_ASSERT((bp-buffer) <= (maxsize-2))
+      U_INTERNAL_ASSERT((uint32_t)(bp-buffer) <= (maxsize-2))
 
-   /* if ((bp-buffer) >= (maxsize-2)) return 0; */
+   /* if ((uint32_t)(bp-buffer) >= (maxsize-2)) return 0; */
 
       U_NUM2STR16(bp, u_strftime_tm.tm_sec);
 
@@ -1157,9 +1158,9 @@ case_S: /* %S The second, formatted with two digits */
       continue;
 
 case_T: /* %X A string representing the full time of day (hours, minutes, and seconds), in a format like 13:13:13 - %T The time in 24-hour notation (%H:%M:%S) (SU) */
-      U_INTERNAL_ASSERT((bp-buffer) <= (maxsize-8))
+      U_INTERNAL_ASSERT((uint32_t)(bp-buffer) <= (maxsize-8))
 
-   /* if ((bp-buffer) >= (maxsize-8)) return 0; */
+   /* if ((uint32_t)(bp-buffer) >= (maxsize-8)) return 0; */
 
       U_NUM2STR64(bp, ':', u_strftime_tm.tm_hour, u_strftime_tm.tm_min, u_strftime_tm.tm_sec);
 
@@ -1168,9 +1169,9 @@ case_T: /* %X A string representing the full time of day (hours, minutes, and se
       continue;
 
 case_U: /* %U The week number, formatted with two digits (from 0 to 53; week number 1 is taken as beginning with the first Sunday in a year). See also %W */
-      U_INTERNAL_ASSERT((bp-buffer) <= (maxsize-2))
+      U_INTERNAL_ASSERT((uint32_t)(bp-buffer) <= (maxsize-2))
 
-   /* if ((bp-buffer) >= (maxsize-2)) return 0; */
+   /* if ((uint32_t)(bp-buffer) >= (maxsize-2)) return 0; */
 
       U_NUM2STR16(bp, (u_strftime_tm.tm_yday + 7 - u_strftime_tm.tm_wday) / 7);
 
@@ -1179,9 +1180,9 @@ case_U: /* %U The week number, formatted with two digits (from 0 to 53; week num
       continue;
 
 case_W: /* %W Another version of the week number: like %U, but counting week 1 as beginning with the first Monday in a year */
-      U_INTERNAL_ASSERT((bp-buffer) <= (maxsize-2))
+      U_INTERNAL_ASSERT((uint32_t)(bp-buffer) <= (maxsize-2))
 
-   /* if ((bp-buffer) >= (maxsize-2)) return 0; */
+   /* if ((uint32_t)(bp-buffer) >= (maxsize-2)) return 0; */
 
       U_NUM2STR16(bp, (u_strftime_tm.tm_yday + ((8-u_strftime_tm.tm_wday) % 7)) / 7);
 
@@ -1190,9 +1191,9 @@ case_W: /* %W Another version of the week number: like %U, but counting week 1 a
       continue;
 
 case_Y: /* %Y The full year, formatted with four digits to include the century */
-      U_INTERNAL_ASSERT((bp-buffer) <= (maxsize-4))
+      U_INTERNAL_ASSERT((uint32_t)(bp-buffer) <= (maxsize-4))
 
-   /* if ((bp-buffer) >= (maxsize-4)) return 0; */
+   /* if ((uint32_t)(bp-buffer) >= (maxsize-4)) return 0; */
 
       (void) sprintf(bp, "%.4d", 1900 + u_strftime_tm.tm_year);
 
@@ -1205,9 +1206,9 @@ case_Y: /* %Y The full year, formatted with four digits to include the century *
 case_Z: /* %Z Defined by ANSI C as eliciting the time zone if available */
       n = u__strlen(tzname[u_is_daylight()], __PRETTY_FUNCTION__);
 
-      U_INTERNAL_ASSERT((bp-buffer) <= (maxsize-n))
+      U_INTERNAL_ASSERT((uint32_t)(bp-buffer) <= (maxsize-n))
 
-   /* if ((bp-buffer) >= (maxsize-n)) return 0; */
+   /* if ((uint32_t)(bp-buffer) >= (maxsize-n)) return 0; */
 
       (void) u__memcpy(bp, tzname[u_is_daylight()], n, __PRETTY_FUNCTION__);
 
@@ -1216,9 +1217,9 @@ case_Z: /* %Z Defined by ANSI C as eliciting the time zone if available */
       continue;
 
 case_a: /* %a An abbreviation for the day of the week */
-      U_INTERNAL_ASSERT((bp-buffer) <= (maxsize-3))
+      U_INTERNAL_ASSERT((uint32_t)(bp-buffer) <= (maxsize-3))
 
-   /* if ((bp-buffer) >= (maxsize-3)) return 0; */
+   /* if ((uint32_t)(bp-buffer) >= (maxsize-3)) return 0; */
 
       u_put_unalignedp32(bp, U_MULTICHAR_CONSTANT32(u_day_name[u_strftime_tm.tm_wday][0],
                                                     u_day_name[u_strftime_tm.tm_wday][1],
@@ -1229,9 +1230,9 @@ case_a: /* %a An abbreviation for the day of the week */
       continue;
 
 case_b: /* %b An abbreviation for the month name - %h Equivalent to %b (SU) */
-      U_INTERNAL_ASSERT((bp-buffer) <= (maxsize-3))
+      U_INTERNAL_ASSERT((uint32_t)(bp-buffer) <= (maxsize-3))
 
-   /* if ((bp-buffer) >= (maxsize-3)) return 0; */
+   /* if ((uint32_t)(bp-buffer) >= (maxsize-3)) return 0; */
 
       u_put_unalignedp32(bp, U_MULTICHAR_CONSTANT32(u_month_name[u_strftime_tm.tm_mon][0],
                                                     u_month_name[u_strftime_tm.tm_mon][1],
@@ -1242,9 +1243,9 @@ case_b: /* %b An abbreviation for the month name - %h Equivalent to %b (SU) */
       continue;
 
 case_c: /* %c A string representing the complete date and time, in the form Mon Apr 01 13:13:13 1992 */
-      U_INTERNAL_ASSERT((bp-buffer) <= (maxsize-24))
+      U_INTERNAL_ASSERT((uint32_t)(bp-buffer) <= (maxsize-24))
 
-   // if ((bp-buffer) >= (maxsize-24)) return 0;
+   // if ((uint32_t)(bp-buffer) >= (maxsize-24)) return 0;
 
       u_put_unalignedp32(bp, U_MULTICHAR_CONSTANT32(u_day_name[u_strftime_tm.tm_wday][0],
                                                     u_day_name[u_strftime_tm.tm_wday][1],
@@ -1265,9 +1266,9 @@ case_c: /* %c A string representing the complete date and time, in the form Mon 
       continue;
 
 case_d: /* %d The day of the month, formatted with two digits */
-      U_INTERNAL_ASSERT((bp-buffer) <= (maxsize-2))
+      U_INTERNAL_ASSERT((uint32_t)(bp-buffer) <= (maxsize-2))
 
-   /* if ((bp-buffer) >= (maxsize-2)) return 0; */
+   /* if ((uint32_t)(bp-buffer) >= (maxsize-2)) return 0; */
 
       U_NUM2STR16(bp, u_strftime_tm.tm_mday);
 
@@ -1276,9 +1277,9 @@ case_d: /* %d The day of the month, formatted with two digits */
       continue;
 
 case_e: /* %e Like %d, the day of the month as a decimal number, but a leading zero is replaced by a space */
-      U_INTERNAL_ASSERT((bp-buffer) <= (maxsize-2))
+      U_INTERNAL_ASSERT((uint32_t)(bp-buffer) <= (maxsize-2))
 
-   /* if ((bp-buffer) >= (maxsize-2)) return 0; */
+   /* if ((uint32_t)(bp-buffer) >= (maxsize-2)) return 0; */
 
       val = (u_strftime_tm.tm_mday >= 10 ? (u_strftime_tm.tm_mday / 10) : 0);
 
@@ -1290,9 +1291,9 @@ case_e: /* %e Like %d, the day of the month as a decimal number, but a leading z
       continue;
 
 case_j: /* %j The count of days in the year, formatted with three digits (from 1 to 366) */
-      U_INTERNAL_ASSERT((bp-buffer) <= (maxsize-3))
+      U_INTERNAL_ASSERT((uint32_t)(bp-buffer) <= (maxsize-3))
 
-   /* if ((bp-buffer) >= (maxsize-3)) return 0; */
+   /* if ((uint32_t)(bp-buffer) >= (maxsize-3)) return 0; */
 
       (void) sprintf(bp, "%.3d", u_strftime_tm.tm_yday+1);
 
@@ -1303,9 +1304,9 @@ case_j: /* %j The count of days in the year, formatted with three digits (from 1
       continue;
 
 case_m: /* %m The month number, formatted with two digits */
-      U_INTERNAL_ASSERT((bp-buffer) <= (maxsize-2))
+      U_INTERNAL_ASSERT((uint32_t)(bp-buffer) <= (maxsize-2))
 
-   /* if ((bp-buffer) >= (maxsize-2)) return 0; */
+   /* if ((uint32_t)(bp-buffer) >= (maxsize-2)) return 0; */
 
       U_NUM2STR16(bp, u_strftime_tm.tm_mon+1);
 
@@ -1314,9 +1315,9 @@ case_m: /* %m The month number, formatted with two digits */
       continue;
 
 case_p: /* %p Either AM or PM as appropriate */
-      U_INTERNAL_ASSERT((bp-buffer) <= (maxsize-2))
+      U_INTERNAL_ASSERT((uint32_t)(bp-buffer) <= (maxsize-2))
 
-   /* if ((bp-buffer) >= (maxsize-2)) return 0; */
+   /* if ((uint32_t)(bp-buffer) >= (maxsize-2)) return 0; */
 
       u_put_unalignedp16(bp, U_MULTICHAR_CONSTANT16(u_strftime_tm.tm_hour < 12 ? 'A' : 'P','M'));
 
@@ -1325,18 +1326,18 @@ case_p: /* %p Either AM or PM as appropriate */
       continue;
 
 case_w: /* %w A single digit representing the day of the week: Sunday is day 0 */
-      U_INTERNAL_ASSERT((bp-buffer) <= (maxsize-1))
+      U_INTERNAL_ASSERT((uint32_t)(bp-buffer) <= (maxsize-1))
 
-   /* if ((bp-buffer) >= (maxsize-1)) return 0; */
+   /* if ((uint32_t)(bp-buffer) >= (maxsize-1)) return 0; */
 
       *bp++ = '0' + (u_strftime_tm.tm_wday % 10);
 
       continue;
 
 case_x: /* %x A string representing the complete date, in a format like Mon Apr 01 1992 */
-      U_INTERNAL_ASSERT((bp-buffer) <= (maxsize-15))
+      U_INTERNAL_ASSERT((uint32_t)(bp-buffer) <= (maxsize-15))
 
-   /* if ((bp-buffer) >= (maxsize-15)) return 0; */
+   /* if ((uint32_t)(bp-buffer) >= (maxsize-15)) return 0; */
 
       u_put_unalignedp32(bp, U_MULTICHAR_CONSTANT32(u_day_name[u_strftime_tm.tm_wday][0],
                                                     u_day_name[u_strftime_tm.tm_wday][1],
@@ -1355,9 +1356,9 @@ case_x: /* %x A string representing the complete date, in a format like Mon Apr 
       continue;
 
 case_y: /* %y The last two digits of the year */
-      U_INTERNAL_ASSERT((bp-buffer) <= (maxsize-2))
+      U_INTERNAL_ASSERT((uint32_t)(bp-buffer) <= (maxsize-2))
 
-   /* if ((bp-buffer) >= (maxsize-2)) return 0; */
+   /* if ((uint32_t)(bp-buffer) >= (maxsize-2)) return 0; */
 
       /**
        * The year could be greater than 100, so we need the value modulo 100.
@@ -1371,9 +1372,9 @@ case_y: /* %y The last two digits of the year */
       continue;
 
 case_z: /* %z The +hhmm or -hhmm numeric timezone (that is, the hour and minute offset from UTC) */
-      U_INTERNAL_ASSERT((bp-buffer) <= (maxsize-5))
+      U_INTERNAL_ASSERT((uint32_t)(bp-buffer) <= (maxsize-5))
 
-   /* if ((bp-buffer) >= (maxsize-5)) return 0; */
+   /* if ((uint32_t)(bp-buffer) >= (maxsize-5)) return 0; */
 
       val = (*u_pnow_adjust / 3600);
 
@@ -1775,7 +1776,8 @@ uint32_t u__vsnprintf(char* restrict buffer, uint32_t buffer_size, const char* r
    U_INTERNAL_ASSERT_MAJOR(fmt_size, 0)
 
    do {
-      U_INTERNAL_ERROR((bp-buffer) <= buffer_size, "BUFFER OVERFLOW at u__vsnprintf() ret = %lu buffer_size = %u format = \"%.*s\"",(bp-buffer),buffer_size,format_size_save,format);
+      U_INTERNAL_ERROR((uint32_t)(bp-buffer) <= buffer_size, "BUFFER OVERFLOW at u__vsnprintf() ret = %u buffer_size = %u format = \"%.*s\"",
+                       (uint32_t)(bp-buffer),   buffer_size, format_size_save, format);
 
       /* Scan the format for conversions ('%' character) */
 
@@ -2092,9 +2094,9 @@ case_ustring_v:
 
       size = (prec < 0 ? (int)u__strlen((const char*)cp, __PRETTY_FUNCTION__) : prec);
 
-      U_INTERNAL_ERROR(size <= (int)(buffer_size - (bp-buffer)),
-                       "WE ARE GOING TO OVERFLOW BUFFER at u__vsnprintf() size = %u remaining = %ld cp = %.20s buffer_size = %u format = \"%.*s\"",
-                       size, (buffer_size - (bp-buffer)), cp, buffer_size, format_size_save, format);
+      U_INTERNAL_ERROR((uint32_t)size <= (buffer_size - (uint32_t)(bp-buffer)),
+                       "WE ARE GOING TO OVERFLOW BUFFER at u__vsnprintf() size = %u remaining = %u cp = %.20s buffer_size = %u format = \"%.*s\"",
+                       size, (buffer_size - (uint32_t)(bp-buffer)), cp, buffer_size, format_size_save, format);
 
       /* if a width from format is specified, the 0 flag for padding will be ignored... */
 

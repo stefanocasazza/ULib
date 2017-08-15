@@ -17,7 +17,7 @@ PRG = test_timeval test_timer test_notifier test_string \
 		test_vector test_options test_application test_tree test_compress test_cache test_date \
 		test_services test_base64 test_header test_entity \
 		test_ipaddress test_socket test_ftp test_http test_rdb_client \
-		test_tokenizer test_query_parser test_multipart test_command test_dialog test_rdb_server test_json test_server test_redis test_elasticsearch \
+		test_tokenizer test_query_parser test_multipart test_command test_dialog test_json test_redis test_elasticsearch \
 		test_smtp test_pop3 test_imap
 ##		test_twilio
 
@@ -26,8 +26,27 @@ TST = timeval.test timer.test notifier.test string.test \
 		vector.test options.test application.test tree.test compress.test cache.test date.test \
 		services.test base64.test header.test entity.test \
 		ipaddress.test socket.test ftp.test http.test \
-		tokenizer.test query_parser.test multipart.test rdb_client_server.test command.test json.test server.test server_rpc.test
+		tokenizer.test query_parser.test multipart.test command.test json.test
 ## 	pop3.test imap.test smtp.test dialog.test redis.test elasticsearch.test twilio.test
+
+if ENABLE_SHARED
+if ENABLE_PLUGINS
+PRG += test_server test_rdb_server test_plugin
+TST += server.test server_rpc.test rdb_client_server.test plugin.test
+
+test_plugin_SOURCES  = test_plugin.cpp
+
+product1_la_SOURCES  = plugin/product1.cpp
+product1_la_LIBADD   = $(LDADD)
+product1_la_LDFLAGS  = -module -rpath /nowhere @MODULE_LIBTOOL_OPTIONS@
+
+product2_la_SOURCES  = plugin/product2.cpp
+product2_la_LIBADD   = $(LDADD)
+product2_la_LDFLAGS  = -module -rpath /nowhere @MODULE_LIBTOOL_OPTIONS@
+
+noinst_LTLIBRARIES = product1.la product2.la
+endif
+endif
 
 if SSH
   PRG += test_ssh_client
@@ -213,25 +232,6 @@ test_interrupt_LDADD = $(LDADD)
 if SANITIZE
 test_process_LDADD   += -lubsan
 test_interrupt_LDADD += -lubsan
-endif
-endif
-
-if PLUGIN
-if STDCPP
-PRG += test_plugin
-TST += plugin.test
-test_plugin_SOURCES  = test_plugin.cpp
-
-product1_la_SOURCES  = plugin/product1.cpp
-product1_la_LIBADD   = $(LDADD)
-product1_la_LDFLAGS  = -module -rpath /nowhere @MODULE_LIBTOOL_OPTIONS@
-
-product2_la_SOURCES  = plugin/product2.cpp
-product2_la_LIBADD   = $(LDADD)
-product2_la_LDFLAGS  = -module -rpath /nowhere @MODULE_LIBTOOL_OPTIONS@
-
-## for convenience module
-noinst_LTLIBRARIES = product1.la product2.la
 endif
 endif
 

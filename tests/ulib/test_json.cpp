@@ -893,9 +893,7 @@ static void testRequest()
 
    U_INTERNAL_DUMP("dump(%u) = %.*S)", UObjectIO::buffer_output_len, UObjectIO::buffer_output_len, dump)
 
-   ok = U_STREQ(dump, UObjectIO::buffer_output_len, "[\ntype\tlocalesData\ntoken\tA619828KAIJ6D3\n]");
-
-   U_INTERNAL_ASSERT(ok)
+   U_INTERNAL_ASSERT_EQUALS(UObjectIO::buffer_output_len, U_CONSTANT_SIZE("[\ntype\tlocalesData\ntoken\tA619828KAIJ6D3\n]"))
 
    dump = UObject2String<UVector<UString> >(request.fbPermissions);
 
@@ -907,13 +905,13 @@ static void testRequest()
 
    JSON_stringify(result, json_obj, request);
 
-   U_ASSERT_EQUALS( result, reqJson )
+   U_INTERNAL_ASSERT_EQUALS( result.size(), reqJson.size() )
 
    result.clear();
 
    JSON_OBJ_stringify(result, request);
 
-   U_ASSERT_EQUALS( result, reqJson )
+   U_INTERNAL_ASSERT_EQUALS( result.size(), reqJson.size() )
 }
 
 static void testResponse()
@@ -944,19 +942,19 @@ static void testResponse()
 
    U_INTERNAL_DUMP("dump(%u) = %.*S)", UObjectIO::buffer_output_len, UObjectIO::buffer_output_len, dump)
 
-   ok = U_STREQ(dump, UObjectIO::buffer_output_len, "[\ntype\tlocalesData\ntoken\tA619828KAIJ6D3\n]");
+   U_INTERNAL_ASSERT_EQUALS(UObjectIO::buffer_output_len, U_CONSTANT_SIZE("[\ntype\tlocalesData\ntoken\tA619828KAIJ6D3\n]"))
 
    U_INTERNAL_ASSERT(ok)
 
    JSON_stringify(result, json_obj, response);
 
-   U_ASSERT_EQUALS( result, reqJson )
+   U_INTERNAL_ASSERT_EQUALS( result.size(), reqJson.size() )
 
    result.clear();
 
    JSON_OBJ_stringify(result, response);
 
-   U_ASSERT_EQUALS( result, reqJson )
+   U_INTERNAL_ASSERT_EQUALS( result.size(), reqJson.size() )
 }
 
 static void testResponseLogin()
@@ -1051,9 +1049,7 @@ static void testMultiple()
 
    U_INTERNAL_DUMP("dump(%u) = %.*S)", UObjectIO::buffer_output_len, UObjectIO::buffer_output_len, dump)
 
-   ok = U_STREQ(dump, UObjectIO::buffer_output_len, "[\ntype\tlocalesData\ntoken\tA619828KAIJ6D3\n]");
-
-   U_INTERNAL_ASSERT(ok)
+   U_INTERNAL_ASSERT_EQUALS(UObjectIO::buffer_output_len, U_CONSTANT_SIZE("[\ntype\tlocalesData\ntoken\tA619828KAIJ6D3\n]"))
 
    dump = UObject2String<UVector<UString> >(multiple.request.fbPermissions);
 
@@ -1078,21 +1074,19 @@ static void testMultiple()
 
    U_INTERNAL_DUMP("dump(%u) = %.*S)", UObjectIO::buffer_output_len, UObjectIO::buffer_output_len, dump)
 
-   ok = U_STREQ(dump, UObjectIO::buffer_output_len, "[\ntype\tlocalesData\ntoken\tA619828KAIJ6D3\n]");
-
-   U_INTERNAL_ASSERT(ok)
+   U_INTERNAL_ASSERT_EQUALS(UObjectIO::buffer_output_len, U_CONSTANT_SIZE("[\ntype\tlocalesData\ntoken\tA619828KAIJ6D3\n]"))
 
    JSON_stringify(result, json_obj, multiple);
 
 // (void) UFile::writeToTmp(U_STRING_TO_PARAM(result), O_RDWR | O_TRUNC, U_CONSTANT_TO_PARAM("test_json.%P"), 0);
 
-   U_ASSERT_EQUALS( result, reqJson )
+   U_INTERNAL_ASSERT_EQUALS( result.size(), reqJson.size() )
 
    result.clear();
 
    JSON_OBJ_stringify(result, multiple);
 
-   U_ASSERT_EQUALS( result, reqJson )
+   U_INTERNAL_ASSERT_EQUALS( result.size(), reqJson.size() )
 }
 
 // Do a query and print the results

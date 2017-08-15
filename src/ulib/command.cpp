@@ -321,6 +321,20 @@ U_NO_EXPORT void UCommand::execute(bool flag_stdin, bool flag_stdout, bool flag_
    pid        = UProcess::execute(U_PATH_CONV(argv_exec[0]), argv_exec+1, envp, flag_stdin, flag_stdout, flag_stderr);
 }
 
+U_NO_EXPORT bool UCommand::wait()
+{
+   U_TRACE_NO_PARAM(0, "UCommand::wait()")
+
+   if (UProcess::waitpid(pid, &status, 0) > 0)
+      {
+      exit_value = UProcess::exitValue(status);
+
+      if (exit_value == 0) U_RETURN(true);
+      }
+
+   U_RETURN(false);
+}
+
 U_NO_EXPORT bool UCommand::postCommand(UString* input, UString* output)
 {
    U_TRACE(1, "UCommand::postCommand(%p,%p)", input, output)
@@ -401,17 +415,6 @@ U_NO_EXPORT bool UCommand::postCommand(UString* input, UString* output)
       }
 
    U_RETURN(true);
-}
-
-U_NO_EXPORT bool UCommand::wait()
-{
-   U_TRACE_NO_PARAM(0, "UCommand::wait()")
-
-   UProcess::waitpid(pid, &status, 0);
-
-   exit_value = UProcess::exitValue(status);
-
-   U_RETURN(exit_value == 0);
 }
 
 bool UCommand::setMsgError(const char* cmd, bool only_if_error)
