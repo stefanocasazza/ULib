@@ -543,7 +543,7 @@ loop:
 
    if (u__isspace(c)) goto loop;
 
-   U_INTERNAL_DUMP("dispatch_table[%d] = %p &&cvalue = %p", c-'!', dispatch_table[c-'!'], &&cvalue)
+   U_INTERNAL_DUMP("dispatch_table[%d] = %d &&cvalue = %p", c-'!', dispatch_table[c-'!'], &&cvalue)
 
    goto *((char*)&&cvalue + dispatch_table[c-'!']);
 

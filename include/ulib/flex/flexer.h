@@ -92,9 +92,7 @@ public:
 
       if (length)
          {
-         data.copy(buf, length, write_position);
-
-         write_position += length;
+         write_position += data.copy(buf, length, write_position);
 
          U_RETURN(length);
          }

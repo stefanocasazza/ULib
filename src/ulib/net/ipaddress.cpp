@@ -601,7 +601,7 @@ __pure bool UIPAddress::isWildCard()
       U_INTERNAL_ASSERT_EQUALS(iAddressType, AF_INET)
       U_INTERNAL_ASSERT_EQUALS(iAddressLength, sizeof(in_addr))
 
-      U_DUMP("htonl(pcAddress.i) = 0x%X %V", htonl(pcAddress.i), UIPAddress::toString(getInAddr()).rep)
+      U_DUMP("htonl(pcAddress.i) = %#X %V", htonl(pcAddress.i), UIPAddress::toString(getInAddr()).rep)
 
       if (htonl(pcAddress.i) == 0x00000000) U_RETURN(true);
 
@@ -642,49 +642,37 @@ bool UIPAllow::parseMask(const UString& spec)
 
    // get bit before slash
 
-   struct in_addr ia;
    char addr_str[U_INET_ADDRSTRLEN];
-   uint32_t start, addr_len = spec.find('/');
+   uint32_t len, addr_len = spec.find('/');
 
    // extract and parse addr part
 
-   if (spec.c_char(0) == '!')
-      {
-      bnot  = true;
-      start = 1;
-      }
-   else
-      {
-      bnot  = false;
-      start = 0;
-      }
+   bnot = (spec.c_char(0) == '!');
 
    if (addr_len == U_NOT_FOUND)
       {
       mask = 0xffffffff;
 
-      spec.copy(addr_str, addr_len, start);
+      len = spec.copy(addr_str, addr_len, bnot);
       }
    else
       {
       mask    =
       network = 0;
 
-      spec.copy(addr_str, addr_len-start, start);
+      len = spec.copy(addr_str, addr_len-bnot, bnot);
       }
 
-   U_INTERNAL_DUMP("u_isIPv4Addr(%S) = %b", addr_str, u_isIPv4Addr(addr_str, u__strlen(addr_str, __PRETTY_FUNCTION__)))
+   U_INTERNAL_DUMP("u_isIPv4Addr(%.*S) = %b", len, addr_str, u_isIPv4Addr(addr_str, len))
 
-   if (u_isIPv4Addr(addr_str, u__strlen(addr_str, __PRETTY_FUNCTION__)) == false) U_RETURN(false);
+   if (u_isIPv4Addr(addr_str, len) == false) U_RETURN(false);
 
    // converts the internet address from the IPv4 numbers-and-dots notation into binary form
    // (in network byte order) and stores it in the structure that points to
 
-   int result = inet_aton(addr_str, &ia);
+   struct in_addr ia;
 
-   U_INTERNAL_DUMP("addr_str = %S result = %d", addr_str, result)
-
-   if (result == 0) U_RETURN(false);
+   if (U_SYSCALL(inet_aton, "%p,%p", addr_str, &ia) == 0) U_RETURN(false);
 
    addr = ia.s_addr;
 
@@ -739,7 +727,7 @@ bool UIPAllow::parseMask(const UString& spec)
       U_DUMP("addr = %V mask = %V network = %V", UIPAddress::toString(addr).rep, UIPAddress::toString(mask).rep, UIPAddress::toString(network).rep)
       }
 
-   U_INTERNAL_DUMP("addr = 0x%08x %B mask = 0x%08x %B network = 0x%08x %B", addr, addr, mask, mask, network, network)
+   U_INTERNAL_DUMP("addr = %#08x %B mask = %#08x %B network = %#08x %B", addr, addr, mask, mask, network, network)
 
    U_RETURN(true);
 }

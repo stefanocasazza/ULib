@@ -2731,7 +2731,7 @@ fi
 
 # Prefix dir
 AC_DEFINE_UNQUOTED(U_PREFIXDIR,	"$u_prefixdir", [install directory])
-# Plugin dir - program executables [EPREFIX/libexec]
+# Plugin dir - program executables [PREFIX/libexec]
 AC_DEFINE_UNQUOTED(U_LIBEXECDIR, "$u_libexecdir", [install directory for plugins])
 # Config dir - read-only single-machine data [PREFIX/etc]
 AC_DEFINE_UNQUOTED(U_SYSCONFDIR, "$u_sysconfdir", [install directory for configuration data])

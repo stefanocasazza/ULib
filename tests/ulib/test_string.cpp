@@ -1494,6 +1494,10 @@ U_EXPORT main(int argc, char* argv[])
 
    U_TRACE(5, "main(%d)", argc)
 
+   bool ok = u_isUTF8((const unsigned char*)U_CONSTANT_TO_PARAM("..M-^X@M-/..M-^X@1M-/..\xC3\xBC\x88\x01\x0BM-^X@M-/..M-^X@M-/..M-^X@M-/../winnt/system32/cmd.exe"));
+
+   U_INTERNAL_ASSERT_EQUALS(ok, false)
+
    UCrono crono;
    UString x(100U), y = U_STRING_FROM_CONSTANT("0.0000001"), z, z1, value = U_STRING_FROM_CONSTANT("0.0");
 
@@ -1637,12 +1641,12 @@ U_EXPORT main(int argc, char* argv[])
    z1 = UStringExt::prepareForEnvironmentVar(U_STRING_FROM_CONSTANT("MasqueradeDevice=eth0 'AuthServiceAddr=http://wifi-aaa2.comune.fi.it' FullPrivateNetwork=172.16.0.0/12 "
                                              "'LocalNetwork=172.16.13.0/24 172.17.13.0/24' 'InternalDevice=br-lan br-wds' 'ExternalDevice=eth0 tun0 tun2'"));
 
-   bool ok = ( z1 == U_STRING_FROM_CONSTANT("MasqueradeDevice=eth0\n"
-                                            "'AuthServiceAddr=http://wifi-aaa2.comune.fi.it'\n"
-                                            "FullPrivateNetwork=172.16.0.0/12\n"
-                                            "'LocalNetwork=172.16.13.0/24 172.17.13.0/24'\n"
-                                            "'InternalDevice=br-lan br-wds'\n"
-                                            "'ExternalDevice=eth0 tun0 tun2'\n") );
+   ok = ( z1 == U_STRING_FROM_CONSTANT("MasqueradeDevice=eth0\n"
+                                       "'AuthServiceAddr=http://wifi-aaa2.comune.fi.it'\n"
+                                       "FullPrivateNetwork=172.16.0.0/12\n"
+                                       "'LocalNetwork=172.16.13.0/24 172.17.13.0/24'\n"
+                                       "'InternalDevice=br-lan br-wds'\n"
+                                       "'ExternalDevice=eth0 tun0 tun2'\n") );
 
    U_INTERNAL_ASSERT( ok )
 
@@ -1965,7 +1969,7 @@ U_EXPORT main(int argc, char* argv[])
 
    const char* ptr = u_getsuffix(U_CONSTANT_TO_PARAM("/dir/base.suffix/www"));
 
-   U_INTERNAL_ASSERT_EQUALS( ptr, 0 )
+   U_INTERNAL_ASSERT_EQUALS( ptr, U_NULLPTR )
 
    ptr = u_getsuffix(U_CONSTANT_TO_PARAM("/dir/base.suffix"));
 

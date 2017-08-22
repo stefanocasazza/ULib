@@ -37,7 +37,7 @@ public:
          int32_t n        =                  content.size();
          unsigned char* s = (unsigned char*) content.data();
 
-         msg = (u_isText(s, n) ?  (color = GREEN, "is") : (color = RED, "NOT"));
+         msg = (u_isText(s, n) ? (color = GREEN, "is") : (color = RED, "NOT"));
 
          U_MESSAGE("%W%s%W Text", color, msg, RESET);
 
@@ -73,7 +73,7 @@ public:
                      if ((i + ++n2) >= n) break;
                      }
 
-                  U_MESSAGE("char %W%C%W at pos 0%o(0x%x) %Wnot text%W%s%W: %.*s%W%c%W%.*s", RED, c, RESET, i, i,
+                  U_MESSAGE("char %W%C%W at pos 0%o(%#x) %Wnot text%W%s%W: %.*s%W%c%W%.*s", RED, c, RESET, i, i,
                               MAGENTA, BRIGHTCYAN, (u__isprint(c) ? "but printable" : ", not printable"), RESET, n1, s-n1, RED, c, RESET, n2, s+1);
                   }
 

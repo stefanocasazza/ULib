@@ -163,7 +163,7 @@ protected:
       {
       U_TRACE_NO_PARAM(0, "ULock::isLocked()")
 
-      U_INTERNAL_DUMP("u_getTag(%p) = %u", sem, u_getTag(sem))
+      U_INTERNAL_DUMP("u_getTag(%#llx) = %u", sem, u_getTag(sem))
 
       if (u_getTag(sem) == U_TRUE_VALUE) U_RETURN(true);
 

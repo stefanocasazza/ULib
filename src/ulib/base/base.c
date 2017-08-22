@@ -666,7 +666,9 @@ time_t u_getLocalNow(time_t sec)
 
    *u_pnow_adjust = (lnow - sec);
 
-   U_INTERNAL_PRINT("u_now_adjust = %d timezone = %ld daylight = %d u_daylight = %b tzname[2] = { %s, %s }",
+// extern char* tzname[2];
+
+   U_INTERNAL_PRINT("u_now_adjust = %d timezone = %ld daylight = %d u_daylight = %d tzname[2] = { %s, %s }",
                     *u_pnow_adjust,    timezone,      daylight,  u_is_daylight(),   tzname[0], tzname[1])
 
    return lnow;
@@ -1084,7 +1086,7 @@ cdefault:
          continue;
          }
 
-      U_INTERNAL_PRINT("dispatch_table[%d] = %p &&cdefault = %p", ch-'A', dispatch_table[ch-'A'], &&cdefault)
+      U_INTERNAL_PRINT("dispatch_table[%d] = %d &&cdefault = %p", ch-'A', dispatch_table[ch-'A'], &&cdefault)
 
       goto *((char*)&&cdefault + dispatch_table[ch-'A']);
 
@@ -1839,7 +1841,7 @@ cdefault:
          continue;
          }
 
-      U_INTERNAL_PRINT("dispatch_table[%d] = %p &&cdefault = %p", ch-'A', dispatch_table[ch-' '], &&cdefault)
+      U_INTERNAL_PRINT("dispatch_table[%d] = %d &&cdefault = %p", ch-'A', dispatch_table[ch-' '], &&cdefault)
 
       goto *((char*)&&cdefault + dispatch_table[ch-' ']);
 
@@ -2686,7 +2688,7 @@ case_w: /* extension: print current working directory */
        * ---------------------------------------------------------------------------------
        */
 next:
-      U_INTERNAL_PRINT("size = %d width = %d prec = %d dprec = %d sign = %c", size, width, prec, dprec, sign)
+      U_INTERNAL_PRINT("size = %d width = %d prec = %d dprec = %d sign = %d", size, width, prec, dprec, sign)
 
       dpad = dprec - size; /* compute actual size, so we know how much to pad */
 
@@ -2698,14 +2700,7 @@ next:
 
       if (pads < 0) pads = 0;
 
-      U_INTERNAL_PRINT("fieldsz = %d pads = %d dpad = %d", fieldsz, pads, dpad)
-
-      /* check ret */
-
-      ret = (bp-buffer) + (width > fieldsz ? width : fieldsz);
-
-      U_INTERNAL_ERROR(ret <= buffer_size,
-                       "BUFFER OVERFLOW at u__vsnprintf() ret = %u buffer_size = %u format = \"%.*s\"", ret, buffer_size, format_size_save, format);
+      U_INTERNAL_PRINT("fieldsz = %d pads = %d dpad = %d flags = %d", fieldsz, pads, dpad, flags)
 
       /* right-adjusting blank padding */
 
@@ -2728,22 +2723,31 @@ next:
          }
       else if ((flags & HEXPREFIX) != 0)
          {
-              if (bpad)   bp -= 2;
-         else if (pads) pads -= 2;
+         U_INTERNAL_PRINT("bpad = %d", bpad)
 
-         u_put_unalignedp16(bp, U_MULTICHAR_CONSTANT16('0',ch));
+         if (bpad) u_put_unalignedp16(bp-2, U_MULTICHAR_CONSTANT16('0',ch));
+         else
+            {
+            u_put_unalignedp16(bp, U_MULTICHAR_CONSTANT16('0',ch));
 
-         bp += 2;
+            bp += 2;
+            }
          }
 
       /* right-adjusting zero padding */
 
       if ((flags & (LADJUST | ZEROPAD)) == ZEROPAD)
          {
+         U_INTERNAL_PRINT("pads = %d", pads)
+
+         U_INTERNAL_ASSERT(pads >= 0)
+
          for (; pads; --pads) *bp++ = '0';
          }
 
       /* leading zeroes from decimal precision */
+
+      U_INTERNAL_PRINT("dpad = %d", dpad)
 
       for (; dpad; --dpad) *bp++ = '0';
 
@@ -2752,6 +2756,13 @@ next:
       if (size)
          {
          U_INTERNAL_ASSERT_POINTER(cp)
+
+         /* check ret */
+
+         ret = (bp-buffer) + size;
+
+         U_INTERNAL_ERROR(ret <= buffer_size,
+                          "BUFFER OVERFLOW at u__vsnprintf() ret = %u buffer_size = %u format = \"%.*s\"", ret, buffer_size, format_size_save, format);
 
          u__memcpy(bp, cp, size, __PRETTY_FUNCTION__);
 
@@ -2762,6 +2773,10 @@ next:
 
       if ((flags & LADJUST) != 0)
          {
+         U_INTERNAL_PRINT("pads = %d", pads)
+
+         U_INTERNAL_ASSERT(pads >= 0)
+
          for (; pads; --pads) *bp++ = ' ';
          }
       }

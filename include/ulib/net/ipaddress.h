@@ -268,7 +268,7 @@ public:
 
    static bool isPrivate(uint32_t i)
       {
-      U_TRACE(0, "UIPAddress::isPrivate(0x%X)", i)
+      U_TRACE(0, "UIPAddress::isPrivate(%#X)", i)
 
       if (((i >= 0x0A000000) && (i <= 0x0AFFFFFF)) ||
           ((i >= 0xAC100000) && (i <= 0xAC1FFFFF)) ||

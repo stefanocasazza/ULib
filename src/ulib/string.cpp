@@ -1012,7 +1012,7 @@ __pure bool UStringRep::isSubStringOf(UStringRep* rep) const
    U_RETURN(false);
 }
 
-void UStringRep::copy(char* s, uint32_t n, uint32_t pos) const
+uint32_t UStringRep::copy(char* s, uint32_t n, uint32_t pos) const
 {
    U_TRACE(0, "UStringRep::copy(%p,%u,%u)", s, n, pos)
 
@@ -1027,6 +1027,8 @@ void UStringRep::copy(char* s, uint32_t n, uint32_t pos) const
    U_MEMCPY(s, str + pos, n);
 
    s[n] = '\0';
+
+   U_RETURN(n);
 }
 
 void UStringRep::trim()
@@ -1076,22 +1078,6 @@ next:
    U_RETURN(r);
 }
 
-__pure uint32_t UStringRep::findWhiteSpace(uint32_t pos) const
-{
-   U_TRACE(0, "UStringRep::findWhiteSpace(%u)", pos)
-
-   U_CHECK_MEMORY
-
-   U_INTERNAL_ASSERT(pos <= _length)
-
-   for (; pos < _length; ++pos)
-      {
-      if (u__isspace(str[pos])) U_RETURN(pos);
-      }
-
-   U_RETURN(U_NOT_FOUND);
-}
-
 __pure bool UStringRep::isEndHeader(uint32_t pos) const
 {
    U_TRACE(0, "UStringRep::isEndHeader(%u)", pos)
@@ -1126,68 +1112,6 @@ __pure bool UStringRep::isEndHeader(uint32_t pos) const
    U_RETURN(false);
 }
 
-__pure bool UStringRep::findEndHeader(uint32_t pos) const
-{
-   U_TRACE(0, "UStringRep::findEndHeader(%u)", pos)
-
-   U_CHECK_MEMORY
-
-   if (_length)
-      {
-      U_INTERNAL_ASSERT_MINOR(pos, _length)
-
-      const char* ptr  = str + pos;
-      uint32_t _remain = (_length - pos);
-
-      if (u_findEndHeader1(ptr, _remain) != U_NOT_FOUND) U_RETURN(true); // find sequence of U_CRLF2
-      }
-
-   U_RETURN(false);
-}
-
-UString::UString(const UString& str, uint32_t pos, uint32_t n)
-{
-   U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(0, UString, "%p,%u,%u", &str, pos, n)
-
-   U_INTERNAL_ASSERT(pos <= str.size())
-
-   uint32_t sz = str.rep->fold(pos, n);
-
-   if (sz) rep = UStringRep::create(sz, sz, str.rep->str + pos);
-   else    _copy(UStringRep::string_rep_null);
-
-   U_INTERNAL_ASSERT(invariant())
-}
-
-UString UString::copy() const
-{
-   U_TRACE_NO_PARAM(0, "UString::copy()")
-
-   if (rep->_length)
-      {
-      uint32_t sz = rep->_length;
-
-      UString copia((void*)rep->str, sz);
-
-      U_RETURN_STRING(copia);
-      }
-
-   return getStringNull();
-}
-
-// SERVICES
-
-UString::UString(uint32_t n, unsigned char c)
-{
-   U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(0, UString, "%u,%C", n, c)
-
-   rep = UStringRep::create(n, n, U_NULLPTR);
-
-   (void) memset((void*)rep->str, c, n);
-
-   U_INTERNAL_ASSERT(invariant())
-}
-
 UString::UString(uint32_t len, uint32_t sz, char* ptr) // NB: for UStringExt::deflate()...
 {
    U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(0, UString, "%u,%u,%p", len, sz, ptr)
@@ -1207,6 +1131,8 @@ UString::UString(uint32_t len, uint32_t sz, char* ptr) // NB: for UStringExt::de
 
    U_INTERNAL_ASSERT(invariant())
 }
+
+// SERVICES
 
 UString& UString::assign(const char* s, uint32_t n)
 {
@@ -2308,7 +2234,7 @@ end:
 #ifdef U_STDCPP_ENABLE
 void UString::get(istream& is)
 {
-   U_TRACE(0, "UString::get(%p)", &is) // problem with sanitize address
+   U_TRACE(0, "UString::get(%p)", &is)
 
    if (is.peek() != '"') is >> *this;
    else
@@ -2383,7 +2309,7 @@ U_EXPORT istream& operator>>(istream& in, UString& str)
          if (str)
             {
             if (str.uniq()) str.setEmpty();
-            else            str._set(UStringRep::create(0U, U_CAPACITY, U_NULLPTR)); // NB: we need this because we use the same object for all input stream of vector (see vector.h:830)...
+            else str._set(UStringRep::create(0U, U_CAPACITY, U_NULLPTR)); // NB: we need this because we use the same object for all input stream of vector (see vector.h:830)...
             }
 
          streamsize w = in.width();
@@ -2436,7 +2362,7 @@ istream& UString::getline(istream& in, unsigned char delim)
       if (size())
          {
          if (uniq()) setEmpty();
-         else        _set(UStringRep::create(0U, U_CAPACITY, U_NULLPTR)); // NB: we need this because we use the same object for all input stream of vector (see vector.h:830)...
+         else _set(UStringRep::create(0U, U_CAPACITY, U_NULLPTR)); // NB: we need this because we use the same object for all input stream of vector (see vector.h:830)...
          }
 
       streambuf* sb = in.rdbuf();

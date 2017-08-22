@@ -112,7 +112,8 @@ USSLSocket::~USSLSocket()
    U_INTERNAL_ASSERT_POINTER(ctx)
 
    if (ssl) SSL_free(ssl); // SSL_free will free UServices::store
-            SSL_CTX_free(ctx);
+
+   SSL_CTX_free(ctx);
 }
 
 void USSLSocket::info_callback(const SSL* ssl, int where, int ret)

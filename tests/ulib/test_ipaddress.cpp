@@ -24,6 +24,8 @@ U_EXPORT main (int argc, char* argv[])
       name_domain = name + '.' + domain;
       }
 
+   U_MESSAGE("addr = %#08x %B mask = %#08x %B network = %#08x %B", 0x100007f, 0x100007f, 0xffffffff, 0xffffffff, 0x100007f, 0x100007f);
+
    result = x.setHostName(U_STRING_FROM_CONSTANT("pippo1"));
 
    U_ASSERT( result == false )

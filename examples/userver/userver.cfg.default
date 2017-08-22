@@ -14,6 +14,7 @@
 # ALLOWED_IP            list of comma separated client address for IP-based access control (IPADDR[/MASK])
 # ALLOWED_IP_PRIVATE    list of comma separated client private address for IP-based access control (IPADDR[/MASK]) for public server
 # ENABLE_RFC1918_FILTER reject request from private IP to public server address
+#
 # MIN_SIZE_FOR_SENDFILE for major size it is better to use sendfile() to serve static content
 #
 # LISTEN_BACKLOG             max number of ready to be delivered connections to accept()
@@ -84,29 +85,38 @@
 # DOS_BLOCKING_PERIOD the blocking period is the amount of time (in seconds) that a client will be blocked for if they are added to the blocking list (defaults to 10)
 # DOS_WHITE_LIST      list of comma separated IP addresses of trusted clients can be whitelisted to insure they are never denied (IPADDR[/MASK])
 # DOS_EMAIL_NOTIFY    the email address to send a message whenever an IP address becomes blacklisted
-# DOS_SYSTEM_COMMAND  the system command specified will be executed whenever an IP address becomes blacklisted. Use %v to denote the IP address of the blacklisted IP 
+# DOS_SYSTEM_COMMAND  the system command specified will be executed whenever an IP address becomes blacklisted. Use %.*s to denote the IP address of the blacklisted IP 
 # DOS_LOGFILE         the file to write DOS event
 # ----------------------------------------------------------------------------------------------------------------------------------------
 
 userver {
 
-# ENABLE_IPV6 no
+# ENABLE_IPV6 yes
 # SERVER      www.example.org
 # PORT        8080
 # SOCKET_NAME tmp/socket
 # IP_ADDRESS  10.30.1.131
-# ALLOWED_IP  127.0.0.1,10.30.0.0/16
  
+# ALLOWED_IP            127.0.0.1,10.30.0.0/16
 # ALLOWED_IP_PRIVATE    127.0.0.1,10.30.0.0/16
 # ENABLE_RFC1918_FILTER yes
+ 
+# MIN_SIZE_FOR_SENDFILE 500k 
 
-  LISTEN_BACKLOG        1024
-  SET_REALTIME_PRIORITY yes
+# LISTEN_BACKLOG        1024
+# SET_REALTIME_PRIORITY yes
 
+# CLIENT_THRESHOLD           100
+# CLIENT_FOR_PARALLELIZATION  10
+ 
+# LOAD_BALANCE_CLUSTER           10.30.0.0/16 
+# LOAD_BALANCE_DEVICE_NETWORK    eth1
+# LOAD_BALANCE_LOADAVG_THRESHOLD 4.5
+ 
 # PID_FILE      /var/run/userver.pid
 # WELCOME_MSG   "220 david.unirel.intranet ULib WEB server (Version 1.1.0) ready.\n"
 # RUN_AS_USER   apache
-  DOCUMENT_ROOT /var/www/localhost/htdocs
+  DOCUMENT_ROOT /var/www
 
 # LOG_FILE     /var/log/userver.log
 # LOG_FILE_SZ  1M
@@ -121,25 +131,40 @@ userver {
 # PLUGIN "geoip  http"
 # PLUGIN "stream http"
 # PLUGIN "socket http"
-
 # PLUGIN_DIR /usr/local/libexec/ulib
 
-  REQ_TIMEOUT 5
+# ORM_DRIVER     "sqlite mysql pgsql"
+# ORM_DRIVER_DIR /usr/local/libexec
 
+# REQ_TIMEOUT 30
+
+# TCP_KEEP_ALIVE yes 
+# TCP_LINGER_SET 0
 # MAX_KEEP_ALIVE 1000
 
-# LOAD_BALANCE_DEVICE_NETWORK    eth1
-# LOAD_BALANCE_LOADAVG_THRESHOLD 4.5
+# DH_FILE      ../ulib/CA/param.dh
+# CERT_FILE    ../ulib/CA/server.crt
+#  KEY_FILE    ../ulib/CA/server.key
+# PASSWORD     stefano
+# CA_PATH      ../ulib/CA/CApath
+# CA_FILE      ../ulib/CA/cacert.pem
+# VERIFY_MODE  1
+# CIPHER_SUITE 0
 
-# DH_FILE     ../ulib/CA/param.dh
-# CERT_FILE   ../ulib/CA/server.crt
-#  KEY_FILE   ../ulib/CA/server.key
-# PASSWORD    stefano
-# CA_PATH     ../ulib/CA/CApath
-# CA_FILE     ../ulib/CA/cacert.pem
-# VERIFY_MODE 1
+# PREFORK_CHILD 4
 
-# PREFORK_CHILD 3
+# CRASH_COUNT        5
+# CRASH_EMAIL_NOTIFY mail.unirel.com:stefano.casazza2@unirel.com 
+#
+# DOS_PAGE_COUNT      2 
+# DOS_PAGE_INTERVAL   1
+# DOS_SITE_COUNT      50
+# DOS_SITE_INTERVAL   1
+# DOS_BLOCKING_PERIOD 10
+# DOS_WHITE_LIST      127.0.0.1,10.8.0.0/16 
+# DOS_EMAIL_NOTIFY    mail.unirel.com:stefano.casazza2@unirel.com
+# DOS_SYSTEM_COMMAND  "sh -c 'echo `date \"+[%%d/%%b/%%Y:%%T %%z]\"` %.*s: %.*s >> /tmp/dos_blacklist.txt'"
+# DOS_LOGFILE         /tmp/dos_blacklist.txt
 }
 
 # ----------------------------------------------------------------------------------------------------------------------------------------------------
@@ -171,12 +196,13 @@ userver {
 # URI_PROTECTED_MASK         mask (DOS regexp) of URI protected from prying eyes (that needs authentication)
 # URI_PROTECTED_ALLOWED_IP   list of comma separated client address for IP-based access control (IPADDR[/MASK]) for URI_PROTECTED_MASK
 #
-# SESSION_COOKIE_OPTION           eventual params for session cookie (lifetime, path, domain, secure, HttpOnly)   
 # ENABLE_CACHING_BY_PROXY_SERVERS enable caching by proxy servers (add Cache control: public directive on header response)
 #
 # URI_REQUEST_CERT_MASK                      mask (DOS regexp) of URI where client must comunicate a certificate in the SSL connection
 # BANDWIDTH_THROTTLING_MASK                  lets you set maximum byte rates on URLs or URL groups (*.jpg|*.gif 50)
 # URI_REQUEST_STRICT_TRANSPORT_SECURITY_MASK mask (DOS regexp) of URI where use HTTP Strict Transport Security to force client to use only SSL
+#
+# SESSION_COOKIE_OPTION eventual params for session cookie (lifetime, path, domain, secure, HttpOnly)   
 # ----------------------------------------------------------------------------------------------------------------------------------------------------
 # This directive gives greater control over abnormal client request behavior, which may be useful for avoiding some forms of denial-of-service attacks
 # ----------------------------------------------------------------------------------------------------------------------------------------------------
@@ -224,29 +250,31 @@ http {
 # APACHE_LIKE_LOG /var/log/httpd/access_log
 # LOG_FILE_SZ     1M
  
-# ENABLE_INOTIFY yes
+# ENABLE_INOTIFY    yes
+# CACHE_FILE_MASK   *.b64|*.txt 
+# CACHE_AVOID_MASK  ap|phpldapadmin|login_request|10.1.55.83|immagini
+# NOCACHE_FILE_MASK banner.html
+# CACHE_FILE_STORE  ../webifv.gz
 
-# CGI_TIMEOUT 60
-
-# VIRTUAL_HOST                    yes
-# MOUNT_POINT                     /phpldapadmin/htdocs
-# DIGEST_AUTHENTICATION           yes
-# ENABLE_CACHING_BY_PROXY_SERVERS yes
+# CGI_TIMEOUT           60
+# VIRTUAL_HOST          yes
+# DIGEST_AUTHENTICATION yes
 
 # URI_PROTECTED_MASK       /RA/admin/cgi-bin/*
 # URI_PROTECTED_ALLOWED_IP 127.0.0.1,10.30.0.0/16
+ 
+# ENABLE_CACHING_BY_PROXY_SERVERS yes
 
 # URI_REQUEST_CERT_MASK                      /wi-auth/cgi-bin/cpe.sh
+# BANDWIDTH_THROTTLING_MASK                  @FILE:../throttling.txt
 # URI_REQUEST_STRICT_TRANSPORT_SECURITY_MASK /admin/*
 
 # SESSION_COOKIE_OPTION "[\"\" 24 / www.example.com yes yes]"
-# ---------------------------------------------------------------------------
-# This directive gives greater control over abnormal client request behavior,
-# which may be useful for avoiding some forms of denial-of-service attacks
-# ---------------------------------------------------------------------------
+
 # LIMIT_REQUEST_BODY   100K
 # REQUEST_READ_TIMEOUT 30 
-# ---------------------------------------------------------------------------
+
+# MOUNT_POINT /phpldapadmin/htdocs
 }
 
 # ------------------------------------------------------------------------------------------------------
@@ -259,9 +287,9 @@ http {
 # ------------------------------------------------------------------------------------------------------
 
 # ssi {
-#
+ 
 # ENVIRONMENT ~/etc/environment.conf 
-#
+ 
 # SSI_AUTOMATIC_ALIASING /index.shtml
 # }
 
@@ -285,15 +313,15 @@ http {
 # fcgi {
 #
 # FCGI_URI_MASK *.php
-#
+ 
 # SOCKET_NAME tmp/fcgi.socket
-#
+ 
 # SERVER 127.0.0.1
 # PORT   8080
-#
+ 
 # RES_TIMEOUT    20
 # FCGI_KEEP_CONN yes
-#
+ 
 # LOG_FILE /var/log/userver.log
 # }
 
@@ -315,17 +343,17 @@ http {
 # -----------------------------------------------------------------------------------------------
 #
 # scgi {
-#
+ 
 # SCGI_URI_MASK *.py
-#
+ 
 # SOCKET_NAME tmp/scgi.socket
-#
+ 
 # SERVER 127.0.0.1
 # PORT   8080
-#
+ 
 # RES_TIMEOUT    20
 # SCGI_KEEP_CONN yes
-#
+ 
 # LOG_FILE /var/log/userver.log
 # }
 
@@ -384,7 +412,7 @@ http {
 
 #  URI_PATH  /my/stream
 #  METADATA  /tmp/metadata
-#
+ 
 #  CONTENT_TYPE text/plain
 #  CONTENT_TYPE "multipart/x-mixed-replace; boundary=++++++++"
 # }
@@ -399,10 +427,10 @@ http {
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 #
 # socket {
-#
+ 
 #  ENVIRONMENT "UTRACE=0 5M 0"
 #  COMMAND my_websocket.sh
-#
+ 
 #  MAX_MESSAGE_SIZE 100K
 # }
 
@@ -638,21 +666,21 @@ http {
 
 # nocat {
 
-   # shell script to manage the firewall
-#  FW_CMD firewall/nodog.fw
-#  FW_ENV "FW_CONF=/etc/nodog_fw.conf \
-#          AuthServiceAddr=http://www.auth-firenze.com/login"
+# shell script to manage the firewall
+# FW_CMD firewall/nodog.fw
+# FW_ENV "FW_CONF=/etc/nodog_fw.conf \
+# AuthServiceAddr=http://www.auth-firenze.com/login"
 
-   # DES3 password stuff
-#  DECRYPT_KEY PASSWORD
+# DES3 password stuff
+# DECRYPT_KEY PASSWORD
 
-   # access point localization tag to be used from portal
-#  LOCAL_NETWORK_LABEL "radio1 radio2"
+# access point localization tag to be used from portal
+# LOCAL_NETWORK_LABEL "radio1 radio2"
 
-   # Number of seconds after a client last login/renewal to terminate their connection
-   # Probably do not want to set this to less than 60 or a lot of bandwidth is likely to get consumed by the client renewal attempts
-#  LOGIN_TIMEOUT 86400 # one notification per day
+# Number of seconds after a client last login/renewal to terminate their connection
+# Probably do not want to set this to less than 60 or a lot of bandwidth is likely to get consumed by the client renewal attempts
+# LOGIN_TIMEOUT 86400 # one notification per day
 
-  # Number of seconds to check if some client has terminate their connection
+# Number of seconds to check if some client has terminate their connection
 # CHECK_EXPIRE_INTERVAL 360
 # }

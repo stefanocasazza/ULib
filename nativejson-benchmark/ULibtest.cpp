@@ -20,7 +20,7 @@ static ULib ulib(U_NULLPTR, "167193,0,0,0,-30,-31,-30,-31,0");
 
 static void GenStat(Stat& stat, const union UValue::jval val)
 {
-	U_TRACE(5, "::GenStat(%p,0x%x)", &stat, val.ival)
+	U_TRACE(5, "::GenStat(%p,%#llx)", &stat, val.ival)
 
 	switch (UValue::getTag(val.ival))
 		{

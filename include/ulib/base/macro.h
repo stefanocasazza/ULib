@@ -147,6 +147,8 @@
 
 #define U_STREQ(a,n,b) (n == U_CONSTANT_SIZE(b) && (memcmp((const char* restrict)(a),b,U_CONSTANT_SIZE(b)) == 0))
 
+#define U_STREQ2(a,b) U_STREQ(a,strlen(a),b)
+
 /* Defs */
 
 #ifndef U_min

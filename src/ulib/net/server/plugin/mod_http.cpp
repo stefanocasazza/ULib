@@ -647,6 +647,8 @@ int UHttpPlugIn::handlerREAD()
 {
    U_TRACE_NO_PARAM(0, "UHttpPlugIn::handlerREAD()")
 
+   U_INTERNAL_DUMP("UServer_Base::mod_name[0] = %S", UServer_Base::mod_name[0])
+
    return UHTTP::handlerREAD();
 }
 
@@ -654,7 +656,7 @@ int UHttpPlugIn::handlerRequest()
 {
    U_TRACE_NO_PARAM(0, "UHttpPlugIn::handlerRequest()")
 
-   U_INTERNAL_DUMP("method_type = %C uri = %.*S", U_http_method_type, U_HTTP_URI_TO_TRACE)
+   U_INTERNAL_DUMP("method_type = %C uri = %.*S UServer_Base::mod_name[0] = %S", U_http_method_type, U_HTTP_URI_TO_TRACE, UServer_Base::mod_name[0])
 
    if (UClientImage_Base::isRequestNeedProcessing()) return UHTTP::processRequest();
 

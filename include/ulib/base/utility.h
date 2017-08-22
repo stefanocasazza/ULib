@@ -712,39 +712,18 @@ U_BOOLEAN_VALUE = 10, // bool value
   U_LREAL_VALUE = 20  // long double value
 } ValueType;
 
-static inline uint64_t u_getPayload(uint64_t val)
-{
-#ifndef HAVE_ARCH64
-   return (val & 0x00000000FFFFFFFFULL);
-#else
-   return (val & U_VALUE_PAYLOAD_MASK);
-#endif
-}
-
-static inline uint32_t u_getTag(uint64_t val)
-{
-#ifndef HAVE_ARCH64
-   return u_getPayload(val >> 32);
-#else
-   if ((int64_t)val <= (int64_t)U_VALUE_NAN_MASK) return U_REAL_VALUE;
-
-   return (val >> U_VALUE_TAG_SHIFT) & U_VALUE_TAG_MASK;
-#endif
-}
+static inline uint32_t u_getTag(    uint64_t val) { return (val >> U_VALUE_TAG_SHIFT) & U_VALUE_TAG_MASK; }
+static inline uint64_t u_getPayload(uint64_t val) { return (val & U_VALUE_PAYLOAD_MASK); }
 
 static inline uint64_t u_getValue(uint16_t tag, void* payload)
 {
    U_INTERNAL_TRACE("u_getValue(%hu,%p)", tag, payload)
 
-#ifndef HAVE_ARCH64
-   return ((uint64_t)tag << 32) | u_getPayload((uint64_t)(long)payload);
-#else
    U_INTERNAL_ASSERT(payload <= (void*)U_VALUE_PAYLOAD_MASK)
 
    return                   U_VALUE_NAN_MASK   |
           ((uint64_t)tag << U_VALUE_TAG_SHIFT) |
-           (uint64_t)payload;
-#endif
+          ((uint64_t)(long)payload & U_VALUE_PAYLOAD_MASK);
 }
 
 static inline void u_setTag(uint16_t tag, uint64_t* pval) { uint64_t payload = u_getPayload(*pval); *pval = u_getValue(tag, (void*)(long)payload); }

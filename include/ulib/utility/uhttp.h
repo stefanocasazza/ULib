@@ -276,12 +276,15 @@ public:
    static bool manageRequestOnRemoteServer();
 #endif
 
+#ifdef DEBUG
+   static uint32_t parserExecute(const char* ptr, uint32_t len, bool response = false);
+#endif
+
    static void setHostname(const char* ptr, uint32_t len);
 
    static void setHostname(const UString& name) { setHostname(U_STRING_TO_PARAM(name)); }
 
    static const char* getStatusDescription(uint32_t* plen = U_NULLPTR);
-   static uint32_t    parserExecute(const char* ptr, uint32_t len, bool response = false);
 
    static uint32_t getUserAgent()
       {
@@ -434,7 +437,7 @@ public:
    static void setDynamicResponse();
    static void setResponse(bool btype, const UString& content_type, UString* pbody);
    static void setRedirectResponse(int mode, const char* ptr_location, uint32_t len_location);
-   static void setErrorResponse(const UString& content_type, int code, const char* fmt, uint32_t fmt_size, bool flag);
+   static void setErrorResponse(const UString& content_type, int code, const char* fmt, uint32_t fmt_size, bool flag = false);
 
    static void setResponse()
       {
@@ -453,7 +456,7 @@ public:
       {
       U_TRACE_NO_PARAM(0, "UHTTP::setNotFound()")
 
-      setErrorResponse(*UString::str_ctype_html, HTTP_NOT_FOUND, U_CONSTANT_TO_PARAM("Your requested URL %.*S was not found on this server"), false);
+      setErrorResponse(*UString::str_ctype_html, HTTP_NOT_FOUND, U_CONSTANT_TO_PARAM("Your requested URL %.*S was not found on this server"), UClientImage_Base::isRequestNotFound());
       }
 
    static void setBadMethod()
@@ -1334,7 +1337,7 @@ private:
    static bool readHeaderRequest() U_NO_EXPORT;
    static void processGetRequest() U_NO_EXPORT;
    static bool processAuthorization() U_NO_EXPORT;
-   static void checkRequestForHeader() U_NO_EXPORT;
+   static bool checkRequestForHeader() U_NO_EXPORT;
    static bool checkGetRequestIfRange() U_NO_EXPORT;
    static bool checkPathName(uint32_t len) U_NO_EXPORT;
    static bool checkGetRequestIfModified() U_NO_EXPORT;

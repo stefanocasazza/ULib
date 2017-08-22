@@ -2150,7 +2150,7 @@ public:
 
       _user.get(is);
 
-      U_INTERNAL_ASSERT(_mac)
+      if (_mac.empty()) _mac = *UString::str_without_mac;
       }
 
 # ifdef DEBUG
@@ -2838,7 +2838,12 @@ next:
 
       while (u__isdigit(*++ptr)) {}
 
-      U_INTERNAL_ASSERT(u__isblank(*ptr))
+      if (u__isblank(*ptr) == false)
+         {
+         U_LOGGER("*** WiAuthUser::getIndexAccessPoint() THE RECORD IS NOT CORRECT %20S ***", ptr);
+
+         return U_NULLPTR;
+         }
 
       ++ptr;
 
@@ -2908,7 +2913,12 @@ next:
 
       while (u__isdigit(*++ptr)) {}
 
-      U_INTERNAL_ASSERT(u__isblank(*ptr))
+      if (u__isblank(*ptr) == false)
+         {
+         U_LOGGER("*** WiAuthUser::getIndexAccessPoint() THE RECORD IS NOT CORRECT %20S ***", ptr);
+
+         return U_NULLPTR;
+         }
 
       ++ptr;
 
@@ -3027,6 +3037,13 @@ next:
 
       ptr = getIndexAccessPoint(ptr, U_NULLPTR);
 
+      if (ptr == U_NULLPTR)
+         {
+         U_LOGGER("*** WiAuthUser::setNodog() ***");
+
+         U_RETURN(false);
+         }
+
       uint32_t sz;
 
       ptr = getNodogReference(ptr, &sz);
@@ -3051,6 +3068,13 @@ next:
       uint32_t _index_access_point;
 
       ptr = getIndexAccessPoint(ptr, &_index_access_point);
+
+      if (ptr == U_NULLPTR)
+         {
+         U_LOGGER("*** WiAuthUser::countUserConnectedOnNodog(%V) ***", key);
+
+         U_RETURN(1);
+         }
 
       if (_index_access_point != index_access_point) U_RETURN(1);
 
@@ -3106,7 +3130,7 @@ next:
          U_RETURN(1);
          }
 
-      U_INTERNAL_ASSERT(user_rec->connected)
+      if (user_rec->connected == false) U_LOGGER("*** quitUserConnected() user NOT CONNECTED *** uid = %V", db_user->getKeyID().rep);
 
       if (user_rec->nodog == *ap_address)
          {
@@ -3178,9 +3202,9 @@ next:
 
       U_INTERNAL_DUMP("user_rec->last_modified = %ld UNotifier::last_event = %ld user_rec->connected = %b", user_rec->last_modified, UNotifier::last_event, user_rec->connected)
 
-      U_INTERNAL_ASSERT(user_rec->connected)
-
       *uid = db_user->getKeyID();
+
+      if (user_rec->connected == false) U_LOGGER("*** WiAuthUser::getStatusUser() user NOT CONNECTED *** uid = %V", uid->rep);
 
       if (user_rec->setNodogReference())
          {
@@ -3245,9 +3269,9 @@ next:
          U_RETURN(1);
          }
 
-      U_INTERNAL_ASSERT(user_rec->connected)
-
       *uid = db_user->getKeyID();
+
+      if (user_rec->connected == false) U_LOGGER("*** setNumberOfUserConnected() user NOT CONNECTED *** uid = %V", uid->rep);
 
       if (user_rec->setNodogReference())
          {
@@ -4108,7 +4132,8 @@ static bool checkIfUserConnected()
          *uid = db_user->getKeyID();
 
          U_INTERNAL_ASSERT(*uid)
-         U_INTERNAL_ASSERT(user_rec->nodog)
+
+         if (user_rec->nodog.empty()) U_LOGGER("*** checkIfUserConnected() user_rec->nodog empty uid = %V ***", uid->rep);
 
          U_RETURN(true);
          }

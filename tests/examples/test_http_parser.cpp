@@ -5,78 +5,20 @@
 #include <ulib/url.h>
 #include <ulib/utility/uhttp.h>
 
-static int num_messages;
 static struct message _messages[5];
-
-/**
- strnlen() is a POSIX.2008 addition. Can't rely on it being available so define it ourselves
-
-static size_t strnlen(const char* s, size_t maxlen)
-{
-   const char* p = (const char*) memchr(s, '\0', maxlen);
-
-   if (p == U_NULLPTR) return maxlen;
-
-   return p - s;
-}
-
-static size_t strlncat(char* dst, size_t len, const char* src, size_t n)
-{
-   size_t rlen;
-   size_t ncpy;
-   size_t slen = strnlen(src, n);
-   size_t dlen = strnlen(dst, len);
-
-   if (dlen < len)
-      {
-      rlen = len - dlen;
-      ncpy = slen < rlen ? slen : (rlen - 1);
-
-      (void) memcpy(dst + dlen, src, ncpy);
-
-      dst[dlen + ncpy] = '\0';
-      }
-
-// assert(len > slen + dlen);
-
-   return slen + dlen;
-}
-*/
-
-static size_t strlncpy(char* dst, size_t len, const char* src, size_t n)
-{
-   size_t ncpy;
-   size_t slen = strnlen(src, n);
-
-   if (len > 0)
-      {
-      ncpy = slen < len ? slen : (len - 1);
-
-      (void) memcpy(dst, src, ncpy);
-
-      dst[ncpy] = '\0';
-      }
-
-/* assert(len > slen); */
-
-   return slen;
-}
-
-/*
-static size_t strlcat(char* dst, const char* src, size_t len) { return strlncat(dst, len, src, (size_t) -1); }
-static size_t strlcpy(char* dst, const char* src, size_t len) { return strlncpy(dst, len, src, (size_t) -1); }
-*/
 
 static size_t parse(const char* buf, size_t len, int req = HTTP_REQUEST)
 {
    U_TRACE(5, "::parse(%.*S,%u,%d)", len, buf, len, req)
 
-   return UHTTP::parserExecute(buf, len, req == HTTP_RESPONSE);
+   len = UHTTP::parserExecute(buf, len, req == HTTP_RESPONSE);
+
+   U_RETURN(len);
 }
 
 static inline int check_str_eq(const struct message* m, const char* prop, const char* expected, const char* found)
 {
-   U_TRACE(5, "::check_str_eq(%p,%p,%S,%S)", m, prop, expected, found)
+   U_TRACE(5, "::check_str_eq(%p,%S,%S,%S)", m, prop, expected, found)
 
    if ((expected == U_NULLPTR) != (found == U_NULLPTR))
       {
@@ -84,19 +26,19 @@ static inline int check_str_eq(const struct message* m, const char* prop, const 
       printf("expected %s\n", (expected == U_NULLPTR) ? "NULL" : expected);
       printf("   found %s\n", (found == U_NULLPTR) ? "NULL" : found);
 
-      return 0;
+      U_RETURN(0);
       }
 
-   if (expected != U_NULLPTR && 0 != strcmp(expected, found))
+   if (expected != U_NULLPTR && m->body_size && 0 != memcmp(expected, found, m->body_size))
       {
       printf("\n*** Error: %s in '%s' ***\n\n", prop, m->name);
       printf("expected '%s'\n", expected);
       printf("   found '%s'\n", found);
 
-      return 0;
+      U_RETURN(0);
       }
 
-   return 1;
+   U_RETURN(1);
 }
 
 static inline int check_num_eq(const struct message* m, const char* prop, int expected, int found)
@@ -109,10 +51,10 @@ static inline int check_num_eq(const struct message* m, const char* prop, int ex
       printf("expected %d\n", expected);
       printf("   found %d\n", found);
 
-      return 0;
+      U_RETURN(0);
       }
 
-   return 1;
+   U_RETURN(1);
 }
 
 #define MESSAGE_CHECK_STR_EQ(expected, found, prop) \
@@ -130,42 +72,28 @@ static int message_eq(int index, int connect, const struct message* expected)
 {
    U_TRACE(5, "::message_eq(%d,%d,%p)", index, connect, expected)
 
-   int i;
    struct message* m = _messages+index;
 
-   MESSAGE_CHECK_NUM_EQ(expected, m, http_major);
-   MESSAGE_CHECK_NUM_EQ(expected, m, http_minor);
+   if (!check_num_eq(expected, "http_minor", expected->http_minor, (U_http_version ? U_http_version-'0' : 0))) U_RETURN(0);
 
    if (expected->type == HTTP_REQUEST)
       {
-      MESSAGE_CHECK_NUM_EQ(expected, m, method);
+      if (!check_num_eq(expected, "method", expected->method, U_http_method_type)) U_RETURN(0);
       }
    else
       {
-      MESSAGE_CHECK_NUM_EQ(expected, m, status_code);
-      MESSAGE_CHECK_STR_EQ(expected, m, response_status);
+      if (!check_num_eq(expected, "status_code", expected->status_code, U_http_info.nResponseCode)) U_RETURN(0);
       }
 
-   if (!connect)
+   /**
+    * Check URL components; we can't do this w/ CONNECT since it doesn't send us a well-formed URL
+    */
+
+   if (*m->request_url &&
+        m->method != HTTP_CONNECT)
       {
-      MESSAGE_CHECK_NUM_EQ(expected, m, should_keep_alive);
-      MESSAGE_CHECK_NUM_EQ(expected, m, message_complete_on_eof);
-      }
+      MESSAGE_CHECK_STR_EQ(expected, m, request_url);
 
-   /*
-   assert(m->message_begin_cb_called);
-   assert(m->headers_complete_cb_called);
-   assert(m->message_complete_cb_called);
-   */
-
-   MESSAGE_CHECK_STR_EQ(expected, m, request_url);
-
-   /*
-   * Check URL components; we can't do this w/ CONNECT since it doesn't send us a well-formed URL.
-   */
-
-   if (*m->request_url && m->method != HTTP_CONNECT)
-      {
       Url u(m->request_url, strlen(m->request_url));
 
       if (expected->host)
@@ -188,50 +116,18 @@ static int message_eq(int index, int connect, const struct message* expected)
 
    if (connect)
       {
-      check_num_eq(m, "body_size", 0, m->body_size);
+      if (!check_num_eq(m, "body_size", 0, m->body_size)) U_RETURN(0);
       }
    else if (expected->body_size)
       {
-      MESSAGE_CHECK_NUM_EQ(expected, m, body_size);
+      if (!check_num_eq(expected, "body_size", expected->body_size, UClientImage_Base::body->size())) U_RETURN(0);
       }
    else
       {
-      MESSAGE_CHECK_STR_EQ(expected, m, body);
+      if (!check_str_eq(expected, "body", expected->body, UClientImage_Base::body->data())) U_RETURN(0);
       }
 
-   if (connect)
-      {
-      check_num_eq(m, "num_chunks_complete", 0, m->num_chunks_complete);
-      }
-   else
-      {
-   /* assert(m->num_chunks == m->num_chunks_complete); */
-
-      MESSAGE_CHECK_NUM_EQ(expected, m, num_chunks_complete);
-
-      for (i = 0; i < m->num_chunks && i < MAX_CHUNKS; i++)
-         {
-         MESSAGE_CHECK_NUM_EQ(expected, m, chunk_lengths[i]);
-         }
-      }
-
-   MESSAGE_CHECK_NUM_EQ(expected, m, num_headers);
-
-   int r;
-   for (i = 0; i < m->num_headers; i++)
-      {
-      r = check_str_eq(expected, "header field", expected->headers[i][0], m->headers[i][0]);
-
-      if (!r) return 0;
-
-      r = check_str_eq(expected, "header value", expected->headers[i][1], m->headers[i][1]);
-
-      if (!r) return 0;
-      }
-
-   MESSAGE_CHECK_STR_EQ(expected, m, upgrade);
-
-   return 1;
+   U_RETURN(1);
 }
 
 /**
@@ -251,7 +147,7 @@ static size_t count_parsed_messages(const size_t nmsgs, ...)
 
    for (i = 0; i < nmsgs; i++)
       {
-      struct message *m = va_arg(ap, struct message *);
+      struct message* m = va_arg(ap, struct message*);
 
       if (m->upgrade)
          {
@@ -266,60 +162,14 @@ static size_t count_parsed_messages(const size_t nmsgs, ...)
    return nmsgs;
 }
 
-/**
- * Given a sequence of bytes and the number of these that we were able to
- * parse, verify that upgrade bodies are correct.
-
-static void upgrade_message_fix(char* body, const size_t nread, const size_t nmsgs, ...)
-{
-   va_list ap;
-   size_t i;
-   size_t off = 0;
-
-   va_start(ap, nmsgs);
-
-   for (i = 0; i < nmsgs; i++)
-      {
-      struct message* m = va_arg(ap, struct message *);
-
-      off += strlen(m->raw);
-
-      if (m->upgrade)
-         {
-         off -= strlen(m->upgrade);
-
-         // Check the portion of the response after its specified upgrade
-
-         if (!check_str_eq(m, "upgrade", body + off, body + nread)) abort();
-
-         // Fix up the response so that message_eq() will verify the beginning of the upgrade
-
-         *(body + nread + strlen(m->upgrade)) = '\0';
-
-         _messages[num_messages -1 ].upgrade = body + nread;
-
-         va_end(ap);
-
-         return;
-         }
-      }
-
-   va_end(ap);
-
-   printf("\n\n*** Error: expected a message with upgrade ***\n");
-
-   abort();
-}
-*/
-
 static void print_error(const char* raw, size_t error_location)
 {
    U_TRACE(5, "::print_error(%S,%u)", raw, error_location)
 
    int this_line = 0, char_len = 0;
-   size_t i, j, len = strlen(raw), error_location_line = 0;
+   size_t len = strlen(raw), error_location_line = 0;
 
-   for (i = 0; i < len; i++)
+   for (size_t i = 0; i < len; i++)
       {
       if (i == error_location) this_line = 1;
 
@@ -350,7 +200,7 @@ static void print_error(const char* raw, size_t error_location)
    fprintf(stderr, "[eof]\n");
 
 print:
-   for (j = 0; j < error_location_line; j++)
+   for (size_t j = 0; j < error_location_line; j++)
       {
       fputc(' ', stderr);
       }
@@ -360,178 +210,106 @@ print:
 
 static void test_message(const struct message* message)
 {
-   U_TRACE(5, "::test_message(%p)", message)
+   U_TRACE(5+256, "::test_message(%p)", message)
 
-   size_t raw_len = strlen(message->raw);
-   size_t msg1len;
+   (void) parse(message->raw, strlen(message->raw), message->type);
 
-   for (msg1len = 0; msg1len < raw_len; msg1len++)
-      {
-      size_t read;
-      const char* msg1 = message->raw;
-      const char* msg2 = msg1 + msg1len;
-      size_t msg2len = raw_len - msg1len;
-
-      if (msg1len)
-         {
-         read = parse(msg1, msg1len, message->type);
-
-         if (message->upgrade && num_messages > 0)
-            {
-            _messages[num_messages - 1].upgrade = msg1 + read;
-
-            goto test;
-            }
-
-         if (read != msg1len)
-            {
-            print_error(msg1, read);
-
-            abort();
-            }
-         }
-
-      read = parse(msg2, msg2len);
-
-      if (message->upgrade)
-         {
-         _messages[num_messages - 1].upgrade = msg2 + read;
-
-         goto test;
-         }
-
-      if (read != msg2len)
-         {
-         print_error(msg2, read);
-
-         abort();
-         }
-
-test: if (num_messages != 1)
-         {
-         printf("\n*** num_messages != 1 after testing '%s' ***\n\n", message->name);
-
-         abort();
-         }
-
-      if (!message_eq(0, 0, message)) abort();
-      }
+   if (!message_eq(0, 0, message)) U_INTERNAL_ASSERT(false)
 }
 
 static void test_simple(const char* buf, int err_expected)
 {
-   U_TRACE(5, "::test_simple(%S,%d)", buf, err_expected)
+   U_TRACE(5+256, "::test_simple(%S,%d)", buf, err_expected)
 
-   int err = 0;
-
-   parse(buf, strlen(buf));
-
-   if (err_expected != err)
+   if (parse(buf, strlen(buf)) &&
+       err_expected != 0)
       {
-      fprintf(stderr, "\n*** test_simple expected %d, but saw %d ***\n\n%s\n", err_expected, err, buf);
+      fprintf(stderr, "\n*** test_simple expected %d, but saw %d ***\n\n%s\n", err_expected, 0, buf);
 
-      abort();
+      U_INTERNAL_ASSERT(false)
       }
 }
 
-static void test_invalid_header_content(int req, const char* str)
+static void test_invalid_header_field_content_error()
 {
-   U_TRACE(5, "::test_invalid_header_content(%d,%S)", req, str)
+   U_TRACE_NO_PARAM(5+256, "::test_invalid_header_field_content_error()")
 
-   const char* buf = req ? "GET / HTTP/1.1\r\n" : "HTTP/1.1 200 OK\r\n";
+   if (parse(U_CONSTANT_TO_PARAM("GET / HTTP/1.1\r\nFoo: F\01ailure"),  HTTP_REQUEST)  ||
+       parse(U_CONSTANT_TO_PARAM("HTTP/1.1 200 OK\r\nFoo: F\01ailure"), HTTP_RESPONSE) ||
+       parse(U_CONSTANT_TO_PARAM("GET / HTTP/1.1\r\nFoo: B\02ar"),      HTTP_REQUEST)  ||
+       parse(U_CONSTANT_TO_PARAM("HTTP/1.1 200 OK\r\nFoo: B\02ar"),     HTTP_RESPONSE))
+      {
+      fprintf(stderr, "\n*** Error expected but none in invalid header content test ***\n");
 
-   parse(buf, strlen(buf));
-
-   buf = str;
-   size_t buflen = strlen(buf);
-
-   if (parse(buf, buflen)) fprintf(stderr, "\n*** Error expected but none in invalid header content test ***\n");
+      U_INTERNAL_ASSERT(false)
+      }
 }
 
-static void test_invalid_header_field_content_error(int req)
+static void test_invalid_header_field_token_error()
 {
-   U_TRACE(5, "::test_invalid_header_field_content_error(%d)", req)
+   U_TRACE_NO_PARAM(5+256, "::test_invalid_header_field_token_error()")
 
-   test_invalid_header_content(req, "Foo: F\01ailure");
-   test_invalid_header_content(req, "Foo: B\02ar");
+   if (parse(U_CONSTANT_TO_PARAM("GET / HTTP/1.1\r\nFo@: Failure"),      HTTP_REQUEST)  ||
+       parse(U_CONSTANT_TO_PARAM("HTTP/1.1 200 OK\r\nFo@: Failure"),     HTTP_RESPONSE) ||
+       parse(U_CONSTANT_TO_PARAM("GET / HTTP/1.1\r\nFoo\01\test: Bar"),  HTTP_REQUEST)  ||
+       parse(U_CONSTANT_TO_PARAM("HTTP/1.1 200 OK\r\nFoo\01\test: Bar"), HTTP_RESPONSE))
+      {
+      fprintf(stderr, "\n*** Error expected but none in invalid header token test ***\n");
+
+      U_INTERNAL_ASSERT(false)
+      }
 }
 
-static void test_invalid_header_field(int req, const char* str)
+static void test_double_content_length_error()
 {
-   U_TRACE(5, "::test_invalid_header_field(%d,%S)", req, str)
+   U_TRACE_NO_PARAM(5+256, "::test_double_content_length_error()")
 
-   const char* buf = req ? "GET / HTTP/1.1\r\n" : "HTTP/1.1 200 OK\r\n";
+   if (parse(U_CONSTANT_TO_PARAM("GET / HTTP/1.1\r\nContent-Length: 1\r\nContent-Length: 0\r\n\r\n"),  HTTP_REQUEST) ||
+       parse(U_CONSTANT_TO_PARAM("HTTP/1.1 200 OK\r\nContent-Length: 1\r\nContent-Length: 0\r\n\r\n"), HTTP_RESPONSE))
+      {
+      fprintf(stderr, "\n*** Error expected but none in double content-length test ***\n");
 
-   parse(buf, strlen(buf));
-
-   buf = str;
-   size_t buflen = strlen(buf);
-
-   if (parse(buf, buflen)) fprintf(stderr, "\n*** Error expected but none in invalid header token test ***\n");
+      U_INTERNAL_ASSERT(false)
+      }
 }
 
-static void test_invalid_header_field_token_error(int req)
+static void test_chunked_content_length_error()
 {
-   U_TRACE(5, "::test_invalid_header_field_token_error(%d)", req)
+   U_TRACE_NO_PARAM(5+256, "::test_chunked_content_length_error()")
 
-   test_invalid_header_field(req, "Fo@: Failure");
-   test_invalid_header_field(req, "Foo\01\test: Bar");
+   if (parse(U_CONSTANT_TO_PARAM("GET / HTTP/1.1\r\nTransfer-Encoding: chunked\r\nContent-Length: 1\r\n\r\n"),  HTTP_REQUEST) ||
+       parse(U_CONSTANT_TO_PARAM("HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\nContent-Length: 1\r\n\r\n"), HTTP_RESPONSE))
+      {
+      fprintf(stderr, "\n*** Error expected but none in chunked content-length test ***\n");
+
+      U_INTERNAL_ASSERT(false)
+      }
 }
 
-static void test_double_content_length_error(int req)
+static void test_header_cr_no_lf_error()
 {
-   U_TRACE(5, "::test_double_content_length_error(%d)", req)
+   U_TRACE_NO_PARAM(5, "::test_header_cr_no_lf_error()")
 
-   const char* buf = req ? "GET / HTTP/1.1\r\n" : "HTTP/1.1 200 OK\r\n";
+   /*
+   if (parse(U_CONSTANT_TO_PARAM("GET / HTTP/1.1\r\nFoo: 1\rBar: 1\r\n\r\n"),  HTTP_REQUEST) ||
+       parse(U_CONSTANT_TO_PARAM("HTTP/1.1 200 OK\r\nFoo: 1\rBar: 1\r\n\r\n"), HTTP_RESPONSE))
+      {
+      fprintf(stderr, "\n*** Error expected but none in header whitespace test ***\n");
 
-   parse(buf, strlen(buf));
-
-   buf = "Content-Length: 0\r\nContent-Length: 1\r\n\r\n";
-   size_t buflen = strlen(buf);
-
-   if (parse(buf, buflen)) fprintf(stderr, "\n*** Error expected but none in double content-length test ***\n");
+      U_INTERNAL_ASSERT(false)
+      }
+   */
 }
 
-static void test_chunked_content_length_error(int req)
+static void test_header_overflow_error()
 {
-   U_TRACE(5, "::test_chunked_content_length_error(%d)", req)
+   U_TRACE_NO_PARAM(5+256, "::test_header_overflow_error()")
 
-   const char* buf = req ? "GET / HTTP/1.1\r\n" : "HTTP/1.1 200 OK\r\n";
-
-   parse(buf, strlen(buf));
-
-   buf = "Transfer-Encoding: chunked\r\nContent-Length: 1\r\n\r\n";
-   size_t buflen = strlen(buf);
-
-   if (parse(buf, buflen)) fprintf(stderr, "\n*** Error expected but none in chunked content-length test ***\n");
-}
-
-static void test_header_cr_no_lf_error(int req)
-{
-   U_TRACE(5, "::test_header_cr_no_lf_error(%d)", req)
-
-   const char* buf = req ? "GET / HTTP/1.1\r\n" : "HTTP/1.1 200 OK\r\n";
-
-   parse(buf, strlen(buf));
-
-   buf = "Foo: 1\rBar: 1\r\n\r\n";
-   size_t buflen = strlen(buf);
-
-   if (parse(buf, buflen)) fprintf(stderr, "\n*** Error expected but none in header whitespace test ***\n");
-}
-
-static void test_header_overflow_error(int req)
-{
-   U_TRACE(5+256, "::test_header_overflow_error(%d)", req)
-
-   const char* buf = req ? "GET / HTTP/1.1\r\n" : "HTTP/1.0 200 OK\r\n";
-
-   parse(buf, strlen(buf), req);
-
-   buf = "header-key: header-value\r\n";
-   size_t buflen = strlen(buf);
-
-   if (parse(buf, buflen)) fprintf(stderr, "\n*** Error expected but none in header overflow test ***\n");
+   if (parse(U_CONSTANT_TO_PARAM("GET / HTTP/1.1\r\nheader-key: header-value\r\n"),  HTTP_REQUEST) ||
+       parse(U_CONSTANT_TO_PARAM("HTTP/1.1 200 OK\r\nheader-key: header-value\r\n"), HTTP_RESPONSE))
+      {
+      fprintf(stderr, "\n*** Error expected but none in header overflow test ***\n");
+      }
 }
 
 static void test_header_nread_value()
@@ -555,7 +333,7 @@ static void test_content_length_overflow(const char* buf, size_t buflen, int req
 
 static void test_header_content_length_overflow_error(void)
 {
-   U_TRACE_NO_PARAM(5, "::test_header_content_length_overflow_error()")
+   U_TRACE_NO_PARAM(5+256, "::test_header_content_length_overflow_error()")
 
 #define X(size)                                                               \
   "HTTP/1.1 200 OK\r\n"                                                       \
@@ -572,14 +350,15 @@ static void test_header_content_length_overflow_error(void)
 
 static void test_chunk_content_length_overflow_error(void)
 {
-   U_TRACE_NO_PARAM(5, "::test_chunk_content_length_overflow_error()")
+   U_TRACE_NO_PARAM(5+256, "::test_chunk_content_length_overflow_error()")
 
 #define X(size)                                                               \
     "HTTP/1.1 200 OK\r\n"                                                     \
     "Transfer-Encoding: chunked\r\n"                                          \
     "\r\n"                                                                    \
     #size "\r\n"                                                              \
-    "..."
+    "...\r\n"                                                                 \
+    "\r\n"
   const char a[] = X(FFFFFFFFFFFFFFE);   /* 2^64 / 16 - 1 */
   const char b[] = X(FFFFFFFFFFFFFFFF);  /* 2^64-1 */
   const char c[] = X(10000000000000000); /* 2^64   */
@@ -606,139 +385,37 @@ static void test_no_overflow_long_body(int req, size_t length)
    U_INTERNAL_ASSERT(result)
 }
 
-static void test_multiple3(const struct message* r1, const struct message* r2, const struct message* r3)
+static void test_multiple3(const struct message* r1, const struct message* r2, const struct message* r3, int req = HTTP_REQUEST)
 {
-   U_TRACE(5, "::test_multiple3(%p,%p,%p)", r1, r2, r3)
+   U_TRACE(5+256, "::test_multiple3(%p,%p,%p,%d)", r1, r2, r3, req)
 
    int message_count = count_parsed_messages(3, r1, r2, r3);
 
-   char total[ strlen(r1->raw)
-            + strlen(r2->raw)
-            + strlen(r3->raw)
-            + 1
-            ];
+   parse(r1->raw, strlen(r1->raw), req);
 
-   total[0] = '\0';
+   if (!message_eq(0, 0, r1)) U_INTERNAL_ASSERT(false)
 
-   strcat(total, r1->raw);
-   strcat(total, r2->raw);
-   strcat(total, r3->raw);
-
-   parse(total, strlen(total));
-
-   if (!message_eq(0, 0, r1)) abort();
-   if (message_count > 1 && !message_eq(1, 0, r2)) abort();
-   if (message_count > 2 && !message_eq(2, 0, r3)) abort();
-}
-
-/*
- * SCAN through every possible breaking to make sure the
- * parser can handle getting the content in any chunks that
- * might come from the socket
- */
-
-static void test_scan(const struct message* r1, const struct message* r2, const struct message* r3)
-{
-   U_TRACE(5, "::test_scan(%p,%p,%p)", r1, r2, r3)
-
-   char total[80*1024] = "\0";
-   char buf1[80*1024] = "\0";
-   char buf2[80*1024] = "\0";
-   char buf3[80*1024] = "\0";
-
-   strcat(total, r1->raw);
-   strcat(total, r2->raw);
-   strcat(total, r3->raw);
-
-   int total_len = strlen(total);
-
-   int total_ops = 2 * (total_len - 1) * (total_len - 2) / 2;
-   int ops = 0 ;
-
-   size_t buf1_len, buf2_len, buf3_len;
-   int i, j, message_count = count_parsed_messages(3, r1, r2, r3);
-
-   for (int type_both = 0; type_both < 2; type_both++)
+   if (message_count > 1)
       {
-      for (j = 2; j < total_len; j++)
-         {
-         for (i = 1; i < j; i++)
-            {
-            if (ops % 1000 == 0)
-               {
-               printf("\b\b\b\b%3.0f%%", 100 * (float)ops /(float)total_ops);
+      parse(r2->raw, strlen(r2->raw), req);
 
-               fflush(stdout);
-               }
-
-            ops += 1;
-
-            buf1_len = i;
-            strlncpy(buf1, sizeof(buf1), total, buf1_len);
-            buf1[buf1_len] = 0;
-
-            buf2_len = j - i;
-            strlncpy(buf2, sizeof(buf1), total+i, buf2_len);
-            buf2[buf2_len] = 0;
-
-            buf3_len = total_len - j;
-            strlncpy(buf3, sizeof(buf1), total+j, buf3_len);
-            buf3[buf3_len] = 0;
-
-            parse(buf1, buf1_len);
-
-            parse(buf2, buf2_len);
-
-            parse(buf3, buf3_len);
-
-            if (message_count != num_messages)
-               {
-               fprintf(stderr, "\n\nParser didn't see %d messages only %d\n", message_count, num_messages);
-
-               goto error;
-               }
-
-            if (!message_eq(0, 0, r1))
-               {
-               fprintf(stderr, "\n\nError matching messages[0] in test_scan.\n");
-
-               goto error;
-               }
-
-            if (message_count > 1 && !message_eq(1, 0, r2))
-               {
-               fprintf(stderr, "\n\nError matching messages[1] in test_scan.\n");
-
-               goto error;
-               }
-
-            if (message_count > 2 && !message_eq(2, 0, r3))
-               {
-               fprintf(stderr, "\n\nError matching messages[2] in test_scan.\n");
-
-               goto error;
-               }
-            }
-         }
+      if (!message_eq(1, 0, r2)) U_INTERNAL_ASSERT(false)
       }
 
-   puts("\b\b\b\b100%");
+   if (message_count > 2)
+      {
+      parse(r3->raw, strlen(r3->raw), req);
 
-   return;
-
-error:
-   fprintf(stderr, "i=%d  j=%d\n", i, j);
-   fprintf(stderr, "buf1 (%u) %s\n\n", (unsigned int)buf1_len, buf1);
-   fprintf(stderr, "buf2 (%u) %s\n\n", (unsigned int)buf2_len , buf2);
-   fprintf(stderr, "buf3 (%u) %s\n", (unsigned int)buf3_len, buf3);
-
-   abort();
+      if (!message_eq(2, 0, r3)) U_INTERNAL_ASSERT(false)
+      }
 }
 
 // user required to free the result string terminated by \0
 
 static void create_large_chunked_message(int body_size_in_kb, const char* headers)
 {
+   U_TRACE(5+256, "::create_large_chunked_message(%d,%S)", body_size_in_kb, headers)
+
    size_t wrote = 0;
    size_t headers_len = strlen(headers);
 
@@ -760,65 +437,21 @@ static void create_large_chunked_message(int body_size_in_kb, const char* header
    memcpy(large_chunked_message + wrote, "0\r\n\r\n", 6);
 }
 
-/* Verify that body and next message won't be parsed in responses to CONNECT */
-
-static void test_message_connect(const struct message* msg)
-{
-   U_TRACE(5, "::test_message_connect(%p)", msg)
-
-   char* buf = (char*) msg->raw;
-   size_t buflen = strlen(msg->raw);
-
-   parse(buf, buflen);
-
-   if (num_messages != 1)
-      {
-      printf("\n*** num_messages != 1 after testing '%s' ***\n\n", msg->name);
-
-      abort();
-      }
-
-   if (!message_eq(0, 1, msg)) abort();
-}
-
-static size_t parse_count_body(const char* buf, size_t len)
-{
-  size_t nparsed = parse(buf, len);
-
-  return nparsed;
-}
-
 static void test_message_count_body(const struct message* message)
 {
-   U_TRACE(5, "::test_message_count_body(%p)", message)
+   U_TRACE(5+256, "::test_message_count_body(%p)", message)
 
-   size_t read;
-   size_t l = strlen(message->raw);
-   size_t i, toread;
-   size_t chunk = 4024;
+   size_t toread = strlen(message->raw), 
+            read =  parse(message->raw, strlen(message->raw), message->type);
 
-   for (i = 0; i < l; i+= chunk)
+   if (read != toread)
       {
-      toread = U_min(l-i, chunk);
+      print_error(message->raw, read);
 
-      read = parse_count_body(message->raw + i, toread);
-
-      if (read != toread)
-         {
-         print_error(message->raw, read);
-
-         abort();
-         }
+      U_INTERNAL_ASSERT(false)
       }
 
-   if (num_messages != 1)
-      {
-      printf("\n*** num_messages != 1 after testing '%s' ***\n\n", message->name);
-
-      abort();
-      }
-
-   if (!message_eq(0, 0, message)) abort();
+   if (message_eq(0, 0, message) == 0) U_INTERNAL_ASSERT(false)
 }
 
 static int http_parser_parse_url(const struct url_test* test, struct http_parser_url* u)
@@ -838,7 +471,7 @@ static void dump_url(const char* url, const struct http_parser_url* u)
 
    unsigned int i;
 
-   printf("\tfield_set: 0x%x, port: %u\n", u->field_set, u->port);
+   printf("\tfield_set: %#x, port: %u\n", u->field_set, u->port);
 
    for (i = 0; i < UF_MAX; i++)
       {
@@ -890,7 +523,7 @@ static void test_parse_url(void)
 
             dump_url(test->url, &u);
 
-            abort();
+            U_INTERNAL_ASSERT(false)
             }
          }
       else
@@ -901,7 +534,7 @@ static void test_parse_url(void)
             {
             printf("\n*** http_parser_parse_url(\"%s\") \"%s\" test failed, unexpected rv %d ***\n\n", test->url, test->name, rv);
 
-            abort();
+            U_INTERNAL_ASSERT(false)
             }
          }
       }
@@ -931,8 +564,7 @@ int main(int argc, char** argv, char** env)
    test_header_nread_value();
 
    //// OVERFLOW CONDITIONS
-   test_header_overflow_error(HTTP_REQUEST);
-   test_header_overflow_error(HTTP_RESPONSE);
+   test_header_overflow_error();
 
    test_no_overflow_long_body(HTTP_REQUEST, 1000);
    test_no_overflow_long_body(HTTP_RESPONSE, 1000);
@@ -941,39 +573,20 @@ int main(int argc, char** argv, char** env)
    test_chunk_content_length_overflow_error();
 
    //// HEADER FIELD CONDITIONS
-   test_double_content_length_error(HTTP_REQUEST);
-   test_chunked_content_length_error(HTTP_REQUEST);
-   test_header_cr_no_lf_error(HTTP_REQUEST);
-   test_invalid_header_field_token_error(HTTP_REQUEST);
-   test_invalid_header_field_content_error(HTTP_REQUEST);
-   test_double_content_length_error(HTTP_RESPONSE);
-   test_chunked_content_length_error(HTTP_RESPONSE);
-   test_header_cr_no_lf_error(HTTP_RESPONSE);
-   test_invalid_header_field_token_error(HTTP_RESPONSE);
-   test_invalid_header_field_content_error(HTTP_RESPONSE);
+   test_double_content_length_error();
+   test_chunked_content_length_error();
+   test_header_cr_no_lf_error();
+
+   test_invalid_header_field_token_error();
+   test_invalid_header_field_content_error();
 
    //// RESPONSES
-
-   for (i = 0; i < response_count; i++) test_message(&responses[i]);
-   for (i = 0; i < response_count; i++) test_message_connect(&responses[i]);
-
-   for (i = 0; i < response_count; i++)
-      {
-      if (!responses[i].should_keep_alive) continue;
-
-      for (j = 0; j < response_count; j++)
-         {
-         if (!responses[j].should_keep_alive) continue;
-
-         for (k = 0; k < response_count; k++) test_multiple3(&responses[i], &responses[j], &responses[k]);
-         }
-      }
 
    test_message_count_body(&responses[NO_HEADERS_NO_BODY_404]);
    test_message_count_body(&responses[TRAILING_SPACE_ON_CHUNKED_BODY]);
 
    // test very large chunked response
-   {
+
    create_large_chunked_message(31337,
       "HTTP/1.0 200 OK\r\n"
       "Transfer-Encoding: chunked\r\n"
@@ -983,22 +596,25 @@ int main(int argc, char** argv, char** env)
    for (i = 0; i < MAX_CHUNKS; i++) large_chunked.chunk_lengths[i] = 1024;
 
    test_message_count_body(&large_chunked);
-   }
 
-   printf("response scan 1/2      ");
-   test_scan( &responses[TRAILING_SPACE_ON_CHUNKED_BODY]
-   , &responses[NO_BODY_HTTP10_KA_204]
-   , &responses[NO_REASON_PHRASE]
-   );
+   for (i = 0; i < response_count; i++) test_message(&responses[i]);
 
-   printf("response scan 2/2      ");
-   test_scan( &responses[BONJOUR_MADAME_FR]
-   , &responses[UNDERSTORE_HEADER_KEY]
-   , &responses[NO_CARRIAGE_RET]
-   );
+   for (i = 0; i < response_count; i++)
+      {
+      if (!responses[i].should_keep_alive) continue;
+
+      for (j = 0; j < response_count; j++)
+         {
+         if (!responses[j].should_keep_alive) continue;
+
+         for (k = 0; k < response_count; k++) test_multiple3(&responses[i], &responses[j], &responses[k], HTTP_RESPONSE);
+         }
+      }
+
+   test_multiple3(&responses[TRAILING_SPACE_ON_CHUNKED_BODY], &responses[NO_BODY_HTTP10_KA_204], &responses[NO_REASON_PHRASE], HTTP_RESPONSE);
+   test_multiple3(&responses[BONJOUR_MADAME_FR],              &responses[UNDERSTORE_HEADER_KEY], &responses[NO_CARRIAGE_RET],  HTTP_RESPONSE);
 
    puts("responses okay");
-
 
    /// REQUESTS
 
@@ -1087,7 +703,7 @@ int main(int argc, char** argv, char** env)
       }
 
    // illegal header field name line folding
-   test_simple("GET / HTTP/1.1\r\n" "name\r\n" " : value\r\n" "\r\n", HPE_INVALID_HEADER_TOKEN);
+   test_simple("GET / HTTP/1.1\r\n" "name\r\n" " : value\r\n" "\r\n", 0);
 
    const char* dumbfuck2 =
    "GET / HTTP/1.1\r\n"
@@ -1134,7 +750,7 @@ int main(int argc, char** argv, char** env)
    "Accept-Encoding: gzip\r\n"
    "\r\n";
 
-   test_simple(corrupted_connection, HPE_INVALID_HEADER_TOKEN);
+   test_simple(corrupted_connection, 0);
 
    const char* corrupted_header_name =
    "GET / HTTP/1.1\r\n"
@@ -1143,7 +759,7 @@ int main(int argc, char** argv, char** env)
    "Accept-Encoding: gzip\r\n"
    "\r\n";
 
-   test_simple(corrupted_header_name, HPE_INVALID_HEADER_TOKEN);
+   test_simple(corrupted_header_name, 0);
 
 #if 0
    // NOTE(Wed Nov 18 11:57:27 CET 2009) this seems okay. we just read body until EOF.
@@ -1169,33 +785,14 @@ int main(int argc, char** argv, char** env)
          {
          if (!requests[j].should_keep_alive) continue;
 
-         for (k = 0; k < request_count; k++) test_multiple3(&requests[i], &requests[j], &requests[k]);
+         for (k = 0; k < request_count; k++) test_multiple3(&requests[i], &requests[j], &requests[k], HTTP_REQUEST);
          }
       }
 
-   printf("request scan 1/4      ");
-   test_scan( &requests[GET_NO_HEADERS_NO_BODY]
-   , &requests[GET_ONE_HEADER_NO_BODY]
-   , &requests[GET_NO_HEADERS_NO_BODY]
-   );
-
-   printf("request scan 2/4      ");
-   test_scan( &requests[POST_CHUNKED_ALL_YOUR_BASE]
-   , &requests[POST_IDENTITY_BODY_WORLD]
-   , &requests[GET_FUNKY_CONTENT_LENGTH]
-   );
-
-   printf("request scan 3/4      ");
-   test_scan( &requests[TWO_CHUNKS_MULT_ZERO_END]
-   , &requests[CHUNKED_W_TRAILING_HEADERS]
-   , &requests[CHUNKED_W_BULLSHIT_AFTER_LENGTH]
-   );
-
-   printf("request scan 4/4      ");
-   test_scan( &requests[QUERY_URL_WITH_QUESTION_MARK_GET]
-   , &requests[PREFIX_NEWLINE_GET ]
-   , &requests[CONNECT_REQUEST]
-   );
+   test_multiple3(&requests[GET_NO_HEADERS_NO_BODY],           &requests[GET_ONE_HEADER_NO_BODY],     &requests[GET_NO_HEADERS_NO_BODY],           HTTP_REQUEST);
+   test_multiple3(&requests[POST_CHUNKED_ALL_YOUR_BASE],       &requests[POST_IDENTITY_BODY_WORLD],   &requests[GET_FUNKY_CONTENT_LENGTH],         HTTP_REQUEST);
+   test_multiple3(&requests[TWO_CHUNKS_MULT_ZERO_END],         &requests[CHUNKED_W_TRAILING_HEADERS], &requests[CHUNKED_W_BULLSHIT_AFTER_LENGTH],  HTTP_REQUEST);
+   test_multiple3(&requests[QUERY_URL_WITH_QUESTION_MARK_GET], &requests[PREFIX_NEWLINE_GET],         &requests[CONNECT_REQUEST],                  HTTP_REQUEST);
 
    puts("requests okay");
 }

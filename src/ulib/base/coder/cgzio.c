@@ -290,7 +290,7 @@ uint32_t u_gz_inflate(const char* restrict input, uint32_t len, char* restrict r
 
       if ((_flags & RESERVED) != 0)
          {
-         U_WARNING("u_gz_inflate(): has flags 0x%x -- not supported", _flags);
+         U_WARNING("u_gz_inflate(): has flags %#x -- not supported", _flags);
 
          return 0;
          }

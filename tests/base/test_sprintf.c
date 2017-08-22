@@ -19,10 +19,45 @@ static struct iovec iov[] = { { 0, 0 }, { (caddr_t)"\n", 1 } };
 #include <float.h>
 #include <limits.h>
 
-static int result = 0;
+static int result;
 
-static void rfg1(void);
-static void rfg2(void);
+static void rfg1(void)
+{
+   char buf[100];
+
+   u__snprintf(buf,sizeof(buf), U_CONSTANT_TO_PARAM("%5.s"), "xyz");
+   if (strcmp(buf, "     ") != 0) printf("got: '%s', expected: '%s'\n", buf, "     ");
+   u__snprintf(buf,sizeof(buf), U_CONSTANT_TO_PARAM("%5.f"), 33.3);
+   if (strcmp(buf, "   33") != 0) printf("got: '%s', expected: '%s'\n", buf, "   33");
+// u__snprintf(buf,sizeof(buf), U_CONSTANT_TO_PARAM("%8.e"), 33.3e7);
+// if (strcmp(buf, "   3e+08") != 0) printf("got: '%s', expected: '%s'\n", buf, "   3e+08");
+// u__snprintf(buf,sizeof(buf), U_CONSTANT_TO_PARAM("%8.E"), 33.3e7);
+// if (strcmp(buf, "   3E+08") != 0) printf("got: '%s', expected: '%s'\n", buf, "   3E+08");
+// u__snprintf(buf,sizeof(buf), U_CONSTANT_TO_PARAM("%.g"), 33.3);
+// if (strcmp(buf, "3e+01") != 0) printf("got: '%s', expected: '%s'\n", buf, "3e+01");
+// u__snprintf(buf,sizeof(buf), U_CONSTANT_TO_PARAM("%.G"), 33.3);
+// if (strcmp(buf, "3E+01") != 0) printf("got: '%s', expected: '%s'\n", buf, "3E+01");
+}
+
+static void rfg2(void)
+{
+   char buf[100];
+
+   u__snprintf(buf,sizeof(buf), U_CONSTANT_TO_PARAM("%.*g"), 0, 3.3);
+   if (strcmp(buf, "3") != 0) printf("got: '%s', expected: '%s'\n", buf, "3");
+   u__snprintf(buf,sizeof(buf), U_CONSTANT_TO_PARAM("%.*G"), 0, 3.3);
+   if (strcmp(buf, "3") != 0) printf("got: '%s', expected: '%s'\n", buf, "3");
+   u__snprintf(buf,sizeof(buf), U_CONSTANT_TO_PARAM("%7.*G"), 0, 3.33);
+   if (strcmp(buf, "      3") != 0) printf("got: '%s', expected: '%s'\n", buf, "      3");
+   u__snprintf(buf,sizeof(buf), U_CONSTANT_TO_PARAM("%04.*o"), 3, 33);
+   if (strcmp(buf, " 041") != 0) printf("got: '%s', expected: '%s'\n", buf, " 041");
+   u__snprintf(buf,sizeof(buf), U_CONSTANT_TO_PARAM("%09.*u"), 7, 33);
+   if (strcmp(buf, "  0000033") != 0) printf("got: '%s', expected: '%s'\n", buf, "  0000033");
+   u__snprintf(buf,sizeof(buf), U_CONSTANT_TO_PARAM("%04.*x"), 3, 33);
+   if (strcmp(buf, " 021") != 0) printf("got: '%s', expected: '%s'\n", buf, " 021");
+   u__snprintf(buf,sizeof(buf), U_CONSTANT_TO_PARAM("%04.*X"), 3, 33);
+   if (strcmp(buf, " 021") != 0) printf("got: '%s', expected: '%s'\n", buf, " 021");
+}
 
 static void fmtchk(const char* fmt)
 {
@@ -48,42 +83,40 @@ static void fmtst2chk(const char* fmt)
   (void) printf("'\n",0);
 }
 
-/*
- * Extracted from exercise.c for glibc-1.05 bug report by Bruce Evans.
+/**
+ * Formatted Output Test
+ *
+ * This exercises the output formatting code
  */
 
 #define DEC -123
 #define INT 255
 #define UNS (~0)
 
-/* Formatted Output Test
- *
- * This exercises the output formatting code.
- */
-
 static void fp_test(void)
 {
-   int i, j, k, l;
    char buf[7];
-   char *prefix = buf;
    char tp[20];
+   char* prefix = buf;
 
    puts("\nFormatted output test");
+
    printf("prefix  6d      6o      6x      6X      6u\n",0);
 
    strcpy(prefix, "%");
-   for (i = 0; i < 2; i++)
+
+   for (int i = 0; i < 2; i++)
       {
-      for (j = 0; j < 2; j++)
+      for (int j = 0; j < 2; j++)
          {
-         for (k = 0; k < 2; k++)
+         for (int k = 0; k < 2; k++)
             {
-            for (l = 0; l < 2; l++)
+            for (int l = 0; l < 2; l++)
                {
                strcpy(prefix, "%");
                if (i == 0) strcat(prefix, "-");
                if (j == 0) strcat(prefix, "+");
-               if (k == 0) strcat(prefix, "#");
+               if (k == 0) strcat(prefix, "0");
                if (l == 0) strcat(prefix, "0");
                printf("%5s |", prefix);
                strcpy(tp, prefix);
@@ -113,8 +146,8 @@ static void fp_test(void)
 
 static void test1(void)
 {
-   double d = FLT_MIN;
    int niter = 17;
+   double d = FLT_MIN;
 
    while (niter-- != 0) printf("%.17e\n", d / 2);
 }
@@ -293,57 +326,4 @@ int main(int argc, char* argv[])
    test4();
 
    return (result != 0);
-}
-
-static void rfg1(void)
-{
-   char buf[100];
-
-   u__snprintf(buf,sizeof(buf), U_CONSTANT_TO_PARAM("%5.s"), "xyz");
-   if (strcmp (buf, "     ") != 0) printf ("got: '%s', expected: '%s'\n", buf, "     ");
-   u__snprintf(buf,sizeof(buf), U_CONSTANT_TO_PARAM("%5.f"), 33.3);
-   if (strcmp (buf, "   33") != 0) printf ("got: '%s', expected: '%s'\n", buf, "   33");
-// u__snprintf(buf,sizeof(buf), U_CONSTANT_TO_PARAM("%8.e"), 33.3e7);
-// if (strcmp (buf, "   3e+08") != 0) printf ("got: '%s', expected: '%s'\n", buf, "   3e+08");
-// u__snprintf(buf,sizeof(buf), U_CONSTANT_TO_PARAM("%8.E"), 33.3e7);
-// if (strcmp (buf, "   3E+08") != 0) printf ("got: '%s', expected: '%s'\n", buf, "   3E+08");
-// u__snprintf(buf,sizeof(buf), U_CONSTANT_TO_PARAM("%.g"), 33.3);
-// if (strcmp (buf, "3e+01") != 0) printf ("got: '%s', expected: '%s'\n", buf, "3e+01");
-// u__snprintf(buf,sizeof(buf), U_CONSTANT_TO_PARAM("%.G"), 33.3);
-// if (strcmp (buf, "3E+01") != 0) printf ("got: '%s', expected: '%s'\n", buf, "3E+01");
-}
-
-static void rfg2(void)
-{
-   int prec;
-   char buf[100];
-
-   prec = 0;
-   u__snprintf(buf,sizeof(buf), U_CONSTANT_TO_PARAM("%.*g"), prec, 3.3);
-   if (strcmp (buf, "3") != 0)
-      printf ("got: '%s', expected: '%s'\n", buf, "3");
-   prec = 0;
-   u__snprintf(buf,sizeof(buf), U_CONSTANT_TO_PARAM("%.*G"), prec, 3.3);
-   if (strcmp (buf, "3") != 0)
-      printf ("got: '%s', expected: '%s'\n", buf, "3");
-   prec = 0;
-   u__snprintf(buf,sizeof(buf), U_CONSTANT_TO_PARAM("%7.*G"), prec, 3.33);
-   if (strcmp (buf, "      3") != 0)
-      printf ("got: '%s', expected: '%s'\n", buf, "      3");
-   prec = 3;
-   u__snprintf(buf,sizeof(buf), U_CONSTANT_TO_PARAM("%04.*o"), prec, 33);
-   if (strcmp (buf, " 041") != 0)
-      printf ("got: '%s', expected: '%s'\n", buf, " 041");
-   prec = 7;
-   u__snprintf(buf,sizeof(buf), U_CONSTANT_TO_PARAM("%09.*u"), prec, 33);
-   if (strcmp (buf, "  0000033") != 0)
-      printf ("got: '%s', expected: '%s'\n", buf, "  0000033");
-   prec = 3;
-   u__snprintf(buf,sizeof(buf), U_CONSTANT_TO_PARAM("%04.*x"), prec, 33);
-   if (strcmp (buf, " 021") != 0)
-      printf ("got: '%s', expected: '%s'\n", buf, " 021");
-   prec = 3;
-   u__snprintf(buf,sizeof(buf), U_CONSTANT_TO_PARAM("%04.*X"), prec, 33);
-   if (strcmp (buf, " 021") != 0)
-      printf ("got: '%s', expected: '%s'\n", buf, " 021");
 }

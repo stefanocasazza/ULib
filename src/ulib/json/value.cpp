@@ -56,7 +56,7 @@ UValue::~UValue()
 
          while (element)
             {
-            U_DUMP("element = %p element->next = %p element->type = (%d,%S)", element, element->next, element->getTag(), getDataTypeDescription(element->getTag()))
+            U_DUMP("element = %p element->next = %p element->type = (%u,%S)", element, element->next, element->getTag(), getDataTypeDescription(element->getTag()))
 
             next = element->next;
 
@@ -73,7 +73,7 @@ UValue::~UValue()
 
          while (element)
             {
-            U_DUMP("element = %p element->next = %p element->type = (%d,%S)", element, element->next, element->getTag(), getDataTypeDescription(element->getTag()))
+            U_DUMP("element = %p element->next = %p element->type = (%u,%S)", element, element->next, element->getTag(), getDataTypeDescription(element->getTag()))
 
             U_ASSERT(isStringOrUTF(element->pkey.ival))
 
@@ -111,9 +111,9 @@ void UValue::clear()
       0,/* 9 */
    };
 
-   int type = getTag();
+   uint32_t type = getTag();
 
-   U_DUMP("dispatch_table[(%d,%S)] = %p", type, getDataTypeDescription(type), dispatch_table[type])
+   U_DUMP("dispatch_table[(%u,%S)] = %d", type, getDataTypeDescription(type), dispatch_table[type])
 
    goto *((char*)&&case_double + dispatch_table[type]);
 
@@ -142,7 +142,7 @@ case_array:
 
    while (element)
       {
-      U_DUMP("element = %p element->next = %p element->type = (%d,%S)", element, element->next, element->getTag(), getDataTypeDescription(element->getTag()))
+      U_DUMP("element = %p element->next = %p element->type = (%u,%S)", element, element->next, element->getTag(), getDataTypeDescription(element->getTag()))
 
       next = element->next;
 
@@ -160,7 +160,7 @@ case_object:
 
    while (element)
       {
-      U_DUMP("element = %p element->next = %p element->type = (%d,%S)", element, element->next, element->getTag(), getDataTypeDescription(element->getTag()))
+      U_DUMP("element = %p element->next = %p element->type = (%u,%S)", element, element->next, element->getTag(), getDataTypeDescription(element->getTag()))
 
       U_ASSERT(isStringOrUTF(element->pkey.ival))
 
@@ -192,7 +192,7 @@ __pure UValue* UValue::at(uint32_t pos) const
 
       while (element)
          {
-         U_DUMP("element = %p element->next = %p element->type = (%d,%S)", element, element->next, element->getTag(), getDataTypeDescription(element->getTag()))
+         U_DUMP("element = %p element->next = %p element->type = (%u,%S)", element, element->next, element->getTag(), getDataTypeDescription(element->getTag()))
 
          if (i++ == pos) U_RETURN_POINTER(element, UValue);
 
@@ -213,7 +213,7 @@ __pure UValue* UValue::at(const char* key, uint32_t key_len) const
 
       while (element)
          {
-         U_DUMP("element = %p element->next = %p element->type = (%d,%S)", element, element->next, element->getTag(), getDataTypeDescription(element->getTag()))
+         U_DUMP("element = %p element->next = %p element->type = (%u,%S)", element, element->next, element->getTag(), getDataTypeDescription(element->getTag()))
 
          U_ASSERT(isStringOrUTF(element->pkey.ival))
 
@@ -241,7 +241,7 @@ uint32_t UValue::getMemberNames(UVector<UString>& members) const
 
       while (element)
          {
-         U_DUMP("element = %p element->next = %p element->type = (%d,%S)", element, element->next, element->getTag(), getDataTypeDescription(element->getTag()))
+         U_DUMP("element = %p element->next = %p element->type = (%u,%S)", element, element->next, element->getTag(), getDataTypeDescription(element->getTag()))
 
          U_ASSERT(isStringOrUTF(element->pkey.ival))
 
@@ -264,7 +264,7 @@ uint32_t UValue::getMemberNames(UVector<UString>& members) const
 
 UString UValue::getString(uint64_t value)
 {
-   U_TRACE(0, "UValue::getString(0x%x)", value)
+   U_TRACE(0, "UValue::getString(%#llx)", value)
 
    U_ASSERT(isStringOrUTF(value))
 
@@ -272,14 +272,14 @@ UString UValue::getString(uint64_t value)
 
    U_INTERNAL_ASSERT_POINTER(rep)
 
-   if (u_getTag(value) == U_STRING_VALUE)
+   if (getTag(value) == U_STRING_VALUE)
       {
       UString str(rep);
 
       U_RETURN_STRING(str);
       }
 
-   U_INTERNAL_ASSERT_EQUALS(u_getTag(value), U_UTF_VALUE)
+   U_ASSERT_EQUALS(getTag(value), U_UTF_VALUE)
 
    uint32_t len = rep->size();
 
@@ -425,9 +425,9 @@ void UValue::stringify() const
       (int)((char*)&&case_null-(char*)&&case_double)
    };
 
-   int type = getTag();
+   uint32_t type = getTag();
 
-   U_DUMP("dispatch_table[(%d,%S)] = %p", type, getDataTypeDescription(type), dispatch_table[type])
+   U_DUMP("dispatch_table[(%u,%S)] = %d", type, getDataTypeDescription(type), dispatch_table[type])
 
    goto *((char*)&&case_double + dispatch_table[type]);
 
@@ -472,7 +472,7 @@ case_array:
 
    if (element)
       {
-l1:   U_DUMP("element = %p element->next = %p element->type = (%d,%S)", element, element->next, element->getTag(), getDataTypeDescription(element->getTag()))
+l1:   U_DUMP("element = %p element->next = %p element->type = (%u,%S)", element, element->next, element->getTag(), getDataTypeDescription(element->getTag()))
 
       element->stringify();
 
@@ -497,7 +497,7 @@ case_object:
 
    if (element)
       {
-l2:   U_DUMP("element = %p element->next = %p element->type = (%d,%S)", element, element->next, element->getTag(), getDataTypeDescription(element->getTag()))
+l2:   U_DUMP("element = %p element->next = %p element->type = (%u,%S)", element, element->next, element->getTag(), getDataTypeDescription(element->getTag()))
 
       element->emitKey();
 
@@ -541,9 +541,9 @@ void UValue::prettify(uint32_t indent) const
       (int)((char*)&&case_null-(char*)&&case_double)
    };
 
-   int type = getTag();
+   uint32_t type = getTag();
 
-   U_DUMP("dispatch_table[(%d,%S)] = %p", type, getDataTypeDescription(type), dispatch_table[type])
+   U_DUMP("dispatch_table[(%u,%S)] = %d", type, getDataTypeDescription(type), dispatch_table[type])
 
    goto *((char*)&&case_double + dispatch_table[type]);
 
@@ -590,7 +590,7 @@ case_array:
                          pstringify += 2;
 
       do {
-         U_DUMP("element = %p element->next = %p element->type = (%d,%S)", element, element->next, element->getTag(), getDataTypeDescription(element->getTag()))
+         U_DUMP("element = %p element->next = %p element->type = (%u,%S)", element, element->next, element->getTag(), getDataTypeDescription(element->getTag()))
 
          (void) memset(pstringify, ' ', indent+4);
                        pstringify +=    indent+4;
@@ -633,7 +633,7 @@ case_object:
                          pstringify += 2;
 
       do {
-         U_DUMP("element = %p element->next = %p element->type = (%d,%S)", element, element->next, element->getTag(), getDataTypeDescription(element->getTag()))
+         U_DUMP("element = %p element->next = %p element->type = (%u,%S)", element, element->next, element->getTag(), getDataTypeDescription(element->getTag()))
 
          (void) memset(pstringify, ' ', indent+4);
                        pstringify +=    indent+4;
@@ -786,15 +786,15 @@ bool UValue::parse(const UString& document)
 #endif
 
    double val;
+   int gexponent;
    const char* p;
    unsigned char c;
    UStringRep* rep;
    const char* start;
-   int gexponent, type;
    uint64_t integerPart;
    const char* s = document.data();
    const char* end = s + (size = document.size());
-   uint32_t sz, significandDigit, decimalDigit, exponent;
+   uint32_t type, sz, significandDigit, decimalDigit, exponent;
    bool minus = false, colon = false, comma = false, separator = true;
 
    initParser();
@@ -876,13 +876,13 @@ dquote_assign:
 
       if (sz)
          {
-         U_DUMP("type = (%d,%S)", type, getDataTypeDescription(type))
+         U_DUMP("type = (%u,%S)", type, getDataTypeDescription(type))
 
          if ((jsonParseFlags & STRING_COPY) == 0)
             {
             U_NEW(UStringRep, rep, UStringRep(start, sz));
 
-            o.ival = u_getValue(type, rep);
+            o.ival = getValue(type, rep);
             }
          else
             {
@@ -890,14 +890,14 @@ dquote_assign:
 
             str.hold();
 
-            o.ival = u_getValue(type, str.rep);
+            o.ival = getValue(type, str.rep);
             }
          }
       else
          {
          UStringRep::string_rep_null->hold();
 
-         o.ival = u_getValue(U_STRING_VALUE, UStringRep::string_rep_null);
+         o.ival = getValue(U_STRING_VALUE, UStringRep::string_rep_null);
          }
 
       goto next;
@@ -910,7 +910,7 @@ case_plus:
       goto case_number;
 
 case_comma:
-      U_INTERNAL_DUMP("comma: comma = %b separator = %b sd[%d].keys = 0x%x", comma, separator, pos, sd[pos].keys)
+      U_INTERNAL_DUMP("comma: comma = %b separator = %b sd[%d].keys = %#llx", comma, separator, pos, sd[pos].keys)
 
       if (comma     ||
           separator ||
@@ -985,7 +985,7 @@ case_zero:
          {
 zero:    if (c == '.') goto case_number;
 
-         o.ival = u_getValue(U_UINT_VALUE, U_NULLPTR);
+         o.ival = getValue(U_UINT_VALUE, U_NULLPTR);
 
          goto next;
          }
@@ -1171,7 +1171,7 @@ noreal:
             goto mreal1;
             }
 
-         o.ival = u_getValue(U_UINT_VALUE, (void*)(integerPart & 0x00000000FFFFFFFFULL));
+         o.ival = getValue(U_UINT_VALUE, (void*)(integerPart & 0x00000000FFFFFFFFULL));
 
          U_INTERNAL_DUMP("value(%.*S) = %u", s-start, start, (uint32_t)integerPart)
 
@@ -1188,7 +1188,7 @@ noreal:
 
          minus = false;
 
-         o.ival = u_getValue(U_INT_VALUE, (void*)(-integerPart & 0x00000000FFFFFFFFULL));
+         o.ival = getValue(U_INT_VALUE, (void*)(-integerPart & 0x00000000FFFFFFFFULL));
 
          U_INTERNAL_DUMP("value(%.*S) = %d", s-(start-1), start-1, -(int32_t)integerPart)
 
@@ -1242,7 +1242,7 @@ mreal1:
       goto next;
 
 case_colon:
-      U_INTERNAL_DUMP("colon: comma = %b colon = %b separator = %b sd[%d].keys = 0x%x", comma, colon, separator, pos, sd[pos].keys)
+      U_INTERNAL_DUMP("colon: comma = %b colon = %b separator = %b sd[%d].keys = %#llx", comma, colon, separator, pos, sd[pos].keys)
 
       if (separator      ||
           colon == false ||
@@ -1267,7 +1267,7 @@ case_svector:
 
          sd[pos].keys  = 0;
          sd[pos].tails = U_NULLPTR;
-         sd[pos].tags  = false;
+         sd[pos].obj   = false;
 
          comma     = false;
          separator = true;
@@ -1282,11 +1282,11 @@ case_svector:
       goto next;
 
 case_evector:
-      U_INTERNAL_DUMP("evector: comma = %b separator = %b sd[%d].tags = %b", comma, separator, pos, sd[pos].tags)
+      U_INTERNAL_DUMP("evector: comma = %b separator = %b sd[%d].obj = %b", comma, separator, pos, sd[pos].obj)
 
       if (comma     ||
           pos == -1 ||
-          sd[pos].tags)
+          sd[pos].obj)
          {
          break;
          }
@@ -1298,7 +1298,7 @@ case_evector:
 case_false:
       if (u_get_unalignedp32(s) == U_MULTICHAR_CONSTANT32('a','l','s','e'))
          {
-         o.ival = u_getValue(U_FALSE_VALUE, U_NULLPTR);
+         o.ival = getValue(U_FALSE_VALUE, U_NULLPTR);
 
          s = start+U_CONSTANT_SIZE("false");
 
@@ -1310,7 +1310,7 @@ case_false:
 case_null:
       if (u_get_unalignedp32(start) == U_MULTICHAR_CONSTANT32('n','u','l','l'))
          {
-         o.ival = u_getValue(U_NULL_VALUE, U_NULLPTR);
+         o.ival = getValue(U_NULL_VALUE, U_NULLPTR);
 
          s = start+U_CONSTANT_SIZE("null");
 
@@ -1322,7 +1322,7 @@ case_null:
 case_true:
       if (u_get_unalignedp32(start) == U_MULTICHAR_CONSTANT32('t','r','u','e'))
          {
-         o.ival = u_getValue(U_TRUE_VALUE, U_NULLPTR);
+         o.ival = getValue(U_TRUE_VALUE, U_NULLPTR);
 
          s = start+U_CONSTANT_SIZE("true");
 
@@ -1342,7 +1342,7 @@ case_sobject:
 
          sd[pos].keys  = 0;
          sd[pos].tails = U_NULLPTR;
-         sd[pos].tags  = true;
+         sd[pos].obj   = true;
 
          comma     = false;
          separator = true;
@@ -1357,12 +1357,12 @@ case_sobject:
       goto next;
 
 case_eobject:
-      U_INTERNAL_DUMP("eobject: comma = %b colon = %b separator = %b sd[%d].tags = %b sd[%d].tails = %p", comma, colon, separator, pos, sd[pos].tags, pos, sd[pos].tails)
+      U_INTERNAL_DUMP("eobject: comma = %b colon = %b separator = %b sd[%d].obj = %b sd[%d].tails = %p", comma, colon,  separator, pos, sd[pos].obj, pos, sd[pos].tails)
 
       if (comma        ||
           pos == -1    ||
           sd[pos].keys ||
-          sd[pos].tags == false)
+          sd[pos].obj == false)
          {
          break;
          }
@@ -1390,10 +1390,10 @@ next: U_INTERNAL_DUMP("next: comma = %b pos = %d colon = %b separator = %b s = %
       comma     =
       separator = false;
 
-      U_DUMP("sd[%d].tags = (%d,%S) sd[%d].tails = %p", pos, (sd[pos].tags ? U_OBJECT_VALUE : U_ARRAY_VALUE),
-                                      getDataTypeDescription((sd[pos].tags ? U_OBJECT_VALUE : U_ARRAY_VALUE)), pos, sd[pos].tails)
+      U_DUMP("sd[%d].obj = (%d,%S) sd[%d].tails = %p", pos, (sd[pos].obj ? U_OBJECT_VALUE : U_ARRAY_VALUE),
+                                     getDataTypeDescription((sd[pos].obj ? U_OBJECT_VALUE : U_ARRAY_VALUE)), pos, sd[pos].tails)
 
-      if (sd[pos].tags == false) sd[pos].tails = insertAfter(sd[pos].tails, o.ival);
+      if (sd[pos].obj == false) sd[pos].tails = insertAfter(sd[pos].tails, o.ival);
       else
          {
          if (colon) break;
@@ -1417,11 +1417,11 @@ next: U_INTERNAL_DUMP("next: comma = %b pos = %d colon = %b separator = %b s = %
       }
 
 cdefault:
-   U_INTERNAL_DUMP("cdefault: pos = %d sd[0].tags = %b sd[0].tails = %p sd[0].keys = 0x%x", pos, sd[0].tags, sd[0].tails, sd[0].keys)
+   U_INTERNAL_DUMP("cdefault: pos = %d sd[0].obj = %b sd[0].tails = %p sd[0].keys = %#llx", pos, sd[0].obj, sd[0].tails, sd[0].keys)
 
    if (pos >= 0)
       {
-      if (sd[0].tags == false) value.ival = (sd[0].tails ? listToValue(U_ARRAY_VALUE, sd[0].tails) : o.ival);
+      if (sd[0].obj == false) value.ival = (sd[0].tails ? listToValue(U_ARRAY_VALUE, sd[0].tails) : o.ival);
       else
          {
          if (sd[0].tails) value.ival = listToValue(U_OBJECT_VALUE, sd[0].tails);
@@ -1451,10 +1451,10 @@ void UValue::nextParser()
 
    U_INTERNAL_ASSERT_DIFFERS(UValue::pos, -1)
 
-   U_DUMP("sd[%d].tags = (%d,%S) sd[%d].tails = %p sd[%d].keys = 0x%x", pos, (sd[pos].tags ? U_OBJECT_VALUE : U_ARRAY_VALUE),
-                                   getDataTypeDescription((sd[pos].tags ? U_OBJECT_VALUE : U_ARRAY_VALUE)), pos, sd[pos].tails, pos, sd[pos].keys)
+   U_DUMP("sd[%d].obj = (%d,%S) sd[%d].tails = %p sd[%d].keys = %#llx", pos, (sd[pos].obj ? U_OBJECT_VALUE : U_ARRAY_VALUE),
+                                   getDataTypeDescription((sd[pos].obj ? U_OBJECT_VALUE : U_ARRAY_VALUE)), pos, sd[pos].tails, pos, sd[pos].keys)
 
-   if (sd[pos].tags == false) sd[pos].tails = insertAfter(sd[pos].tails, o.ival);
+   if (sd[pos].obj == false) sd[pos].tails = insertAfter(sd[pos].tails, o.ival);
    else
       {
       if (sd[pos].keys == 0)
@@ -2280,9 +2280,9 @@ const char* UValue::getJReadErrorDescription()
    U_RETURN(descr);
 }
 
-const char* UValue::getDataTypeDescription(int type)
+const char* UValue::getDataTypeDescription(uint32_t type)
 {
-   U_TRACE(0, "UValue::getDataTypeDescription(%d)", type)
+   U_TRACE(0, "UValue::getDataTypeDescription(%u)", type)
 
    struct data_type_info {
       int value;        // The numeric value
@@ -2308,7 +2308,7 @@ const char* UValue::getDataTypeDescription(int type)
       U_ENTRY(U_JR_EOBJECT)
    };
 
-   const char* descr = (type >= 0 && type < (int)U_NUM_ELEMENTS(data_type_table) ? data_type_table[type].name : "Data type unknown");
+   const char* descr = (type < (int)U_NUM_ELEMENTS(data_type_table) ? data_type_table[type].name : "Data type unknown");
 
    U_RETURN(descr);
 }

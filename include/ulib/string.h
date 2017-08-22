@@ -256,7 +256,7 @@ public:
 
    char* data() const { return (char*)str; }
 
-   void copy(char* s, uint32_t n = U_NOT_FOUND, uint32_t pos = 0) const;
+   uint32_t copy(char* s, uint32_t n = U_NOT_FOUND, uint32_t pos = 0) const;
 
    // ELEMENT ACCESS
 
@@ -666,9 +666,37 @@ public:
       }
 
    bool   isEndHeader(uint32_t pos) const __pure;
-   bool findEndHeader(uint32_t pos) const __pure;
+   bool findEndHeader(uint32_t pos) const __pure
+      {
+      U_TRACE(0, "UStringRep::findEndHeader(%u)", pos)
 
-   uint32_t findWhiteSpace(uint32_t pos) const __pure;
+      U_CHECK_MEMORY
+
+      if (_length)
+         {
+         U_INTERNAL_ASSERT_MINOR(pos, _length)
+
+         if (u_findEndHeader1(str + pos, _length - pos) != U_NOT_FOUND) U_RETURN(true); // find sequence of U_CRLF2
+         }
+
+      U_RETURN(false);
+      }
+
+   uint32_t findWhiteSpace(uint32_t pos) const __pure
+      {
+      U_TRACE(0, "UStringRep::findWhiteSpace(%u)", pos)
+
+      U_CHECK_MEMORY
+
+      U_INTERNAL_ASSERT(pos <= _length)
+
+      for (; pos < _length; ++pos)
+         {
+         if (u__isspace(str[pos])) U_RETURN(pos);
+         }
+
+      U_RETURN(U_NOT_FOUND);
+      }
 
 #ifdef HAVE_STRTOF
    float strtof() const;
@@ -1334,7 +1362,16 @@ public:
       U_INTERNAL_ASSERT(invariant())
       }
 
-   explicit UString(uint32_t n, unsigned char c);
+   explicit UString(uint32_t n, unsigned char c)
+      {
+      U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(0, UString, "%u,%C", n, c)
+
+      rep = UStringRep::create(n, n, U_NULLPTR);
+
+      (void) memset((void*)rep->str, c, n);
+
+      U_INTERNAL_ASSERT(invariant())
+      }
 
    explicit UString(uint32_t sz, const char* format, uint32_t fmt_size, ...) // ctor with var arg
       {
@@ -1354,7 +1391,19 @@ public:
       U_INTERNAL_ASSERT(invariant())
       }
 
-   explicit UString(const UString& str, uint32_t pos, uint32_t n = U_NOT_FOUND);
+   explicit UString(const UString& str, uint32_t pos, uint32_t n = U_NOT_FOUND)
+      {
+      U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(0, UString, "%p,%u,%u", &str, pos, n)
+
+      U_INTERNAL_ASSERT(pos <= str.size())
+
+      uint32_t sz = str.rep->fold(pos, n);
+
+      if (sz) rep = UStringRep::create(sz, sz, str.rep->str + pos);
+      else    _copy(UStringRep::string_rep_null);
+
+      U_INTERNAL_ASSERT(invariant())
+      }
 
    // SUBSTRING
 
@@ -1704,8 +1753,21 @@ public:
    char* c_strdup() const                                            { return strndup(rep->str, rep->_length); }
    char* c_strndup(uint32_t pos = 0, uint32_t n = U_NOT_FOUND) const { return strndup(rep->str+pos, rep->fold(pos, n)); }
 
-   UString copy() const;
-   void    copy(char* s, uint32_t n = U_NOT_FOUND, uint32_t pos = 0) const { rep->copy(s, n, pos); }
+   UString copy() const
+      {
+      U_TRACE_NO_PARAM(0, "UString::copy()")
+
+      if (rep->_length)
+         {
+         UString copia((void*)rep->str, rep->_length);
+
+         U_RETURN_STRING(copia);
+         }
+
+      return getStringNull();
+      }
+
+   uint32_t copy(char* s, uint32_t n = U_NOT_FOUND, uint32_t pos = 0) const { return rep->copy(s, n, pos); }
 
    // STRING OPERATIONS
 

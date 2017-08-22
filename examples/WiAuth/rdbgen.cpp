@@ -73,8 +73,8 @@ public:
             {
             char buffer[U_PATH_MAX];
 
-            (void) memcmp(buffer, p, plen);
-            (void) memcmp(buffer+plen, ".jnl", sizeof(".jnl"));
+            (void) memcpy(buffer, p, plen);
+            (void) memcpy(buffer+plen, ".jnl", sizeof(".jnl"));
 
             if (UFile::access(buffer, R_OK) == false) bjournal2remove = true;
             }

@@ -1862,14 +1862,44 @@ next:
                   continue;
                   }
 
-               goto error;
+error:         U_SRV_LOG("WARNING: invalid character %C in URI %.*S", c, ptr - U_http_info.uri, U_http_info.uri);
+
+               U_RETURN(false);
                }
 
             if (c != '+')
                {
-error:         U_SRV_LOG("WARNING: invalid character %C in URI %.*S", c, ptr - U_http_info.uri, U_http_info.uri);
+#           ifdef DEBUG
+               unsigned char c1;
+               bool utf8 = false;
+               unsigned char* p = (unsigned char*)ptr+1;
 
-               U_RETURN(false);
+               do {
+                  c1 = *p;
+
+                  if (c1 == '?' ||
+                      u__isblank(c1))
+                     {
+                     if (u_isUTF8((unsigned char*)ptr, p-(unsigned char*)ptr)) utf8 = true;
+
+                     break;
+                     }
+                  }
+               while (++p < (unsigned char*)endptr);
+
+               U_INTERNAL_DUMP("buffer(%u) = %.*S utf8 = %b", (const char*)p-ptr, (const char*)p-ptr, ptr, utf8)
+
+               /*
+               if (utf8)
+                  {
+                  ptr = (const char*)p;
+
+                  continue;
+                  }
+               */
+#           endif
+
+               goto error;
                }
             }
          }
@@ -1909,29 +1939,25 @@ bool UHTTP::scanfHeaderResponse(const char* ptr, uint32_t size)
 
       while (u__isdigit(*ptr1)) ++ptr1;
 
-      U_INTERNAL_ASSERT(u__isblank(*ptr1))
-
       U_http_info.nResponseCode = u_strtoul(ptr, ptr1);
 
       U_INTERNAL_DUMP("U_http_version = %C U_http_info.nResponseCode = %d", U_http_version, U_http_info.nResponseCode)
-
-      U_INTERNAL_ASSERT_EQUALS(U_http_info.nResponseCode, ::strtol(ptr, U_NULLPTR, 10))
 
       if (U_IS_HTTP_VALID_RESPONSE(U_http_info.nResponseCode))
          {
          while (u__islterm(*ptr1) == false) { ++ptr1; }
 
+         U_http_info.startHeader = ptr1 - start;
+
+         U_INTERNAL_DUMP("U_http_info.startHeader(%u) = %.20S", U_http_info.startHeader, ptr1)
+
          if (ptr1 <= (start+size-U_CONSTANT_SIZE(U_CRLF)) &&
              u_get_unalignedp16(ptr1) == U_MULTICHAR_CONSTANT16('\r','\n'))
             {
             U_line_terminator_len = U_CONSTANT_SIZE(U_CRLF);
-
-            U_http_info.startHeader = ptr1 - start;
-
-            U_INTERNAL_DUMP("U_http_info.startHeader(%u) = %.20S", U_http_info.startHeader, ptr1)
-
-            U_RETURN(true);
             }
+
+         U_RETURN(true);
          }
       }
 
@@ -2017,29 +2043,34 @@ bool UHTTP::checkContentLength(const UString& response)
 
    if (pos != U_NOT_FOUND)
       {
-      uint32_t end = response.findWhiteSpace(pos += U_CONSTANT_SIZE("Content-Length") + 2);
+      const char* ptr = response.c_pointer(pos + U_CONSTANT_SIZE("Content-Length:"));
 
-      if (end != U_NOT_FOUND)
+      U_INTERNAL_DUMP("ptr = %.14S", ptr)
+
+      while (u__isdigit(*ptr) == false) ++ptr;
+
+      const char* s = ptr;
+
+      while (u__isdigit(*s)) ++s;
+
+      uint32_t len = s - ptr;
+
+      U_INTERNAL_DUMP("len = %u", len)
+
+      if (len > U_CONSTANT_SIZE("1844674407370955160")) U_http_info.clength = U_NOT_FOUND;
+      else
          {
-         uint32_t len = end - pos;
+         U_http_info.clength = u__strtoul(ptr, len);
 
-         U_INTERNAL_DUMP("len = %u", len)
+         U_INTERNAL_DUMP("U_http_info.clength = %u U_http_data_chunked = %b", U_http_info.clength, U_http_data_chunked)
 
-         if (len <= U_CONSTANT_SIZE("1844674407370955160"))
-            {
-            U_http_info.clength = u__strtoul(response.c_pointer(pos), len);
+         // check for double content-length
 
-            U_INTERNAL_DUMP("len = %u U_http_info.clength = %u", len, U_http_info.clength)
+         pos = response.distance(s);
 
-            if (U_http_info.clength == 0)
-               {
-               U_http_flag &= ~HTTP_IS_DATA_CHUNKED;
+         if (U_STRING_FIND_EXT(response, pos, "Content-Length", U_http_info.endHeader-U_CONSTANT_SIZE(U_CRLF2)-pos) == U_NOT_FOUND) U_RETURN(true);
 
-               U_INTERNAL_DUMP("U_http_data_chunked = %b", U_http_data_chunked)
-               }
-
-            U_RETURN(true);
-            }
+         U_http_info.clength = U_NOT_FOUND;
          }
       }
 
@@ -2123,13 +2154,37 @@ loop: sz = buffer.size();
 
    ptr = buffer.c_pointer(U_http_info.startHeader);
 
-   U_INTERNAL_ASSERT_EQUALS(u_get_unalignedp16(ptr), U_MULTICHAR_CONSTANT16('\r','\n'))
-
    p = memmem(ptr+U_CONSTANT_SIZE(U_CRLF), sz-U_http_info.startHeader-U_CONSTANT_SIZE(U_CRLF), U_CONSTANT_TO_PARAM(U_CRLF2));
 
-   if (p) sz = U_http_info.startHeader + (const char*)p - ptr;
+        if (p) sz = U_http_info.startHeader + (const char*)p - ptr;
+   else if (u_get_unalignedp32(ptr) == U_MULTICHAR_CONSTANT32('\r','\n','\r','\n')) sz = U_http_info.startHeader;
    else
       {
+#  ifdef DEBUG
+      if (sk == U_NULLPTR)
+         {
+         if (*ptr == '\n')
+            {
+            U_http_info.startHeader++;
+
+            p = memmem(ptr+1, sz-U_http_info.startHeader, U_CONSTANT_TO_PARAM("\n\n"));
+
+            if (p)
+               {
+               U_http_info.endHeader = U_http_info.startHeader + (const char*)p - ptr + 1;
+
+               U_INTERNAL_DUMP("U_http_info.startHeader(%u) = %.20S U_http_info.endHeader(%u) = %.20S",
+                                U_http_info.startHeader, buffer.c_pointer(U_http_info.startHeader),
+                                U_http_info.endHeader,   buffer.c_pointer(U_http_info.endHeader))
+
+               U_RETURN(true);
+               }
+            }
+
+         U_RETURN(false);
+         }
+#  endif
+
       sz = USocketExt::readWhileNotToken(sk, buffer, U_CONSTANT_TO_PARAM(U_CRLF2), UServer_Base::timeoutMS);
 
       if (sz == U_NOT_FOUND) U_RETURN(false);
@@ -2171,8 +2226,6 @@ U_NO_EXPORT inline bool UHTTP::checkDataChunked(UString* pbuffer)
 {
    U_TRACE(0, "UHTTP::checkDataChunked(%V)", pbuffer->rep)
 
-   U_INTERNAL_ASSERT_EQUALS(U_line_terminator_len, 2)
-
    U_INTERNAL_DUMP("U_http_data_chunked = %b", U_http_data_chunked)
 
    if (U_http_data_chunked == false)
@@ -2200,11 +2253,6 @@ U_NO_EXPORT bool UHTTP::readDataChunked(USocket* sk, UString* pbuffer, UString& 
 
    if (checkDataChunked(pbuffer))
       {
-            char* out;
-      const char* inp;
-      const char* ptr;
-      const char* end;
-
       /**
        * If a server wants to start sending a response before knowing its total length (like with long script output),
        * it might use the simple chunked transfer-encoding, which breaks the complete response into smaller chunks and
@@ -2239,78 +2287,121 @@ U_NO_EXPORT bool UHTTP::readDataChunked(USocket* sk, UString* pbuffer, UString& 
 
       U_INTERNAL_ASSERT_DIFFERS(U_http_info.endHeader, 0)
 
-      uint32_t chunkSize, count = pbuffer->find(U_CRLF2, U_http_info.endHeader, U_CONSTANT_SIZE(U_CRLF2));
+            char* out;
+      const char* inp;
+      const char* ptr;
+      const char* end;
+      const char* start;
+      uint32_t len, size, chunkSize, count = pbuffer->find(U_CRLF2, U_http_info.endHeader, U_CONSTANT_SIZE(U_CRLF2));
 
-      if (count == U_NOT_FOUND) count = USocketExt::readWhileNotToken(sk, *pbuffer, U_CONSTANT_TO_PARAM(U_CRLF2), U_SSL_TIMEOUT_MS);
+      if (count == U_NOT_FOUND)
+         {
+#     ifdef DEBUG
+         if (sk == U_NULLPTR) U_RETURN(true);
+#     endif
+
+         count = USocketExt::readWhileNotToken(sk, *pbuffer, U_CONSTANT_TO_PARAM(U_CRLF2), U_SSL_TIMEOUT_MS);
+         }
 
       if (count == U_NOT_FOUND) U_RETURN(false);
 
       count += U_CONSTANT_SIZE(U_CRLF2); // NB: the message include also the blank line...
 
-      U_INTERNAL_DUMP("count = %u U_http_info.endHeader = %u", count, U_http_info.endHeader)
+      U_INTERNAL_DUMP("count = %u U_http_info.endHeader = %u pbuffer->size() = %u", count, U_http_info.endHeader, pbuffer->size())
 
       if (count <= U_http_info.endHeader) U_RETURN(false);
 
-      U_http_info.clength = (count - U_http_info.endHeader);
+      U_http_info.clength = count - U_http_info.endHeader; // NB: U_http_info.clength is used to set position in pipeline for POST request...
 
       U_INTERNAL_DUMP("U_http_info.clength = %u", U_http_info.clength)
 
-      body.setBuffer(U_http_info.clength);
+      ptr = pbuffer->data();
+
+      inp = ptr + U_http_info.endHeader;
+      end = ptr + (len = pbuffer->size());
+
+      body.setBuffer(len - U_http_info.endHeader);
 
       out = body.data();
-      end = pbuffer->c_pointer(count);
-      inp = pbuffer->c_pointer(U_http_info.endHeader);
 
-      do {
-         // Decode the hexadecimal chunk size into an understandable number
+loop: U_INTERNAL_DUMP("inp = %.20S", inp) // Decode the hexadecimal chunk size into an understandable number
 
-         U_INTERNAL_DUMP("inp = %.20S", inp)
+      while (u__isspace(*inp)) { ++inp; }
 
-         while (u__isspace(*inp)) { ++inp; }
+      if (inp > end) chunkSize = 0;
+      else
+         {
+         for (ptr = inp; u__isxdigit(*inp); ++inp) {}
 
-         if (inp > end) chunkSize = 0;
-         else
-            {
-            for (ptr = inp; u__isxdigit(*inp); ++inp) {}
+         len = inp - ptr;
 
-            count     = inp-ptr;
-            chunkSize = (count ? u_hex2int(ptr, count) : 0);
-            }
+         U_INTERNAL_DUMP("len = %u", len)
 
-         U_INTERNAL_DUMP("chunkSize = %u", chunkSize)
+         if (len > U_CONSTANT_SIZE("FFFFFFFFFFFFFFE")) U_RETURN(false);
 
-         // The last chunk is followed by zero or more trailers, followed by a blank line
-
-         if (chunkSize == 0)
-            {
-            body.size_adjust(body.distance(out));
-
-            U_INTERNAL_DUMP("body = %V", body.rep)
-
-            if (body) U_RETURN(true);
-
-            U_RETURN(false);
-            }
-
-         U_INTERNAL_DUMP("inp = %.20S", inp)
-
-         if (*++inp != '\n')
-            {
-            // discard the rest of the line
-
-            inp = (const char*) U_SYSCALL(memchr, "%p,%C,%p", inp, '\n', pbuffer->remain(inp));
-
-            if (UNLIKELY(inp == U_NULLPTR)) U_RETURN(false);
-            }
-
-         ++inp;
-
-         U_MEMCPY(out, inp, chunkSize);
-
-         inp += chunkSize + U_CONSTANT_SIZE(U_CRLF);
-         out += chunkSize;
+         chunkSize = (len ? u_hex2int(ptr, len) : 0);
          }
-      while (inp <= end);
+
+      U_INTERNAL_DUMP("chunkSize = %u", chunkSize)
+
+      // The last chunk is followed by zero or more trailers, followed by a blank line
+
+      if (chunkSize == 0)
+         {
+         size = body.distance(out);
+
+         if (size)
+            {
+            body.size_adjust(size);
+
+            U_INTERNAL_DUMP("body(%u) = %V", size, body.rep)
+
+            len = pbuffer->distance(inp) + U_CONSTANT_SIZE(U_CRLF2);
+
+            U_INTERNAL_DUMP("count = %u len = %u inp = %.10S", count, len, inp)
+
+            if (count < len &&
+                u_get_unalignedp32(inp) == U_MULTICHAR_CONSTANT32('\r','\n','\r','\n'))
+               {
+               U_http_info.clength = len - U_http_info.endHeader; // NB: U_http_info.clength is used to set position in pipeline for POST request...
+
+               U_INTERNAL_DUMP("U_http_info.clength = %u", U_http_info.clength)
+               }
+
+            U_RETURN(true);
+            }
+
+         U_RETURN(false);
+         }
+
+      U_INTERNAL_DUMP("inp = %.20S", inp)
+
+      if (*++inp != '\n')
+         {
+         // discard the rest of the line
+
+         inp = (const char*) U_SYSCALL(memchr, "%p,%C,%p", inp, '\n', pbuffer->remain(inp));
+
+         if (UNLIKELY(inp == U_NULLPTR)) U_RETURN(false);
+         }
+
+      start = ++inp;
+
+      inp += (ptrdiff_t)chunkSize + U_CONSTANT_SIZE(U_CRLF);
+
+      U_INTERNAL_DUMP("inp = %p end = %p", inp, end)
+
+      if (inp <= end)
+         {
+         U_MEMCPY(out, start, chunkSize);
+                  out +=      chunkSize;
+
+         goto loop;
+         }
+
+#  ifdef DEBUG
+      if (sk == U_NULLPTR) U_RETURN(true);
+#  endif
       }
 
    U_RETURN(false);
@@ -2688,18 +2779,18 @@ U_NO_EXPORT inline void UHTTP::setXHttpForwardedFor(const char* ptr, uint32_t le
       {                                                                            \
       do { ++pn; } while (u__isblank(*pn));                                        \
                                                                                    \
-      if (UNLIKELY(pn >= pend)) return;                                            \
+      if (UNLIKELY(pn >= pend)) U_RETURN(false);                                   \
       }                                                                            \
                                                                                    \
    pn = (const char*) memchr((ptr1 = pn), '\r', pend - pn);                        \
                                                                                    \
-   if (UNLIKELY(pn == U_NULLPTR)) return;
+   if (UNLIKELY(pn == U_NULLPTR)) U_RETURN(false);
 
-U_NO_EXPORT void UHTTP::checkRequestForHeader()
+U_NO_EXPORT bool UHTTP::checkRequestForHeader()
 {
    U_TRACE_NO_PARAM(0, "UHTTP::checkRequestForHeader()")
 
-   U_INTERNAL_DUMP("U_line_terminator_len = %d", U_line_terminator_len)
+   U_INTERNAL_DUMP("U_line_terminator_len = %u", U_line_terminator_len)
 
    U_INTERNAL_ASSERT(*UClientImage_Base::request)
    U_INTERNAL_ASSERT_DIFFERS(U_http_method_type, 0)
@@ -2759,7 +2850,7 @@ U_NO_EXPORT void UHTTP::checkRequestForHeader()
          {
          pn = (const char*) memchr(pn, '\r', remain);
 
-         if (UNLIKELY(pn == U_NULLPTR)) return; // NB: we can have too much advanced...
+         if (UNLIKELY(pn == U_NULLPTR)) U_RETURN(false); // NB: we can have too much advanced...
 
          goto next;
          }
@@ -2907,6 +2998,10 @@ U_NO_EXPORT void UHTTP::checkRequestForHeader()
          if (u_get_unalignedp32(p)   == U_MULTICHAR_CONSTANT32('C','o','n','t') &&
              u_get_unalignedp32(p+7) == U_MULTICHAR_CONSTANT32('-','L','e','n'))
             {
+#        ifdef DEBUG
+            if (U_http_info.clength) U_RETURN(false); // // check for double content-length
+#        endif
+
             SET_POINTER_CHECK_REQUEST_FOR_HEADER
 
             setContentLength(ptr1, pn);
@@ -3028,7 +3123,7 @@ U_NO_EXPORT void UHTTP::checkRequestForHeader()
          {
          pn = (const char*) memchr(pn, ':', remain);
 
-         if (UNLIKELY(pn == U_NULLPTR)) return; // NB: we can have too much advanced...
+         if (UNLIKELY(pn == U_NULLPTR)) U_RETURN(false); // NB: we can have too much advanced...
          }
 
       SET_POINTER_CHECK_REQUEST_FOR_HEADER
@@ -3210,11 +3305,14 @@ next: U_INTERNAL_DUMP("char (after cr/newline) = %C U_http_version = %C U_Client
 
          U_ClientImage_data_missing = false;
 
-         return;
+         U_RETURN(true);
          }
       }
+
+   U_RETURN(true);
 }
 
+#ifdef DEBUG
 uint32_t UHTTP::parserExecute(const char* ptr, uint32_t len, bool bresponse)
 {
    U_TRACE(0, "UHTTP::parserExecute(%.*S,%u,%b)", len, ptr, len, bresponse)
@@ -3225,15 +3323,49 @@ uint32_t UHTTP::parserExecute(const char* ptr, uint32_t len, bool bresponse)
 
    u_clientimage_info.flag.u = 0;
 
+   UClientImage_Base::body->clear();
+
    (void) UClientImage_Base::request->assign(ptr, len);
 
    if (bresponse)
       {
-      if (readHeaderResponse(U_NULLPTR, *UClientImage_Base::request) &&
-          (checkContentLength(*UClientImage_Base::request)           ||
-           checkDataChunked(UClientImage_Base::request)))
+      if (readHeaderResponse(U_NULLPTR, *UClientImage_Base::request))
          {
-         U_RETURN(len);
+         bool res1 = checkContentLength(*UClientImage_Base::request),
+              res2 = readDataChunked(U_NULLPTR, UClientImage_Base::request, *UClientImage_Base::body);
+
+         if (res1)
+            {
+            if (res2 == false)
+               {
+               *UClientImage_Base::body = UClientImage_Base::request->substr(U_http_info.endHeader, U_http_info.clength);
+
+               U_RETURN(len);
+               }
+            }
+         else
+            {
+            if (res2) U_RETURN(len);
+
+            U_INTERNAL_DUMP("U_http_version = %C U_http_method_type = %u U_http_info.clength = %u", U_http_version, U_http_method_type, U_http_info.clength)
+
+            if (U_http_info.clength)
+               {
+               if (U_http_info.clength != U_NOT_FOUND &&
+                   checkDataChunked(UClientImage_Base::request) == false)
+                  {
+                  *UClientImage_Base::body = UClientImage_Base::request->substr(U_http_info.endHeader, U_http_info.clength);
+
+                  U_RETURN(len);
+                  }
+               }
+            else
+               {
+               *UClientImage_Base::body = UClientImage_Base::request->substr(U_http_info.endHeader);
+
+               U_RETURN(len);
+               }
+            }
          }
       }
    else
@@ -3244,17 +3376,21 @@ uint32_t UHTTP::parserExecute(const char* ptr, uint32_t len, bool bresponse)
 
          if (U_http_info.endHeader)
             {
-            checkRequestForHeader();
+            if (checkRequestForHeader() == false) U_RETURN(0);
 
-            U_INTERNAL_DUMP("U_http_version = %C U_http_method_type = %u", U_http_version, U_http_method_type)
+            U_INTERNAL_DUMP("U_http_version = %C U_http_method_type = %u U_http_info.clength = %u", U_http_version, U_http_method_type, U_http_info.clength)
+            }
+
+         if (U_http_info.clength &&
+             checkDataChunked(UClientImage_Base::request))
+            {
+            U_RETURN(0);
             }
 
          U_INTERNAL_DUMP("U_HTTP_HOST(%u) = %.*S", U_http_host_len, U_HTTP_HOST_TO_TRACE)
 
          UClientImage_Base::size_request = (U_http_info.endHeader ? U_http_info.endHeader
                                                                   : U_http_info.startHeader + U_CONSTANT_SIZE(U_CRLF2));
-
-         U_INTERNAL_DUMP("UClientImage_Base::size_request = %u U_http_info.clength = %u", UClientImage_Base::size_request, U_http_info.clength)
 
          U_RETURN(len);
          }
@@ -3264,6 +3400,7 @@ uint32_t UHTTP::parserExecute(const char* ptr, uint32_t len, bool bresponse)
 
    U_RETURN(0);
 }
+#endif
 
 // manage dynamic page request (CGI - C/ULib Servlet Page - RUBY - PHP - PYTHON)
 
@@ -3935,7 +4072,7 @@ int UHTTP::handlerREAD()
 
    if (U_http_info.endHeader)
       {
-      checkRequestForHeader();
+      (void) checkRequestForHeader();
 
       U_INTERNAL_DUMP("U_http_version = %C U_http_method_type = %u", U_http_version, U_http_method_type)
 
@@ -4711,8 +4848,7 @@ int UHTTP::processRequest()
       {
       if (isPOST())
          {
-         if (UClientImage_Base::isRequestNotFound()) setNotFound();
-         else                                        setBadRequest();
+         setNotFound();
 
          U_RETURN(U_PLUGIN_HANDLER_FINISHED);
          }
@@ -9855,11 +9991,13 @@ bool UHTTP::processCGIOutput(bool cgi_sh_script, bool bheaders)
    sz           = UClientImage_Base::wbuffer->size();
    ptr = endptr = UClientImage_Base::wbuffer->data();
 
-   U_INTERNAL_DUMP("U_http_info.endHeader = %u U_line_terminator_len = %d UClientImage_Base::wbuffer(%u) = %.*S", U_http_info.endHeader, U_line_terminator_len, sz, sz, ptr)
+   U_INTERNAL_DUMP("U_http_info.endHeader = %u U_line_terminator_len = %u UClientImage_Base::wbuffer(%u) = %.*S", U_http_info.endHeader, U_line_terminator_len, sz, sz, ptr)
 
+   /*
 #ifdef DEBUG
-// (void) UFile::writeToTmp(ptr, sz, O_RDWR | O_TRUNC, U_CONSTANT_TO_PARAM("processCGIOutput.%P"), 0);
+   (void) UFile::writeToTmp(ptr, sz, O_RDWR | O_TRUNC, U_CONSTANT_TO_PARAM("processCGIOutput.%P"), 0);
 #endif
+   */
 
    if (bheaders == false)
       {
@@ -9889,7 +10027,7 @@ bool UHTTP::processCGIOutput(bool cgi_sh_script, bool bheaders)
 rescan:
       U_http_info.endHeader = u_findEndHeader(ptr, sz); // NB: U_http_info.endHeader comprende anche la blank line...
 
-      U_INTERNAL_DUMP("U_http_info.endHeader = %u U_line_terminator_len = %d", U_http_info.endHeader, U_line_terminator_len)
+      U_INTERNAL_DUMP("U_http_info.endHeader = %u U_line_terminator_len = %u", U_http_info.endHeader, U_line_terminator_len)
 
       if (U_http_info.endHeader == U_NOT_FOUND)
          {

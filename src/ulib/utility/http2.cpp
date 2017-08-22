@@ -888,9 +888,9 @@ void UHTTP2::decodeHeaders(UHashMap<UString>* table, HpackDynamicTable* dyntbl, 
 
       index = *ptr;
 
-      U_INTERNAL_DUMP("index = (\\%o %u 0x%X) %C %B", index, index, index, index, index)
+      U_INTERNAL_DUMP("index = (\\%o %u %#X) %C %B", index, index, index, index, index)
 
-      U_INTERNAL_DUMP("index & 0x80 = 0x%x", index & 0x80)
+      U_INTERNAL_DUMP("index & 0x80 = %#x", index & 0x80)
 
       if ((index & 0x80) == 0x80) // (128: 10000000) Section 6.1: Indexed Header Field Representation
          {
@@ -907,7 +907,7 @@ void UHTTP2::decodeHeaders(UHashMap<UString>* table, HpackDynamicTable* dyntbl, 
          goto check2;
          }
 
-      U_INTERNAL_DUMP("index & 0x40 = 0x%x", index & 0x40)
+      U_INTERNAL_DUMP("index & 0x40 = %#x", index & 0x40)
 
       if ((index & 0x40) == 0x40) // (64: 01000000) Section 6.2.1:  Literal Header Field with Incremental Indexing
          {
@@ -920,7 +920,7 @@ void UHTTP2::decodeHeaders(UHashMap<UString>* table, HpackDynamicTable* dyntbl, 
          goto check1;
          }
 
-      U_INTERNAL_DUMP("index & 0x20 = 0x%x", index & 0x20)
+      U_INTERNAL_DUMP("index & 0x20 = %#x", index & 0x20)
 
       if ((index & 0x20) == 0x20) // (32: 00100000) Section 6.3: Dynamic Table Size Update
          {
@@ -992,7 +992,7 @@ upd_err:
          return;
          }
 
-      U_INTERNAL_DUMP("index & 0x10 = 0x%x", index & 0x10)
+      U_INTERNAL_DUMP("index & 0x10 = %#x", index & 0x10)
 
       /*
       if ((index & 0x10) == 0x10) // (16: 00010000) Section 6.2.3: Literal Header Field Never Indexed
@@ -1120,7 +1120,7 @@ check2:
 
       // existing name
 
-      U_INTERNAL_DUMP("dispatch_table[%u] = %p &&cdefault = %p", index, dispatch_table[index], &&cdefault)
+      U_INTERNAL_DUMP("dispatch_table[%u] = %d &&cdefault = %p", index, dispatch_table[index], &&cdefault)
 
       goto *((char*)&&cdefault + dispatch_table[index]);
 
@@ -1196,7 +1196,7 @@ case_2_3: // GET - POST
 #  ifdef DEBUG
       U_INTERNAL_ASSERT_EQUALS(bdecodeHeadersDebug, false)
 
-      U_INTERNAL_DUMP("bregular = %b pseudo_header_mask = 0x%x %B", bregular, pseudo_header_mask, pseudo_header_mask)
+      U_INTERNAL_DUMP("bregular = %b pseudo_header_mask = %#x %B", bregular, pseudo_header_mask, pseudo_header_mask)
 
       if (btest == false &&
           bdecodeHeadersDebug == false)
@@ -1295,7 +1295,7 @@ case_4_5: // :path => / /index.html
 #  ifdef DEBUG
       U_INTERNAL_ASSERT_EQUALS(bdecodeHeadersDebug, false)
 
-      U_INTERNAL_DUMP("bregular = %b pseudo_header_mask = 0x%x %B", bregular, pseudo_header_mask, pseudo_header_mask)
+      U_INTERNAL_DUMP("bregular = %b pseudo_header_mask = %#x %B", bregular, pseudo_header_mask, pseudo_header_mask)
 
       if (btest == false &&
           bdecodeHeadersDebug == false)
@@ -1358,7 +1358,7 @@ case_7: // https
 #  ifdef DEBUG
       U_INTERNAL_DUMP("name = %V value = %V", hpack_static_table[index-1].name, hpack_static_table[index-1].value)
 
-      U_INTERNAL_DUMP("bregular = %b pseudo_header_mask = 0x%x %B", bregular, pseudo_header_mask, pseudo_header_mask)
+      U_INTERNAL_DUMP("bregular = %b pseudo_header_mask = %#x %B", bregular, pseudo_header_mask, pseudo_header_mask)
 
       if (btest == false &&
           bdecodeHeadersDebug == false)
@@ -1762,7 +1762,7 @@ insert_table:
       }
 
 #ifdef DEBUG
-   U_INTERNAL_DUMP("bregular = %b pseudo_header_mask = 0x%x %B", bregular, pseudo_header_mask, pseudo_header_mask)
+   U_INTERNAL_DUMP("bregular = %b pseudo_header_mask = %#x %B", bregular, pseudo_header_mask, pseudo_header_mask)
 
    if (btest == false &&
        bdecodeHeadersDebug == false)

@@ -33329,7 +33329,7 @@ cat >>confdefs.h <<_ACEOF
 #define U_PREFIXDIR "$u_prefixdir"
 _ACEOF
 
-# Plugin dir - program executables [EPREFIX/libexec]
+# Plugin dir - program executables [PREFIX/libexec]
 
 cat >>confdefs.h <<_ACEOF
 #define U_LIBEXECDIR "$u_libexecdir"
