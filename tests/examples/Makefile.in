@@ -123,8 +123,11 @@ mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = $(top_builddir)/include/ulib/internal/config.h
 CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
-am__EXEEXT_1 = bench_http_parser$(EXEEXT) test_http_parser$(EXEEXT)
-am_bench_http_parser_OBJECTS = bench_http_parser.$(OBJEXT)
+@DEBUG_TRUE@am__EXEEXT_1 = bench_http_parser$(EXEEXT) \
+@DEBUG_TRUE@	test_http_parser$(EXEEXT)
+am__bench_http_parser_SOURCES_DIST = bench_http_parser.cpp
+@DEBUG_TRUE@am_bench_http_parser_OBJECTS =  \
+@DEBUG_TRUE@	bench_http_parser.$(OBJEXT)
 bench_http_parser_OBJECTS = $(am_bench_http_parser_OBJECTS)
 bench_http_parser_LDADD = $(LDADD)
 bench_http_parser_DEPENDENCIES =  \
@@ -133,8 +136,10 @@ AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
 am__v_lt_1 = 
-am_test_http_parser_OBJECTS = test_http_parser.$(OBJEXT) \
-	ctest_http_parser.$(OBJEXT)
+am__test_http_parser_SOURCES_DIST = test_http_parser.cpp \
+	ctest_http_parser.c
+@DEBUG_TRUE@am_test_http_parser_OBJECTS = test_http_parser.$(OBJEXT) \
+@DEBUG_TRUE@	ctest_http_parser.$(OBJEXT)
 test_http_parser_OBJECTS = $(am_test_http_parser_OBJECTS)
 test_http_parser_LDADD = $(LDADD)
 test_http_parser_DEPENDENCIES = $(top_builddir)/src/ulib/lib@ULIB@.la
@@ -190,8 +195,8 @@ am__v_CXXLD_ = $(am__v_CXXLD_@AM_DEFAULT_V@)
 am__v_CXXLD_0 = @echo "  CXXLD   " $@;
 am__v_CXXLD_1 = 
 SOURCES = $(bench_http_parser_SOURCES) $(test_http_parser_SOURCES)
-DIST_SOURCES = $(bench_http_parser_SOURCES) \
-	$(test_http_parser_SOURCES)
+DIST_SOURCES = $(am__bench_http_parser_SOURCES_DIST) \
+	$(am__test_http_parser_SOURCES_DIST)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -620,14 +625,14 @@ DEFAULT_INCLUDES = -I. -I$(top_srcdir) -I$(top_srcdir)/include -I$(top_srcdir)/e
 EXTRA_DIST = inp ok CA CSP LCSP TSA RSIGN XAdES nocat wi-auth WAGSM RA IR/WEB IR/benchmark IR/doc_dir *.cfg .htpasswd .htdigest python \
 				 *.properties *.test *.sh error_msg workflow doc_parse robots.txt alias.txt throttling.txt css js benchmark websocket docroot php.sh test_http_parser.h
 
-PRG = bench_http_parser test_http_parser
-bench_http_parser_SOURCES = bench_http_parser.cpp
-test_http_parser_SOURCES = test_http_parser.cpp ctest_http_parser.c
 TESTS = client_server.test test_manager.test IR.test web_server.test \
 	web_server_multiclient.test web_socket.test $(am__append_1) \
 	$(am__append_2) $(am__append_3) $(am__append_4) \
 	$(am__append_5) $(am__append_6) $(am__append_7) \
 	$(am__append_8) ../reset.color
+@DEBUG_TRUE@PRG = bench_http_parser test_http_parser
+@DEBUG_TRUE@bench_http_parser_SOURCES = bench_http_parser.cpp
+@DEBUG_TRUE@test_http_parser_SOURCES = test_http_parser.cpp ctest_http_parser.c
 LDADD = @ULIBS@ $(HTTP_LIB) $(top_builddir)/src/ulib/lib@ULIB@.la @ULIB_LIBS@
 all: all-am
 
