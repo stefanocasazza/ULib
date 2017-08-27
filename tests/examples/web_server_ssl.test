@@ -8,8 +8,8 @@
 
 start_msg web_server_ssl
 
-(cd benchmark; rm -f  db; creat_link FrameworkBenchmarks/ULib/db db; sync)
-(cd ..;        rm -rf db; creat_link examples/benchmark/db		  db; sync)
+(cd benchmark; rm -f  db; creat_link FrameworkBenchmarks/ULib/db db)
+(cd ..;        rm -rf db; creat_link examples/benchmark/db		  db)
                           creat_link			 benchmark/db       db
 								  creat_link			 benchmark/libraries libraries
 
@@ -138,7 +138,7 @@ http {
  DIGEST_AUTHENTICATION no
  APACHE_LIKE_LOG /var/log/httpd/access_log
  CACHE_FILE_MASK inp/http/data/file1|*.flv|*.svgz
- CACHE_AVOID_MASK www.sito1.com|ruby
+ CACHE_AVOID_MASK www.sito1.com/inp|ruby
 }
 EOF
 }
@@ -156,18 +156,18 @@ if [ $? -ne 0 ]; then
    echo localhost www.sito2.com	>> /etc/hosts 2>/dev/null
 fi
 
-mkdir -p $DOC_ROOT/benchmark/docroot $DOC_ROOT/www.sito1.com/benchmark/docroot
+mkdir $DOC_ROOT/www.sito1.com
 
-creat_link ../ok											 $DOC_ROOT/ok
-creat_link ../tmp											 $DOC_ROOT/tmp
-creat_link ../uploads									 $DOC_ROOT/uploads
-creat_link ../../../benchmark/docroot/servlet	 $DOC_ROOT/benchmark/docroot/servlet
-creat_link ../../inp										 $DOC_ROOT/www.sito1.com/inp
-creat_link ../../tmp									    $DOC_ROOT/www.sito1.com/tmp
-creat_link ../SSI											 $DOC_ROOT/www.sito1.com/SSI
-creat_link ../cgi-bin									 $DOC_ROOT/www.sito1.com/cgi-bin
-creat_link ../../uploads								 $DOC_ROOT/www.sito1.com/uploads
-creat_link ../../../../benchmark/docroot/servlet $DOC_ROOT/www.sito1.com/benchmark/docroot/servlet
+creat_link ../ok									 $DOC_ROOT/ok
+creat_link ../tmp									 $DOC_ROOT/tmp
+creat_link ../uploads							 $DOC_ROOT/uploads
+creat_link ../benchmark/docroot/servlet    $DOC_ROOT/servlet
+creat_link ../../inp								 $DOC_ROOT/www.sito1.com/inp
+creat_link ../../tmp								 $DOC_ROOT/www.sito1.com/tmp
+creat_link ../SSI									 $DOC_ROOT/www.sito1.com/SSI
+creat_link ../cgi-bin							 $DOC_ROOT/www.sito1.com/cgi-bin
+creat_link ../../uploads						 $DOC_ROOT/www.sito1.com/uploads
+creat_link ../../benchmark/docroot/servlet $DOC_ROOT/www.sito1.com/servlet
 
 touch vuoto.txt $DOC_ROOT/vuoto.txt $DOC_ROOT/www.sito1.com/vuoto.txt
 cat << EOF >tmp/c

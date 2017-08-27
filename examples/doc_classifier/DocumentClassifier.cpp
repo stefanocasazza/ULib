@@ -192,13 +192,13 @@ void DocumentClassifier::printLabel(UTree<UCertificate*>* pnode)
    UString issuer = cert->getIssuerForLDAP();
 
    inner.snprintf(U_CONSTANT_TO_PARAM("<certificate issuer=\"%.*s\" serial=\"%d\" filename=\"%s\">\n"),
-                  U_STRING_TO_TRACE(issuer), cert->getSerialNumber(), u_basename(filename.data()));
+                  U_STRING_TO_TRACE(issuer), cert->getSerialNumber(), u_basename(U_STRING_TO_PARAM(filename)));
 
    buffer += inner;
 
    if (crl_exist)
       {
-      inner.snprintf(U_CONSTANT_TO_PARAM("<crl filename=\"%s\"/>\n"), u_basename(crl.data()));
+      inner.snprintf(U_CONSTANT_TO_PARAM("<crl filename=\"%s\"/>\n"), u_basename(U_STRING_TO_PARAM(crl)));
 
       buffer += inner;
       }

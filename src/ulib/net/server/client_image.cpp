@@ -109,7 +109,7 @@ void UClientImage_Base::logRequest()
       U_INTERNAL_ASSERT_MAJOR(u_printf_string_max_length, 0)
       }
 
-   U_INTERNAL_DUMP("u_printf_string_max_length = %d U_ClientImage_pipeline = %b", u_printf_string_max_length, U_ClientImage_pipeline)
+   U_INTERNAL_DUMP("u_printf_string_max_length = %d U_ClientImage_pipeline = %b request = %V", u_printf_string_max_length, U_ClientImage_pipeline, request->rep)
 
    UServer_Base::log->log(U_CONSTANT_TO_PARAM("received request (%u bytes) %.*s%.*s%#.*S from %v"), sz,
                           (U_ClientImage_pipeline ? U_CONSTANT_SIZE("[pipeline] ") : 0), "[pipeline] ",
@@ -405,7 +405,7 @@ void UClientImage_Base::setSendfile(int fd, uint32_t lstart, uint32_t lcount)
    UServer_Base::pClientImage->sfd   = fd;
 }
 
-// NB: we have default to true to manage pipeline for protocol as RPC...
+// NB: we have default as true to manage pipeline for protocol as RPC...
 
 U_NO_EXPORT inline bool UClientImage_Base::handlerCache() { return true; }
 

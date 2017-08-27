@@ -1,4 +1,3 @@
-[ /                                                    /index.php
-  /fortunes                                            /benchmark/docroot/servlet/fortunes
-  /plaintext                                           /benchmark/docroot/servlet/plaintext
-  /www.sito1.com/benchmark/docroot/servlet/jsonrequest /benchmark/docroot/servlet/jsonrequest ]
+[ /          /index.php
+  /fortunes  /servlet/fortunes
+  /plaintext /servlet/plaintext ]

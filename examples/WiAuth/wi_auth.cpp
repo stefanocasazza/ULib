@@ -103,13 +103,7 @@ extern U_EXPORT void runDynamicPage_wi_auth(int param);
       POST_ENTRY(uploader)
    };
    
-   U_http_info.nResponseCode = 0; // NB: it is used by server_plugin_ssi to continue processing with a shell script...
-   
    UHTTP::manageRequest(GET_table, U_NUM_ELEMENTS(GET_table), POST_table, U_NUM_ELEMENTS(POST_table));
-   
-   U_INTERNAL_DUMP("U_http_info.nResponseCode = %d", U_http_info.nResponseCode)
-   
-   if (U_http_info.nResponseCode == 0) (void) UClientImage_Base::environment->append(U_CONSTANT_TO_PARAM("HTTP_RESPONSE_CODE=0\n"));
    
    UClientImage_Base::setRequestNoCache();
    

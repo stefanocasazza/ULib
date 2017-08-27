@@ -59,7 +59,7 @@ int main(int argc, char* argv[])
    u__snprintf(buffer, 4096, U_CONSTANT_TO_PARAM("%U %H"), 0);
    if (strcasecmp(buf, buffer)) goto failed;
 
-   sprintf(buf, "%s", u_basename(argv[0]));
+   sprintf(buf, "%s", u_basename(argv[0], strlen(argv[0])));
    u__snprintf(buffer, 4096, U_CONSTANT_TO_PARAM("%N"), 0);
    if (strcmp(buf, buffer)) goto failed;
 

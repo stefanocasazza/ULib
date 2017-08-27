@@ -103,7 +103,7 @@ GET /cgi-bin/cgi.rb HTTP/1.1
 Host: 10.30.1.131
 Accept-Encoding: gzip,deflate
 
-POST /www.sito1.com/benchmark/docroot/servlet/jsonrequest HTTP/1.1
+POST /www.sito1.com/servlet/jsonrequest HTTP/1.1
 Host: 10.30.1.131
 Accept: application/jsonrequest
 Content-Encoding: identity

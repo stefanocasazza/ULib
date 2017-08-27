@@ -49,7 +49,7 @@ bool UXAdESUtility::checkDocument(const UString& document, const char* pathname,
 
    (void) tmpdir.reserve(100U);
 
-   tmpdir.snprintf(U_CONSTANT_TO_PARAM("%s/%s"), u_tmpdir, u_basename(pathname));
+   tmpdir.snprintf(U_CONSTANT_TO_PARAM("%s/%s"), u_tmpdir, u_basename(pathname, strlen(pathname)));
 
    if (zip.extract(document, &tmpdir, false))
       {

@@ -539,6 +539,10 @@ int UHttpPlugIn::handlerRun() // NB: we use this method instead of handlerInit()
       U_INTERNAL_ASSERT_POINTER(u_pthread_time)
       U_INTERNAL_ASSERT_POINTER(UServer_Base::ptr_shared_data)
 
+#   ifndef U_SERVER_CAPTIVE_PORTAL
+      UClientImage_Base::callerHandlerCache = UHTTP::handlerCache;
+#   endif
+
       UClientImage_Base::iov_vec[1].iov_base = (caddr_t)UServer_Base::ptr_shared_data->log_date_shared.date3;
 #  endif
 
@@ -550,7 +554,6 @@ int UHttpPlugIn::handlerRun() // NB: we use this method instead of handlerInit()
 
       // NB: we can shortcut the http request processing...
 
-      UClientImage_Base::callerHandlerCache      = UHTTP::handlerCache;
       UClientImage_Base::callerIsValidMethod     = UHTTP::isValidMethod;
       UClientImage_Base::callerIsValidRequest    = UHTTP::isValidRequest;
       UClientImage_Base::callerIsValidRequestExt = UHTTP::isValidRequestExt;
@@ -558,7 +561,7 @@ int UHttpPlugIn::handlerRun() // NB: we use this method instead of handlerInit()
 #  ifdef U_LOG_DISABLE
       UClientImage_Base::callerHandlerRead = UHTTP::handlerREAD;
 #  else
-      UClientImage_Base::callerHandlerRead = UHTTP::handlerREADWithLog;
+      UClientImage_Base::callerHandlerRead = (UServer_Base::isLog() ? UHTTP::handlerREADWithLog : UHTTP::handlerREAD);
 #  endif
 
       if (UServer_Base::vplugin_size == 1)
@@ -566,7 +569,7 @@ int UHttpPlugIn::handlerRun() // NB: we use this method instead of handlerInit()
 #     ifdef U_LOG_DISABLE
          UClientImage_Base::callerHandlerRequest = UHTTP::processRequest;
 #     else
-         UClientImage_Base::callerHandlerRequest = UHTTP::processRequestWithLog;
+         UClientImage_Base::callerHandlerRequest = (UServer_Base::isLog() ? UHTTP::processRequestWithLog : UHTTP::processRequest);
 #     endif
          }
       }
@@ -579,11 +582,11 @@ int UHttpPlugIn::handlerRun() // NB: we use this method instead of handlerInit()
    if (UServer_Base::apache_like_log) UHTTP::initApacheLikeLog();
 #endif
 
-   UHTTP::cache_file->callForAllEntry(UHTTP::callInitForAllUSP);
+   UHTTP::callInitForAllUSP();
 
    UHTTP::bcallInitForAllUSP = true;
 
-   UHTTP::UServletPage* usp = UHTTP::getUSP(U_CONSTANT_TO_PARAM("/modupload"));
+   UHTTP::UServletPage* usp = UHTTP::getUSP(U_CONSTANT_TO_PARAM("modupload"));
 
    if (usp)
       {
@@ -609,7 +612,7 @@ int UHttpPlugIn::handlerFork()
    UHTTP::initInotify();
 #endif
 
-   if (UHTTP::bcallInitForAllUSP) UHTTP::cache_file->callForAllEntry(UHTTP::callAfterForkForAllUSP);
+   if (UHTTP::bcallInitForAllUSP) UHTTP::callAfterForkForAllUSP();
 
    U_RETURN(U_PLUGIN_HANDLER_PROCESSED | U_PLUGIN_HANDLER_GO_ON);
 }
@@ -622,7 +625,7 @@ int UHttpPlugIn::handlerStop()
 
    U_SET_MODULE_NAME(usp_end);
 
-   UHTTP::cache_file->callForAllEntry(UHTTP::callEndForAllUSP);
+   UHTTP::callEndForAllUSP();
 
    UHTTP::bcallInitForAllUSP = false;
 
@@ -679,7 +682,7 @@ int UHttpPlugIn::handlerSigHUP()
       }
 #endif
 
-   if (UHTTP::bcallInitForAllUSP) UHTTP::cache_file->callForAllEntry(UHTTP::callSigHUPForAllUSP);
+   if (UHTTP::bcallInitForAllUSP) UHTTP::callSigHUPForAllUSP();
 
    U_RETURN(U_PLUGIN_HANDLER_PROCESSED | U_PLUGIN_HANDLER_GO_ON);
 }

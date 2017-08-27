@@ -2,15 +2,15 @@
 
 . ../.function
 
-(cd benchmark; rm -f  db; creat_link FrameworkBenchmarks/ULib/db  db; sync)
+(cd benchmark; rm -f  db; creat_link FrameworkBenchmarks/ULib/db db)
 
 #DOC_ROOT=ruby/blog
  DOC_ROOT=benchmark/docroot
 
 rm -f tmp/usp_compile.sh.err /tmp/*.hpack.* \
-		$DOC_ROOT/web_server.log* \
+      $DOC_ROOT/web_server.log* \
       out/userver_*.out err/userver_*.err \
-					 trace.*userver_*.[0-9]*			  object.*userver_*.[0-9]*				 stack.*userver_*.[0-9]*			  mempool.*userver_*.[0-9]* \
+                trace.*userver_*.[0-9]*           object.*userver_*.[0-9]*           stack.*userver_*.[0-9]*           mempool.*userver_*.[0-9]* \
       $DOC_ROOT/trace.*userver_*.[0-9]* $DOC_ROOT/object.*userver_*.[0-9]* $DOC_ROOT/stack.*userver_*.[0-9]* $DOC_ROOT/mempool.*userver_*.[0-9]*
 
  UTRACE="0 50M 0"
@@ -24,15 +24,15 @@ SOCK1=tmp/fcgi.socket
 
 start_test() {
 
-	CMD=test_fcgi
+   CMD=test_fcgi
 
-	PIDS=`ps x | grep $CMD | grep -v grep | awk '{ print $1 }'`
+   PIDS=`ps x | grep $CMD | grep -v grep | awk '{ print $1 }'`
 
-	if [ -z "$PIDS" ]; then
-#		rm -f	$SOCK1
-		../../src/ulib/net/server/plugin/fcgi/$CMD $SOCK1 2>/tmp/$CMD.err &
-		chmod 777 $SOCK1
-	fi
+   if [ -z "$PIDS" ]; then
+#     rm -f $SOCK1
+      ../../src/ulib/net/server/plugin/fcgi/$CMD $SOCK1 2>/tmp/$CMD.err &
+      chmod 777 $SOCK1
+   fi
 }
 
 #start_test
@@ -50,7 +50,7 @@ start_test() {
 # ./web_server.sh
 #
 # /opt/go/bin/h2a    -p 80 -H 127.0.0.1 -P 8080 -d -D >& h2a.out &
-# /opt/go/bin/h2spec -p 80										>& h2spec.out
+# /opt/go/bin/h2spec -p 80                            >& h2spec.out
 # =================================================================
 
 cat <<EOF >inp/webserver.cfg
@@ -117,9 +117,9 @@ prepare_usp
 
 #STRACE=$TRUSS
 start_prg_background userver_tcp -c inp/webserver.cfg
-											 # /srv/userver_orm.cfg
-											 # RA/RA.cfg
-											 # deployment.properties
+                                  # /srv/userver_orm.cfg
+                                  # RA/RA.cfg
+                                  # deployment.properties
 
 wait_server_ready localhost 8080
 
@@ -128,10 +128,10 @@ echo "PID = `cat /var/run/userver_tcp.pid`"
 
 # HTTP pseudo-streaming for FLV video
 
-#curl -I -s -D -			'http://localhost:8080/test.flv'					 -o /dev/null
-#curl -I -s -D -			'http://localhost:8080/test.flv'					 -o /tmp/test.flv
-#curl    -s -v -r0-499	'http://localhost:8080/test.flv'					 -o /tmp/test.flv
-#curl    -s -D				'http://localhost:8080/test.flv?start=669000' -o /tmp/test.flv
+#curl -I -s -D -        'http://localhost:8080/test.flv'              -o /dev/null
+#curl -I -s -D -        'http://localhost:8080/test.flv'              -o /tmp/test.flv
+#curl    -s -v -r0-499  'http://localhost:8080/test.flv'              -o /tmp/test.flv
+#curl    -s -D          'http://localhost:8080/test.flv?start=669000' -o /tmp/test.flv
 
 #sleep 6
 #kill_server userver_tcp

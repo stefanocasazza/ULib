@@ -1057,7 +1057,7 @@ void PEC_report::processFiles()
 {
    U_TRACE(5, "PEC_report::processFiles()")
 
-   U_INTERNAL_ASSERT_EQUALS(UDirWalk::isDirectory(), false)
+   U_ASSERT_EQUALS(UDirWalk::isDirectory(), false)
 
    ++nfiles;
 
@@ -1067,13 +1067,19 @@ void PEC_report::processFiles()
 
    UDirWalk::setFoundFile(_filename);
 
-   const char* ptr      = _filename.c_str();
-   const char* basename = u_basename(ptr);
+   const char* ptr = _filename.c_str();
+   uint32_t sz     = _filename.size();
+
+   const char* basename = u_basename(ptr, sz);
+
+   sz -= basename-ptr;
+
+   U_INTERNAL_DUMP("basename(%u) = %S", sz, sz, basename)
 
    // check for file name ends with...
 
    if (filter_ext &&
-       UStringExt::endsWith(_filename, *filter_ext) == false)
+       UStringExt::endsWith(basename, sz, *filter_ext) == false)
       {
       U_WARNING("file <%s> skipped...", ptr);
 

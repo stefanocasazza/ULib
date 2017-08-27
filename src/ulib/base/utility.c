@@ -2627,7 +2627,7 @@ int u_splitCommand(char* restrict s, uint32_t n, char** restrict argv, char* res
    if (bpath)
       {
       argv[0] = argv[1];
-      argv[1] = (char* restrict) u_basename(argv[0]);
+      argv[1] = (char* restrict) u_basename(argv[0], u__strlen(argv[0], __PRETTY_FUNCTION__));
 
       pathbuf[0] = '\0';
       }

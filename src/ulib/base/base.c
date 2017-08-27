@@ -369,52 +369,6 @@ pcPFu64pc u_num2str64 = num2str64;
  * int _dl_discover_osversion() { return 0xffffff; }
  */
 
-__pure const char* u_basename(const char* restrict path)
-{
-   const char* restrict base;
-
-   U_INTERNAL_TRACE("u_basename(%s)", path)
-
-#ifdef _MSWINDOWS_
-   if (u__isalpha(path[0]) && path[1] == ':') path += 2; /* Skip over the disk name in MSDOS pathnames */
-#endif
-
-   for (base = path; *path; ++path) if (IS_DIR_SEPARATOR(*path)) base = path + 1;
-
-   return base;
-}
-
-__pure const char* u_getsuffix(const char* restrict path, uint32_t len)
-{
-   const char* restrict ptr;
-
-   U_INTERNAL_TRACE("u_getsuffix(%.*s,%u)", U_min(len,128), path, len)
-
-   U_INTERNAL_ASSERT_POINTER(path)
-
-   // NB: we can have something like 'www.sito1.com/tmp'...
-
-   ptr = (const char*) memrchr(path, '.', len);
-
-   return (ptr && memrchr(ptr+1, '/', len - (ptr+1 - path)) == 0 ? ptr : 0);
-}
-
-bool u_is_overlap(const char* restrict dst, const char* restrict src, size_t n)
-{
-   U_INTERNAL_TRACE("u_is_overlap(%p,%p,%lu)", dst, src, n)
-
-   U_INTERNAL_ASSERT_MAJOR(n, 0)
-
-        if (src < dst) return ((src + n - 1) >= dst);
-   else if (dst < src) return ((dst + n - 1) >= src);
-
-   /* They start at same place. Since we know neither of them has zero length, they must overlap */
-
-   U_INTERNAL_ASSERT_EQUALS(dst, src)
-
-   return true;
-}
-
 #ifdef DEBUG
 size_t u__strlen(const char* restrict s, const char* called_by_function)
 {
@@ -820,7 +774,7 @@ void u_init_ulib(char** restrict argv)
    else
       {
       u_progpath = *argv;
-      u_progname = u_basename(u_progpath);
+      u_progname = u_basename(u_progpath, u__strlen(u_progpath, __PRETTY_FUNCTION__));
 
       U_INTERNAL_ASSERT_POINTER(u_progname)
 
@@ -2031,7 +1985,7 @@ empty:      u_put_unalignedp16(bp, U_MULTICHAR_CONSTANT16('"','"'));
 
          if ((flags & ALT) != 0) /* NB: # -> force print of all binary string (compatibly with buffer size)... */
             {
-            remaining -= (prec * 2);
+            remaining >>= 1;
 
             if (u__isprint(*cp) == false &&
                 u__isspace(*cp) == false)
@@ -2056,7 +2010,11 @@ empty:      u_put_unalignedp16(bp, U_MULTICHAR_CONSTANT16('"','"'));
                }
             else
                {
-               if (c == '\0') break;
+               if (c == '\0' &&
+                   (flags & ALT) == 0) /* NB: # -> force print of all binary string (compatibly with buffer size)... */
+                  {
+                  break;
+                  }
 
                i = u_sprintc(bp, c);
 

@@ -173,22 +173,26 @@ public:
    // manage pathname
 
    static UString  dirname(const char* s, uint32_t n);
-   static UString basename(const char* s, uint32_t n);
+   static UString basename(const char* s, uint32_t n)
+      {
+      U_TRACE(0, "UStringExt::basename(%.*S,%u)", n, s, n)
+
+      const char* ptr = u_basename(s, n);
+
+      return UString(ptr, n-(ptr-s));
+      }
 
    static UString  dirname(const UString& s) { return  dirname(U_STRING_TO_PARAM(s)); }
    static UString basename(const UString& s) { return basename(U_STRING_TO_PARAM(s)); }
 
-   static uint32_t getBaseNameLen(const UString& s)
+   static uint32_t getBaseNameLen(const char* s, uint32_t n)
       {
-      U_TRACE(0, "UStringExt::getBaseNameLen(%V)", s.rep)
+      U_TRACE(0, "UStringExt::getBaseNameLen(%.*S,%u)", n, s, n)
 
-      uint32_t len = s.size(),
-               pos = s.rfind('/'); // Find last '/'
-
-      if (pos != U_NOT_FOUND) len -= pos + 1;
-
-      U_RETURN(len);
+      return n-(u_basename(s, n)-s);
       }
+
+   static uint32_t getBaseNameLen(const UString& s) { return getBaseNameLen(U_STRING_TO_PARAM(s)); }
 
    // check if string s1 start with string s2
 
@@ -215,8 +219,9 @@ public:
       U_RETURN(false);
       }
 
-   static bool endsWith(const UString& s1, const UString& s2)           { return endsWith(U_STRING_TO_PARAM(s1), U_STRING_TO_PARAM(s2)); }
-   static bool endsWith(const UString& s1, const char* s2, uint32_t n2) { return endsWith(U_STRING_TO_PARAM(s1), s2, n2); }
+   static bool endsWith(const UString& s1,           const UString& s2)           { return endsWith(U_STRING_TO_PARAM(s1), U_STRING_TO_PARAM(s2)); }
+   static bool endsWith(const UString& s1,           const char* s2, uint32_t n2) { return endsWith(U_STRING_TO_PARAM(s1), s2, n2); }
+   static bool endsWith(const char* s1, uint32_t n1, const UString& s2)           { return endsWith(s1, n1,                U_STRING_TO_PARAM(s2)); }
 
    // SUBSTITUTE: replace all occurrences of 'a' with 'b'
 
@@ -283,7 +288,25 @@ public:
    // Within a string we can count number of occurrence of another string by using substr_count function.
    // This function takes the main string and the search string as inputs and returns number of time search string is found inside the main string
 
-   static uint32_t substr_count(const char* s, uint32_t n, const char* a, uint32_t n1) __pure;
+   static __pure uint32_t substr_count(const char* s, uint32_t n, const char* a, uint32_t n1)
+      {
+      U_TRACE(0, "UStringExt::substr_count(%.*S,%u,%.*S,%u)", n, s, n, n1, a, n1)
+
+      uint32_t num    = 0;
+      const char* ptr = s;
+      const char* end = s + n;
+
+      while (true)
+         {
+         ptr = (const char*) u_find(ptr, end - ptr, a, n1);
+
+         if (ptr == U_NULLPTR) U_RETURN(num);
+
+         ++num;
+
+         ptr += n1;
+         }
+      }
 
    static uint32_t substr_count(const UString& s,       char  a)             { return substr_count(U_STRING_TO_PARAM(s), &a, 1); }
    static uint32_t substr_count(const UString& s, const char* a, uint32_t n) { return substr_count(U_STRING_TO_PARAM(s),  a, n); }

@@ -78,7 +78,7 @@ int UWebSocketPlugIn::handlerRun()
 
    U_NEW(UString, UWebSocket::rbuffer, UString(U_CAPACITY));
 
-   UHTTP::UServletPage* usp = UHTTP::getUSP(U_CONSTANT_TO_PARAM("/modsocket"));
+   UHTTP::UServletPage* usp = UHTTP::getUSP(U_CONSTANT_TO_PARAM("modsocket"));
 
    if (usp)
       {
@@ -87,13 +87,13 @@ int UWebSocketPlugIn::handlerRun()
       U_INTERNAL_ASSERT_POINTER(usp->runDynamicPage)
 
       on_message = usp->runDynamicPage;
-
-      U_RETURN(U_PLUGIN_HANDLER_PROCESSED | U_PLUGIN_HANDLER_GO_ON);
+      }
+   else
+      {
+      if (command == U_NULLPTR) U_RETURN(U_PLUGIN_HANDLER_ERROR);
       }
 
-   if (command) U_RETURN(U_PLUGIN_HANDLER_PROCESSED | U_PLUGIN_HANDLER_GO_ON);
-
-   U_RETURN(U_PLUGIN_HANDLER_ERROR);
+   U_RETURN(U_PLUGIN_HANDLER_PROCESSED | U_PLUGIN_HANDLER_GO_ON);
 }
 
 // Connection-wide hooks

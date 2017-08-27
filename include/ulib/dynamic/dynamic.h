@@ -194,7 +194,7 @@ protected:
    static HINSTANCE dload(const char* name, uint32_t name_len);
 
 private:
-   U_DISALLOW_COPY_AND_ASSIGN(UDynamic)
+   U_DISALLOW_ASSIGN(UDynamic)
 
    friend class UOrmSession;
    friend class UServer_Base;

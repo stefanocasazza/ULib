@@ -103,7 +103,7 @@ void* UDynamic::lookup(HINSTANCE handle, const char* sym)
 #if defined(U_STDCPP_ENABLE) && defined(DEBUG)
 const char* UDynamic::dump(bool reset) const
 {
-   *UObjectIO::os << "handle        " << (void*)handle;
+   *UObjectIO::os << "handle                      " << (void*)handle;
 
    if (reset)
       {

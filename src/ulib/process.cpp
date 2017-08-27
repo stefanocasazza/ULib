@@ -229,7 +229,7 @@ pid_t UProcess::execute(const char* pathname, char* argv[], char* envp[], bool f
 
    U_INTERNAL_ASSERT_POINTER(argv)
    U_DUMP_EXEC(argv, envp)
-   U_INTERNAL_ASSERT_EQUALS(strcmp(argv[0],u_basename(pathname)), 0)
+   U_INTERNAL_ASSERT_EQUALS(strcmp(argv[0], u_basename(pathname, u__strlen(pathname, __PRETTY_FUNCTION__))), 0)
 
    (void) U_SYSCALL(memset, "%p,%d,%lu",        &aStartupInfo, 0, sizeof(STARTUPINFO));
    (void) U_SYSCALL(memset, "%p,%d,%lu", &aProcessInformation, 0, sizeof(PROCESS_INFORMATION));
@@ -439,7 +439,7 @@ pid_t UProcess::execute(const char* pathname, char* argv[], char* envp[], bool f
 
    U_INTERNAL_ASSERT_POINTER(argv)
    U_DUMP_EXEC(argv, envp)
-   U_INTERNAL_ASSERT_EQUALS(strcmp(u_basename(pathname), argv[0]), 0)
+   U_INTERNAL_ASSERT_EQUALS(strcmp(argv[0], u_basename(pathname, u__strlen(pathname, __PRETTY_FUNCTION__))), 0)
 
    pid_t pid;
 

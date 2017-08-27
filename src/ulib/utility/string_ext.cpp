@@ -695,13 +695,12 @@ UString UStringExt::evalExpression(const UString& expr, const UString& environme
 
    void* pParser = expressionParserAlloc(malloc);
 
-#ifdef U_DEBUG
    /*
+#ifdef U_DEBUG
    (void) fprintf(stderr, "start parsing expr: \"%.*s\"\n", U_STRING_TO_TRACE(expr));
-
     expressionParserTrace(stderr, (char*)"parser: ");
-   */
 #endif
+   */
 
    while ((token_id = t.getTokenId(&token)) > 0)
       {
@@ -729,13 +728,12 @@ UString UStringExt::evalExpression(const UString& expr, const UString& environme
 
    expressionParserFree(pParser, free);
 
-#if defined(U_DEBUG) && !defined(U_SUBSTR_INC_REF)
    /*
+#if defined(U_DEBUG) && !defined(U_SUBSTR_INC_REF)
    (void) fprintf(stderr, "ended parsing expr: \"%.*s\"\n", U_STRING_TO_TRACE(expr));
-
    U_INTERNAL_DUMP("token.rep->parent->child = %d", token.rep->parent->child)
-   */
 #endif
+   */
 
    U_RETURN_STRING(result);
 }
@@ -1029,29 +1027,6 @@ UString UStringExt::removeEmptyLine(const char* s, uint32_t n)
    U_RETURN_STRING(result);
 }
 
-// Within a string we can count number of occurrence of another string by using substr_count function.
-// This function takes the main string and the search string as inputs and returns number of time search string is found inside the main string
-
-__pure uint32_t UStringExt::substr_count(const char* s, uint32_t n, const char* a, uint32_t n1)
-{
-   U_TRACE(0, "UStringExt::substr_count(%.*S,%u,%.*S,%u)", n, s, n, n1, a, n1)
-
-   uint32_t num    = 0;
-   const char* ptr = s;
-   const char* end = s + n;
-
-   while (true)
-      {
-      ptr = (const char*) u_find(ptr, end - ptr, a, n1);
-
-      if (ptr == U_NULLPTR) U_RETURN(num);
-
-      ++num;
-
-      ptr += n1;
-      }
-}
-
 UString UStringExt::dirname(const char* path, uint32_t n)
 {
    U_TRACE(0, "UStringExt::dirname(%.*S,%u)", n, path, n)
@@ -1101,24 +1076,6 @@ UString UStringExt::dirname(const char* path, uint32_t n)
    UString result(path, (uint32_t)(last_slash - path));
 
    U_RETURN_STRING(result);
-}
-
-UString UStringExt::basename(const char* s, uint32_t n)
-{
-   U_TRACE(0, "UStringExt::basename(%.*S,%u)", n, s, n)
-
-   const char* last_slash = (const char*) memrchr(s, '/', n); // Find last '/'
-
-   if (last_slash)
-      {
-      UString result(last_slash+1, n-(last_slash-s)-1);
-
-      U_RETURN_STRING(result);
-      }
-
-   UString same(s, n);
-
-   U_RETURN_STRING(same);
 }
 
 /**

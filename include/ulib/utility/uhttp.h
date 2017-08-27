@@ -169,7 +169,6 @@ public:
    static UFile* file;
    static UString* ext;
    static UString* etag;
-   static UString* suffix;
    static UString* request;
    static UString* qcontent;
    static UString* pathname;
@@ -183,13 +182,14 @@ public:
    static UHashMap<UString>* prequestHeader;
    static UVector<UModProxyService*>* vservice;
 
+   static const char* uri_suffix;
+   static const char* uri_basename;
    static char response_buffer[64];
    static int mime_index, cgi_timeout; // the time-out value in seconds for output cgi process
    static bool enable_caching_by_proxy_servers, skip_check_cookie_ip_address;
    static uint32_t limit_request_body, request_read_timeout, range_start, range_size;
 
    static bool readRequest();
-   static void setPathName();
    static bool handlerCache();
    static int  manageRequest();
    static void initDbNotFound();
@@ -295,13 +295,28 @@ public:
       U_RETURN(agent);
       }
 
+   static void setPathName()
+      {
+      U_TRACE_NO_PARAM(0, "UHTTP::setPathName()")
+
+      U_INTERNAL_ASSERT(pathname->empty())
+      U_ASSERT(pathname->capacity() >= u_cwd_len + U_http_info.uri_len)
+
+      char* ptr = pathname->data();
+
+      U_MEMCPY(ptr,                     u_cwd,           u_cwd_len);
+      U_MEMCPY(ptr+u_cwd_len, U_http_info.uri, U_http_info.uri_len);
+
+      pathname->size_adjust_force(u_cwd_len + U_http_info.uri_len); // NB: pathname can be referenced by file obj...
+      }
+
    static void checkForPathName()
       {
       U_TRACE_NO_PARAM(0, "UHTTP::checkForPathName()")
 
       if (pathname->empty())
          {
-         setPathName(); 
+         setPathName();
 
          file->setPath(*pathname);
 
@@ -348,7 +363,7 @@ public:
       {
       U_TRACE(0, "UHTTP::checkDirectoryForDocumentRoot(%.*S,%u)", len, ptr, len)
 
-      U_INTERNAL_DUMP("document_root(%3u) = %V", UServer_Base::document_root_size, UServer_Base::document_root->rep)
+      U_INTERNAL_DUMP("document_root(%u) = %V", UServer_Base::document_root_size, UServer_Base::document_root->rep)
 
       U_INTERNAL_ASSERT_POINTER(UServer_Base::document_root_ptr)
 
@@ -437,7 +452,7 @@ public:
    static void setDynamicResponse();
    static void setResponse(bool btype, const UString& content_type, UString* pbody);
    static void setRedirectResponse(int mode, const char* ptr_location, uint32_t len_location);
-   static void setErrorResponse(const UString& content_type, int code, const char* fmt, uint32_t fmt_size, bool flag = false);
+   static void setErrorResponse(const UString& content_type, int code, const char* fmt, uint32_t fmt_size, bool bformat = true);
 
    static void setResponse()
       {
@@ -456,7 +471,7 @@ public:
       {
       U_TRACE_NO_PARAM(0, "UHTTP::setNotFound()")
 
-      setErrorResponse(*UString::str_ctype_html, HTTP_NOT_FOUND, U_CONSTANT_TO_PARAM("Your requested URL %.*S was not found on this server"), UClientImage_Base::isRequestNotFound());
+      setErrorResponse(*UString::str_ctype_html, HTTP_NOT_FOUND, U_CONSTANT_TO_PARAM("Your requested URL %.*S was not found on this server"));
       }
 
    static void setBadMethod()
@@ -465,7 +480,7 @@ public:
 
       U_INTERNAL_ASSERT_EQUALS(U_http_info.nResponseCode, HTTP_BAD_METHOD)
 
-      setErrorResponse(*UString::str_ctype_html, HTTP_BAD_METHOD, U_CONSTANT_TO_PARAM("The requested method is not allowed for the URL %.*S"), false);
+      setErrorResponse(*UString::str_ctype_html, HTTP_BAD_METHOD, U_CONSTANT_TO_PARAM("The requested method is not allowed for the URL %.*S"));
       }
 
    static void setBadRequest()
@@ -474,7 +489,7 @@ public:
 
       UClientImage_Base::resetPipelineAndSetCloseConnection();
 
-      setErrorResponse(*UString::str_ctype_html, HTTP_BAD_REQUEST, U_CONSTANT_TO_PARAM("Your requested URL %.*S was a request that this server could not understand"), false);
+      setErrorResponse(*UString::str_ctype_html, HTTP_BAD_REQUEST, U_CONSTANT_TO_PARAM("Your requested URL %.*S was a request that this server could not understand"));
       }
 
    static void setForbidden()
@@ -483,7 +498,14 @@ public:
 
       UClientImage_Base::setRequestForbidden();
 
-      setErrorResponse(*UString::str_ctype_html, HTTP_FORBIDDEN, U_CONSTANT_TO_PARAM("You don't have permission to access %.*S on this server"), false);
+      setErrorResponse(*UString::str_ctype_html, HTTP_FORBIDDEN, U_CONSTANT_TO_PARAM("You don't have permission to access %.*S on this server"));
+      }
+
+   static void setMethodNotImplemented()
+      {
+      U_TRACE_NO_PARAM(0, "UHTTP::setMethodNotImplemented()")
+
+      setErrorResponse(*UString::str_ctype_html, HTTP_NOT_IMPLEMENTED, U_CONSTANT_TO_PARAM("Sorry, the method you requested is not implemented"), false);
       }
 
    static void setUnAuthorized();
@@ -497,7 +519,7 @@ public:
                                            "and was unable to complete your request. Please contact the server "
                                            "administrator, and inform them of the time the error occurred, and "
                                            "anything you might have done that may have caused the error. More "
-                                           "information about this error may be available in the server error log"), true);
+                                           "information about this error may be available in the server error log"), false);
       }
 
    static void setServiceUnavailable()
@@ -506,7 +528,7 @@ public:
 
       setErrorResponse(*UString::str_ctype_html, HTTP_UNAVAILABLE,
                        U_CONSTANT_TO_PARAM("Sorry, the service you requested is not available at this moment. "
-                                           "Please contact the server administrator and inform them about this"), true);
+                                           "Please contact the server administrator and inform them about this"), false);
       }
 
 #ifdef U_HTTP_STRICT_TRANSPORT_SECURITY
@@ -803,12 +825,13 @@ public:
    public:
 
    vPFi runDynamicPage;
+   UString path, basename;
 
-   UServletPage()
+   UServletPage(const void* name, uint32_t nlen, const char* base = U_NULLPTR, uint32_t blen = 0, vPFi _runDynamicPage = U_NULLPTR) : runDynamicPage(_runDynamicPage), path(name, nlen)
       {
-      U_TRACE_REGISTER_OBJECT(0, UServletPage, "", 0)
+      U_TRACE_REGISTER_OBJECT(0, UServletPage, "%.*S,%u,%.*S,%u,%p", nlen, name, nlen, blen, base, blen, _runDynamicPage)
 
-      runDynamicPage = U_NULLPTR;
+      if (blen) (void) basename.replace(base, blen);
       }
 
    ~UServletPage()
@@ -816,23 +839,58 @@ public:
       U_TRACE_UNREGISTER_OBJECT(0, UServletPage)
       }
 
+   // SERVICE
+
+   bool operator<(const UServletPage& other) const { return cmp_obj(&basename, &other.basename); }
+
+   static int cmp_obj(const void* a, const void* b)
+      {
+      U_TRACE(0, "UServletPage::cmp_obj(%p,%p)", a, b)
+
+#  ifdef U_STDCPP_ENABLE
+      /**
+       * The comparison function must follow a strict-weak-ordering
+       *
+       * 1) For all x, it is not the case that x < x (irreflexivity)
+       * 2) For all x, y, if x < y then it is not the case that y < x (asymmetry)
+       * 3) For all x, y, and z, if x < y and y < z then x < z (transitivity)
+       * 4) For all x, y, and z, if x is incomparable with y, and y is incomparable with z, then x is incomparable with z (transitivity of incomparability)
+       */
+
+      return (((const UServletPage*)a)->basename.compare(((const UServletPage*)b)->basename) < 0);
+#  else
+      return (*(const UServletPage**)a)->basename.compare((*(const UServletPage**)b)->basename);
+#  endif
+      }
+
 #if defined(U_STDCPP_ENABLE) && defined(DEBUG)
    const char* dump(bool reset) const U_EXPORT;
 #endif
 
    private:
-   U_DISALLOW_COPY_AND_ASSIGN(UServletPage)
+   bool load() U_NO_EXPORT;
+   bool isPath(const char* pathname, uint32_t len)
+      {
+      U_TRACE(0, "UServletPage::isPath(%.*S,%u)", len, pathname, len)
+
+      if (path.equal(pathname, len)) U_RETURN(true);
+
+      U_RETURN(false);
+      }
+
+   U_DISALLOW_ASSIGN(UServletPage)
+
+                      friend class UHTTP;
+   template <class T> friend void u_construct(const T**,bool);
    };
 
    static bool bcallInitForAllUSP;
-   static const char* usp_page_key;
-   static uint32_t usp_page_key_len;
-   static UServletPage* usp_page_ptr;
+   static UVector<UServletPage*>* vusp;
 
-   static bool       callEndForAllUSP(UStringRep* key, void* value);
-   static bool      callInitForAllUSP(UStringRep* key, void* value);
-   static bool    callSigHUPForAllUSP(UStringRep* key, void* value);
-   static bool callAfterForkForAllUSP(UStringRep* key, void* value);
+   static void       callEndForAllUSP();
+   static void      callInitForAllUSP();
+   static void    callSigHUPForAllUSP();
+   static void callAfterForkForAllUSP();
 
    static UServletPage* getUSP(const char* key, uint32_t key_len);
 
@@ -1246,20 +1304,25 @@ private:
 
       mime_index = U_unknow;
 
-      const char* ptr = u_getsuffix(U_FILE_TO_PARAM(*file));
+      U_INTERNAL_DUMP("uri_suffix = %p", uri_suffix)
 
-      if (ptr) (void) u_get_mimetype(ptr+1, &mime_index);
+      if (uri_suffix)
+         {
+         U_INTERNAL_ASSERT_EQUALS(uri_suffix, u_getsuffix(U_FILE_TO_PARAM(*file))+1)
+
+         (void) u_get_mimetype(uri_suffix, &mime_index);
+         }
       }
 
-   static const char* setMimeIndex(const char* suffix_ptr)
+   static const char* setMimeIndex(const char* suffix)
       {
-      U_TRACE(0, "UHTTP::setMimeIndex(%S)", suffix_ptr)
+      U_TRACE(0, "UHTTP::setMimeIndex(%S)", suffix)
 
       U_INTERNAL_ASSERT_POINTER(file)
 
       mime_index = U_unknow;
 
-      const char* ctype = file->getMimeType(suffix_ptr, &mime_index);
+      const char* ctype = file->getMimeType(suffix, &mime_index);
 
       file_data->mime_index = mime_index;
 
@@ -1275,6 +1338,8 @@ private:
       {
       U_TRACE_NO_PARAM(0, "UHTTP::handlerREADWithLog()")
 
+      U_ASSERT(UServer_Base::isLog())
+
       (void) strcpy(UServer_Base::mod_name[0], "[http] ");
 
       U_ClientImage_state = handlerREAD();
@@ -1287,6 +1352,8 @@ private:
    static int processRequestWithLog()
       {
       U_TRACE_NO_PARAM(0, "UHTTP::processRequestWithLog()")
+
+      U_ASSERT(UServer_Base::isLog())
 
       (void) strcpy(UServer_Base::mod_name[0], "[http] ");
 
@@ -1339,14 +1406,11 @@ private:
    static bool processAuthorization() U_NO_EXPORT;
    static bool checkRequestForHeader() U_NO_EXPORT;
    static bool checkGetRequestIfRange() U_NO_EXPORT;
-   static bool checkPathName(uint32_t len) U_NO_EXPORT;
    static bool checkGetRequestIfModified() U_NO_EXPORT;
    static void setCGIShellScript(UString& command) U_NO_EXPORT;
    static bool checkIfSourceHasChangedAndCompileUSP() U_NO_EXPORT;
-   static bool checkIfUSP(UStringRep* key, void* value) U_NO_EXPORT;
    static bool compileUSP(const char* path, uint32_t len) U_NO_EXPORT;
    static void manageDataForCache(const UString& file_name) U_NO_EXPORT;
-   static bool checkIfUSPLink(UStringRep* key, void* value) U_NO_EXPORT;
    static int  checkGetRequestForRange(const UString& data) U_NO_EXPORT;
    static int  sortRange(const void* a, const void* b) __pure U_NO_EXPORT;
    static bool addHTTPVariables(UStringRep* key, void* value) U_NO_EXPORT;
@@ -1357,6 +1421,7 @@ private:
    static bool checkDataSession(const UString& token, time_t expire, UString* data) U_NO_EXPORT;
 
    static inline void setUpgrade(const char* ptr) U_NO_EXPORT;
+   static inline bool checkPathName(uint32_t len) U_NO_EXPORT;
    static inline void setIfModSince(const char* ptr) U_NO_EXPORT;
    static inline void setConnection(const char* ptr) U_NO_EXPORT;
    static        void setAcceptEncoding(const char* ptr) U_NO_EXPORT;

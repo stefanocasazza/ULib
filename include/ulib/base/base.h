@@ -306,10 +306,6 @@ U_EXPORT void u_init_ulib_username(void);
 U_EXPORT void u_init_ulib_hostname(void);
 U_EXPORT void u_init_http_method_list(void);
 
-U_EXPORT const char* u_basename(const char* restrict path) __pure;
-U_EXPORT const char* u_getsuffix(const char* restrict path, uint32_t len) __pure;
-U_EXPORT bool u_is_overlap(const char* restrict dst, const char* restrict src, size_t n);
-
 /* Location info */
 
 extern U_EXPORT uint32_t u_num_line;
@@ -553,6 +549,76 @@ static inline char* u_dtoa(double num, char* restrict cp)
       }
 
    return u_dbl2str(num, cp);
+}
+
+static inline bool u_is_overlap(const char* restrict dst, const char* restrict src, size_t n)
+{
+   U_INTERNAL_TRACE("u_is_overlap(%p,%p,%lu)", dst, src, n)
+
+   U_INTERNAL_ASSERT_MAJOR(n, 0)
+
+        if (src < dst) return ((src + n - 1) >= dst);
+   else if (dst < src) return ((dst + n - 1) >= src);
+
+   /* They start at same place. Since we know neither of them has zero length, they must overlap */
+
+   U_INTERNAL_ASSERT_EQUALS(dst, src)
+
+   return true;
+}
+
+static inline __pure const char* u_basename(const char* restrict path, uint32_t len)
+{
+   U_INTERNAL_TRACE("u_basename(%.*s,%u)", U_min(len,128), path, len)
+
+   const char* restrict ptr;
+
+   U_INTERNAL_ASSERT_MAJOR(len, 0)
+   U_INTERNAL_ASSERT_POINTER(path)
+
+   /**
+    * NB: we can have something like 'www.sito1.com/tmp'...
+    *
+    * for (ptr = path+len-2; ptr > path; --ptr) if (IS_DIR_SEPARATOR(*ptr)) return ptr+1;
+    */
+
+   ptr = (const char* restrict) memrchr(path, '/', len);
+
+   return (ptr ? ptr+1 : path);
+}
+
+static inline const char* u_getsuffix(const char* restrict path, uint32_t len)
+{
+   char c;
+   const char* restrict ptr;
+
+   U_INTERNAL_TRACE("u_getsuffix(%.*s,%u)", U_min(len,128), path, len)
+
+   U_INTERNAL_ASSERT_MAJOR(len, 0)
+   U_INTERNAL_ASSERT_POINTER(path)
+
+   /**
+    * NB: we can have something like 'www.sito1.com/tmp'...
+    *
+    * ptr = (const char*) memrchr(path, '.', len);
+    *
+    * return (ptr && memrchr(ptr+1, '/', len-(ptr+1-path)) == 0 ? ptr : 0);
+    */
+
+   for (ptr = path+len-2; ptr > path; --ptr)
+      {
+      c = *ptr;
+
+      if (c == '.' ||
+          IS_DIR_SEPARATOR(c))
+         {
+         if (c == '.') return ptr;
+
+         return U_NULLPTR;
+         }
+      }
+
+   return U_NULLPTR;
 }
 
 #ifdef __cplusplus

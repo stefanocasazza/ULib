@@ -219,7 +219,7 @@ extern U_EXPORT uclientimage_info u_clientimage_info;
 #define U_http_method_list u_clientimage_info.http_method_list
 #define U_http_method_type u_clientimage_info.http_info.method_type
 
-#define U_line_terminator_len                    u_clientimage_info.flag.c[0]
+#define U_line_terminator_len u_clientimage_info.flag.c[0]
 
 #define U_ClientImage_state                      u_clientimage_info.flag.c[1]
 #define U_ClientImage_close                      u_clientimage_info.flag.c[2]
@@ -229,25 +229,25 @@ extern U_EXPORT uclientimage_info u_clientimage_info;
 #define U_ClientImage_parallelization            u_clientimage_info.flag.c[6]
 #define U_ClientImage_advise_for_parallelization u_clientimage_info.flag.c[7]
 
-#define U_http_version                 u_clientimage_info.http_info.flag[ 0]
-#define U_http_method_num              u_clientimage_info.http_info.flag[ 1]
-#define U_http_host_len                u_clientimage_info.http_info.flag[ 2]
-#define U_http_host_vlen               u_clientimage_info.http_info.flag[ 3]
-#define U_http_range_len               u_clientimage_info.http_info.flag[ 4]
-#define U_http_accept_len              u_clientimage_info.http_info.flag[ 5]
-#define U_http_uri_offset              u_clientimage_info.http_info.flag[ 6]
-#define U_http_websocket_len           u_clientimage_info.http_info.flag[ 7]
-#define U_http2_settings_len           u_clientimage_info.http_info.flag[ 8]
-#define U_http_ip_client_len           u_clientimage_info.http_info.flag[ 9]
-#define U_http_content_type_len        u_clientimage_info.http_info.flag[10]
-#define U_http_accept_language_len     u_clientimage_info.http_info.flag[11]
+#define U_http_version              u_clientimage_info.http_info.flag[ 0]
+#define U_http_method_num           u_clientimage_info.http_info.flag[ 1]
+#define U_http_host_len             u_clientimage_info.http_info.flag[ 2]
+#define U_http_host_vlen            u_clientimage_info.http_info.flag[ 3]
+#define U_http_range_len            u_clientimage_info.http_info.flag[ 4]
+#define U_http_accept_len           u_clientimage_info.http_info.flag[ 5]
+#define U_http_uri_offset           u_clientimage_info.http_info.flag[ 6]
+#define U_http_websocket_len        u_clientimage_info.http_info.flag[ 7]
+#define U_http2_settings_len        u_clientimage_info.http_info.flag[ 8]
+#define U_http_ip_client_len        u_clientimage_info.http_info.flag[ 9]
+#define U_http_content_type_len     u_clientimage_info.http_info.flag[10]
+#define U_http_accept_language_len  u_clientimage_info.http_info.flag[11]
 
-#define U_http_flag                    u_clientimage_info.http_info.flag[12]
-#define U_http_flag_save               UHttpClient_Base::u_http_info_save.flag[12]
+#define U_http_flag            u_clientimage_info.http_info.flag[12]
+#define U_http_flag_save UHttpClient_Base::u_http_info_save.flag[12]
 
-#define U_http_len_user1               u_clientimage_info.http_info.flag[13]
-#define U_http_len_user2               u_clientimage_info.http_info.flag[14]
-#define U_http_len_user3               u_clientimage_info.http_info.flag[15]
+#define U_http_len_user1 u_clientimage_info.http_info.flag[13]
+#define U_http_len_user2 u_clientimage_info.http_info.flag[14]
+#define U_http_len_user3 u_clientimage_info.http_info.flag[15]
 
 enum HttpRequestType {
    HTTP_IS_SENDFILE            = 0x0001,
@@ -315,11 +315,11 @@ enum HttpRequestType {
 #define U_HTTP_METHOD_NUM_TO_PARAM(num) u_clientimage_info.http_method_list[num].name, u_clientimage_info.http_method_list[num].len
 #define U_HTTP_METHOD_NUM_TO_TRACE(num) u_clientimage_info.http_method_list[num].len,  u_clientimage_info.http_method_list[num].name
 
-#define U_HTTP_HOST_STREQ(str)    (U_http_host_len                          ? U_STREQ(u_clientimage_info.http_info.host, U_http_host_len, str) : false)
-#define U_HTTP_REFERER_STREQ(str) (u_clientimage_info.http_info.referer_len ? U_STREQ(u_clientimage_info.http_info.referer,u_clientimage_info.http_info.referer_len, str) : false)
-
 #define U_HTTP_URI_MEMEQ(str)  (memcmp(u_clientimage_info.http_info.uri, U_CONSTANT_TO_PARAM(str)) == 0)
 #define U_HTTP_URI_STREQ(str)  U_STREQ(u_clientimage_info.http_info.uri, u_clientimage_info.http_info.uri_len, str)
+
+#define U_HTTP_HOST_STREQ(str)    (U_http_host_len                          ? U_STREQ(u_clientimage_info.http_info.host, U_http_host_len, str) : false)
+#define U_HTTP_REFERER_STREQ(str) (u_clientimage_info.http_info.referer_len ? U_STREQ(u_clientimage_info.http_info.referer,u_clientimage_info.http_info.referer_len, str) : false)
 
 #define U_HTTP_CTYPE_MEMEQ(str) (U_http_content_type_len ?  memcmp(u_clientimage_info.http_info.content_type, U_CONSTANT_TO_PARAM(str)) == 0 : false)
 #define U_HTTP_CTYPE_STREQ(str) (U_http_content_type_len ? U_STREQ(u_clientimage_info.http_info.content_type, U_http_content_type_len, str)  : false)
@@ -328,7 +328,9 @@ enum HttpRequestType {
 #define U_HTTP_QUERY_STREQ(str) (u_clientimage_info.http_info.query_len ? U_STREQ(u_clientimage_info.http_info.query, u_clientimage_info.http_info.query_len, str) : false)
 
 #define U_HTTP_USER_AGENT_MEMEQ(str) (u_clientimage_info.http_info.user_agent_len ?  memcmp(u_clientimage_info.http_info.user_agent,U_CONSTANT_TO_PARAM(str)) == 0 : false)
-#define U_HTTP_USER_AGENT_STREQ(str) (u_clientimage_info.http_info.user_agent_len ? U_STREQ(u_clientimage_info.http_info.user_agent,u_clientimage_info.http_info.user_agent_len, str) : false)
+#define U_HTTP_USER_AGENT_STREQ(str) (u_clientimage_info.http_info.user_agent_len \
+                                          ? U_STREQ(u_clientimage_info.http_info.user_agent,u_clientimage_info.http_info.user_agent_len, str) \
+                                          : false)
 
 /**
  * The hostname of your server from header's request.

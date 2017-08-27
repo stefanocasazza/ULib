@@ -1,8 +1,5 @@
 /* test_sprintf.c */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include <ulib/base/base.h>
 
 #ifndef __MINGW32__
@@ -17,7 +14,6 @@ static struct iovec iov[] = { { 0, 0 }, { (caddr_t)"\n", 1 } };
 #define printf(fmt,args...) write(STDOUT_FILENO,ubuffer,u__snprintf(ubuffer,sizeof(ubuffer),fmt,strlen(fmt) , ##args))
 
 #include <float.h>
-#include <limits.h>
 
 static int result;
 

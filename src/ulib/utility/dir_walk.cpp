@@ -162,6 +162,8 @@ U_NO_EXPORT bool UDirWalk::isFile()
 
    const char* ptr = u_getsuffix(pathname+1, pathlen-1);
 
+   U_INTERNAL_DUMP("ptr = %S pathname(%u) = %.*S", ptr, pathlen, pathlen, pathname)
+
    if (ptr++)
       {
       if (u_get_mimetype(ptr, U_NULLPTR)) U_RETURN(true);
