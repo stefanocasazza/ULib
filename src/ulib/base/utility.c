@@ -2304,7 +2304,7 @@ static const char* u_check_for_suffix_exe(const char* restrict program)
 bool u_pathfind(char* restrict result, const char* restrict path, uint32_t path_len, const char* restrict filename, int mode)
 {
    uint32_t p_index = 0;
-   char zPath[U_PATH_MAX + 1];
+   char zPath[U_PATH_MAX+1];
 
    U_INTERNAL_TRACE("u_pathfind(%p,%.*s,%u,%s,%d)", result, path_len, path, path_len, filename, mode)
 

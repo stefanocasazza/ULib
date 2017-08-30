@@ -21,8 +21,8 @@
 int      u_trace_fd = -1;
 int      u_trace_signal;
 int      u_trace_suspend;
-void*    u_trace_mask_level;
 char     u_trace_tab[256]; /* 256 max indent */
+void*    u_trace_mask_level;
 uint32_t u_trace_num_tab;
 
 static int level_active;
@@ -238,6 +238,20 @@ void u_trace_init(int bsignal)
 
    env = getenv(bsignal ? "UTRACE_SIGNAL" : "UTRACE");
 
+   if (u_trace_folder == U_NULLPTR)
+      {
+      u_trace_folder = getenv("UTRACE_FOLDER");
+
+      if (u_trace_folder == U_NULLPTR)
+         {
+#     if !defined(U_SERVER_CAPTIVE_PORTAL) || defined(ENABLE_THREAD)
+         u_trace_folder = ".";
+#     else
+         u_trace_folder = "/tmp";
+#     endif
+         }
+      }
+
    if (bsignal == 0 &&
        ( env ==   0 ||
         *env == '\0'))
@@ -280,9 +294,11 @@ void u_trace_init(int bsignal)
       if (u_trace_fd == STDERR_FILENO) file_size = 0;
       else
          {
-         char name[128];
+         char name[U_PATH_MAX];
 
-         (void) u__snprintf(name, 128, U_CONSTANT_TO_PARAM("trace.%N.%P"), 0);
+         U_INTERNAL_ASSERT_POINTER(u_trace_folder)
+
+         (void) u__snprintf(name, sizeof(name), U_CONSTANT_TO_PARAM("%s/trace.%N.%P"), u_trace_folder);
 
          /* NB: O_RDWR is needed for mmap(MAP_SHARED)... */
 
@@ -290,7 +306,7 @@ void u_trace_init(int bsignal)
 
          if (u_trace_fd == -1)
             {
-            U_WARNING("Failed to create file %S - current working directory: %.*s", name, u_cwd_len, u_cwd);
+            U_WARNING("Failed to create file %S - current working directory: %.*S - UTRACE_FOLDER: %S", name, u_cwd_len, u_cwd, u_trace_folder);
 
             return;
             }

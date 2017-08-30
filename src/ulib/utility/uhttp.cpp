@@ -1321,8 +1321,6 @@ void UHTTP::init()
 
    setStatusDescription();
 
-   U_http_info.nResponseCode = 0;
-
    U_INTERNAL_ASSERT_EQUALS(old_response_code, HTTP_OK)
 
    U_MEMCPY(response_buffer, UClientImage_Base::iov_vec[0].iov_base, UClientImage_Base::iov_vec[0].iov_len);
@@ -1810,7 +1808,7 @@ next:
 
             U_http_version = *ptr++;
 
-            U_INTERNAL_DUMP("U_http_version = %C U_http_info.nResponseCode = %d", U_http_version, U_http_info.nResponseCode)
+            U_INTERNAL_DUMP("U_http_version = %C U_http_info.nResponseCode = %u", U_http_version, U_http_info.nResponseCode)
 
 #        ifndef U_HTTP2_DISABLE
             if (U_http_version == '2')
@@ -1955,7 +1953,7 @@ bool UHTTP::scanfHeaderResponse(const char* ptr, uint32_t size)
 
       U_http_info.nResponseCode = u_strtoul(ptr, ptr1);
 
-      U_INTERNAL_DUMP("U_http_version = %C U_http_info.nResponseCode = %d", U_http_version, U_http_info.nResponseCode)
+      U_INTERNAL_DUMP("U_http_version = %C U_http_info.nResponseCode = %u", U_http_version, U_http_info.nResponseCode)
 
       if (U_IS_HTTP_VALID_RESPONSE(U_http_info.nResponseCode))
          {
@@ -2116,7 +2114,7 @@ loop: sz = buffer.size();
 
    // check for HTTP response line: HTTP/1.n 100 Continue
 
-   U_INTERNAL_DUMP("U_http_info.nResponseCode = %d", U_http_info.nResponseCode)
+   U_INTERNAL_DUMP("U_http_info.nResponseCode = %u", U_http_info.nResponseCode)
 
    if (UNLIKELY(U_http_info.nResponseCode == HTTP_CONTINUE))
       {
@@ -3474,7 +3472,7 @@ bool UHTTP::runCGI(bool set_environment)
 next: U_DUMP("UServer_Base::isParallelizationChild() = %b UServer_Base::isParallelizationParent() = %b",
               UServer_Base::isParallelizationChild(),     UServer_Base::isParallelizationParent())
 
-      U_INTERNAL_DUMP("U_http_info.nResponseCode = %d UClientImage_Base::wbuffer(%u) = %V UClientImage_Base::body(%u) = %V",
+      U_INTERNAL_DUMP("U_http_info.nResponseCode = %u UClientImage_Base::wbuffer(%u) = %V UClientImage_Base::body(%u) = %V",
                        U_http_info.nResponseCode,     UClientImage_Base::wbuffer->size(), UClientImage_Base::wbuffer->rep,
                        UClientImage_Base::body->size(), UClientImage_Base::body->rep)
 
@@ -3569,7 +3567,7 @@ next:
 
    if (U_ClientImage_parallelization != U_PARALLELIZATION_PARENT)
       {
-      U_INTERNAL_DUMP("U_http_info.nResponseCode = %d UClientImage_Base::wbuffer(%u) = %V UClientImage_Base::body(%u) = %V",
+      U_INTERNAL_DUMP("U_http_info.nResponseCode = %u UClientImage_Base::wbuffer(%u) = %V UClientImage_Base::body(%u) = %V",
                        U_http_info.nResponseCode,     UClientImage_Base::wbuffer->size(), UClientImage_Base::wbuffer->rep,
                        UClientImage_Base::body->size(), UClientImage_Base::body->rep)
 
@@ -4399,7 +4397,7 @@ manage:
 
       if (U_SYSCALL(stat, "%S,%p", buffer, &st) == 0)
          {
-         U_DEBUG("Request usp service not in cache: %V - try to compile it", pathname->rep)
+         U_DEBUG("Request usp service not in cache: %V - we try to compile it", pathname->rep)
 
          (void) pathname->replace(buffer, sz);
 
@@ -4407,7 +4405,7 @@ manage:
 
          manageDataForCache(UStringExt::basename(file->getPath()));
 
-         UClientImage_Base::setRequestInFileCache();
+         if (file_data) UClientImage_Base::setRequestInFileCache();
          }
       }
 #endif
@@ -4755,6 +4753,15 @@ bool UHTTP::getFileInCache(const char* name, uint32_t len)
    U_RETURN(false);
 }
 
+U_NO_EXPORT inline void UHTTP::resetFileCache()
+{
+   U_TRACE_NO_PARAM(0, "UHTTP::resetFileCache()")
+
+   file->close();
+
+   file_data->fd = -1;
+}
+
 int UHTTP::processRequest()
 {
    U_TRACE_NO_PARAM(1, "UHTTP::processRequest()")
@@ -4847,7 +4854,7 @@ int UHTTP::processRequest()
 
       U_INTERNAL_DUMP("U_http_method_not_implemented = %b", U_http_method_not_implemented)
 
-      if (UServer_Base::vplugin_name->last() != *UString::str_http) U_RETURN(U_PLUGIN_HANDLER_GO_ON); // NB: there are other plugin after this...
+      if (UServer_Base::vplugin_name->last() != *UString::str_http) U_RETURN(U_PLUGIN_HANDLER_GO_ON); // NB: there are other plugin after this (http)...
 
       setMethodNotImplemented();
 
@@ -4886,8 +4893,6 @@ int UHTTP::processRequest()
     * ext->snprintf(U_CONSTANT_TO_PARAM("Etag: %v\r\n"), etag->rep);
     */
 
-   bool result;
-
    U_ASSERT(ext->empty())
 
    if (file->dir())
@@ -4912,8 +4917,6 @@ int UHTTP::processRequest()
 
          if (isDataFromCache()) // NB: check if we have the content of the index file in cache...
             {
-            U_http_info.nResponseCode = HTTP_OK;
-
 #        ifdef USE_LIBZ
             if (U_http_is_accept_gzip &&
                 isDataCompressFromCache())
@@ -4998,8 +5001,7 @@ int UHTTP::processRequest()
 
          sz = UClientImage_Base::body->size();
 
-         mime_index                = U_unknow;
-         U_http_info.nResponseCode = HTTP_OK;
+         mime_index = U_unknow;
 
          (void) ext->append(getHeaderMimeType(U_NULLPTR, sz, U_CTYPE_HTML));
          }
@@ -5014,40 +5016,41 @@ check_file: // now we check the file...
 
    if (file_data)
       {
-      if (file_data->fd == -1)
-         {
-         result = (file->regular() &&
-                   file->open());
+      U_INTERNAL_DUMP("file_data->fd = %d", file_data->fd)
 
-         if (result) file_data->fd = file->fd;
-         }
-      else
+      if (file_data->fd != -1)
          {
-         result   = true;
          file->fd = file_data->fd;
+
+         goto next;
+         }
+
+      if (file->regular() &&
+          file->open())
+         {
+         file_data->fd = file->fd;
+
+         goto next;
          }
       }
-   else
+   else if (file->open())
       {
-      // NB: this can happen (ex: we don't cache usp file)...
-
-      result        = file->open();
       file_data     = file_not_in_cache_data;
       mime_index    = U_unknow;
       file_data->fd = file->fd;
+
+      goto next;
       }
 
-   if (result == false)
-      {
-      U_INTERNAL_DUMP("errno = %d", errno)
+   U_INTERNAL_DUMP("errno = %d", errno)
 
-           if (errno == ENOENT) setNotFound();
-      else if (errno == EPERM)  setForbidden();
-      else                      setServiceUnavailable();
+        if (errno == ENOENT) setNotFound();
+   else if (errno == EPERM)  setForbidden();
+   else                      setServiceUnavailable();
 
-      U_RETURN(U_PLUGIN_HANDLER_FINISHED);
-      }
+   U_RETURN(U_PLUGIN_HANDLER_FINISHED);
 
+next:
    U_INTERNAL_DUMP("file_data->fd = %d file_data->size = %u file_data->mode = %d file_data->mtime = %ld",
                     file_data->fd,     file_data->size,     file_data->mode,     file_data->mtime)
 
@@ -5062,7 +5065,7 @@ check_file: // now we check the file...
          {
          file_data->fd = file->fd;
 
-         if (U_SYSCALL(fstat, "%d,%p", file->fd, (struct stat*)file) != 0) goto error;
+         if (U_SYSCALL(fstat, "%d,%p", file->fd, (struct stat*)file) != 0) goto err;
          }
       }
 
@@ -5079,24 +5082,19 @@ check_file: // now we check the file...
       {
       if (file_data->size)
          {
-         processGetRequest();
-
          U_INTERNAL_DUMP("U_http_is_nocache_file = %b", U_http_is_nocache_file)
 
-         if (U_http_is_nocache_file)
+         if (processGetRequest() == false)
             {
-            file->close();
+            if (U_http_is_nocache_file) resetFileCache();
 
-            file_data->fd = -1;
+            U_RETURN(U_PLUGIN_HANDLER_FINISHED);
             }
 
-         U_RETURN(U_PLUGIN_HANDLER_FINISHED);
+         if (U_http_is_nocache_file == false) goto end;
          }
 
-error:
-      file->close();
-
-      file_data->fd = -1;
+err:  resetFileCache();
       }
 
 end:
@@ -5209,7 +5207,7 @@ void UHTTP::setEndRequestProcessing()
       }
 #endif
 
-   U_INTERNAL_DUMP("U_ClientImage_request = %b U_http_info.nResponseCode = %d U_ClientImage_request_is_cached = %b U_http_info.startHeader = %u",
+   U_INTERNAL_DUMP("U_ClientImage_request = %b U_http_info.nResponseCode = %u U_ClientImage_request_is_cached = %b U_http_info.startHeader = %u",
                     U_ClientImage_request,     U_http_info.nResponseCode,     U_ClientImage_request_is_cached,     U_http_info.startHeader)
 
 #ifndef U_CACHE_REQUEST_DISABLE
@@ -5533,10 +5531,9 @@ void UHTTP::clearSessionSSL()
  * 1) User submits login form. Form sends login and password to ULib server.
  * 2) ULib server validates login data, generates random string (session id), saves it to closed server storage
  *    in pair with user login, and sends session id to browser in response as cookie. Browser stores cookie.
- * 3) User visits any page on this domain and browser sends a cookie to server for each request.
- * 4) ULib server checks if cookie has been sent, if such cookie exists in server storage with pair with login. Identifies user, provides access to his private content.
- * 5) Logout button removes the cookie from browser and sid-login pair from server storage. Browser does not send cookies, server does not see it and does not see
- *    sid-login pair
+ * 3) User visits any page on this domain and browser sends a cookie to ULib server for each request.
+ * 4) ULib server checks if cookie has been sent, if such cookie exists in server storage with pair with login identifies user, provides access to his private content.
+ * 5) Logout button removes the cookie from browser and sid-login pair from server storage. Browser does not send cookies, server does not see it and does not see sid-login pair
  */
 
 void UHTTP::addSetCookie(const UString& cookie)
@@ -5640,10 +5637,10 @@ bool UHTTP::getCookie(UString* cookie, UString* data)
          U_INTERNAL_DUMP("sid_counter_cur = %u", sid_counter_cur)
 
          /**
-          * XSRF (cross-site request forgery) is a problem that can be solved by using Crumbs. Crumbs is a large alphanumeric string you pass between each on your site, and it is
-          * a timestamp + a HMAC-MD5 encoded result of your IP address and browser user agent and a pre-defined key known only to the web server. So, the application checks the crumb
-          * value on every page, and the crumb value has a specific expiration time and also is based on IP and browser, so it is difficult to forge. If the crumb value is wrong,
-          * then it just prevents the user from viewing that page...
+          * XSRF (cross-site request forgery) is a problem that can be solved by using Crumbs. Crumbs is a large alphanumeric string you pass between each on your site,
+          * and it is a timestamp + a HMAC-MD5 encoded result of your IP address and browser user agent and a pre-defined key known only to the web server. So, the
+          * application checks the crumb value on every page, and the crumb value has a specific expiration time and also is based on IP and browser, so it is difficult
+          * to forge. If the crumb value is wrong, then it just prevents the user from viewing that page...
           */
 
          check = false;
@@ -6467,7 +6464,7 @@ void UHTTP::handlerResponse()
 {
    U_TRACE_NO_PARAM(0, "UHTTP::handlerResponse()")
 
-   U_INTERNAL_DUMP("U_http_info.nResponseCode = %d", U_http_info.nResponseCode)
+   U_INTERNAL_DUMP("U_http_info.nResponseCode = %u", U_http_info.nResponseCode)
 
    U_INTERNAL_ASSERT_MAJOR(U_http_info.nResponseCode, 0)
 
@@ -7126,7 +7123,7 @@ U_NO_EXPORT bool UHTTP::processAuthorization()
 
       if (digest_authentication)
          {
-         /*
+         /**
           * A user requests page protected by digest auth:
           *
           * - The server sends back a 401 and a WWW-Authenticate header with the value of digest along with a nonce value and a realm value
@@ -7322,7 +7319,7 @@ end:
 
    if (result == false)
       {
-      // NB: we cannot authorize someone if it is not present above document root almost one passwd file... 
+      // NB: we cannot authorize someone if it is not present above document root almost one auth file... 
 
       if (bpass || htdigest || htpasswd) setUnAuthorized();
       else                                  setForbidden();
@@ -7377,41 +7374,6 @@ __pure bool UHTTP::isTSARequest()
    U_RETURN(false);
 }
 
-bool UHTTP::isProxyRequest()
-{
-   U_TRACE_NO_PARAM(0, "UHTTP::isProxyRequest()")
-
-   U_INTERNAL_DUMP("U_http_is_request_nostat = %b", U_http_is_request_nostat)
-
-   if (UClientImage_Base::isRequestNotFound())
-      {
-      // check a possibly proxy service for the HTTP request
-
-      service = UModProxyService::findService();
-
-      if (service)
-         {
-#     ifdef USE_LIBSSL
-         if (service->isRequestCertificate() && // NB: check if it is required a certificate for this service...
-             UServer_Base::pClientImage->askForClientCertificate() == false)
-            {
-            service = U_NULLPTR;
-
-            UModProxyService::setMsgError(UModProxyService::BAD_REQUEST);
-            }
-#     endif
-
-         U_INTERNAL_DUMP("service->server = %V", service->server.rep)
-
-         // NB: process the HTTP PROXY request with fork....
-
-         if (UServer_Base::startParallelization() == false) U_RETURN(true); // child
-         }
-      }
-
-   U_RETURN(false);
-}
-
 __pure bool UHTTP::isFCGIRequest()
 {
    U_TRACE_NO_PARAM(0, "UHTTP::isFCGIRequest()")
@@ -7450,7 +7412,79 @@ __pure bool UHTTP::isSCGIRequest()
    U_RETURN(false);
 }
 
+__pure bool UHTTP::isUriRequestNeedCertificate()
+{
+   U_TRACE_NO_PARAM(0, "UHTTP::isUriRequestNeedCertificate()")
+
+   // check if the uri request need a certificate
+
 #ifdef USE_LIBSSL
+   if (UServer_Base::bssl &&
+       uri_request_cert_mask)
+      {
+      uint32_t sz;
+      const char* ptr = UClientImage_Base::getRequestUri(sz);
+
+      if (UServices::dosMatchWithOR(ptr, sz, U_STRING_TO_PARAM(*uri_request_cert_mask), 0)) U_RETURN(true);
+      }
+#endif
+
+   U_RETURN(false);
+}
+
+bool UHTTP::isProxyRequest()
+{
+   U_TRACE_NO_PARAM(0, "UHTTP::isProxyRequest()")
+
+   U_INTERNAL_DUMP("U_http_is_request_nostat = %b", U_http_is_request_nostat)
+
+   if (UClientImage_Base::isRequestNotFound())
+      {
+      // check a possibly proxy service for the HTTP request
+
+      service = UModProxyService::findService();
+
+      if (service)
+         {
+#     ifdef USE_LIBSSL
+         if (service->isRequestCertificate() && // NB: check if it is required a certificate for this service...
+             UServer_Base::pClientImage->askForClientCertificate() == false)
+            {
+            service = U_NULLPTR;
+
+            UModProxyService::setMsgError(UModProxyService::BAD_REQUEST);
+            }
+#     endif
+
+         U_INTERNAL_DUMP("service->server = %V", service->server.rep)
+
+         // NB: process the HTTP PROXY request with fork....
+
+         if (UServer_Base::startParallelization() == false) U_RETURN(true); // child
+         }
+      }
+
+   U_RETURN(false);
+}
+
+#ifdef USE_LIBSSL
+__pure bool UHTTP::isUriRequestProtected()
+{
+   U_TRACE_NO_PARAM(0, "UHTTP::isUriRequestProtected()")
+
+   // check if the uri is protected
+
+   if (uri_protected_mask)
+      {
+      uint32_t sz;
+      const char* ptr = UClientImage_Base::getRequestUri(sz);
+
+      if (UServices::dosMatchWithOR(ptr, sz, U_STRING_TO_PARAM(*uri_protected_mask), 0)) U_RETURN(true);
+      }
+
+   U_RETURN(false);
+}
+
 bool UHTTP::checkUriProtected()
 {
    U_TRACE_NO_PARAM(0, "UHTTP::checkUriProtected()")
@@ -7483,44 +7517,7 @@ bool UHTTP::checkUriProtected()
 
    U_RETURN(false);
 }
-
-__pure bool UHTTP::isUriRequestProtected()
-{
-   U_TRACE_NO_PARAM(0, "UHTTP::isUriRequestProtected()")
-
-   // check if the uri is protected
-
-   if (uri_protected_mask)
-      {
-      uint32_t sz;
-      const char* ptr = UClientImage_Base::getRequestUri(sz);
-
-      if (UServices::dosMatchWithOR(ptr, sz, U_STRING_TO_PARAM(*uri_protected_mask), 0)) U_RETURN(true);
-      }
-
-   U_RETURN(false);
-}
 #endif
-
-__pure bool UHTTP::isUriRequestNeedCertificate()
-{
-   U_TRACE_NO_PARAM(0, "UHTTP::isUriRequestNeedCertificate()")
-
-   // check if the uri request need a certificate
-
-#ifdef USE_LIBSSL
-   if (UServer_Base::bssl &&
-       uri_request_cert_mask)
-      {
-      uint32_t sz;
-      const char* ptr = UClientImage_Base::getRequestUri(sz);
-
-      if (UServices::dosMatchWithOR(ptr, sz, U_STRING_TO_PARAM(*uri_request_cert_mask), 0)) U_RETURN(true);
-      }
-#endif
-
-   U_RETURN(false);
-}
 
 #ifdef U_HTTP_STRICT_TRANSPORT_SECURITY
 __pure bool UHTTP::isUriRequestStrictTransportSecurity()
@@ -7548,7 +7545,7 @@ __pure bool UHTTP::isUriRequestStrictTransportSecurity()
 }
 #endif
 
-// NB: the tables must be ordered alphabetically because we use binary search algorithm (also we skip the prefix 'GET_' or 'POST_')
+// NB: the tables must be ordered alphabetically because we use binary search algorithm (also we skip the prefix 'GET_' or 'POST_' of the named services)
 
 void UHTTP::manageRequest(service_info*  GET_table, uint32_t n1,
                           service_info* POST_table, uint32_t n2)
@@ -7595,6 +7592,8 @@ not_found:
 
    U_INTERNAL_DUMP("target(%u) = %.*S", target_len, target_len, target)
 
+   if (target_len == 0) goto not_found; // NB: skip '/' request...
+
    U_http_info.nResponseCode = 0; // NB: it is used by server_plugin_ssi to continue processing with a shell script...
 
    if (u_getsuffix(target, target_len) == U_NULLPTR) // NB: else we go to the next phase of request processing...
@@ -7629,7 +7628,7 @@ not_found:
 found:
       table[probe].function();
 
-      U_INTERNAL_DUMP("U_http_info.nResponseCode = %d", U_http_info.nResponseCode)
+      U_INTERNAL_DUMP("U_http_info.nResponseCode = %u", U_http_info.nResponseCode)
 
       if (U_http_info.nResponseCode == 0) (void) UClientImage_Base::environment->append(U_CONSTANT_TO_PARAM("HTTP_RESPONSE_CODE=0\n"));
       }
@@ -8019,26 +8018,29 @@ U_NO_EXPORT void UHTTP::manageDataForCache(const UString& file_name)
    U_TRACE(1, "UHTTP::manageDataForCache(%V)", file_name.rep)
 
    UString suffix;
-   uint32_t    file_len = file->getPathRelativLen();
-   const char* file_ptr = file->getPathRelativ();
+   const char* ctype;
    uint32_t    suffix_len;
    const char* suffix_ptr;
+
    uint32_t    file_name_len = file_name.size();
    const char* file_name_ptr = file_name.data();
 
-#ifdef DEBUG
+   uint32_t    file_len = file->getPathRelativLen();
+   const char* file_ptr = file->getPathRelativ();
+
+   U_INTERNAL_DUMP("pathname = %V file = %.*S rpathname = %V", pathname->rep, file_len, file_ptr, rpathname->rep)
+
    U_INTERNAL_ASSERT(file_name)
    U_INTERNAL_ASSERT_POINTER(file)
    U_INTERNAL_ASSERT_POINTER(pathname)
    U_INTERNAL_ASSERT_POINTER(cache_file)
 
-   U_INTERNAL_DUMP("pathname = %V file = %.*S rpathname = %V", pathname->rep, file_len, file_ptr, rpathname->rep)
-
-   if (pathname->equal(file_ptr, file_len) == false) // NB: it can happen with inotify...
+   /*
+   if (pathname->equal(file_ptr, file_len) == false)
       {
-      U_DEBUG("UHTTP::manageDataForCache(%V) pathname(%u) = %.*S file(%u) = %.*S", file_name.rep, pathname->size(), pathname->rep, file_len, file_len, file_ptr)
+      U_DEBUG("UHTTP::manageDataForCache(%V) pathname(%u) = %V file(%u) = %.*S", file_name.rep, pathname->size(), pathname->rep, file_len, file_len, file_ptr)
       }
-#endif
+   */
 
    U_NEW(UHTTP::UFileCacheData, file_data, UHTTP::UFileCacheData);
 
@@ -8197,8 +8199,6 @@ U_NO_EXPORT void UHTTP::manageDataForCache(const UString& file_name)
 
    if (suffix_len)
       {
-      const char* ctype;
-
       // manage authorization data...
 
       if (suffix_len == 8)
@@ -8417,43 +8417,19 @@ U_NO_EXPORT void UHTTP::manageDataForCache(const UString& file_name)
 check:
       ctype = u_get_mimetype(suffix_ptr, &file_data->mime_index);
 
-      U_INTERNAL_DUMP("u_is_cacheable(%d) = %b ctype = %S", file_data->mime_index, u_is_cacheable(file_data->mime_index), ctype)
+      U_INTERNAL_DUMP("u_is_cacheable(%d) = %b", file_data->mime_index, u_is_cacheable(file_data->mime_index))
 
-      if (u_is_cacheable(file_data->mime_index))
-         {
-         if (file_data->size == 0)
-            {
-            U_SRV_LOG("WARNING: found empty file: %V", pathname->rep);
-            }
-         else if (file->open())
-            {
-            UString content;
-
-            mime_index = file_data->mime_index;
-
-            if (isSizeForSendfile(file_data->size)) // NB: for major size we assume is better to use sendfile()
-               {
-               file_data->fd = file->getFd();
-
-               putDataInCache(getHeaderMimeType(U_NULLPTR, 0, ctype, U_TIME_FOR_EXPIRE), content);
-               }
-            else
-               {
-               content = file->getContent(true, false, true);
-
-               if (content.empty()) goto error;
-
-               putDataInCache(getHeaderMimeType(content.data(), 0, ctype, U_TIME_FOR_EXPIRE), content);
-               }
-            }
-
-         goto end;
-         }
+      if (u_is_cacheable(file_data->mime_index)) goto manage;
       }
 
    if (cache_file_mask &&
        UServices::dosMatchWithOR(file_name_ptr, file_name_len, U_STRING_TO_PARAM(*cache_file_mask), 0))
       {
+      ctype = setMimeIndex(suffix_ptr);
+
+manage:
+      U_INTERNAL_DUMP("ctype = %S", ctype)
+
       if (file_data->size == 0)
          {
          U_SRV_LOG("WARNING: found empty file: %V", pathname->rep);
@@ -8461,21 +8437,21 @@ check:
       else if (file->open())
          {
          UString content;
+         const char* ptr = U_NULLPTR;
 
-         if (isSizeForSendfile(file_data->size)) // NB: for major size we assume is better to use sendfile()
-            {
-            file_data->fd = file->fd;
+         mime_index = file_data->mime_index;
 
-            putDataInCache(getHeaderMimeType(U_NULLPTR, 0, setMimeIndex(suffix_ptr), U_TIME_FOR_EXPIRE), content);
-            }
+         if (isSizeForSendfile(file_data->size)) file_data->fd = file->getFd(); // NB: for major size we assume is better to use sendfile()
          else
             {
             content = file->getContent(true, false, true);
 
             if (content.empty()) goto error;
 
-            putDataInCache(getHeaderMimeType(content.data(), 0, setMimeIndex(suffix_ptr), U_TIME_FOR_EXPIRE), content);
+            ptr = content.data();
             }
+
+         putDataInCache(getHeaderMimeType(ptr, 0, ctype, U_TIME_FOR_EXPIRE), content);
          }
       }
 
@@ -8642,7 +8618,7 @@ U_NO_EXPORT void UHTTP::checkPathName()
 
    if (checkDirectoryForDocumentRoot(ptr, len1) == false)
       {
-#  ifndef U_SERVER_CAPTIVE_PORTAL
+#  if !defined(U_SERVER_CAPTIVE_PORTAL) || defined(ENABLE_THREAD)
       setForbidden();
 #  endif
 
@@ -8675,32 +8651,36 @@ U_NO_EXPORT void UHTTP::checkPathName()
 
       if (U_http_is_request_nostat)
          {
-         U_ClientImage_request = 0; // set to UClientImage_Base::NOT_FOUND...
+         U_ClientImage_request = 0; // we set to UClientImage_Base::NOT_FOUND...
 
          return;
          }
 
       if (len >= 9)
          {
-         // check for zombies...
-
+#     if defined(U_SERVER_CAPTIVE_PORTAL) && !defined(ENABLE_THREAD)
          if (u_get_unalignedp64(ptr)   == U_MULTICHAR_CONSTANT64('c','h','e','c','k','Z','o','m') &&
              u_get_unalignedp32(ptr+8) == U_MULTICHAR_CONSTANT32('b','i','e','s'))
             {
+            // ask to check for zombies...
+
             UServer_Base::removeZombies();
 
             goto nocontent;
             }
+#     endif
 
-         // we don't wont to process this kind of request (usually aliased)...
-
+#     ifdef U_ALIAS
          if (                   ptr[len-9] == 'n' &&
              u_get_unalignedp64(ptr+len-8) == U_MULTICHAR_CONSTANT64('o','c','o','n','t','e','n','t'))
             {
+            // we don't wont to process this kind of request (usually aliased)...
+
             U_ASSERT(UStringExt::endsWith(ptr, len, U_CONSTANT_TO_PARAM("nocontent")))
 
             goto nocontent;
             }
+#     endif
 
          if (len >= U_PATH_MAX ||
              u_isFileName(ptr, len) == false)
@@ -8741,8 +8721,6 @@ nocontent:  UClientImage_Base::setCloseConnection();
          return;
          }
 #  endif
-
-      U_INTERNAL_DUMP("U_http_is_nocache_file = %b", U_http_is_nocache_file)
 
 #  if defined(HAVE_SYS_INOTIFY_H) && defined(U_HTTP_INOTIFY_SUPPORT)
       bool bstat = false;
@@ -9494,12 +9472,15 @@ bool UHTTP::manageSendfile(const char* ptr, uint32_t len)
       file_data->fd   = file->fd;
       file_data->size = file->st_size;
 
-      processGetRequest();
-
-      if (file_data->fd != UServer_Base::pClientImage->sfd) file->close();
-      else
+      if (processGetRequest())
          {
-         U_ClientImage_pclose(UServer_Base::pClientImage) = U_CLOSE;
+         handlerResponse();
+
+         if (file_data->fd != UServer_Base::pClientImage->sfd) file->close();
+         else
+            {
+            U_ClientImage_pclose(UServer_Base::pClientImage) = U_CLOSE;
+            }
          }
 
       U_RETURN(true);
@@ -9761,7 +9742,7 @@ loop:
 
                U_http_info.nResponseCode = u_strtoul(start, ptr1);
 
-               U_INTERNAL_DUMP("U_http_info.nResponseCode = %d", U_http_info.nResponseCode)
+               U_INTERNAL_DUMP("U_http_info.nResponseCode = %u", U_http_info.nResponseCode)
 
                ptr1 = (const char*) memchr(ptr1, '\n', endptr - ptr1);
 
@@ -10038,7 +10019,7 @@ bool UHTTP::processCGIRequest(UCommand* cmd, UHTTP::ucgi* cgi)
 
    // process the CGI or script request
 
-   U_INTERNAL_DUMP("U_http_method_type = %B URI = %.*S U_http_info.nResponseCode = %d", U_http_method_type, U_HTTP_URI_TO_TRACE, U_http_info.nResponseCode)
+   U_INTERNAL_DUMP("U_http_method_type = %B URI = %.*S U_http_info.nResponseCode = %u", U_http_method_type, U_HTTP_URI_TO_TRACE, U_http_info.nResponseCode)
 
    U_ASSERT(cmd->checkForExecute())
    U_INTERNAL_ASSERT(*UClientImage_Base::environment)
@@ -10520,7 +10501,7 @@ U_NO_EXPORT bool UHTTP::checkGetRequestIfModified()
    U_RETURN(true);
 }
 
-U_NO_EXPORT void UHTTP::processGetRequest()
+U_NO_EXPORT bool UHTTP::processGetRequest()
 {
    U_TRACE_NO_PARAM(0, "UHTTP::processGetRequest()")
 
@@ -10546,7 +10527,7 @@ U_NO_EXPORT void UHTTP::processGetRequest()
       goto sendfile;
       }
 
-   if (file->memmap(PROT_READ, &mmap) == false) goto err;
+   if (file->memmap(PROT_READ, &mmap) == false) goto error;
 
    if (file_data == file_not_in_cache_data)
       {
@@ -10565,8 +10546,6 @@ U_NO_EXPORT void UHTTP::processGetRequest()
    range_size  = file->st_size;
    range_start = 0;
 
-   U_http_info.nResponseCode = HTTP_OK;
-
    if (U_http_range_len &&
        checkGetRequestIfRange())
       {
@@ -10575,94 +10554,79 @@ U_NO_EXPORT void UHTTP::processGetRequest()
       //
       // Range: bytes=0-31
 
-      if (checkGetRequestForRange(mmap) != U_PARTIAL)
-         {
-         handlerResponse();
-
-         return;
-         }
+      if (checkGetRequestForRange(mmap) != U_PARTIAL) U_RETURN(true);
 
       U_http_info.nResponseCode = HTTP_PARTIAL;
-
-      goto build_response;
       }
-
-   // --------------------------------------------------------------------
-   // NB: check for Flash pseudo-streaming
-   // --------------------------------------------------------------------
-   // Adobe Flash Player can start playing from any part of a FLV movie
-   // by sending the HTTP request below ('123' is the bytes offset):
-   //
-   // GET /movie.flv?start=123
-   //
-   // HTTP servers that support Flash Player requests must send the binary 
-   // FLV Header ("FLV\x1\x1\0\0\0\x9\0\0\0\x9") before the requested data
-   // --------------------------------------------------------------------
-
-   if (u_is_flv(file_data->mime_index) &&
-       U_HTTP_QUERY_MEMEQ("start="))
+   else
       {
-      U_INTERNAL_ASSERT_DIFFERS(U_http_info.nResponseCode, HTTP_PARTIAL)
+      // --------------------------------------------------------------------
+      // NB: check for Flash pseudo-streaming
+      // --------------------------------------------------------------------
+      // Adobe Flash Player can start playing from any part of a FLV movie
+      // by sending the HTTP request below ('123' is the bytes offset):
+      //
+      // GET /movie.flv?start=123
+      //
+      // HTTP servers that support Flash Player requests must send the binary 
+      // FLV Header ("FLV\x1\x1\0\0\0\x9\0\0\0\x9") before the requested data
+      // --------------------------------------------------------------------
 
-      range_start = atol(U_http_info.query + U_CONSTANT_SIZE("start="));
-
-      U_SRV_LOG("Request for flash pseudo-streaming: video = %.*S start = %u", U_FILE_TO_TRACE(*file), range_start);
-
-      if (range_start >= range_size) range_start = 0;
-      else
+      if (u_is_flv(file_data->mime_index) &&
+          U_HTTP_QUERY_MEMEQ("start="))
          {
-         // build response...
+         U_INTERNAL_ASSERT_DIFFERS(U_http_info.nResponseCode, HTTP_PARTIAL)
 
-         U_http_info.nResponseCode = HTTP_PARTIAL;
+         range_start = atol(U_http_info.query + U_CONSTANT_SIZE("start="));
 
-         setResponseForRange(range_start, range_size-1, U_CONSTANT_SIZE(U_FLV_HEAD));
+         U_SRV_LOG("Request for flash pseudo-streaming: video = %.*S start = %u", U_FILE_TO_TRACE(*file), range_start);
 
-         handlerResponse();
-
-         U_INTERNAL_DUMP("U_http_version = %C", U_http_version)
-
-#     ifndef U_HTTP2_DISABLE
-         if (U_http_version == '2')
-            {
-            // TODO...
-            }
+         if (range_start >= range_size) range_start = 0;
          else
-#     endif
-         (void) UClientImage_Base::wbuffer->append(U_CONSTANT_TO_PARAM(U_FLV_HEAD));
+            {
+            U_http_info.nResponseCode = HTTP_PARTIAL;
 
-         goto next;
+            setResponseForRange(range_start, range_size-1, U_CONSTANT_SIZE(U_FLV_HEAD));
+
+            U_INTERNAL_DUMP("U_http_version = %C", U_http_version)
+
+#        ifndef U_HTTP2_DISABLE
+            if (U_http_version == '2')
+               {
+               // TODO...
+               }
+            else
+#        endif
+            (void) UClientImage_Base::wbuffer->append(U_CONSTANT_TO_PARAM(U_FLV_HEAD));
+            }
          }
       }
 
-build_response:
-   handlerResponse();
-
-next:
    U_INTERNAL_DUMP("range_start = %u range_size = %u", range_start, range_size)
 
    U_ASSERT(UClientImage_Base::body->empty())
 
-   // NB: we check if we can send the body with sendfile()...
-
-   if (isSizeForSendfile(range_size))
+   if (isSizeForSendfile(range_size)) // NB: we check if we can send the body with sendfile()...
       {
       U_http_flag |= HTTP_IS_SENDFILE;
 
 sendfile:
       UClientImage_Base::setSendfile(file->fd, range_start, range_size);
-
-      return;
       }
-
-   if (U_http_info.nResponseCode == HTTP_PARTIAL &&
-       file->memmap(PROT_READ, &mmap, range_start, range_size) == false)
+   else
       {
-err:  setServiceUnavailable();
+      if (U_http_info.nResponseCode == HTTP_PARTIAL &&
+          file->memmap(PROT_READ, &mmap, range_start, range_size) == false)
+         {
+error:   setServiceUnavailable();
 
-      return;
+         U_RETURN(false);
+         }
+
+      *UClientImage_Base::body = mmap;
       }
 
-   *UClientImage_Base::body = mmap;
+   U_RETURN(true);
 }
 
 // -------------------------------------------------------------------------------------------------------------------------------------
@@ -10831,6 +10795,8 @@ U_NO_EXPORT bool UHTTP::compileUSP(const char* path, uint32_t len)
    static int fd_stderr;
 
    UString command(200U);
+
+   // Ex: usp_compile.sh -i /home/user/project/include -o /home/user/project/build <file.usp> so
 
    command.snprintf(U_CONSTANT_TO_PARAM("usp_compile.sh %.*s %s"), len, path, U_LIB_SUFFIX);
 

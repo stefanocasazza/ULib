@@ -1302,16 +1302,12 @@ private:
       U_INTERNAL_ASSERT_POINTER(file)
       U_ASSERT_EQUALS(UClientImage_Base::isRequestNotFound(), false)
 
-      mime_index = U_unknow;
+      uri_suffix = u_getsuffix(U_FILE_TO_PARAM(*file));
 
       U_INTERNAL_DUMP("uri_suffix = %p", uri_suffix)
 
-      if (uri_suffix)
-         {
-         U_INTERNAL_ASSERT_EQUALS(uri_suffix, u_getsuffix(U_FILE_TO_PARAM(*file))+1)
-
-         (void) u_get_mimetype(uri_suffix, &mime_index);
-         }
+      if (uri_suffix == U_NULLPTR) mime_index = U_unknow;
+      else                         (void) u_get_mimetype(uri_suffix+1, &mime_index);
       }
 
    static const char* setMimeIndex(const char* suffix)
@@ -1402,7 +1398,7 @@ private:
    static bool readBodyRequest() U_NO_EXPORT;
    static bool processFileCache() U_NO_EXPORT;
    static bool readHeaderRequest() U_NO_EXPORT;
-   static void processGetRequest() U_NO_EXPORT;
+   static bool processGetRequest() U_NO_EXPORT;
    static bool processAuthorization() U_NO_EXPORT;
    static bool checkRequestForHeader() U_NO_EXPORT;
    static bool checkGetRequestIfRange() U_NO_EXPORT;
@@ -1420,6 +1416,7 @@ private:
    static void setResponseForRange(uint32_t start, uint32_t end, uint32_t header) U_NO_EXPORT;
    static bool checkDataSession(const UString& token, time_t expire, UString* data) U_NO_EXPORT;
 
+   static inline void resetFileCache() U_NO_EXPORT;
    static inline void setUpgrade(const char* ptr) U_NO_EXPORT;
    static inline bool checkPathName(uint32_t len) U_NO_EXPORT;
    static inline void setIfModSince(const char* ptr) U_NO_EXPORT;

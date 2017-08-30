@@ -1139,6 +1139,11 @@ int UClientImage_Base::handlerRead() // Connection-wide hooks
 
    int result;
    uint32_t sz;
+   const char* ptr1;
+   /*
+   const char* ptr2;
+   UHTTP::UServletPage* usp;
+   */
 
    prepareForRead();
 
@@ -1164,10 +1169,10 @@ start:
       }
 
 #ifdef DEBUG
+   U_INTERNAL_ASSERT(socket->isOpen())
+
    UServer_Base::nread++;
 #endif
-
-   U_INTERNAL_ASSERT(socket->isOpen())
 
 loop:
    U_INTERNAL_DUMP("U_ClientImage_pipeline = %b size_request = %u rstart = %u rbuffer(%u) = %V",
@@ -1254,7 +1259,7 @@ data_missing:
 
          setRequestProcessed();
 
-         goto next;
+         goto next2;
          }
 
       csfd                            = -1;
@@ -1263,6 +1268,110 @@ data_missing:
 #endif
 
    resetBuffer();
+
+   /*
+   ptr1 = rbuffer->c_pointer(3);
+   ptr2 = ptr1 + 8;
+
+   if (u_get_unalignedp64(ptr1) == U_MULTICHAR_CONSTANT64(' ','/','c','a','c','h','e','d') &&
+       u_get_unalignedp64(ptr2) == U_MULTICHAR_CONSTANT64('_','w','o','r','l','d','s','?'))
+      {
+      usp = UHTTP::vusp->at(0);
+
+      for (ptr1 = U_http_info.query = ptr2 + 8 + U_CONSTANT_SIZE("queries"); *ptr1 != ' '; ++ptr1) {}
+
+      U_http_info.query_len = ptr1 - U_http_info.query;
+
+      U_INTERNAL_DUMP("query = %.*S", U_HTTP_QUERY_TO_TRACE)
+      }
+   else if (u_get_unalignedp64(ptr1) == U_MULTICHAR_CONSTANT64(' ','/','d','b',' ','H','T','T'))
+      {
+      usp = UHTTP::vusp->at(1);
+      }
+   else if (u_get_unalignedp64(ptr1) == U_MULTICHAR_CONSTANT64(' ','/','f','o','r','t','u','n') &&
+            u_get_unalignedp64(ptr2) == U_MULTICHAR_CONSTANT64('e',' ','H','T','T','P','/','1'))
+      {
+      usp = UHTTP::vusp->at(2);
+      }
+   else if (u_get_unalignedp64(ptr1) == U_MULTICHAR_CONSTANT64(' ','/','j','s','o','n',' ','H'))
+      {
+      usp = UHTTP::vusp->at(3);
+      }
+   else if (u_get_unalignedp64(ptr1) == U_MULTICHAR_CONSTANT64(' ','/','m','d','b',' ','H','T'))
+      {
+      usp = UHTTP::vusp->at(4);
+      }
+   else if (u_get_unalignedp64(ptr1) == U_MULTICHAR_CONSTANT64(' ','/','m','f','o','r','t','u') &&
+            u_get_unalignedp64(ptr2) == U_MULTICHAR_CONSTANT64('n','e',' ','H','T','T','P','/'))
+      {
+      usp = UHTTP::vusp->at(5);
+      }
+   else if (u_get_unalignedp64(ptr1) == U_MULTICHAR_CONSTANT64(' ','/','m','q','u','e','r','y') &&
+            u_get_unalignedp64(ptr2) == U_MULTICHAR_CONSTANT64('?','q','u','e','r','i','e','s'))
+      {
+      usp = UHTTP::vusp->at(6);
+
+      for (ptr1 = U_http_info.query = ptr2 + 8; *ptr1 != ' '; ++ptr1) {}
+
+      U_http_info.query_len = ptr1 - U_http_info.query;
+
+      U_INTERNAL_DUMP("query = %.*S", U_HTTP_QUERY_TO_TRACE)
+      }
+   else if (u_get_unalignedp64(ptr1) == U_MULTICHAR_CONSTANT64(' ','/','m','u','p','d','a','t') &&
+            u_get_unalignedp64(ptr2) == U_MULTICHAR_CONSTANT64('e','?','q','u','e','r','i','e'))
+      {
+      usp = UHTTP::vusp->at(7);
+
+      for (ptr1 = U_http_info.query = ptr2 + 8 + 1; *ptr1 != ' '; ++ptr1) {}
+
+      U_http_info.query_len = ptr1 - U_http_info.query;
+
+      U_INTERNAL_DUMP("query = %.*S", U_HTTP_QUERY_TO_TRACE)
+      }
+   else if (u_get_unalignedp64(ptr1) == U_MULTICHAR_CONSTANT64(' ','/','q','u','e','r','y','?'))
+      {
+      usp = UHTTP::vusp->at(9);
+
+      for (ptr1 = U_http_info.query = ptr2 + U_CONSTANT_SIZE("queries"); *ptr1 != ' '; ++ptr1) {}
+
+      U_http_info.query_len = ptr1 - U_http_info.query;
+
+      U_INTERNAL_DUMP("query = %.*S", U_HTTP_QUERY_TO_TRACE)
+      }
+   else if (u_get_unalignedp64(ptr1) == U_MULTICHAR_CONSTANT64(' ','/','u','p','d','a','t','e') &&
+            u_get_unalignedp64(ptr2) == U_MULTICHAR_CONSTANT64('?','q','u','e','r','i','e','s'))
+      {
+      usp = UHTTP::vusp->at(10);
+
+      for (ptr1 = U_http_info.query = ptr2 + 8; *ptr1 != ' '; ++ptr1) {}
+
+      U_http_info.query_len = ptr1 - U_http_info.query;
+
+      U_INTERNAL_DUMP("query = %.*S", U_HTTP_QUERY_TO_TRACE)
+      }
+   else
+      {
+      U_INTERNAL_DUMP("ptr1 = %.16S", ptr1)
+
+      goto next1;
+      }
+
+   U_http_content_type_len = 0;
+
+   U_http_info.nResponseCode = HTTP_OK;
+
+   usp->runDynamicPage(0);
+
+   UHTTP::setDynamicResponse();
+
+   UHTTP::ext->clear();
+
+   (void) writeResponse();
+
+   U_RETURN(U_NOTIFIER_OK);
+
+next1:
+   */
 
             size_request =
    U_ClientImage_request = 0;
@@ -1308,7 +1417,7 @@ data_missing:
       if (log_request_partial == UEventFd::fd) logRequest();
 #  endif
 #  ifndef U_CACHE_REQUEST_DISABLE
-next:
+next2:
 #  endif
       sz = rbuffer->size();
 
@@ -1329,7 +1438,7 @@ next:
          }
       else if (size_request < sz) // we check if we have a pipeline...
          {
-         const char* ptr1 = rbuffer->c_pointer(size_request);
+         ptr1 = rbuffer->c_pointer(size_request);
 
          if (UNLIKELY(u__isspace(*ptr1))) while (u__isspace(*++ptr1)) {}
 
@@ -1621,6 +1730,8 @@ bool UClientImage_Base::writeResponse()
    else
 #endif
    {
+   U_DUMP_IOVEC(iov_vec+idx,iovcnt)
+
    U_INTERNAL_ASSERT_EQUALS(nrequest, 0)
 
 #if defined(USE_LIBSSL) || defined(_MSWINDOWS_)

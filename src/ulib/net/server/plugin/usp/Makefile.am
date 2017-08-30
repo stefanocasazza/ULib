@@ -22,21 +22,16 @@ clean-local:
 MODULE_LIBTOOL_OPTIONS = -export-dynamic -avoid-version
 
 if !CROSS_COMPILING
-AM_CPPFLAGS = @USP_FLAGS@
 moduledir = @ULIB_MODULEDIR@/usp
+AM_CPPFLAGS = @USP_FLAGS@
 
 #SUFFIXES = .cpp .usp .lo .la
 
 #db.cpp: ./usp_translator$(EXEEXT)
-
 #json.cpp: ./usp_translator$(EXEEXT)
-
 #query.cpp: ./usp_translator$(EXEEXT)
-
 #update.cpp: ./usp_translator$(EXEEXT)
-
 #fortune.cpp: ./usp_translator$(EXEEXT)
-
 #plaintext.cpp: ./usp_translator$(EXEEXT)
 
 .usp.cpp: ./usp_translator$(EXEEXT)

@@ -203,11 +203,14 @@ void UOrmDriverSqlite::handlerDisConnect()
 {
    U_TRACE_NO_PARAM(0, "UOrmDriverSqlite::handlerDisConnect()")
 
-   U_INTERNAL_ASSERT_POINTER(UOrmDriver::connection)
+   U_INTERNAL_DUMP("UOrmDriver::connection = %p", UOrmDriver::connection)
 
-   (void) U_SYSCALL(sqlite3_close, "%p", (sqlite3*)UOrmDriver::connection);
+   if (UOrmDriver::connection)
+      {
+      (void) U_SYSCALL(sqlite3_close, "%p", (sqlite3*)UOrmDriver::connection);
 
-   UOrmDriver::connection = U_NULLPTR;
+      UOrmDriver::connection = U_NULLPTR;
+      }
 }
 
 bool UOrmDriverSqlite::handlerQuery(const char* query, uint32_t query_len)
@@ -286,7 +289,6 @@ void UOrmDriverSqlite::handlerStatementReset(USqlStatement* pstmt)
    U_TRACE(0, "UOrmDriverSqlite::handlerStatementReset(%p)", pstmt)
 
    U_INTERNAL_ASSERT_POINTER(pstmt)
-   U_INTERNAL_ASSERT_POINTER(UOrmDriver::connection)
 
    // reset a prepared statement object back to its initial state, ready to be re-executed
 
@@ -303,7 +305,6 @@ void UOrmDriverSqlite::handlerStatementRemove(USqlStatement* pstmt)
    U_TRACE(0, "UOrmDriverSqlite::handlerStatementRemove(%p)", pstmt)
 
    U_INTERNAL_ASSERT_POINTER(pstmt)
-   U_INTERNAL_ASSERT_POINTER(UOrmDriver::connection)
 
    UOrmDriver::errcode = U_SYSCALL(sqlite3_finalize, "%p", (sqlite3_stmt*)pstmt->pHandle);
 

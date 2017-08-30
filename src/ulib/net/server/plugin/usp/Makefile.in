@@ -391,8 +391,8 @@ ulib_la = @ULIBS@ $(top_builddir)/src/ulib/lib@ULIB@.la
 usp_translator_LDADD = $(ulib_la) @ULIB_LIBS@
 usp_translator_SOURCES = usp_translator.cpp
 usp_translator_LDFLAGS = $(PRG_LDFLAGS)
-@CROSS_COMPILING_FALSE@AM_CPPFLAGS = @USP_FLAGS@
 @CROSS_COMPILING_FALSE@moduledir = @ULIB_MODULEDIR@/usp
+@CROSS_COMPILING_FALSE@AM_CPPFLAGS = @USP_FLAGS@
 all: all-am
 
 .SUFFIXES:
@@ -737,15 +737,10 @@ clean-local:
 #SUFFIXES = .cpp .usp .lo .la
 
 #db.cpp: ./usp_translator$(EXEEXT)
-
 #json.cpp: ./usp_translator$(EXEEXT)
-
 #query.cpp: ./usp_translator$(EXEEXT)
-
 #update.cpp: ./usp_translator$(EXEEXT)
-
 #fortune.cpp: ./usp_translator$(EXEEXT)
-
 #plaintext.cpp: ./usp_translator$(EXEEXT)
 
 @CROSS_COMPILING_FALSE@.usp.cpp: ./usp_translator$(EXEEXT)

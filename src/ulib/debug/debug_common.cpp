@@ -78,7 +78,9 @@ extern "C" void U_EXPORT u_debug_at_exit(void)
 
       u_trace_close();
 
-      U_WRITE_MEM_POOL_INFO_TO("mempool.%N.%P", 0);
+      U_INTERNAL_ASSERT_POINTER(u_trace_folder)
+
+      U_WRITE_MEM_POOL_INFO_TO("%s/mempool.%N.%P", u_trace_folder);
 
       U_INTERNAL_PRINT("u_flag_exit = %d", u_flag_exit)
 

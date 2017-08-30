@@ -296,6 +296,7 @@ extern U_EXPORT bool u_exec_failed;
 extern U_EXPORT char u_user_name[32];
 extern U_EXPORT uint32_t u_flag_sse; /* detect SSE2, SSSE3, SSE4.2 */
 extern U_EXPORT uint32_t u_m_w, u_m_z;
+extern U_EXPORT const char* u_trace_folder;
 extern U_EXPORT const char* u_short_units[6]; /* { "B", "KB", "MB", "GB", "TB", 0 } */
 extern U_EXPORT const char* restrict u_tmpdir;
 extern U_EXPORT char u_hostname[HOST_NAME_MAX+1];

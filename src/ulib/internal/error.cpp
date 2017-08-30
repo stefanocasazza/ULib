@@ -94,13 +94,10 @@ void UError::stackDump()
 {
    U_INTERNAL_TRACE("UError::stackDump()")
 
-   char name[128];
+   U_INTERNAL_ASSERT_POINTER(u_trace_folder)
 
-#if defined(U_LINUX) && (!defined(U_SERVER_CAPTIVE_PORTAL) || defined(ENABLE_THREAD))
-   (void) u__snprintf(name, sizeof(name), U_CONSTANT_TO_PARAM("stack.%N.%P"), 0);
-#else
-   (void) u__snprintf(name, sizeof(name), U_CONSTANT_TO_PARAM("/tmp/stack.%N.%P"), 0);
-#endif
+   char name[U_PATH_MAX];
+   (void) u__snprintf(name, sizeof(name), U_CONSTANT_TO_PARAM("%s/stack.%N.%P"), u_trace_folder);
 
    int fd = open(name, O_CREAT | O_WRONLY | O_APPEND | O_BINARY, 0666);
 

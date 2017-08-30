@@ -161,6 +161,7 @@ bool u_fork_called;
 bool u_exec_failed;
 uint32_t u_flag_sse; /* detect SSE2, SSSE3, SSE4.2 */
 char u_user_name[32];
+const char* u_trace_folder;
 char u_hostname[HOST_NAME_MAX+1];
 int32_t u_printf_string_max_length;
 uint32_t u_hostname_len, u_user_name_len;

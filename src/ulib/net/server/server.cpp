@@ -1027,11 +1027,16 @@ bool UServer_Base::checkHitUriStats()
       uint32_t sz;
       const char* ptr = UClientImage_Base::getRequestUri(sz);
 
-      UString key(UServer_Base::client_address_len + sz);
+      if (sz != U_CONSTANT_SIZE("/favicon.ico")                                                &&
+          u_get_unalignedp64(ptr)   != U_MULTICHAR_CONSTANT64('/','f','a','v','i','c','o','n') &&
+          u_get_unalignedp32(ptr+8) != U_MULTICHAR_CONSTANT32('.','i','c','o'))
+         {
+         UString key(UServer_Base::client_address_len + sz);
 
-      key.snprintf(U_CONSTANT_TO_PARAM("%.*s%.*s"), U_CLIENT_ADDRESS_TO_TRACE, sz, ptr);
+         key.snprintf(U_CONSTANT_TO_PARAM("%.*s%.*s"), U_CLIENT_ADDRESS_TO_TRACE, sz, ptr);
 
-      if (checkHitStats(U_STRING_TO_PARAM(key), page_interval, page_count)) U_RETURN(true);
+         if (checkHitStats(U_STRING_TO_PARAM(key), page_interval, page_count)) U_RETURN(true);
+         }
       }
 
    U_RETURN(false);
@@ -1128,8 +1133,8 @@ public:
 
             continue;
             }
-            
-#       ifndef U_SERVER_CAPTIVE_PORTAL
+
+#       if !defined(U_SERVER_CAPTIVE_PORTAL) && !defined(U_LOG_DISABLE) && defined(USE_LIBZ)
          if (UServer_Base::log)                         UServer_Base::log->checkForLogRotateDataToWrite();
          if (UServer_Base::apache_like_log) UServer_Base::apache_like_log->checkForLogRotateDataToWrite();
 #       endif
