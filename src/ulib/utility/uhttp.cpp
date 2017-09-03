@@ -7065,22 +7065,23 @@ U_NO_EXPORT bool UHTTP::processAuthorization()
    U_TRACE_NO_PARAM(0, "UHTTP::processAuthorization()")
 
    UTokenizer t;
+   const char* ptr;
    uint32_t sz, pos = 0;
    bool result = false, bpass = false;
-   const char* ptr = UClientImage_Base::getRequestUri(sz);
    UString buffer(100U), fpasswd, content, tmp, user(100U);
-   const char* uri_suffix = u_getsuffix(ptr, sz);
+   const char* request = UClientImage_Base::getRequestUri(sz);
+   const char* uri_suffix = u_getsuffix(request, sz);
 
    if (uri_suffix)
       {
       U_INTERNAL_ASSERT_EQUALS(uri_suffix[0], '.')
 
-      pos = (ptr + sz) - uri_suffix;
+      pos = (request + sz) - uri_suffix;
       }
 
    U_INTERNAL_DUMP("digest_authentication = %b", digest_authentication)
 
-   buffer.snprintf(U_CONSTANT_TO_PARAM("..%.*s.ht%6s"), sz-pos, ptr, digest_authentication ? "digest" : "passwd");
+   buffer.snprintf(U_CONSTANT_TO_PARAM("..%.*s.ht%6s"), sz-pos, request, digest_authentication ? "digest" : "passwd");
 
    UHTTP::UFileCacheData* ptr_file_data = cache_file->at(U_STRING_TO_PARAM(buffer));
 
@@ -7165,8 +7166,10 @@ U_NO_EXPORT bool UHTTP::processAuthorization()
                      {
                      U_ASSERT(_uri.empty())
 
-                     if (sz > value.size()   ||
-                         memcmp(ptr, value.data(), sz))
+                     U_INTERNAL_DUMP("request = %.*S", sz, request)
+
+                     if (sz > value.size() ||
+                         memcmp(request, value.data(), sz))
                         {
                         goto end;
                         }
