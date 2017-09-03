@@ -731,6 +731,10 @@ static inline uint64_t u_getValue(uint16_t tag, void* payload)
 
 static inline void u_setTag(uint16_t tag, uint64_t* pval) { uint64_t payload = u_getPayload(*pval); *pval = u_getValue(tag, (void*)(long)payload); }
 
+#if defined(USE_PGSQL) && defined(LIBPGPORT_NOT_FOUND)
+static inline void pg_qsort(void* a, size_t n, size_t es, int (*cmp)(const void*, const void*)) { qsort(a, n, es, cmp); }
+#endif
+
 #ifdef __cplusplus
 }
 #endif

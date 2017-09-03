@@ -589,6 +589,9 @@
 /* Standard C lib version */
 #undef LIBC_VERSION
 
+/* Define to 1 if PostgreSQL libpgport is not available */
+#undef LIBPGPORT_NOT_FOUND
+
 /* Libraries */
 #undef LIBS_VAR
 

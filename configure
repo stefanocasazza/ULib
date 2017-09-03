@@ -28614,10 +28614,14 @@ $as_echo_n "checking for PostgreSQL client libraries... " >&6; }
             POSTGRESQL_CPPFLAGS="-I`$PG_CONFIG --includedir` -I`$PG_CONFIG --includedir-server`"
             POSTGRESQL_VERSION=`$PG_CONFIG --version | sed -e 's#PostgreSQL ##'`
 
-				if test -f "$postgresql_libdir/libpgport.a" -o -f "$postgresql_libdir/libpgport.so"; then
+				if test -f "$postgresql_libdir/libpgport.a" -o -f "$postgresql_libdir/libpgport.so" -o -f "/usr/lib/libpgport.a" -o -f "/usr/lib/libpgport.so"; then
 					POSTGRESQL_LIBS="-lpq -lpgport"
 				else
 					POSTGRESQL_LIBS="-lpq"
+
+
+$as_echo "#define LIBPGPORT_NOT_FOUND 1" >>confdefs.h
+
 				fi
 
 
