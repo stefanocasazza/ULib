@@ -135,15 +135,6 @@ void UFile::setRoot()
 
 // gcc - call is unlikely and code size would grow
 
-void UFile::setPath(const UString& path, const UString* environment)
-{
-   U_TRACE(0, "UFile::setPath(%V,%p)", path.rep, environment)
-
-   pathname = path;
-
-   setPathRelativ(environment);
-}
-
 bool UFile::open(int flags)
 {
    U_TRACE(0, "UFile::open(%d)", flags)
@@ -151,10 +142,11 @@ bool UFile::open(int flags)
    U_CHECK_MEMORY
 
    U_INTERNAL_ASSERT_EQUALS(fd, -1)
-   U_INTERNAL_ASSERT_POINTER(path_relativ)
-   U_INTERNAL_ASSERT_MAJOR(path_relativ_len, 0)
 
    U_INTERNAL_DUMP("path_relativ(%u) = %.*S", path_relativ_len, path_relativ_len, path_relativ)
+
+   U_INTERNAL_ASSERT_POINTER(path_relativ)
+   U_INTERNAL_ASSERT_MAJOR(path_relativ_len, 0)
 
    fd = UFile::open(path_relativ, flags, PERM_FILE);
 
@@ -184,9 +176,10 @@ bool UFile::creat(int flags, mode_t mode)
    U_CHECK_MEMORY
 
    U_INTERNAL_ASSERT_EQUALS(fd, -1)
-   U_INTERNAL_ASSERT_POINTER(path_relativ)
 
    U_INTERNAL_DUMP("path_relativ(%u) = %.*S", path_relativ_len, path_relativ_len, path_relativ)
+
+   U_INTERNAL_ASSERT_POINTER(path_relativ)
 
    fd = UFile::open(path_relativ, O_CREAT | flags, mode);
 
@@ -195,24 +188,15 @@ bool UFile::creat(int flags, mode_t mode)
    U_RETURN(false);
 }
 
-bool UFile::creat(const UString& path, int flags, mode_t mode)
-{
-   U_TRACE(0, "UFile::creat(%V,%d,%d)", path.rep, flags, mode)
-
-   setPath(path);
-
-   return creat(flags, mode);
-}
-
 bool UFile::stat()
 {
    U_TRACE_NO_PARAM(1, "UFile::stat()")
 
    U_CHECK_MEMORY
 
-   U_INTERNAL_ASSERT_POINTER(path_relativ)
-
    U_INTERNAL_DUMP("path_relativ(%u) = %.*S", path_relativ_len, path_relativ_len, path_relativ)
+
+   U_INTERNAL_ASSERT_POINTER(path_relativ)
 
    st_ino = 0;
 
@@ -706,9 +690,9 @@ bool UFile::memmap(int prot, UString* str, uint32_t offset, uint32_t length)
 
    U_CHECK_MEMORY
 
-   U_INTERNAL_ASSERT_POINTER(path_relativ)
-
    U_INTERNAL_DUMP("path_relativ(%u) = %.*S", path_relativ_len, path_relativ_len, path_relativ)
+
+   U_INTERNAL_ASSERT_POINTER(path_relativ)
 
    U_INTERNAL_ASSERT_DIFFERS(fd, -1)
    U_INTERNAL_ASSERT_MAJOR(st_size, 0)
@@ -781,9 +765,9 @@ void UFile::munmap()
 
    U_CHECK_MEMORY
 
-   U_INTERNAL_ASSERT_POINTER(path_relativ)
-
    U_INTERNAL_DUMP("path_relativ(%u) = %.*S", path_relativ_len, path_relativ_len, path_relativ)
+
+   U_INTERNAL_ASSERT_POINTER(path_relativ)
 
    U_INTERNAL_ASSERT_MAJOR(map_size,0UL)
    U_INTERNAL_ASSERT_DIFFERS(map,(char*)MAP_FAILED)
@@ -821,9 +805,9 @@ UString UFile::_getContent(bool bsize, bool brdonly, bool bmap)
    U_INTERNAL_ASSERT_DIFFERS(fd, -1)
 
 #if defined(DEBUG) && !defined(U_LINUX) && !defined(O_TMPFILE)
-   U_INTERNAL_ASSERT_POINTER(path_relativ)
-
    U_INTERNAL_DUMP("path_relativ(%u) = %.*S", path_relativ_len, path_relativ_len, path_relativ)
+
+   U_INTERNAL_ASSERT_POINTER(path_relativ)
 #endif
 
 # ifdef U_COVERITY_FALSE_POSITIVE
@@ -933,9 +917,9 @@ bool UFile::creatForWrite(int flags, bool bmkdirs)
 {
    U_TRACE(1, "UFile::creatForWrite(%d,%b)", flags, bmkdirs)
 
-   U_INTERNAL_ASSERT_POINTER(path_relativ)
-
    U_INTERNAL_DUMP("path_relativ(%u) = %.*S", path_relativ_len, path_relativ_len, path_relativ)
+
+   U_INTERNAL_ASSERT_POINTER(path_relativ)
 
    bool esito = isOpen();
 
@@ -1161,9 +1145,9 @@ bool UFile::ftruncate(uint32_t n)
 
    U_CHECK_MEMORY
 
-   U_INTERNAL_ASSERT_POINTER(path_relativ)
-
    U_INTERNAL_DUMP("path_relativ(%u) = %.*S", path_relativ_len, path_relativ_len, path_relativ)
+
+   U_INTERNAL_ASSERT_POINTER(path_relativ)
 
    U_INTERNAL_ASSERT_DIFFERS(fd, -1)
 #if defined(__CYGWIN__) || defined(_MSWINDOWS_)
@@ -1316,9 +1300,9 @@ bool UFile::pread(void* buf, uint32_t count, uint32_t offset)
    U_INTERNAL_ASSERT_DIFFERS(fd, -1)
 
 #if defined(DEBUG) && !defined(U_LINUX) && !defined(O_TMPFILE)
-   U_INTERNAL_ASSERT_POINTER(path_relativ)
-
    U_INTERNAL_DUMP("path_relativ(%u) = %.*S", path_relativ_len, path_relativ_len, path_relativ)
+
+   U_INTERNAL_ASSERT_POINTER(path_relativ)
 #endif
 
 #ifdef U_COVERITY_FALSE_POSITIVE
@@ -1339,9 +1323,9 @@ bool UFile::pwrite(const void* _buf, uint32_t count, uint32_t offset)
    U_INTERNAL_ASSERT_DIFFERS(fd, -1)
 
 #if defined(DEBUG) && !defined(U_LINUX) && !defined(O_TMPFILE)
-   U_INTERNAL_ASSERT_POINTER(path_relativ)
-
    U_INTERNAL_DUMP("path_relativ(%u) = %.*S", path_relativ_len, path_relativ_len, path_relativ)
+
+   U_INTERNAL_ASSERT_POINTER(path_relativ)
 #endif
 
 #ifdef U_COVERITY_FALSE_POSITIVE
@@ -1611,9 +1595,9 @@ bool UFile::_rename(const char* newpath)
 
    U_CHECK_MEMORY
 
-   U_INTERNAL_ASSERT_POINTER(path_relativ)
-
    U_INTERNAL_DUMP("path_relativ(%u) = %.*S", path_relativ_len, path_relativ_len, path_relativ)
+
+   U_INTERNAL_ASSERT_POINTER(path_relativ)
 
    bool result = UFile::_rename(path_relativ, newpath);
 
@@ -1663,28 +1647,6 @@ void UFile::substitute(UFile& file)
    U_INTERNAL_DUMP("fd = %d map = %p map_size = %u st_size = %I", fd, map, map_size, st_size)
 
    if (fd != -1) UFile::fsync();
-}
-
-UString UFile::getSuffix() const
-{
-   U_TRACE_NO_PARAM(0, "UFile::getSuffix()")
-
-   U_INTERNAL_ASSERT_POINTER(path_relativ)
-
-   U_INTERNAL_DUMP("path_relativ(%u) = %.*S", path_relativ_len, path_relativ_len, path_relativ)
-
-   UString suffix;
-   const char* ptr = u_getsuffix(path_relativ, path_relativ_len);
-
-   if (ptr)
-      {
-      U_INTERNAL_ASSERT_EQUALS(ptr[0], '.')
-      U_INTERNAL_ASSERT_EQUALS(strchr(ptr, '/'), U_NULLPTR)
-
-      (void) suffix.assign(ptr+1, (path_relativ + path_relativ_len) - (1 + ptr)); // 1 => '.'
-      }
-
-   U_RETURN_STRING(suffix);
 }
 
 // MIME TYPE

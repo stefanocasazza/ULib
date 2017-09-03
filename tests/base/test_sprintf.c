@@ -183,9 +183,9 @@ static void test3(void)
    puts("");
 }
 
+/*
 static void test4(void)
 {
-/*
 #if !defined(SOLARIS) && !defined(MACOSX)
    char bytes[7];
    char buf[20];
@@ -206,8 +206,8 @@ static void test4(void)
       result = 1;
       }
 #endif
-*/
 }
+*/
 
 int main(int argc, char* argv[])
 {
@@ -318,8 +318,6 @@ int main(int argc, char* argv[])
 
    rfg1();
    rfg2();
-
-   test4();
 
    return (result != 0);
 }

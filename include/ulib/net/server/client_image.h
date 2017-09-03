@@ -333,7 +333,7 @@ public:
    static UString* rbuffer;
    static UString* wbuffer;
    static UString* request;
-   static bool bIPv6, bsendGzipBomp;
+   static bool bIPv6, bsendGzipBomb;
 
    static char cbuffer[128];
    static UString* request_uri;

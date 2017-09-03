@@ -221,12 +221,15 @@ U_EXPORT bool u_validate_email_address(const char* restrict address, uint32_t ad
 
 static inline bool u_isSuffixSwap(const char* restrict suffix) // NB: vi tmp...
 {
-   U_INTERNAL_TRACE("u_isSuffixSwap(%s)", suffix)
+   U_INTERNAL_TRACE("u_isSuffixSwap(%p)", suffix)
 
-   U_INTERNAL_ASSERT_EQUALS(suffix[0], '.')
-   U_INTERNAL_ASSERT_EQUALS(strchr(suffix, '/'), U_NULLPTR)
+   if (suffix)
+      {
+      U_INTERNAL_ASSERT_EQUALS(suffix[0], '.')
+      U_INTERNAL_ASSERT_EQUALS(strchr(suffix, '/'), U_NULLPTR)
 
-   if (u_get_unalignedp32(suffix) == U_MULTICHAR_CONSTANT32('.','s','w','p')) return true;
+      if (u_get_unalignedp32(suffix) == U_MULTICHAR_CONSTANT32('.','s','w','p')) return true;
+      }
 
    return false;
 }

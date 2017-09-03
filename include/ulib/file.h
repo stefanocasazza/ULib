@@ -132,7 +132,14 @@ public:
    // PATH
 
    void setRoot();
-   void setPath(const UString& path, const UString* environment = U_NULLPTR);
+   void setPath(const UString& path, const UString* environment = U_NULLPTR)
+      {
+      U_TRACE(0, "UFile::setPath(%V,%p)", path.rep, environment)
+
+      pathname = path;
+
+      setPathRelativ(environment);
+      }
 
    bool isRoot() const
       {
@@ -173,31 +180,12 @@ public:
       U_RETURN(false);
       }
 
-   bool isSuffixSwap() const // NB: vi tmp...
-      {
-      U_TRACE_NO_PARAM(0, "UFile::isSuffixSwap()")
-
-      U_INTERNAL_ASSERT_POINTER(path_relativ)
-
-      U_INTERNAL_DUMP("path_relativ(%u) = %.*S", path_relativ_len, path_relativ_len, path_relativ)
-
-      const char* suffix = u_getsuffix(path_relativ, path_relativ_len);
-
-      if (suffix &&
-          u_isSuffixSwap(suffix))
-         {
-         U_RETURN(true);
-         }
-
-      U_RETURN(false);
-      }
-
    // NB: the string can be not writable so path_relativ[path_relativ_len] can be != '\0'...
 
-   UString& getPath() { return pathname; }
    UString  getName() const;
    UString  getDirName() const;
-   UString  getSuffix() const;
+   UString& getPath()                 { return pathname; }
+   UString  getSuffix() const         { return getSuffix(u_getsuffix(path_relativ, path_relativ_len)); }
    char*    getPathRelativ() const    { return (char*)path_relativ; }
    int32_t  getPathRelativLen() const { return        path_relativ_len; }
 
@@ -251,7 +239,14 @@ public:
       }
 
    bool creat(                     int flags = O_TRUNC | O_RDWR, mode_t mode = PERM_FILE);
-   bool creat(const UString& path, int flags = O_TRUNC | O_RDWR, mode_t mode = PERM_FILE);
+   bool creat(const UString& path, int flags = O_TRUNC | O_RDWR, mode_t mode = PERM_FILE)
+      {
+      U_TRACE(0, "UFile::creat(%V,%d,%d)", path.rep, flags, mode)
+
+      setPath(path);
+
+      return creat(flags, mode);
+      }
 
    void reopen(int flags)
       {
@@ -259,9 +254,9 @@ public:
 
       U_CHECK_MEMORY
 
-      U_INTERNAL_ASSERT_POINTER(path_relativ)
-
       U_INTERNAL_DUMP("path_relativ(%u) = %.*S", path_relativ_len, path_relativ_len, path_relativ)
+
+      U_INTERNAL_ASSERT_POINTER(path_relativ)
 
       close();
 
@@ -318,9 +313,9 @@ public:
 
       U_CHECK_MEMORY
 
-      U_INTERNAL_ASSERT_POINTER(path_relativ)
-
       U_INTERNAL_DUMP("path_relativ(%u) = %.*S", path_relativ_len, path_relativ_len, path_relativ)
+
+      U_INTERNAL_ASSERT_POINTER(path_relativ)
 
       if (U_SYSCALL(access, "%S,%d", U_PATH_CONV(path_relativ), mode) == 0) U_RETURN(true);
 
@@ -349,9 +344,9 @@ public:
 
       U_CHECK_MEMORY
 
-      U_INTERNAL_ASSERT_POINTER(path_relativ)
-
       U_INTERNAL_DUMP("path_relativ(%u) = %.*S", path_relativ_len, path_relativ_len, path_relativ)
+
+      U_INTERNAL_ASSERT_POINTER(path_relativ)
 
       if (U_SYSCALL(lstat, "%S,%p", U_PATH_CONV(path_relativ), (struct stat*)this) == 0) U_RETURN(true);
 
@@ -368,9 +363,9 @@ public:
       U_INTERNAL_ASSERT_DIFFERS(fd, -1)
 
 #  if defined(DEBUG) && !defined(U_LINUX) && !defined(O_TMPFILE)
-      U_INTERNAL_ASSERT_POINTER(path_relativ)
-
       U_INTERNAL_DUMP("path_relativ(%u) = %.*S", path_relativ_len, path_relativ_len, path_relativ)
+
+      U_INTERNAL_ASSERT_POINTER(path_relativ)
 #  endif
 
 #  ifdef U_COVERITY_FALSE_POSITIVE
@@ -404,9 +399,9 @@ public:
       U_INTERNAL_ASSERT_DIFFERS(fd, -1)
 
 #  if defined(DEBUG) && !defined(U_LINUX) && !defined(O_TMPFILE)
-      U_INTERNAL_ASSERT_POINTER(path_relativ)
-
       U_INTERNAL_DUMP("path_relativ(%u) = %.*S", path_relativ_len, path_relativ_len, path_relativ)
+
+      U_INTERNAL_ASSERT_POINTER(path_relativ)
 #  endif
 
       st_size = lseek(U_SEEK_BEGIN, SEEK_END);
@@ -604,9 +599,9 @@ public:
 
       U_CHECK_MEMORY
 
-      U_INTERNAL_ASSERT_POINTER(path_relativ)
-
       U_INTERNAL_DUMP("path_relativ(%u) = %.*S", path_relativ_len, path_relativ_len, path_relativ)
+
+      U_INTERNAL_ASSERT_POINTER(path_relativ)
 
       if (UFile::_unlink(path_relativ)) U_RETURN(true);
 
@@ -634,9 +629,9 @@ public:
       U_INTERNAL_ASSERT_DIFFERS(fd, -1)
 
 #  if defined(DEBUG) && !defined(U_LINUX) && !defined(O_TMPFILE)
-      U_INTERNAL_ASSERT_POINTER(path_relativ)
-
       U_INTERNAL_DUMP("path_relativ(%u) = %.*S", path_relativ_len, path_relativ_len, path_relativ)
+
+      U_INTERNAL_ASSERT_POINTER(path_relativ)
 #  endif
 
 #  ifdef U_COVERITY_FALSE_POSITIVE
@@ -654,9 +649,9 @@ public:
       U_INTERNAL_ASSERT_DIFFERS(fd, -1)
 
 #  if defined(DEBUG) && !defined(U_LINUX) && !defined(O_TMPFILE)
-      U_INTERNAL_ASSERT_POINTER(path_relativ)
-
       U_INTERNAL_DUMP("path_relativ(%u) = %.*S", path_relativ_len, path_relativ_len, path_relativ)
+
+      U_INTERNAL_ASSERT_POINTER(path_relativ)
 #  endif
 
       if (fallocate(fd, n))
@@ -685,9 +680,9 @@ public:
       U_INTERNAL_ASSERT_DIFFERS(fd, -1)
 
 #  if defined(DEBUG) && !defined(U_LINUX) && !defined(O_TMPFILE)
-      U_INTERNAL_ASSERT_POINTER(path_relativ)
-
       U_INTERNAL_DUMP("path_relativ(%u) = %.*S", path_relativ_len, path_relativ_len, path_relativ)
+
+      U_INTERNAL_ASSERT_POINTER(path_relativ)
 #  endif
 
       return lock(fd, l_type, start, len);
@@ -702,9 +697,9 @@ public:
       U_INTERNAL_ASSERT_DIFFERS(fd, -1)
 
 #  if defined(DEBUG) && !defined(U_LINUX) && !defined(O_TMPFILE)
-      U_INTERNAL_ASSERT_POINTER(path_relativ)
-
       U_INTERNAL_DUMP("path_relativ(%u) = %.*S", path_relativ_len, path_relativ_len, path_relativ)
+
+      U_INTERNAL_ASSERT_POINTER(path_relativ)
 #  endif
 
       return lock(fd, F_UNLCK, start, len);
@@ -841,9 +836,9 @@ public:
       U_INTERNAL_ASSERT_DIFFERS(fd, -1)
 
 #  if defined(DEBUG) && !defined(U_LINUX) && !defined(O_TMPFILE)
-      U_INTERNAL_ASSERT_POINTER(path_relativ)
-
       U_INTERNAL_DUMP("path_relativ(%u) = %.*S", path_relativ_len, path_relativ_len, path_relativ)
+
+      U_INTERNAL_ASSERT_POINTER(path_relativ)
 #  endif
 
 #  ifdef U_COVERITY_FALSE_POSITIVE
@@ -1083,6 +1078,29 @@ protected:
    bool creatForWrite(int flags, bool bmkdirs);
    void setPathRelativ(const UString* environment = U_NULLPTR);
    void setPath(const UFile& file, char* buffer_path, const char* suffix, uint32_t len);
+
+   UString getSuffix(const char* ptr) const
+      {
+      U_TRACE(0, "UFile::getSuffix(%p)", ptr)
+
+      U_INTERNAL_DUMP("path_relativ(%u) = %.*S", path_relativ_len, path_relativ_len, path_relativ)
+
+      U_INTERNAL_ASSERT_POINTER(path_relativ)
+
+      if (ptr)
+         {
+         U_INTERNAL_ASSERT_EQUALS(ptr[0], '.')
+         U_INTERNAL_ASSERT_EQUALS(strchr(ptr, '/'), U_NULLPTR)
+
+         ptr += 1; // 1 => '.'
+
+         UString suffix(ptr, (path_relativ + path_relativ_len) - ptr);
+
+         U_RETURN_STRING(suffix);
+         }
+
+      return UString::getStringNull();
+      }
 
    static void ftw_tree_up();
    static void ftw_tree_push();

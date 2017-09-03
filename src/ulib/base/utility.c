@@ -3595,7 +3595,7 @@ __pure int u_isUTF16(const unsigned char* restrict buf, uint32_t len)
  */
 
 #define U__S  0x00000001 /* character space    ' ' (32 0x20) */
-#define U__E  0x00000002 /* character used in printf format  */
+#define U__E  0x00000002 /* character used in printf format */
 #define U__H  0x00000004 /* character         '+' (43 0x2B) */
 #define U__V  0x00000008 /* character         ',' (44 0x2C) */
 #define U__O  0x00000010 /* character minus   '-' (45 0x2D) */

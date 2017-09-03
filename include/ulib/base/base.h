@@ -570,9 +570,9 @@ static inline bool u_is_overlap(const char* restrict dst, const char* restrict s
 
 static inline __pure const char* u_basename(const char* restrict path, uint32_t len)
 {
-   U_INTERNAL_TRACE("u_basename(%.*s,%u)", U_min(len,128), path, len)
-
    const char* restrict ptr;
+
+   U_INTERNAL_TRACE("u_basename(%.*s,%u)", U_min(len,128), path, len)
 
    U_INTERNAL_ASSERT_MAJOR(len, 0)
    U_INTERNAL_ASSERT_POINTER(path)
@@ -583,7 +583,7 @@ static inline __pure const char* u_basename(const char* restrict path, uint32_t 
     * for (ptr = path+len-2; ptr > path; --ptr) if (IS_DIR_SEPARATOR(*ptr)) return ptr+1;
     */
 
-   ptr = (const char* restrict) memrchr(path, '/', len);
+   ptr = (const char* restrict) memrchr(path, PATH_SEPARATOR, len);
 
    return (ptr ? ptr+1 : path);
 }
@@ -606,7 +606,7 @@ static inline const char* u_getsuffix(const char* restrict path, uint32_t len)
     * return (ptr && memrchr(ptr+1, '/', len-(ptr+1-path)) == 0 ? ptr : 0);
     */
 
-   for (ptr = path+len-2; ptr > path; --ptr)
+   for (ptr = path+len-2; ptr >= path; --ptr)
       {
       c = *ptr;
 

@@ -209,12 +209,12 @@ UOrmStatement::UOrmStatement(UOrmSession& session, const char* stmt, uint32_t le
       pdrv  = (psession = &session)->pdrv;
       pstmt = pdrv->handlerStatementCreation(stmt, len);
 
-      U_INTERNAL_DUMP("psession = %p pdrv = %p", psession, pdrv)
+      U_INTERNAL_DUMP("psession = %p pdrv = %p pstmt = %p", psession, pdrv, pstmt)
+
+      if (pstmt) return;
       }
-   else
-      {
-      if (UOrmDriver::env_driver_len) UOrmSession::loadDriverFail(UOrmDriver::env_driver, UOrmDriver::env_driver_len);
-      }
+
+   if (UOrmDriver::env_driver_len) UOrmSession::loadDriverFail(UOrmDriver::env_driver, UOrmDriver::env_driver_len);
 #endif
 }
 

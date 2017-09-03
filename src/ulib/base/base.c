@@ -1887,13 +1887,15 @@ case_float:
          {
          double dbl = VA_ARG(double);
 
-         len = u_dtoa(dbl, bp) - bp;
+         U_INTERNAL_PRINT("dbl = %g", dbl)
+
+         len = (dbl == .0 ? (*bp='0',1) : u_dtoa(dbl, bp) - bp);
          }
       else
          {
          buf[0] = '%';
 
-         cp = buf + 1;
+         cp = buf+1;
 
          if ((flags & ALT)     != 0)           *cp++ = '#';
          if ((flags & ZEROPAD) != 0)           *cp++ = '0';
@@ -1901,21 +1903,108 @@ case_float:
          if ((flags & THOUSANDS_GROUPED) != 0) *cp++ = '\'';
          if (sign)                             *cp++ = sign;
 
-         u_put_unalignedp32(cp, U_MULTICHAR_CONSTANT32('*','.','*','L')); /* width, prec */
-
-         u_put_unalignedp16(cp + ((flags & LONGDBL) == 0 ? 3 : 4), U_MULTICHAR_CONSTANT16(ch,'\0'));
-
-         if ((flags & LONGDBL) != 0)
+         if (prec == -1 &&
+             width == 0)
             {
-            long double ldbl = VA_ARG(long double);
+            u_put_unalignedp16(cp, U_MULTICHAR_CONSTANT16(ch,'\0'));
 
-            len = sprintf(bp, (const char* restrict)buf, width, prec, ldbl);
+            if ((flags & LONGDBL) != 0)
+               {
+               long double ldbl = VA_ARG(long double);
+
+               U_INTERNAL_PRINT("buf = %s ldbl = %Lg", buf, ldbl)
+
+               len = sprintf(bp, (const char* restrict)buf, ldbl);
+               }
+            else
+               {
+               double dbl = VA_ARG(double);
+
+               U_INTERNAL_PRINT("buf = %s dbl = %g", buf, dbl)
+
+               len = sprintf(bp, (const char* restrict)buf, dbl);
+               }
             }
          else
             {
-            double dbl = VA_ARG(double);
+            if (width == 0)
+               {
+               u_put_unalignedp32(cp, U_MULTICHAR_CONSTANT32('.','*','L','\0')); /* prec, prefix long double */
 
-            len = sprintf(bp, (const char* restrict)buf, width, prec, dbl);
+               if ((flags & LONGDBL) != 0)
+                  {
+                  long double ldbl = VA_ARG(long double);
+
+                  u_put_unalignedp16(cp+3, U_MULTICHAR_CONSTANT16(ch,'\0'));
+
+                  U_INTERNAL_PRINT("buf = %s prec = %d ldbl = %Lg", buf, prec, ldbl)
+
+                  len = sprintf(bp, (const char* restrict)buf, prec, ldbl);
+                  }
+               else
+                  {
+                  double dbl = VA_ARG(double);
+
+                  u_put_unalignedp16(cp+2, U_MULTICHAR_CONSTANT16(ch,'\0'));
+
+                  U_INTERNAL_PRINT("buf = %s prec = %d dbl = %g", buf, prec, dbl)
+
+                  len = sprintf(bp, (const char* restrict)buf, prec, dbl);
+                  }
+               }
+            else if (prec == -1)
+               {
+               u_put_unalignedp16(cp, U_MULTICHAR_CONSTANT16('*','L')); /* width, prefix long double */
+
+               if ((flags & LONGDBL) != 0)
+                  {
+                  long double ldbl = VA_ARG(long double);
+
+                  u_put_unalignedp16(cp+2, U_MULTICHAR_CONSTANT16(ch,'\0'));
+
+                  U_INTERNAL_PRINT("buf = %s width = %u ldbl = %Lg", buf, ldbl)
+
+                  len = sprintf(bp, (const char* restrict)buf, width, ldbl);
+                  }
+               else
+                  {
+                  double dbl = VA_ARG(double);
+
+                  u_put_unalignedp16(cp+1, U_MULTICHAR_CONSTANT16(ch,'\0'));
+
+                  U_INTERNAL_PRINT("buf = %s width = %u dbl = %g", buf, dbl)
+
+                  len = sprintf(bp, (const char* restrict)buf, width, dbl);
+                  }
+               }
+            else
+               {
+               U_INTERNAL_ASSERT_DIFFERS(prec, -1)
+               U_INTERNAL_ASSERT_DIFFERS(width, 0)
+
+               u_put_unalignedp32(cp, U_MULTICHAR_CONSTANT32('*','.','*','L')); /* width, prec, prefix long double */
+
+               if ((flags & LONGDBL) != 0)
+                  {
+                  long double ldbl = VA_ARG(long double);
+
+                  u_put_unalignedp16(cp+4, U_MULTICHAR_CONSTANT16(ch,'\0'));
+
+                  U_INTERNAL_PRINT("buf = %s width = %u prec = %d ldbl = %Lg", buf, width, prec, ldbl)
+
+                  len = sprintf(bp, (const char* restrict)buf, width, prec, ldbl);
+                  }
+               else
+                  {
+                  double dbl = VA_ARG(double);
+
+                  u_put_unalignedp16(cp+3, U_MULTICHAR_CONSTANT16(ch,'\0'));
+
+                  U_INTERNAL_PRINT("buf = %s width = %u prec = %d dbl = %g", buf, width, prec, dbl)
+
+                  len = sprintf(bp, (const char* restrict)buf, width, prec, dbl);
+                  }
+               }
             }
 
          U_INTERNAL_ASSERT_EQUALS(len, strlen(bp))

@@ -29,8 +29,6 @@ void UOrmDriverSqlite::handlerError()
 {
    U_TRACE_NO_PARAM(0, "UOrmDriverSqlite::handlerError()")
 
-   U_INTERNAL_ASSERT_POINTER(UOrmDriver::connection)
-
    // Translation table for error status codes
 
    struct error_value_info {
@@ -76,8 +74,11 @@ void UOrmDriverSqlite::handlerError()
       U_ENTRY(SQLITE_DONE)          /* sqlite3_step() has finished executing */
    };
 
-   if (UOrmDriver::errmsg  == U_NULLPTR) UOrmDriver::errmsg  = U_SYSCALL(sqlite3_errmsg,  "%p", (sqlite3*)UOrmDriver::connection);
-   if (UOrmDriver::errcode == 0)         UOrmDriver::errcode = U_SYSCALL(sqlite3_errcode, "%p", (sqlite3*)UOrmDriver::connection);
+   if (UOrmDriver::connection)
+      {
+      if (UOrmDriver::errmsg  == U_NULLPTR) UOrmDriver::errmsg  = U_SYSCALL(sqlite3_errmsg,  "%p", (sqlite3*)UOrmDriver::connection);
+      if (UOrmDriver::errcode == 0)         UOrmDriver::errcode = U_SYSCALL(sqlite3_errcode, "%p", (sqlite3*)UOrmDriver::connection);
+      }
 
    if (UOrmDriver::errcode >= 0                                     &&
        UOrmDriver::errcode < (int)U_NUM_ELEMENTS(error_value_table) &&

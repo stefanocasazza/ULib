@@ -182,8 +182,6 @@ public:
    static UHashMap<UString>* prequestHeader;
    static UVector<UModProxyService*>* vservice;
 
-   static const char* uri_suffix;
-   static const char* uri_basename;
    static char response_buffer[64];
    static int mime_index, cgi_timeout; // the time-out value in seconds for output cgi process
    static bool enable_caching_by_proxy_servers, skip_check_cookie_ip_address;
@@ -892,6 +890,7 @@ public:
    static void    callSigHUPForAllUSP();
    static void callAfterForkForAllUSP();
 
+   static bool          checkForUSP();
    static UServletPage* getUSP(const char* key, uint32_t key_len);
 
    // CSP (C Servlet Page)
@@ -1302,7 +1301,7 @@ private:
       U_INTERNAL_ASSERT_POINTER(file)
       U_ASSERT_EQUALS(UClientImage_Base::isRequestNotFound(), false)
 
-      uri_suffix = u_getsuffix(U_FILE_TO_PARAM(*file));
+      const char* uri_suffix = u_getsuffix(U_FILE_TO_PARAM(*file));
 
       U_INTERNAL_DUMP("uri_suffix = %p", uri_suffix)
 
@@ -1406,7 +1405,6 @@ private:
    static void setCGIShellScript(UString& command) U_NO_EXPORT;
    static bool checkIfSourceHasChangedAndCompileUSP() U_NO_EXPORT;
    static bool compileUSP(const char* path, uint32_t len) U_NO_EXPORT;
-   static void manageDataForCache(const UString& file_name) U_NO_EXPORT;
    static int  checkGetRequestForRange(const UString& data) U_NO_EXPORT;
    static int  sortRange(const void* a, const void* b) __pure U_NO_EXPORT;
    static bool addHTTPVariables(UStringRep* key, void* value) U_NO_EXPORT;
@@ -1414,6 +1412,7 @@ private:
    static void putDataInCache(const UString& fmt, UString& content) U_NO_EXPORT;
    static bool readDataChunked(USocket* sk, UString* pbuffer, UString& body) U_NO_EXPORT;
    static void setResponseForRange(uint32_t start, uint32_t end, uint32_t header) U_NO_EXPORT;
+   static void manageDataForCache(const UString& basename, const UString& suffix) U_NO_EXPORT;
    static bool checkDataSession(const UString& token, time_t expire, UString* data) U_NO_EXPORT;
 
    static inline void resetFileCache() U_NO_EXPORT;

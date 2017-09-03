@@ -28,17 +28,17 @@ export ORM_DRIVER ORM_OPTION UMEMPOOL
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------
 #Running 15s test @ http://localhost:8080/plaintext
 #  4 threads and 256 connections
-#  Thread Stats   Avg      Stdev     Max   +/- Stdev
-#    Latency     1.00ms  220.28us  17.02ms   74.17%
-#    Req/Sec   552.46k    33.92k  614.40k    54.19%
-#  Latency Distribution
-#     50%    1.00ms
-#     75%    1.13ms
-#     90%    1.24ms
-#     99%    1.43ms
-#  31102816 requests in 14.97s, 3.74GB read
-#Requests/sec: 2077107.68
-#Transfer/sec:    255.53MB
+# Thread Stats   Avg      Stdev     Max   +/- Stdev
+#   Latency     1.86ms    2.30ms  28.08ms   88.21%
+#   Req/Sec   552.42k   200.56k    1.39M    68.22%
+# Latency Distribution
+#    50%    1.00ms
+#    75%    2.46ms
+#    90%    4.53ms
+#    99%   11.03ms
+# 30638208 requests in 14.99s, 3.68GB read
+#Requests/sec: 2044562.05
+#Transfer/sec:    251.53MB
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------
 # JSON
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -49,16 +49,16 @@ export ORM_DRIVER ORM_OPTION UMEMPOOL
 #Running 15s test @ http://localhost:8080/json
 #  4 threads and 256 connections
 #  Thread Stats   Avg      Stdev     Max   +/- Stdev
-#    Latency   449.69us  236.81us  20.50ms   89.87%
-#    Req/Sec    76.61k     5.88k   99.00k    54.11%
+#    Latency     0.90ms    2.52ms  36.05ms   93.49%
+#    Req/Sec    89.35k    47.88k  229.78k    65.55%
 #  Latency Distribution
-#     50%  443.00us
-#     75%  562.00us
-#     90%  645.00us
-#     99%  823.00us
-#  4323309 requests in 15.00s, 614.33MB read
-#Requests/sec: 288235.65
-#Transfer/sec:     40.96MB
+#     50%  166.00us
+#     75%  408.00us
+#     90%    2.27ms
+#     99%   11.68ms
+#  4845404 requests in 15.00s, 688.52MB read
+#Requests/sec: 323059.07
+#Transfer/sec:     45.91MB
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------
 # DB
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------

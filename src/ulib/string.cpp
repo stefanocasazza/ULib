@@ -1979,9 +1979,13 @@ double UString::strtod() const
 
    UValue json;
 
-   if (json.parse(*this)) return json.getDouble();
+   if (equal("0", 1) == false &&
+       json.parse(*this))
+      {
+      return json.getDouble();
+      }
 
-   U_RETURN(0);
+   U_RETURN(.0);
 }
 
 void UString::printKeyValue(const char* key, uint32_t keylen, const char* _data, uint32_t datalen)

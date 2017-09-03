@@ -1841,14 +1841,14 @@ void UServer_Base::loadConfigParam()
    if (preforked_num_kids > 1) monitoring_process = true;
 
 #ifdef USE_LIBSSL
-   *password   = cfg->at(U_CONSTANT_TO_PARAM("PASSWORD"));
-   *ca_file    = cfg->at(U_CONSTANT_TO_PARAM("CA_FILE"));
-   *ca_path    = cfg->at(U_CONSTANT_TO_PARAM("CA_PATH"));
-   *key_file   = cfg->at(U_CONSTANT_TO_PARAM("KEY_FILE"));
-   *cert_file  = cfg->at(U_CONSTANT_TO_PARAM("CERT_FILE"));
+   *dh_file   = cfg->at(U_CONSTANT_TO_PARAM("DH_FILE"));
+   *ca_file   = cfg->at(U_CONSTANT_TO_PARAM("CA_FILE"));
+   *ca_path   = cfg->at(U_CONSTANT_TO_PARAM("CA_PATH"));
+   *key_file  = cfg->at(U_CONSTANT_TO_PARAM("KEY_FILE"));
+   *password  = cfg->at(U_CONSTANT_TO_PARAM("PASSWORD"));
+   *cert_file = cfg->at(U_CONSTANT_TO_PARAM("CERT_FILE"));
 
-   *dh_file    = cfg->at(U_CONSTANT_TO_PARAM("DH_FILE"));
-   verify_mode = cfg->at(U_CONSTANT_TO_PARAM("VERIFY_MODE"));
+   verify_mode = cfg->readLong(U_CONSTANT_TO_PARAM("VERIFY_MODE"));
 
    if (bssl) min_size_for_sendfile = U_NOT_FOUND; // NB: we can't use sendfile with SSL...
 #endif

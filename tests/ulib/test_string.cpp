@@ -1494,20 +1494,11 @@ U_EXPORT main(int argc, char* argv[])
 
    U_TRACE(5, "main(%d)", argc)
 
-   bool ok = u_isUTF8((const unsigned char*)U_CONSTANT_TO_PARAM("..M-^X@M-/..M-^X@1M-/..\xC3\xBC\x88\x01\x0BM-^X@M-/..M-^X@M-/..M-^X@M-/../winnt/system32/cmd.exe"));
-
-   U_INTERNAL_ASSERT_EQUALS(ok, false)
-
-   UCrono crono;
-   UString x(100U), y = U_STRING_FROM_CONSTANT("0.0000001"), z, z1, value = U_STRING_FROM_CONSTANT("0.0");
-
-   UString new_value(U_CAPACITY, U_CONSTANT_TO_PARAM("%.*s; %v"), U_STRING_TO_TRACE(y), value.rep);
-
-   value = new_value;
-
-   U_INTERNAL_DUMP("value(%u): = %.*S", value.size(), U_STRING_TO_TRACE(value))
-
-   U_ASSERT( value == U_STRING_FROM_CONSTANT("0.0000001; 0.0") )
+   /*
+   double val1 = U_STRING_FROM_CONSTANT("0").strtod();
+   u__printf(1, U_CONSTANT_TO_PARAM("0 = %lf %g"), val1, val1);
+   exit(0);
+   */
 
    U_ASSERT( U_STRING_FROM_CONSTANT("0.0").strtod() == 0.0 )
    U_ASSERT( U_STRING_FROM_CONSTANT("1.0").strtod() == 1.0 )
@@ -1563,6 +1554,7 @@ U_EXPORT main(int argc, char* argv[])
 #endif
 
    int i;
+   UString x(100U), y, z;
 
    for (i = -310; i < 310; ++i)
       {
@@ -1635,6 +1627,23 @@ U_EXPORT main(int argc, char* argv[])
 
    U_ASSERT( y == U_STRING_FROM_CONSTANT("10.30.1.0/24 10.1.0.1/16") )
 #endif
+
+   UCrono crono;
+   UString z1, value = U_STRING_FROM_CONSTANT("0.0");
+
+   y = U_STRING_FROM_CONSTANT("0.0000001");
+
+   UString new_value(U_CAPACITY, U_CONSTANT_TO_PARAM("%.*s; %v"), U_STRING_TO_TRACE(y), value.rep);
+
+   value = new_value;
+
+   U_INTERNAL_DUMP("value(%u): = %.*S", value.size(), U_STRING_TO_TRACE(value))
+
+   U_ASSERT( value == U_STRING_FROM_CONSTANT("0.0000001; 0.0") )
+
+   bool ok = u_isUTF8((const unsigned char*)U_CONSTANT_TO_PARAM("..M-^X@M-/..M-^X@1M-/..\xC3\xBC\x88\x01\x0BM-^X@M-/..M-^X@M-/..M-^X@M-/../winnt/system32/cmd.exe"));
+
+   U_INTERNAL_ASSERT_EQUALS(ok, false)
 
    UString buffer(U_CAPACITY), encoded(U_CAPACITY);
 
