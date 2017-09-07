@@ -53,9 +53,9 @@ typedef int  (*iPFprpr) (UStringRep*, UStringRep*);
 typedef void (*vPFprpr) (UStringRep*, UStringRep*);
 
 #define U_cdb_ignore_case(obj)         (obj)->UCDB::flag[0]
-#define U_cdb_shared(obj)              (obj)->UCDB::flag[1]
-#define U_cdb_result_call(obj)         (obj)->UCDB::flag[2]
-#define U_cdb_add_entry_to_vector(obj) (obj)->UCDB::flag[3]
+#define U_cdb_result_call(obj)         (obj)->UCDB::flag[1]
+#define U_cdb_add_entry_to_vector(obj) (obj)->UCDB::flag[2]
+#define U_cdb_no_hash(obj)             (obj)->UCDB::flag[3]
 
 class U_EXPORT UCDB : public UFile {
 public:
@@ -275,6 +275,13 @@ protected:
    uint32_t cdb_hash(const char* t, uint32_t tlen)
       {
       U_TRACE(0, "UCDB::cdb_hash(%.*S,%u)", tlen, t, tlen)
+
+      if (U_cdb_no_hash(this))
+         {
+         U_INTERNAL_ASSERT_EQUALS(tlen, sizeof(uint32_t))
+
+         U_RETURN(*(uint32_t*)t);
+         }
 
       int flags = (U_cdb_ignore_case(this) == 0xff ? -1 : U_cdb_ignore_case(this));
 

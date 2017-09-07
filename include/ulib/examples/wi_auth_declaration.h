@@ -116,7 +116,7 @@ static UString*  yearName;
 static UString* monthName;
 static UString*  weekName;
 
-static uint32_t    time_available_daily,   time_available_flat;
+static uint32_t    time_available_daily,    time_available_flat;
 static uint64_t traffic_available_daily, traffic_available_flat;
 
 static bool     user_exist, brenew, isIP, isMAC, ap_address_trust, db_user_filter_tavarnelle, admin_status_nodog_and_user_as_csv, status_nodog_and_user_resync;
@@ -4776,7 +4776,7 @@ static void setBufferForAdminEditAP()
    U_TRACE_NO_PARAM(5, "::setBufferForAdminEditAP()")
 
    if (db_user_filter_tavarnelle) (void) buffer_srv->assign(U_CONSTANT_TO_PARAM("tavarnelle.shtml?admin_edit_ap=0&"));
-   else                           (void) buffer_srv->assign(U_CONSTANT_TO_PARAM(                 "admin_edit_ap=?"));
+   else                           (void) buffer_srv->assign(U_CONSTANT_TO_PARAM(                 "admin_edit_ap?"));
 }
 
 static void GET_admin_edit_ap()

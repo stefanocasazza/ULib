@@ -135,9 +135,11 @@ void ULib::init(char** argv, const char* mempool)
    UMemoryPool::func_call = __PRETTY_FUNCTION__;
 
    U_INTERNAL_ASSERT_EQUALS(u_dbl2str(1234567890, buffer)-buffer, 12)
+   U_INTERNAL_DUMP("buffer = %.12S", buffer)
    U_INTERNAL_ASSERT_EQUALS(memcmp(buffer, "1234567890.0", 12), 0)
 
    U_INTERNAL_ASSERT_EQUALS(u_num2str64(1234567890, buffer)-buffer, 10)
+   U_INTERNAL_DUMP("buffer = %.10S", buffer)
    U_INTERNAL_ASSERT_EQUALS(memcmp(buffer, "1234567890", 10), 0)
 #endif
 

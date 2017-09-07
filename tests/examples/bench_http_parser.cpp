@@ -12,7 +12,7 @@
 
 #include <ulib/utility/uhttp.h>
 
-static const char data[] =
+static const char request[521] =
     "POST /joyent/http-parser HTTP/1.1\r\n"
     "Host: github.com\r\n"
     "DNT: 1\r\n"
@@ -46,7 +46,7 @@ static int bench(int iter_count, int silent)
 
    for (i = 0; i < iter_count; i++)
       {
-      UHTTP::parserExecute(data, sizeof(data)-1);
+      UHTTP::parserExecute(request, sizeof(request)-1);
       }
 
    if (!silent)

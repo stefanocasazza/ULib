@@ -116,10 +116,13 @@ plugin/product1.lo: plugin/product1.cpp /usr/include/stdc-predef.h \
  /usr/lib/gcc/x86_64-pc-linux-gnu/7.2.0/include/g++-v7/bits/basic_string.h \
  /usr/lib/gcc/x86_64-pc-linux-gnu/7.2.0/include/g++-v7/ext/alloc_traits.h \
  /usr/lib/gcc/x86_64-pc-linux-gnu/7.2.0/include/g++-v7/bits/alloc_traits.h \
+ /usr/lib/gcc/x86_64-pc-linux-gnu/7.2.0/include/g++-v7/string_view \
+ /usr/lib/gcc/x86_64-pc-linux-gnu/7.2.0/include/g++-v7/limits \
+ /usr/lib/gcc/x86_64-pc-linux-gnu/7.2.0/include/g++-v7/bits/functional_hash.h \
+ /usr/lib/gcc/x86_64-pc-linux-gnu/7.2.0/include/g++-v7/bits/string_view.tcc \
  /usr/lib/gcc/x86_64-pc-linux-gnu/7.2.0/include/g++-v7/ext/string_conversions.h \
  /usr/lib/gcc/x86_64-pc-linux-gnu/7.2.0/include/g++-v7/cstdio \
  /usr/lib/gcc/x86_64-pc-linux-gnu/7.2.0/include/g++-v7/cerrno \
- /usr/lib/gcc/x86_64-pc-linux-gnu/7.2.0/include/g++-v7/bits/functional_hash.h \
  /usr/lib/gcc/x86_64-pc-linux-gnu/7.2.0/include/g++-v7/bits/basic_string.tcc \
  /usr/lib/gcc/x86_64-pc-linux-gnu/7.2.0/include/g++-v7/bits/locale_classes.tcc \
  /usr/lib/gcc/x86_64-pc-linux-gnu/7.2.0/include/g++-v7/system_error \
@@ -488,13 +491,19 @@ plugin/product.h:
 
 /usr/lib/gcc/x86_64-pc-linux-gnu/7.2.0/include/g++-v7/bits/alloc_traits.h:
 
+/usr/lib/gcc/x86_64-pc-linux-gnu/7.2.0/include/g++-v7/string_view:
+
+/usr/lib/gcc/x86_64-pc-linux-gnu/7.2.0/include/g++-v7/limits:
+
+/usr/lib/gcc/x86_64-pc-linux-gnu/7.2.0/include/g++-v7/bits/functional_hash.h:
+
+/usr/lib/gcc/x86_64-pc-linux-gnu/7.2.0/include/g++-v7/bits/string_view.tcc:
+
 /usr/lib/gcc/x86_64-pc-linux-gnu/7.2.0/include/g++-v7/ext/string_conversions.h:
 
 /usr/lib/gcc/x86_64-pc-linux-gnu/7.2.0/include/g++-v7/cstdio:
 
 /usr/lib/gcc/x86_64-pc-linux-gnu/7.2.0/include/g++-v7/cerrno:
-
-/usr/lib/gcc/x86_64-pc-linux-gnu/7.2.0/include/g++-v7/bits/functional_hash.h:
 
 /usr/lib/gcc/x86_64-pc-linux-gnu/7.2.0/include/g++-v7/bits/basic_string.tcc:
 

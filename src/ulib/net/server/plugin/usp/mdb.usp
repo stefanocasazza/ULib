@@ -5,7 +5,7 @@ TechEmpower Web Framework Benchmarks
 <!--#declaration
 #include "world.h"
 
-static bson_t* query;  
+static bson_t* query;
 static UMongoDBClient* mc;
 
 static void usp_fork_mdb()

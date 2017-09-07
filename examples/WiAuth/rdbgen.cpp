@@ -99,7 +99,7 @@ public:
 
          if (bshm == false) x.resetReference();
 
-         U_INTERNAL_DUMP("optind = %d argv[optind] = %S", optind, argv[optind])
+         U_INTERNAL_DUMP("optind = %d argv[optind] = %S op = %d", optind, argv[optind], op)
 
          switch (op)
             {
@@ -149,9 +149,10 @@ public:
             case 4: // size, capacity
                {
                char buffer[64];
-               uint32_t sz = x.getCapacity(),
-                        n  = u__snprintf(buffer, sizeof(buffer), U_CONSTANT_TO_PARAM("%u record(s) - capacity: %.2fM (%u bytes)\n"),
-                                         x.size(), (double)sz / (1024.0 * 1024.0), sz);
+               uint32_t sz  = x.getCapacity(),
+                        jsz = x.getJournalSize(),
+                        n   = u__snprintf(buffer, sizeof(buffer), U_CONSTANT_TO_PARAM("journal.size() =  %.2fM (%u bytes) - %u record(s) - capacity: %.2fM (%u bytes)\n"),
+                                         (double)jsz / (1024.0 * 1024.0), jsz, x.size(), (double)sz / (1024.0 * 1024.0), sz);
 
                (void) write(1, buffer, n);
                }

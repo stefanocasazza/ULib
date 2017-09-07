@@ -15,8 +15,8 @@ rm -f log/php${ARG}.log \
 			 trace.*.[0-9]*	  object.*.[0-9]*		 stack.*.[0-9]*	  mempool.*.[0-9]* \
       www/trace.*.[0-9]* www/object.*.[0-9]* www/stack.*.[0-9]* www/mempool.*.[0-9]*
 
-if [ ! -s "www/info.php" ]; then
-	echo -n "<?php phpinfo(); ?>" > www/info.php
+if [ ! -s "www/index.php" ]; then
+	echo -n "<?php phpinfo(); ?>" > www/index.php
 fi
 if [ ! -s "www/cgi-bin/index.php" ]; then
 	echo -n "<?php phpinfo(); ?>" > www/cgi-bin/index.php

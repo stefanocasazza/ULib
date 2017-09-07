@@ -7,8 +7,8 @@ configfiles = userver.service
 
 EXTRA_DIST = $(configfiles:%=%.in) \
 				 cdb configure.help TODO LICENSE* README* *.spec* \
-	 			 ULib.m4 rpm.sh rpmpkgreq.lst rpmpkgreq.lst.suse openwrt \
 	 			 doc/Doxyfile doc/readme.txt shtool *.awk .travis.yml autogen.sh nativejson-benchmark \
+	 			 ULib.m4 rpm.sh rpmpkgreq.lst rpmpkgreq.lst.suse openwrt CODE_OF_CONDUCT.md CONTRIBUTING.md \
 				 fuzz/http1-corpus fuzz/http2-corpus fuzz/build_libFuzzer.sh fuzz/Makefile.in fuzz/Makefile.am fuzz/*.cpp fuzz/uclient.cfg
 
 MAINTAINERCLEANFILES = configure aclocal.m4 libtool Makefile.in Makefile INSTALL

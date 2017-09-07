@@ -5398,7 +5398,7 @@ void UHTTP::initDbNotFound()
 
    // POSIX shared memory object: interprocess - can be used by unrelated processes (userver_tcp and userver_ssl)
 
-   if (db_not_found->open(4096 * 4096, false, true, true, U_SHM_LOCK_DB_NOT_FOUND)) // NB: we don't want truncate (we have only the journal)...
+   if (db_not_found->open(8 * U_1M, false, true, true, U_SHM_LOCK_DB_NOT_FOUND)) // NB: we don't want truncate (we have only the journal)...
       {
       U_SRV_LOG("db NotFound initialization success: size(%u)", db_not_found->size());
       }
@@ -5423,7 +5423,7 @@ void UHTTP::initSession()
 
       U_NEW(URDBObjectHandler<UDataStorage*>, db_session, URDBObjectHandler<UDataStorage*>(U_STRING_FROM_CONSTANT("../db/session.http"), -1, U_NULLPTR));
 
-      if (db_session->open(4096 * 4096, false, true, true, U_SRV_LOCK_DATA_SESSION)) // NB: we don't want truncate (we have only the journal)...
+      if (db_session->open(8 * U_1M, false, true, true, U_SRV_LOCK_DATA_SESSION)) // NB: we don't want truncate (we have only the journal)...
          {
          U_SRV_LOG("db initialization of HTTP session success");
 
@@ -5466,7 +5466,7 @@ void UHTTP::initSessionSSL()
    U_NEW(USSLSession, data_session_ssl, USSLSession);
    U_NEW(URDBObjectHandler<UDataStorage*>, db_session_ssl, URDBObjectHandler<UDataStorage*>(U_STRING_FROM_CONSTANT("../db/session.ssl"), -1, data_session_ssl));
 
-   if (db_session_ssl->open(4096 * 4096, false, true, true, U_SRV_LOCK_SSL_SESSION)) // NB: we don't want truncate (we have only the journal)...
+   if (db_session_ssl->open(8 * U_1M, false, true, true, U_SRV_LOCK_SSL_SESSION)) // NB: we don't want truncate (we have only the journal)...
       {
       U_SRV_LOG("db initialization of SSL session success");
 
@@ -7589,6 +7589,7 @@ not_found:
       return;
       }
 
+   const char* ptr;
    service_info* key;
    uint32_t target_len;
    int32_t cmp = -1, probe, low = -1;
@@ -7601,9 +7602,13 @@ not_found:
    target     += 1;
    target_len -= 1;
 
-   U_INTERNAL_DUMP("target(%u) = %.*S", target_len, target_len, target)
-
    if (target_len == 0) goto not_found; // NB: skip '/' request...
+
+   ptr = (const char*) memrchr(target, PATH_SEPARATOR, target_len);
+
+   if (ptr) target_len = ptr - target;
+
+   U_INTERNAL_DUMP("target(%u) = %.*S", target_len, target_len, target)
 
    if (u_getsuffix(target, target_len) != U_NULLPTR) goto end; // NB: if we have a suffix (Ex: something.sh) we go to the next phase of request processing...
 
@@ -8212,11 +8217,18 @@ U_NO_EXPORT void UHTTP::manageDataForCache(const UString& basename, const UStrin
 
       if (suffix_len == 8)
          {
-         if (u_get_unalignedp64(suffix_ptr) == U_MULTICHAR_CONSTANT64('h','t','p','a','s','s','w','d') ||
-             u_get_unalignedp64(suffix_ptr) == U_MULTICHAR_CONSTANT64('h','t','d','i','g','e','s','t'))
+         bool bpasswd = u_get_unalignedp64(suffix_ptr) == U_MULTICHAR_CONSTANT64('h','t','p','a','s','s','w','d'),
+              bdigest = u_get_unalignedp64(suffix_ptr) == U_MULTICHAR_CONSTANT64('h','t','d','i','g','e','s','t');
+
+         U_INTERNAL_DUMP("bpasswd = %b bdigest = %b", bpasswd, bdigest)
+
+         if (bpasswd ||
+             bdigest)
             {
             if (u_get_unalignedp16(file_ptr) != U_MULTICHAR_CONSTANT16('.','.'))
                {
+               // NB: web password files should not be within the Web server's URI space -- that is, they should not be fetchable with a browser...
+
                U_WARNING("Find file data users permission (%V - %u bytes) inside DOCUMENT_ROOT (%w), for security reason it must be moved into the directory up",
                           pathname->rep, file_data->size);
 
@@ -8224,6 +8236,22 @@ U_NO_EXPORT void UHTTP::manageDataForCache(const UString& basename, const UStrin
                }
 
             UString content = file->getContent(true, false, true);
+
+            if (bpasswd &&
+                U_STRING_FIND(content, 0, ":{SHA}") == U_NOT_FOUND) // htpasswd -s .htpasswd admin
+               {
+               U_WARNING("Find file data users permission (%V - %u bytes) that don't use SHA encryption for passwords, ignored", pathname->rep, file_data->size);
+
+               goto error;
+               }
+
+            if (bdigest &&
+                U_STRING_FIND(content, 0, ":Protected Area:") == U_NOT_FOUND) // htdigest .htdigest 'Protected Area' admin
+               {
+               U_WARNING("Find file data users permission (%V - %u bytes) that don't use the fixed realm name 'Protected Area', ignored", pathname->rep, file_data->size);
+
+               goto error;
+               }
 
             if (u_get_unalignedp16(file_ptr+2) != U_MULTICHAR_CONSTANT16('/','.'))
                {
@@ -8238,18 +8266,18 @@ U_NO_EXPORT void UHTTP::manageDataForCache(const UString& basename, const UStrin
 
             U_INTERNAL_ASSERT_EQUALS(file_len, 12)
 
-            if (u_get_unalignedp64(suffix_ptr) == U_MULTICHAR_CONSTANT64('h','t','p','a','s','s','w','d'))
+            if (bpasswd)
                {
                U_INTERNAL_ASSERT_EQUALS(htpasswd, U_NULLPTR)
 
                U_NEW(UString, htpasswd, UString(content));
 
-               U_SRV_LOG("File data users permission: %V loaded - %u bytes", pathname->rep, file_data->size);
+               U_SRV_LOG("File data users permission: ../.htpasswd loaded - %u bytes", file_data->size);
                }
             else
                {
+               U_INTERNAL_ASSERT(bdigest)
                U_INTERNAL_ASSERT_EQUALS(htdigest, U_NULLPTR)
-               U_INTERNAL_ASSERT_EQUALS(u_get_unalignedp64(suffix_ptr), U_MULTICHAR_CONSTANT64('h','t','d','i','g','e','s','t'))
 
                U_NEW(UString, htdigest, UString(content));
 

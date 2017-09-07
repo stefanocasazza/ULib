@@ -2170,7 +2170,7 @@ public:
       }
 };
 
-#if defined(U_STDCPP_ENABLE)
+#ifdef U_STDCPP_ENABLE
 #  include <vector>
 
 template <class T> class U_EXPORT UJsonTypeHandler<std::vector<T> > : public UJsonTypeHandler_Base {
@@ -2265,5 +2265,69 @@ public:
          }
       }
 };
+
+// by Victor Stewart
+
+#  ifdef HAVE_CXX17
+#     include <unordered_map>
+
+template <class T> class U_EXPORT UJsonTypeHandler<std::unordered_map<UString, T> > : public UJsonTypeHandler_Base {
+public:
+   typedef std::unordered_map<UString, T> stringtobitmaskmap;
+
+   explicit UJsonTypeHandler(stringtobitmaskmap& map) : UJsonTypeHandler_Base(&map) {}
+
+   void clear()
+      {
+      U_TRACE_NO_PARAM(0, "UJsonTypeHandler<stringtobitmaskmap>::clear()")
+
+      ((stringtobitmaskmap*)pval)->clear();   
+      }
+
+   void toJSON(UString& json)
+      {
+      U_TRACE(0, "UJsonTypeHandler<stringtobitmaskmap>::toJSON(%V)", json.rep)
+
+      stringtobitmaskmap* pmap = (stringtobitmaskmap*)pval;
+
+      if (pmap->empty()) (void) json.append(U_CONSTANT_TO_PARAM("{}"));
+      else
+         {
+         json.push_back('{');
+
+         // this is is C++17 vvv
+         for (const auto & [ key, value ] : *pmap) json.toJSON<T>(key, UJsonTypeHandler<T>(value)); 
+
+         json.setLastChar('}');
+         }
+
+      U_INTERNAL_DUMP("json(%u) = %V", json.size(), json.rep)
+      }
+
+   void fromJSON(UValue& json)
+      {
+      U_TRACE(0, "UJsonTypeHandler<stringtobitmaskmap>::fromJSON(%p)", &json)
+
+      U_ASSERT(((stringtobitmaskmap*)pval)->empty())
+
+      UValue* pelement = json.toNode();
+
+      while (pelement)
+         {
+         uint64_t pitem;
+
+         UJsonTypeHandler<uint64_t>(pitem).fromJSON(*pelement);
+
+         UStringRep* rep = (UStringRep*)u_getPayload(pelement->pkey.ival);
+
+         U_INTERNAL_DUMP("pelement->pkey(%p) = %V", rep, rep)
+
+         ((stringtobitmaskmap*)pval)->insert_or_assign(rep, pitem); // insert_or_assign is C++17 
+
+         pelement = pelement->next;
+         }
+      }
+};
+#  endif
 #endif
 #endif

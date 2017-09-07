@@ -644,6 +644,7 @@ if test "$enable_stdcpp" = "yes"; then
 
 	AX_CXX_COMPILE_STDCXX_11([ext], [optional])
 	AX_CXX_COMPILE_STDCXX_14([ext], [optional])
+	AX_CXX_COMPILE_STDCXX_17([ext], [optional])
 else
    AC_MSG_RESULT(no)
 	AM_CONDITIONAL(STDCPP, false)
@@ -2677,10 +2678,13 @@ if test "x$ax_cv_cxx_compile_cxx11" = xno -a "x$ax_cv_cxx_compile_cxx11__std_gnu
 		*)	AC_MSG_RESULT(no) ;;
 	esac
 fi
+AC_SUBST(STD_GNU11)
 if test "x$ax_cv_cxx_compile_cxx14" = xno -a "x$ax_cv_cxx_compile_cxx14__std_gnupp14" = xyes; then
 	CXXFLAGS="-std=gnu++14 $CXXFLAGS"
 fi
-AC_SUBST(STD_GNU11)
+if test "x$ax_cv_cxx_compile_cxx17" = xno -a "x$ax_cv_cxx_compile_cxx17__std_gnupp17" = xyes; then
+	CXXFLAGS="-std=gnu++17 $CXXFLAGS"
+fi
 
 CXX=$CXX_save
 AC_SUBST(CXX)

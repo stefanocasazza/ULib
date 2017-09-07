@@ -19,6 +19,8 @@
 #include <ulib/utility/string_ext.h>
 #include <ulib/utility/data_session.h>
 
+#include <netinet/in.h>
+
 /**
  * @class URDB
  *
@@ -214,10 +216,12 @@ public:
       }
 
    bool fetch();
-   bool find(const UString& _key)                   { return find(U_STRING_TO_PARAM(_key)); }
-   bool find(const char*    _key, uint32_t keylen);
+   bool find(const char* key, uint32_t keylen);
+
+   bool find(const UString& _key) { return find(U_STRING_TO_PARAM(_key)); }
 
    UFile&   getJournal()            { return journal; }
+   uint32_t getJournalSize()        { return journal.st_size; }
    uint32_t getCapacity() const     { return RDB_capacity(this); }
    uint32_t getDataSize() const     { return RDB_node_data_sz(this); }
    void*    getDataPointer() const  { return RDB_node_data(this); }
@@ -465,6 +469,21 @@ public:
    bool getDataStorage();
    bool getDataStorage(const char* s, uint32_t n);
 
+   bool getDataStorage(in_addr_t client)
+      {
+      U_TRACE(0, "URDBObjectHandler<UDataStorage*>::getDataStorage(%u)", client)
+
+      U_CHECK_MEMORY
+
+      U_cdb_no_hash(this) = true;
+
+      bool result = getDataStorage((const char*)&client, sizeof(in_addr_t));
+
+      U_cdb_no_hash(this) = false;
+
+      U_RETURN(result);
+      }
+
    bool getDataStorage(const UString& _key)
       {
       U_TRACE(0, "URDBObjectHandler<UDataStorage*>::getDataStorage(%V)", _key.rep)
@@ -554,6 +573,21 @@ public:
          }
 
       U_RETURN(false);
+      }
+
+   bool insertDataStorage(void* drec, uint32_t dlen, in_addr_t client, int op)
+      {
+      U_TRACE(0, "URDBObjectHandler<UDataStorage*>::insertDataStorage(%p,%u,%u,%d)", drec, dlen, client, op)
+
+      U_CHECK_MEMORY
+
+      U_cdb_no_hash(this) = true;
+
+      bool result = insertDataStorage(drec, dlen, (const char*)&client, sizeof(in_addr_t), op);
+
+      U_cdb_no_hash(this) = false;
+
+      U_RETURN(result);
       }
 
    UString getKeyID() const { return pDataStorage->keyid; }

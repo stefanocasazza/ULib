@@ -181,12 +181,15 @@ U_NO_EXPORT void URDB::htAlloc(URDB* prdb)
 
    U_INTERNAL_DUMP("RDB_capacity = %u", RDB_capacity(prdb))
 
-#ifdef DEBUG
    if (RDB_capacity(prdb) < sizeof(URDB::cache_node))
       {
-      U_ERROR("URDB::htAlloc() - capacity(%u) < size node(%u) - db(%.*S,%u recs)", RDB_capacity(prdb), sizeof(URDB::cache_node), U_FILE_TO_TRACE(*prdb), RDB_nrecord(prdb));
+      U_WARNING("URDB::htAlloc() - capacity(%u) < size node(%u) - db(%.*S,%u recs)", RDB_capacity(prdb), sizeof(URDB::cache_node), U_FILE_TO_TRACE(*prdb), RDB_nrecord(prdb));
+
+      if (prdb->resizeJournal(prdb->journal.st_size) == false)
+         {
+         U_ERROR("URDB::htAlloc() - resizeJournal(%u) failed", prdb->journal.st_size);
+         }
       }
-#endif
 
    prdb->node = RDB_off(prdb);
 
@@ -268,7 +271,9 @@ U_NO_EXPORT bool URDB::resizeJournal(uint32_t oversize)
 
       if (oversize < _size) oversize = _size;
 
-      U_INTERNAL_DUMP("oversize = %u", oversize)
+      U_INTERNAL_DUMP("oversize = %u pnode = %p", oversize, pnode)
+
+      if (pnode == U_NULLPTR) pnode = RDB_hashtab(this);
 
       uint32_t _offset = (char*)pnode - journal.map;
 
@@ -320,7 +325,7 @@ U_NO_EXPORT bool URDB::writev(const struct iovec* _iov, int n, uint32_t _size)
 {
    U_TRACE(0, "URDB::writev(%p,%d,%u)", _iov, n, _size)
 
-   U_INTERNAL_ASSERT_MAJOR(_size,0)
+   U_INTERNAL_ASSERT_MAJOR(_size, 0)
 
    U_INTERNAL_DUMP("RDB_off = %u", RDB_off(this))
 
@@ -665,6 +670,8 @@ bool URDB::open(uint32_t log_size, bool btruncate, bool cdb_brdonly, bool brefer
       if (journal_sz     == journal_sz_new ||
           journal.ftruncate(journal_sz_new))
          {
+         journal_sz = journal_sz_new;
+
 #     if !defined(__CYGWIN__) && !defined(_MSWINDOWS_)
          if (journal_sz_new < 32 * 1024 * 1024) journal_sz_new = 32 * 1024 * 1024; // oversize mmap for optimize resizeJournal() with ftruncate()
 #     endif
@@ -681,36 +688,46 @@ bool URDB::open(uint32_t log_size, bool btruncate, bool cdb_brdonly, bool brefer
                {
                ++nerror;
 
-               U_WARNING("URDB::open(%u,%b,%b,%b) - capacity(%u) < size node(%u)",
-                          log_size, btruncate, cdb_brdonly, breference, RDB_capacity(this), sizeof(URDB::cache_node));
+               U_WARNING("URDB::open(%u,%b,%b,%b,%p) - capacity(%u) < size node(%u)",
+                         log_size, btruncate, cdb_brdonly, breference, psem, RDB_capacity(this), sizeof(URDB::cache_node));
                }
 #        endif
 
-            if (breference) RDB_reference(this)++;
+            // NB: if space available is inferior than 15% we resize the journal...
 
-            if (psem != &nolock)
+            U_INTERNAL_ASSERT_MAJOR(journal_sz, RDB_off(this))
+
+            uint32_t ratio = ((journal_sz - RDB_off(this)) * 100U) / journal_sz_new;
+
+            U_INTERNAL_DUMP("(journal_sz - RDB_off) = %u ratio = %u (%u%%)", journal_sz - RDB_off(this), ratio, 100 - ratio)
+
+            if (ratio < 85 ||
+                resizeJournal(journal_sz))
                {
-               if (psem == U_NULLPTR)
+               if (breference) RDB_reference(this)++;
+
+               if (psem != &nolock)
                   {
-                  char somename[256];
+                  if (psem == U_NULLPTR)
+                     {
+                     char somename[256];
 
-                  // For portable use, a shared memory object should be identified by a name of the form /somename; that is,
-                  // a null-terminated string of up to NAME_MAX (i.e., 255) characters consisting of an initial slash,
-                  // followed by one or more characters, none of which are slashes
+                     // For portable use, a shared memory object should be identified by a name of the form /somename; that is,
+                     // a null-terminated string of up to NAME_MAX (i.e., 255) characters consisting of an initial slash,
+                     // followed by one or more characters, none of which are slashes
 
-                  UString basename = UFile::getName();
+                     UString basename = UFile::getName();
 
-                  (void) u__snprintf(somename, sizeof(somename), U_CONSTANT_TO_PARAM("/%v"), basename.rep);
+                     (void) u__snprintf(somename, sizeof(somename), U_CONSTANT_TO_PARAM("/%v"), basename.rep);
 
-                  psem = (sem_t*) UFile::shm_open(somename, sizeof(sem_t) + 1);
+                     psem = (sem_t*) UFile::shm_open(somename, sizeof(sem_t) + 1);
+                     }
+
+                  _lock.init(psem);
                   }
 
-               _lock.init(psem);
-
-               U_cdb_shared(this) = true;
+               U_RETURN(true);
                }
-
-            U_RETURN(true);
             }
          }
       }

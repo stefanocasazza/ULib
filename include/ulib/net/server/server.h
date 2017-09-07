@@ -803,8 +803,8 @@ protected:
    static void initEvasive();
    static bool checkHitUriStats();
    static bool checkHitSiteStats();
+   static bool checkHold(in_addr_t client);
    static bool checkHitStats(const char* key, uint32_t key_len, uint32_t interval, uint32_t count);
-   static bool checkHold(in_addr_t client, const char* client_address, uint32_t client_address_len);
 #endif
 
             UServer_Base(UFileConfig* pcfg = U_NULLPTR);

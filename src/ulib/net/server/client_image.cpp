@@ -994,7 +994,7 @@ void UClientImage_Base::prepareForRead()
       U_INTERNAL_DUMP("UServer_Base::client_address = %.*S", U_CLIENT_ADDRESS_TO_TRACE)
 
 #  ifdef U_EVASIVE_SUPPORT
-      if (UServer_Base::checkHold(socket->remoteIPAddress().getInAddr(), U_CLIENT_ADDRESS_TO_PARAM))
+      if (UServer_Base::checkHold(socket->remoteIPAddress().getInAddr()))
          {
          abortive_close();
 

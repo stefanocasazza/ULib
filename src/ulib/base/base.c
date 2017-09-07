@@ -167,187 +167,84 @@ int32_t u_printf_string_max_length;
 uint32_t u_hostname_len, u_user_name_len;
 struct uclientimage_info u_clientimage_info;
 
-static char* num2str32(uint32_t num, char* restrict cp)
+static inline uint32_t digits(uint32_t u, uint32_t k, uint32_t* d, char* restrict* pp, uint32_t n)
 {
-   uint32_t a, b, c, d1, d2, d3, d4;
+   U_INTERNAL_TRACE("digits(%u,%u,%p,%p,%u)", u, k, d, *pp, n)
 
-   U_INTERNAL_TRACE("num2str32(%u,%p)", num, cp)
-
-   if (num < 10000)
+   if (u < (k*10))
       {
-      d1 = (num / 100) << 1;
-      d2 = (num % 100) << 1;
+      **pp  = (*d = (u / k)) + '0';
+       *pp += 1;
 
-      if (num >= 1000) *cp++ = u_ctn2s[d1];
-      if (num >=  100) *cp++ = u_ctn2s[d1+1];
-      if (num >=   10) *cp++ = u_ctn2s[d2];
-
-      *cp++ = u_ctn2s[d2+1];
-
-      return cp;
+      return n-1;
       }
 
-   if (num < 100000000) /* num = bbbbcccc */
-      {
-      b  = num / 10000;
-      c  = num % 10000;
-      d1 = (b / 100) << 1;
-      d2 = (b % 100) << 1;
-      d3 = (c / 100);
-      d4 = (c % 100);
-
-      if (num >= 10000000) *cp++ = u_ctn2s[d1];
-      if (num >=  1000000) *cp++ = u_ctn2s[d1+1];
-      if (num >=   100000) *cp++ = u_ctn2s[d2];
-
-      *cp++ = u_ctn2s[d2+1];
-
-      U_NUM2STR16(cp,   d3);
-      U_NUM2STR16(cp+2, d4);
-
-      return (cp + 4);
-      }
-
-   /* num = aabbbbcccc in decimal */
-
-   a = num  / 100000000; /* 1 to 42 */
-       num %= 100000000;
-
-   if (a < 10) *cp++ = '0' + (char)a;
-   else
-      {
-      U_NUM2STR16(cp, a);
-
-      cp += 2;
-      }
-
-   b = num / 10000; /* 0 to 9999 */
-   c = num % 10000; /* 0 to 9999 */
-
-   d1 = (b / 100);
-   d2 = (b % 100);
-
-   d3 = (c / 100);
-   d4 = (c % 100);
-
-   U_NUM2STR16(cp,   d1);
-   U_NUM2STR16(cp+2, d2);
-   U_NUM2STR16(cp+4, d3);
-   U_NUM2STR16(cp+6, d4);
-
-   return (cp + 8);
+   return n;
 }
 
-static char* num2str64(uint64_t num, char* restrict cp)
+static inline char* out(uint32_t d, char* restrict p)
 {
-   uint32_t a, i, j, v0, v1, b0, b1, c0, c1, d1, d2, d3, d4, d5, d6, d7, d8;
+   U_INTERNAL_TRACE("out(%u,%p)", d, p)
 
-   U_INTERNAL_TRACE("num2str64(%llu,%p)", num, cp)
+   U_NUM2STR16(p, d);
 
-   if (num <= UINT_MAX) return u_num2str32((uint32_t)num, cp);
+   return p+2;
+}
 
-   if (num < 10000000000000000)
+static inline char* itoa(uint32_t u, char* restrict p, uint32_t d, uint32_t n)
+{
+   switch (n)
       {
-      v0 = (uint32_t)(num / 100000000);
-      v1 = (uint32_t)(num % 100000000);
-
-      b0 = v0 / 10000;
-      c0 = v0 % 10000;
-
-      d1 = (b0 / 100) << 1;
-      d2 = (b0 % 100) << 1;
-
-      d3 = (c0 / 100) << 1;
-      d4 = (c0 % 100) << 1;
-
-      b1 = v1 / 10000;
-      c1 = v1 % 10000;
-
-      d5 = (b1 / 100);
-      d6 = (b1 % 100);
-
-      d7 = (c1 / 100);
-      d8 = (c1 % 100);
-
-      if (num >= 1000000000000000) *cp++ = u_ctn2s[d1];
-      if (num >=  100000000000000) *cp++ = u_ctn2s[d1+1];
-      if (num >=   10000000000000) *cp++ = u_ctn2s[d2];
-      if (num >=    1000000000000) *cp++ = u_ctn2s[d2+1];
-      if (num >=     100000000000) *cp++ = u_ctn2s[d3];
-      if (num >=      10000000000) *cp++ = u_ctn2s[d3+1];
-      if (num >=       1000000000) *cp++ = u_ctn2s[d4];
-      if (num >=        100000000) *cp++ = u_ctn2s[d4+1];
-
-      U_NUM2STR16(cp,   d5);
-      U_NUM2STR16(cp+2, d6);
-      U_NUM2STR16(cp+4, d7);
-      U_NUM2STR16(cp+6, d8);
-
-      return (cp + 8);
+      case 10: d  = u / 100000000; p = out(d, p); /* FALLTHRU */
+      case  9: u -= d * 100000000;                /* FALLTHRU */
+      case  8: d  = u /   1000000; p = out(d, p); /* FALLTHRU */
+      case  7: u -= d *   1000000;                /* FALLTHRU */
+      case  6: d  = u /     10000; p = out(d, p); /* FALLTHRU */
+      case  5: u -= d *     10000;                /* FALLTHRU */
+      case  4: d  = u /       100; p = out(d, p); /* FALLTHRU */
+      case  3: u -= d *       100;                /* FALLTHRU */
+      case  2: d  = u /         1; p = out(d, p); /* FALLTHRU */
+      case  1: ;
       }
 
-   a = (uint32_t)(num  / 10000000000000000); /* 1 to 1844 */
-                  num %= 10000000000000000;
+   return p;
+}
 
-        if (a <  10) *cp++ = '0' + (char)a;
-   else if (a < 100)
-      {
-      U_NUM2STR16(cp, a);
+static char* num2str32(uint32_t u, char* restrict p)
+{
+   uint32_t d, n;
 
-      cp += 2;
-      }
-   else if (a < 1000)
-      {
-      *cp++ = '0' + (char)(a / 100);
+   U_INTERNAL_TRACE("num2str32(%u,%p)", u, p)
 
-      i = (a % 100);
+        if (u >= 100000000) n = digits(u, 100000000, &d, &p, 10);
+   else if (u <        100) n = digits(u,         1, &d, &p,  2);
+   else if (u <      10000) n = digits(u,       100, &d, &p,  4);
+   else if (u <    1000000) n = digits(u,     10000, &d, &p,  6);
+   else                     n = digits(u,   1000000, &d, &p,  8);
 
-      U_NUM2STR16(cp, i);
+   return itoa(u, p, d, n);
+}
 
-      cp += 2;
-      }
-   else
-      {
-      i = (a / 100);
-      j = (a % 100);
+static char* num2str64(uint64_t u, char* restrict p)
+{
+   uint64_t upper;
+   uint32_t d, lower = (uint32_t)u;
 
-      U_NUM2STR16(cp,   i);
-      U_NUM2STR16(cp+2, j);
+   U_INTERNAL_TRACE("num2str64(%llu,%p)", u, p)
 
-      cp += 4;
-      }
+   if (lower == u) return num2str32(lower, p);
 
-   v0 = (uint32_t)(num / 100000000);
-   v1 = (uint32_t)(num % 100000000);
+   upper = u / 1000000000;
 
-   b0 = v0 / 10000;
-   c0 = v0 % 10000;
+   p = num2str32(upper, p);
 
-   d1 = (b0 / 100);
-   d2 = (b0 % 100);
+   lower = u - (upper * 1000000000);
 
-   d3 = (c0 / 100);
-   d4 = (c0 % 100);
+   d = lower / 100000000;
 
-   b1 = v1 / 10000;
-   c1 = v1 % 10000;
+   *p++ = d + '0';
 
-   d5 = (b1 / 100);
-   d6 = (b1 % 100);
-
-   d7 = (c1 / 100);
-   d8 = (c1 % 100);
-
-   U_NUM2STR16(cp,    d1);
-   U_NUM2STR16(cp+2,  d2);
-   U_NUM2STR16(cp+4,  d3);
-   U_NUM2STR16(cp+6,  d4);
-   U_NUM2STR16(cp+8,  d5);
-   U_NUM2STR16(cp+10, d6);
-   U_NUM2STR16(cp+12, d7);
-   U_NUM2STR16(cp+14, d8);
-
-   return (cp + 16);
+   return itoa(lower, p, d, 9);
 }
 
 static char* dtoa(double num, char* restrict cp) { return cp + sprintf(cp, "%g", num); }

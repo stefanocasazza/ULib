@@ -1977,12 +1977,12 @@ double UString::strtod() const
 {
    U_TRACE_NO_PARAM(0, "UString::strtod()")
 
-   UValue json;
-
-   if (equal("0", 1) == false &&
-       json.parse(*this))
+   if (rep->equal(U_CONSTANT_TO_PARAM("0"))   == false &&
+       rep->equal(U_CONSTANT_TO_PARAM("0.0")) == false)
       {
-      return json.getDouble();
+      UValue json;
+
+      if (json.parse(*this)) return json.getDouble();
       }
 
    U_RETURN(.0);

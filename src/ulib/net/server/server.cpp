@@ -824,7 +824,7 @@ void UServer_Base::initEvasive()
 
    // POSIX shared memory object: interprocess - can be used by unrelated processes (userver_tcp and userver_ssl)
 
-   if (db_evasive->open(4096 * 4096, false, true, true, U_SHM_LOCK_EVASIVE)) // NB: we don't want truncate (we have only the journal)...
+   if (db_evasive->open(128 * U_1M, false, true, true, U_SHM_LOCK_EVASIVE)) // NB: we don't want truncate (we have only the journal)...
       {
       U_SRV_LOG("db Evasive initialization success: size(%u)", db_evasive->size());
 
@@ -843,9 +843,9 @@ void UServer_Base::initEvasive()
       }
 }
 
-bool UServer_Base::checkHold(in_addr_t client, const char* client_address, uint32_t client_address_len)
+bool UServer_Base::checkHold(in_addr_t client)
 {
-   U_TRACE(0, "UServer_Base::checkHold(%u,%.*S,%u)", client, client_address_len, client_address, client_address_len)
+   U_TRACE(0, "UServer_Base::checkHold(%u)", client)
 
    U_INTERNAL_ASSERT_POINTER(db_evasive)
 
@@ -857,7 +857,7 @@ bool UServer_Base::checkHold(in_addr_t client, const char* client_address, uint3
 
       // First see if the IP itself is on "hold"
 
-      if (db_evasive->getDataStorage(client_address, client_address_len))
+      if (db_evasive->getDataStorage(client))
          {
          db_evasive->lockRecord();
 
@@ -920,12 +920,14 @@ bool UServer_Base::checkHitStats(const char* key, uint32_t key_len, uint32_t int
 
    db_evasive->unlockRecord();
 
-   if (db_evasive->getDataStorage(U_CLIENT_ADDRESS_TO_PARAM)) evasive_rec->timestamp = u_now->tv_sec; // Make it wait longer in blacklist land
+   in_addr_t client = UServer_Base::csocket->remoteIPAddress().getInAddr();
+
+   if (db_evasive->getDataStorage(client)) evasive_rec->timestamp = u_now->tv_sec; // Make it wait longer in blacklist land
    else
       {
       UServer_Base::uevasive rec = { (uint32_t)u_now->tv_sec, 0 };
 
-      (void) db_evasive->insertDataStorage(&rec, sizeof(uevasive), U_CLIENT_ADDRESS_TO_PARAM, RDB_INSERT);
+      (void) db_evasive->insertDataStorage(&rec, sizeof(uevasive), client, RDB_INSERT);
       }
 
    /*
@@ -1006,11 +1008,13 @@ bool UServer_Base::checkHitSiteStats()
 
    if (bwhitelist == false)
       {
-      char key[32];
+      char key[6] = { '_', 0, 0, 0, 0, '_' };
+
+      u_put_unalignedp32(key+1, UServer_Base::csocket->remoteIPAddress().getInAddr());
 
       U_gettimeofday // NB: optimization if it is enough a time resolution of one second...
 
-      if (checkHitStats(key, u__snprintf(key, sizeof(key), U_CONSTANT_TO_PARAM("%.*s_SITE"), U_CLIENT_ADDRESS_TO_TRACE), site_interval, site_count)) U_RETURN(true);
+      if (checkHitStats(key, sizeof(key), site_interval, site_count)) U_RETURN(true);
       }
 
    U_RETURN(false);
@@ -1031,11 +1035,14 @@ bool UServer_Base::checkHitUriStats()
           u_get_unalignedp64(ptr)   != U_MULTICHAR_CONSTANT64('/','f','a','v','i','c','o','n') &&
           u_get_unalignedp32(ptr+8) != U_MULTICHAR_CONSTANT32('.','i','c','o'))
          {
-         UString key(UServer_Base::client_address_len + sz);
+         char key[260];
+         uint32_t key_sz = (sz < 256 ? sz : 256);
 
-         key.snprintf(U_CONSTANT_TO_PARAM("%.*s%.*s"), U_CLIENT_ADDRESS_TO_TRACE, sz, ptr);
+         u_put_unalignedp32(key, UServer_Base::csocket->remoteIPAddress().getInAddr());
 
-         if (checkHitStats(U_STRING_TO_PARAM(key), page_interval, page_count)) U_RETURN(true);
+         U_MEMCPY(key+4, ptr, key_sz);
+
+         if (checkHitStats(key, key_sz, page_interval, page_count)) U_RETURN(true);
          }
       }
 
@@ -3383,7 +3390,7 @@ try_accept:
    U_INTERNAL_DUMP("client_address = %.*S", CLIENT_ADDRESS_LEN, CLIENT_ADDRESS)
 
 #ifdef U_EVASIVE_SUPPORT
-   if (checkHold(CSOCKET->remoteIPAddress().getInAddr(), CLIENT_ADDRESS, CLIENT_ADDRESS_LEN))
+   if (checkHold(CSOCKET->remoteIPAddress().getInAddr()))
       {
       CSOCKET->abortive_close();
 
