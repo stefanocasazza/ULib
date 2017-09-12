@@ -46,14 +46,14 @@ int URpcPlugIn::handlerConfig(UFileConfig& cfg)
 
    URPCObject::loadGenericMethod(&cfg);
 
-   U_RETURN(U_PLUGIN_HANDLER_PROCESSED | U_PLUGIN_HANDLER_GO_ON);
+   U_RETURN(U_PLUGIN_HANDLER_PROCESSED);
 }
 
 __pure int URpcPlugIn::handlerInit()
 {
    U_TRACE_NO_PARAM(0, "URpcPlugIn::handlerInit()")
 
-   if (rpc_parser) U_RETURN(U_PLUGIN_HANDLER_PROCESSED | U_PLUGIN_HANDLER_GO_ON);
+   if (rpc_parser) U_RETURN(U_PLUGIN_HANDLER_OK);
 
    U_RETURN(U_PLUGIN_HANDLER_ERROR);
 }
@@ -67,11 +67,9 @@ int URpcPlugIn::handlerREAD()
    if (rpc_parser)
       {
       is_rpc_msg = URPC::readRequest(UServer_Base::csocket); // NB: URPC::resetInfo() it is already called by clearData()...
-
-      if (is_rpc_msg) U_RETURN(U_PLUGIN_HANDLER_PROCESSED | U_PLUGIN_HANDLER_FINISHED);
       }
 
-   U_RETURN(U_PLUGIN_HANDLER_GO_ON);
+   U_RETURN(U_PLUGIN_HANDLER_OK);
 }
 
 int URpcPlugIn::handlerRequest()
@@ -96,10 +94,10 @@ int URpcPlugIn::handlerRequest()
       if (UServer_Base::isLog()) (void) UClientImage_Base::request_uri->assign(method);
 #  endif
 
-      U_RETURN(U_PLUGIN_HANDLER_PROCESSED | U_PLUGIN_HANDLER_FINISHED);
+      U_RETURN(U_PLUGIN_HANDLER_PROCESSED);
       }
 
-   U_RETURN(U_PLUGIN_HANDLER_GO_ON);
+   U_RETURN(U_PLUGIN_HANDLER_OK);
 }
 
 // DEBUG

@@ -145,7 +145,7 @@ public:
       {
       U_TRACE_NO_PARAM(0, "UFile::isRoot()")
 
-      U_INTERNAL_DUMP("u_cwd           = %S", u_cwd)
+      U_INTERNAL_DUMP("u_cwd            = %S", u_cwd)
       U_INTERNAL_DUMP("path_relativ(%u) = %.*S", path_relativ_len, path_relativ_len, path_relativ)
 
       if (path_relativ_len == 1 &&

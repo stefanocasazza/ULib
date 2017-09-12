@@ -46,7 +46,7 @@ int USoapPlugIn::handlerConfig(UFileConfig& cfg)
 
    USOAPObject::loadGenericMethod(&cfg);
 
-   U_RETURN(U_PLUGIN_HANDLER_PROCESSED | U_PLUGIN_HANDLER_GO_ON);
+   U_RETURN(U_PLUGIN_HANDLER_PROCESSED);
 }
 
 int USoapPlugIn::handlerInit()
@@ -65,7 +65,7 @@ int USoapPlugIn::handlerInit()
       UHTTP::valias->push_back(*UString::str_soap);
       UHTTP::valias->push_back(*UString::str_nostat);
 
-      U_RETURN(U_PLUGIN_HANDLER_PROCESSED | U_PLUGIN_HANDLER_GO_ON);
+      U_RETURN(U_PLUGIN_HANDLER_OK);
 #  endif
       }
 
@@ -101,10 +101,10 @@ int USoapPlugIn::handlerRequest()
          UHTTP::setResponse(true, *UString::str_ctype_soap, &body);
          }
 
-      U_RETURN(U_PLUGIN_HANDLER_PROCESSED | U_PLUGIN_HANDLER_GO_ON);
+      U_RETURN(U_PLUGIN_HANDLER_PROCESSED);
       }
 
-   U_RETURN(U_PLUGIN_HANDLER_GO_ON);
+   U_RETURN(U_PLUGIN_HANDLER_OK);
 }
 
 // DEBUG

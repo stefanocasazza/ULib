@@ -211,11 +211,11 @@ U_NO_EXPORT UString USSIPlugIn::getPathname(const UString& name, const UString& 
    U_TRACE(0, "USSIPlugIn::getPathname(%V,%V,%V)", name.rep, value.rep, directory.rep)
 
    /**
-    * "include file" looks in the current directory (the name must not start with /, ., or ..) and "include virtual" starts
-    * in the root directory of your kiosk (so the name must start with "/".) You might want to make a "/includes" directory
-    * in your Kiosk and then you can say "include virtual=/includes/file.txt" from any page. The "virtual" and "file"
-    * parameters are also used with "fsize" and "flastmod". With either method, you can only reference files that are within
-    * your Kiosk directory (apart if "direct"...)
+    * 'include file' looks in the current directory (the name must not start with /, ., or ..) and 'include virtual' starts
+    * in the root directory of your kiosk (so the name must start with "/".) You might want to make a '/includes' directory
+    * in your Kiosk and then you can say 'include virtual=/includes/file.txt' from any page. The 'virtual' and 'file'
+    * parameters are also used with 'fsize' and 'flastmod'. With either method, you can only reference files that are within
+    * your Kiosk directory (apart if 'direct'...)
     */
 
    UString pathname;
@@ -938,12 +938,11 @@ int USSIPlugIn::handlerConfig(UFileConfig& cfg)
 {
    U_TRACE(0, "USSIPlugIn::handlerConfig(%p)", &cfg)
 
-   // --------------------------------------------------------------------------------------------------------------
+   // -------------------------------------------------------------------------------------------------------------------------
    // ENVIRONMENT             path of file configuration environment for SSI
    //
-   // SSI_AUTOMATIC_ALIASING  special SSI HTML file that is recognized automatically as alias of all uri request
-   //                         without suffix (generally cause navigation directory not working)
-   // --------------------------------------------------------------------------------------------------------------
+   // SSI_AUTOMATIC_ALIASING  special SSI HTML file that is recognized automatically as alias of all uri request without suffix
+   // -------------------------------------------------------------------------------------------------------------------------
 
    if (cfg.loadTable())
       {
@@ -966,10 +965,10 @@ int USSIPlugIn::handlerConfig(UFileConfig& cfg)
       if (x) UHTTP::setGlobalAlias(x); // NB: automatic alias of all uri request without suffix...
 #  endif
 
-      U_RETURN(U_PLUGIN_HANDLER_PROCESSED | U_PLUGIN_HANDLER_GO_ON);
+      U_RETURN(U_PLUGIN_HANDLER_PROCESSED);
       }
 
-   U_RETURN(U_PLUGIN_HANDLER_GO_ON);
+   U_RETURN(U_PLUGIN_HANDLER_OK);
 }
 
 int USSIPlugIn::handlerInit()
@@ -984,7 +983,7 @@ int USSIPlugIn::handlerInit()
    U_NEW(UString, header, UString);
    U_NEW(UString, alternative_include, UString);
 
-   U_RETURN(U_PLUGIN_HANDLER_PROCESSED | U_PLUGIN_HANDLER_GO_ON);
+   U_RETURN(U_PLUGIN_HANDLER_OK);
 }
 
 // Connection-wide hooks
@@ -993,11 +992,14 @@ int USSIPlugIn::handlerRequest()
 {
    U_TRACE_NO_PARAM(0, "USSIPlugIn::handlerRequest()")
 
-   U_INTERNAL_DUMP("uri = %.*S", U_HTTP_URI_TO_TRACE)
+   U_INTERNAL_DUMP("uri(%u) = %.*S query = %.*S", u_clientimage_info.http_info.uri_len, U_HTTP_URI_TO_TRACE, U_HTTP_QUERY_TO_TRACE)
 
    if (UClientImage_Base::isRequestNotFound()  == false &&
        UClientImage_Base::isRequestForbidden() == false)
       {
+      U_INTERNAL_ASSERT_MAJOR(U_http_info.uri_len, 1)
+      U_INTERNAL_ASSERT_EQUALS(U_HTTP_QUERY_STREQ("_nav_"), false)
+
       bool bcache =          UHTTP::file_data &&
                     u_is_ssi(UHTTP::file_data->mime_index);
 
@@ -1042,7 +1044,7 @@ int USSIPlugIn::handlerRequest()
 
                UHTTP::setInternalError();
 
-               U_RETURN(U_PLUGIN_HANDLER_GO_ON);
+               U_RETURN(U_PLUGIN_HANDLER_OK);
                }
             }
          else
@@ -1131,10 +1133,10 @@ int USSIPlugIn::handlerRequest()
          UClientImage_Base::environment->setEmpty();
          }
 
-   // U_RETURN(U_PLUGIN_HANDLER_PROCESSED | U_PLUGIN_HANDLER_GO_ON);
+   // U_RETURN(U_PLUGIN_HANDLER_PROCESSED);
       }
 
-   U_RETURN(U_PLUGIN_HANDLER_GO_ON);
+   U_RETURN(U_PLUGIN_HANDLER_OK);
 }
 
 // DEBUG

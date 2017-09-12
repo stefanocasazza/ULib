@@ -48,9 +48,9 @@ int UProxyPlugIn::handlerConfig(UFileConfig& cfg)
 {
    U_TRACE(0, "UProxyPlugIn::handlerConfig(%p)", &cfg)
 
-   if (UModProxyService::loadConfig(cfg)) U_RETURN(U_PLUGIN_HANDLER_PROCESSED | U_PLUGIN_HANDLER_GO_ON);
+   if (UModProxyService::loadConfig(cfg)) U_RETURN(U_PLUGIN_HANDLER_PROCESSED);
 
-   U_RETURN(U_PLUGIN_HANDLER_GO_ON);
+   U_RETURN(U_PLUGIN_HANDLER_OK);
 }
 
 int UProxyPlugIn::handlerInit()
@@ -70,7 +70,7 @@ int UProxyPlugIn::handlerInit()
 
    U_NEW(UHttpClient<UTCPSocket>, client_http, UHttpClient<UTCPSocket>((UFileConfig*)U_NULLPTR));
 
-   U_RETURN(U_PLUGIN_HANDLER_PROCESSED | U_PLUGIN_HANDLER_GO_ON);
+   U_RETURN(U_PLUGIN_HANDLER_OK);
 }
 
 // Connection-wide hooks
@@ -111,7 +111,7 @@ int UProxyPlugIn::handlerRequest()
                UHTTP::setInternalError();
                }
 
-            U_RETURN(U_PLUGIN_HANDLER_PROCESSED | U_PLUGIN_HANDLER_GO_ON);
+            U_RETURN(U_PLUGIN_HANDLER_PROCESSED);
             }
          }
 
@@ -125,7 +125,7 @@ int UProxyPlugIn::handlerRequest()
             {
             UModProxyService::setMsgError(UModProxyService::INTERNAL_ERROR);
 
-            U_RETURN(U_PLUGIN_HANDLER_PROCESSED | U_PLUGIN_HANDLER_GO_ON);
+            U_RETURN(U_PLUGIN_HANDLER_PROCESSED);
             }
 
          U_INTERNAL_DUMP("uri = %.*S", U_HTTP_URI_TO_TRACE)
@@ -226,12 +226,10 @@ int UProxyPlugIn::handlerRequest()
          client_http->reset(); // reset reference to request...
          }
 
-      UClientImage_Base::setRequestProcessed();
-
-      U_RETURN(U_PLUGIN_HANDLER_PROCESSED | U_PLUGIN_HANDLER_GO_ON);
+      U_RETURN(U_PLUGIN_HANDLER_PROCESSED);
       }
 
-   U_RETURN(U_PLUGIN_HANDLER_GO_ON);
+   U_RETURN(U_PLUGIN_HANDLER_OK);
 }
 
 // DEBUG

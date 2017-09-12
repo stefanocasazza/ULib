@@ -1494,6 +1494,12 @@ U_EXPORT main(int argc, char* argv[])
 
    U_TRACE(5, "main(%d)", argc)
 
+   const char* ptr = ".banner.swpx" + U_CONSTANT_SIZE(".banner.swpx") - sizeof(".swp");
+
+   U_INTERNAL_DUMP("u_isSuffixSwap(%S)", ptr)
+
+   U_INTERNAL_ASSERT(u_isSuffixSwap(ptr))
+
    /*
    double val1 = U_STRING_FROM_CONSTANT("0").strtod();
    u__printf(1, U_CONSTANT_TO_PARAM("0 = %lf %g"), val1, val1);
@@ -1976,7 +1982,7 @@ U_EXPORT main(int argc, char* argv[])
    U_ASSERT( UStringExt::dirname(z)  == U_STRING_FROM_CONSTANT("/dir") )
    U_ASSERT( UStringExt::basename(z) == U_STRING_FROM_CONSTANT("base.suffix") )
 
-   const char* ptr = u_getsuffix(U_CONSTANT_TO_PARAM("/dir/base.suffix/www"));
+   ptr = u_getsuffix(U_CONSTANT_TO_PARAM("/dir/base.suffix/www"));
 
    U_INTERNAL_ASSERT_EQUALS( ptr, U_NULLPTR )
 

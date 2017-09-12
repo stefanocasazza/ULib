@@ -547,7 +547,6 @@ public:
    static UString* uri_request_cert_mask;
 
    static bool checkUriProtected();
-   static bool isUriRequestProtected() __pure;
 #endif
 
 #if defined(U_HTTP_STRICT_TRANSPORT_SECURITY) || defined(USE_LIBSSL)
@@ -1325,7 +1324,7 @@ private:
       }
 
    static int handlerREAD();
-   static int processRequest();
+   static void processRequest();
    static void handlerResponse();
 
 #ifndef U_LOG_DISABLE
@@ -1344,7 +1343,7 @@ private:
       U_RETURN(U_ClientImage_state);
       }
 
-   static int processRequestWithLog()
+   static void processRequestWithLog()
       {
       U_TRACE_NO_PARAM(0, "UHTTP::processRequestWithLog()")
 
@@ -1352,11 +1351,9 @@ private:
 
       (void) strcpy(UServer_Base::mod_name[0], "[http] ");
 
-      U_ClientImage_state = processRequest();
+      processRequest();
 
       UServer_Base::mod_name[0][0] = '\0';
-
-      U_RETURN(U_ClientImage_state);
       }
 #endif
 
@@ -1398,7 +1395,6 @@ private:
    static bool processFileCache() U_NO_EXPORT;
    static bool readHeaderRequest() U_NO_EXPORT;
    static bool processGetRequest() U_NO_EXPORT;
-   static bool processAuthorization() U_NO_EXPORT;
    static bool checkRequestForHeader() U_NO_EXPORT;
    static bool checkGetRequestIfRange() U_NO_EXPORT;
    static bool checkGetRequestIfModified() U_NO_EXPORT;
@@ -1408,12 +1404,14 @@ private:
    static int  checkGetRequestForRange(const UString& data) U_NO_EXPORT;
    static int  sortRange(const void* a, const void* b) __pure U_NO_EXPORT;
    static bool addHTTPVariables(UStringRep* key, void* value) U_NO_EXPORT;
+   static void setSendfile(int fd, uint32_t start, uint32_t count) U_NO_EXPORT;
    static bool splitCGIOutput(const char*& ptr1, const char* ptr2) U_NO_EXPORT;
    static void putDataInCache(const UString& fmt, UString& content) U_NO_EXPORT;
    static bool readDataChunked(USocket* sk, UString* pbuffer, UString& body) U_NO_EXPORT;
    static void setResponseForRange(uint32_t start, uint32_t end, uint32_t header) U_NO_EXPORT;
    static void manageDataForCache(const UString& basename, const UString& suffix) U_NO_EXPORT;
    static bool checkDataSession(const UString& token, time_t expire, UString* data) U_NO_EXPORT;
+   static bool processAuthorization(const char* ptr = U_NULLPTR, uint32_t sz = 0, const char* pattern = U_NULLPTR, uint32_t len = 0) U_NO_EXPORT;
 
    static inline void resetFileCache() U_NO_EXPORT;
    static inline void setUpgrade(const char* ptr) U_NO_EXPORT;

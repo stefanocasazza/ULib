@@ -200,9 +200,11 @@ bool UFile::stat()
 
    st_ino = 0;
 
-   bool result = (U_SYSCALL(stat, "%S,%p", U_PATH_CONV(path_relativ), (struct stat*)this) == 0);
+   if (U_SYSCALL(stat, "%S,%p", U_PATH_CONV(path_relativ), (struct stat*)this) == 0) U_RETURN(true);
 
-   U_RETURN(result);
+   st_mode = 0;
+
+   U_RETURN(false);
 }
 
 bool UFile::chdir(const char* path, bool flag_save)

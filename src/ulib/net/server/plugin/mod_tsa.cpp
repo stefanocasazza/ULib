@@ -49,10 +49,10 @@ int UTsaPlugIn::handlerConfig(UFileConfig& cfg)
       {
       command = UServer_Base::loadConfigCommand();
 
-      U_RETURN(U_PLUGIN_HANDLER_PROCESSED | U_PLUGIN_HANDLER_GO_ON);
+      U_RETURN(U_PLUGIN_HANDLER_PROCESSED);
       }
 
-   U_RETURN(U_PLUGIN_HANDLER_GO_ON);
+   U_RETURN(U_PLUGIN_HANDLER_OK);
 }
 
 int UTsaPlugIn::handlerInit()
@@ -71,7 +71,7 @@ int UTsaPlugIn::handlerInit()
       UHTTP::valias->push_back(*UString::str_tsa);
       UHTTP::valias->push_back(*UString::str_nostat);
 
-      U_RETURN(U_PLUGIN_HANDLER_PROCESSED | U_PLUGIN_HANDLER_GO_ON);
+      U_RETURN(U_PLUGIN_HANDLER_OK);
 #  endif
       }
 
@@ -105,10 +105,10 @@ int UTsaPlugIn::handlerRequest()
       UServer_Base::logCommandMsgError(command->getCommand(), true);
 #  endif
 
-      U_RETURN(U_PLUGIN_HANDLER_PROCESSED | U_PLUGIN_HANDLER_GO_ON);
+      U_RETURN(U_PLUGIN_HANDLER_PROCESSED);
       }
 
-   U_RETURN(U_PLUGIN_HANDLER_GO_ON);
+   U_RETURN(U_PLUGIN_HANDLER_OK);
 }
 
 // DEBUG

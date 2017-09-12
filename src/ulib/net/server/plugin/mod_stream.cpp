@@ -93,10 +93,10 @@ int UStreamPlugIn::handlerConfig(UFileConfig& cfg)
 
       command = UServer_Base::loadConfigCommand();
 
-      U_RETURN(U_PLUGIN_HANDLER_PROCESSED | U_PLUGIN_HANDLER_GO_ON);
+      U_RETURN(U_PLUGIN_HANDLER_PROCESSED);
       }
 
-   U_RETURN(U_PLUGIN_HANDLER_GO_ON);
+   U_RETURN(U_PLUGIN_HANDLER_OK);
 }
 
 int UStreamPlugIn::handlerInit()
@@ -127,7 +127,7 @@ int UStreamPlugIn::handlerInit()
 
    (void) content_type->append(U_CONSTANT_TO_PARAM(U_CRLF));
 
-   U_RETURN(U_PLUGIN_HANDLER_PROCESSED | U_PLUGIN_HANDLER_GO_ON);
+   U_RETURN(U_PLUGIN_HANDLER_OK);
 }
 
 int UStreamPlugIn::handlerRun()
@@ -153,7 +153,7 @@ int UStreamPlugIn::handlerRun()
       UProcess::setProcessGroup(pid, pgid);
       */
 
-      U_RETURN(U_PLUGIN_HANDLER_PROCESSED | U_PLUGIN_HANDLER_GO_ON);
+      U_RETURN(U_PLUGIN_HANDLER_OK);
       }
 
    if (proc.child())
@@ -175,7 +175,7 @@ int UStreamPlugIn::handlerRun()
       handlerForSigTERM(SIGTERM);
       }
 
-   U_RETURN(U_PLUGIN_HANDLER_PROCESSED | U_PLUGIN_HANDLER_GO_ON);
+   U_RETURN(U_PLUGIN_HANDLER_OK);
 }
 
 // Connection-wide hooks
@@ -184,7 +184,7 @@ int UStreamPlugIn::handlerRequest()
 {
    U_TRACE_NO_PARAM(0, "UStreamPlugIn::handlerRequest()")
 
-   if (U_HTTP_URI_EQUAL(*uri_path) == false) U_RETURN(U_PLUGIN_HANDLER_GO_ON);
+   if (U_HTTP_URI_EQUAL(*uri_path) == false) U_RETURN(U_PLUGIN_HANDLER_OK);
 
    U_http_info.nResponseCode = HTTP_OK;
 
@@ -205,7 +205,7 @@ int UStreamPlugIn::handlerRequest()
 
             rbuf->close(readd);
 
-            U_RETURN(U_PLUGIN_HANDLER_FINISHED);
+            U_RETURN(U_PLUGIN_HANDLER_OK);
             }
 
          UTimeVal to_sleep(0L, 10 * 1000L);
@@ -224,7 +224,7 @@ int UStreamPlugIn::handlerRequest()
          }
       }
 
-   U_RETURN(U_PLUGIN_HANDLER_PROCESSED | U_PLUGIN_HANDLER_GO_ON);
+   U_RETURN(U_PLUGIN_HANDLER_PROCESSED);
 }
 
 // DEBUG

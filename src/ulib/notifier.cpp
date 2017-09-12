@@ -373,6 +373,8 @@ int UNotifier::waitForEvent(int fd_max, fd_set* read_set, fd_set* write_set, UEv
 {
    U_TRACE(1, "UNotifier::waitForEvent(%d,%p,%p,%p)", fd_max, read_set, write_set, ptimeout)
 
+   U_INTERNAL_ASSERT_DIFFERS(U_ClientImage_parallelization, U_PARALLELIZATION_CHILD)
+
    int result;
 
 #ifdef HAVE_EPOLL_WAIT
@@ -508,6 +510,7 @@ loop0:
          }
 #  else
       int i = 0;
+      bool bdelete;
       pevents = events;
 #    ifdef U_EPOLLET_POSTPONE_STRATEGY
       bool bloop1 = false;
@@ -545,9 +548,13 @@ loop0:
           *  EPOLLIN  EPOLLRDHUP
           */
 
-         if (UNLIKELY((pevents->events & (EPOLLERR | EPOLLHUP))   != 0) ||
-              (LIKELY((pevents->events & (EPOLLIN  | EPOLLRDHUP)) != 0) ? handler_event->handlerRead()
-                                                                        : handler_event->handlerWrite()) == U_NOTIFIER_DELETE)
+         bdelete = UNLIKELY((pevents->events & (EPOLLERR | EPOLLHUP))   != 0) ||
+                     LIKELY((pevents->events & (EPOLLIN  | EPOLLRDHUP)) != 0 ? handler_event->handlerRead()
+                                                                             : handler_event->handlerWrite() == U_NOTIFIER_DELETE);
+
+         U_INTERNAL_DUMP("bdelete = %b", bdelete)
+
+         if (bdelete)
             {
             handlerDelete(handler_event);
 
@@ -555,7 +562,7 @@ loop0:
             if (bepollet) pevents->events = 0;
 #        endif
             }
-#       if defined(U_EPOLLET_POSTPONE_STRATEGY)
+#        if defined(U_EPOLLET_POSTPONE_STRATEGY)
          else if (bepollet)
             {
             if (U_ClientImage_state != U_PLUGIN_HANDLER_AGAIN &&
@@ -568,7 +575,7 @@ loop0:
                pevents->events = 0;
                }
             }
-#       endif
+#        endif
          }
 
       if (++i < nfd_ready)
@@ -858,11 +865,12 @@ void UNotifier::insert(UEventFd* item, int op)
 #endif
 }
 
-void UNotifier::modify(UEventFd* item)
+bool UNotifier::modify(UEventFd* item)
 {
    U_TRACE(0, "UNotifier::modify(%p)", item)
 
    U_INTERNAL_ASSERT_POINTER(item)
+   U_INTERNAL_ASSERT_DIFFERS(U_ClientImage_parallelization, U_PARALLELIZATION_CHILD)
 
    int fd = item->fd;
 
@@ -886,7 +894,7 @@ void UNotifier::modify(UEventFd* item)
 
    struct epoll_event _events = { item->op_mask, { item } };
 
-   (void) U_SYSCALL(epoll_ctl, "%d,%d,%d,%p", epollfd, EPOLL_CTL_MOD, fd, &_events);
+   if (U_SYSCALL(epoll_ctl, "%d,%d,%d,%p", epollfd, EPOLL_CTL_MOD, fd, &_events)) U_RETURN(false);
 #elif defined(HAVE_KQUEUE)
    U_INTERNAL_ASSERT_MAJOR(kq, 0)
    U_INTERNAL_ASSERT_MINOR(nkqevents, max_connection)
@@ -950,6 +958,8 @@ void UNotifier::modify(UEventFd* item)
    U_INTERNAL_ASSERT(fd_read_cnt  >= 0)
    U_INTERNAL_ASSERT(fd_write_cnt >= 0)
 #endif
+
+   U_RETURN(true);
 }
 
 void UNotifier::handlerDelete(int fd, int mask)
@@ -957,6 +967,7 @@ void UNotifier::handlerDelete(int fd, int mask)
    U_TRACE(0, "UNotifier::handlerDelete(%d,%B)", fd, mask)
 
    U_INTERNAL_ASSERT_MAJOR(fd, 0)
+   U_INTERNAL_ASSERT_DIFFERS(U_ClientImage_parallelization, U_PARALLELIZATION_CHILD)
 
    if (fd < (int32_t)lo_map_fd_len) lo_map_fd[fd] = U_NULLPTR;
    else

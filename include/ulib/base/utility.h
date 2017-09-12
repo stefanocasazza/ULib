@@ -397,16 +397,18 @@ U_EXPORT bool u_dosmatch_ext(const char* restrict s, uint32_t n1, const char* re
 
 /* multiple patterns separated by '|' */
 
-U_EXPORT bool u_match_with_OR(bPFpcupcud pfn_match, const char* restrict s, uint32_t n1, const char* restrict pattern, uint32_t n2, int flags) __pure;
+extern U_EXPORT const char* restrict u_pOR;
 
-static inline bool u_dosmatch_with_OR(const char* restrict s, uint32_t n1, const char* restrict pattern, uint32_t n2, int flags)
+U_EXPORT uint32_t u_match_with_OR(bPFpcupcud pfn_match, const char* restrict s, uint32_t n1, const char* restrict pattern, uint32_t n2, int flags) __pure;
+
+static inline uint32_t u_dosmatch_with_OR(const char* restrict s, uint32_t n1, const char* restrict pattern, uint32_t n2, int flags)
 {
    U_INTERNAL_TRACE("u_dosmatch_with_OR(%.*s,%u,%.*s,%u,%d)", U_min(n1,128), s, n1, n2, pattern, n2, flags)
 
    return u_match_with_OR(u_dosmatch, s, n1, pattern, n2, flags);
 }
 
-static inline bool u_dosmatch_ext_with_OR(const char* restrict s, uint32_t n1, const char* restrict pattern, uint32_t n2, int flags)
+static inline uint32_t u_dosmatch_ext_with_OR(const char* restrict s, uint32_t n1, const char* restrict pattern, uint32_t n2, int flags)
 {
    U_INTERNAL_TRACE("u_dosmatch_ext_with_OR(%.*s,%u,%.*s,%u,%d)", U_min(n1,128), s, n1, n2, pattern, n2, flags)
 

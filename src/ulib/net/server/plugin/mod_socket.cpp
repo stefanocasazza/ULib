@@ -64,10 +64,10 @@ int UWebSocketPlugIn::handlerConfig(UFileConfig& cfg)
 
       UWebSocket::max_message_size = cfg.readLong(U_CONSTANT_TO_PARAM("MAX_MESSAGE_SIZE"), U_STRING_MAX_SIZE);
 
-      U_RETURN(U_PLUGIN_HANDLER_PROCESSED | U_PLUGIN_HANDLER_GO_ON);
+      U_RETURN(U_PLUGIN_HANDLER_PROCESSED);
       }
 
-   U_RETURN(U_PLUGIN_HANDLER_GO_ON);
+   U_RETURN(U_PLUGIN_HANDLER_OK);
 }
 
 int UWebSocketPlugIn::handlerRun()
@@ -93,7 +93,7 @@ int UWebSocketPlugIn::handlerRun()
       if (command == U_NULLPTR) U_RETURN(U_PLUGIN_HANDLER_ERROR);
       }
 
-   U_RETURN(U_PLUGIN_HANDLER_PROCESSED | U_PLUGIN_HANDLER_GO_ON);
+   U_RETURN(U_PLUGIN_HANDLER_OK);
 }
 
 // Connection-wide hooks
@@ -184,10 +184,10 @@ handle_data:
          UClientImage_Base::close();
          }
 
-      U_RETURN(U_PLUGIN_HANDLER_PROCESSED | U_PLUGIN_HANDLER_GO_ON);
+      U_RETURN(U_PLUGIN_HANDLER_PROCESSED);
       }
 
-   U_RETURN(U_PLUGIN_HANDLER_GO_ON);
+   U_RETURN(U_PLUGIN_HANDLER_OK);
 }
 
 // DEBUG

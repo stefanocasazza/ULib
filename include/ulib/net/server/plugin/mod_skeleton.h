@@ -17,12 +17,13 @@
 #include <ulib/net/server/server_plugin.h>
 
 /**
- * The plugin interface is an integral part of UServer which provides a flexible way to add specific functionality to UServer.
- * Plugins allow you to enhance the functionality of UServer without changing the core of the server. They can be loaded at
- * startup time and can change virtually some aspect of the behaviour of the server.
+ * The plugin interface is an integral part of UServer which provides a flexible way to add specific
+ * functionality to UServer. Plugins allow you to enhance the functionality of UServer without changing
+ * the core of the server. They can be loaded at startup time and can change virtually some aspect of
+ * the behaviour of the server
  *
  * UServer has 7 hooks which are used in different states of the execution of the request:
- * --------------------------------------------------------------------------------------------
+ * ----------------------------------------------------------------------------------------------------
  *  * Server-wide hooks:
  *  ````````````````````
  *  1) handlerConfig: called when the server finished to process its configuration
@@ -31,19 +32,18 @@
  *  4) handlerFork:   called when the server have forked a child
  *  5) handlerStop:   called when the server shut down
  *
- *  * Connection-wide hooks:
+ *  * Connection-wide hooks: called in `UClientImage_Base::handlerRead()`
  *  ````````````````````````
  *  6) handlerREAD:
  *  7) handlerRequest:
- *   called in `UClientImage_Base::handlerRead()`
- * --------------------------------------------------------------------------------------------
+ * ----------------------------------------------------------------------------------------------------
  *
  * RETURNS:
- *  U_PLUGIN_HANDLER_GO_ON     ok
+ *  U_PLUGIN_HANDLER_OK        ok
  *  U_PLUGIN_HANDLER_ERROR     error
  *  U_PLUGIN_HANDLER_AGAIN     the request is not ready (NONBLOCKING)
- *  U_PLUGIN_HANDLER_FINISHED  the request processing is complete
  *  U_PLUGIN_HANDLER_PROCESSED the request has been processed
+ *  U_PLUGIN_HANDLER_FINISHED  the request processing is complete
  */
 
 class U_EXPORT USkeletonPlugIn : public UServerPlugIn {

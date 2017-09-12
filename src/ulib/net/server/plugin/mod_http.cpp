@@ -134,7 +134,7 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
 
          U_NEW(UString, UHTTP::maintenance_mode_page, UString(x));
 
-         U_RETURN(U_PLUGIN_HANDLER_PROCESSED | U_PLUGIN_HANDLER_GO_ON);
+         U_RETURN(U_PLUGIN_HANDLER_PROCESSED);
          }
 
       UHTTP::virtual_host = bvirtual_host;
@@ -452,10 +452,10 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
          }
 #  endif
 
-      U_RETURN(U_PLUGIN_HANDLER_PROCESSED | U_PLUGIN_HANDLER_GO_ON);
+      U_RETURN(U_PLUGIN_HANDLER_PROCESSED);
       }
 
-   U_RETURN(U_PLUGIN_HANDLER_GO_ON);
+   U_RETURN(U_PLUGIN_HANDLER_OK);
 }
 
 int UHttpPlugIn::handlerInit()
@@ -510,7 +510,7 @@ int UHttpPlugIn::handlerInit()
 
    UHTTP::init();
 
-   U_RETURN(U_PLUGIN_HANDLER_PROCESSED | U_PLUGIN_HANDLER_GO_ON);
+   U_RETURN(U_PLUGIN_HANDLER_OK);
 }
 
 int UHttpPlugIn::handlerRun() // NB: we use this method instead of handlerInit() because now we have the shared data allocated by UServer...
@@ -601,7 +601,7 @@ int UHttpPlugIn::handlerRun() // NB: we use this method instead of handlerInit()
 
    U_RESET_MODULE_NAME;
 
-   U_RETURN(U_PLUGIN_HANDLER_PROCESSED | U_PLUGIN_HANDLER_GO_ON);
+   U_RETURN(U_PLUGIN_HANDLER_OK);
 }
 
 int UHttpPlugIn::handlerFork()
@@ -614,7 +614,7 @@ int UHttpPlugIn::handlerFork()
 
    if (UHTTP::bcallInitForAllUSP) UHTTP::callAfterForkForAllUSP();
 
-   U_RETURN(U_PLUGIN_HANDLER_PROCESSED | U_PLUGIN_HANDLER_GO_ON);
+   U_RETURN(U_PLUGIN_HANDLER_OK);
 }
 
 int UHttpPlugIn::handlerStop()
@@ -641,7 +641,7 @@ int UHttpPlugIn::handlerStop()
 
    U_RESET_MODULE_NAME;
 
-   U_RETURN(U_PLUGIN_HANDLER_PROCESSED | U_PLUGIN_HANDLER_GO_ON);
+   U_RETURN(U_PLUGIN_HANDLER_OK);
 }
 
 // Connection-wide hooks
@@ -661,9 +661,14 @@ int UHttpPlugIn::handlerRequest()
 
    U_INTERNAL_DUMP("method_type = %C uri = %.*S UServer_Base::mod_name[0] = %S", U_http_method_type, U_HTTP_URI_TO_TRACE, UServer_Base::mod_name[0])
 
-   if (UClientImage_Base::isRequestNeedProcessing()) return UHTTP::processRequest();
+   if (UClientImage_Base::isRequestNeedProcessing())
+      {
+      UHTTP::processRequest();
 
-   U_RETURN(U_PLUGIN_HANDLER_FINISHED);
+      U_RETURN(U_PLUGIN_HANDLER_PROCESSED);
+      }
+
+   U_RETURN(U_PLUGIN_HANDLER_OK);
 }
 
 // SigHUP hook
@@ -684,5 +689,5 @@ int UHttpPlugIn::handlerSigHUP()
 
    if (UHTTP::bcallInitForAllUSP) UHTTP::callSigHUPForAllUSP();
 
-   U_RETURN(U_PLUGIN_HANDLER_PROCESSED | U_PLUGIN_HANDLER_GO_ON);
+   U_RETURN(U_PLUGIN_HANDLER_OK);
 }

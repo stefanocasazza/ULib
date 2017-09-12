@@ -50,5 +50,5 @@ int UEchoPlugIn::handlerRequest()
    (void) UClientImage_Base::wbuffer->assign(U_CONSTANT_TO_PARAM(U_ECHO_RESPONSE_FOR_TEST));
 #endif
 
-   U_RETURN(U_PLUGIN_HANDLER_PROCESSED | U_PLUGIN_HANDLER_FINISHED);
+   U_RETURN(U_PLUGIN_HANDLER_PROCESSED);
 }

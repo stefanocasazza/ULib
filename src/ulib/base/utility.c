@@ -1974,9 +1974,11 @@ __pure bool u_dosmatch_ext(const char* restrict s, uint32_t n1, const char* rest
    return ((flags & FNM_INVERT) != 0);
 }
 
-__pure bool u_match_with_OR(bPFpcupcud pfn_match, const char* restrict s, uint32_t n1, const char* restrict pattern, uint32_t n2, int flags)
+const char* restrict u_pOR;
+
+__pure uint32_t u_match_with_OR(bPFpcupcud pfn_match, const char* restrict s, uint32_t n1, const char* restrict pattern, uint32_t n2, int flags)
 {
-   const char* restrict p_or;
+   uint32_t n0;
    const char* restrict end = pattern + n2;
 
    U_INTERNAL_TRACE("u_match_with_OR(%p,%.*s,%u,%.*s,%u,%d)", pfn_match, U_min(n1,128), s, n1, n2, pattern, n2, flags)
@@ -1988,13 +1990,25 @@ __pure bool u_match_with_OR(bPFpcupcud pfn_match, const char* restrict s, uint32
 
    while (true)
       {
-      p_or = (const char* restrict) memchr(pattern, '|', n2);
+      u_pOR = (const char* restrict) memchr(pattern, '|', n2);
 
-      if (p_or == 0) return pfn_match(s, n1, pattern, n2, flags);
+      if (u_pOR == U_NULLPTR) return pfn_match(s, n1, pattern, n2, flags);
 
-      if (pfn_match(s, n1, pattern, (p_or - pattern), (flags & ~FNM_INVERT))) return ((flags & FNM_INVERT) == 0);
+      n0 = (u_pOR - pattern);
 
-      pattern = p_or + 1;
+      if (pfn_match(s, n1, pattern, n0, (flags & ~FNM_INVERT)))
+         {
+         if ((flags & FNM_INVERT) == 0)
+            {
+            u_pOR = pattern;
+
+            return n0;
+            }
+
+         return 0;
+         }
+
+      pattern = u_pOR + 1;
          n2   = end - pattern;
       }
 }

@@ -574,9 +574,9 @@ void UHTTP::in_READ()
                inotify_dir       = U_NULLPTR;
                inotify_file_data = U_NULLPTR;
                }
-
+ 
             if (*inotify_name != '.' ||
-                u_isSuffixSwap(inotify_name + len - U_CONSTANT_SIZE(".swp")) == false) // NB: vi tmp...
+                (name = inotify_name + len - sizeof(".swp"), name[0] != '.' || u_isSuffixSwap(name) == false)) // NB: vi tmp...
                {
                if (binotify_path == false) cache_file->callForAllEntry(getInotifyPathDirectory);
 
@@ -1116,8 +1116,8 @@ void UHTTP::init()
       }
    else
       {
-      if (cache_avoid_mask == U_NULLPTR) UDirWalk::setDirectory(*UString::str_point);
-      else                               UDirWalk::setDirectory(*UString::str_point, *cache_avoid_mask, FNM_INVERT);
+      if (cache_avoid_mask == U_NULLPTR) (void) UDirWalk::setDirectory(*UString::str_point);
+      else                               (void) UDirWalk::setDirectory(*UString::str_point, *cache_avoid_mask, FNM_INVERT);
 
       UDirWalk::setFollowLinks(true);
       UDirWalk::setRecurseSubDirs(true, true);
@@ -3797,15 +3797,6 @@ next2:
    if (U_ClientImage_advise_for_parallelization == 2) U_RETURN(true);
 # endif
 
-   if (UClientImage_Base::csfd > 0)
-      {
-      U_INTERNAL_DUMP("U_http_sendfile = %b", U_http_sendfile)
-
-      U_INTERNAL_ASSERT(U_http_sendfile)
-
-      UClientImage_Base::setSendfile(UClientImage_Base::csfd, range_start, range_size);
-      }
-
    UClientImage_Base::setHeaderForResponse(6+29+2+12+2); // Date: Wed, 20 Jun 2012 11:43:17 GMT\r\nServer: ULib\r\n
 
 #ifndef U_LOG_DISABLE
@@ -3884,16 +3875,28 @@ bool UHTTP::isValidation()
       U_RETURN(false);
       }
 
-   if (isUriRequestProtected() && // check if the uri requested is protected
-       checkUriProtected() == false)
-      {
-      U_RETURN(false);
-      }
+   if (checkUriProtected() == false) U_RETURN(false); // check if the uri requested is protected
 #endif
 
    U_RETURN(true);
 }
 #endif
+
+U_NO_EXPORT void UHTTP::setSendfile(int fd, uint32_t start, uint32_t count)
+{
+   U_TRACE(0, "UHTTP::setSendfile(%d,%u,%u)", fd, start, count)
+
+   UClientImage_Base::setSendfile(fd, start, count);
+
+   if ((count - start) > (6 * U_1M))
+      {
+      if (UServer_Base::startParallelization()) return; // parent
+
+      UClientImage_Base::setCloseConnection();
+
+      handlerResponse();
+      }
+}
 
 int UHTTP::handlerREAD()
 {
@@ -3937,7 +3940,7 @@ int UHTTP::handlerREAD()
          }
 #  endif
 
-      if (U_ClientImage_data_missing) U_RETURN(U_PLUGIN_HANDLER_FINISHED);
+      if (U_ClientImage_data_missing) U_RETURN(U_PLUGIN_HANDLER_OK);
 
       if (UNLIKELY(UServer_Base::csocket->isClosed())) U_RETURN(U_PLUGIN_HANDLER_ERROR);
 
@@ -3970,14 +3973,14 @@ int UHTTP::handlerREAD()
          {
          setBadRequest();
 
-         U_RETURN(U_PLUGIN_HANDLER_FINISHED);
+         U_RETURN(U_PLUGIN_HANDLER_OK);
          }
 
       setResponse();
 
       UClientImage_Base::resetPipelineAndSetCloseConnection();
 
-      U_RETURN(U_PLUGIN_HANDLER_FINISHED);
+      U_RETURN(U_PLUGIN_HANDLER_OK);
       }
 
    U_INTERNAL_ASSERT_DIFFERS(U_http_method_type, 0)
@@ -3997,7 +4000,7 @@ int UHTTP::handlerREAD()
          }
 #  endif
 
-      if (U_ClientImage_data_missing) U_RETURN(U_PLUGIN_HANDLER_FINISHED);
+      if (U_ClientImage_data_missing) U_RETURN(U_PLUGIN_HANDLER_OK);
       }
 
    U_INTERNAL_DUMP("U_HTTP_HOST(%u) = %.*S", U_http_host_len, U_HTTP_HOST_TO_TRACE)
@@ -4008,7 +4011,7 @@ int UHTTP::handlerREAD()
          {
          setBadRequest();
 
-         U_RETURN(U_PLUGIN_HANDLER_FINISHED);
+         U_RETURN(U_PLUGIN_HANDLER_OK);
          }
       }
 #ifndef U_SERVER_CAPTIVE_PORTAL
@@ -4020,7 +4023,7 @@ int UHTTP::handlerREAD()
 
       U_SRV_LOG("WARNING: unrecognized header <Host> in request: %.*S", U_HTTP_VHOST_TO_TRACE);
 
-      U_RETURN(U_PLUGIN_HANDLER_FINISHED);
+      U_RETURN(U_PLUGIN_HANDLER_OK);
       }
 #endif
 
@@ -4047,7 +4050,7 @@ int UHTTP::handlerREAD()
          "NOTIFY, MSEARCH, SUBSCRIBE, UNSUBSCRIBE"     // upnp
          "\r\nContent-Length: 0\r\n\r\n"));
 
-      U_RETURN(U_PLUGIN_HANDLER_FINISHED);
+      U_RETURN(U_PLUGIN_HANDLER_OK);
       }
 
    UClientImage_Base::size_request = (U_http_info.endHeader ? U_http_info.endHeader
@@ -4088,7 +4091,7 @@ int UHTTP::handlerREAD()
 
             if (UClientImage_Base::wbuffer->empty()) setBadRequest();
 
-            U_RETURN(U_PLUGIN_HANDLER_FINISHED);
+            U_RETURN(U_PLUGIN_HANDLER_OK);
             }
 
          UClientImage_Base::size_request += U_http_info.clength;
@@ -4112,24 +4115,17 @@ int UHTTP::handlerREAD()
 
          U_SRV_LOG("we strike back sending gzip bomb...", 0);
 
-         if (UServer_Base::startParallelization()) U_RETURN(U_PLUGIN_HANDLER_FINISHED); // parent
-
          UClientImage_Base::body->clear();
-
-         UClientImage_Base::setCloseConnection();
-
-         U_http_flag           |= HTTP_IS_RESPONSE_GZIP | HTTP_IS_SENDFILE;
-         U_ClientImage_request |= UClientImage_Base::ALREADY_PROCESSED | UClientImage_Base::NO_CACHE;
-
-         UClientImage_Base::setSendfile(file_gzip_bomb->fd, 0, file_gzip_bomb->size);
 
          U_http_info.nResponseCode = HTTP_OK;
 
+         U_http_flag |= HTTP_IS_RESPONSE_GZIP;
+
          *ext = file_gzip_bomb->array->operator[](0);
 
-         handlerResponse();
+         setSendfile(file_gzip_bomb->fd, 0, file_gzip_bomb->size);
 
-         U_RETURN(U_PLUGIN_HANDLER_FINISHED);
+         U_RETURN(U_PLUGIN_HANDLER_OK);
          }
 
       UClientImage_Base::abortive_close();
@@ -4230,11 +4226,15 @@ int UHTTP::manageRequest()
 
    // manage global alias
 
-   U_INTERNAL_DUMP("global_alias = %p UClientImage_Base::request_uri(%u) = %V",
-                    global_alias,     UClientImage_Base::request_uri->size(), UClientImage_Base::request_uri->rep)
+   U_INTERNAL_DUMP("global_alias = %p UClientImage_Base::request_uri(%u) = %V uri(%u) = %.*S query = %.*S",
+                    global_alias,     UClientImage_Base::request_uri->size(), UClientImage_Base::request_uri->rep,
+                    u_clientimage_info.http_info.uri_len, U_HTTP_URI_TO_TRACE, U_HTTP_QUERY_TO_TRACE)
 
-   if (global_alias                            &&
-       UClientImage_Base::request_uri->empty() &&
+   if (global_alias                                                                    &&
+       UClientImage_Base::request_uri->empty()                                         && // NB: this is exclusive with alias...
+       u_clientimage_info.http_info.uri_len > 1                                        &&
+       u_clientimage_info.http_info.uri[u_clientimage_info.http_info.uri_len-1] != '/' && // directory request
+       U_HTTP_QUERY_STREQ("_nav_") == false                                            &&
        u_getsuffix(U_HTTP_URI_TO_PARAM) == U_NULLPTR)
       {
       (void) UClientImage_Base::request_uri->assign(U_HTTP_URI_TO_PARAM);
@@ -4278,7 +4278,7 @@ set_uri: U_http_info.uri     = alias->data();
       {
       setServiceUnavailable();
 
-      U_RETURN(U_PLUGIN_HANDLER_FINISHED);
+      U_RETURN(U_PLUGIN_HANDLER_OK);
       }
 #endif
 
@@ -4316,7 +4316,7 @@ set_uri: U_http_info.uri     = alias->data();
 
       UClientImage_Base::setRequestNeedProcessing();
 
-      U_RETURN(U_PLUGIN_HANDLER_FINISHED);
+      U_RETURN(U_PLUGIN_HANDLER_OK);
       }
    }
 
@@ -4428,7 +4428,7 @@ file_in_cache:
 #  endif
 
 #  if defined(U_HTTP_STRICT_TRANSPORT_SECURITY) || defined(USE_LIBSSL)
-      if (isValidation() == false) U_RETURN(U_PLUGIN_HANDLER_FINISHED);
+      if (isValidation() == false) U_RETURN(U_PLUGIN_HANDLER_OK);
 #  endif
 
       mime_index = file_data->mime_index;
@@ -4479,13 +4479,13 @@ file_in_cache:
 
          U_RESET_MODULE_NAME;
 
-         U_RETURN(U_PLUGIN_HANDLER_FINISHED);
+         U_RETURN(U_PLUGIN_HANDLER_OK);
          }
 
 #     ifndef U_COVERITY_FALSE_POSITIVE // UNREACHABLE
          if (U_ClientImage_state != U_PLUGIN_HANDLER_ERROR) goto from_cache;
 
-         U_RETURN(U_PLUGIN_HANDLER_FINISHED);
+         U_RETURN(U_PLUGIN_HANDLER_OK);
 #     endif
          }
 
@@ -4501,7 +4501,7 @@ file_in_cache:
 
                UClientImage_Base::environment->setEmpty();
 
-               U_RETURN(U_PLUGIN_HANDLER_FINISHED);
+               U_RETURN(U_PLUGIN_HANDLER_OK);
                }
 
             U_INTERNAL_DUMP("U_http_is_request_nostat = %b query(%u) = %.*S", U_http_is_request_nostat, U_http_info.query_len, U_HTTP_QUERY_TO_TRACE)
@@ -4511,7 +4511,7 @@ file_in_cache:
                 U_HTTP_QUERY_STREQ("_nav_") == false &&
                 (checkForPathName(), runDynamicPage()))
                {
-               U_RETURN(U_PLUGIN_HANDLER_FINISHED);
+               U_RETURN(U_PLUGIN_HANDLER_OK);
                }
 #        endif
             }
@@ -4563,7 +4563,7 @@ file_exist_and_need_to_be_processed: // NB: if we can't service the content of f
        (UClientImage_Base::isRequestAlreadyProcessed()  || // => 4)
         isValidation() == false))
       {
-      U_RETURN(U_PLUGIN_HANDLER_FINISHED);
+      U_RETURN(U_PLUGIN_HANDLER_OK);
       }
 #endif
 
@@ -4576,7 +4576,7 @@ file_exist_and_need_to_be_processed: // NB: if we can't service the content of f
          {
          setBadRequest();
 
-         U_RETURN(U_PLUGIN_HANDLER_FINISHED);
+         U_RETURN(U_PLUGIN_HANDLER_OK);
          }
 
       UClientImage_Base::setRequestNoCache();
@@ -4609,7 +4609,7 @@ end:
 
       if (UClientImage_Base::isRequestNeedProcessing())
          {
-         U_ClientImage_state = UClientImage_Base::callerHandlerRequest();
+         UClientImage_Base::callerHandlerRequest();
 
          if (UServer_Base::csocket->isClosed()) U_RETURN(U_PLUGIN_HANDLER_ERROR);
          }
@@ -4619,7 +4619,7 @@ end:
       }
 #endif
 
-   U_RETURN(U_PLUGIN_HANDLER_FINISHED);
+   U_RETURN(U_PLUGIN_HANDLER_OK);
 }
 
 //#define TEST_LOAD_BALANCE_ON_LOCALHOST
@@ -4770,7 +4770,7 @@ U_NO_EXPORT inline void UHTTP::resetFileCache()
    file_data->fd = -1;
 }
 
-int UHTTP::processRequest()
+void UHTTP::processRequest()
 {
    U_TRACE_NO_PARAM(1, "UHTTP::processRequest()")
 
@@ -4783,7 +4783,7 @@ int UHTTP::processRequest()
          if (UClientImage_Base::isRequestNotFound()) setNotFound();
          else                                        setBadRequest();
 
-         U_RETURN(U_PLUGIN_HANDLER_FINISHED);
+         return;
          }
 
       if (isPUT())
@@ -4862,7 +4862,7 @@ int UHTTP::processRequest()
 
       U_INTERNAL_DUMP("U_http_method_not_implemented = %b", U_http_method_not_implemented)
 
-      if (UServer_Base::vplugin_name->last() != *UString::str_http) U_RETURN(U_PLUGIN_HANDLER_GO_ON); // NB: there are other plugin after this (http)...
+      if (UServer_Base::vplugin_name->last() != *UString::str_http) return; // NB: there are other plugin after this (http)...
 
       setMethodNotImplemented();
 
@@ -4912,7 +4912,7 @@ int UHTTP::processRequest()
          {
          setForbidden(); // set forbidden error response...
 
-         U_RETURN(U_PLUGIN_HANDLER_FINISHED);
+         return;
          }
 #  endif
 
@@ -4947,7 +4947,7 @@ int UHTTP::processRequest()
             goto end;
 #        endif
 
-            U_RETURN(U_PLUGIN_HANDLER_FINISHED);
+            return;
             }
 
          file->setPath(*pathname);
@@ -4976,7 +4976,7 @@ int UHTTP::processRequest()
 
          UClientImage_Base::setRequestNoCache();
 
-         U_RETURN(U_PLUGIN_HANDLER_FINISHED);
+         return;
          }
 #  endif
 
@@ -4988,7 +4988,7 @@ int UHTTP::processRequest()
 
          // check if it's OK to do directory listing via authentication (digest|basic)
 
-         if (processAuthorization() == false) U_RETURN(U_PLUGIN_HANDLER_FINISHED);
+         if (processAuthorization() == false) return;
 
          *UClientImage_Base::body = getHTMLDirectoryList();
 
@@ -5056,7 +5056,7 @@ check_file: // now we check the file...
    else if (errno == EPERM)  setForbidden();
    else                      setServiceUnavailable();
 
-   U_RETURN(U_PLUGIN_HANDLER_FINISHED);
+   return;
 
 next:
    U_INTERNAL_DUMP("file_data->fd = %d file_data->size = %u file_data->mode = %d file_data->mtime = %ld",
@@ -5096,7 +5096,7 @@ next:
             {
             if (U_http_is_nocache_file) resetFileCache();
 
-            U_RETURN(U_PLUGIN_HANDLER_FINISHED);
+            return;
             }
 
          if (U_http_is_nocache_file == false) goto end;
@@ -5107,8 +5107,6 @@ err:  resetFileCache();
 
 end:
    handlerResponse();
-
-   U_RETURN(U_PLUGIN_HANDLER_FINISHED);
 }
 
 void UHTTP::setEndRequestProcessing()
@@ -5224,14 +5222,6 @@ void UHTTP::setEndRequestProcessing()
        U_IS_HTTP_SUCCESS(U_http_info.nResponseCode))
       {
       UClientImage_Base::setRequestToCache();
-
-      U_INTERNAL_DUMP("file_data = %p U_http_sendfile = %b", file_data, U_http_sendfile)
-
-      if (file_data &&
-          U_http_sendfile)
-         {
-         UClientImage_Base::csfd = file_data->fd;
-         }
       }
 #endif
 }
@@ -6009,15 +5999,14 @@ U_NO_EXPORT UString UHTTP::getHTMLDirectoryList()
 
    bool is_dir;
    UDirWalk dirwalk;
-   uint32_t i, pos, n;
    UVector<UString> vec(2048);
    UString buffer(4000U), item, size, basename, entry(4000U), value_encoded(U_CAPACITY), readme_txt;
 
-   int32_t len     = file->getPathRelativLen();
+   uint32_t len    = file->getPathRelativLen();
    const char* ptr = file->getPathRelativ();
-   bool broot      = (len == 1 && ptr[0] == '/');
 
-   if (broot)
+   if (len == 1 &&
+       ptr[0] == '/')
       {
       (void) buffer.assign(U_CONSTANT_TO_PARAM(
          "<html><head><title>Index of /</title></head>"
@@ -6033,7 +6022,7 @@ U_NO_EXPORT UString UHTTP::getHTMLDirectoryList()
          "<html><head><title>Index of %.*s</title></head>"
          "<body><h1>Index of directory: %.*s</h1><hr>"
          "<table><tr>"
-         "<td><a href=\"/%.*s/..?_nav_\"><img width=\"20\" height=\"21\" align=\"absbottom\" border=\"0\" src=\"/icons/dir.png\"> Up one level</a></td>"
+         "<td><a href=\"%.*s/..?_nav_\"><img width=\"20\" height=\"21\" align=\"absbottom\" border=\"0\" src=\"/icons/dir.png\"> Up one level</a></td>" // '<dir>/../?_nav_' don't work
          "<td></td>"
          "<td></td>"
          "</tr>"), len, ptr, len, ptr, len, ptr);
@@ -6041,11 +6030,7 @@ U_NO_EXPORT UString UHTTP::getHTMLDirectoryList()
       if (dirwalk.setDirectory(U_FILE_TO_STRING(*file)) == false) goto end;
       }
 
-   n = dirwalk.walk(vec, U_ALPHABETIC_SORT);
-
-   pos = buffer.size();
-
-   for (i = 0; i < n; ++i)
+   for (uint32_t i = 0, n = dirwalk.walk(vec, U_ALPHABETIC_SORT), pos = buffer.size(); i < n; ++i)
       {
       item      = vec[i];
       file_data = (*cache_file)[item];
@@ -6096,7 +6081,6 @@ U_NO_EXPORT UString UHTTP::getHTMLDirectoryList()
          }
       }
 
-end:
    (void) buffer.append(U_CONSTANT_TO_PARAM("</table><hr>"));
 
    if (readme_txt)
@@ -6106,6 +6090,7 @@ end:
       (void) buffer.append(U_CONSTANT_TO_PARAM("</pre><hr>"));
       }
 
+end:
    (void) buffer.append(U_CONSTANT_TO_PARAM("<address>ULib Server</address></body></html>"));
 
    U_INTERNAL_DUMP("buffer(%u) = %V", buffer.size(), buffer.rep)
@@ -7060,23 +7045,37 @@ no_response:
    handlerResponse();
 }
 
-U_NO_EXPORT bool UHTTP::processAuthorization()
+U_NO_EXPORT bool UHTTP::processAuthorization(const char* request, uint32_t sz, const char* pattern, uint32_t len)
 {
-   U_TRACE_NO_PARAM(0, "UHTTP::processAuthorization()")
+   U_TRACE(0, "UHTTP::processAuthorization(%.*S,%u,%.*S,%u)", sz, request, sz, len, pattern, len)
+
+   if (sz == 0) request = UClientImage_Base::getRequestUri(sz);
 
    UTokenizer t;
    const char* ptr;
-   uint32_t sz, pos = 0;
+   uint32_t pos = 0;
    bool result = false, bpass = false;
    UString buffer(100U), fpasswd, content, tmp, user(100U);
-   const char* request = UClientImage_Base::getRequestUri(sz);
-   const char* uri_suffix = u_getsuffix(request, sz);
 
-   if (uri_suffix)
+   if (pattern)
       {
-      U_INTERNAL_ASSERT_EQUALS(uri_suffix[0], '.')
+      sz      = len-1;
+      request = pattern;
 
-      pos = (request + sz) - uri_suffix;
+      U_INTERNAL_ASSERT_EQUALS(pattern[sz], '*')
+
+      if (pattern[sz-1] == '/') pos = 1;
+      }
+   else
+      {
+      const char* uri_suffix = u_getsuffix(request, sz);
+
+      if (uri_suffix)
+         {
+         U_INTERNAL_ASSERT_EQUALS(uri_suffix[0], '.')
+
+         pos = (request + sz) - uri_suffix;
+         }
       }
 
    U_INTERNAL_DUMP("digest_authentication = %b", digest_authentication)
@@ -7166,12 +7165,22 @@ U_NO_EXPORT bool UHTTP::processAuthorization()
                      {
                      U_ASSERT(_uri.empty())
 
-                     U_INTERNAL_DUMP("request = %.*S", sz, request)
+                     ptr = value.data();
+                     pos = value.size();
 
-                     if (sz > value.size() ||
-                         memcmp(request, value.data(), sz))
+                     U_INTERNAL_DUMP("ptr(%u) = %.*S request(%u) = %.*S", pos, pos, ptr, sz, sz, request)
+
+                     if (pattern)
                         {
-                        goto end;
+                        if (UServices::dosMatchWithOR(ptr, pos, pattern, len, 0) == false) goto end;
+                        }
+                     else
+                        {
+                        if (sz > pos ||
+                            memcmp(request, ptr, sz))
+                           {
+                           goto end;
+                           }
                         }
                
                      _uri = value;
@@ -7477,54 +7486,47 @@ bool UHTTP::isProxyRequest()
 }
 
 #ifdef USE_LIBSSL
-__pure bool UHTTP::isUriRequestProtected()
+bool UHTTP::checkUriProtected()
 {
-   U_TRACE_NO_PARAM(0, "UHTTP::isUriRequestProtected()")
+   U_TRACE_NO_PARAM(0, "UHTTP::checkUriProtected()")
 
    // check if the uri is protected
 
    if (uri_protected_mask)
       {
-      uint32_t sz;
+      const char* pattern = uri_protected_mask->data();
+      uint32_t sz, pattern_len = uri_protected_mask->size();
       const char* ptr = UClientImage_Base::getRequestUri(sz);
 
-      if (UServices::dosMatchWithOR(ptr, sz, U_STRING_TO_PARAM(*uri_protected_mask), 0)) U_RETURN(true);
-      }
-
-   U_RETURN(false);
-}
-
-bool UHTTP::checkUriProtected()
-{
-   U_TRACE_NO_PARAM(0, "UHTTP::checkUriProtected()")
-
-   U_INTERNAL_ASSERT_POINTER(uri_protected_mask)
-
-   if (vallow_IP)
-      {
-      bool ok = UClientImage_Base::isAllowed(*vallow_IP);
-
-      if (ok &&
-          U_http_ip_client_len)
+      if ((pattern_len = u_dosmatch_with_OR(ptr, sz, pattern, pattern_len, 0)))
          {
-         ok = UIPAllow::isAllowed(UServer_Base::client_address, *vallow_IP);
-         }
+         if (vallow_IP)
+            {
+            bool ok = UClientImage_Base::isAllowed(*vallow_IP);
 
-      if (ok == false)
-         {
-         setForbidden();
+            if (ok &&
+                U_http_ip_client_len)
+               {
+               ok = UIPAllow::isAllowed(UServer_Base::client_address, *vallow_IP);
+               }
 
-         U_SRV_LOG("URI_PROTECTED: request %.*S denied by access list", U_HTTP_URI_TO_TRACE);
+            if (ok == false)
+               {
+               setForbidden();
 
-         U_RETURN(false);
+               U_SRV_LOG("URI_PROTECTED: request %.*S denied by access list", U_HTTP_URI_TO_TRACE);
+
+               U_RETURN(false);
+               }
+            }
+
+         // check if it's OK via authentication (digest|basic)
+
+         if (processAuthorization(ptr, sz, (u_pOR != U_NULLPTR ? u_pOR : pattern), pattern_len) == false) U_RETURN(false);
          }
       }
 
-   // check if it's OK via authentication (digest|basic)
-
-   if (processAuthorization()) U_RETURN(true);
-
-   U_RETURN(false);
+   U_RETURN(true);
 }
 #endif
 
@@ -7610,7 +7612,16 @@ not_found:
 
    U_INTERNAL_DUMP("target(%u) = %.*S", target_len, target_len, target)
 
-   if (u_getsuffix(target, target_len) != U_NULLPTR) goto end; // NB: if we have a suffix (Ex: something.sh) we go to the next phase of request processing...
+   ptr = u_getsuffix(target, target_len);
+
+   if (ptr != U_NULLPTR)
+      {
+      if (memcmp(ptr+1, U_CONSTANT_TO_PARAM("shtml"))) goto end; // NB: if we have a suffix different from '.shtml' (Ex: process.sh) we go to the next phase of request processing...
+
+      if (ptr) target_len = ptr - target;
+
+      U_INTERNAL_DUMP("target(%u) = %.*S", target_len, target_len, target)
+      }
 
    U_http_info.nResponseCode = 0; // NB: it is used by server_plugin_ssi to continue processing with a shell script...
 
@@ -8293,7 +8304,7 @@ U_NO_EXPORT void UHTTP::manageDataForCache(const UString& basename, const UStrin
       // manage gzip bomb...
 
       if (suffix_len == 2                                                     &&
-          UServer_Base::bssl != false                                         && // NB: we can't use sendfile with SSL...
+          UServer_Base::bssl == false                                         && // NB: we can't use sendfile with SSL...
           u_get_unalignedp16(  suffix_ptr) == U_MULTICHAR_CONSTANT16('g','z') &&
           u_get_unalignedp64(basename_ptr) == U_MULTICHAR_CONSTANT64('_','_','B','o','m','B','_','_'))
          {
@@ -8616,12 +8627,10 @@ U_NO_EXPORT bool UHTTP::processFileCache()
       U_http_info.nResponseCode = HTTP_PARTIAL;
       }
 
-   if (isSizeForSendfile(sz) == false) *UClientImage_Base::body = getBodyFromCache().substr(range_start, range_size);
+   if (isSizeForSendfile(sz)) setSendfile(file_data->fd, range_start, range_size);
    else
       {
-      U_http_flag |= HTTP_IS_SENDFILE;
-
-      UClientImage_Base::setSendfile(file_data->fd, range_start, range_size);
+      *UClientImage_Base::body = getBodyFromCache().substr(range_start, range_size);
       }
 
 end:
@@ -10554,22 +10563,11 @@ U_NO_EXPORT bool UHTTP::processGetRequest()
    U_INTERNAL_ASSERT_DIFFERS(file_data->fd, -1)
    U_INTERNAL_ASSERT_EQUALS(file->fd, file_data->fd)
    U_INTERNAL_ASSERT_EQUALS(file->st_size, file_data->size)
+   U_INTERNAL_ASSERT_MINOR(range_size, UServer_Base::min_size_for_sendfile)
 
    UString mmap;
    time_t expire;
    const char* ctype;
-
-   // NB: we check if we need to send the body with sendfile()...
-
-   U_INTERNAL_DUMP("U_http_sendfile = %b", U_http_sendfile)
-
-   if (U_http_sendfile)
-      {
-      U_INTERNAL_ASSERT_DIFFERS(U_http_version, '2')
-      U_INTERNAL_ASSERT(range_size >= UServer_Base::min_size_for_sendfile)
-
-      goto sendfile;
-      }
 
    if (file->memmap(PROT_READ, &mmap) == false) goto error;
 
@@ -10648,15 +10646,9 @@ U_NO_EXPORT bool UHTTP::processGetRequest()
 
    U_INTERNAL_DUMP("range_start = %u range_size = %u", range_start, range_size)
 
-   U_ASSERT(UClientImage_Base::body->empty())
+   // NB: we check if we can send the body with sendfile()...
 
-   if (isSizeForSendfile(range_size)) // NB: we check if we can send the body with sendfile()...
-      {
-      U_http_flag |= HTTP_IS_SENDFILE;
-
-sendfile:
-      UClientImage_Base::setSendfile(file->fd, range_start, range_size);
-      }
+   if (isSizeForSendfile(range_size)) setSendfile(file->fd, range_start, range_size);
    else
       {
       if (U_http_info.nResponseCode == HTTP_PARTIAL &&

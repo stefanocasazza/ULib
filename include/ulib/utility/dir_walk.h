@@ -158,9 +158,11 @@ public:
 
    static void setFilter(const UString& _filter, int _filter_flags = 0) { setFilter(U_STRING_TO_PARAM(_filter), _filter_flags); }
 
-   static bool setDirectory(const UString& dir, const char* f = U_NULLPTR, uint32_t flen = 0, int _filter_flags = 0);
+   static bool setDirectory(const char* dir, uint32_t dlen, const char* f = U_NULLPTR, uint32_t flen = 0, int _filter_flags = 0);
 
-   static void setDirectory(const UString& dir, const UString& _filter, int _filter_flags = 0) { setDirectory(dir, U_STRING_TO_PARAM(_filter), _filter_flags); }
+   static bool setDirectory(const UString& dir, const char* f = U_NULLPTR, uint32_t flen = 0, int _filter_flags = 0) { return setDirectory(U_STRING_TO_PARAM(dir), f, flen, _filter_flags); } 
+   static bool setDirectory(const UString& dir, const UString& _filter,                       int _filter_flags = 0)
+      { return setDirectory(U_STRING_TO_PARAM(dir), U_STRING_TO_PARAM(_filter), _filter_flags); }
 
    // DEBUG
 

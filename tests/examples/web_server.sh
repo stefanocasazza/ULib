@@ -76,6 +76,9 @@ userver {
 #PLUGIN "ssi http"
 #ORM_DRIVER "sqlite mysql"
  ORM_DRIVER sqlite
+#DOCUMENT_ROOT  docroot
+#PLUGIN_DIR     ../../../src/ulib/net/server/plugin/.libs
+#ORM_DRIVER_DIR ../../../src/ulib/orm/driver/.libs
  DOCUMENT_ROOT  JONATHAN/docroot
 #DOCUMENT_ROOT  benchmark/docroot
  PLUGIN_DIR     ../../../../src/ulib/net/server/plugin/.libs
@@ -91,7 +94,7 @@ userver {
 #ORM_DRIVER_DIR ../../../../../src/ulib/orm/driver/.libs
 }
 http {
-ALIAS "[ / /100.html ]"
+#ALIAS "[ / /100.html ]"
 #VIRTUAL_HOST yes
  ENABLE_INOTIFY yes
  LIMIT_REQUEST_BODY 3M

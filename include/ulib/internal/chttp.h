@@ -219,8 +219,7 @@ extern U_EXPORT uclientimage_info u_clientimage_info;
 #define U_http_method_list u_clientimage_info.http_method_list
 #define U_http_method_type u_clientimage_info.http_info.method_type
 
-#define U_line_terminator_len u_clientimage_info.flag.c[0]
-
+#define U_line_terminator_len                    u_clientimage_info.flag.c[0]
 #define U_ClientImage_state                      u_clientimage_info.flag.c[1]
 #define U_ClientImage_close                      u_clientimage_info.flag.c[2]
 #define U_ClientImage_request                    u_clientimage_info.flag.c[3]
@@ -229,18 +228,18 @@ extern U_EXPORT uclientimage_info u_clientimage_info;
 #define U_ClientImage_parallelization            u_clientimage_info.flag.c[6]
 #define U_ClientImage_advise_for_parallelization u_clientimage_info.flag.c[7]
 
-#define U_http_version              u_clientimage_info.http_info.flag[ 0]
-#define U_http_method_num           u_clientimage_info.http_info.flag[ 1]
-#define U_http_host_len             u_clientimage_info.http_info.flag[ 2]
-#define U_http_host_vlen            u_clientimage_info.http_info.flag[ 3]
-#define U_http_range_len            u_clientimage_info.http_info.flag[ 4]
-#define U_http_accept_len           u_clientimage_info.http_info.flag[ 5]
-#define U_http_uri_offset           u_clientimage_info.http_info.flag[ 6]
-#define U_http_websocket_len        u_clientimage_info.http_info.flag[ 7]
-#define U_http2_settings_len        u_clientimage_info.http_info.flag[ 8]
-#define U_http_ip_client_len        u_clientimage_info.http_info.flag[ 9]
-#define U_http_content_type_len     u_clientimage_info.http_info.flag[10]
-#define U_http_accept_language_len  u_clientimage_info.http_info.flag[11]
+#define U_http_version             u_clientimage_info.http_info.flag[ 0]
+#define U_http_method_num          u_clientimage_info.http_info.flag[ 1]
+#define U_http_host_len            u_clientimage_info.http_info.flag[ 2]
+#define U_http_host_vlen           u_clientimage_info.http_info.flag[ 3]
+#define U_http_range_len           u_clientimage_info.http_info.flag[ 4]
+#define U_http_accept_len          u_clientimage_info.http_info.flag[ 5]
+#define U_http_uri_offset          u_clientimage_info.http_info.flag[ 6]
+#define U_http_websocket_len       u_clientimage_info.http_info.flag[ 7]
+#define U_http2_settings_len       u_clientimage_info.http_info.flag[ 8]
+#define U_http_ip_client_len       u_clientimage_info.http_info.flag[ 9]
+#define U_http_content_type_len    u_clientimage_info.http_info.flag[10]
+#define U_http_accept_language_len u_clientimage_info.http_info.flag[11]
 
 #define U_http_flag            u_clientimage_info.http_info.flag[12]
 #define U_http_flag_save UHttpClient_Base::u_http_info_save.flag[12]
@@ -250,17 +249,15 @@ extern U_EXPORT uclientimage_info u_clientimage_info;
 #define U_http_len_user3 u_clientimage_info.http_info.flag[15]
 
 enum HttpRequestType {
-   HTTP_IS_SENDFILE            = 0x0001,
-   HTTP_IS_KEEP_ALIVE          = 0x0002,
-   HTTP_IS_DATA_CHUNKED        = 0x0004,
-   HTTP_IS_ACCEPT_GZIP         = 0x0008,
-   HTTP_IS_NOCACHE_FILE        = 0x0010,
-   HTTP_IS_RESPONSE_GZIP       = 0x0020,
-   HTTP_IS_REQUEST_NOSTAT      = 0x0040,
-   HTTP_METHOD_NOT_IMPLEMENTED = 0x0080
+   HTTP_IS_KEEP_ALIVE          = 0x0001,
+   HTTP_IS_DATA_CHUNKED        = 0x0002,
+   HTTP_IS_ACCEPT_GZIP         = 0x0004,
+   HTTP_IS_NOCACHE_FILE        = 0x0008,
+   HTTP_IS_RESPONSE_GZIP       = 0x0010,
+   HTTP_IS_REQUEST_NOSTAT      = 0x0020,
+   HTTP_METHOD_NOT_IMPLEMENTED = 0x0040
 };
 
-#define U_http_sendfile               ((U_http_flag & HTTP_IS_SENDFILE)            != 0)
 #define U_http_keep_alive             ((U_http_flag & HTTP_IS_KEEP_ALIVE)          != 0)
 #define U_http_data_chunked           ((U_http_flag & HTTP_IS_DATA_CHUNKED)        != 0)
 #define U_http_is_nocache_file        ((U_http_flag & HTTP_IS_NOCACHE_FILE)        != 0)

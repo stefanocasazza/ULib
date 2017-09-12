@@ -260,8 +260,8 @@ public:
    // ---------------------------------
    // Connection-wide hooks
    // ---------------------------------
-   static int pluginsHandlerREAD();
-   static int pluginsHandlerRequest();
+   static int  pluginsHandlerREAD();
+   static void pluginsHandlerRequest();
    // ---------------------------------
    // SIGHUP hook
    // ---------------------------------

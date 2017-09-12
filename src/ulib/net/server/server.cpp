@@ -2142,7 +2142,7 @@ void UServer_Base::loadConfigParam()
    UString plugin_dir  = cfg->at(U_CONSTANT_TO_PARAM("PLUGIN_DIR")),
            plugin_list = cfg->at(U_CONSTANT_TO_PARAM("PLUGIN"));
 
-   if (loadPlugins(plugin_dir, plugin_list) == U_PLUGIN_HANDLER_ERROR) U_ERROR("Plugins stage load failed");
+   if (loadPlugins(plugin_dir, plugin_list) != U_PLUGIN_HANDLER_FINISHED) U_ERROR("Plugins stage load failed");
 }
 
 U_NO_EXPORT void UServer_Base::loadStaticLinkedModules(const char* name)
@@ -2252,10 +2252,10 @@ int UServer_Base::loadPlugins(UString& plugin_dir, const UString& plugin_list)
    U_NEW(UVector<UServerPlugIn*>, vplugin,        UVector<UServerPlugIn*>(10U));
    U_NEW(UVector<UServerPlugIn*>, vplugin_static, UVector<UServerPlugIn*>(10U));
 
-   uint32_t i, pos = 0;
+   int result;
+   uint32_t i, pos;
    UString item, _name;
    UServerPlugIn* _plugin;
-   int result = U_PLUGIN_HANDLER_ERROR;
 
    if (plugin_list) vplugin_size = vplugin_name->split(U_STRING_TO_PARAM(plugin_list)); // NB: we don't use split with substr() cause of dependency from config var PLUGIN...
    else
@@ -2288,25 +2288,26 @@ int UServer_Base::loadPlugins(UString& plugin_dir, const UString& plugin_list)
          _plugin = vplugin_static->remove(pos);
 
          vplugin->push(_plugin);
-
-         continue;
          }
-
-      _name.setBuffer(32U);
-
-      _name.snprintf(U_CONSTANT_TO_PARAM("server_plugin_%v"), item.rep);
-
-      _plugin = UPlugIn<UServerPlugIn*>::create(U_STRING_TO_PARAM(_name));
-
-#  ifndef U_LOG_DISABLE
-      if (isLog())
+      else
          {
-         if (_plugin) log->log(U_CONSTANT_TO_PARAM(         "Load phase of plugin %V success"), item.rep);
-         else         log->log(U_CONSTANT_TO_PARAM("WARNING: Load phase of plugin %V failed"),  item.rep);
-         }
-#  endif
+         _name.setBuffer(32U);
 
-      if (_plugin) vplugin->push(_plugin);
+         _name.snprintf(U_CONSTANT_TO_PARAM("server_plugin_%v"), item.rep);
+
+         _plugin = UPlugIn<UServerPlugIn*>::create(U_STRING_TO_PARAM(_name));
+
+         if (_plugin)
+            {
+            vplugin->push(_plugin);
+
+            U_SRV_LOG("Load phase of plugin %V success", item.rep);
+            }
+         else
+            {
+            U_SRV_LOG("WARNING: Load phase of plugin %V failed", item.rep);
+            }
+         }
       }
 
    U_INTERNAL_ASSERT_MAJOR(vplugin_size, 0)
@@ -2328,126 +2329,122 @@ int UServer_Base::loadPlugins(UString& plugin_dir, const UString& plugin_list)
             {
             cfg->table.clear();
 
-            _plugin = vplugin->at(i);
-
-            result = _plugin->handlerConfig(*cfg);
-
-#        ifndef U_LOG_DISABLE
-            if (isLog())
-               {
-               if ((result & (U_PLUGIN_HANDLER_ERROR | U_PLUGIN_HANDLER_PROCESSED)) != 0)
-                  {
-                  if ((result & U_PLUGIN_HANDLER_ERROR) == 0) log->log(U_CONSTANT_TO_PARAM(         "Configuration phase of plugin %V success"), item.rep);
-                  else                                        log->log(U_CONSTANT_TO_PARAM("WARNING: Configuration phase of plugin %V failed"),  item.rep);
-                  }
-               }
-#        endif
+            result = vplugin->at(i)->handlerConfig(*cfg);
 
             cfg->reset();
 
-            if ((result & U_PLUGIN_HANDLER_GO_ON) == 0) U_RETURN(result);
-            }
+            if (result)
+               {
+               if (result == U_PLUGIN_HANDLER_ERROR)
+                  {
+                  U_SRV_LOG("WARNING: Configuration phase of plugin %V failed", item.rep);
 
-         if (i == 0) U_RETURN(U_PLUGIN_HANDLER_FINISHED);
+                  U_RETURN(U_PLUGIN_HANDLER_ERROR);
+                  }
+
+               U_SRV_LOG("Configuration phase of plugin %V success", item.rep);
+               }
+            }
          }
-      while (true);
+      while (i > 0);
       }
 
    U_RETURN(U_PLUGIN_HANDLER_FINISHED);
 }
 
-// manage plugin handler hooks...
-
 #ifdef U_LOG_DISABLE
-#  define U_PLUGIN_HANDLER(xxx)                                                    \
-int UServer_Base::pluginsHandler##xxx()                                            \
-{                                                                                  \
-   U_TRACE_NO_PARAM(0, "UServer_Base::pluginsHandler"#xxx"()")                     \
-                                                                                   \
-   U_INTERNAL_ASSERT_POINTER(vplugin)                                              \
-   U_INTERNAL_ASSERT_MAJOR(vplugin_size, 0)                                        \
-                                                                                   \
-   int result;                                                                     \
-   uint32_t i = 0;                                                                 \
-                                                                                   \
-   do {                                                                            \
-      result = vplugin->at(i)->handler##xxx();                                     \
-                                                                                   \
-      if ((result & U_PLUGIN_HANDLER_GO_ON) == 0) U_RETURN(result);                \
-      }                                                                            \
-   while (++i < vplugin_size);                                                     \
-                                                                                   \
-   U_RETURN(U_PLUGIN_HANDLER_FINISHED);                                            \
+void UServer_Base::pluginsHandlerRequest()
+{
+   U_TRACE_NO_PARAM(0, "UServer_Base::pluginsHandlerRequest()")
+
+   U_INTERNAL_ASSERT_POINTER(vplugin)
+   U_INTERNAL_ASSERT_MAJOR(vplugin_size, 0)
+
+   int result;
+
+   for (uint32_t i = 0; i < vplugin_size; ++i)
+      {
+      if ((result = vplugin->at(i)->handlerRequest()))
+         {
+         if (result == U_PLUGIN_HANDLER_ERROR)
+            {
+            U_ClientImage_state = U_PLUGIN_HANDLER_ERROR;
+
+            return;
+            }
+
+         U_INTERNAL_ASSERT_EQUALS(result, U_PLUGIN_HANDLER_PROCESSED)
+
+         UClientImage_Base::setRequestProcessed();
+         }
+      }
 }
 #else
-#  define U_PLUGIN_HANDLER(xxx)                                                    \
-int UServer_Base::pluginsHandler##xxx()                                            \
-{                                                                                  \
-   U_TRACE_NO_PARAM(0, "UServer_Base::pluginsHandler"#xxx"()")                     \
-                                                                                   \
-   U_INTERNAL_ASSERT_POINTER(vplugin)                                              \
-   U_INTERNAL_ASSERT_MAJOR(vplugin_size, 0)                                        \
-                                                                                   \
-   uint32_t i = 0;                                                                 \
-   int result, ilog;                                                               \
-   UServerPlugIn* _plugin;                                                         \
-                                                                                   \
-   do {                                                                            \
-      _plugin = vplugin->at(i);                                                    \
-                                                                                   \
-      if (isLog() == false) result = _plugin->handler##xxx();                      \
-      else                                                                         \
-         {                                                                         \
-         UString name = vplugin_name->at(i);                                       \
-                                                                                   \
-         (void) u__snprintf(mod_name[0], sizeof(mod_name[0]), U_CONSTANT_TO_PARAM("[%v] "), name.rep); \
-                                                                                   \
-         result = _plugin->handler##xxx();                                         \
-                                                                                   \
-         if ((result & (U_PLUGIN_HANDLER_ERROR |                                   \
-                        U_PLUGIN_HANDLER_PROCESSED)) != 0)                         \
-            {                                                                      \
-            ilog = 0;                                                              \
-                                                                                   \
-            if ((result & U_PLUGIN_HANDLER_ERROR) != 0)                            \
-               {                                                                   \
-               if ((result & U_PLUGIN_HANDLER_FINISHED) == 0) ilog = 2;            \
-               }                                                                   \
-            else                                                                   \
-               {                                                                   \
-               if ((result & U_PLUGIN_HANDLER_PROCESSED) != 0  &&                  \
-                   U_ClientImage_parallelization != U_PARALLELIZATION_PARENT)      \
-                  {                                                                \
-                  ilog = 1;                                                        \
-                  }                                                                \
-               }                                                                   \
-                                                                                   \
-            if (ilog)                                                              \
-               {                                                                   \
-               if (ilog == 1)                                                      \
-                  {                                                                \
-                  log->log(U_CONSTANT_TO_PARAM(#xxx" phase of plugin %V success"), name.rep); \
-                  }                                                                \
-               else                                                                \
-                  {                                                                \
-                  log->log(U_CONSTANT_TO_PARAM("WARNING: "#xxx" phase of plugin %V failed"), name.rep); \
-                  }                                                                \
-               }                                                                   \
-            }                                                                      \
-                                                                                   \
-         mod_name[0][0] = '\0';                                                    \
-         }                                                                         \
-                                                                                   \
-      if ((result & U_PLUGIN_HANDLER_GO_ON) == 0) U_RETURN(result);                \
-      }                                                                            \
-   while (++i < vplugin_size);                                                     \
-                                                                                   \
-   U_RETURN(U_PLUGIN_HANDLER_FINISHED);                                            \
+void UServer_Base::pluginsHandlerRequest()
+{
+   U_TRACE_NO_PARAM(0, "UServer_Base::pluginsHandlerRequest()")
+
+   U_INTERNAL_ASSERT_POINTER(vplugin)
+   U_INTERNAL_ASSERT_MAJOR(vplugin_size, 0)
+
+   int result;
+   UString name;
+   UServerPlugIn* _plugin;
+
+   for (uint32_t i = 0; i < vplugin_size; ++i)
+      {
+      _plugin = vplugin->at(i);
+
+      if (isLog() == false)
+         {
+         if ((result = _plugin->handlerRequest()))
+            {
+            if (result == U_PLUGIN_HANDLER_ERROR)
+               {
+               U_ClientImage_state = U_PLUGIN_HANDLER_ERROR;
+
+               return;
+               }
+
+            U_INTERNAL_ASSERT_EQUALS(result, U_PLUGIN_HANDLER_PROCESSED)
+
+            UClientImage_Base::setRequestProcessed();
+            }
+
+         continue;
+         }
+
+      name = vplugin_name->at(i);
+
+      (void) u__snprintf(mod_name[0], sizeof(mod_name[0]), U_CONSTANT_TO_PARAM("[%v] "), name.rep);
+
+      result = _plugin->handlerRequest();
+
+      mod_name[0][0] = '\0';
+
+      if (result)
+         {
+         if (result == U_PLUGIN_HANDLER_ERROR)
+            {
+            U_ClientImage_state = U_PLUGIN_HANDLER_ERROR;
+
+            log->log(U_CONSTANT_TO_PARAM("WARNING: Request phase of plugin %V failed"), name.rep);
+
+            return;
+            }
+
+         U_INTERNAL_ASSERT_EQUALS(result, U_PLUGIN_HANDLER_PROCESSED)
+
+         if (U_ClientImage_parallelization != U_PARALLELIZATION_PARENT)
+            {
+            UClientImage_Base::setRequestProcessed();
+
+            log->log(U_CONSTANT_TO_PARAM("Request phase of plugin %V success"), name.rep);
+            }
+         }
+      }
 }
 #endif
-
-// Connection-wide hooks
-U_PLUGIN_HANDLER(Request)
 
 // NB: we call the various handlerXXX() in reverse order respect to the content of config var PLUGIN...
 
@@ -2460,17 +2457,17 @@ int UServer_Base::pluginsHandler##xxx()                                         
    U_INTERNAL_ASSERT_POINTER(vplugin)                                              \
    U_INTERNAL_ASSERT_MAJOR(vplugin_size, 0)                                        \
                                                                                    \
-   int result;                                                                     \
    uint32_t i = vplugin_size;                                                      \
                                                                                    \
    do {                                                                            \
-      result = vplugin->at(--i)->handler##xxx();                                   \
-                                                                                   \
-      if ((result & U_PLUGIN_HANDLER_GO_ON) == 0) U_RETURN(result);                \
-                                                                                   \
-      if (i == 0) U_RETURN(U_PLUGIN_HANDLER_FINISHED);                             \
+      if (vplugin->at(--i)->handler##xxx() == U_PLUGIN_HANDLER_ERROR)              \
+         {                                                                         \
+         U_RETURN(U_PLUGIN_HANDLER_ERROR);                                         \
+         }                                                                         \
       }                                                                            \
-   while (true);                                                                   \
+   while (i > 0);                                                                  \
+                                                                                   \
+   U_RETURN(U_PLUGIN_HANDLER_FINISHED);                                            \
 }
 #else
 #  define U_PLUGIN_HANDLER_REVERSE(xxx)                                            \
@@ -2481,61 +2478,57 @@ int UServer_Base::pluginsHandler##xxx()                                         
    U_INTERNAL_ASSERT_POINTER(vplugin)                                              \
    U_INTERNAL_ASSERT_MAJOR(vplugin_size, 0)                                        \
                                                                                    \
-   int result, ilog;                                                               \
+   int result;                                                                     \
+   UString name;                                                                   \
    UServerPlugIn* _plugin;                                                         \
    uint32_t i = vplugin_size;                                                      \
                                                                                    \
    do {                                                                            \
       _plugin = vplugin->at(--i);                                                  \
                                                                                    \
-      if (isLog() == false) result = _plugin->handler##xxx();                      \
-      else                                                                         \
+      if (isLog() == false)                                                        \
          {                                                                         \
-         UString name = vplugin_name->at(i);                                       \
-                                                                                   \
-         (void) u__snprintf(mod_name[0], sizeof(mod_name[0]), U_CONSTANT_TO_PARAM("[%v] "), name.rep); \
-                                                                                   \
-         result = _plugin->handler##xxx();                                         \
-                                                                                   \
-         if ((result & (U_PLUGIN_HANDLER_ERROR |                                   \
-                        U_PLUGIN_HANDLER_PROCESSED)) != 0)                         \
+         if ((result = _plugin->handler##xxx()))                                   \
             {                                                                      \
-            ilog = 0;                                                              \
+            if (result == U_PLUGIN_HANDLER_ERROR) U_RETURN(U_PLUGIN_HANDLER_ERROR);\
                                                                                    \
-            if ((result & U_PLUGIN_HANDLER_ERROR) != 0)                            \
-               {                                                                   \
-               if ((result & U_PLUGIN_HANDLER_FINISHED) != 0) ilog = 2;            \
-               }                                                                   \
-            else                                                                   \
-               {                                                                   \
-               if ((result & U_PLUGIN_HANDLER_PROCESSED) != 0  &&                  \
-                   U_ClientImage_parallelization != U_PARALLELIZATION_PARENT)      \
-                  {                                                                \
-                  ilog = 1;                                                        \
-                  }                                                                \
-               }                                                                   \
-                                                                                   \
-            if (ilog)                                                              \
-               {                                                                   \
-               if (ilog == 1)                                                      \
-                  {                                                                \
-                  log->log(U_CONSTANT_TO_PARAM(#xxx" phase of plugin %V success"), name.rep); \
-                  }                                                                \
-               else                                                                \
-                  {                                                                \
-                  log->log(U_CONSTANT_TO_PARAM("WARNING: "#xxx" phase of plugin %V failed"), name.rep); \
-                  }                                                                \
-               }                                                                   \
+            U_INTERNAL_ASSERT_EQUALS(result, U_PLUGIN_HANDLER_PROCESSED)           \
             }                                                                      \
                                                                                    \
-         mod_name[0][0] = '\0';                                                    \
+         continue;                                                                 \
          }                                                                         \
                                                                                    \
-      if ((result & U_PLUGIN_HANDLER_GO_ON) == 0) U_RETURN(result);                \
+      name = vplugin_name->at(i);                                                  \
                                                                                    \
-      if (i == 0) U_RETURN(U_PLUGIN_HANDLER_FINISHED);                             \
+      (void) u__snprintf(mod_name[0], sizeof(mod_name[0]),                         \
+                         U_CONSTANT_TO_PARAM("[%v] "), name.rep);                  \
+                                                                                   \
+      result = _plugin->handler##xxx();                                            \
+                                                                                   \
+      mod_name[0][0] = '\0';                                                       \
+                                                                                   \
+      if (result)                                                                  \
+         {                                                                         \
+         if (result == U_PLUGIN_HANDLER_ERROR)                                     \
+            {                                                                      \
+            log->log(U_CONSTANT_TO_PARAM("WARNING: "#xxx" phase of plugin "        \
+                                         "%V failed"), name.rep);                  \
+                                                                                   \
+            U_RETURN(U_PLUGIN_HANDLER_ERROR);                                      \
+            }                                                                      \
+                                                                                   \
+         U_INTERNAL_ASSERT_EQUALS(result, U_PLUGIN_HANDLER_PROCESSED)              \
+                                                                                   \
+         if (U_ClientImage_parallelization != U_PARALLELIZATION_PARENT)            \
+            {                                                                      \
+            log->log(U_CONSTANT_TO_PARAM(#xxx" phase of plugin %V success"),       \
+                     name.rep);                                                    \
+            }                                                                      \
+         }                                                                         \
       }                                                                            \
-   while (true);                                                                   \
+   while (i > 0);                                                                  \
+                                                                                   \
+   U_RETURN(U_PLUGIN_HANDLER_FINISHED);                                            \
 }
 #endif
 
@@ -2668,7 +2661,7 @@ void UServer_Base::init()
 
          socket->cLocalAddress.setLocalHost(UClientImage_Base::bIPv6);
 
-         U_WARNING("IP_ADDRESS from system interface fail, we try using localhost");
+         U_WARNING("getting IP_ADDRESS from system interface fail, we try using localhost");
          }
       else
          {

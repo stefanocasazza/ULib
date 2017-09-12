@@ -164,11 +164,11 @@ int UGeoIPPlugIn::handlerConfig(UFileConfig& cfg)
          {
          U_NEW(UString, country_forbidden_mask, UString(x));
 
-         U_RETURN(U_PLUGIN_HANDLER_PROCESSED | U_PLUGIN_HANDLER_GO_ON);
+         U_RETURN(U_PLUGIN_HANDLER_PROCESSED);
          }
       }
 
-   U_RETURN(U_PLUGIN_HANDLER_GO_ON);
+   U_RETURN(U_PLUGIN_HANDLER_OK);
 }
 
 int UGeoIPPlugIn::handlerInit()
@@ -202,7 +202,7 @@ int UGeoIPPlugIn::handlerInit()
          }
       }
 
-   U_RETURN(U_PLUGIN_HANDLER_PROCESSED | U_PLUGIN_HANDLER_GO_ON);
+   U_RETURN(U_PLUGIN_HANDLER_OK);
 }
 
 // Connection-wide hooks
@@ -220,7 +220,7 @@ int UGeoIPPlugIn::handlerREAD()
       U_RETURN(U_PLUGIN_HANDLER_ERROR);
       }
 
-   U_RETURN(U_PLUGIN_HANDLER_PROCESSED | U_PLUGIN_HANDLER_GO_ON);
+   U_RETURN(U_PLUGIN_HANDLER_OK);
 }
 
 int UGeoIPPlugIn::handlerRequest()
@@ -268,7 +268,7 @@ int UGeoIPPlugIn::handlerRequest()
          gir->postal_code);
       }
 
-   U_RETURN(U_PLUGIN_HANDLER_PROCESSED | U_PLUGIN_HANDLER_GO_ON);
+   U_RETURN(U_PLUGIN_HANDLER_OK);
 }
 
 // DEBUG

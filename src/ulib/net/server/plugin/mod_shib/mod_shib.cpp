@@ -538,9 +538,9 @@ int UShibPlugIn::handlerConfig(UFileConfig& cfg)
 {
    U_TRACE(0, "UShibPlugIn::handlerConfig(%p)", &cfg)
 
-   if (UModProxyService::loadConfig(cfg)) U_RETURN(U_PLUGIN_HANDLER_PROCESSED | U_PLUGIN_HANDLER_GO_ON);
+   if (UModProxyService::loadConfig(cfg)) U_RETURN(U_PLUGIN_HANDLER_PROCESSED);
 
-   U_RETURN(U_PLUGIN_HANDLER_GO_ON);
+   U_RETURN(U_PLUGIN_HANDLER_OK);
 }
 
 /*
@@ -587,7 +587,7 @@ int UShibPlugIn::handlerInit()
          m_plugMgr->regFactory(shibtarget::XML::NativeRequestMapType, &URequestMapFactory);
          m_plugMgr->regFactory(shibtarget::XML::LegacyRequestMapType, &URequestMapFactory);
 
-         if (conf->load(SHIB_CONFIG)) U_RETURN(U_PLUGIN_HANDLER_PROCESSED | U_PLUGIN_HANDLER_GO_ON);
+         if (conf->load(SHIB_CONFIG)) U_RETURN(U_PLUGIN_HANDLER_OK);
          }
       }
 
@@ -702,8 +702,8 @@ int UShibPlugIn::handlerRequest()
       U_SYSCALL_VOID(free, "%p", (void*)UShibTarget::hostname);
       U_SYSCALL_VOID(free, "%p", (void*)UShibTarget::remote_addr);
 
-      U_RETURN(U_PLUGIN_HANDLER_PROCESSED | U_PLUGIN_HANDLER_GO_ON);
+      U_RETURN(U_PLUGIN_HANDLER_PROCESSED);
       }
 
-   U_RETURN(U_PLUGIN_HANDLER_GO_ON);
+   U_RETURN(U_PLUGIN_HANDLER_OK);
 }

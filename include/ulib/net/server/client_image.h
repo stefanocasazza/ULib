@@ -44,11 +44,12 @@ class UBandWidthThrottling;
 
 template <class T> class UServer;
 
-#define U_ClientImage_http(obj)   (obj)->UClientImage_Base::flag.c[0]
-#define U_ClientImage_idle(obj)   (obj)->UClientImage_Base::flag.c[1]
-#define U_ClientImage_pclose(obj) (obj)->UClientImage_Base::flag.c[2]
-
 #define U_ClientImage_request_is_cached UClientImage_Base::cbuffer[0]
+
+#define U_ClientImage_http(obj)                    (obj)->UClientImage_Base::flag.c[0]
+#define U_ClientImage_idle(obj)                    (obj)->UClientImage_Base::flag.c[1]
+#define U_ClientImage_pclose(obj)                  (obj)->UClientImage_Base::flag.c[2]
+#define U_ClientImage_request_is_from_userver(obj) (obj)->UClientImage_Base::flag.c[3]
 
 class U_EXPORT UClientImage_Base : public UEventFd {
 public:
@@ -68,6 +69,8 @@ public:
    bool isPendingSendfile()
       {
       U_TRACE_NO_PARAM(0, "UClientImage_Base::isPendingSendfile()")
+
+      U_INTERNAL_DUMP("sfd = %d count = %u", sfd, count)
 
       if (count > 0) U_RETURN(true);
 
@@ -146,7 +149,8 @@ public:
       NO_CACHE             = 0x0002,
       IN_FILE_CACHE        = 0x0004,
       ALREADY_PROCESSED    = 0x0008,
-      FILE_CACHE_PROCESSED = 0x0010
+      FILE_CACHE_PROCESSED = 0x0010,
+      REQUEST_FROM_USERVER = 0x0020
    };
 
    static bool isRequestNotFound()
@@ -344,7 +348,8 @@ public:
 
    static bPF callerHandlerCache;
    static bPFpc callerIsValidMethod;
-   static iPF callerHandlerRead, callerHandlerRequest;
+   static iPF callerHandlerRead;
+   static vPF callerHandlerRequest;
    static bPFpcu callerIsValidRequest, callerIsValidRequestExt;
 
    // NB: these are for ULib Servlet Page (USP) - USP_PRINTF...
@@ -417,6 +422,8 @@ protected:
       {
       U_TRACE_NO_PARAM(0, "UClientImage::setPendingSendfile()")
 
+      U_INTERNAL_ASSERT_DIFFERS(U_ClientImage_parallelization, U_PARALLELIZATION_CHILD)
+
       count = ncount;
 
       prepareForSendfile();
@@ -446,8 +453,8 @@ protected:
    bool logCertificate(); // append on log the peer certicate of client ("issuer","serial")
    bool askForClientCertificate();
 
+   static int idx, iovcnt;
    static struct iovec* piov;
-   static int csfd, idx, iovcnt;
    static UTimeVal* chronometer;
    static uint32_t ncount, nrequest, resto;
    static long time_between_request, time_run;
@@ -459,7 +466,30 @@ protected:
    static void resetWriteBuffer();
    static void saveRequestResponse();
    static void manageReadBufferResize(uint32_t n);
-   static void setSendfile(int _sfd, uint32_t _start, uint32_t _count);
+   static void setSendfile(int fd, uint32_t start, uint32_t count);
+
+   bool isRequestFromUServer()
+      {
+      U_TRACE_NO_PARAM(0, "UClientImage_Base::isRequestFromUServer()")
+
+      if (U_ClientImage_request_is_from_userver(this) != false) U_RETURN(true);
+
+      U_RETURN(false);
+      }
+
+   void setRequestFromUServer()
+      {
+      U_TRACE_NO_PARAM(0, "UClientImage_Base::setRequestFromUServer()")
+
+      U_ClientImage_request_is_from_userver(this) = true;
+      }
+
+   void resetRequestFromUServer()
+      {
+      U_TRACE_NO_PARAM(0, "UClientImage_Base::resetRequestFromUServer()")
+
+      U_ClientImage_request_is_from_userver(this) = true;
+      }
 
 #ifndef U_CACHE_REQUEST_DISABLE
    static bool isRequestCacheable() __pure;

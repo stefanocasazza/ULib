@@ -197,10 +197,10 @@ int UFCGIPlugIn::handlerConfig(UFileConfig& cfg)
 
       fcgi_keep_conn = cfg.readBoolean(U_CONSTANT_TO_PARAM("CGI_KEEP_CONN"));
 
-      U_RETURN(U_PLUGIN_HANDLER_PROCESSED | U_PLUGIN_HANDLER_GO_ON);
+      U_RETURN(U_PLUGIN_HANDLER_PROCESSED);
       }
 
-   U_RETURN(U_PLUGIN_HANDLER_GO_ON);
+   U_RETURN(U_PLUGIN_HANDLER_OK);
 }
 
 int UFCGIPlugIn::handlerInit()
@@ -236,8 +236,6 @@ int UFCGIPlugIn::handlerInit()
          UHTTP::valias->push_back(*UString::str_nostat);
 
          environment_type = (UHTTP::fcgi_uri_mask->equal(U_CONSTANT_TO_PARAM("*.php")) ? U_PHP : U_CGI);
-
-         U_RETURN(U_PLUGIN_HANDLER_PROCESSED | U_PLUGIN_HANDLER_GO_ON);
 #     endif
          }
 
@@ -245,7 +243,7 @@ int UFCGIPlugIn::handlerInit()
              connection = U_NULLPTR;
       }
 
-   U_RETURN(U_PLUGIN_HANDLER_ERROR);
+   U_RETURN(U_PLUGIN_HANDLER_OK);
 }
 
 // Connection-wide hooks
@@ -369,7 +367,7 @@ int UFCGIPlugIn::handlerRequest()
          {
          UHTTP::setInternalError();
 
-         U_RETURN(U_PLUGIN_HANDLER_PROCESSED | U_PLUGIN_HANDLER_GO_ON);
+         U_RETURN(U_PLUGIN_HANDLER_PROCESSED);
          }
 
       if (fcgi_keep_conn == false)
@@ -448,8 +446,7 @@ int UFCGIPlugIn::handlerRequest()
                   {
                   U_INTERNAL_ASSERT_EQUALS(pos + clength, connection->response.size())
 
-                  if (UHTTP::processCGIOutput(false, false)) UClientImage_Base::setRequestProcessed();
-                  else                                       UHTTP::setInternalError();
+                  if (UHTTP::processCGIOutput(false, false) == false) UHTTP::setInternalError();
 
                   goto end;
                   }
@@ -487,10 +484,10 @@ end:  connection->clearData();
          connection->close();
          }
 
-      U_RETURN(U_PLUGIN_HANDLER_GO_ON | U_PLUGIN_HANDLER_PROCESSED);
+      U_RETURN(U_PLUGIN_HANDLER_PROCESSED);
       }
 
-   U_RETURN(U_PLUGIN_HANDLER_GO_ON);
+   U_RETURN(U_PLUGIN_HANDLER_OK);
 }
 
 // DEBUG

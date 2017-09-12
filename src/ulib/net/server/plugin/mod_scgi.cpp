@@ -75,10 +75,10 @@ int USCGIPlugIn::handlerConfig(UFileConfig& cfg)
 
       scgi_keep_conn = cfg.readBoolean(U_CONSTANT_TO_PARAM("SCGI_KEEP_CONN"));
 
-      U_RETURN(U_PLUGIN_HANDLER_PROCESSED | U_PLUGIN_HANDLER_GO_ON);
+      U_RETURN(U_PLUGIN_HANDLER_PROCESSED);
       }
 
-   U_RETURN(U_PLUGIN_HANDLER_GO_ON);
+   U_RETURN(U_PLUGIN_HANDLER_OK);
 }
 
 int USCGIPlugIn::handlerInit()
@@ -111,7 +111,7 @@ int USCGIPlugIn::handlerInit()
          UHTTP::valias->push_back(*UHTTP::scgi_uri_mask);
          UHTTP::valias->push_back(*UString::str_nostat);
 
-         U_RETURN(U_PLUGIN_HANDLER_PROCESSED | U_PLUGIN_HANDLER_GO_ON);
+         U_RETURN(U_PLUGIN_HANDLER_OK);
 #     endif
          }
 
@@ -203,8 +203,7 @@ int USCGIPlugIn::handlerRequest()
 
       *UClientImage_Base::wbuffer = connection->getResponse();
 
-      if (UHTTP::processCGIOutput(false, false)) UClientImage_Base::setRequestProcessed();
-      else                                       UHTTP::setInternalError();
+      if (UHTTP::processCGIOutput(false, false) == false) UHTTP::setInternalError();
 
 end:  connection->clearData();
 
@@ -214,10 +213,10 @@ end:  connection->clearData();
          connection->close();
          }
 
-      U_RETURN(U_PLUGIN_HANDLER_PROCESSED | U_PLUGIN_HANDLER_GO_ON);
+      U_RETURN(U_PLUGIN_HANDLER_PROCESSED);
       }
 
-   U_RETURN(U_PLUGIN_HANDLER_GO_ON);
+   U_RETURN(U_PLUGIN_HANDLER_OK);
 }
 
 // DEBUG

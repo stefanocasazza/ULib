@@ -85,9 +85,7 @@ public:
 
       // sizeof(uint32_t) <= hsize <= size / sizeof(cache_hash_table_entry) (hsize is a power of 2)
 
-      uint32_t hsize = sizeof(uint32_t);
-
-      while (hsize <= (size / sizeof(UCache::cache_hash_table_entry))) hsize <<= 1U;
+      uint32_t hsize = u_nextPowerOfTwo(size / sizeof(UCache::cache_hash_table_entry));
 
       U_RETURN(hsize);
       }
@@ -194,6 +192,12 @@ protected:
       {
       U_TRACE(0, "UCache::hash(%.*S,%u)", keylen, key, keylen)
 
+      U_INTERNAL_ASSERT_POINTER(info)
+
+      U_INTERNAL_DUMP("info->hsize = %u", info->hsize)
+
+      U_INTERNAL_ASSERT_MAJOR(info->hsize, 0)
+
       uint32_t keyhash = u_cdb_hash((unsigned char*)key, keylen, -1) * sizeof(uint32_t) % info->hsize;
 
       U_RETURN(keyhash);
@@ -216,7 +220,7 @@ protected:
       {
       U_TRACE(0, "UCache::setHead(%u,%u)", pos, value)
 
-      U_INTERNAL_ASSERT_MINOR(pos,info->hsize)
+      U_INTERNAL_ASSERT_MINOR(pos, info->hsize)
       U_INTERNAL_ASSERT(value <= (info->size - sizeof(uint32_t)))
 
       char* ptr = x + pos;

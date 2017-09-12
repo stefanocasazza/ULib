@@ -148,7 +148,7 @@ public:
 
             case 4: // size, capacity
                {
-               char buffer[64];
+               char buffer[128];
                uint32_t sz  = x.getCapacity(),
                         jsz = x.getJournalSize(),
                         n   = u__snprintf(buffer, sizeof(buffer), U_CONSTANT_TO_PARAM("journal.size() =  %.2fM (%u bytes) - %u record(s) - capacity: %.2fM (%u bytes)\n"),

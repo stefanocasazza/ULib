@@ -99,7 +99,7 @@ public:
       }
 
    static void clear();
-   static void modify(UEventFd* handler_event);
+   static bool modify(UEventFd* handler_event);
    static void callForAllEntryDynamic(bPFpv function);
    static void insert(UEventFd* handler_event, int op = 0);
 

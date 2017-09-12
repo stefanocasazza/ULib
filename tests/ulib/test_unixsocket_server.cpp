@@ -33,7 +33,7 @@ protected:
 
       if (UClientImage_Base::manageRead() == U_NOTIFIER_DELETE) U_RETURN(U_NOTIFIER_DELETE);
 
-      if (U_ClientImage_state == U_PLUGIN_HANDLER_GO_ON)
+      if (U_ClientImage_state == U_PLUGIN_HANDLER_OK)
          {
          *UClientImage_Base::wbuffer = *UClientImage_Base::rbuffer;
 

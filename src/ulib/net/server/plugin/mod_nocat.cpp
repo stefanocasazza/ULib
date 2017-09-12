@@ -2118,7 +2118,7 @@ int UNoCatPlugIn::handlerConfig(UFileConfig& cfg)
 
    U_INTERNAL_DUMP("label = %V", label->rep)
 
-   U_RETURN(U_PLUGIN_HANDLER_PROCESSED | U_PLUGIN_HANDLER_GO_ON);
+   U_RETURN(U_PLUGIN_HANDLER_PROCESSED);
 }
 
 int UNoCatPlugIn::handlerInit()
@@ -2247,7 +2247,7 @@ int UNoCatPlugIn::handlerInit()
 
    U_INTERNAL_DUMP("num_peers_preallocate = %u peers_preallocate = %p", num_peers_preallocate, peers_preallocate)
 
-   U_RETURN(U_PLUGIN_HANDLER_PROCESSED | U_PLUGIN_HANDLER_GO_ON);
+   U_RETURN(U_PLUGIN_HANDLER_OK);
 }
 
 bool UNoCatPlugIn::preallocatePeersFault()
@@ -2418,7 +2418,7 @@ int UNoCatPlugIn::handlerFork()
       }
 #endif
 
-   U_RETURN(U_PLUGIN_HANDLER_PROCESSED | U_PLUGIN_HANDLER_GO_ON);
+   U_RETURN(U_PLUGIN_HANDLER_OK);
 }
 
 // Connection-wide hooks
@@ -2887,10 +2887,10 @@ redirect:
 
 end:  UClientImage_Base::setCloseConnection();
 
-      U_RETURN(U_PLUGIN_HANDLER_PROCESSED | U_PLUGIN_HANDLER_GO_ON);
+      U_RETURN(U_PLUGIN_HANDLER_PROCESSED);
       }
 
-   U_RETURN(U_PLUGIN_HANDLER_GO_ON);
+   U_RETURN(U_PLUGIN_HANDLER_OK);
 }
 
 // DEBUG

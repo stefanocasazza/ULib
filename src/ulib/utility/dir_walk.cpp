@@ -91,13 +91,13 @@ void UDirWalk::ctor(const UString* dir, const char* _filter, uint32_t _filter_le
       }
 }
 
-bool UDirWalk::setDirectory(const UString& dir, const char* _filter, uint32_t _filter_len, int _filter_flags)
+bool UDirWalk::setDirectory(const char* dir, uint32_t dlen, const char* _filter, uint32_t _filter_len, int _filter_flags)
 {
-   U_TRACE(0, "UDirWalk::setDirectory(%V,%.*S,%u,%d)", dir.rep, _filter_len, _filter, _filter_len, _filter_flags)
+   U_TRACE(0, "UDirWalk::setDirectory(%.*S,%u,%.*S,%u,%d)", dlen, dir, dlen, _filter_len, _filter, _filter_len, _filter_flags)
 
-   pthis->pathlen = dir.size();
+   pthis->pathlen = dlen;
 
-   const char* pdir = u_getPathRelativ(dir.data(), &(pthis->pathlen));
+   const char* pdir = u_getPathRelativ(dir, &(pthis->pathlen));
 
    U_INTERNAL_ASSERT_MAJOR(pthis->pathlen, 0)
 

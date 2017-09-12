@@ -1,33 +1,33 @@
 dist: trusty
 language: cpp
 
-matrix:
-  include:
-    - compiler: gcc
-      addons:
-        apt:
-          sources:
-            - llvm-toolchain-precise-3.7
-            - ubuntu-toolchain-r-test
-          packages:
-            - g++-5-multilib
-            - gcc-5-multilib
-
-    - compiler: clang
-      addons:
-        apt:
-          sources:
-            - llvm-toolchain-precise-3.7
-            - ubuntu-toolchain-r-test
-          packages:
-            - clang-3.7
+#matrix:
+#  include:
+#    - compiler: gcc
+#      addons:
+#        apt:
+#          sources:
+#            - llvm-toolchain-precise
+#            - ubuntu-toolchain-r-test
+#          packages:
+#            - g++-multilib
+#            - gcc-multilib
+#
+#    - compiler: clang
+#      addons:
+#        apt:
+#          sources:
+#            - llvm-toolchain-precise
+#            - ubuntu-toolchain-r-test
+#          packages:
+#            - clang
 
 #before_install:
 # - sudo pip install cpp-coveralls
 
-install:
-  - if [ "$CXX" = "g++" ]; then export CXX="g++-5" CC="gcc-5"; fi
-  - if [ "$CXX" = "clang++" ]; then export CXX="clang++-3.7" CC="clang-3.7"; fi
+#install:
+# - if [ "$CXX" = "g++" ]; then export CXX="g++" CC="gcc"; fi
+# - if [ "$CXX" = "clang++" ]; then export CXX="clang++" CC="clang"; fi
 # - cd ${TRAVIS_BUILD_DIR}
 # - wget http://ftp.de.debian.org/debian/pool/main/l/lcov/lcov_1.11.orig.tar.gz
 # - tar xf lcov_1.11.orig.tar.gz
