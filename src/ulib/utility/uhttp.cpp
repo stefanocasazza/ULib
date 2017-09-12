@@ -4525,7 +4525,9 @@ file_in_cache:
 
       U_INTERNAL_DUMP("file_data->link = %b file_data->ptr = %p", file_data->link, file_data->ptr)
 
+#  ifndef U_COVERITY_FALSE_POSITIVE // FORWARD_NULL
       if (file_data->link)
+#  endif
          {
          file_data = (UHTTP::UFileCacheData*)file_data->ptr;
 

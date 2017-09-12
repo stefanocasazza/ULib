@@ -993,7 +993,9 @@ unsigned zip_extract(const char* zipfile, const char** files, char*** filenames,
                {
                perror("read");
 
+#           ifndef U_COVERITY_FALSE_POSITIVE // NEGATIVE_RETURNS
                (void) close(f_fd);
+#           endif
 
                return 0;
                }
