@@ -2157,9 +2157,6 @@ U_NO_EXPORT void UServer_Base::loadStaticLinkedModules(const char* name)
 
    if (vplugin_name->find(x) != U_NOT_FOUND) // NB: we load only the plugin that we want from configuration (PLUGIN var)...
       {
-#  ifndef U_LOG_DISABLE
-      bool ok = false;
-#  endif
 #if defined(U_STATIC_HANDLER_RPC)    || defined(U_STATIC_HANDLER_SHIB)   || defined(U_STATIC_HANDLER_ECHO)  || \
     defined(U_STATIC_HANDLER_STREAM) || defined(U_STATIC_HANDLER_SOCKET) || defined(U_STATIC_HANDLER_SCGI)  || \
     defined(U_STATIC_HANDLER_FCGI)   || defined(U_STATIC_HANDLER_GEOIP)  || defined(U_STATIC_HANDLER_PROXY) || \
@@ -2210,23 +2207,17 @@ U_NO_EXPORT void UServer_Base::loadStaticLinkedModules(const char* name)
 #  endif
 next: if (_plugin)
          {
-#     ifndef U_LOG_DISABLE
-         ok = true;
-#     endif
-
          vplugin_name_static->push_back(x);
 
          vplugin_static->push_back(_plugin);
+
+         U_SRV_LOG("Link phase of static plugin %V success", x.rep);
+         }
+      else
+         {
+         U_SRV_LOG("WARNING: Link phase of static plugin %V failed", x.rep);
          }
 #endif
-
-#  ifndef U_LOG_DISABLE
-      if (isLog())
-         {
-         if (ok) log->log(U_CONSTANT_TO_PARAM(         "Link phase of static plugin %V success"), x.rep);
-         else    log->log(U_CONSTANT_TO_PARAM("WARNING: Link phase of static plugin %V failed"),  x.rep);
-         }
-#  endif
       }
 }
 

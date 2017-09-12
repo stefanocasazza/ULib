@@ -975,7 +975,9 @@ U_EXPORT istream& operator>>(istream& is, UCDB& cdb)
          {
          u_put_unaligned32(hr->dlen, dlen);
 
+#     ifndef U_COVERITY_FALSE_POSITIVE // TAINTED_SCALAR
          is.read(ptr, dlen);
+#     endif
 
          U_INTERNAL_DUMP("data = %.*S", dlen, ptr)
 

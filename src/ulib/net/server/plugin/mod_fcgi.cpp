@@ -236,11 +236,15 @@ int UFCGIPlugIn::handlerInit()
          UHTTP::valias->push_back(*UString::str_nostat);
 
          environment_type = (UHTTP::fcgi_uri_mask->equal(U_CONSTANT_TO_PARAM("*.php")) ? U_PHP : U_CGI);
+
+         U_RETURN(U_PLUGIN_HANDLER_OK);
 #     endif
          }
 
       delete connection;
              connection = U_NULLPTR;
+
+      U_RETURN(U_PLUGIN_HANDLER_ERROR);
       }
 
    U_RETURN(U_PLUGIN_HANDLER_OK);

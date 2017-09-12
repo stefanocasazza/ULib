@@ -17,6 +17,7 @@ void* UPlugIn<void*>::create(const char* name, uint32_t name_len)
 {
    U_TRACE(0, "UPlugIn<void*>::create(%.*S,%u)", name_len, name, name_len)
 
+#ifndef U_COVERITY_FALSE_POSITIVE
    HINSTANCE handle = UDynamic::dload(name, name_len);
 
    if (handle)
@@ -36,6 +37,7 @@ void* UPlugIn<void*>::create(const char* name, uint32_t name_len)
          return obj;
          }
       }
+#endif
 
    return U_NULLPTR;
 }

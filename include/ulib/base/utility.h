@@ -156,7 +156,7 @@ static inline uint8_t u_loadavg(const char* buffer)
  * Output range: [2..2147483648]
  */
 
-static inline uint64_t u_nextPowerOfTwo(uint32_t n)
+static inline uint32_t u_nextPowerOfTwo(uint32_t n)
 {
    U_INTERNAL_TRACE("u_nextPowerOfTwo(%u)", n)
 

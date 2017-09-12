@@ -1000,7 +1000,9 @@ unsigned zip_extract(const char* zipfile, const char** files, char*** filenames,
 
             ze.crc = crc32(ze.crc, (Bytef*)rd_buff, rdamt);
 
+#        ifndef U_COVERITY_FALSE_POSITIVE // NEGATIVE_RETURNS
             (void) write(f_fd, rd_buff, rdamt);
+#        endif
 
             out_a += rdamt;
             in_a  -= rdamt;

@@ -1133,7 +1133,7 @@ int USSIPlugIn::handlerRequest()
          UClientImage_Base::environment->setEmpty();
          }
 
-   // U_RETURN(U_PLUGIN_HANDLER_PROCESSED);
+      U_RETURN(U_PLUGIN_HANDLER_PROCESSED);
       }
 
    U_RETURN(U_PLUGIN_HANDLER_OK);

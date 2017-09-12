@@ -249,7 +249,7 @@ protected:
    static bool setHandler(int fd);
 
 private:
-   static void handlerDelete(int fd, int mask);
+   static void handlerDelete(unsigned int fd, int mask);
 
 #ifndef USE_LIBEVENT
    static void notifyHandlerEvent() U_NO_EXPORT;

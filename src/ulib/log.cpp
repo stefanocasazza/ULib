@@ -479,7 +479,9 @@ void ULog::write(const struct iovec* iov, int n)
 
             if (file_ptr <= log_gzip_sz)
                {
+#           ifndef U_COVERITY_FALSE_POSITIVE // FORWARD_NULL
                checkForLogRotateDataToWrite(); // check if there are previous data to write
+#           endif
 
                ptr_log_data->gzip_len = u_gz_deflate(UFile::map, file_ptr, (char*)ptr_log_data+sizeof(log_data), true);
 
@@ -682,7 +684,7 @@ void ULog::log(const struct iovec* iov, const char* type, int ncount, const char
       ptr = buffer1;
       }
 
-   len  = (UServer_Base::mod_name[0] ? u__snprintf(buffer2, sizeof(buffer2), U_CONSTANT_TO_PARAM("%s"), UServer_Base::mod_name) : 0);
+   len  = (UServer_Base::mod_name[0][0] ? u__snprintf(buffer2, sizeof(buffer2), U_CONSTANT_TO_PARAM("%s"), UServer_Base::mod_name) : 0);
    len += u__snprintf(buffer2+len, sizeof(buffer2)-len, U_CONSTANT_TO_PARAM("send %s (%u bytes) %.*s%#.*S"), type, ncount, msg_len, msg, sz, ptr);
 
    va_list argp;
@@ -720,7 +722,7 @@ void ULog::logResponse(const UString& data, const char* format, uint32_t fmt_siz
 
    U_INTERNAL_DUMP("u_printf_string_max_length = %d", u_printf_string_max_length)
 
-   len  = (UServer_Base::mod_name[0] ? u__snprintf(buffer, sizeof(buffer), U_CONSTANT_TO_PARAM("%s"), UServer_Base::mod_name) : 0);
+   len  = (UServer_Base::mod_name[0][0] ? u__snprintf(buffer, sizeof(buffer), U_CONSTANT_TO_PARAM("%s"), UServer_Base::mod_name) : 0);
    len += u__snprintf(buffer-len, sizeof(buffer)-len, U_CONSTANT_TO_PARAM("received response (%u bytes) %#.*S"), sz, sz, ptr);
 
    va_list argp;

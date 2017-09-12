@@ -962,9 +962,9 @@ bool UNotifier::modify(UEventFd* item)
    U_RETURN(true);
 }
 
-void UNotifier::handlerDelete(int fd, int mask)
+void UNotifier::handlerDelete(unsigned int fd, int mask)
 {
-   U_TRACE(0, "UNotifier::handlerDelete(%d,%B)", fd, mask)
+   U_TRACE(0, "UNotifier::handlerDelete(%u,%B)", fd, mask)
 
    U_INTERNAL_ASSERT_MAJOR(fd, 0)
    U_INTERNAL_ASSERT_DIFFERS(U_ClientImage_parallelization, U_PARALLELIZATION_CHILD)

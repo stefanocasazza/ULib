@@ -4431,7 +4431,9 @@ file_in_cache:
       if (isValidation() == false) U_RETURN(U_PLUGIN_HANDLER_OK);
 #  endif
 
+#  ifndef U_COVERITY_FALSE_POSITIVE // FORWARD_NULL
       mime_index = file_data->mime_index;
+#  endif
 
       U_INTERNAL_DUMP("mime_index(%d) = %C u_is_ssi() = %b", mime_index, mime_index, u_is_ssi(mime_index))
 
@@ -8826,8 +8828,12 @@ nocontent:  UClientImage_Base::setCloseConnection();
 
             if (U_STREQ(ptr, len, U_LIB_SUFFIX)) goto nocontent;
 
+            (void) suffix.assign(ptr, len);
+
+            U_INTERNAL_DUMP("suffix = %V", suffix.rep)
+
             if (U_HTTP_QUERY_STREQ("_nav_") &&
-                U_STREQ(ptr, len, "usp"))
+                suffix.equal(U_CONSTANT_TO_PARAM("usp")))
                {
                UClientImage_Base::setRequestNeedProcessing();
                }
@@ -8840,8 +8846,6 @@ nocontent:  UClientImage_Base::setCloseConnection();
             U_DEBUG("Found file not in cache: %V - inotify %s enabled", pathname->rep, UServer_Base::handler_inotify ? "is" : "NOT")
 
             U_ASSERT_EQUALS(basename, UStringExt::basename(file->getPath()))
-
-            if (len) (void) suffix.assign(ptr, len);
 
             (void) pathname->replace(U_FILE_TO_PARAM(*file));
 
