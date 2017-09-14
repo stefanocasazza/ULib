@@ -534,7 +534,7 @@ int UHttpClient_Base::checkResponse(int& redirectCount)
                {
                newLocation = refresh.substr(pos + U_CONSTANT_SIZE("url="));
 
-               if (newLocation.isQuoted()) newLocation.rep->unQuote();
+               if (newLocation.isQuoted()) newLocation.unQuote();
                }
             }
 

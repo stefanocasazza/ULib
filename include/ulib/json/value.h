@@ -2268,7 +2268,7 @@ public:
 
 // by Victor Stewart
 
-#  ifdef HAVE_CXX17
+#  if defined(HAVE_CXX17) && !defined(__clang__)
 #     include <unordered_map>
 
 template <class T> class U_EXPORT UJsonTypeHandler<std::unordered_map<UString, T> > : public UJsonTypeHandler_Base {

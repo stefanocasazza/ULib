@@ -1430,40 +1430,6 @@ __pure bool u_isNumber(const char* restrict s, uint32_t n)
    return (s == end);
 }
 
-/* find the first char not quoted */
-
-__pure const char* u_find_char(const char* restrict s, const char* restrict end, char c)
-{
-   uint32_t i;
-
-   U_INTERNAL_TRACE("u_find_char(%.*s,%p,%d)", U_min(end-s,128), s, end, c)
-
-   U_INTERNAL_ASSERT_POINTER(s)
-   U_INTERNAL_ASSERT_POINTER(end)
-   U_INTERNAL_ASSERT_EQUALS(s[-1],c)
-
-loop:
-   s = (const char* restrict) memchr(s, c, end - s);
-
-   if (s == 0) s = end;
-   else
-      {
-      if (*(s-1) == '\\')
-         {
-         for (i = 2; (*(s-i) == '\\'); ++i) {}
-
-         if ((i & 1) == 0)
-            {
-            ++s;
-
-            goto loop;
-            }
-         }
-      }
-
-   return s;
-}
-
 /* skip string delimiter or white space and line comment */
 
 __pure const char* u_skip(const char* restrict s, const char* restrict end, const char* restrict delim, char line_comment)

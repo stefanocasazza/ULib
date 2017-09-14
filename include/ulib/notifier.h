@@ -204,7 +204,7 @@ protected:
    static UEventFd** lo_map_fd;
    static UEventFd* handler_event;
    static bool bread, flag_sigterm;
-   static UGenericHashMap<int,UEventFd*>* hi_map_fd; // maps a fd to a node pointer
+   static UGenericHashMap<unsigned int,UEventFd*>* hi_map_fd; // maps a fd to a node pointer
    static uint32_t bepollet_threshold, lo_map_fd_len;
 
 #ifndef USE_LIBEVENT

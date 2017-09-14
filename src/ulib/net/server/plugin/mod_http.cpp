@@ -527,51 +527,47 @@ int UHttpPlugIn::handlerRun() // NB: we use this method instead of handlerInit()
 #endif
    if (UServer_Base::handler_inotify) UHTTP::initDbNotFound();
 
-   if (UServer_Base::vplugin_name->last() == *UString::str_http)
+   UServer_Base::update_date  =
+   UServer_Base::update_date3 = true;
+
+   UClientImage_Base::iov_vec[1].iov_len  = 6+29+2+12+2+17+2;
+   UClientImage_Base::iov_vec[1].iov_base = (caddr_t)ULog::date.date3; // Date: Wed, 20 Jun 2012 11:43:17 GMT\r\nServer: ULib\r\nConnection: close\r\n
+
+#if defined(U_LINUX) && defined(ENABLE_THREAD)
+   U_INTERNAL_ASSERT_POINTER(u_pthread_time)
+   U_INTERNAL_ASSERT_POINTER(UServer_Base::ptr_shared_data)
+
+# ifndef U_SERVER_CAPTIVE_PORTAL
+   UClientImage_Base::callerHandlerCache = UHTTP::handlerCache;
+# endif
+
+   UClientImage_Base::iov_vec[1].iov_base = (caddr_t)UServer_Base::ptr_shared_data->log_date_shared.date3;
+#endif
+
+   U_INTERNAL_DUMP("UClientImage_Base::iov_vec[0] = %.*S UClientImage_Base::iov_vec[1] = %.*S",
+                    UClientImage_Base::iov_vec[0].iov_len, UClientImage_Base::iov_vec[0].iov_base,
+                    UClientImage_Base::iov_vec[1].iov_len, UClientImage_Base::iov_vec[1].iov_base)
+
+   U_MEMCPY(UClientImage_Base::iov_sav, UClientImage_Base::iov_vec, sizeof(struct iovec) * 4);
+
+   UClientImage_Base::callerIsValidMethod     = UHTTP::isValidMethod;
+   UClientImage_Base::callerIsValidRequest    = UHTTP::isValidRequest;
+   UClientImage_Base::callerIsValidRequestExt = UHTTP::isValidRequestExt;
+
+   if (UServer_Base::vplugin_name->last() == *UString::str_http) // NB: we can shortcut the http request processing...
       {
-      UServer_Base::update_date  =
-      UServer_Base::update_date3 = true;
-
-      UClientImage_Base::iov_vec[1].iov_len  = 6+29+2+12+2+17+2;
-      UClientImage_Base::iov_vec[1].iov_base = (caddr_t)ULog::date.date3; // Date: Wed, 20 Jun 2012 11:43:17 GMT\r\nServer: ULib\r\nConnection: close\r\n
-
-#  if defined(U_LINUX) && defined(ENABLE_THREAD)
-      U_INTERNAL_ASSERT_POINTER(u_pthread_time)
-      U_INTERNAL_ASSERT_POINTER(UServer_Base::ptr_shared_data)
-
-#   ifndef U_SERVER_CAPTIVE_PORTAL
-      UClientImage_Base::callerHandlerCache = UHTTP::handlerCache;
-#   endif
-
-      UClientImage_Base::iov_vec[1].iov_base = (caddr_t)UServer_Base::ptr_shared_data->log_date_shared.date3;
-#  endif
-
-      U_INTERNAL_DUMP("UClientImage_Base::iov_vec[0] = %.*S UClientImage_Base::iov_vec[1] = %.*S",
-                       UClientImage_Base::iov_vec[0].iov_len, UClientImage_Base::iov_vec[0].iov_base,
-                       UClientImage_Base::iov_vec[1].iov_len, UClientImage_Base::iov_vec[1].iov_base)
-
-      U_MEMCPY(UClientImage_Base::iov_sav, UClientImage_Base::iov_vec, sizeof(struct iovec) * 4);
-
-      // NB: we can shortcut the http request processing...
-
-      UClientImage_Base::callerIsValidMethod     = UHTTP::isValidMethod;
-      UClientImage_Base::callerIsValidRequest    = UHTTP::isValidRequest;
-      UClientImage_Base::callerIsValidRequestExt = UHTTP::isValidRequestExt;
-
 #  ifdef U_LOG_DISABLE
-      UClientImage_Base::callerHandlerRead = UHTTP::handlerREAD;
-#  else
-      UClientImage_Base::callerHandlerRead = (UServer_Base::isLog() ? UHTTP::handlerREADWithLog : UHTTP::handlerREAD);
-#  endif
-
-      if (UServer_Base::vplugin_size == 1)
+      if ((UServer_Base::isLog())
          {
-#     ifdef U_LOG_DISABLE
-         UClientImage_Base::callerHandlerRequest = UHTTP::processRequest;
-#     else
-         UClientImage_Base::callerHandlerRequest = (UServer_Base::isLog() ? UHTTP::processRequestWithLog : UHTTP::processRequest);
-#     endif
+                                              UClientImage_Base::callerHandlerRead    = UHTTP::handlerREADWithLog;
+         if (UServer_Base::vplugin_size == 1) UClientImage_Base::callerHandlerRequest = UHTTP::processRequestWithLog;
          }
+      else
+#  endif
+      {
+                                           UClientImage_Base::callerHandlerRead    = UHTTP::handlerREAD;
+      if (UServer_Base::vplugin_size == 1) UClientImage_Base::callerHandlerRequest = UHTTP::processRequest;
+      }
       }
 
    U_ASSERT(UHTTP::cache_file_check_memory())

@@ -1,0 +1,54 @@
+<!--#
+prototype for Shiv Shankar Dayal
+-->
+<!--#declaration
+static UOrmSession* psql_db;
+
+static void usp_fork_one()
+{
+   U_TRACE(5, "::usp_fork_one()")
+
+   U_NEW(UOrmSession, psql_db, UOrmSession(U_CONSTANT_TO_PARAM("hello_world")));
+
+   if (psql_db->isReady() == false)
+      {
+      U_WARNING("usp_fork_one(): we cound't connect to db");
+
+      delete psql_db;
+             psql_db = U_NULLPTR;
+
+      return;
+      }
+}
+
+#ifdef DEBUG
+static void usp_end_one()
+{
+   U_TRACE(5, "::usp_end_one()")
+
+   if (psql_db) delete psql_db;
+}
+#endif
+
+static void GET_two()
+{
+   U_TRACE_NO_PARAM(5, "::GET_two()")
+
+   U_MESSAGE("GET_two() called");
+}
+
+static void POST_something()
+{
+   U_TRACE_NO_PARAM(5, "::POST_something()")
+}
+-->
+<!--#code
+static UHTTP::service_info GET_table[] = { // NB: the table must be ordered alphabetically for binary search...
+   GET_ENTRY(two)
+};
+static UHTTP::service_info POST_table[] = { // NB: the table must be ordered alphabetically for binary search...
+   POST_ENTRY(something)
+};
+
+UHTTP::manageRequest(GET_table, U_NUM_ELEMENTS(GET_table), POST_table, U_NUM_ELEMENTS(POST_table));
+-->

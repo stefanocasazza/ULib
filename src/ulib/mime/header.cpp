@@ -187,7 +187,7 @@ UString UMimeHeader::getValueAttributeFromKeyValue(const char* name_attr, uint32
          {
          value = name_value[i+1];
 
-         if (value.isQuoted()) value.rep->unQuote();
+         if (value.isQuoted()) value.unQuote();
 
          break;
          }
@@ -229,7 +229,7 @@ bool UMimeHeader::getNames(const UString& cdisposition, UString& name, UString& 
 
             U_INTERNAL_DUMP("name_value[%d] = %V", i+1, name.rep)
 
-            if (name.isQuoted()) name.rep->unQuote();
+            if (name.isQuoted()) name.unQuote();
 
             U_INTERNAL_DUMP("name = %V", name.rep)
             }
@@ -243,7 +243,7 @@ bool UMimeHeader::getNames(const UString& cdisposition, UString& name, UString& 
                {
                result = true;
 
-               if (filename.isQuoted()) filename.rep->unQuote();
+               if (filename.isQuoted()) filename.unQuote();
 
                uint32_t len    = filename.size();
                const char* ptr = filename.data();

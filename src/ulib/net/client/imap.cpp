@@ -258,7 +258,7 @@ bool UImapClient::list(const UString& ref, const UString& wild, UVector<ListResp
 
             if (attributes.size() > 2)
                {
-               attributes.rep->unQuote();
+               attributes.unQuote();
 
                UVector<UString> v2(attributes);
 

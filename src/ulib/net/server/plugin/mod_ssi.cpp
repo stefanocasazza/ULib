@@ -997,9 +997,6 @@ int USSIPlugIn::handlerRequest()
    if (UClientImage_Base::isRequestNotFound()  == false &&
        UClientImage_Base::isRequestForbidden() == false)
       {
-      U_INTERNAL_ASSERT_MAJOR(U_http_info.uri_len, 1)
-      U_INTERNAL_ASSERT_EQUALS(U_HTTP_QUERY_STREQ("_nav_"), false)
-
       bool bcache =          UHTTP::file_data &&
                     u_is_ssi(UHTTP::file_data->mime_index);
 
@@ -1008,9 +1005,12 @@ int USSIPlugIn::handlerRequest()
       if (bcache ||
           (UHTTP::setMimeIndex(), u_is_ssi(UHTTP::mime_index)))
          {
-         // init
-
+         U_INTERNAL_ASSERT_MAJOR(U_http_info.uri_len, 1)
          U_ASSERT(UClientImage_Base::environment->empty())
+         U_INTERNAL_ASSERT_EQUALS(U_HTTP_QUERY_STREQ("_nav_"), false)
+         U_INTERNAL_ASSERT_DIFFERS(u_clientimage_info.http_info.uri[u_clientimage_info.http_info.uri_len-1], '/') // directory request
+
+         // init
 
          if (UHTTP::getCGIEnvironment(*UClientImage_Base::environment, U_SHELL) == false) U_RETURN(U_PLUGIN_HANDLER_ERROR);
 

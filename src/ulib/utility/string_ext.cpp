@@ -1520,7 +1520,7 @@ uint32_t UStringExt::getNameValueFromData(const UString& content, UVector<UStrin
             {
             x = content.substr(oldPos, len);
 
-            if (x.isQuoted()) x.rep->unQuote();
+            if (x.isQuoted()) x.unQuote();
 
             name_value.push_back(x);
             }

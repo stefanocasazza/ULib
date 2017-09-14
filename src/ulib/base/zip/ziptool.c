@@ -995,9 +995,9 @@ unsigned zip_extract(const char* zipfile, const char** files, char*** filenames,
 
 #           ifndef U_COVERITY_FALSE_POSITIVE // NEGATIVE_RETURNS
                (void) close(f_fd);
-#           endif
 
                return 0;
+#           endif
                }
 
             ze.crc = crc32(ze.crc, (Bytef*)rd_buff, rdamt);
@@ -1015,7 +1015,9 @@ unsigned zip_extract(const char* zipfile, const char** files, char*** filenames,
          if (eflen) consume(eflen);
          }
 
+#  ifndef U_COVERITY_FALSE_POSITIVE // NEGATIVE_RETURNS
       (void) close(f_fd);
+#  endif
 
       /* if there is a data descriptor left, compare the CRC */
 

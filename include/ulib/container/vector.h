@@ -181,11 +181,7 @@ public:
       U_INTERNAL_ASSERT_MINOR(pos, _length)
       U_INTERNAL_ASSERT_RANGE(1,_length,_capacity)
 
-#  ifdef U_APEX_ENABLE
-      if (--_length) (void) U_SYSCALL(apex_memmove, "%p,%p,%u", vec + pos, vec + pos +1, (_length - pos) * sizeof(void*));
-#  else
-      if (--_length) (void) U_SYSCALL(     memmove, "%p,%p,%u", vec + pos, vec + pos +1, (_length - pos) * sizeof(void*));
-#  endif
+      if (--_length) (void) U_SYSCALL(memmove, "%p,%p,%u", vec + pos, vec + pos +1, (_length - pos) * sizeof(void*));
       }
 
    void erase(uint32_t first, uint32_t _last) // erase [first,last[
@@ -201,11 +197,7 @@ public:
 
       uint32_t new_length = (_length - (_last - first));
 
-#  ifdef U_APEX_ENABLE
-      if (new_length) (void) U_SYSCALL(apex_memmove, "%p,%p,%u", vec + first, vec + _last, (_length - _last) * sizeof(void*));
-#  else
-      if (new_length) (void) U_SYSCALL(     memmove, "%p,%p,%u", vec + first, vec + _last, (_length - _last) * sizeof(void*));
-#  endif
+      if (new_length) (void) U_SYSCALL(memmove, "%p,%p,%u", vec + first, vec + _last, (_length - _last) * sizeof(void*));
 
       _length = new_length;
       }
@@ -232,6 +224,7 @@ public:
       U_INTERNAL_ASSERT_RANGE(1,_length,_capacity)
 
       const void* tmp = vec[from];
+
       vec[from] = vec[to];
       vec[to]   = tmp;
       }

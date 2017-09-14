@@ -35,6 +35,10 @@ class UCertificate;
 template <class T> class UJsonTypeHandler;
 template <class T> class URDBObjectHandler;
 
+#if defined(U_STDCPP_ENABLE) && defined(HAVE_CXX11)
+template <class T> class UHashMapAnonIter;
+#endif
+
 class U_NO_EXPORT UHashMapNode {
 public:
 
@@ -452,6 +456,22 @@ public:
       clear();
       }
 
+#if defined(U_STDCPP_ENABLE) && defined(HAVE_CXX11)
+   UHashMapAnonIter<T> begin() { return UHashMapAnonIter<T>(this, 0); }
+   UHashMapAnonIter<T>   end() { return UHashMapAnonIter<T>(this, _length); }
+
+   UHashMapAnonIter<T> erase(UHashMapAnonIter<T> it)
+      {
+      U_TRACE(0, "UHashMap<T*>::erase(%p)", &it)
+
+      node = *it;
+
+      eraseAfterFind();
+
+      return ++it;
+      }
+#endif
+
    T* erase(const char*       _key) { return (T*) UHashMap<void*>::erase(_key); }
    T* erase(const UString&    _key) { return (T*) UHashMap<void*>::erase(_key.rep); }
    T* erase(const UStringRep* _key) { return (T*) UHashMap<void*>::erase(_key); }
@@ -820,6 +840,29 @@ private:
    friend class UNoCatPlugIn;
 };
 
+#if defined(U_STDCPP_ENABLE) && defined(HAVE_CXX11)
+template <class T> class UHashMapAnonIter {
+public:
+   explicit UHashMapAnonIter(UHashMap<T*>* map, uint32_t length) : _length(length), _map(map) {}
+
+   bool operator!=(const UHashMapAnonIter& other) const { return (_length != other._length); }
+
+   UHashMapNode* operator*() const { return _node; }
+
+   UHashMapAnonIter& operator++()
+      {
+      _node = (_length++ ? _map->next(_node): _map->first());
+
+      return *this;
+      }
+
+protected:
+   uint32_t _length;
+   UHashMap<T*>* _map;
+   UHashMapNode* _node;
+};
+#endif
+
 template <> class U_EXPORT UHashMap<UString> : public UHashMap<UStringRep*> {
 public:
 
@@ -935,5 +978,4 @@ public:
 private:
    U_DISALLOW_COPY_AND_ASSIGN(UHashMap<UVectorUString>)
 };
-
 #endif

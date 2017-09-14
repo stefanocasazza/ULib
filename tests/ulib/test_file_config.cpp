@@ -110,6 +110,72 @@ static bool cancella(UStringRep* key, void* value)
    U_RETURN(false);
 }
 
+#if defined(U_STDCPP_ENABLE) && defined(HAVE_CXX14)
+class MessageDelivery {
+public:
+   int64_t messageDateTime;
+
+   MessageDelivery() { messageDateTime = 0; }
+};
+
+typedef UVector<MessageDelivery*> vmsg;
+#endif
+
+static void testHashMapIterator()
+{
+   U_TRACE_NO_PARAM(5, "testHashMapIterator()")
+
+#if defined(U_STDCPP_ENABLE) && defined(HAVE_CXX14)
+   UVector<UString> badUsers;
+   UHashMap<vmsg*> deliveries;
+   int64_t twentyFourHoursAgoInMilliseconds = 1;
+
+   auto badUserMapCleaner = [&] (UHashMapNode*& node) -> bool
+      {
+      for (UString badUser : badUsers)
+         {
+         if (badUser.rep->equal(node->key)) return true;
+         }
+
+      return false;
+      };
+
+   UHashMapAnonIter<vmsg> it = deliveries.begin();
+
+   while (it != deliveries.end())
+      {
+      UHashMapNode* node = *it;
+
+      // remove expired users
+      if (badUsers.size() && badUserMapCleaner(node))
+         {
+         it = deliveries.erase(it);
+
+         continue;
+         }
+
+      ++it;
+
+      // remove expired deliveries
+
+      unsigned a = 0;
+      vmsg* vdeliveries = (vmsg*)node->elem;
+
+      while (a < vdeliveries->size())
+         {
+         if (vdeliveries->at(a)->messageDateTime < twentyFourHoursAgoInMilliseconds)
+            {
+            vdeliveries->erase(a);
+
+            continue;
+            }
+
+         a++;
+         }
+      }
+#endif
+}
+
 int U_EXPORT main (int argc, char* argv[], char* env[])
 {
    U_ULIB_INIT(argv);

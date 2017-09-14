@@ -1349,8 +1349,6 @@ void UString::unQuote()
 {
    U_TRACE_NO_PARAM(0, "UString::unQuote()")
 
-   U_ASSERT(uniq())
-
    uint32_t len = rep->_length;
 
         if (len            <= 2) clear();
@@ -1361,11 +1359,7 @@ void UString::unQuote()
 
       char* ptr = (char*) rep->str;
 
-#  ifdef U_APEX_ENABLE
-      (void) U_SYSCALL(apex_memmove, "%p,%p,%u", ptr, ptr + 1, len);
-#  else
-      (void) U_SYSCALL(     memmove, "%p,%p,%u", ptr, ptr + 1, len);
-#  endif
+      (void) U_SYSCALL(memmove, "%p,%p,%u", ptr, ptr + 1, len);
 
       ptr[(rep->_length = len)] = '\0';
       }

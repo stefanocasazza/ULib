@@ -1,0 +1,56 @@
+#!/bin/sh
+
+. ../.function
+
+## one.test -- Test prototype for Shiv Shankar Dayal
+
+start_msg one
+
+ UTRACE="0 15M 0"
+#UOBJDUMP="0 10M 10"
+#USIMERR="error.sim"
+ export UTRACE UOBJDUMP USIMERR
+
+DOC_ROOT=ShivShankarDayal/docroot
+
+rm -rf $DOC_ROOT/*log /tmp/request.* /tmp/response.* \
+		 out/userver_tcp.out err/userver_tcp.err \
+                trace.*userver_*.[0-9]*           object.*userver_*.[0-9]*           stack.*userver_*.[0-9]*           mempool.*userver_*.[0-9]* \
+      $DOC_ROOT/trace.*userver_*.[0-9]* $DOC_ROOT/object.*userver_*.[0-9]* $DOC_ROOT/stack.*userver_*.[0-9]* $DOC_ROOT/mempool.*userver_*.[0-9]*
+
+cat <<EOF >inp/webserver.cfg
+userver {
+ PORT 8080
+ LOG_FILE one.log
+ LOG_FILE_SZ 1M
+ DOCUMENT_ROOT $DOC_ROOT
+ PREFORK_CHILD 0
+ PLUGIN_DIR ../../../../src/ulib/net/server/plugin/.libs
+#ORM_DRIVER mysql
+ ORM_DRIVER sqlite
+ ORM_DRIVER_DIR ../../../../src/ulib/orm/driver/.libs
+}
+http {
+ USP_AUTOMATIC_ALIASING /one
+}
+EOF
+
+check_for_netcat
+
+DIR_CMD="../../examples/userver"
+
+export ORM_DRIVER="sqlite"
+export ORM_OPTION="host=localhost dbname=../db/hello_world"
+
+start_prg_background userver_tcp -c inp/webserver.cfg
+
+wait_server_ready localhost 8080
+
+send_req $NCAT localhost 8080 inp/http/one.req one 2 kill
+
+kill_server userver_tcp
+
+mv err/userver_tcp.err err/one.err
+
+# Test against expected output
+test_output_wc l one

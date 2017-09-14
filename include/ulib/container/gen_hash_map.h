@@ -524,10 +524,10 @@ private:
    friend class UNotifier;
 };
 
-// Functor used by UGenericHashMap class to generate a hashcode for an object of type <int>
+// Functor used by UGenericHashMap class to generate a hashcode for an object of type <unsigned int>
 
-template <> struct UHashCodeFunctor<int> {
-   uint32_t operator()(const int& value) const
+template <> struct UHashCodeFunctor<unsigned int> {
+   uint32_t operator()(const unsigned int& value) const
       {
       // http://www.concentric.net/~Ttwang/tech/inthash.htm
 

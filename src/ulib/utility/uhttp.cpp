@@ -4527,7 +4527,6 @@ file_in_cache:
 
 #  ifndef U_COVERITY_FALSE_POSITIVE // FORWARD_NULL
       if (file_data->link)
-#  endif
          {
          file_data = (UHTTP::UFileCacheData*)file_data->ptr;
 
@@ -4537,6 +4536,7 @@ file_in_cache:
 
          U_INTERNAL_DUMP("st_mode = %d st_size = %I st_mtime = %ld", file->st_mode, file->st_size, file->st_mtime)
          }
+#  endif
 
 from_cache:
       if (isGETorHEAD()      == false ||
@@ -7502,6 +7502,8 @@ bool UHTTP::checkUriProtected()
       uint32_t sz, pattern_len = uri_protected_mask->size();
       const char* ptr = UClientImage_Base::getRequestUri(sz);
 
+      u_pOR = U_NULLPTR;
+
       if ((pattern_len = u_dosmatch_with_OR(ptr, sz, pattern, pattern_len, 0)))
          {
          if (vallow_IP)
@@ -10299,7 +10301,7 @@ U_NO_EXPORT void UHTTP::setResponseForRange(uint32_t _start, uint32_t _end, uint
    // Single range
 
    U_INTERNAL_ASSERT(_start <= _end)
-   U_INTERNAL_ASSERT_RANGE(_start, _end, range_size-1)
+   U_INTERNAL_ASSERT_RANGE(_start,_end,range_size-1)
 
    UString tmp(100U);
 
@@ -10569,7 +10571,6 @@ U_NO_EXPORT bool UHTTP::processGetRequest()
    U_INTERNAL_ASSERT_DIFFERS(file_data->fd, -1)
    U_INTERNAL_ASSERT_EQUALS(file->fd, file_data->fd)
    U_INTERNAL_ASSERT_EQUALS(file->st_size, file_data->size)
-   U_INTERNAL_ASSERT_MINOR(range_size, UServer_Base::min_size_for_sendfile)
 
    UString mmap;
    time_t expire;

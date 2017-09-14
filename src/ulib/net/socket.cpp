@@ -870,7 +870,10 @@ void USocket::close_socket()
    // NB: to avoid epoll_wait() fire events on file descriptor already closed...
 
 #if defined(HAVE_EPOLL_WAIT) && !defined(USE_LIBEVENT)
-   if (UNotifier::isHandler(iSockDesc))
+   U_INTERNAL_DUMP("U_ClientImage_parallelization = %d", U_ClientImage_parallelization)
+
+   if (U_ClientImage_parallelization != U_PARALLELIZATION_CHILD &&
+       UNotifier::isHandler(iSockDesc))
       {
       (void) U_SYSCALL(epoll_ctl, "%d,%d,%d,%p", UNotifier::epollfd, EPOLL_CTL_DEL, iSockDesc, (struct epoll_event*)1);
 

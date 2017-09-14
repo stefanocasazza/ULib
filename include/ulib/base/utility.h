@@ -318,9 +318,37 @@ static inline bool u_is_quoted(const char* restrict s, uint32_t n)
    return false;
 }
 
-/* find char not quoted */
+/* find first char not quoted */
 
-U_EXPORT const char* u_find_char(const char* restrict s, const char* restrict end, char c) __pure;
+__pure static inline const char* u_find_char(const char* restrict s, const char* restrict end, char c)
+{
+   U_INTERNAL_TRACE("u_find_char(%.*s,%p,%d)", U_min(end-s,128), s, end, c)
+
+   U_INTERNAL_ASSERT_POINTER(s)
+   U_INTERNAL_ASSERT_POINTER(end)
+   U_INTERNAL_ASSERT_EQUALS(s[-1],c)
+
+loop:
+   s = (const char* restrict) memchr(s, c, end - s);
+
+   if (s == U_NULLPTR) return end;
+
+   if (*(s-1) == '\\')
+      {
+      uint32_t i;
+
+      for (i = 2; (*(s-i) == '\\'); ++i) {}
+
+      if ((i & 1) == 0)
+         {
+         ++s;
+
+         goto loop;
+         }
+      }
+
+   return s;
+}
 
 /* skip string delimiter or white space and line comment */
 

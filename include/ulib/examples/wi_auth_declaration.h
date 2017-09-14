@@ -5412,10 +5412,10 @@ static void GET_admin_view_using_historical()
             tmp2 = vec2[2];
             tmp3 = vec2[3];
 
-            tmp0.rep->unQuote();
-            tmp1.rep->unQuote();
-            tmp2.rep->unQuote();
-            tmp3.rep->unQuote();
+            tmp0.unQuote();
+            tmp1.unQuote();
+            tmp2.unQuote();
+            tmp3.unQuote();
 
             _totale1 += tmp1.strtoul();
             _totale2 += tmp2.strtoul();

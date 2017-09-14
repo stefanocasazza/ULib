@@ -52,16 +52,17 @@ struct pollfd UNotifier::fds[1];
  * };
  */
 
-int                             UNotifier::nfd_ready; // the number of file descriptors ready for the requested I/O
-long                            UNotifier::last_event;
-uint32_t                        UNotifier::min_connection;
-uint32_t                        UNotifier::num_connection;
-uint32_t                        UNotifier::max_connection;
-uint32_t                        UNotifier::lo_map_fd_len;
-uint32_t                        UNotifier::bepollet_threshold = 10;
-UEventFd*                       UNotifier::handler_event;
-UEventFd**                      UNotifier::lo_map_fd;
-UGenericHashMap<int,UEventFd*>* UNotifier::hi_map_fd; // maps a fd to a node pointer
+int        UNotifier::nfd_ready; // the number of file descriptors ready for the requested I/O
+long       UNotifier::last_event;
+uint32_t   UNotifier::min_connection;
+uint32_t   UNotifier::num_connection;
+uint32_t   UNotifier::max_connection;
+uint32_t   UNotifier::lo_map_fd_len;
+uint32_t   UNotifier::bepollet_threshold = 10;
+UEventFd*  UNotifier::handler_event;
+UEventFd** UNotifier::lo_map_fd;
+
+UGenericHashMap<unsigned int,UEventFd*>* UNotifier::hi_map_fd; // maps a fd to a node pointer
 
 #ifdef DEBUG
 uint32_t UNotifier::nwatches;
@@ -490,7 +491,9 @@ loop0:
 
       U_INTERNAL_DUMP("i = %d handler_event->fd = %d", i, handler_event->fd)
 
-      if (handler_event->fd != -1)
+      U_INTERNAL_ASSERT_DIFFERS((handler_event->fd, -1)
+
+   // if (handler_event->fd != -1)
          {
          U_INTERNAL_DUMP("bread = %b bwrite = %b", ((pkqrevents->flags & EVFILT_READ)  != 0), ((pkqrevents->flags & EVFILT_WRITE) != 0))
 
@@ -701,7 +704,7 @@ void UNotifier::createMapFd()
    lo_map_fd_len = 20+max_connection;
    lo_map_fd     = (UEventFd**) UMemoryPool::_malloc(&lo_map_fd_len, sizeof(UEventFd*), true);
 
-   typedef UGenericHashMap<int,UEventFd*> umapfd;
+   typedef UGenericHashMap<unsigned int,UEventFd*> umapfd;
 
    U_NEW(umapfd, hi_map_fd, umapfd);
 
@@ -728,7 +731,7 @@ bool UNotifier::isHandler(int fd)
          {
          lock();
 
-         result = hi_map_fd->find(fd);
+         result = hi_map_fd->find((unsigned int)fd);
 
          unlock();
          }
@@ -761,7 +764,7 @@ bool UNotifier::setHandler(int fd)
 
    lock();
 
-   result = hi_map_fd->find(fd);
+   result = hi_map_fd->find((unsigned int)fd);
 
    unlock();
 
@@ -794,7 +797,7 @@ void UNotifier::insert(UEventFd* item, int op)
       {
       lock();
 
-      hi_map_fd->insert(fd, item);
+      hi_map_fd->insert((unsigned int)fd, item);
 
       unlock();
       }
@@ -969,7 +972,7 @@ void UNotifier::handlerDelete(unsigned int fd, int mask)
    U_INTERNAL_ASSERT_MAJOR(fd, 0)
    U_INTERNAL_ASSERT_DIFFERS(U_ClientImage_parallelization, U_PARALLELIZATION_CHILD)
 
-   if (fd < (int32_t)lo_map_fd_len) lo_map_fd[fd] = U_NULLPTR;
+   if (fd < lo_map_fd_len) lo_map_fd[fd] = U_NULLPTR;
    else
       {
       lock();
@@ -1053,7 +1056,7 @@ void UNotifier::callForAllEntryDynamic(bPFpv function)
          }
       }
 
-   UGenericHashMap<int,UEventFd*>::UGenericHashMapNode* _node;
+   UGenericHashMap<unsigned int,UEventFd*>::UGenericHashMapNode* _node;
 
    if ((_node = hi_map_fd->first()))
       {
@@ -1064,7 +1067,7 @@ void UNotifier::callForAllEntryDynamic(bPFpv function)
 
          if (function(item))
             {
-            U_DEBUG("UNotifier::callForAllEntryDynamic(): hi_map_fd(%p) = %p %d", _node, item, item->fd);
+            U_DEBUG("UNotifier::callForAllEntryDynamic(): hi_map_fd(%p) = %p %u", _node, item, item->fd);
 
             handlerDelete(item);
 
@@ -1109,7 +1112,7 @@ void UNotifier::clear()
             }
          }
 
-      UGenericHashMap<int,UEventFd*>::UGenericHashMapNode* _node;
+      UGenericHashMap<unsigned int,UEventFd*>::UGenericHashMapNode* _node;
 
       if ((_node = hi_map_fd->first()))
          {
