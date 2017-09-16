@@ -1267,6 +1267,26 @@ protected:
       U_CHECK_MEMORY_OBJECT(rep)
       }
 
+   // SUBSTRING
+
+   UString(const UStringRep* _rep, const char* t, uint32_t tlen)
+      {
+      U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(0, UString, "%V,%p,%u", _rep, t, tlen)
+
+      rep = _rep->substr(t, tlen);
+
+      U_INTERNAL_ASSERT(invariant())
+      }
+
+   UString(const UStringRep* _rep, uint32_t pos, uint32_t n = U_NOT_FOUND)
+      {
+      U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(0, UString, "%V,%u,%u", _rep, pos, n)
+
+      rep = _rep->substr(pos, _rep->fold(pos, n));
+
+      U_INTERNAL_ASSERT(invariant())
+      }
+
 public:
    void _assign(UStringRep* r)
       {
@@ -1406,24 +1426,6 @@ public:
       }
 
    // SUBSTRING
-
-   explicit UString(const UStringRep* _rep, const char* t, uint32_t tlen)
-      {
-      U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(0, UString, "%V,%p,%u", _rep, t, tlen)
-
-      rep = _rep->substr(t, tlen);
-
-      U_INTERNAL_ASSERT(invariant())
-      }
-
-   explicit UString(const UStringRep* _rep, uint32_t pos, uint32_t n = U_NOT_FOUND)
-      {
-      U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(0, UString, "%V,%u,%u", _rep, pos, n)
-
-      rep = _rep->substr(pos, _rep->fold(pos, n));
-
-      U_INTERNAL_ASSERT(invariant())
-      }
 
    UString substr(const char* t, uint32_t tlen) const
       {

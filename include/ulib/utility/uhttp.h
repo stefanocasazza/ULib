@@ -169,7 +169,6 @@ public:
    static UFile* file;
    static UString* ext;
    static UString* etag;
-   static UString* request;
    static UString* qcontent;
    static UString* pathname;
    static UString* rpathname;
@@ -203,6 +202,8 @@ public:
    static bool scanfHeaderResponse(const char* ptr, uint32_t size);
    static bool readHeaderResponse(USocket* socket, UString& buffer);
    static bool readBodyResponse(USocket* socket, UString* buffer, UString& body);
+
+   static UString getPathComponent(uint32_t index); // Returns the path element at the specified index
 
    static bool isValidRequest(const char* ptr, uint32_t sz)
       {

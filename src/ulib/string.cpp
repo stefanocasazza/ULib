@@ -1331,11 +1331,7 @@ char* UString::__replace(uint32_t pos, uint32_t n1, uint32_t n2)
    else if (how_much > 0 &&
             n1 != n2)
       {
-#  ifdef U_APEX_ENABLE
-      (void) U_SYSCALL(apex_memmove, "%p,%p,%u", str + pos + n2, src, how_much);
-#  else
-      (void) U_SYSCALL(     memmove, "%p,%p,%u", str + pos + n2, src, how_much);
-#  endif
+      (void) U_SYSCALL(memmove, "%p,%p,%u", str + pos + n2, src, how_much);
       }
 
    U_ASSERT(uniq())
@@ -1359,9 +1355,20 @@ void UString::unQuote()
 
       char* ptr = (char*) rep->str;
 
-      (void) U_SYSCALL(memmove, "%p,%p,%u", ptr, ptr + 1, len);
+      if (rep->references)
+         {
+         UStringRep* r;
 
-      ptr[(rep->_length = len)] = '\0';
+         U_NEW(UStringRep, r, UStringRep(ptr+1, len));
+
+         _set(r);
+         }
+      else
+         {
+         (void) U_SYSCALL(memmove, "%p,%p,%u", ptr, ptr + 1, len);
+
+         ptr[(rep->_length = len)] = '\0';
+         }
       }
 }
 

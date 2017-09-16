@@ -30,9 +30,6 @@ userver {
  ORM_DRIVER sqlite
  ORM_DRIVER_DIR ../../../../src/ulib/orm/driver/.libs
 }
-http {
- USP_AUTOMATIC_ALIASING /one
-}
 EOF
 
 check_for_netcat

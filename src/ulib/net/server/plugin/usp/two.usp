@@ -1,0 +1,7 @@
+<!--#
+prototype for Shiv Shankar Dayal
+-->
+<!--#cpath
+id;
+-->
+<h1>I am two: id=<!--#xmlputs id --></h1>

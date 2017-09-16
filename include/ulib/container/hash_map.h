@@ -563,9 +563,9 @@ public:
          UHashMapNode* _node;
          UHashMapNode* _next;
          UHashMapNode** ptr;
-         UHashMapNode** end;
+         UHashMapNode** _end;
 
-         for (end = (ptr = table) + _capacity; ptr < end; ++ptr)
+         for (_end = (ptr = table) + _capacity; ptr < _end; ++ptr)
             {
             if (*ptr)
                {
@@ -597,11 +597,11 @@ public:
 
       const T* _elem;
       UHashMapNode** ptr;
-      UHashMapNode** end;
+      UHashMapNode** _end;
       UHashMapNode* _node;
       UHashMapNode** pnode;
 
-      for (end = (ptr = table) + _capacity; ptr < end; ++ptr)
+      for (_end = (ptr = table) + _capacity; ptr < _end; ++ptr)
          {
          if (*ptr)
             {
@@ -795,12 +795,12 @@ public:
       UHashMapNode* _node;
       UHashMapNode* _next;
       UHashMapNode** ptr;
-      UHashMapNode** end;
+      UHashMapNode** _end;
 
       _os.put('[');
       _os.put('\n');
 
-      for (end = (ptr = t.table) + t._capacity; ptr < end; ++ptr)
+      for (_end = (ptr = t.table) + t._capacity; ptr < _end; ++ptr)
          {
          if (*ptr)
             {

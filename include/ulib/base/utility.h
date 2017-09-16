@@ -427,7 +427,7 @@ U_EXPORT bool u_dosmatch_ext(const char* restrict s, uint32_t n1, const char* re
 
 extern U_EXPORT const char* restrict u_pOR;
 
-U_EXPORT uint32_t u_match_with_OR(bPFpcupcud pfn_match, const char* restrict s, uint32_t n1, const char* restrict pattern, uint32_t n2, int flags) __pure;
+U_EXPORT uint32_t u_match_with_OR(bPFpcupcud pfn_match, const char* restrict s, uint32_t n1, const char* restrict pattern, uint32_t n2, int flags);
 
 static inline uint32_t u_dosmatch_with_OR(const char* restrict s, uint32_t n1, const char* restrict pattern, uint32_t n2, int flags)
 {

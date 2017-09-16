@@ -1394,10 +1394,12 @@ check:            U_INTERNAL_DUMP("nrequest = %u resto = %u", nrequest, resto)
                   if (resto ||
                       nrequest != n)
                      {
-                     *request = rbuffer->substr((rstart = (nrequest * size_request)));
+                     rstart = (nrequest ? nrequest : 1) * size_request;
+
+                     *request = rbuffer->substr(rstart);
                      }
 
-                  U_INTERNAL_DUMP("request(%u) = %V", request->size(), request->rep)
+                  U_INTERNAL_DUMP("rstart = %u request(%u) = %V", rstart, request->size(), request->rep)
 
                   goto write;
                   }
@@ -1409,7 +1411,7 @@ check:            U_INTERNAL_DUMP("nrequest = %u resto = %u", nrequest, resto)
          }
       }
 
-   U_INTERNAL_DUMP("U_ClientImage_pipeline = %b size_request = %u request->size() = %u", U_ClientImage_pipeline, size_request, request->size())
+   U_INTERNAL_DUMP("U_ClientImage_pipeline = %b size_request = %u request->size() = %u rstart = %u", U_ClientImage_pipeline, size_request, request->size(), rstart)
 
    if (isRequestNeedProcessing())
       {

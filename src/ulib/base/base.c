@@ -191,7 +191,7 @@ static inline char* out(uint32_t d, char* restrict p)
    return p+2;
 }
 
-static inline char* itoa(uint32_t u, char* restrict p, uint32_t d, uint32_t n)
+static inline char* u_itoa(uint32_t u, char* restrict p, uint32_t d, uint32_t n)
 {
    switch (n)
       {
@@ -222,7 +222,7 @@ static char* num2str32(uint32_t u, char* restrict p)
    else if (u <    1000000) n = digits(u,     10000, &d, &p,  6);
    else                     n = digits(u,   1000000, &d, &p,  8);
 
-   return itoa(u, p, d, n);
+   return u_itoa(u, p, d, n);
 }
 
 static char* num2str64(uint64_t u, char* restrict p)
@@ -244,7 +244,7 @@ static char* num2str64(uint64_t u, char* restrict p)
 
    *p++ = d + '0';
 
-   return itoa(lower, p, d, 9);
+   return u_itoa(lower, p, d, 9);
 }
 
 static char* dtoa(double num, char* restrict cp) { return cp + sprintf(cp, "%g", num); }

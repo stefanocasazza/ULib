@@ -124,7 +124,8 @@ public:
       const char* ptr;
       uint32_t i, n, size;
       UString token, declaration, http_header(U_CAPACITY), buffer(U_CAPACITY), bufname(100U), vcode(U_CAPACITY), output(U_CAPACITY), output1(U_CAPACITY), output2(U_CAPACITY);
-      bool bgroup, binit = false, bend = false, bsighup = false, bfork = false, bcomment = false, bvar = false, test_if_html = false, is_html = false, bsession = false, bstorage = false;
+      bool bgroup, binit = false, bend = false, bsighup = false, bfork = false, bcomment = false, bvar = false, test_if_html = false, is_html = false, bsession = false,
+           bstorage = false;
 
       // Anything that is not enclosed in <!-- ... --> tags is assumed to be HTML
 
@@ -202,6 +203,7 @@ public:
           * <!--#session -->
           * <!--#storage -->
           * <!--#args -->
+          * <!--#cpath -->
           * <!--#header -->
           * <!--#vcode -->
           * <!--#pcode -->
@@ -355,6 +357,39 @@ public:
                name = (pos == U_NOT_FOUND ? tmp : tmp.substr(0U, pos));
 
                buffer.snprintf(U_CONSTANT_TO_PARAM("\n\tUString %v = USP_FORM_VALUE(%u);\n\t"), name.rep, i);
+
+               if (pos != U_NOT_FOUND)
+                  {
+                  buffer.snprintf_add(U_CONSTANT_TO_PARAM("\n\tif (%v.empty()) %v = U_STRING_FROM_CONSTANT(%.*s);\n\t"),
+                                      name.rep, name.rep, tmp.size() - pos - 2, tmp.c_pointer(pos + 1));  
+                  }
+
+               (void) output.append(buffer);
+               }
+            }
+         else if (strncmp(directive, U_CONSTANT_TO_PARAM("cpath")) == 0)
+            {
+            U_ASSERT(vcode.empty())
+
+            n = token.size() - U_CONSTANT_SIZE("cpath") - 2;
+
+            token = UStringExt::trim(directive + U_CONSTANT_SIZE("cpath"), n);
+
+            UString tmp, name;
+            UVector<UString> vec(token, "\t\n;");
+
+            (void) buffer.reserve(token.size() * 100U);
+
+            for (i = 0, n = vec.size(); i < n; ++i)
+               {
+#           ifdef DEBUG
+               name.clear(); // NB: to avoid DEAD OF SOURCE STRING WITH CHILD ALIVE...
+#           endif
+               tmp  = UStringExt::trim(vec[i]);
+               pos  = tmp.find('(');
+               name = (pos == U_NOT_FOUND ? tmp : tmp.substr(0U, pos));
+
+               buffer.snprintf(U_CONSTANT_TO_PARAM("\n\tUString %v = UHTTP::getPathComponent(%u);\n\t"), name.rep, i+1);
 
                if (pos != U_NOT_FOUND)
                   {

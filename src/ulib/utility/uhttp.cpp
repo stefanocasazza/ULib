@@ -83,7 +83,6 @@ UString* UHTTP::ext;
 UString* UHTTP::etag;
 UString* UHTTP::geoip;
 UString* UHTTP::tmpdir;
-UString* UHTTP::request;
 UString* UHTTP::htpasswd;
 UString* UHTTP::htdigest;
 UString* UHTTP::qcontent;
@@ -834,7 +833,6 @@ void UHTTP::init()
    U_INTERNAL_ASSERT_EQUALS(pcmd, U_NULLPTR)
    U_INTERNAL_ASSERT_EQUALS(geoip, U_NULLPTR)
    U_INTERNAL_ASSERT_EQUALS(tmpdir, U_NULLPTR)
-   U_INTERNAL_ASSERT_EQUALS(request, U_NULLPTR)
    U_INTERNAL_ASSERT_EQUALS(qcontent, U_NULLPTR)
    U_INTERNAL_ASSERT_EQUALS(pathname, U_NULLPTR)
    U_INTERNAL_ASSERT_EQUALS(rpathname, U_NULLPTR)
@@ -854,7 +852,6 @@ void UHTTP::init()
    U_NEW(UString, etag, UString);
    U_NEW(UString, geoip, UString(U_CAPACITY));
    U_NEW(UString, tmpdir, UString(U_PATH_MAX));
-   U_NEW(UString, request, UString);
    U_NEW(UString, qcontent, UString);
    U_NEW(UString, pathname, UString(U_CAPACITY));
    U_NEW(UString, rpathname, UString);
@@ -1413,7 +1410,6 @@ void UHTTP::dtor()
       delete pcmd;
       delete geoip;
       delete tmpdir;
-      delete request;
       delete qcontent;
       delete pathname;
       delete rpathname;
@@ -4175,32 +4171,33 @@ int UHTTP::manageRequest()
 
    if (valias)
       {
+      int i, n;
       UString str;
-      int i, n = valias->size();
+      uint32_t len;
+      const char* p1;
 
       // Ex: /admin /admin.html
 
       U_DUMP("valias = %S", UObject2String(*valias))
 
-      for (i = 0; i < n; i += 2)
+      for (i = 0, n = valias->size(); i < n; i += 2)
          {
          int flag = 0;
 
          str = (*valias)[i];
 
-         const char* ptr = str.data();
+          p1 = str.data();
+         len = str.size();
 
-         int len = str.size();
-
-         if (ptr[0] == '!')
+         if (p1[0] == '!')
             {
-            ++ptr;
+            ++p1;
             --len;
 
             flag = FNM_INVERT;
             }
 
-         if (U_HTTP_URI_DOSMATCH(ptr, len, flag))
+         if (U_HTTP_URI_DOSMATCH(p1, len, flag))
             {
             str = (*valias)[i+1];
 
@@ -4218,9 +4215,12 @@ int UHTTP::manageRequest()
 
       if (i < n)
          {
-         if (UStringExt::endsWith(U_STRING_TO_PARAM(str), U_CONSTANT_TO_PARAM("nostat"))) U_http_flag |= HTTP_IS_REQUEST_NOSTAT; // NOT a static page...
+         if (UStringExt::endsWith(U_STRING_TO_PARAM(str), U_CONSTANT_TO_PARAM("nostat")))
+            {
+            U_http_flag |= HTTP_IS_REQUEST_NOSTAT; // NOT a static page...
 
-         U_INTERNAL_DUMP("U_http_is_request_nostat = %b", U_http_is_request_nostat)
+            goto set_uri;
+            }
          }
       }
 
@@ -4265,6 +4265,8 @@ set_uri: U_http_info.uri     = alias->data();
 
 #     ifdef DEBUG
          if (UClientImage_Base::request_uri->findWhiteSpace(0) != U_NOT_FOUND) U_ERROR("request URI has space: %V", UClientImage_Base::request_uri->rep);
+
+         U_INTERNAL_DUMP("U_http_is_request_nostat = %b", U_http_is_request_nostat)
 #     endif
          }
       }
@@ -4291,9 +4293,10 @@ set_uri: U_http_info.uri     = alias->data();
 
    pathname->setBuffer(u_cwd_len + U_http_info.uri_len);
 
-   old_path_len = U_http_info.uri_len-1;
-
-        if (old_path_len == 0) file_data = U_NULLPTR;
+   if ((old_path_len = U_http_info.uri_len-1) == 0)
+      {
+      file_data = U_NULLPTR;
+      }
    else if (checkFileInCache(U_http_info.uri+1, old_path_len))
       {
       UClientImage_Base::setRequestInFileCache();
@@ -4332,7 +4335,7 @@ set_uri: U_http_info.uri     = alias->data();
       // NB: if status is 'file not found' and we have virtual host
       //     we check if it is present as shared file (without the virtual host prefix)
       // ------------------------------------------------------------------------------
-      const char* ptr = pathname->c_pointer(u_cwd_len);
+      const char* p1 = pathname->c_pointer(u_cwd_len);
 
 #    ifdef U_ALIAS
       U_INTERNAL_DUMP("virtual_host = %b U_http_host_vlen = %u U_http_is_request_nostat = %b", virtual_host, U_http_host_vlen, U_http_is_request_nostat)
@@ -4348,13 +4351,13 @@ set_uri: U_http_info.uri     = alias->data();
 
             file->path_relativ_len = UClientImage_Base::request_uri->size();
 
-            U_MEMCPY(ptr, UClientImage_Base::request_uri->data(), file->path_relativ_len);
+            U_MEMCPY(p1, UClientImage_Base::request_uri->data(), file->path_relativ_len);
             }
          else
             {
             file->path_relativ_len = U_http_info.uri_len-U_http_host_vlen-1;
 
-            (void) U_SYSCALL(memmove, "%p,%p,%u", (void*)ptr, ptr+1+U_http_host_vlen, file->path_relativ_len);
+            (void) U_SYSCALL(memmove, "%p,%p,%u", (void*)p1, p1+1+U_http_host_vlen, file->path_relativ_len);
             }
 
          if (checkPathName(file->path_relativ_len)) goto manage;
@@ -4366,7 +4369,7 @@ set_uri: U_http_info.uri     = alias->data();
       if (u_isUrlEncoded(U_HTTP_URI_TO_PARAM, false) &&
               u_isBase64(U_HTTP_URI_TO_PARAM) == false)
          {
-         file->path_relativ_len = u_url_decode(U_HTTP_URI_TO_PARAM, (unsigned char*)ptr);
+         file->path_relativ_len = u_url_decode(U_HTTP_URI_TO_PARAM, (unsigned char*)p1);
 
          if (checkPathName(file->path_relativ_len)) goto manage;
          }
@@ -4423,6 +4426,8 @@ manage:
 file_in_cache:
       U_INTERNAL_ASSERT_POINTER(file_data)
 
+      U_DUMP("U_http_info.nResponseCode = %u", U_http_info.nResponseCode)
+
 #  ifdef U_EVASIVE_SUPPORT
       if (UServer_Base::checkHitUriStats()) U_RETURN(U_PLUGIN_HANDLER_ERROR);
 #  endif
@@ -4463,6 +4468,8 @@ file_in_cache:
          U_INTERNAL_ASSERT_POINTER(usp->runDynamicPage)
 
          U_SET_MODULE_NAME(usp);
+
+         U_DUMP("U_http_info.nResponseCode = %u", U_http_info.nResponseCode)
 
          usp->runDynamicPage(0);
 
@@ -7502,8 +7509,6 @@ bool UHTTP::checkUriProtected()
       uint32_t sz, pattern_len = uri_protected_mask->size();
       const char* ptr = UClientImage_Base::getRequestUri(sz);
 
-      u_pOR = U_NULLPTR;
-
       if ((pattern_len = u_dosmatch_with_OR(ptr, sz, pattern, pattern_len, 0)))
          {
          if (vallow_IP)
@@ -7528,7 +7533,7 @@ bool UHTTP::checkUriProtected()
 
          // check if it's OK via authentication (digest|basic)
 
-         if (processAuthorization(ptr, sz, (u_pOR != U_NULLPTR ? u_pOR : pattern), pattern_len) == false) U_RETURN(false);
+         if (processAuthorization(ptr, sz, u_pOR, pattern_len) == false) U_RETURN(false);
          }
       }
 
@@ -7562,6 +7567,48 @@ __pure bool UHTTP::isUriRequestStrictTransportSecurity()
 }
 #endif
 
+UString UHTTP::getPathComponent(uint32_t index) // Returns the path element at the specified index
+{
+   U_TRACE(0, "UHTTP::getPathComponent(%u)", index)
+
+   uint32_t sz;
+   const char* ptr = UClientImage_Base::getRequestUri(sz);
+
+   U_INTERNAL_ASSERT_EQUALS(ptr[0], '/')
+
+   if (--sz)
+      {
+      uint32_t len;
+      const char* p;
+      const char* end = ++ptr+sz;
+
+      U_INTERNAL_DUMP("uri(%u) = %.*S", sz, sz, ptr)
+
+      while (ptr < end)
+         {
+         p = (const char*) memchr(ptr, '/', (len = (end - ptr)));
+
+         U_INTERNAL_DUMP("p = %p index = %u", p, index)
+
+         if (index == 0 ||
+             p == U_NULLPTR)
+            {
+            UString x;
+
+            if (index == 0) (void) x.assign(ptr, (p ? p - ptr : len));
+
+            U_RETURN_STRING(x);
+            }
+
+         --index;
+
+         ptr = p + 1;
+         }
+      }
+
+   return UString::getStringNull();
+}
+
 // NB: the tables must be ordered alphabetically because we use binary search algorithm (also we skip the prefix 'GET_' or 'POST_' of the named services)
 
 void UHTTP::manageRequest(service_info*  GET_table, uint32_t n1,
@@ -7589,30 +7636,21 @@ void UHTTP::manageRequest(service_info*  GET_table, uint32_t n1,
       return;
       }
 
-   if (high == 0)
-      {
-not_found:
-      U_http_info.nResponseCode = HTTP_BAD_REQUEST;
-
-      return;
-      }
-
    const char* ptr;
    service_info* key;
    uint32_t target_len;
-   int32_t cmp = -1, probe, low = -1;
+   int32_t cmp, probe, low;
    const char* target = UClientImage_Base::getRequestUri(target_len);
-
-   // NB: skip first char of uri ('/')...
 
    U_INTERNAL_ASSERT_EQUALS(target[0], '/')
 
-   target     += 1;
-   target_len -= 1;
+   if (high == 0 ||
+       --target_len == 0)
+      {
+      goto end;
+      }
 
-   if (target_len == 0) goto not_found; // NB: skip '/' request...
-
-   ptr = (const char*) memrchr(target, PATH_SEPARATOR, target_len);
+   ptr = (const char*) memchr(++target, PATH_SEPARATOR, target_len);
 
    if (ptr) target_len = ptr - target;
 
@@ -7629,7 +7667,8 @@ not_found:
       U_INTERNAL_DUMP("target(%u) = %.*S", target_len, target_len, target)
       }
 
-   U_http_info.nResponseCode = 0; // NB: it is used by server_plugin_ssi to continue processing with a shell script...
+   cmp =
+   low = -1;
 
    while ((high - low) > 1)
       {
@@ -7653,19 +7692,23 @@ not_found:
    if (low == -1 ||
        (key = table + low, key->len != target_len || memcmp(key->name, target, target_len)))
       {
-      goto not_found;
+      goto end;
       }
 
    probe = low;
 
 found:
+   U_http_info.nResponseCode = 0; // NB: it is used by server_plugin_ssi to continue processing with a shell script...
+
    table[probe].function();
 
    U_INTERNAL_DUMP("U_http_info.nResponseCode = %u", U_http_info.nResponseCode)
 
    if (U_http_info.nResponseCode == 0)
       {
-end:  (void) UClientImage_Base::environment->append(U_CONSTANT_TO_PARAM("HTTP_RESPONSE_CODE=0\n"));
+end:  U_http_info.nResponseCode = HTTP_BAD_REQUEST;
+
+      (void) UClientImage_Base::environment->append(U_CONSTANT_TO_PARAM("HTTP_RESPONSE_CODE=0\n"));
       }
 }
 
@@ -8667,7 +8710,7 @@ U_NO_EXPORT void UHTTP::checkPathName()
    U_INTERNAL_ASSERT(pathname->isNullTerminated())
 
    const char* ptr = pathname->data();
-   uint32_t len = pathname->size(), len1 = u_canonicalize_pathname((char*)ptr, len);
+   uint32_t len    = pathname->size(), len1 = u_canonicalize_pathname((char*)ptr, len);
 
    if (checkDirectoryForDocumentRoot(ptr, len1) == false)
       {
@@ -8682,31 +8725,74 @@ U_NO_EXPORT void UHTTP::checkPathName()
 
    file->setPath(*pathname);
 
-   UString basename = UStringExt::basename(ptr = file->getPathRelativ(), len = file->getPathRelativLen());
+   ptr = file->getPathRelativ();
+   len = file->getPathRelativLen();
 
-   U_INTERNAL_DUMP("file(%u) = %.*S basename = %V", len, len, ptr, basename.rep)
-
-   U_INTERNAL_ASSERT(basename)
-
-   if (nocache_file_mask &&
-       UServices::dosMatchWithOR(basename, U_STRING_TO_PARAM(*nocache_file_mask), 0))
-      {
-      U_http_flag |= HTTP_IS_NOCACHE_FILE | HTTP_IS_REQUEST_NOSTAT;
-
-      U_INTERNAL_DUMP("U_http_is_nocache_file = %b U_http_is_request_nostat = %b", U_http_is_nocache_file, U_http_is_request_nostat)
-      }
+   U_INTERNAL_DUMP("file(%u) = %.*S", len, len, ptr)
 
    if (checkFileInCacheOld(ptr, len) == false)
       {
       U_INTERNAL_ASSERT_EQUALS(file_data, U_NULLPTR)
-
-      U_INTERNAL_DUMP("U_http_is_request_nostat = %b", U_http_is_request_nostat)
 
       if (U_http_is_request_nostat)
          {
          U_ClientImage_request = 0; // we set to UClientImage_Base::NOT_FOUND...
 
          return;
+         }
+
+#  ifdef U_ALIAS
+      if (virtual_host == false)
+#  endif
+      {
+      // /name_of_usp/1657484/can-you-give-an-example-of-stack-overflow-in-c => name_of_usp.so
+
+      UFileCacheData* pdata;
+      const char* p1 = U_http_info.uri+1;
+      const char* p2 = (const char*) memchr(p1, '/', old_path_len);
+
+      U_INTERNAL_DUMP("p2 = %p", p2)
+
+      if (p2                                 &&
+          (len1 = (p2-p1)) > 1               &&
+          (pdata = cache_file->at(p1, len1)) &&
+          u_is_usp(pdata->mime_index))
+         {
+         pathname->rep->_length -= (U_http_info.uri_len-len1)-1; // NB: pathname can be referenced by the file obj...
+
+         file->setPath(*pathname);
+
+         file_data = pdata;
+
+         file->st_size  = pdata->size;
+         file->st_mode  = pdata->mode;
+         file->st_mtime = pdata->mtime;
+
+         U_INTERNAL_DUMP("new_uri(%u) = %.*S file = %.*S file_data->fd = %d st_size = %I st_mtime = %ld dir() = %b",
+                          len1+1, len1+1, U_http_info.uri, U_FILE_TO_TRACE(*file), file_data->fd, file->st_size, file->st_mtime, file->dir())
+
+         UClientImage_Base::setRequestInFileCache();
+
+         return;
+         }
+      }
+
+      UString basename;
+
+      if (nocache_file_mask)
+         {
+         basename = UStringExt::basename(ptr, len);
+
+         U_INTERNAL_ASSERT(basename)
+
+         if (UServices::dosMatchWithOR(basename, U_STRING_TO_PARAM(*nocache_file_mask), 0))
+            {
+            U_http_flag |= HTTP_IS_NOCACHE_FILE | HTTP_IS_REQUEST_NOSTAT;
+
+            U_ClientImage_request = 0; // we set to UClientImage_Base::NOT_FOUND...
+
+            return;
+            }
          }
 
       if (len >= 9)
@@ -8824,6 +8910,13 @@ nocontent:  UClientImage_Base::setCloseConnection();
          {
          UString suffix;
 
+         if (basename.empty())
+            {
+            basename = UStringExt::basename(ptr, len);
+
+            U_INTERNAL_ASSERT(basename)
+            }
+         
          ptr = u_getsuffix(U_STRING_TO_PARAM(basename));
 
          if (ptr)

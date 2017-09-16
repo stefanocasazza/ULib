@@ -556,8 +556,8 @@ int UHttpPlugIn::handlerRun() // NB: we use this method instead of handlerInit()
 
    if (UServer_Base::vplugin_name->last() == *UString::str_http) // NB: we can shortcut the http request processing...
       {
-#  ifdef U_LOG_DISABLE
-      if ((UServer_Base::isLog())
+#  ifndef U_LOG_DISABLE
+      if (UServer_Base::isLog())
          {
                                               UClientImage_Base::callerHandlerRead    = UHTTP::handlerREADWithLog;
          if (UServer_Base::vplugin_size == 1) UClientImage_Base::callerHandlerRequest = UHTTP::processRequestWithLog;

@@ -19,7 +19,11 @@
 #include <ulib/utility/string_ext.h>
 #include <ulib/utility/data_session.h>
 
-#include <netinet/in.h>
+#ifdef _MSWINDOWS_
+#  include <ws2tcpip.h>
+#else
+#  include <netinet/in.h>
+#endif
 
 /**
  * @class URDB

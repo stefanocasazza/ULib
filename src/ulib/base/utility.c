@@ -1556,13 +1556,13 @@ end:
 uint32_t u_split(char* restrict s, uint32_t n, char** restrict argv, const char* restrict delim)
 {
    const char* restrict p;
-   char* restrict end  = s + n;
+   char* restrict end = s + n;
    char** restrict ptr = argv;
 
    U_INTERNAL_TRACE("u_split(%.*s,%u,%p,%s)", U_min(n,128), s, n, argv, delim)
 
    U_INTERNAL_ASSERT_POINTER(s)
-   U_INTERNAL_ASSERT_MAJOR(n,0)
+   U_INTERNAL_ASSERT_MAJOR(n, 0)
    U_INTERNAL_ASSERT_POINTER(argv)
    U_INTERNAL_ASSERT_EQUALS(u_isBinary((const unsigned char*)s,n),false)
 
@@ -1598,7 +1598,6 @@ uint32_t u_split(char* restrict s, uint32_t n, char** restrict argv, const char*
 
 __pure bool u_dosmatch(const char* restrict s, uint32_t n1, const char* restrict mask, uint32_t n2, int flags)
 {
-   bool result;
    const char* restrict cp = 0;
    const char* restrict mp = 0;
    unsigned char c1 = 0, c2 = 0;
@@ -1626,7 +1625,7 @@ __pure bool u_dosmatch(const char* restrict s, uint32_t n1, const char* restrict
          if (c2 != c1 &&
              c2 != '?')
             {
-            return ((flags & FNM_INVERT) != 0);
+            return ((flags & FNM_INVERT) != 0); /* no match */
             }
 
          ++s;
@@ -1639,20 +1638,27 @@ __pure bool u_dosmatch(const char* restrict s, uint32_t n1, const char* restrict
          {
          if (s >= end_s)
             {
-            if (mask == 0) return false;
+            if (mask == 0) return ((flags & FNM_INVERT) != 0); /* no match */
 
             while (*mask == '*') ++mask;
 
-            result = (mask >= end_mask);
+            if ((flags & FNM_INVERT) == 0)
+               {
+               if (mask >= end_mask) return true; /* match */
 
-            return ((flags & FNM_INVERT) != 0 ? (result == false) : result);
+               return false; /* no match */
+               }
+
+            if (mask >= end_mask) return false; /* match */
+
+            return true; /* no match */
             }
 
          c2 = (mask ? u__tolower(*mask) : 0);
 
          if (c2 == '*')
             {
-            if (++mask >= end_mask) return ((flags & FNM_INVERT) == 0);
+            if (++mask >= end_mask) return ((flags & FNM_INVERT) == 0); /* match */
 
             cp = s+1;
             mp = mask;
@@ -1690,7 +1696,7 @@ __pure bool u_dosmatch(const char* restrict s, uint32_t n1, const char* restrict
          if (c2 != c1 &&
              c2 != '?')
             {
-            return ((flags & FNM_INVERT) != 0);
+            return ((flags & FNM_INVERT) != 0); /* no match */
             }
 
          ++s;
@@ -1703,18 +1709,27 @@ __pure bool u_dosmatch(const char* restrict s, uint32_t n1, const char* restrict
          {
          if (s >= end_s)
             {
+            if (mask == 0) return ((flags & FNM_INVERT) != 0); /* no match */
+
             while (*mask == '*') ++mask;
 
-            result = (mask >= end_mask);
+            if ((flags & FNM_INVERT) == 0)
+               {
+               if (mask >= end_mask) return true; /* match */
 
-            return ((flags & FNM_INVERT) != 0 ? (result == false) : result);
+               return false; /* no match */
+               }
+
+            if (mask >= end_mask) return false; /* match */
+
+            return true; /* no match */
             }
 
          c2 = *mask;
 
          if (c2 == '*')
             {
-            if (++mask >= end_mask) return ((flags & FNM_INVERT) == 0);
+            if (++mask >= end_mask) return ((flags & FNM_INVERT) == 0); /* match */
 
             cp = s + 1;
             mp = mask;
@@ -1754,7 +1769,7 @@ __pure bool u_dosmatch_ext(const char* restrict s, uint32_t n1, const char* rest
       {
       U_INTERNAL_PRINT("switch: s[0] = %c n1 = %u mask[0] = %c n2 = %u", s[0], n1, mask[0], n2)
 
-      switch (mask[0])
+      switch (*mask)
          {
          case '*':
             {
@@ -1794,34 +1809,33 @@ __pure bool u_dosmatch_ext(const char* restrict s, uint32_t n1, const char* rest
 
             if (bnot)
                {
-               mask += 2;
                  n2 -= 2;
+               mask += 2;
                }
             else
                {
-               ++mask;
                --n2;
+               ++mask;
                }
 
             U_INTERNAL_PRINT("s[0] = %c n1 = %u mask[0] = %c n2 = %u", s[0], n1, mask[0], n2)
 
             while (true)
                {
-               if (mask[0] == '\\')
+               if (*mask == '\\')
                   {
-                  ++mask;
-                  --n2;
+                  if (*++mask == s[0]) match = true;
 
-                  if (mask[0] == s[0]) match = true;
+                  --n2;
                   }
                else
                   {
-                  if (mask[0] == ']') break;
+                  if (*mask == ']') break;
 
                   if (n2 == 0)
                      {
-                     --mask;
                      ++n2;
+                     --mask;
 
                      break;
                      }
@@ -1888,8 +1902,8 @@ __pure bool u_dosmatch_ext(const char* restrict s, uint32_t n1, const char* rest
             {
             if (n2 >= 2)
                {
-               ++mask;
                --n2;
+               ++mask;
                }
             }
 
@@ -1914,8 +1928,8 @@ __pure bool u_dosmatch_ext(const char* restrict s, uint32_t n1, const char* rest
          break;
          }
 
-      ++mask;
       --n2;
+      ++mask;
 
       if (n1 == 0)
          {
@@ -1934,15 +1948,15 @@ __pure bool u_dosmatch_ext(const char* restrict s, uint32_t n1, const char* rest
    if (n2 == 0 &&
        n1 == 0)
       {
-      return ((flags & FNM_INVERT) == 0);
+      return ((flags & FNM_INVERT) == 0); /* match */
       }
 
-   return ((flags & FNM_INVERT) != 0);
+   return ((flags & FNM_INVERT) != 0); /* no match */
 }
 
 const char* restrict u_pOR;
 
-__pure uint32_t u_match_with_OR(bPFpcupcud pfn_match, const char* restrict s, uint32_t n1, const char* restrict pattern, uint32_t n2, int flags)
+uint32_t u_match_with_OR(bPFpcupcud pfn_match, const char* restrict s, uint32_t n1, const char* restrict pattern, uint32_t n2, int flags)
 {
    uint32_t n0;
    const char* restrict end = pattern + n2;
@@ -1954,29 +1968,25 @@ __pure uint32_t u_match_with_OR(bPFpcupcud pfn_match, const char* restrict s, ui
    U_INTERNAL_ASSERT_MAJOR(n2, 0)
    U_INTERNAL_ASSERT_POINTER(pattern)
 
-   while (true)
+loop:
+   u_pOR = (const char* restrict) memchr(pattern, '|', n2);
+
+   U_INTERNAL_PRINT("u_pOR = %p pattern(%u) = %.*s", u_pOR, n2, n2, pattern)
+
+   if (u_pOR == U_NULLPTR) return (pfn_match(s, n1, (u_pOR = pattern), n2, flags) ? n2 : 0);
+
+   n0 = (u_pOR - pattern);
+
+   if (pfn_match(s, n1, pattern, n0, (flags & ~FNM_INVERT)))
       {
-      u_pOR = (const char* restrict) memchr(pattern, '|', n2);
+      u_pOR = pattern;
 
-      if (u_pOR == U_NULLPTR) return pfn_match(s, n1, pattern, n2, flags);
-
-      n0 = (u_pOR - pattern);
-
-      if (pfn_match(s, n1, pattern, n0, (flags & ~FNM_INVERT)))
-         {
-         if ((flags & FNM_INVERT) == 0)
-            {
-            u_pOR = pattern;
-
-            return n0;
-            }
-
-         return 0;
-         }
-
-      pattern = u_pOR + 1;
-         n2   = end - pattern;
+      return ((flags & FNM_INVERT) == 0 ? n0 : 0);
       }
+
+   n2 = end - (pattern = (u_pOR + 1));
+
+   goto loop;
 }
 
 /**
