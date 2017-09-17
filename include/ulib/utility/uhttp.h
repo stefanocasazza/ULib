@@ -541,6 +541,9 @@ public:
    static UString* htpasswd;
    static UString* htdigest;
    static bool digest_authentication; // authentication method (digest|basic)
+   static UString* user_authentication;
+
+   static UString getUserAuthentication() { return *user_authentication; }
 
 #ifdef USE_LIBSSL
    static UString* uri_protected_mask;

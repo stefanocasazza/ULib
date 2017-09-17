@@ -98,6 +98,7 @@ UString* UHTTP::cache_avoid_mask;
 UString* UHTTP::cache_file_store;
 UString* UHTTP::cgi_cookie_option;
 UString* UHTTP::set_cookie_option;
+UString* UHTTP::user_authentication;
 UString* UHTTP::string_HTTP_Variables;
 uint32_t UHTTP::range_size;
 uint32_t UHTTP::range_start;
@@ -841,6 +842,7 @@ void UHTTP::init()
    U_INTERNAL_ASSERT_EQUALS(set_cookie, U_NULLPTR)
    U_INTERNAL_ASSERT_EQUALS(form_name_value, U_NULLPTR)
    U_INTERNAL_ASSERT_EQUALS(set_cookie_option, U_NULLPTR)
+   U_INTERNAL_ASSERT_EQUALS(user_authentication, U_NULLPTR)
    U_INTERNAL_ASSERT_EQUALS(string_HTTP_Variables, U_NULLPTR)
 
    U_NEW(UFile, file, UFile);
@@ -858,6 +860,7 @@ void UHTTP::init()
    U_NEW(UString, upload_dir, UString);
    U_NEW(UString, set_cookie, UString);
    U_NEW(UString, set_cookie_option, UString(200U));
+   U_NEW(UString, user_authentication, UString(100U));
    U_NEW(UString, string_HTTP_Variables, UString(U_CAPACITY));
 
    if (cgi_cookie_option == U_NULLPTR) U_NEW(UString, cgi_cookie_option, U_STRING_FROM_CONSTANT("[\"\" 0]"));
@@ -1420,6 +1423,7 @@ void UHTTP::dtor()
       delete cache_avoid_mask;
       delete cgi_cookie_option;
       delete set_cookie_option;
+      delete user_authentication;
 
       if (htpasswd)          delete htpasswd;
       if (htdigest)          delete htdigest;
@@ -4067,9 +4071,7 @@ int UHTTP::handlerREAD()
 
    if (isGETorHEAD() == false)
       {
-      U_http_flag |= HTTP_IS_NOCACHE_FILE | HTTP_IS_REQUEST_NOSTAT;
-
-      U_INTERNAL_DUMP("U_http_is_nocache_file = %b U_http_is_request_nostat = %b U_http_version = %C", U_http_is_nocache_file, U_http_is_request_nostat, U_http_version)
+      U_http_flag |= HTTP_IS_NOCACHE_FILE;
 
 #  ifndef U_SERVER_CAPTIVE_PORTAL
       if (U_http_info.clength ||
@@ -4265,8 +4267,6 @@ set_uri: U_http_info.uri     = alias->data();
 
 #     ifdef DEBUG
          if (UClientImage_Base::request_uri->findWhiteSpace(0) != U_NOT_FOUND) U_ERROR("request URI has space: %V", UClientImage_Base::request_uri->rep);
-
-         U_INTERNAL_DUMP("U_http_is_request_nostat = %b", U_http_is_request_nostat)
 #     endif
          }
       }
@@ -4293,15 +4293,23 @@ set_uri: U_http_info.uri     = alias->data();
 
    pathname->setBuffer(u_cwd_len + U_http_info.uri_len);
 
+   U_INTERNAL_DUMP("U_http_is_request_nostat = %b", U_http_is_request_nostat)
+
    if ((old_path_len = U_http_info.uri_len-1) == 0)
       {
       file_data = U_NULLPTR;
       }
-   else if (checkFileInCache(U_http_info.uri+1, old_path_len))
+   else
+#  ifdef U_ALIAS
+      if (U_http_is_request_nostat == false)
+#  endif
       {
-      UClientImage_Base::setRequestInFileCache();
+      if (checkFileInCache(U_http_info.uri+1, old_path_len))
+         {
+         UClientImage_Base::setRequestInFileCache();
 
-      goto file_in_cache;
+         goto file_in_cache;
+         }
       }
 
    setPathName();
@@ -7060,13 +7068,15 @@ U_NO_EXPORT bool UHTTP::processAuthorization(const char* request, uint32_t sz, c
 {
    U_TRACE(0, "UHTTP::processAuthorization(%.*S,%u,%.*S,%u)", sz, request, sz, len, pattern, len)
 
+   user_authentication->setBuffer(100U);
+
    if (sz == 0) request = UClientImage_Base::getRequestUri(sz);
 
    UTokenizer t;
    const char* ptr;
    uint32_t pos = 0;
    bool result = false, bpass = false;
-   UString buffer(100U), fpasswd, content, tmp, user(100U);
+   UString buffer(100U), fpasswd, content, tmp;
 
    if (pattern)
       {
@@ -7168,9 +7178,9 @@ U_NO_EXPORT bool UHTTP::processAuthorization(const char* request, uint32_t sz, c
                   {
                   if (name.equal(U_CONSTANT_TO_PARAM("username")))
                      {
-                     U_ASSERT(user.empty())
+                     U_ASSERT(user_authentication->empty())
 
-                     user = value;
+                     *user_authentication = value;
                      }
                   else if (name.equal(U_CONSTANT_TO_PARAM("uri")))
                      {
@@ -7280,7 +7290,7 @@ U_NO_EXPORT bool UHTTP::processAuthorization(const char* request, uint32_t sz, c
 
          // MD5(user : realm : password)
 
-         buffer.snprintf(U_CONSTANT_TO_PARAM("%v:%v:"), user.rep, realm.rep);
+         buffer.snprintf(U_CONSTANT_TO_PARAM("%v:%v:"), user_authentication->rep, realm.rep);
 
          // s.casazza:Protected Area:b9ee2af50be37...........\n
 
@@ -7327,14 +7337,14 @@ U_NO_EXPORT bool UHTTP::processAuthorization(const char* request, uint32_t sz, c
 
             UString password(100U);
 
-            if (t.next(user,     (bool*)U_NULLPTR) &&
-                t.next(password, (bool*)U_NULLPTR))
+            if (t.next(*user_authentication, (bool*)U_NULLPTR) &&
+                t.next(password,             (bool*)U_NULLPTR))
                {
                UString line(100U), output(100U);
 
                UServices::generateDigest(U_HASH_SHA1, 0, password, output, true);
 
-               line.snprintf(U_CONSTANT_TO_PARAM("%v:{SHA}%v\n"), user.rep, output.rep);
+               line.snprintf(U_CONSTANT_TO_PARAM("%v:{SHA}%v\n"), user_authentication->rep, output.rep);
 
                // s.casazza:{SHA}Lkii1ZE7k.....\n
 
@@ -7343,7 +7353,7 @@ U_NO_EXPORT bool UHTTP::processAuthorization(const char* request, uint32_t sz, c
             }
          }
 
-end:  U_SRV_LOG("%srequest authorization for user %V %s", result ? "" : "WARNING: ", user.rep, result ? "success" : "failed");
+end:  U_SRV_LOG("%srequest authorization for user %V %s", result ? "" : "WARNING: ", user_authentication->rep, result ? "success" : "failed");
       }
 
    if (result == false)
@@ -8708,6 +8718,7 @@ U_NO_EXPORT void UHTTP::checkPathName()
    U_INTERNAL_DUMP("pathname(%u) = %V", pathname->size(), pathname->rep)
 
    U_INTERNAL_ASSERT(pathname->isNullTerminated())
+   U_ASSERT(UClientImage_Base::isRequestNotFound())
 
    const char* ptr = pathname->data();
    uint32_t len    = pathname->size(), len1 = u_canonicalize_pathname((char*)ptr, len);
@@ -8734,12 +8745,7 @@ U_NO_EXPORT void UHTTP::checkPathName()
       {
       U_INTERNAL_ASSERT_EQUALS(file_data, U_NULLPTR)
 
-      if (U_http_is_request_nostat)
-         {
-         U_ClientImage_request = 0; // we set to UClientImage_Base::NOT_FOUND...
-
-         return;
-         }
+      if (U_http_is_request_nostat) return;
 
 #  ifdef U_ALIAS
       if (virtual_host == false)
@@ -8788,8 +8794,6 @@ U_NO_EXPORT void UHTTP::checkPathName()
          if (UServices::dosMatchWithOR(basename, U_STRING_TO_PARAM(*nocache_file_mask), 0))
             {
             U_http_flag |= HTTP_IS_NOCACHE_FILE | HTTP_IS_REQUEST_NOSTAT;
-
-            U_ClientImage_request = 0; // we set to UClientImage_Base::NOT_FOUND...
 
             return;
             }

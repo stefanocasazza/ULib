@@ -22,252 +22,259 @@
 #define FNM_LEADING_DIR FNM_PERIOD
 #endif
 
-static int compare_str(const void* str1, const void* str2) { return u_strnatcmp(*(const char**)str1, *(const char**)str2); }
+static void check_match_true(bPFpcupcud pfn_match, const char* restrict s, uint32_t n1, const char* restrict pattern, uint32_t n2, int flags)
+{
+   U_INTERNAL_TRACE("check_match_true(%p,%.*s,%u,%.*s,%u,%d)", pfn_match, U_min(n1,128), s, n1, n2, pattern, n2, flags)
+
+   U_INTERNAL_ASSERT(       pfn_match(s, n1, pattern, n2, flags))
+   U_INTERNAL_ASSERT_EQUALS(pfn_match(s, n1, pattern, n2, flags | FNM_INVERT), false)
+}
+
+static void check_match_false(bPFpcupcud pfn_match, const char* restrict s, uint32_t n1, const char* restrict pattern, uint32_t n2, int flags)
+{
+   U_INTERNAL_TRACE("check_match_false(%p,%.*s,%u,%.*s,%u,%d)", pfn_match, U_min(n1,128), s, n1, n2, pattern, n2, flags)
+
+   U_INTERNAL_ASSERT_EQUALS(pfn_match(s, n1, pattern, n2, flags), false)
+   U_INTERNAL_ASSERT(       pfn_match(s, n1, pattern, n2, flags | FNM_INVERT))
+}
 
 static void check_match1(bPFpcupcud pfn_match)
 {
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("01000000002345"),
-                                U_CONSTANT_TO_PARAM("01*2345"), 0) )
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("01000000002345"),
-                                U_CONSTANT_TO_PARAM("01*2?46"), 0) == false )
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("01000000002345"),
-                                U_CONSTANT_TO_PARAM("010000000 2?45"), 0) == false )
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("01000000002345"),
-                                U_CONSTANT_TO_PARAM("01*2?4?"), 0) )
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("01000000002345"),
-                                U_CONSTANT_TO_PARAM("01*00*00*2?46"), 0) == false )
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("01000000002345"),
-                                U_CONSTANT_TO_PARAM("01*2?46?????????????????????"), 0) == false )
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("01000000002345"),
-                                U_CONSTANT_TO_PARAM("*****01*2?46?????????????????????"), 0) == false )
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("aaAA4b334"),
-                                U_CONSTANT_TO_PARAM("aaAA?b*4"), 0) )
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("aaAA4b334"),
-                                U_CONSTANT_TO_PARAM("aaaa?b*4"), FNM_CASEFOLD) )
+   check_match_true( pfn_match, U_CONSTANT_TO_PARAM("01000000002345"), U_CONSTANT_TO_PARAM("01*2345"), 0);
+   check_match_false(pfn_match, U_CONSTANT_TO_PARAM("01000000002345"), U_CONSTANT_TO_PARAM("01*2?46"), 0);
+   check_match_false(pfn_match, U_CONSTANT_TO_PARAM("01000000002345"), U_CONSTANT_TO_PARAM("010000000 2?45"), 0);
+   check_match_true( pfn_match, U_CONSTANT_TO_PARAM("01000000002345"), U_CONSTANT_TO_PARAM("01*2?4?"), 0);
+   check_match_false(pfn_match, U_CONSTANT_TO_PARAM("01000000002345"), U_CONSTANT_TO_PARAM("01*00*00*2?46"), 0);
+   check_match_false(pfn_match, U_CONSTANT_TO_PARAM("01000000002345"), U_CONSTANT_TO_PARAM("01*2?46?????????????????????"), 0);
+   check_match_false(pfn_match, U_CONSTANT_TO_PARAM("01000000002345"), U_CONSTANT_TO_PARAM("*****01*2?46?????????????????????"), 0);
+   check_match_true( pfn_match, U_CONSTANT_TO_PARAM("aaAA4b334"),      U_CONSTANT_TO_PARAM("aaAA?b*4"), 0);
+   check_match_true( pfn_match, U_CONSTANT_TO_PARAM("aaAA4b334"),      U_CONSTANT_TO_PARAM("aaaa?b*4"), FNM_CASEFOLD);
 }
 
 static void check_match2(bPFpcupcud pfn_match)
 {
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("pluto.au"),  U_CONSTANT_TO_PARAM("*.jpg|*.gif|*.mp3"), 0) == false)
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("pippo.gif"), U_CONSTANT_TO_PARAM("*.jpg|*.gif|*.mp3"), 0))
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("workflow"),  U_CONSTANT_TO_PARAM("??/??/????|??:??:??|workflow"), 0))
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("index.shtml"), U_CONSTANT_TO_PARAM("*.css|*.js|*.*html|*.png|*.gif|*.jpg"), 0))
+   check_match_false(pfn_match, U_CONSTANT_TO_PARAM("pluto.au"),    U_CONSTANT_TO_PARAM("*.jpg|*.gif|*.mp3"), 0);
+   check_match_true( pfn_match, U_CONSTANT_TO_PARAM("pippo.gif"),   U_CONSTANT_TO_PARAM("*.jpg|*.gif|*.mp3"), 0);
+   check_match_true( pfn_match, U_CONSTANT_TO_PARAM("workflow"),    U_CONSTANT_TO_PARAM("??/??/????|??:??:??|workflow"), 0);
+   check_match_true( pfn_match, U_CONSTANT_TO_PARAM("index.shtml"), U_CONSTANT_TO_PARAM("*.css|*.js|*.*html|*.png|*.gif|*.jpg"), 0);
 }
 
 static void check_match3(bPFpcupcud pfn_match)
 {
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("pluto.au"),  U_CONSTANT_TO_PARAM("*.jpg|*.gif|*.mp3"), FNM_INVERT))
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("pippo.gif"), U_CONSTANT_TO_PARAM("*.jpg|*.gif|*.mp3"), FNM_INVERT) == false)
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("workflow"),  U_CONSTANT_TO_PARAM("??/??/????|??:??:??|workflow"), FNM_INVERT) == false)
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("index.shtml"), U_CONSTANT_TO_PARAM("*.css|*.js|*.*html|*.png|*.gif|*.jpg"), FNM_INVERT) == false)
+   check_match_false(pfn_match, U_CONSTANT_TO_PARAM("pluto.au"),    U_CONSTANT_TO_PARAM("*.jpg|*.gif|*.mp3"), 0);
+   check_match_true( pfn_match, U_CONSTANT_TO_PARAM("pippo.gif"),   U_CONSTANT_TO_PARAM("*.jpg|*.gif|*.mp3"), 0);
+   check_match_true( pfn_match, U_CONSTANT_TO_PARAM("workflow"),    U_CONSTANT_TO_PARAM("??/??/????|??:??:??|workflow"), 0);
+   check_match_true( pfn_match, U_CONSTANT_TO_PARAM("index.shtml"), U_CONSTANT_TO_PARAM("*.css|*.js|*.*html|*.png|*.gif|*.jpg"), 0);
 }
 
 static void check_match4(bPFpcupcud pfn_match)
 {
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("abbb/xy"), U_CONSTANT_TO_PARAM("a*b/*"), FNM_PATHNAME | FNM_PERIOD))
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("!#%+,-./01234567889"), U_CONSTANT_TO_PARAM("!#%+,-./01234567889"), 0))
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM(":;=@ABCDEFGHIJKLMNO"), U_CONSTANT_TO_PARAM(":;=@ABCDEFGHIJKLMNO"), 0))
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("PQRSTUVWXYZ]abcdefg"), U_CONSTANT_TO_PARAM("PQRSTUVWXYZ]abcdefg"), 0))
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("hijklmnopqrstuvwxyz"), U_CONSTANT_TO_PARAM("hijklmnopqrstuvwxyz"), 0))
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("^_{}~"),               U_CONSTANT_TO_PARAM("^_{}~"),               0))
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("\"$&'()"), U_CONSTANT_TO_PARAM("\\\"\\$\\&\\'\\(\\)"), 0))
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("*?[\\`|"), U_CONSTANT_TO_PARAM("\\*\\?\\[\\\\\\`\\|"), 0))
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("<>"),      U_CONSTANT_TO_PARAM("\\<\\>"), 0)             )
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("?*["), U_CONSTANT_TO_PARAM("[?*[][?*[][?*[]"), 0))
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("a/b"), U_CONSTANT_TO_PARAM("?/b"), 0))
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("a/b"), U_CONSTANT_TO_PARAM("a?b"), 0))
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("a/b"), U_CONSTANT_TO_PARAM("a/?"), 0))
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("aa/b"), U_CONSTANT_TO_PARAM("?/b"), 0) == false)
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("aa/b"), U_CONSTANT_TO_PARAM("a?b"), 0) == false)
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("a/bb"), U_CONSTANT_TO_PARAM("a/?"), 0) == false)
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("abc"), U_CONSTANT_TO_PARAM("[abc]"), 0) == false)
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("x"), U_CONSTANT_TO_PARAM("[abc]"), 0) == false)
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("a"), U_CONSTANT_TO_PARAM("[abc]"), 0))
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("["), U_CONSTANT_TO_PARAM("[[abc]"), 0))
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("xyz"), U_CONSTANT_TO_PARAM("[!abc]"), 0) == false)
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("abc]"), U_CONSTANT_TO_PARAM("[][abc]"), 0) == false)
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("]"), U_CONSTANT_TO_PARAM("[!]]"), 0) == false)
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("aa]"), U_CONSTANT_TO_PARAM("[!]a]"), 0) == false)
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("a"), U_CONSTANT_TO_PARAM("[a-c]"), 0))
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("b"), U_CONSTANT_TO_PARAM("[a-c]"), 0))
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("c"), U_CONSTANT_TO_PARAM("[a-c]"), 0))
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("a"), U_CONSTANT_TO_PARAM("[b-c]"), 0) == false)
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("d"), U_CONSTANT_TO_PARAM("[b-c]"), 0) == false)
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("B"), U_CONSTANT_TO_PARAM("[a-c]"), 0) == false)
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("b"), U_CONSTANT_TO_PARAM("[A-C]"), 0) == false)
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("as"), U_CONSTANT_TO_PARAM("[a-ca-z]"), 0) == false)
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("a"), U_CONSTANT_TO_PARAM("[a-c0-9]"), 0))
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("d"), U_CONSTANT_TO_PARAM("[a-c0-9]"), 0) == false)
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("B"), U_CONSTANT_TO_PARAM("[a-c0-9]"), 0) == false)
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("-"), U_CONSTANT_TO_PARAM("[-a]"), 0))
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("a"), U_CONSTANT_TO_PARAM("[-b]"), 0) == false)
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("a"), U_CONSTANT_TO_PARAM("[!-b]"), 0))
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("-"), U_CONSTANT_TO_PARAM("[a-c-0-9]"), 0))
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("b"), U_CONSTANT_TO_PARAM("[a-c-0-9]"), 0))
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("a:"), U_CONSTANT_TO_PARAM("a[0-9-a]"), 0) == false)
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("a:"), U_CONSTANT_TO_PARAM("a[09-a]"), 0))
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("asd/sdf"), U_CONSTANT_TO_PARAM("*"), 0))
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("as"), U_CONSTANT_TO_PARAM("[a-c][a-z]"), 0))
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("as"), U_CONSTANT_TO_PARAM("??"), 0))
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("asd/sdf"), U_CONSTANT_TO_PARAM("as*df"), 0))
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("asd/sdf"), U_CONSTANT_TO_PARAM("as*"), 0))
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("asd/sdf"), U_CONSTANT_TO_PARAM("*df"), 0))
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("asd/sdf"), U_CONSTANT_TO_PARAM("as*dg"), 0) == false)
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("asdf"), U_CONSTANT_TO_PARAM("as*df"), 0))
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("asdf"), U_CONSTANT_TO_PARAM("as*df?"), 0) == false)
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("asdf"), U_CONSTANT_TO_PARAM("as*??"), 0))
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("asdf"), U_CONSTANT_TO_PARAM("a*???"), 0))
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("asdf"), U_CONSTANT_TO_PARAM("*????"), 0))
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("asdf"), U_CONSTANT_TO_PARAM("????*"), 0))
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("asdf"), U_CONSTANT_TO_PARAM("??*?"), 0))
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("/"), U_CONSTANT_TO_PARAM("/"), 0))
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("/"), U_CONSTANT_TO_PARAM("/*"), 0))
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("/"), U_CONSTANT_TO_PARAM("*/"), 0))
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("/"), U_CONSTANT_TO_PARAM("/?"), 0) == false)
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("/"), U_CONSTANT_TO_PARAM("?/"), 0) == false)
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("/"), U_CONSTANT_TO_PARAM("?"), 0))
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("."), U_CONSTANT_TO_PARAM("?"), 0))
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("/"), U_CONSTANT_TO_PARAM("/"), FNM_PATHNAME))
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("//"), U_CONSTANT_TO_PARAM("//"), FNM_PATHNAME))
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("/.a"), U_CONSTANT_TO_PARAM("/*"), FNM_PATHNAME))
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("/.a"), U_CONSTANT_TO_PARAM("/?a"), FNM_PATHNAME))
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("/.a/.b"), U_CONSTANT_TO_PARAM("/*/?b"), FNM_PATHNAME))
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("/$"), U_CONSTANT_TO_PARAM("\\/\\$"), 0))
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("/["), U_CONSTANT_TO_PARAM("\\/\\["), 0))
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("/\\$"), U_CONSTANT_TO_PARAM("\\/\\$"), FNM_NOESCAPE) == false)
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM(".asd"), U_CONSTANT_TO_PARAM(".*"), FNM_PERIOD))
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("/.asd"), U_CONSTANT_TO_PARAM("*"), FNM_PERIOD))
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("/as/.df"), U_CONSTANT_TO_PARAM("*/?*f"), FNM_PERIOD))
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM(".asd"), U_CONSTANT_TO_PARAM("[!a-z]*"), FNM_PERIOD) == false)
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("/."), U_CONSTANT_TO_PARAM("/."), FNM_PATHNAME|FNM_PERIOD))
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("/.a./.b."), U_CONSTANT_TO_PARAM("/.*/.*"), FNM_PATHNAME|FNM_PERIOD))
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("foobar"), U_CONSTANT_TO_PARAM("foo*[abc]z"), 0) == false)
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("foobaz"), U_CONSTANT_TO_PARAM("foo*[abc][xyz]"), 0))
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("foobaz"), U_CONSTANT_TO_PARAM("foo?*[abc][xyz]"), 0))
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("foobaz"), U_CONSTANT_TO_PARAM("foo?*[abc][x/yz]"), 0))
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("foobaz"), U_CONSTANT_TO_PARAM("foo?*[abc]/[xyz]"), FNM_PATHNAME) == false)
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("a"), U_CONSTANT_TO_PARAM("a/"), FNM_PATHNAME) == false)
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("a/"), U_CONSTANT_TO_PARAM("a"), FNM_PATHNAME) == false)
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("//a"), U_CONSTANT_TO_PARAM("/a"), FNM_PATHNAME) == false)
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("/a"), U_CONSTANT_TO_PARAM("//a"), FNM_PATHNAME) == false)
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("cz"), U_CONSTANT_TO_PARAM("[ab-]z"), 0) == false)
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("az"), U_CONSTANT_TO_PARAM("[-a]z"), 0))
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("bz"), U_CONSTANT_TO_PARAM("[-ab]z"), 0))
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("cz"), U_CONSTANT_TO_PARAM("[-ab]z"), 0) == false)
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("-z"), U_CONSTANT_TO_PARAM("[-ab]z"), 0))
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("\\"), U_CONSTANT_TO_PARAM("[\\\\-a]"), 0))
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("a"), U_CONSTANT_TO_PARAM("[\\\\-a]"), 0))
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("\\"), U_CONSTANT_TO_PARAM("[\\]-a]"), 0) == false)
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("a"), U_CONSTANT_TO_PARAM("[\\]-a]"), 0))
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("]"), U_CONSTANT_TO_PARAM("[\\]-a]"), 0))
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("_"), U_CONSTANT_TO_PARAM("[!\\\\-a]"), 0) == false)
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("-"), U_CONSTANT_TO_PARAM("[!\\\\-a]"), 0))
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("!"), U_CONSTANT_TO_PARAM("[\\!-]"), 0))
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("-"), U_CONSTANT_TO_PARAM("[\\!-]"), 0))
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("\\"), U_CONSTANT_TO_PARAM("[\\!-]"), 0) == false)
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("Z"), U_CONSTANT_TO_PARAM("[Z-\\\\]"), 0))
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("["), U_CONSTANT_TO_PARAM("[Z-\\\\]"), 0))
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("\\"), U_CONSTANT_TO_PARAM("[Z-\\\\]"), 0))
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("-"), U_CONSTANT_TO_PARAM("[Z-\\\\]"), 0) == false)
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("-"), U_CONSTANT_TO_PARAM("[Z-\\]]"), 0) == false)
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("x"), U_CONSTANT_TO_PARAM("x"), FNM_PATHNAME|FNM_LEADING_DIR) )
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("x"), U_CONSTANT_TO_PARAM("*"), FNM_PATHNAME|FNM_LEADING_DIR) )
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("x"), U_CONSTANT_TO_PARAM("*x"), FNM_PATHNAME|FNM_LEADING_DIR) )
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("x"), U_CONSTANT_TO_PARAM("x*"), FNM_PATHNAME|FNM_LEADING_DIR) )
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("x"), U_CONSTANT_TO_PARAM("a"), FNM_PATHNAME|FNM_LEADING_DIR) == false)
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("x"), U_CONSTANT_TO_PARAM("x/y"),  FNM_PATHNAME|FNM_LEADING_DIR) == false)
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("x"), U_CONSTANT_TO_PARAM("x?y"), FNM_PATHNAME|FNM_LEADING_DIR) == false)
+   check_match_true( pfn_match, U_CONSTANT_TO_PARAM("abbb/xy"), U_CONSTANT_TO_PARAM("a*b/*"), FNM_PATHNAME | FNM_PERIOD);
+   check_match_true( pfn_match, U_CONSTANT_TO_PARAM("!#%+,-./01234567889"), U_CONSTANT_TO_PARAM("!#%+,-./01234567889"), 0);
+   check_match_true( pfn_match, U_CONSTANT_TO_PARAM(":;=@ABCDEFGHIJKLMNO"), U_CONSTANT_TO_PARAM(":;=@ABCDEFGHIJKLMNO"), 0);
+   check_match_true( pfn_match, U_CONSTANT_TO_PARAM("PQRSTUVWXYZ]abcdefg"), U_CONSTANT_TO_PARAM("PQRSTUVWXYZ]abcdefg"), 0);
+   check_match_true( pfn_match, U_CONSTANT_TO_PARAM("hijklmnopqrstuvwxyz"), U_CONSTANT_TO_PARAM("hijklmnopqrstuvwxyz"), 0);
+   check_match_true( pfn_match, U_CONSTANT_TO_PARAM("^_{}~"),               U_CONSTANT_TO_PARAM("^_{}~"),               0);
+   check_match_true( pfn_match, U_CONSTANT_TO_PARAM("\"$&'()"), U_CONSTANT_TO_PARAM("\\\"\\$\\&\\'\\(\\)"), 0);
+   check_match_true( pfn_match, U_CONSTANT_TO_PARAM("*?[\\`|"), U_CONSTANT_TO_PARAM("\\*\\?\\[\\\\\\`\\|"), 0);
+   check_match_true( pfn_match, U_CONSTANT_TO_PARAM("<>"),      U_CONSTANT_TO_PARAM("\\<\\>"), 0);
+   check_match_true( pfn_match, U_CONSTANT_TO_PARAM("?*["), U_CONSTANT_TO_PARAM("[?*[][?*[][?*[]"), 0);
+   check_match_true( pfn_match, U_CONSTANT_TO_PARAM("a/b"), U_CONSTANT_TO_PARAM("?/b"), 0);
+   check_match_true( pfn_match, U_CONSTANT_TO_PARAM("a/b"), U_CONSTANT_TO_PARAM("a?b"), 0);
+   check_match_true( pfn_match, U_CONSTANT_TO_PARAM("a/b"), U_CONSTANT_TO_PARAM("a/?"), 0);
+   check_match_false(pfn_match, U_CONSTANT_TO_PARAM("aa/b"), U_CONSTANT_TO_PARAM("?/b"), 0);
+   check_match_false(pfn_match, U_CONSTANT_TO_PARAM("aa/b"), U_CONSTANT_TO_PARAM("a?b"), 0);
+   check_match_false(pfn_match, U_CONSTANT_TO_PARAM("a/bb"), U_CONSTANT_TO_PARAM("a/?"), 0);
+   check_match_false(pfn_match, U_CONSTANT_TO_PARAM("abc"), U_CONSTANT_TO_PARAM("[abc]"), 0);
+   check_match_false(pfn_match, U_CONSTANT_TO_PARAM("x"), U_CONSTANT_TO_PARAM("[abc]"), 0);
+   check_match_true( pfn_match, U_CONSTANT_TO_PARAM("a"), U_CONSTANT_TO_PARAM("[abc]"), 0);
+   check_match_true( pfn_match, U_CONSTANT_TO_PARAM("["), U_CONSTANT_TO_PARAM("[[abc]"), 0);
+   check_match_false(pfn_match, U_CONSTANT_TO_PARAM("xyz"), U_CONSTANT_TO_PARAM("[!abc]"), 0);
+   check_match_false(pfn_match, U_CONSTANT_TO_PARAM("abc]"), U_CONSTANT_TO_PARAM("[][abc]"), 0);
+   check_match_false(pfn_match, U_CONSTANT_TO_PARAM("]"), U_CONSTANT_TO_PARAM("[!]]"), 0);
+   check_match_false(pfn_match, U_CONSTANT_TO_PARAM("aa]"), U_CONSTANT_TO_PARAM("[!]a]"), 0);
+   check_match_true( pfn_match, U_CONSTANT_TO_PARAM("a"), U_CONSTANT_TO_PARAM("[a-c]"), 0);
+   check_match_true( pfn_match, U_CONSTANT_TO_PARAM("b"), U_CONSTANT_TO_PARAM("[a-c]"), 0);
+   check_match_true( pfn_match, U_CONSTANT_TO_PARAM("c"), U_CONSTANT_TO_PARAM("[a-c]"), 0);
+   check_match_false(pfn_match, U_CONSTANT_TO_PARAM("a"), U_CONSTANT_TO_PARAM("[b-c]"), 0);
+   check_match_false(pfn_match, U_CONSTANT_TO_PARAM("d"), U_CONSTANT_TO_PARAM("[b-c]"), 0);
+   check_match_false(pfn_match, U_CONSTANT_TO_PARAM("B"), U_CONSTANT_TO_PARAM("[a-c]"), 0);
+   check_match_false(pfn_match, U_CONSTANT_TO_PARAM("b"), U_CONSTANT_TO_PARAM("[A-C]"), 0);
+   check_match_false(pfn_match, U_CONSTANT_TO_PARAM("as"), U_CONSTANT_TO_PARAM("[a-ca-z]"), 0);
+   check_match_true( pfn_match, U_CONSTANT_TO_PARAM("a"), U_CONSTANT_TO_PARAM("[a-c0-9]"), 0);
+   check_match_false(pfn_match, U_CONSTANT_TO_PARAM("d"), U_CONSTANT_TO_PARAM("[a-c0-9]"), 0);
+   check_match_false(pfn_match, U_CONSTANT_TO_PARAM("B"), U_CONSTANT_TO_PARAM("[a-c0-9]"), 0);
+   check_match_true( pfn_match, U_CONSTANT_TO_PARAM("-"), U_CONSTANT_TO_PARAM("[-a]"), 0);
+   check_match_false(pfn_match, U_CONSTANT_TO_PARAM("a"), U_CONSTANT_TO_PARAM("[-b]"), 0);
+   check_match_true( pfn_match, U_CONSTANT_TO_PARAM("a"), U_CONSTANT_TO_PARAM("[!-b]"), 0);
+   check_match_true( pfn_match, U_CONSTANT_TO_PARAM("-"), U_CONSTANT_TO_PARAM("[a-c-0-9]"), 0);
+   check_match_true( pfn_match, U_CONSTANT_TO_PARAM("b"), U_CONSTANT_TO_PARAM("[a-c-0-9]"), 0);
+   check_match_false(pfn_match, U_CONSTANT_TO_PARAM("a:"), U_CONSTANT_TO_PARAM("a[0-9-a]"), 0);
+   check_match_true( pfn_match, U_CONSTANT_TO_PARAM("a:"), U_CONSTANT_TO_PARAM("a[09-a]"), 0);
+   check_match_true( pfn_match, U_CONSTANT_TO_PARAM("asd/sdf"), U_CONSTANT_TO_PARAM("*"), 0);
+   check_match_true( pfn_match, U_CONSTANT_TO_PARAM("as"), U_CONSTANT_TO_PARAM("[a-c][a-z]"), 0);
+   check_match_true( pfn_match, U_CONSTANT_TO_PARAM("as"), U_CONSTANT_TO_PARAM("??"), 0);
+   check_match_true( pfn_match, U_CONSTANT_TO_PARAM("asd/sdf"), U_CONSTANT_TO_PARAM("as*df"), 0);
+   check_match_true( pfn_match, U_CONSTANT_TO_PARAM("asd/sdf"), U_CONSTANT_TO_PARAM("as*"), 0);
+   check_match_true( pfn_match, U_CONSTANT_TO_PARAM("asd/sdf"), U_CONSTANT_TO_PARAM("*df"), 0);
+   check_match_false(pfn_match, U_CONSTANT_TO_PARAM("asd/sdf"), U_CONSTANT_TO_PARAM("as*dg"), 0);
+   check_match_true( pfn_match, U_CONSTANT_TO_PARAM("asdf"), U_CONSTANT_TO_PARAM("as*df"), 0);
+   check_match_false(pfn_match, U_CONSTANT_TO_PARAM("asdf"), U_CONSTANT_TO_PARAM("as*df?"), 0);
+   check_match_true( pfn_match, U_CONSTANT_TO_PARAM("asdf"), U_CONSTANT_TO_PARAM("as*??"), 0);
+   check_match_true( pfn_match, U_CONSTANT_TO_PARAM("asdf"), U_CONSTANT_TO_PARAM("a*???"), 0);
+   check_match_true( pfn_match, U_CONSTANT_TO_PARAM("asdf"), U_CONSTANT_TO_PARAM("*????"), 0);
+   check_match_true( pfn_match, U_CONSTANT_TO_PARAM("asdf"), U_CONSTANT_TO_PARAM("????*"), 0);
+   check_match_true( pfn_match, U_CONSTANT_TO_PARAM("asdf"), U_CONSTANT_TO_PARAM("??*?"), 0);
+   check_match_true( pfn_match, U_CONSTANT_TO_PARAM("/"), U_CONSTANT_TO_PARAM("/"), 0);
+   check_match_true( pfn_match, U_CONSTANT_TO_PARAM("/"), U_CONSTANT_TO_PARAM("/*"), 0);
+   check_match_true( pfn_match, U_CONSTANT_TO_PARAM("/"), U_CONSTANT_TO_PARAM("*/"), 0);
+   check_match_false(pfn_match, U_CONSTANT_TO_PARAM("/"), U_CONSTANT_TO_PARAM("/?"), 0);
+   check_match_false(pfn_match, U_CONSTANT_TO_PARAM("/"), U_CONSTANT_TO_PARAM("?/"), 0);
+   check_match_true( pfn_match, U_CONSTANT_TO_PARAM("/"), U_CONSTANT_TO_PARAM("?"), 0);
+   check_match_true( pfn_match, U_CONSTANT_TO_PARAM("."), U_CONSTANT_TO_PARAM("?"), 0);
+   check_match_true( pfn_match, U_CONSTANT_TO_PARAM("/"), U_CONSTANT_TO_PARAM("/"), FNM_PATHNAME);
+   check_match_true( pfn_match, U_CONSTANT_TO_PARAM("//"), U_CONSTANT_TO_PARAM("//"), FNM_PATHNAME);
+   check_match_true( pfn_match, U_CONSTANT_TO_PARAM("/.a"), U_CONSTANT_TO_PARAM("/*"), FNM_PATHNAME);
+   check_match_true( pfn_match, U_CONSTANT_TO_PARAM("/.a"), U_CONSTANT_TO_PARAM("/?a"), FNM_PATHNAME);
+   check_match_true( pfn_match, U_CONSTANT_TO_PARAM("/.a/.b"), U_CONSTANT_TO_PARAM("/*/?b"), FNM_PATHNAME);
+   check_match_true( pfn_match, U_CONSTANT_TO_PARAM("/$"), U_CONSTANT_TO_PARAM("\\/\\$"), 0);
+   check_match_true( pfn_match, U_CONSTANT_TO_PARAM("/["), U_CONSTANT_TO_PARAM("\\/\\["), 0);
+   check_match_false(pfn_match, U_CONSTANT_TO_PARAM("/\\$"), U_CONSTANT_TO_PARAM("\\/\\$"), FNM_NOESCAPE);
+   check_match_true( pfn_match, U_CONSTANT_TO_PARAM(".asd"), U_CONSTANT_TO_PARAM(".*"), FNM_PERIOD);
+   check_match_true( pfn_match, U_CONSTANT_TO_PARAM("/.asd"), U_CONSTANT_TO_PARAM("*"), FNM_PERIOD);
+   check_match_true( pfn_match, U_CONSTANT_TO_PARAM("/as/.df"), U_CONSTANT_TO_PARAM("*/?*f"), FNM_PERIOD);
+   check_match_false(pfn_match, U_CONSTANT_TO_PARAM(".asd"), U_CONSTANT_TO_PARAM("[!a-z]*"), FNM_PERIOD);
+   check_match_true( pfn_match, U_CONSTANT_TO_PARAM("/."), U_CONSTANT_TO_PARAM("/."), FNM_PATHNAME|FNM_PERIOD);
+   check_match_true( pfn_match, U_CONSTANT_TO_PARAM("/.a./.b."), U_CONSTANT_TO_PARAM("/.*/.*"), FNM_PATHNAME|FNM_PERIOD);
+   check_match_false(pfn_match, U_CONSTANT_TO_PARAM("foobar"), U_CONSTANT_TO_PARAM("foo*[abc]z"), 0);
+   check_match_true( pfn_match, U_CONSTANT_TO_PARAM("foobaz"), U_CONSTANT_TO_PARAM("foo*[abc][xyz]"), 0);
+   check_match_true( pfn_match, U_CONSTANT_TO_PARAM("foobaz"), U_CONSTANT_TO_PARAM("foo?*[abc][xyz]"), 0);
+   check_match_true( pfn_match, U_CONSTANT_TO_PARAM("foobaz"), U_CONSTANT_TO_PARAM("foo?*[abc][x/yz]"), 0);
+   check_match_false(pfn_match, U_CONSTANT_TO_PARAM("foobaz"), U_CONSTANT_TO_PARAM("foo?*[abc]/[xyz]"), FNM_PATHNAME);
+   check_match_false(pfn_match, U_CONSTANT_TO_PARAM("a"), U_CONSTANT_TO_PARAM("a/"), FNM_PATHNAME);
+   check_match_false(pfn_match, U_CONSTANT_TO_PARAM("a/"), U_CONSTANT_TO_PARAM("a"), FNM_PATHNAME);
+   check_match_false(pfn_match, U_CONSTANT_TO_PARAM("//a"), U_CONSTANT_TO_PARAM("/a"), FNM_PATHNAME);
+   check_match_false(pfn_match, U_CONSTANT_TO_PARAM("/a"), U_CONSTANT_TO_PARAM("//a"), FNM_PATHNAME);
+   check_match_false(pfn_match, U_CONSTANT_TO_PARAM("cz"), U_CONSTANT_TO_PARAM("[ab-]z"), 0);
+   check_match_true( pfn_match, U_CONSTANT_TO_PARAM("az"), U_CONSTANT_TO_PARAM("[-a]z"), 0);
+   check_match_true( pfn_match, U_CONSTANT_TO_PARAM("bz"), U_CONSTANT_TO_PARAM("[-ab]z"), 0);
+   check_match_false(pfn_match, U_CONSTANT_TO_PARAM("cz"), U_CONSTANT_TO_PARAM("[-ab]z"), 0);
+   check_match_true( pfn_match, U_CONSTANT_TO_PARAM("-z"), U_CONSTANT_TO_PARAM("[-ab]z"), 0);
+   check_match_true( pfn_match, U_CONSTANT_TO_PARAM("\\"), U_CONSTANT_TO_PARAM("[\\\\-a]"), 0);
+   check_match_true( pfn_match, U_CONSTANT_TO_PARAM("a"), U_CONSTANT_TO_PARAM("[\\\\-a]"), 0);
+   check_match_false(pfn_match, U_CONSTANT_TO_PARAM("\\"), U_CONSTANT_TO_PARAM("[\\]-a]"), 0);
+   check_match_true( pfn_match, U_CONSTANT_TO_PARAM("a"), U_CONSTANT_TO_PARAM("[\\]-a]"), 0);
+   check_match_true( pfn_match, U_CONSTANT_TO_PARAM("]"), U_CONSTANT_TO_PARAM("[\\]-a]"), 0);
+   check_match_false(pfn_match, U_CONSTANT_TO_PARAM("_"), U_CONSTANT_TO_PARAM("[!\\\\-a]"), 0);
+   check_match_true( pfn_match, U_CONSTANT_TO_PARAM("-"), U_CONSTANT_TO_PARAM("[!\\\\-a]"), 0);
+   check_match_true( pfn_match, U_CONSTANT_TO_PARAM("!"), U_CONSTANT_TO_PARAM("[\\!-]"), 0);
+   check_match_true( pfn_match, U_CONSTANT_TO_PARAM("-"), U_CONSTANT_TO_PARAM("[\\!-]"), 0);
+   check_match_false(pfn_match, U_CONSTANT_TO_PARAM("\\"), U_CONSTANT_TO_PARAM("[\\!-]"), 0);
+   check_match_true( pfn_match, U_CONSTANT_TO_PARAM("Z"), U_CONSTANT_TO_PARAM("[Z-\\\\]"), 0);
+   check_match_true( pfn_match, U_CONSTANT_TO_PARAM("["), U_CONSTANT_TO_PARAM("[Z-\\\\]"), 0);
+   check_match_true( pfn_match, U_CONSTANT_TO_PARAM("\\"), U_CONSTANT_TO_PARAM("[Z-\\\\]"), 0);
+   check_match_false(pfn_match, U_CONSTANT_TO_PARAM("-"), U_CONSTANT_TO_PARAM("[Z-\\\\]"), 0);
+   check_match_false(pfn_match, U_CONSTANT_TO_PARAM("-"), U_CONSTANT_TO_PARAM("[Z-\\]]"), 0);
+   check_match_true( pfn_match, U_CONSTANT_TO_PARAM("x"), U_CONSTANT_TO_PARAM("x"), FNM_PATHNAME|FNM_LEADING_DIR);
+   check_match_true( pfn_match, U_CONSTANT_TO_PARAM("x"), U_CONSTANT_TO_PARAM("*"), FNM_PATHNAME|FNM_LEADING_DIR);
+   check_match_true( pfn_match, U_CONSTANT_TO_PARAM("x"), U_CONSTANT_TO_PARAM("*x"), FNM_PATHNAME|FNM_LEADING_DIR);
+   check_match_true( pfn_match, U_CONSTANT_TO_PARAM("x"), U_CONSTANT_TO_PARAM("x*"), FNM_PATHNAME|FNM_LEADING_DIR);
+   check_match_false(pfn_match, U_CONSTANT_TO_PARAM("x"), U_CONSTANT_TO_PARAM("a"), FNM_PATHNAME|FNM_LEADING_DIR);
+   check_match_false(pfn_match, U_CONSTANT_TO_PARAM("x"), U_CONSTANT_TO_PARAM("x/y"),  FNM_PATHNAME|FNM_LEADING_DIR);
+   check_match_false(pfn_match, U_CONSTANT_TO_PARAM("x"), U_CONSTANT_TO_PARAM("x?y"), FNM_PATHNAME|FNM_LEADING_DIR);
 }
 
 /* Tests for fnmatch function */
 
 static void check_match5(bPFpcupcud pfn_match)
 {
-// U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("a"), U_CONSTANT_TO_PARAM("[[.a.]]"), 0))
-// U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("-"), U_CONSTANT_TO_PARAM("[[.-.]]"), 0))
-// U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("-"), U_CONSTANT_TO_PARAM("[[.-.][.].]]"), 0))
-// U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("-"), U_CONSTANT_TO_PARAM("[[.].][.-.]]"), 0))
-// U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("-"), U_CONSTANT_TO_PARAM("[[.-.][=u=]]"), 0))
-// U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("a"), U_CONSTANT_TO_PARAM("[![.a.]]"), 0) == false)
-// U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("a"), U_CONSTANT_TO_PARAM("[[.b.]]"), 0) == false)
-// U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("a"), U_CONSTANT_TO_PARAM("[[.b.][.c.]]"), 0) == false)
-// U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("a"), U_CONSTANT_TO_PARAM("[[.b.][=b=]]"), 0) == false)
-// U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("a"), U_CONSTANT_TO_PARAM("[[=a=]]"), 0))
-// U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("b"), U_CONSTANT_TO_PARAM("[[=a=]b]"), 0))
-// U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("b"), U_CONSTANT_TO_PARAM("[[=a=][=b=]]"), 0))
-// U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("a"), U_CONSTANT_TO_PARAM("[[=a=][=b=]]"), 0))
-// U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("a"), U_CONSTANT_TO_PARAM("[[=a=][.b.]]"), 0))
-// U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("="), U_CONSTANT_TO_PARAM("[[=a=]b]"), 0) == false)
-// U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("]"), U_CONSTANT_TO_PARAM("[[=a=]b]"), 0) == false)
-// U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("a"), U_CONSTANT_TO_PARAM("[[=b=][=c=]]"), 0) == false)
-// U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("a"), U_CONSTANT_TO_PARAM("[[=b=][.].]]"), 0) == false)
-// U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("a"), U_CONSTANT_TO_PARAM("[[.a.]-c]"), 0))
-// U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("a"), U_CONSTANT_TO_PARAM("[a-[.c.]]"), 0))
-// U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("a"), U_CONSTANT_TO_PARAM("[[.a.]-[.c.]]"), 0))
-// U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("b"), U_CONSTANT_TO_PARAM("[[.a.]-c]"), 0))
-// U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("b"), U_CONSTANT_TO_PARAM("[a-[.c.]]"), 0))
-// U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("b"), U_CONSTANT_TO_PARAM("[[.a.]-[.c.]]"), 0))
-// U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("c"), U_CONSTANT_TO_PARAM("[[.a.]-c]"), 0))
-// U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("c"), U_CONSTANT_TO_PARAM("[a-[.c.]]"), 0))
-// U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("c"), U_CONSTANT_TO_PARAM("[[.a.]-[.c.]]"), 0))
-// U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("d"), U_CONSTANT_TO_PARAM("[[.a.]-c]"), 0) == false)
-// U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("d"), U_CONSTANT_TO_PARAM("[a-[.c.]]"), 0) == false)
-// U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("d"), U_CONSTANT_TO_PARAM("[[.a.]-[.c.]]"), 0) == false)
-// U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("a"), U_CONSTANT_TO_PARAM("[[.c.]-a]"), 0) == false)
-// U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("a"), U_CONSTANT_TO_PARAM("[c-[.a.]]"), 0) == false)
-// U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("a"), U_CONSTANT_TO_PARAM("[[.c.]-[.a.]]"), 0) == false)
-// U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("c"), U_CONSTANT_TO_PARAM("[[.c.]-a]"), 0) == false)
-// U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("c"), U_CONSTANT_TO_PARAM("[c-[.a.]]"), 0) == false)
-// U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("c"), U_CONSTANT_TO_PARAM("[[.c.]-[.a.]]"), 0) == false)
-// U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("/."), U_CONSTANT_TO_PARAM("??"), 0))
-// U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("/["), U_CONSTANT_TO_PARAM("\\/["), 0) == false)
-// U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("/."), U_CONSTANT_TO_PARAM("*"), FNM_PATHNAME|FNM_PERIOD) == false)
-// U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("/."), U_CONSTANT_TO_PARAM("/*"), FNM_PATHNAME|FNM_PERIOD) == false)
-// U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("/."), U_CONSTANT_TO_PARAM("/?"), FNM_PATHNAME|FNM_PERIOD) == false)
-// U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("/."), U_CONSTANT_TO_PARAM("/[!a-z]"), FNM_PATHNAME|FNM_PERIOD) == false)
-// U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("abbb/.x"), U_CONSTANT_TO_PARAM("a*b/*"), FNM_PATHNAME | FNM_PERIOD) == false)
+// check_match_true( pfn_match, U_CONSTANT_TO_PARAM("a"), U_CONSTANT_TO_PARAM("[[.a.]]"), 0);
+// check_match_true( pfn_match, U_CONSTANT_TO_PARAM("-"), U_CONSTANT_TO_PARAM("[[.-.]]"), 0);
+// check_match_true( pfn_match, U_CONSTANT_TO_PARAM("-"), U_CONSTANT_TO_PARAM("[[.-.][.].]]"), 0);
+// check_match_true( pfn_match, U_CONSTANT_TO_PARAM("-"), U_CONSTANT_TO_PARAM("[[.].][.-.]]"), 0);
+// check_match_true( pfn_match, U_CONSTANT_TO_PARAM("-"), U_CONSTANT_TO_PARAM("[[.-.][=u=]]"), 0);
+// check_match_false(pfn_match, U_CONSTANT_TO_PARAM("a"), U_CONSTANT_TO_PARAM("[![.a.]]"), 0);
+// check_match_false(pfn_match, U_CONSTANT_TO_PARAM("a"), U_CONSTANT_TO_PARAM("[[.b.]]"), 0);
+// check_match_false(pfn_match, U_CONSTANT_TO_PARAM("a"), U_CONSTANT_TO_PARAM("[[.b.][.c.]]"), 0);
+// check_match_false(pfn_match, U_CONSTANT_TO_PARAM("a"), U_CONSTANT_TO_PARAM("[[.b.][=b=]]"), 0);
+// check_match_true( pfn_match, U_CONSTANT_TO_PARAM("a"), U_CONSTANT_TO_PARAM("[[=a=]]"), 0);
+// check_match_true( pfn_match, U_CONSTANT_TO_PARAM("b"), U_CONSTANT_TO_PARAM("[[=a=]b]"), 0);
+// check_match_true( pfn_match, U_CONSTANT_TO_PARAM("b"), U_CONSTANT_TO_PARAM("[[=a=][=b=]]"), 0);
+// check_match_true( pfn_match, U_CONSTANT_TO_PARAM("a"), U_CONSTANT_TO_PARAM("[[=a=][=b=]]"), 0);
+// check_match_true( pfn_match, U_CONSTANT_TO_PARAM("a"), U_CONSTANT_TO_PARAM("[[=a=][.b.]]"), 0);
+// check_match_false(pfn_match, U_CONSTANT_TO_PARAM("="), U_CONSTANT_TO_PARAM("[[=a=]b]"), 0);
+// check_match_false(pfn_match, U_CONSTANT_TO_PARAM("]"), U_CONSTANT_TO_PARAM("[[=a=]b]"), 0);
+// check_match_false(pfn_match, U_CONSTANT_TO_PARAM("a"), U_CONSTANT_TO_PARAM("[[=b=][=c=]]"), 0);
+// check_match_false(pfn_match, U_CONSTANT_TO_PARAM("a"), U_CONSTANT_TO_PARAM("[[=b=][.].]]"), 0);
+// check_match_true( pfn_match, U_CONSTANT_TO_PARAM("a"), U_CONSTANT_TO_PARAM("[[.a.]-c]"), 0);
+// check_match_true( pfn_match, U_CONSTANT_TO_PARAM("a"), U_CONSTANT_TO_PARAM("[a-[.c.]]"), 0);
+// check_match_true( pfn_match, U_CONSTANT_TO_PARAM("a"), U_CONSTANT_TO_PARAM("[[.a.]-[.c.]]"), 0);
+// check_match_true( pfn_match, U_CONSTANT_TO_PARAM("b"), U_CONSTANT_TO_PARAM("[[.a.]-c]"), 0);
+// check_match_true( pfn_match, U_CONSTANT_TO_PARAM("b"), U_CONSTANT_TO_PARAM("[a-[.c.]]"), 0);
+// check_match_true( pfn_match, U_CONSTANT_TO_PARAM("b"), U_CONSTANT_TO_PARAM("[[.a.]-[.c.]]"), 0);
+// check_match_true( pfn_match, U_CONSTANT_TO_PARAM("c"), U_CONSTANT_TO_PARAM("[[.a.]-c]"), 0);
+// check_match_true( pfn_match, U_CONSTANT_TO_PARAM("c"), U_CONSTANT_TO_PARAM("[a-[.c.]]"), 0);
+// check_match_true( pfn_match, U_CONSTANT_TO_PARAM("c"), U_CONSTANT_TO_PARAM("[[.a.]-[.c.]]"), 0);
+// check_match_false(pfn_match, U_CONSTANT_TO_PARAM("d"), U_CONSTANT_TO_PARAM("[[.a.]-c]"), 0);
+// check_match_false(pfn_match, U_CONSTANT_TO_PARAM("d"), U_CONSTANT_TO_PARAM("[a-[.c.]]"), 0);
+// check_match_false(pfn_match, U_CONSTANT_TO_PARAM("d"), U_CONSTANT_TO_PARAM("[[.a.]-[.c.]]"), 0);
+// check_match_false(pfn_match, U_CONSTANT_TO_PARAM("a"), U_CONSTANT_TO_PARAM("[[.c.]-a]"), 0);
+// check_match_false(pfn_match, U_CONSTANT_TO_PARAM("a"), U_CONSTANT_TO_PARAM("[c-[.a.]]"), 0);
+// check_match_false(pfn_match, U_CONSTANT_TO_PARAM("a"), U_CONSTANT_TO_PARAM("[[.c.]-[.a.]]"), 0);
+// check_match_false(pfn_match, U_CONSTANT_TO_PARAM("c"), U_CONSTANT_TO_PARAM("[[.c.]-a]"), 0);
+// check_match_false(pfn_match, U_CONSTANT_TO_PARAM("c"), U_CONSTANT_TO_PARAM("[c-[.a.]]"), 0);
+// check_match_false(pfn_match, U_CONSTANT_TO_PARAM("c"), U_CONSTANT_TO_PARAM("[[.c.]-[.a.]]"), 0);
+// check_match_true( pfn_match, U_CONSTANT_TO_PARAM("/."), U_CONSTANT_TO_PARAM("??"), 0);
+// check_match_false(pfn_match, U_CONSTANT_TO_PARAM("/["), U_CONSTANT_TO_PARAM("\\/["), 0);
+// check_match_false(pfn_match, U_CONSTANT_TO_PARAM("/."), U_CONSTANT_TO_PARAM("*"), FNM_PATHNAME|FNM_PERIOD);
+// check_match_false(pfn_match, U_CONSTANT_TO_PARAM("/."), U_CONSTANT_TO_PARAM("/*"), FNM_PATHNAME|FNM_PERIOD);
+// check_match_false(pfn_match, U_CONSTANT_TO_PARAM("/."), U_CONSTANT_TO_PARAM("/?"), FNM_PATHNAME|FNM_PERIOD);
+// check_match_false(pfn_match, U_CONSTANT_TO_PARAM("/."), U_CONSTANT_TO_PARAM("/[!a-z]"), FNM_PATHNAME|FNM_PERIOD);
+// check_match_false(pfn_match, U_CONSTANT_TO_PARAM("abbb/.x"), U_CONSTANT_TO_PARAM("a*b/*"), FNM_PATHNAME | FNM_PERIOD);
 
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("a]"), U_CONSTANT_TO_PARAM("[]a]]"), 0))
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("[]abc"), U_CONSTANT_TO_PARAM("[][]abc"), 0) == false)
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("a"), U_CONSTANT_TO_PARAM("[!abc]"), 0) == false)
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("]"), U_CONSTANT_TO_PARAM("[][abc]"), 0))
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("x"), U_CONSTANT_TO_PARAM("[!abc]"), 0))
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("a"), U_CONSTANT_TO_PARAM("[][abc]"), 0))
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("]"), U_CONSTANT_TO_PARAM("[!a]"), 0))
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("]]"), U_CONSTANT_TO_PARAM("[!a]]"), 0))
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("a"), U_CONSTANT_TO_PARAM("[c-a]"), 0) == false)
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("c"), U_CONSTANT_TO_PARAM("[c-a]"), 0) == false)
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("-"), U_CONSTANT_TO_PARAM("[!-a]"), 0) == false)
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("/"), U_CONSTANT_TO_PARAM("[!a-c]"), 0))
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("."), U_CONSTANT_TO_PARAM("[!a-c]"), 0))
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("/.a"), U_CONSTANT_TO_PARAM("/[!a-z]a"), FNM_PATHNAME))
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("/$"), U_CONSTANT_TO_PARAM("\\/\\$"), FNM_NOESCAPE) == false)
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("\\/\\$"), U_CONSTANT_TO_PARAM("\\/\\$"), FNM_NOESCAPE))
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("..asd"), U_CONSTANT_TO_PARAM(".[!a-z]*"), FNM_PERIOD))
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM(".asd"), U_CONSTANT_TO_PARAM("*"), FNM_PERIOD) == false)
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM(".asd"), U_CONSTANT_TO_PARAM("?asd"), FNM_PERIOD) == false)
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("az"), U_CONSTANT_TO_PARAM("[a-]z"), 0))
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("bz"), U_CONSTANT_TO_PARAM("[ab-]z"), 0))
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("-z"), U_CONSTANT_TO_PARAM("[ab-]z"), 0))
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("_"), U_CONSTANT_TO_PARAM("[\\\\-a]"), 0))
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("-"), U_CONSTANT_TO_PARAM("[\\\\-a]"), 0) == false)
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("_"), U_CONSTANT_TO_PARAM("[\\]-a]"), 0))
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("-"), U_CONSTANT_TO_PARAM("[\\]-a]"), 0) == false)
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("\\"), U_CONSTANT_TO_PARAM("[!\\\\-a]"), 0) == false)
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("a"), U_CONSTANT_TO_PARAM("[!\\\\-a]"), 0) == false)
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("Z"), U_CONSTANT_TO_PARAM("[Z-\\]]"), 0))
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("["), U_CONSTANT_TO_PARAM("[Z-\\]]"), 0))
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("\\"), U_CONSTANT_TO_PARAM("[Z-\\]]"), 0))
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("]"), U_CONSTANT_TO_PARAM("[Z-\\]]"), 0))
+   check_match_true( pfn_match, U_CONSTANT_TO_PARAM("a]"), U_CONSTANT_TO_PARAM("[]a]]"), 0);
+   check_match_false(pfn_match, U_CONSTANT_TO_PARAM("[]abc"), U_CONSTANT_TO_PARAM("[][]abc"), 0);
+   check_match_false(pfn_match, U_CONSTANT_TO_PARAM("a"), U_CONSTANT_TO_PARAM("[!abc]"), 0);
+   check_match_true( pfn_match, U_CONSTANT_TO_PARAM("]"), U_CONSTANT_TO_PARAM("[][abc]"), 0);
+   check_match_true( pfn_match, U_CONSTANT_TO_PARAM("x"), U_CONSTANT_TO_PARAM("[!abc]"), 0);
+   check_match_true( pfn_match, U_CONSTANT_TO_PARAM("a"), U_CONSTANT_TO_PARAM("[][abc]"), 0);
+   check_match_true( pfn_match, U_CONSTANT_TO_PARAM("]"), U_CONSTANT_TO_PARAM("[!a]"), 0);
+   check_match_true( pfn_match, U_CONSTANT_TO_PARAM("]]"), U_CONSTANT_TO_PARAM("[!a]]"), 0);
+   check_match_false(pfn_match, U_CONSTANT_TO_PARAM("a"), U_CONSTANT_TO_PARAM("[c-a]"), 0);
+   check_match_false(pfn_match, U_CONSTANT_TO_PARAM("c"), U_CONSTANT_TO_PARAM("[c-a]"), 0);
+   check_match_false(pfn_match, U_CONSTANT_TO_PARAM("-"), U_CONSTANT_TO_PARAM("[!-a]"), 0);
+   check_match_true( pfn_match, U_CONSTANT_TO_PARAM("/"), U_CONSTANT_TO_PARAM("[!a-c]"), 0);
+   check_match_true( pfn_match, U_CONSTANT_TO_PARAM("."), U_CONSTANT_TO_PARAM("[!a-c]"), 0);
+   check_match_true( pfn_match, U_CONSTANT_TO_PARAM("/.a"), U_CONSTANT_TO_PARAM("/[!a-z]a"), FNM_PATHNAME);
+   check_match_false(pfn_match, U_CONSTANT_TO_PARAM("/$"), U_CONSTANT_TO_PARAM("\\/\\$"), FNM_NOESCAPE);
+   check_match_true( pfn_match, U_CONSTANT_TO_PARAM("\\/\\$"), U_CONSTANT_TO_PARAM("\\/\\$"), FNM_NOESCAPE);
+   check_match_true( pfn_match, U_CONSTANT_TO_PARAM("..asd"), U_CONSTANT_TO_PARAM(".[!a-z]*"), FNM_PERIOD);
+   check_match_false(pfn_match, U_CONSTANT_TO_PARAM(".asd"), U_CONSTANT_TO_PARAM("*"), FNM_PERIOD);
+   check_match_false(pfn_match, U_CONSTANT_TO_PARAM(".asd"), U_CONSTANT_TO_PARAM("?asd"), FNM_PERIOD);
+   check_match_true( pfn_match, U_CONSTANT_TO_PARAM("az"), U_CONSTANT_TO_PARAM("[a-]z"), 0);
+   check_match_true( pfn_match, U_CONSTANT_TO_PARAM("bz"), U_CONSTANT_TO_PARAM("[ab-]z"), 0);
+   check_match_true( pfn_match, U_CONSTANT_TO_PARAM("-z"), U_CONSTANT_TO_PARAM("[ab-]z"), 0);
+   check_match_true( pfn_match, U_CONSTANT_TO_PARAM("_"), U_CONSTANT_TO_PARAM("[\\\\-a]"), 0);
+   check_match_false(pfn_match, U_CONSTANT_TO_PARAM("-"), U_CONSTANT_TO_PARAM("[\\\\-a]"), 0);
+   check_match_true( pfn_match, U_CONSTANT_TO_PARAM("_"), U_CONSTANT_TO_PARAM("[\\]-a]"), 0);
+   check_match_false(pfn_match, U_CONSTANT_TO_PARAM("-"), U_CONSTANT_TO_PARAM("[\\]-a]"), 0);
+   check_match_false(pfn_match, U_CONSTANT_TO_PARAM("\\"), U_CONSTANT_TO_PARAM("[!\\\\-a]"), 0);
+   check_match_false(pfn_match, U_CONSTANT_TO_PARAM("a"), U_CONSTANT_TO_PARAM("[!\\\\-a]"), 0);
+   check_match_true( pfn_match, U_CONSTANT_TO_PARAM("Z"), U_CONSTANT_TO_PARAM("[Z-\\]]"), 0);
+   check_match_true( pfn_match, U_CONSTANT_TO_PARAM("["), U_CONSTANT_TO_PARAM("[Z-\\]]"), 0);
+   check_match_true( pfn_match, U_CONSTANT_TO_PARAM("\\"), U_CONSTANT_TO_PARAM("[Z-\\]]"), 0);
+   check_match_true( pfn_match, U_CONSTANT_TO_PARAM("]"), U_CONSTANT_TO_PARAM("[Z-\\]]"), 0);
 
 #ifndef __MINGW32__
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("/"), U_CONSTANT_TO_PARAM("?"), FNM_PATHNAME) == false)
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("/"), U_CONSTANT_TO_PARAM("*"), FNM_PATHNAME) == false)
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("a/b"), U_CONSTANT_TO_PARAM("a?b"), FNM_PATHNAME) == false)
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("/.a/.b"), U_CONSTANT_TO_PARAM("/*b"), FNM_PATHNAME) == false)
-   U_INTERNAL_ASSERT( pfn_match(U_CONSTANT_TO_PARAM("/a./.b."), U_CONSTANT_TO_PARAM("/*/*"), FNM_PATHNAME|FNM_PERIOD) == false)
+   check_match_false(pfn_match, U_CONSTANT_TO_PARAM("/"), U_CONSTANT_TO_PARAM("?"), FNM_PATHNAME);
+   check_match_false(pfn_match, U_CONSTANT_TO_PARAM("/"), U_CONSTANT_TO_PARAM("*"), FNM_PATHNAME);
+   check_match_false(pfn_match, U_CONSTANT_TO_PARAM("a/b"), U_CONSTANT_TO_PARAM("a?b"), FNM_PATHNAME);
+   check_match_false(pfn_match, U_CONSTANT_TO_PARAM("/.a/.b"), U_CONSTANT_TO_PARAM("/*b"), FNM_PATHNAME);
+   check_match_false(pfn_match, U_CONSTANT_TO_PARAM("/a./.b."), U_CONSTANT_TO_PARAM("/*/*"), FNM_PATHNAME|FNM_PERIOD);
 #endif
 }
+
+static int compare_str(const void* str1, const void* str2) { return u_strnatcmp(*(const char**)str1, *(const char**)str2); }
 
 #define U_TESTO_SEMPLICE "testosemplicetxt" /* no _.:?! */
 
