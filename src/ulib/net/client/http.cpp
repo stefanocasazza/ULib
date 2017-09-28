@@ -947,9 +947,10 @@ bool UHttpClient_Base::sendRequest()
 
    if (server_context_flag)
       {
-      u_clientimage_info.flag.u                  = flag_save;
-      u_clientimage_info.http_info.nResponseCode = U_http_info.nResponseCode;
-      u_clientimage_info.http_info               = http_info_save;
+      u_clientimage_info.flag.u = flag_save;
+
+                    http_info_save.nResponseCode = U_http_info.nResponseCode;
+      U_http_info = http_info_save;
       }
 
    U_INTERNAL_DUMP("server_context_flag = %b U_ClientImage_close = %b", server_context_flag, U_ClientImage_close)

@@ -4481,6 +4481,7 @@ file_in_cache:
          if (checkIfSourceHasChangedAndCompileUSP())
 #     endif
          {
+#     ifndef U_COVERITY_FALSE_POSITIVE // FORWARD_NULL
          UServletPage* usp = (UServletPage*)file_data->ptr;
 
          U_INTERNAL_ASSERT_POINTER(usp)
@@ -4491,6 +4492,7 @@ file_in_cache:
          U_DUMP("U_http_info.nResponseCode = %u", U_http_info.nResponseCode)
 
          usp->runDynamicPage(0);
+#     endif
 
          U_DUMP("U_http_info.nResponseCode = %u U_ClientImage_parallelization = %d UClientImage_Base::isNoHeaderForResponse() = %b",
                  U_http_info.nResponseCode,     U_ClientImage_parallelization,     UClientImage_Base::isNoHeaderForResponse())
