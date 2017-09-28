@@ -702,6 +702,9 @@
 /* Define if we have support for crc32 intrinsics */
 #undef USE_HARDWARE_CRC32
 
+/* Define if enable libbrotli support */
+#undef USE_LIBBROTLI
+
 /* Define if enable libcurl support */
 #undef USE_LIBCURL
 
@@ -961,6 +964,9 @@
 
 /* Ldap version */
 #undef _LDAP_VERSION
+
+/* libbrotli - google compression library version */
+#undef _LIBBROTLI_VERSION
 
 /* libevent - event notification library version */
 #undef _LIBEVENT_VERSION

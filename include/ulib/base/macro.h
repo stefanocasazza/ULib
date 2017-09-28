@@ -207,8 +207,8 @@ enum AffermationType {
 
 /* MIME type */
 
-#define U_unknow  -1
 #define U_know    'K'
+#define U_unknow  -1
 
 #define U_css     'c' /* text/css */
 #define U_flv     'f' /* video/x-flv */
@@ -217,10 +217,12 @@ enum AffermationType {
 #define U_ico     'i' /* image/x-icon */
 #define U_js      'j' /* application/javascript */
 #define U_png     'p' /* image/png */
+#define U_svg     's' /* image/svg+xml */
 #define U_txt     't' /* text/plain */
 
 #define U_jpg     'J' /* image/jpg */
 #define U_gz      'Z' /* gzip */
+#define U_br      'B' /* brotli */
 
 /* MIME type for dynamic content */
 

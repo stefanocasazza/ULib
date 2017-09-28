@@ -288,7 +288,7 @@ public:
 
    // Check if the column named \a id has NULL value
 
-   bool isNull(const UString& id)
+   bool isNull(UString& id)
       {
       U_TRACE(1, "UDBIRow::isNull(%V)", id.rep)
 

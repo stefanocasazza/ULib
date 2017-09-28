@@ -94,6 +94,8 @@ int URpcPlugIn::handlerRequest()
       if (UServer_Base::isLog()) (void) UClientImage_Base::request_uri->assign(method);
 #  endif
 
+      UClientImage_Base::setRequestProcessed();
+
       U_RETURN(U_PLUGIN_HANDLER_PROCESSED);
       }
 

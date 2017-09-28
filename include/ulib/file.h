@@ -182,8 +182,17 @@ public:
 
    // NB: the string can be not writable so path_relativ[path_relativ_len] can be != '\0'...
 
-   UString  getName() const;
-   UString  getDirName() const;
+   UString getName() const;
+   UString getDirName() const;
+   UString getDirParent() const
+      {
+      U_TRACE_NO_PARAM(0, "UFile::getDirParent()")
+
+      U_INTERNAL_ASSERT(S_ISDIR(st_mode))
+
+      return getDirName();
+      }
+
    UString& getPath()                 { return pathname; }
    UString  getSuffix() const         { return getSuffix(u_getsuffix(path_relativ, path_relativ_len)); }
    char*    getPathRelativ() const    { return (char*)path_relativ; }
@@ -1078,6 +1087,16 @@ protected:
    bool creatForWrite(int flags, bool bmkdirs);
    void setPathRelativ(const UString* environment = U_NULLPTR);
    void setPath(const UFile& file, char* buffer_path, const char* suffix, uint32_t len);
+
+   static uint32_t getMmapSize(uint32_t length)
+      {
+      U_TRACE(0, "UFile::getMmapSize(%u)", length)
+
+      length = ((length % PAGESIZE) == 0 ?  length + PAGESIZE
+                                         : (length + U_PAGEMASK) & ~U_PAGEMASK);
+
+      U_RETURN(length);
+      }
 
    UString getSuffix(const char* ptr) const
       {

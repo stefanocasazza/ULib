@@ -112,6 +112,7 @@ class UXMLEscape;
 class UMimeHeader;
 class UPop3Client;
 class UHttpPlugIn;
+class UProxyPlugIn;
 class Application;
 class UServer_Base;
 class UHashMapNode;
@@ -215,7 +216,7 @@ public:
       }
 
    bool  isNullTerminated() const { return (str [_length] == '\0'); }
-   void setNullTerminated() const { ((char*)str)[_length]  = '\0'; }
+   void setNullTerminated()       { ((char*)str)[_length]  = '\0'; }
 
    uint32_t space() const
       {
@@ -1004,6 +1005,7 @@ private:
    friend class UMimeHeader;
    friend class UHttpPlugIn;
    friend class Application;
+   friend class UProxyPlugIn;
    friend class UHashMapNode;
    friend class UServer_Base;
    friend class UMongoDBClient;
@@ -1741,9 +1743,22 @@ public:
 
    // C-Style String
 
-   void setNullTerminated() const;
+   void setNullTerminated()
+      {
+      U_TRACE_NO_PARAM(0, "UString::setNullTerminated()")
 
-   const char* c_str() const
+      U_INTERNAL_ASSERT_MAJOR(rep->_length, 0)
+
+      if (writeable()) rep->setNullTerminated();
+      else
+         {
+         duplicate();
+         }
+
+      U_ASSERT_EQUALS(u__strlen(rep->str, __PRETTY_FUNCTION__), rep->_length)
+      }
+
+   const char* c_str()
       {
       U_TRACE_NO_PARAM(0, "UString::c_str()")
 
@@ -1968,7 +1983,18 @@ public:
 
    // set uniq
 
-   void duplicate() const;
+   void duplicate()
+      {
+      U_TRACE_NO_PARAM(0, "UString::duplicate()")
+
+      uint32_t sz = size();
+
+      U_INTERNAL_ASSERT_MAJOR(sz, 0)
+
+      _set(UStringRep::create(sz, sz, rep->str));
+
+      U_INTERNAL_ASSERT(invariant())
+      }
 
    bool uniq() const      { return rep->uniq(); }
    bool writeable() const { return rep->writeable(); }

@@ -118,7 +118,7 @@ public:
 
    static void close();
    static void initFork();
-   static void init(bool flag, bool info);
+   static void init(bool flag);
 
    static void U_EXPORT   registerObject(UObjectDumpable* dumper); // Add the 'dumper' to the list of registered objects
    static void U_EXPORT unregisterObject(const void* ptr_object);  // Use 'ptr_object' to locate and remove the associated 'dumper' from the list of registered objects
@@ -131,9 +131,9 @@ public:
    static uint32_t dumpObject(char* buffer, uint32_t buffer_size, const void* ptr_object);
 
 private:
-   static char*    file_ptr;
-   static char*    file_mem;
-   static char*    file_limit;
+   static char* file_ptr;
+   static char* file_mem;
+   static char* file_limit;
    static uint32_t file_size;
 
    static char* lbuf;
@@ -153,6 +153,8 @@ private:
    static bool printObjLive(const UObjectDumpable* dumper) U_NO_EXPORT;
    static int  compareDumper(const void* dumper1, const void* dumper2) __pure U_NO_EXPORT;
    static bool checkIfObject(const char* name_class, const void* ptr_object) __pure U_NO_EXPORT;
+
+   friend void u_debug_print_info();
 };
 
 #endif

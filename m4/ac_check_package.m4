@@ -108,6 +108,59 @@ AC_DEFUN([AC_CHECK_PACKAGE],[
 	fi
 	], [AC_MSG_RESULT(no)])
 
+	AC_MSG_CHECKING(if brotli library is wanted)
+	wanted=1;
+	if test -z "$with_libbrotli" ; then
+		wanted=0;
+		if test -n "$CROSS_ENVIRONMENT" -o "$USP_FLAGS" = "-DAS_cpoll_cppsp_DO" -o "$enable_shared" = "no"; then
+			with_libbrotli="no";
+		else
+			with_libbrotli="${CROSS_ENVIRONMENT}/usr";
+		fi
+	fi
+	AC_ARG_WITH(libbrotli, [  --with-libbrotli        use system   brotli library - [[will check /usr /usr/local]] [[default=use if present]]], [
+	if test "$withval" = "no"; then
+		AC_MSG_RESULT(no)
+	else
+		AC_MSG_RESULT(yes)
+		for dir in $withval ${CROSS_ENVIRONMENT}/ ${CROSS_ENVIRONMENT}/usr ${CROSS_ENVIRONMENT}/usr/local; do
+			libbrotlidir="$dir"
+			if test -f "$dir/include/brotli/encode.h"; then
+				found_libbrotli="yes";
+				break;
+			fi
+		done
+		if test x_$found_libbrotli != x_yes; then
+			msg="Cannot find libbrotli library";
+			if test $wanted = 1; then
+				AC_MSG_ERROR($msg)
+			else
+				AC_MSG_RESULT($msg)
+			fi
+		else
+			echo "${T_MD}libbrotli found in $libbrotlidir${T_ME}"
+			USE_LIBBROTLI=yes
+			AC_DEFINE(USE_LIBBROTLI, 1, [Define if enable libbrotli support])
+
+			if test -z "$CROSS_ENVIRONMENT" -a x_$PKG_CONFIG != x_no; then
+				libbrotli_version=$(pkg-config --modversion libbrotlienc 2>/dev/null)
+			fi
+			if test -z "${libbrotli_version}"; then
+				libbrotli_version=$(ls $libbrotlidir/lib*/libbrotli*.so.*.* 2>/dev/null | head -n 1 | awk -F'.so.' '{n=2; print $n}' 2>/dev/null)
+			fi
+			if test -z "${libzopfli_version}"; then
+				libzopfli_version="unknown"
+			fi
+         ULIB_LIBS="$ULIB_LIBS -lbrotlidec -lbrotlienc";
+			if test $libbrotlidir != "${CROSS_ENVIRONMENT}/" -a $libbrotlidir != "${CROSS_ENVIRONMENT}/usr" -a $libbrotlidir != "${CROSS_ENVIRONMENT}/usr/local"; then
+				CPPFLAGS="$CPPFLAGS -I$libbrotlidir/include"
+				LDFLAGS="$LDFLAGS -L$libbrotlidir/lib -Wl,-R$libbrotlidir/lib";
+				PRG_LDFLAGS="$PRG_LDFLAGS -L$libbrotlidir/lib";
+			fi
+		fi
+	fi
+	], [AC_MSG_RESULT(no)])
+
 	AC_MSG_CHECKING(if MAGIC library is wanted)
 	wanted=1;
 	if test -z "$with_magic" ; then

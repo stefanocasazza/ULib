@@ -19,6 +19,10 @@
 #ifdef USE_LIBSSL
 #  include <openssl/pem.h>
 #endif
+#ifdef USE_LIBBROTLI
+#  include <brotli/encode.h>
+#  include <brotli/decode.h>
+#endif
 
 class U_EXPORT UStringExt {
 public:
@@ -63,6 +67,15 @@ public:
 
    static UString   compress(const UString& s) { return   compress(U_STRING_TO_PARAM(s)); }
    static UString decompress(const UString& s) { return decompress(U_STRING_TO_PARAM(s)); }
+
+#ifdef USE_LIBBROTLI
+   static UString unbrotli(const char* s, uint32_t n);
+   static UString unbrotli(const UString& s) { return unbrotli(U_STRING_TO_PARAM(s)); }
+
+   static UString brotli(const char* s, uint32_t n, uint32_t quality = BROTLI_MAX_QUALITY, uint32_t mode = BROTLI_MODE_TEXT, uint32_t lgwin = BROTLI_DEFAULT_WINDOW);
+   static UString brotli(const UString& s,          uint32_t quality = BROTLI_MAX_QUALITY, uint32_t mode = BROTLI_MODE_TEXT, uint32_t lgwin = BROTLI_DEFAULT_WINDOW)
+      { return brotli(U_STRING_TO_PARAM(s), quality, mode, lgwin); }
+#endif
 
    // GZIP method
 

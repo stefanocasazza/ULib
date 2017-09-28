@@ -316,12 +316,14 @@ extern U_EXPORT const char* restrict u_name_function;
 /* MIME type identification */
 
 static inline bool u_is_gz(int mime_index)     { return (mime_index == U_gz); }
+static inline bool u_is_br(int mime_index)     { return (mime_index == U_br); }
 static inline bool u_is_js(int mime_index)     { return (mime_index == U_js); }
 static inline bool u_is_css(int mime_index)    { return (mime_index == U_css); }
 static inline bool u_is_gif(int mime_index)    { return (mime_index == U_gif); }
 static inline bool u_is_jpg(int mime_index)    { return (mime_index == U_jpg); }
 static inline bool u_is_png(int mime_index)    { return (mime_index == U_png); }
 static inline bool u_is_flv(int mime_index)    { return (mime_index == U_flv); }
+static inline bool u_is_svg(int mime_index)    { return (mime_index == U_svg); }
 static inline bool u_is_html(int mime_index)   { return (mime_index == U_html); }
 
 static inline bool u_is_usp(int mime_index)    { return (mime_index == U_usp); }
@@ -344,7 +346,13 @@ static inline bool u_is_cacheable(int mime_index) { return (u_is_js(mime_index) 
                                                             u_is_css(mime_index) ||
                                                             u_is_img(mime_index) ||
                                                             u_is_ssi(mime_index) ||
+                                                            u_is_svg(mime_index) ||
                                                             u_is_html(mime_index)); }
+
+static inline bool u_is_compressable(int mime_index) { return (u_is_ssi(mime_index) == false &&
+                                                               u_is_gz( mime_index) == false &&
+                                                               u_is_br( mime_index) == false); }
+
 
 /**
  * Print with format extension: bBCDHMNOPQrRSvVUYwW

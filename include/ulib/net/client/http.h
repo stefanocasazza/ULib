@@ -181,8 +181,7 @@ protected:
    uint32_t method_num;
    bool bFollowRedirects, bproxy;
 
-   static bool server_context_flag;
-   static struct uhttpinfo u_http_info_save;
+   static bool server_context_flag, data_chunked;
 
    bool sendRequestEngine();
    bool parseRequest(uint32_t n);

@@ -1,3 +1,2 @@
-[ /          /index.php
-  /fortunes  /servlet/fortunes
+[ /fortunes  /servlet/fortunes
   /plaintext /servlet/plaintext ]

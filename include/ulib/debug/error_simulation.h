@@ -30,9 +30,9 @@ union uuvararg {
 
 struct U_EXPORT USimulationError {
 
-   static bool           flag_init;
-   static char*          file_mem;
-   static uint32_t       file_size;
+   static bool     flag_init;
+   static char*    file_mem;
+   static uint32_t file_size;
    static union uuvararg var_arg; // buffer for return value (simulation of error)
 
    static void  init();

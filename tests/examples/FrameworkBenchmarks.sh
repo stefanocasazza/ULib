@@ -22,9 +22,9 @@ export ORM_DRIVER ORM_OPTION UMEMPOOL
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------
 # PLAINTEXT
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------
- UMEMPOOL="58,0,0,41,16401,-14,-15,11,25"
- sed -i "s|TCP_LINGER_SET .*|TCP_LINGER_SET 0|g"		 benchmark/FrameworkBenchmarks/fbenchmark.cfg
- sed -i "s|LISTEN_BACKLOG .*|LISTEN_BACKLOG 16384|g"	 benchmark/FrameworkBenchmarks/fbenchmark.cfg
+#UMEMPOOL="58,0,0,41,16401,-14,-15,11,25"
+#sed -i "s|TCP_LINGER_SET .*|TCP_LINGER_SET 0|g"		 benchmark/FrameworkBenchmarks/fbenchmark.cfg
+#sed -i "s|LISTEN_BACKLOG .*|LISTEN_BACKLOG 16384|g"	 benchmark/FrameworkBenchmarks/fbenchmark.cfg
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------
 #Running 15s test @ http://localhost:8080/plaintext
 #  4 threads and 256 connections
@@ -62,15 +62,15 @@ export ORM_DRIVER ORM_OPTION UMEMPOOL
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------
 # DB
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------
-#ORM_DRIVER="sqlite"
-#ORM_OPTION="host=localhost dbname=../db/hello_world"
+ ORM_DRIVER="sqlite"
+ ORM_OPTION="host=localhost dbname=../db/hello_world"
 #ORM_DRIVER="mysql"
 #ORM_OPTION="host=localhost user=benchmarkdbuser password=benchmarkdbpass character-set=utf8 dbname=hello_world"
 #ORM_DRIVER="pgsql"
 #ORM_OPTION="host=localhost user=benchmarkdbuser password=benchmarkdbpass dbname=hello_world"
-#UMEMPOOL="545,0,0,49,275,-14,-13,-25,41"
-#sed -i "s|TCP_LINGER_SET .*|TCP_LINGER_SET -2|g"	benchmark/FrameworkBenchmarks/fbenchmark.cfg
-#sed -i "s|LISTEN_BACKLOG .*|LISTEN_BACKLOG 256|g"	benchmark/FrameworkBenchmarks/fbenchmark.cfg
+ UMEMPOOL="545,0,0,49,275,-14,-13,-25,41"
+ sed -i "s|TCP_LINGER_SET .*|TCP_LINGER_SET -2|g"	benchmark/FrameworkBenchmarks/fbenchmark.cfg
+ sed -i "s|LISTEN_BACKLOG .*|LISTEN_BACKLOG 256|g"	benchmark/FrameworkBenchmarks/fbenchmark.cfg
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------
 #Running 15s test @ http://localhost:8080/fortune
 #  4 threads and 256 connections

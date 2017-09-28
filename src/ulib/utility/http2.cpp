@@ -2493,7 +2493,7 @@ unsigned char* UHTTP2::hpackEncodeHeader(unsigned char* dst, const UString& name
                U_ASSERT(name == U_STRING_FROM_CONSTANT("Content-Style-Type") ||
                         name == U_STRING_FROM_CONSTANT("Content-Script-Type"))
 
-               U_ERROR("Content-Style-Type and Content-Script-Type are not supported");
+               U_WARNING("Content-Style-Type and Content-Script-Type are not supported");
                }
 #        endif
             }

@@ -154,6 +154,8 @@ void UNotifier::init()
    U_TRACE(0, "UNotifier::init()")
 
 #ifdef HAVE_EPOLL_WAIT
+   U_INTERNAL_ASSERT_DIFFERS(U_ClientImage_parallelization, U_PARALLELIZATION_CHILD)
+
    int old = epollfd;
 
    U_INTERNAL_DUMP("old = %d", old)
@@ -316,6 +318,8 @@ void UNotifier::resume(UEventFd* item)
    U_INTERNAL_ASSERT_EQUALS(item->op_mask, EPOLLOUT)
 
 #ifdef HAVE_EPOLL_WAIT
+   U_INTERNAL_ASSERT_DIFFERS(U_ClientImage_parallelization, U_PARALLELIZATION_CHILD)
+
    struct epoll_event _events = { EPOLLOUT, { item } };
 
    (void) U_SYSCALL(epoll_ctl, "%d,%d,%d,%p", epollfd, EPOLL_CTL_ADD, item->fd, &_events);
@@ -348,6 +352,8 @@ void UNotifier::suspend(UEventFd* item)
    U_INTERNAL_ASSERT_EQUALS(item->op_mask, EPOLLOUT)
 
 #ifdef HAVE_EPOLL_WAIT
+   U_INTERNAL_ASSERT_DIFFERS(U_ClientImage_parallelization, U_PARALLELIZATION_CHILD)
+
    (void) U_SYSCALL(epoll_ctl, "%d,%d,%d,%p", epollfd, EPOLL_CTL_DEL, item->fd, (struct epoll_event*)1);
 #elif defined(HAVE_KQUEUE)
    U_INTERNAL_ASSERT_MAJOR(kq, 0)
@@ -379,6 +385,8 @@ int UNotifier::waitForEvent(int fd_max, fd_set* read_set, fd_set* write_set, UEv
    int result;
 
 #ifdef HAVE_EPOLL_WAIT
+   U_INTERNAL_ASSERT_DIFFERS(U_ClientImage_parallelization, U_PARALLELIZATION_CHILD)
+
    result = U_SYSCALL(epoll_wait, "%d,%p,%u,%d", epollfd, events, max_connection, UEventTime::getMilliSecond(ptimeout));
 #elif defined(HAVE_KQUEUE)
    result = U_SYSCALL(kevent, "%d,%p,%d,%p,%d,%p", kq, kqevents, nkqevents, kqrevents, max_connection, UEventTime::getTimeSpec(ptimeout));
@@ -437,6 +445,7 @@ loop:
 # endif
    nkqevents = 0;
 #else
+   U_INTERNAL_ASSERT_DIFFERS(U_ClientImage_parallelization, U_PARALLELIZATION_CHILD)
 loop:
    nfd_ready = U_SYSCALL(epoll_wait, "%d,%p,%u,%d", epollfd, events, max_connection, UEventTime::getMilliSecond(ptimeout));
 #endif
@@ -528,6 +537,8 @@ loop0:
       handler_event = (UEventFd*)pevents->data.ptr;
 
       U_INTERNAL_DUMP("i = %d handler_event->fd = %d", i, handler_event->fd)
+
+   // U_INTERNAL_ASSERT_DIFFERS(handler_event->fd, -1)
 
       if (handler_event->fd != -1)
          {
@@ -814,6 +825,7 @@ void UNotifier::insert(UEventFd* item, int op)
    (void) UDispatcher::add(*(item->pevent));
 #elif defined(HAVE_EPOLL_WAIT)
    U_INTERNAL_ASSERT_MAJOR(epollfd, 0)
+   U_INTERNAL_ASSERT_DIFFERS(U_ClientImage_parallelization, U_PARALLELIZATION_CHILD)
 
 # ifdef DEBUG
    if (op)
@@ -894,6 +906,7 @@ bool UNotifier::modify(UEventFd* item)
    (void) UDispatcher::add(*(item->pevent));
 #elif defined(HAVE_EPOLL_WAIT)
    U_INTERNAL_ASSERT_MAJOR(epollfd, 0)
+   U_INTERNAL_ASSERT_DIFFERS(U_ClientImage_parallelization, U_PARALLELIZATION_CHILD)
 
    struct epoll_event _events = { item->op_mask, { item } };
 

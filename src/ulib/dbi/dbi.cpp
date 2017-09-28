@@ -286,9 +286,10 @@ void UDBI::bind(const UString& v, bool is_null)
    else if (v.empty()) (void) escaped_query.append(U_CONSTANT_TO_PARAM("''"));
    else
       {
-      char* new_str;
+      U_INTERNAL_ASSERT(v.isNullTerminated())
 
-      const char* ptr = v.c_str();
+      char* new_str;
+      const char* ptr = v.data();
 
       size_t sz = U_SYSCALL(dbi_conn_quote_string_copy, "%p,%S,%p", conn, ptr, &new_str);
 

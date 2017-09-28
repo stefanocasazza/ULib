@@ -178,8 +178,8 @@ public:
    int32_t getNumArgument() const       { return ncmd; }
    int32_t getNumFileArgument() const   { return nfile; }
 
-   UString getStringCommand()           { return command; }
-   UString getStringEnvironment()       { return environment; }
+   UString getStringCommand()     { return command; }
+   UString getStringEnvironment() { return environment; }
 
    void setCommand(const UString& cmd)
       {
@@ -307,7 +307,7 @@ protected:
    static void outputCommandWithDialog(const UString& cmd, char** envp, UString* output, int fd_stdin, int fd_stderr, bool dialog);
 
 private:
-          void setEnvironment(const UString& env) U_NO_EXPORT;
+          void setEnvironment(UString& env) U_NO_EXPORT;
    inline void execute(bool flag_stdin, bool flag_stdout, bool flag_stderr) U_NO_EXPORT;
 
    static bool wait() U_NO_EXPORT;

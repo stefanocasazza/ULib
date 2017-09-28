@@ -193,11 +193,11 @@ public:
    static void setStatusDescription();
    static void setEndRequestProcessing();
    static bool callService(const UString& path);
+   static void checkContentLength(uint32_t length);
    static bool isUriRequestNeedCertificate() __pure;
    static bool isValidMethod(const char* ptr) __pure;
    static bool checkContentLength(const UString& response);
    static bool manageSendfile(const char* ptr, uint32_t len);
-   static bool checkContentLength(uint32_t length, uint32_t pos);
    static bool scanfHeaderRequest(const char* ptr, uint32_t size);
    static bool scanfHeaderResponse(const char* ptr, uint32_t size);
    static bool readHeaderResponse(USocket* socket, UString& buffer);
@@ -292,35 +292,6 @@ public:
       uint32_t agent = (U_http_info.user_agent_len ? u_cdb_hash((unsigned char*)U_HTTP_USER_AGENT_TO_PARAM, -1) : 0);
 
       U_RETURN(agent);
-      }
-
-   static void setPathName()
-      {
-      U_TRACE_NO_PARAM(0, "UHTTP::setPathName()")
-
-      U_INTERNAL_ASSERT(pathname->empty())
-      U_ASSERT(pathname->capacity() >= u_cwd_len + U_http_info.uri_len)
-
-      char* ptr = pathname->data();
-
-      U_MEMCPY(ptr,                     u_cwd,           u_cwd_len);
-      U_MEMCPY(ptr+u_cwd_len, U_http_info.uri, U_http_info.uri_len);
-
-      pathname->size_adjust_force(u_cwd_len + U_http_info.uri_len); // NB: pathname can be referenced by file obj...
-      }
-
-   static void checkForPathName()
-      {
-      U_TRACE_NO_PARAM(0, "UHTTP::checkForPathName()")
-
-      if (pathname->empty())
-         {
-         setPathName();
-
-         file->setPath(*pathname);
-
-         U_INTERNAL_DUMP("file = %.*S", U_FILE_TO_TRACE(*file))
-         }
       }
 
    static bool isSizeForSendfile(uint32_t sz)
@@ -930,7 +901,7 @@ public:
       if (relocated) UMemoryPool::_free(relocated, size, 1);
       }
 
-   bool compile(const UString& program);
+   bool compile(UString& program);
 
    // DEBUG
 
@@ -1127,9 +1098,9 @@ public:
    U_MEMORY_DEALLOCATOR
 
    void* ptr;               // data
-   UVector<UString>* array; // content, header, gzip(content, header)
+   UVector<UString>* array; // content, header, gzip(content, header), brotli(content, header)
 #ifndef U_HTTP2_DISABLE
-   UVector<UString>* http2; //          header, gzip(header)
+   UVector<UString>* http2; //          header, gzip(         header), brotli(         header)
 #endif
    time_t mtime;            // time of last modification
    time_t expire;           // expire time of the entry
@@ -1183,18 +1154,6 @@ public:
       U_RETURN(false);
       }
 
-   static bool isDataCompressFromCache()
-      {
-      U_TRACE_NO_PARAM(0, "UHTTP::isDataCompressFromCache()")
-
-      U_INTERNAL_ASSERT_POINTER(file_data)
-      U_INTERNAL_ASSERT_POINTER(file_data->array)
-
-      if (file_data->array->size() > 2) U_RETURN(true);
-
-      U_RETURN(false);
-      }
-
    static void checkFileForCache();
    static void renewFileDataInCache();
 
@@ -1203,15 +1162,13 @@ public:
       {
       U_TRACE(0, "UHTTP::checkFileInCache(%.*S,%u)", len, path, len)
 
-      file_data = cache_file->at(path, len);
-
-      if (file_data)
+      if ((file_data = cache_file->at(path, len)))
          {
          file->st_size  = file_data->size;
          file->st_mode  = file_data->mode;
          file->st_mtime = file_data->mtime;
 
-         U_INTERNAL_DUMP("file_data->fd = %d st_size = %I st_mtime = %ld dir() = %b", file_data->fd, file->st_size, file->st_mtime, file->dir())
+         U_DUMP("file_data->fd = %d st_size = %I st_mtime = %#3D dir() = %b", file_data->fd, file->st_size, file->st_mtime, file->dir())
 
          U_RETURN(true);
          }
@@ -1241,61 +1198,56 @@ public:
       U_RETURN(false);
       }
 
-   static UString getDataFromCache(int idx);
+   static UString getDataFromCache(UVector<UString>* array, uint32_t idx)
+      {
+      U_TRACE(0, "UHTTP::getDataFromCache(%p,%u)", array, idx)
 
-   static UString getBodyFromCache()         { return getDataFromCache(0); }
-   static UString getBodyCompressFromCache() { return getDataFromCache(2); }
+      U_INTERNAL_ASSERT_MINOR(idx, 6)
+
+      U_INTERNAL_DUMP("U_http_version = %C", U_http_version)
+
+      if (array &&
+          idx < array->size())
+         {
+         UString result = array->at(idx);
+
+         U_RETURN_STRING(result);
+         }
+
+      return UString::getStringNull();
+      }
 
 #ifdef U_HTTP2_DISABLE
-   static UString getHeaderFromCache()         { return getDataFromCache(1); };
-   static UString getHeaderCompressFromCache() { return getDataFromCache(3); };
+   static UString getHeaderFromCache(uint32_t idx) { return getDataFromCache(file_data->array, idx); }
 #else
-   static UString getHeaderFromCache()
-      {
-      U_TRACE_NO_PARAM(0, "UHTTP::getHeaderFromCache()")
-
-      UString result;
-
-      U_INTERNAL_DUMP("U_http_version = %C", U_http_version)
-
-           if (U_http_version != '2') result = getDataFromCache(1);
-      else if (file_data->http2)      result = file_data->http2->operator[](0);
-
-      U_RETURN_STRING(result);
-      }
-
-   static UString getHeaderCompressFromCache()
-      {
-      U_TRACE_NO_PARAM(0, "UHTTP::getHeaderCompressFromCache()")
-
-      UString result;
-
-      U_INTERNAL_DUMP("U_http_version = %C", U_http_version)
-
-           if (U_http_version != '2') result = getDataFromCache(3);
-      else if (file_data->http2)      result = file_data->http2->operator[](1);
-
-      U_RETURN_STRING(result);
-      }
+   static UString getHeaderFromCache(uint32_t idx) { return getDataFromCache((U_http_version != '2' ? file_data->array : (idx /= 2, file_data->http2)), idx); }
 #endif
+
+   static UString getBodyFromCache()                 { return getDataFromCache(file_data->array, 0); }
+   static UString getHeaderFromCache()               { return getHeaderFromCache(1); }
+   static UString getBodyCompressFromCache()         { return getDataFromCache(file_data->array, 2); }
+   static UString getHeaderCompressFromCache()       { return getHeaderFromCache(3); }
+   static UString getBodyCompressBrotliFromCache()   { return getDataFromCache(file_data->array, 4); }
+   static UString getHeaderCompressBrotliFromCache() { return getHeaderFromCache(5); }
 
    static UString contentOfFromCache(const char* path, uint32_t len)
       {
       U_TRACE(0, "UHTTP::contentOfFromCache(%.*S,%u)", len, path, len)
 
-      UString result;
+      if ((file_data = cache_file->at(path, len)))
+         {
+         UString result = getBodyFromCache();
 
-      file_data = cache_file->at(path, len);
+         U_RETURN_STRING(result);
+         }
 
-      if (file_data) result = getBodyFromCache();
-
-      U_RETURN_STRING(result);
+      return UString::getStringNull();
       }
 
    static UString contentOfFromCache(const UString& path) { return contentOfFromCache(U_STRING_TO_PARAM(path)); }
 
 private:
-   static uint32_t old_response_code;
+   static uint32_t old_response_code, is_response_compressed;
 
    static void setMimeIndex()
       {
@@ -1387,30 +1339,35 @@ private:
    static bool checkForInotifyDirectory(UStringRep* key, void* value) U_NO_EXPORT;
 #endif
 
+#if defined(USE_LIBZ) || defined(USE_LIBBROTLI)
+   static inline void setAcceptEncoding(const char* ptr, uint32_t len) U_NO_EXPORT;
+#endif      
+
 #ifdef U_STATIC_ONLY
    static void loadStaticLinkedServlet(const char* name, uint32_t len, vPFi runDynamicPage) U_NO_EXPORT;
 #endif      
 
    static bool callService() U_NO_EXPORT;
-   static void checkPathName() U_NO_EXPORT;
+   static bool checkPathName() U_NO_EXPORT;
    static void checkIPClient() U_NO_EXPORT;
    static bool runDynamicPage() U_NO_EXPORT;
    static bool readBodyRequest() U_NO_EXPORT;
    static bool processFileCache() U_NO_EXPORT;
    static bool readHeaderRequest() U_NO_EXPORT;
    static bool processGetRequest() U_NO_EXPORT;
+   static void processDataFromCache() U_NO_EXPORT;
    static bool checkRequestForHeader() U_NO_EXPORT;
    static bool checkGetRequestIfRange() U_NO_EXPORT;
-   static bool checkGetRequestIfModified() U_NO_EXPORT;
    static void setCGIShellScript(UString& command) U_NO_EXPORT;
    static bool checkIfSourceHasChangedAndCompileUSP() U_NO_EXPORT;
+   static void setResponseCompressed(const UString& data) U_NO_EXPORT;
    static bool compileUSP(const char* path, uint32_t len) U_NO_EXPORT;
    static int  checkGetRequestForRange(const UString& data) U_NO_EXPORT;
    static int  sortRange(const void* a, const void* b) __pure U_NO_EXPORT;
    static bool addHTTPVariables(UStringRep* key, void* value) U_NO_EXPORT;
-   static void setSendfile(int fd, uint32_t start, uint32_t count) U_NO_EXPORT;
    static bool splitCGIOutput(const char*& ptr1, const char* ptr2) U_NO_EXPORT;
    static void putDataInCache(const UString& fmt, UString& content) U_NO_EXPORT;
+   static void setHeaderForCache(UFileCacheData* ptr, const UString& data) U_NO_EXPORT;
    static bool readDataChunked(USocket* sk, UString* pbuffer, UString& body) U_NO_EXPORT;
    static void setResponseForRange(uint32_t start, uint32_t end, uint32_t header) U_NO_EXPORT;
    static void manageDataForCache(const UString& basename, const UString& suffix) U_NO_EXPORT;
@@ -1420,9 +1377,10 @@ private:
    static inline void resetFileCache() U_NO_EXPORT;
    static inline void setUpgrade(const char* ptr) U_NO_EXPORT;
    static inline bool checkPathName(uint32_t len) U_NO_EXPORT;
+   static inline bool checkGetRequestIfModified() U_NO_EXPORT;
    static inline void setIfModSince(const char* ptr) U_NO_EXPORT;
    static inline void setConnection(const char* ptr) U_NO_EXPORT;
-   static        void setAcceptEncoding(const char* ptr) U_NO_EXPORT;
+   static inline bool setSendfile(int fd, uint32_t start, uint32_t count) U_NO_EXPORT;
    static inline void setContentLength(const char* ptr1, const char* ptr2) U_NO_EXPORT;
 
    static inline bool checkDataChunked(UString* pbuffer) U_NO_EXPORT;
@@ -1443,6 +1401,10 @@ private:
    friend class USSIPlugIn;
    friend class UHttpPlugIn;
    friend class UClientImage_Base;
+
+#ifdef U_STDCPP_ENABLE
+   friend istream& operator>>(istream&, UHTTP::UFileCacheData&);
+#endif
 };
 
 template <> inline void u_destroy(const UHTTP::UFileCacheData* elem)

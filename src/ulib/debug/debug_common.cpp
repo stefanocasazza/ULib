@@ -88,13 +88,28 @@ extern "C" void U_EXPORT u_debug_at_exit(void)
       }
 }
 
-static void print_info(void)
+void U_EXPORT u_debug_print_info()
 {
+   U_INTERNAL_TRACE("u_debug_print_info()")
+
    // print program mode and info for ULib...
+
+   char* memusage = getenv("UMEMUSAGE");
 
    U_MESSAGE("DEBUG MODE%W (pid %W%P%W) - " PACKAGE_STRING " " PLATFORM_VAR " (" __DATE__ ")%W", YELLOW, BRIGHTCYAN, YELLOW, RESET);
 
-   char* memusage = getenv("UMEMUSAGE");
+   u_print_status_trace();
+
+#ifdef U_STDCPP_ENABLE
+   if (UObjectDB::fd == -1)
+      {
+      U_MESSAGE("OBJDUMP%W<%Woff%W>%W", YELLOW, RED, YELLOW, RESET);
+      }
+   else
+      {
+      U_MESSAGE("OBJDUMP%W<%Won%W>: Level<%W%d%W> MaxSize<%W%d%W>%W", YELLOW, GREEN, YELLOW, CYAN, UObjectDB::level_active, YELLOW, CYAN, UObjectDB::file_size, YELLOW, RESET);
+      }
+#endif
 
    U_MESSAGE("MEMUSAGE%W<%W%s%W>%W", YELLOW, (memusage ? GREEN : RED), (memusage ? "on" : "off"), YELLOW, RESET);
 }
@@ -103,18 +118,15 @@ extern "C" void U_EXPORT u_debug_init(void)
 {
    U_INTERNAL_TRACE("u_debug_init()")
 
-   print_info();
-
-   USimulationError::init();
-
 #ifdef U_STDCPP_ENABLE
-   UObjectDB::init(true, true);
+   UObjectDB::init(true);
 #endif
 
-   // we go to check if there are previous creation of global
-   // objects that can have forced the initialization of trace file...
+   u_trace_check_init(); // we go to check if there are previous creation of global objects that can have forced the initialization of trace file...
 
-   u_trace_check_init();
+   u_debug_print_info();
+
+   USimulationError::init();
 }
 
 // set_memlimit() uses setrlimit() to restrict dynamic memory allocation.
@@ -160,13 +172,13 @@ pid_t U_EXPORT u_debug_fork(pid_t _pid, int trace_active)
       {
       u_setPid();
 
-      print_info(); // print program mode and info for ULib...
-
       u_trace_initFork();
 
 #  ifdef U_STDCPP_ENABLE
       if (UObjectDB::fd > 0) UObjectDB::initFork();
 #  endif
+
+      u_debug_print_info();
       }
 
    if (trace_active)

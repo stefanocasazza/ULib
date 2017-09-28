@@ -1222,7 +1222,8 @@ UString UStringExt::decompress(const char* s, uint32_t n)
 #ifdef DEBUG
    int r =
 #endif
-   U_SYSCALL(mz_uncompress, "%p,%p,%p,%u", (unsigned char*)out.rep->data(), &out_len, (const unsigned char*)ptr + sizeof(uint32_t), n - U_CONSTANT_SIZE(U_MINIZ_COMPRESS) - sizeof(uint32_t));
+   U_SYSCALL(mz_uncompress, "%p,%p,%p,%u", (unsigned char*)out.rep->data(), &out_len,
+                                     (const unsigned char*)ptr + sizeof(uint32_t), n - U_CONSTANT_SIZE(U_MINIZ_COMPRESS) - sizeof(uint32_t));
 
    U_INTERNAL_ASSERT_EQUALS(r, Z_OK)
 
@@ -1232,6 +1233,83 @@ UString UStringExt::decompress(const char* s, uint32_t n)
 
    U_RETURN_STRING(out);
 }
+
+#ifdef USE_LIBBROTLI
+UString UStringExt::brotli(const char* s, uint32_t len, uint32_t quality, uint32_t mode, uint32_t lgwin) // .br compress
+{
+   U_TRACE(1, "UStringExt::brotli(%.*S,%u,%u,%u,%u)", len, s, len, quality, mode, lgwin)
+
+   int rc;
+   size_t sz = U_SYSCALL(BrotliEncoderMaxCompressedSize, "%u", len); /* Get an estimation about the output buffer... */
+
+   if (sz == 0) return UString::getStringNull();
+
+   if (UFile::isAllocableFromPool(sz))
+      {
+      rc = U_SYSCALL(BrotliEncoderCompress, "%u,%u,%u,%u,%p,%p,%p", quality, lgwin, (BrotliEncoderMode)mode, (size_t)len, (uint8_t*)s, &sz, (uint8_t*)UFile::pfree);
+
+      U_INTERNAL_DUMP("BrotliEncoderCompress() = %d (%u => %u)", rc, len, sz)
+
+      if (rc == 0) return UString::getStringNull();
+
+      len = UFile::getSizeAligned(sz);
+
+      UString result(sz, len, UFile::pfree);
+
+      UFile::pfree += len;
+      UFile::nfree -= len;
+
+      U_RETURN_STRING(result);
+      }
+
+   UString r(sz);
+
+   rc = U_SYSCALL(BrotliEncoderCompress, "%u,%u,%u,%u,%p,%p,%p", quality, lgwin, (BrotliEncoderMode)mode, (size_t)len, (uint8_t*)s, &sz, (uint8_t*)r.data());
+
+   U_INTERNAL_DUMP("BrotliEncoderCompress() = %d (%u => %u)", rc, len, sz)
+
+   if (rc == 0) return UString::getStringNull();
+
+   r.rep->_length = sz;
+
+   U_RETURN_STRING(r);
+}
+
+UString UStringExt::unbrotli(const char* ptr, uint32_t sz) // .br uncompress
+{
+   U_TRACE(0, "UStringExt::unbrotli(%.*S,%u)", sz, ptr, sz)
+
+   UString r(sz);
+   const uint8_t* next_out;
+   BrotliDecoderResult result;
+   size_t input_len = sz, available_out;
+   const uint8_t* input = (const uint8_t*)ptr;
+
+   BrotliDecoderState* state  = (BrotliDecoderState*) U_SYSCALL(BrotliDecoderCreateInstance, "%p,%p,%p", U_NULLPTR, U_NULLPTR, U_NULLPTR);
+
+   do {
+      available_out = 0;
+
+      result = (BrotliDecoderResult) U_SYSCALL(BrotliDecoderDecompressStream, "%p,%p,%p,%p,%p,%p", state, &input_len, &input, &available_out, U_NULLPTR, U_NULLPTR);
+
+      next_out = BrotliDecoderTakeOutput(state, &available_out);
+
+      if (available_out) (void) r.append((const char*)next_out, available_out);
+      }
+   while (result == BROTLI_DECODER_RESULT_NEEDS_MORE_OUTPUT);
+
+   if (result != BROTLI_DECODER_RESULT_SUCCESS)
+      {
+      BrotliDecoderErrorCode code = (BrotliDecoderErrorCode) U_SYSCALL(BrotliDecoderGetErrorCode, "%p", state);
+
+      U_WARNING("brotli decoder fail, error %S", BrotliDecoderErrorString(code));
+      }
+
+   U_SYSCALL_VOID(BrotliDecoderDestroyInstance, "%p", state);
+
+   U_RETURN_STRING(r);
+}
+#endif
 
 UString UStringExt::deflate(const char* s, uint32_t len, int type) // .gz compress
 {

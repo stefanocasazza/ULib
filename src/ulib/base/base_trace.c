@@ -19,8 +19,8 @@
 #include <ulib/base/utility.h>
 
 int      u_trace_fd = -1;
-int      u_trace_signal;
 int      u_trace_suspend;
+bool     u_trace_signal;
 char     u_trace_tab[256]; /* 256 max indent */
 void*    u_trace_mask_level;
 uint32_t u_trace_num_tab;
@@ -47,27 +47,6 @@ static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 #endif
 */
 
-static void printInfo(void)
-{
-   U_INTERNAL_TRACE("printInfo()")
-
-   /* print info about debug mode */
-
-   if (u_trace_fd == -1)
-      {
-      U_MESSAGE("TRACE%W<%Woff%W>%W", YELLOW, RED, YELLOW, RESET);
-      }
-   else
-      {
-      U_MESSAGE("TRACE%W<%Won%W>: Level<%W%d%W> MaxSize<%W%d%W> Test<%W%d%W>%W", YELLOW,
-                  GREEN,              YELLOW,
-                  CYAN, level_active, YELLOW,
-                  CYAN, file_size,    YELLOW,
-                  CYAN, u_flag_test,  YELLOW,
-                  RESET);
-      }
-}
-
 static char* restrict file_mem;
 static char* restrict file_ptr;
 static char* restrict file_limit;
@@ -86,10 +65,9 @@ void u_trace_check_if_interrupt(void) /* check for context manage signal event -
 
 void u_trace_lock(void)
 {
-   U_INTERNAL_TRACE("u_trace_lock()")
-
 #ifdef ENABLE_THREAD
    uint32_t tid = u_gettid();
+
 # ifdef _MSWINDOWS_
    if (old_tid == 0) InitializeCriticalSection(&mutex);
 
@@ -97,6 +75,8 @@ void u_trace_lock(void)
 # else
    (void) pthread_mutex_lock(&mutex);
 # endif
+
+   U_INTERNAL_TRACE("u_trace_lock()")
 
    if (old_tid != tid)
       {
@@ -205,8 +185,6 @@ void u_trace_close(void)
       }
 }
 
-/* we can mask trace by hi-byte param 'level' */
-
 static int flag_init;
 static struct sigaction act;
 
@@ -228,7 +206,7 @@ static void setHandlerSIGUSR2(void)
    (void) sigaction(SIGUSR2, &act, 0);
 }
 
-void u_trace_init(int bsignal)
+void u_trace_init(bool bsignal)
 {
    const char* env;
 
@@ -252,8 +230,8 @@ void u_trace_init(int bsignal)
          }
       }
 
-   if (bsignal == 0 &&
-       ( env ==   0 ||
+   if (bsignal == false     &&
+       ( env ==   U_NULLPTR ||
         *env == '\0'))
       {
       level_active = -1;
@@ -289,7 +267,7 @@ void u_trace_init(int bsignal)
 
    if (level_active >= 0)
       {
-      u_trace_mask_level = 0; /* NB: check necessary for incoherent state... */
+      u_trace_mask_level = 0; /* NB: reset necessary for incoherent state... */
 
       if (u_trace_fd == STDERR_FILENO) file_size = 0;
       else
@@ -326,7 +304,7 @@ void u_trace_init(int bsignal)
                return;
                }
 
-            /* NB: include also PROT_READ seem to avoid some strange SIGSEGV... */
+            /* NB: to include also PROT_READ seem to avoid some strange SIGSEGV... */
 
             file_mem = (char* restrict) mmap(0, file_size, PROT_READ | PROT_WRITE, MAP_SHARED, u_trace_fd, 0);
 
@@ -346,7 +324,9 @@ void u_trace_init(int bsignal)
       if (u_trace_fd > STDERR_FILENO) u_atexit(&u_trace_close); /* register function of close trace at exit... */
       }
 
+# ifndef _MSWINDOWS_
    setHandlerSIGUSR2(); /* on-off by signal SIGUSR2 */
+# endif
 }
 
 void u_trace_handlerSignal(void)
@@ -364,17 +344,34 @@ void u_trace_handlerSignal(void)
       u_trace_close();
 
       level_active = -1;
+
+#  ifndef _MSWINDOWS_
+      setHandlerSIGUSR2(); /* on-off by signal SIGUSR2 */
+#  endif
       }
-
-   printInfo();
-
-# ifndef _MSWINDOWS_
-   setHandlerSIGUSR2(); /* on-off by signal SIGUSR2 */
-# endif
 #endif
-
-   u_trace_signal = 0;
 }
+
+void u_print_status_trace(void)
+{
+   U_INTERNAL_TRACE("u_print_status_trace()")
+
+   if (u_trace_fd == -1)
+      {
+      U_MESSAGE("TRACE%W<%Woff%W>%W", YELLOW, RED, YELLOW, RESET);
+      }
+   else
+      {
+      U_MESSAGE("TRACE%W<%Won%W>: Level<%W%d%W> MaxSize<%W%d%W> Test<%W%d%W>%W", YELLOW,
+                  GREEN,              YELLOW,
+                  CYAN, level_active, YELLOW,
+                  CYAN, file_size,    YELLOW,
+                  CYAN, u_flag_test,  YELLOW,
+                  RESET);
+      }
+}
+
+/* we can mask trace by hi-byte param 'level' */
 
 int u_trace_check_if_active(int level)
 {
@@ -382,8 +379,15 @@ int u_trace_check_if_active(int level)
 
    int trace_active;
 
-        if (flag_init == 0) u_trace_init(0);
-   else if (u_trace_signal) u_trace_handlerSignal();
+        if (flag_init == 0) u_trace_init(false);
+   else if (u_trace_signal)
+      {
+      u_trace_signal = false;
+
+      u_trace_handlerSignal();
+
+      u_print_status_trace();
+      }
 
    U_INTERNAL_PRINT("u_trace_fd = %d level_active = %d u_trace_mask_level = %p", u_trace_fd, level_active, u_trace_mask_level)
 
@@ -414,21 +418,19 @@ void u_trace_check_init(void)
       }
    else
       {
-      u_trace_init(0);
+      u_trace_init(false);
       }
-
-   printInfo();
 }
 
 void u_trace_dump(const char* restrict format, uint32_t fmt_size, ...)
 {
-   U_INTERNAL_TRACE("u_trace_dump(%.*s,%u)", fmt_size, format, fmt_size)
-
    char buffer[8192];
    uint32_t buffer_len;
 
    va_list argp;
    va_start(argp, fmt_size);
+
+   U_INTERNAL_TRACE("u_trace_dump(%.*s,%u)", fmt_size, format, fmt_size)
 
    buffer_len = u__vsnprintf(buffer, sizeof(buffer), format, fmt_size, argp);
 
@@ -446,9 +448,9 @@ void u_trace_dump(const char* restrict format, uint32_t fmt_size, ...)
 
 void u_trace_initFork(void)
 {
-   int bsignal = (u_trace_fd != -1);
-
    U_INTERNAL_TRACE("u_trace_initFork()")
+
+   bool bsignal = (u_trace_fd != -1);
 
    if (u_trace_fd > STDERR_FILENO)
       {
@@ -463,8 +465,6 @@ void u_trace_initFork(void)
       }
 
    u_trace_init(bsignal);
-
-   printInfo();
 }
 
 /*

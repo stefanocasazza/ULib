@@ -144,13 +144,13 @@ public:
    // request state processing
 
    enum RequestStatusType {
-   // NOT_FOUND            = 0x0000,
-      FORBIDDEN            = 0x0001,
-      NO_CACHE             = 0x0002,
-      IN_FILE_CACHE        = 0x0004,
-      ALREADY_PROCESSED    = 0x0008,
-      FILE_CACHE_PROCESSED = 0x0010,
-      REQUEST_FROM_USERVER = 0x0020
+   // NOT_FOUND            = 0x00,
+      FORBIDDEN            = 0x01,
+      NO_CACHE             = 0x02,
+      IN_FILE_CACHE        = 0x04,
+      ALREADY_PROCESSED    = 0x08,
+      FILE_CACHE_PROCESSED = 0x10,
+      REQUEST_FROM_USERVER = 0x20
    };
 
    static bool isRequestNotFound()
@@ -168,46 +168,94 @@ public:
       U_RETURN(false);
       }
 
-   static void setRequestProcessed()
+   static bool isRequestAlreadyProcessed()
       {
-      U_TRACE_NO_PARAM(0, "UClientImage_Base::setRequestProcessed()")
+      U_TRACE_NO_PARAM(0, "UClientImage_Base::isRequestAlreadyProcessed()")
 
-      U_INTERNAL_DUMP("U_ClientImage_request = %d %B", U_ClientImage_request, U_ClientImage_request)
+      if ((U_ClientImage_request & ALREADY_PROCESSED) != 0) U_RETURN(true);
 
-      if ((U_ClientImage_request & ALREADY_PROCESSED) == 0) U_ClientImage_request |= ALREADY_PROCESSED;
+      U_RETURN(false);
       }
 
    static void setRequestNeedProcessing()
       {
       U_TRACE_NO_PARAM(0, "UClientImage_Base::setRequestNeedProcessing()")
 
-      U_INTERNAL_DUMP("U_ClientImage_request = %d %B", U_ClientImage_request, U_ClientImage_request)
+      U_ASSERT(isRequestAlreadyProcessed())
 
       U_ClientImage_request &= ~ALREADY_PROCESSED;
-
-      U_INTERNAL_DUMP("U_ClientImage_request = %d %B", U_ClientImage_request, U_ClientImage_request)
       }
 
    static bool isRequestNeedProcessing()
       {
       U_TRACE_NO_PARAM(0, "UClientImage_Base::isRequestNeedProcessing()")
 
-      U_INTERNAL_DUMP("U_ClientImage_request = %d %B", U_ClientImage_request, U_ClientImage_request)
-
       if ((U_ClientImage_request & ALREADY_PROCESSED) == 0) U_RETURN(true);
 
       U_RETURN(false);
       }
 
-   static bool isRequestAlreadyProcessed()
+   static void setRequestProcessed()
       {
-      U_TRACE_NO_PARAM(0, "UClientImage_Base::isRequestAlreadyProcessed()")
+      U_TRACE_NO_PARAM(0, "UClientImage_Base::setRequestProcessed()")
 
-      U_INTERNAL_DUMP("U_ClientImage_request = %d %B", U_ClientImage_request, U_ClientImage_request)
+      U_ASSERT(isRequestNeedProcessing())
 
-      if ((U_ClientImage_request & ALREADY_PROCESSED) != 0) U_RETURN(true);
+      U_ClientImage_request |= ALREADY_PROCESSED;
+      }
+
+   static bool isRequestForbidden()
+      {
+      U_TRACE_NO_PARAM(0, "UClientImage_Base::isRequestForbidden()")
+
+      if ((U_ClientImage_request & FORBIDDEN) != 0) U_RETURN(true);
 
       U_RETURN(false);
+      }
+
+   static void setRequestForbidden()
+      {
+      U_TRACE_NO_PARAM(0, "UClientImage_Base::setRequestForbidden()")
+
+      U_ASSERT_EQUALS(isRequestForbidden(), false)
+
+      U_ClientImage_request |= FORBIDDEN;
+      }
+
+   static bool isRequestInFileCache()
+      {
+      U_TRACE_NO_PARAM(0, "UClientImage_Base::isRequestInFileCache()")
+
+      if ((U_ClientImage_request & IN_FILE_CACHE) != 0) U_RETURN(true);
+
+      U_RETURN(false);
+      }
+
+   static void setRequestInFileCache()
+      {
+      U_TRACE_NO_PARAM(0, "UClientImage_Base::setRequestInFileCache()")
+
+      U_ASSERT_EQUALS(isRequestInFileCache(), false)
+
+      U_ClientImage_request |= IN_FILE_CACHE;
+      }
+
+   static bool isRequestFileCacheProcessed()
+      {
+      U_TRACE_NO_PARAM(0, "UClientImage_Base::isRequestFileCacheProcessed()")
+
+      if ((U_ClientImage_request & FILE_CACHE_PROCESSED) != 0) U_RETURN(true);
+
+      U_RETURN(false);
+      }
+
+   static void setRequestFileCacheProcessed()
+      {
+      U_TRACE_NO_PARAM(0, "UClientImage_Base::setRequestFileCacheProcessed()")
+
+      U_ASSERT_EQUALS(isRequestFileCacheProcessed(), false)
+
+      U_ClientImage_request |= FILE_CACHE_PROCESSED;
       }
 
    static bool isRequestRedirected()
@@ -223,66 +271,6 @@ public:
          {
          U_RETURN(true);
          }
-
-      U_RETURN(false);
-      }
-
-   static void setRequestForbidden()
-      {
-      U_TRACE_NO_PARAM(0, "UClientImage_Base::setRequestForbidden()")
-
-      U_INTERNAL_DUMP("U_ClientImage_request = %d %B", U_ClientImage_request, U_ClientImage_request)
-
-      U_ClientImage_request |= FORBIDDEN | ALREADY_PROCESSED;
-      }
-
-   static bool isRequestForbidden()
-      {
-      U_TRACE_NO_PARAM(0, "UClientImage_Base::isRequestForbidden()")
-
-      U_INTERNAL_DUMP("U_ClientImage_request = %d %B", U_ClientImage_request, U_ClientImage_request)
-
-      if ((U_ClientImage_request & FORBIDDEN) != 0) U_RETURN(true);
-
-      U_RETURN(false);
-      }
-
-   static void setRequestInFileCache()
-      {
-      U_TRACE_NO_PARAM(0, "UClientImage_Base::setRequestInFileCache()")
-
-      U_INTERNAL_DUMP("U_ClientImage_request = %d %B", U_ClientImage_request, U_ClientImage_request)
-
-      U_ClientImage_request |= IN_FILE_CACHE | ALREADY_PROCESSED;
-      }
-
-   static bool isRequestInFileCache()
-      {
-      U_TRACE_NO_PARAM(0, "UClientImage_Base::isRequestInFileCache()")
-
-      U_INTERNAL_DUMP("U_ClientImage_request = %d %B", U_ClientImage_request, U_ClientImage_request)
-
-      if ((U_ClientImage_request & IN_FILE_CACHE) != 0) U_RETURN(true);
-
-      U_RETURN(false);
-      }
-
-   static void setRequestFileCacheProcessed()
-      {
-      U_TRACE_NO_PARAM(0, "UClientImage_Base::setRequestFileCacheProcessed()")
-
-      U_INTERNAL_DUMP("U_ClientImage_request = %d %B", U_ClientImage_request, U_ClientImage_request)
-
-      U_ClientImage_request |= FILE_CACHE_PROCESSED;
-      }
-
-   static bool isRequestFileCacheProcessed()
-      {
-      U_TRACE_NO_PARAM(0, "UClientImage_Base::isRequestFileCacheProcessed()")
-
-      U_INTERNAL_DUMP("U_ClientImage_request = %d %B", U_ClientImage_request, U_ClientImage_request)
-
-      if ((U_ClientImage_request & FILE_CACHE_PROCESSED) != 0) U_RETURN(true);
 
       U_RETURN(false);
       }

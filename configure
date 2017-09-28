@@ -1071,6 +1071,7 @@ with_distcc
 with_libz
 enable_zip
 with_libzopfli
+with_libbrotli
 with_magic
 enable_ssl_staticlib_deps
 with_ssl
@@ -1839,6 +1840,7 @@ Optional Packages:
   --with-distcc           using distcc we must avoid to use some gcc flags (-mtune=native,-flto,...)
   --with-libz             use system     LIBZ library - [will check /usr /usr/local] [default=use if present]
   --with-libzopfli        use system   zopfli library - [will check /usr /usr/local] [default=use if present]
+  --with-libbrotli        use system   brotli library - [will check /usr /usr/local] [default=use if present]
   --with-magic            use system libmagic library - [will check /usr /usr/local] [default=use if present]
   --with-ssl              use system      SSL library - [will check /usr /usr/local] [default=use if present]
   --with-pcre             use system     PCRE library - [will check /usr /usr/local] [default=use if present]
@@ -27659,6 +27661,7 @@ $as_echo "${T_MD}C++ stuff:${T_ME}" >&6; }
      ulib_ldap_msg="no (--with-ldap)"
      ulib_libz_msg="no (--with-libz)"
 ulib_libzopfli_msg="no (--with-libzopfli)"
+ulib_libbrotli_msg="no (--with-libbrotli)"
    ulib_libtdb_msg="no (--with-libtdb)"
      ulib_curl_msg="no (--with-curl)"
     ulib_expat_msg="no (--with-expat)"
@@ -28853,6 +28856,7 @@ $as_echo "$use_distcc" >&6; }
 
 libz_version="unknow"
 libzopfli_version="unknown"
+libbrotli_version="unknown"
 libtdb_version="unknown"
 pcre_version="unknown"
 ldap_version="unknown"
@@ -29011,6 +29015,73 @@ $as_echo "#define USE_LIBZOPFLI 1" >>confdefs.h
 				CPPFLAGS="$CPPFLAGS -I$libzopflidir/include"
 				LDFLAGS="$LDFLAGS -L$libzopflidir/lib -Wl,-R$libzopflidir/lib";
 				PRG_LDFLAGS="$PRG_LDFLAGS -L$libzopflidir/lib";
+			fi
+		fi
+	fi
+
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if brotli library is wanted" >&5
+$as_echo_n "checking if brotli library is wanted... " >&6; }
+	wanted=1;
+	if test -z "$with_libbrotli" ; then
+		wanted=0;
+		if test -n "$CROSS_ENVIRONMENT" -o "$USP_FLAGS" = "-DAS_cpoll_cppsp_DO" -o "$enable_shared" = "no"; then
+			with_libbrotli="no";
+		else
+			with_libbrotli="${CROSS_ENVIRONMENT}/usr";
+		fi
+	fi
+
+# Check whether --with-libbrotli was given.
+if test "${with_libbrotli+set}" = set; then :
+  withval=$with_libbrotli;
+	if test "$withval" = "no"; then
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+	else
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+		for dir in $withval ${CROSS_ENVIRONMENT}/ ${CROSS_ENVIRONMENT}/usr ${CROSS_ENVIRONMENT}/usr/local; do
+			libbrotlidir="$dir"
+			if test -f "$dir/include/brotli/encode.h"; then
+				found_libbrotli="yes";
+				break;
+			fi
+		done
+		if test x_$found_libbrotli != x_yes; then
+			msg="Cannot find libbrotli library";
+			if test $wanted = 1; then
+				as_fn_error $? "$msg" "$LINENO" 5
+			else
+				{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $msg" >&5
+$as_echo "$msg" >&6; }
+			fi
+		else
+			echo "${T_MD}libbrotli found in $libbrotlidir${T_ME}"
+			USE_LIBBROTLI=yes
+
+$as_echo "#define USE_LIBBROTLI 1" >>confdefs.h
+
+
+			if test -z "$CROSS_ENVIRONMENT" -a x_$PKG_CONFIG != x_no; then
+				libbrotli_version=$(pkg-config --modversion libbrotlienc 2>/dev/null)
+			fi
+			if test -z "${libbrotli_version}"; then
+				libbrotli_version=$(ls $libbrotlidir/lib*/libbrotli*.so.*.* 2>/dev/null | head -n 1 | awk -F'.so.' '{n=2; print $n}' 2>/dev/null)
+			fi
+			if test -z "${libzopfli_version}"; then
+				libzopfli_version="unknown"
+			fi
+         ULIB_LIBS="$ULIB_LIBS -lbrotlidec -lbrotlienc";
+			if test $libbrotlidir != "${CROSS_ENVIRONMENT}/" -a $libbrotlidir != "${CROSS_ENVIRONMENT}/usr" -a $libbrotlidir != "${CROSS_ENVIRONMENT}/usr/local"; then
+				CPPFLAGS="$CPPFLAGS -I$libbrotlidir/include"
+				LDFLAGS="$LDFLAGS -L$libbrotlidir/lib -Wl,-R$libbrotlidir/lib";
+				PRG_LDFLAGS="$PRG_LDFLAGS -L$libbrotlidir/lib";
 			fi
 		fi
 	fi
@@ -30503,6 +30574,10 @@ if test "$USE_LIBZOPFLI" = "yes"; then
 	ulib_libzopfli_msg="yes ( $libzopfli_version )"
 fi
 
+if test "$USE_LIBBROTLI" = "yes"; then
+	ulib_libbrotli_msg="yes ( $libbrotli_version )"
+fi
+
 if test "$USE_LIBTDB" = "yes"; then
 	ulib_libtdb_msg="yes ( $libtdb_version )"
 	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for tdb_traverse_read in -ltdb" >&5
@@ -31965,6 +32040,11 @@ _ACEOF
 
 cat >>confdefs.h <<_ACEOF
 #define _LIBZOPFLI_VERSION "$libzopfli_version"
+_ACEOF
+
+
+cat >>confdefs.h <<_ACEOF
+#define _LIBBROTLI_VERSION "$libbrotli_version"
 _ACEOF
 
 
@@ -35099,6 +35179,7 @@ ULIB_SYSCONFDIR="$u_sysconfdir"
 
            LIBZ support: ${ulib_libz_msg}
       LIBZOPFLI support: ${ulib_libzopfli_msg}
+      LIBBROTLI support: ${ulib_libbrotli_msg}
          LIBTDB support: ${ulib_libtdb_msg}
            PCRE support: ${ulib_pcre_msg}
             SSL support: ${ulib_ssl_msg}
@@ -35161,6 +35242,7 @@ $as_echo "$as_me: Configured to build src/ulib/lib${ULIB}:
 
            LIBZ support: ${ulib_libz_msg}
       LIBZOPFLI support: ${ulib_libzopfli_msg}
+      LIBBROTLI support: ${ulib_libbrotli_msg}
          LIBTDB support: ${ulib_libtdb_msg}
            PCRE support: ${ulib_pcre_msg}
             SSL support: ${ulib_ssl_msg}

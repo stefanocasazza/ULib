@@ -257,7 +257,7 @@ unsigned UPKCS7::getSignerCertificates(UVector<UCertificate*>& vec, int flags) c
  * flags    is an optional set of flags (PKCS7_TEXT, PKCS7_NOCERTS, PKCS7_DETACHED, PKCS7_BINARY, ...)
  */
 
-PKCS7* UPKCS7::sign(const UString& data, const UString& signcert, const UString& pkey, const UString& passwd, const UString& certs, int flags)
+PKCS7* UPKCS7::sign(const UString& data, const UString& signcert, UString& pkey, const UString& passwd, const UString& certs, int flags)
 {
    U_TRACE(1, "UPKCS7::sign(%V,%V,%V,%V,%V,%d)", data.rep, signcert.rep, pkey.rep, passwd.rep, certs.rep, flags)
 

@@ -247,7 +247,7 @@ struct U_EXPORT UServices {
    static UString getFileName(long hash, bool crl = false);
    static ENGINE* loadEngine(const char* id, unsigned int flags);
    static bool setupOpenSSLStore(const char* CAfile = U_NULLPTR, const char* CApath = U_NULLPTR, int store_flags = U_STORE_FLAGS);
-   static EVP_PKEY* loadKey(const UString& x, const char* format, bool _private = true, const char* password = U_NULLPTR, ENGINE* e = U_NULLPTR);
+   static EVP_PKEY* loadKey(UString& x, const char* format, bool _private = true, const char* password = U_NULLPTR, ENGINE* e = U_NULLPTR);
 
    /**
     * data   is the data to be signed
@@ -255,8 +255,8 @@ struct U_EXPORT UServices {
     * passwd is the corresponsding password for the private key
     */
 
-   static bool    verifySignature(  int alg, const UString& data, const UString& signature, const UString& pkey,                                    ENGINE* e = U_NULLPTR);
-   static UString getSignatureValue(int alg, const UString& data,                           const UString& pkey, const UString& passwd, int base64, ENGINE* e = U_NULLPTR);
+   static bool    verifySignature(  int alg, const UString& data, const UString& signature, UString& pkey,                              ENGINE* e = U_NULLPTR);
+   static UString getSignatureValue(int alg, const UString& data,                           UString& pkey, UString& passwd, int base64, ENGINE* e = U_NULLPTR);
 #endif
 };
 

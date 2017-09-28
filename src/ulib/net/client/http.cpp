@@ -204,8 +204,8 @@
 
 #define U_MAX_REDIRECTS 10 // HTTP 1.0 used to suggest 5
 
-bool             UHttpClient_Base::server_context_flag;
-struct uhttpinfo UHttpClient_Base::u_http_info_save;
+bool UHttpClient_Base::data_chunked;
+bool UHttpClient_Base::server_context_flag;
 
 UHttpClient_Base::UHttpClient_Base(UFileConfig* _cfg) : UClient_Base(_cfg)
 {
@@ -228,6 +228,8 @@ void UHttpClient_Base::reset()
    U_TRACE_NO_PARAM(0, "UHttpClient_Base::reset()")
 
    body.clear();
+
+   data_chunked = false;
 
     requestHeader->clear();
    responseHeader->clear();
@@ -874,14 +876,14 @@ bool UHttpClient_Base::sendRequestEngine()
 
          if (U_http_info.clength == 0)
             {
-            bool is_chunked = responseHeader->isChunked();
+            data_chunked = responseHeader->isChunked();
 
-            if (is_chunked) U_http_flag |=  HTTP_IS_DATA_CHUNKED;
-            else            U_http_flag &= ~HTTP_IS_DATA_CHUNKED;
+            if (data_chunked) U_http_flag |=  HTTP_IS_DATA_CHUNKED;
+            else              U_http_flag &= ~HTTP_IS_DATA_CHUNKED;
 
-            U_INTERNAL_DUMP("is_chunked = %b U_http_data_chunked = %b", is_chunked, U_http_data_chunked)
+            U_INTERNAL_DUMP("data_chunked = %b U_http_data_chunked = %b", data_chunked, U_http_data_chunked)
 
-            if (is_chunked == false) U_RETURN(true);
+            if (data_chunked == false) U_RETURN(true);
             }
 
          if (UHTTP::readBodyResponse(UClient_Base::socket, &response, body)) U_RETURN(true);
@@ -916,11 +918,12 @@ bool UHttpClient_Base::sendRequest()
 
    bool ok;
    uint64_t flag_save = 0;
+   struct uhttpinfo http_info_save;
 
    if (server_context_flag)
       {
-      u_http_info_save = U_http_info;
-             flag_save = u_clientimage_info.flag.u;
+           flag_save = u_clientimage_info.flag.u;
+      http_info_save = u_clientimage_info.http_info;
       }
 
    if (UClient_Base::iovcnt == 0)
@@ -944,10 +947,9 @@ bool UHttpClient_Base::sendRequest()
 
    if (server_context_flag)
       {
-      u_clientimage_info.flag.u = flag_save;
-
-                    u_http_info_save.nResponseCode = U_http_info.nResponseCode;
-      U_http_info = u_http_info_save;
+      u_clientimage_info.flag.u                  = flag_save;
+      u_clientimage_info.http_info.nResponseCode = U_http_info.nResponseCode;
+      u_clientimage_info.http_info               = http_info_save;
       }
 
    U_INTERNAL_DUMP("server_context_flag = %b U_ClientImage_close = %b", server_context_flag, U_ClientImage_close)

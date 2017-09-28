@@ -79,157 +79,184 @@ int UProxyPlugIn::handlerRequest()
 {
    U_TRACE_NO_PARAM(0, "UProxyPlugIn::handlerRequest()")
 
-   if (UHTTP::isProxyRequest())
+   if (UHTTP::isProxyRequest() == false) U_RETURN(U_PLUGIN_HANDLER_OK);
+
+   // NB: process the HTTP PROXY request with fork....
+
+   if (UServer_Base::startParallelization()) U_RETURN(U_PLUGIN_HANDLER_PROCESSED); // parent
+
+   bool output_to_client = false,
+        output_to_server = false;
+
+   if (UHTTP::service->command) // check if it is required an action...
       {
-      bool output_to_client = false,
-           output_to_server = false;
+      U_ASSERT(UClientImage_Base::environment->empty())
 
-      if (UHTTP::service->command) // check if it is required an action...
+      if (UHTTP::getCGIEnvironment(*UClientImage_Base::environment, U_GENERIC))
          {
-         U_ASSERT(UClientImage_Base::environment->empty())
+         if (UHTTP::service->environment) UClientImage_Base::environment->append(UHTTP::service->environment);
 
-         if (UHTTP::getCGIEnvironment(*UClientImage_Base::environment, U_GENERIC))
+         if (UHTTP::processCGIRequest(UHTTP::service->command) &&
+             UHTTP::processCGIOutput(false, false))
             {
-            if (UHTTP::service->environment) UClientImage_Base::environment->append(UHTTP::service->environment);
-
-            if (UHTTP::processCGIRequest(UHTTP::service->command) &&
-                UHTTP::processCGIOutput(false, false))
-               {
-               if (UHTTP::service->isResponseForClient()) output_to_client = true; // send output as response to client...
-               else                                       output_to_server = true; // send output as request  to server...
-               }
-
-            UClientImage_Base::environment->setEmpty();
+            if (UHTTP::service->isResponseForClient()) output_to_client = true; // send output as response to client...
+            else                                       output_to_server = true; // send output as request  to server...
             }
 
-         if (output_to_client == false &&
-             output_to_server == false)
-            {
-            if (U_http_info.nResponseCode == 0 ||
-                U_http_info.nResponseCode == HTTP_OK)
-               {
-               UHTTP::setInternalError();
-               }
-
-            U_RETURN(U_PLUGIN_HANDLER_PROCESSED);
-            }
+         UClientImage_Base::environment->setEmpty();
          }
 
-      U_INTERNAL_DUMP("output_to_server = %b output_to_client = %b", output_to_server, output_to_client)
-
-      if (output_to_server) // check if the kind of request is like HTTP protocol (client/server)...
+      if (output_to_client == false &&
+          output_to_server == false)
          {
-         U_INTERNAL_ASSERT(*UClientImage_Base::wbuffer)
-
-         if (UHTTP::scanfHeaderResponse(U_STRING_TO_PARAM(*UClientImage_Base::wbuffer)) == false)
+         if (U_http_info.nResponseCode == 0 ||
+             U_http_info.nResponseCode == HTTP_OK)
             {
-            UModProxyService::setMsgError(UModProxyService::INTERNAL_ERROR);
-
-            U_RETURN(U_PLUGIN_HANDLER_PROCESSED);
+            UHTTP::setInternalError();
             }
 
-         U_INTERNAL_DUMP("uri = %.*S", U_HTTP_URI_TO_TRACE)
+         U_RETURN(U_PLUGIN_HANDLER_PROCESSED);
          }
-
-      if (output_to_client == false)
-         {
-         // before connect to server check if server and/or port to connect has changed...
-
-         if (client_http->setHostPort(UHTTP::service->getServer(), UHTTP::service->getPort()) &&
-             client_http->UClient_Base::isConnected())
-            {
-            client_http->UClient_Base::close();
-            }
-
-         // --------------------------------------------------------------------------------------------------------------------
-         // A WebSocket is a long-lived connection, lasting hours or days. If each WebSocket proxy holds the original thread,
-         // won't that consume all of the workers very quickly? It looks as if my server, with 16 workers, will be unable to
-         // handle either the 17th WebSocket proxy or any other HTTP request. That's not really practical in a production system.
-         // A WebSocket server could potentially handle hundreds or even thousands of simultaneous connections, which would mean
-         // the same number of proxies in server...
-         // --------------------------------------------------------------------------------------------------------------------
-
-         if (UHTTP::service->isWebSocket())
-            {
-            UWebSocket::checkForInitialData(); // check if we have read more data than necessary...
-
-            while (UWebSocket::handleDataFraming(UServer_Base::csocket) == STATUS_CODE_OK                                                            &&
-                   (client_http->UClient_Base::prepareRequest(*UClientImage_Base::wbuffer), client_http->UClient_Base::sendRequestAndReadResponse()) &&
-                   UWebSocket::sendData(UWebSocket::message_type, (const unsigned char*)U_STRING_TO_PARAM(client_http->UClient_Base::response)))
-               {
-               client_http->UClient_Base::clearData();
-
-               UClientImage_Base::wbuffer->setEmpty();
-               }
-
-            U_RETURN(U_PLUGIN_HANDLER_ERROR);
-            }
-
-                                                client_http->setFollowRedirects(UHTTP::service->isFollowRedirects(), true);
-         if (UHTTP::service->isAuthorization()) client_http->setRequestPasswordAuthentication(UHTTP::service->getUser(), UHTTP::service->getPassword());
-
-         // connect to server, send request and get response
-
-         if (output_to_server == false) *UClientImage_Base::wbuffer = *UClientImage_Base::request;
-
-         bool result = client_http->sendRequest(*UClientImage_Base::wbuffer);
-
-         *UClientImage_Base::wbuffer = client_http->getResponse();
-
-         if (result)
-            {
-            UClientImage_Base::setNoHeaderForResponse();
-
-            U_INTERNAL_DUMP("U_http_data_chunked = %b U_ClientImage_close = %b", U_http_data_chunked, U_ClientImage_close)
-
-            if (U_http_data_chunked == false)
-               {
-               if (UHTTP::service->isReplaceResponse()) *UClientImage_Base::wbuffer = UHTTP::service->replaceResponse(*UClientImage_Base::wbuffer); 
-               }
-            else
-               {
-               U_http_flag &= ~HTTP_IS_DATA_CHUNKED;
-
-               U_INTERNAL_DUMP("U_http_data_chunked = %b", U_http_data_chunked)
-
-               // NB: in this case we broke the transparency of the response to avoid a duplication of effort to read chunked data...
-
-               UString body = client_http->getContent();
-
-               U_INTERNAL_ASSERT(body)
-
-               if (UHTTP::service->isReplaceResponse()) body = UHTTP::service->replaceResponse(body); 
-
-               UString content_type = client_http->getResponseHeader()->getContentType();
-
-               uint32_t sz = content_type.size() + U_CONSTANT_SIZE(U_CRLF);
-
-               content_type.size_adjust_force(sz);
-
-               U_ASSERT(UStringExt::endsWith(content_type, U_CONSTANT_TO_PARAM(U_CRLF)))
-
-#           ifdef USE_LIBZ
-               if (U_http_is_accept_gzip_save &&
-                   body.size() > U_MIN_SIZE_FOR_DEFLATE)
-                  {
-                  body = UStringExt::deflate(body, 1);
-                  }
-#           endif
-
-               UHTTP::setResponse(true, content_type, &body);
-               }
-            }
-#     ifndef U_LOG_DISABLE
-         else if (UServer_Base::isLog()) UServer_Base::log->logResponse(*UClientImage_Base::wbuffer, U_CONSTANT_TO_PARAM(""), 0);
-#     endif
-
-         client_http->reset(); // reset reference to request...
-         }
-
-      U_RETURN(U_PLUGIN_HANDLER_PROCESSED);
       }
 
-   U_RETURN(U_PLUGIN_HANDLER_OK);
+   U_INTERNAL_DUMP("output_to_server = %b output_to_client = %b", output_to_server, output_to_client)
+
+   if (output_to_server) // check if the kind of request is like HTTP protocol (client/server)...
+      {
+      U_INTERNAL_ASSERT(*UClientImage_Base::wbuffer)
+
+      if (UHTTP::scanfHeaderResponse(U_STRING_TO_PARAM(*UClientImage_Base::wbuffer)) == false)
+         {
+         UModProxyService::setMsgError(UModProxyService::INTERNAL_ERROR);
+
+         U_RETURN(U_PLUGIN_HANDLER_PROCESSED);
+         }
+
+      U_INTERNAL_DUMP("uri = %.*S", U_HTTP_URI_TO_TRACE)
+      }
+
+   if (output_to_client) UClientImage_Base::setRequestProcessed();
+   else
+      {
+      // before connect to server check if server and/or port to connect has changed...
+
+      if (client_http->setHostPort(UHTTP::service->getServer(), UHTTP::service->getPort()) &&
+          client_http->UClient_Base::isConnected())
+         {
+         client_http->UClient_Base::close();
+         }
+
+      // --------------------------------------------------------------------------------------------------------------------
+      // A WebSocket is a long-lived connection, lasting hours or days. If each WebSocket proxy holds the original thread,
+      // won't that consume all of the workers very quickly? It looks as if my server, with 16 workers, will be unable to
+      // handle either the 17th WebSocket proxy or any other HTTP request. That's not really practical in a production system.
+      // A WebSocket server could potentially handle hundreds or even thousands of simultaneous connections, which would mean
+      // the same number of proxies in server...
+      // --------------------------------------------------------------------------------------------------------------------
+
+      if (UHTTP::service->isWebSocket())
+         {
+         UWebSocket::checkForInitialData(); // check if we have read more data than necessary...
+
+         while (UWebSocket::handleDataFraming(UServer_Base::csocket) == STATUS_CODE_OK                                                            &&
+                (client_http->UClient_Base::prepareRequest(*UClientImage_Base::wbuffer), client_http->UClient_Base::sendRequestAndReadResponse()) &&
+                UWebSocket::sendData(UWebSocket::message_type, (const unsigned char*)U_STRING_TO_PARAM(client_http->UClient_Base::response)))
+            {
+            client_http->UClient_Base::clearData();
+
+            UClientImage_Base::wbuffer->setEmpty();
+            }
+
+         U_RETURN(U_PLUGIN_HANDLER_ERROR);
+         }
+
+                                             client_http->setFollowRedirects(UHTTP::service->isFollowRedirects(), true);
+      if (UHTTP::service->isAuthorization()) client_http->setRequestPasswordAuthentication(UHTTP::service->getUser(), UHTTP::service->getPassword());
+
+      // connect to server, send request and get response
+
+      if (output_to_server == false) *UClientImage_Base::wbuffer = *UClientImage_Base::request;
+
+      bool result = client_http->sendRequest(*UClientImage_Base::wbuffer);
+
+      *UClientImage_Base::wbuffer = client_http->getResponse();
+
+      if (result == false)
+         {
+         UClientImage_Base::setRequestProcessed();
+
+#     ifndef U_LOG_DISABLE
+         if (UServer_Base::isLog()) UServer_Base::log->logResponse(*UClientImage_Base::wbuffer, U_CONSTANT_TO_PARAM(""), 0);
+#     endif
+         }
+      else
+         {
+         UClientImage_Base::setNoHeaderForResponse();
+
+         U_INTERNAL_DUMP("U_http_data_chunked = %b U_ClientImage_close = %b client_http->data_chunked = %b", U_http_data_chunked, U_ClientImage_close, client_http->data_chunked)
+
+         if (client_http->data_chunked == false)
+            {
+            if (UHTTP::service->isReplaceResponse()) *UClientImage_Base::wbuffer = UHTTP::service->replaceResponse(*UClientImage_Base::wbuffer); 
+
+            UClientImage_Base::setRequestProcessed();
+            }
+         else
+            {
+            // NB: in this case we broke the transparency of the response to avoid a duplication of effort to read chunked data...
+
+            uint32_t sz, csz, ratio;
+            UString body = client_http->getContent();
+
+            U_INTERNAL_ASSERT(body)
+
+            if (UHTTP::service->isReplaceResponse()) body = UHTTP::service->replaceResponse(body); 
+
+            UString content_type = client_http->getResponseHeader()->getContentType();
+
+            content_type.rep->_length += 2; // NB: we add "\r\n"...
+
+#        if defined(USE_LIBZ) || defined(USE_LIBBROTLI)
+            if ((sz = body.size()) > U_MIN_SIZE_FOR_DEFLATE)
+               {
+               UString compressed;
+
+               U_INTERNAL_DUMP("U_http_is_accept_gzip = %b U_http_is_accept_brotli = %b", U_http_is_accept_gzip, U_http_is_accept_brotli)
+
+#           ifdef USE_LIBBROTLI
+               if (U_http_is_accept_brotli &&
+                   (compressed = UStringExt::brotli(body, 6)))
+                  {
+                  goto next;
+                  }
+#           endif
+#           ifdef USE_LIBZ
+               if (U_http_is_accept_gzip) compressed = UStringExt::deflate(body, 1);
+#           endif
+
+next:          csz = compressed.size(), ratio = (csz * 100U) / sz;
+
+               U_INTERNAL_DUMP("ratio = %u (%u%%)", ratio, 100-ratio)
+
+               // NB: we accept new data only if ratio compression is better than 15%...
+
+               if (ratio < 85)
+                  {
+                  body = compressed;
+
+                  U_SRV_LOG("proxy response: %u bytes - (%u%%) compression ratio", csz, 100-ratio);
+                  }
+               }
+#        endif
+
+            UHTTP::setResponse(true, content_type, &body);
+            }
+         }
+
+      client_http->reset(); // reset reference to request...
+      }
+
+   U_RETURN(U_PLUGIN_HANDLER_PROCESSED);
 }
 
 // DEBUG

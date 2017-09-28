@@ -4832,7 +4832,6 @@ static struct mimeentry mimetab_r[] = {
 };
 
 static struct mimeentry mimetab_s[] = {
-   MIME_ENTRY( "svg",        "image/svg+xml" ), /* (svg, svgz) */
    MIME_ENTRY( "swf",        "application/x-shockwave-flash" ),
    MIME_ENTRY( "sgm",        "text/sgml" ), /* (sgml) */
    MIME_ENTRY( "sh",         "application/x-sh" ),
@@ -5023,6 +5022,7 @@ const char* u_get_mimetype(const char* restrict suffix, int* pmime_index)
       case U_MULTICHAR_CONSTANT32('c','s','p',0):
       case U_MULTICHAR_CONSTANT32('c','g','i',0):
       case U_MULTICHAR_CONSTANT32('p','h','p',0):
+      case U_MULTICHAR_CONSTANT32('s','v','g',0):
          {
          if (pmime_index)
             {
@@ -5032,6 +5032,7 @@ const char* u_get_mimetype(const char* restrict suffix, int* pmime_index)
                case U_MULTICHAR_CONSTANT32('u','s','p',0): *pmime_index = U_usp; break;
                case U_MULTICHAR_CONSTANT32('c','s','p',0): *pmime_index = U_csp; break;
                case U_MULTICHAR_CONSTANT32('c','g','i',0): *pmime_index = U_cgi; break;
+               case U_MULTICHAR_CONSTANT32('s','v','g',0): *pmime_index = U_svg; return "image/svg+xml";
                case U_MULTICHAR_CONSTANT32('p','h','p',0): *pmime_index = U_php; return "application/x-httpd-php";
                }
             }
@@ -5047,6 +5048,12 @@ const char* u_get_mimetype(const char* restrict suffix, int* pmime_index)
          if (pmime_index) *pmime_index = U_gz;
 
          return "application/x-gzip";
+         }
+      case U_MULTICHAR_CONSTANT16('b','r'):
+         {
+         if (pmime_index) *pmime_index = U_br;
+
+         return "application/x-brotli";
          }
       case U_MULTICHAR_CONSTANT16('p','l'):
          {

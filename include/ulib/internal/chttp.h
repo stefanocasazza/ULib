@@ -220,6 +220,7 @@ extern U_EXPORT uclientimage_info u_clientimage_info;
 #define U_http_method_type u_clientimage_info.http_info.method_type
 
 #define U_line_terminator_len                    u_clientimage_info.flag.c[0]
+
 #define U_ClientImage_state                      u_clientimage_info.flag.c[1]
 #define U_ClientImage_close                      u_clientimage_info.flag.c[2]
 #define U_ClientImage_request                    u_clientimage_info.flag.c[3]
@@ -240,33 +241,29 @@ extern U_EXPORT uclientimage_info u_clientimage_info;
 #define U_http_ip_client_len       u_clientimage_info.http_info.flag[ 9]
 #define U_http_content_type_len    u_clientimage_info.http_info.flag[10]
 #define U_http_accept_language_len u_clientimage_info.http_info.flag[11]
+#define U_http_flag                u_clientimage_info.http_info.flag[12]
 
-#define U_http_flag            u_clientimage_info.http_info.flag[12]
-#define U_http_flag_save UHttpClient_Base::u_http_info_save.flag[12]
-
-#define U_http_len_user1 u_clientimage_info.http_info.flag[13]
-#define U_http_len_user2 u_clientimage_info.http_info.flag[14]
-#define U_http_len_user3 u_clientimage_info.http_info.flag[15]
+#define U_http_len_user1           u_clientimage_info.http_info.flag[13]
+#define U_http_len_user2           u_clientimage_info.http_info.flag[14]
+#define U_http_len_user3           u_clientimage_info.http_info.flag[15]
 
 enum HttpRequestType {
-   HTTP_IS_KEEP_ALIVE          = 0x0001,
-   HTTP_IS_DATA_CHUNKED        = 0x0002,
-   HTTP_IS_ACCEPT_GZIP         = 0x0004,
-   HTTP_IS_NOCACHE_FILE        = 0x0008,
-   HTTP_IS_RESPONSE_GZIP       = 0x0010,
-   HTTP_IS_REQUEST_NOSTAT      = 0x0020,
-   HTTP_METHOD_NOT_IMPLEMENTED = 0x0040
+   HTTP_IS_KEEP_ALIVE          = 0x01,
+   HTTP_IS_DATA_CHUNKED        = 0x02,
+   HTTP_IS_ACCEPT_GZIP         = 0x04,
+   HTTP_IS_ACCEPT_BROTLI       = 0x08,
+   HTTP_IS_NOCACHE_FILE        = 0x10,
+   HTTP_IS_REQUEST_NOSTAT      = 0x20,
+   HTTP_METHOD_NOT_IMPLEMENTED = 0x40
 };
 
 #define U_http_keep_alive             ((U_http_flag & HTTP_IS_KEEP_ALIVE)          != 0)
 #define U_http_data_chunked           ((U_http_flag & HTTP_IS_DATA_CHUNKED)        != 0)
+#define U_http_is_accept_gzip         ((U_http_flag & HTTP_IS_ACCEPT_GZIP)         != 0)
+#define U_http_is_accept_brotli       ((U_http_flag & HTTP_IS_ACCEPT_BROTLI)       != 0)
 #define U_http_is_nocache_file        ((U_http_flag & HTTP_IS_NOCACHE_FILE)        != 0)
-#define U_http_is_response_gzip       ((U_http_flag & HTTP_IS_RESPONSE_GZIP)       != 0)
 #define U_http_is_request_nostat      ((U_http_flag & HTTP_IS_REQUEST_NOSTAT)      != 0)
 #define U_http_method_not_implemented ((U_http_flag & HTTP_METHOD_NOT_IMPLEMENTED) != 0)
-
-#define U_http_is_accept_gzip         ((U_http_flag      & HTTP_IS_ACCEPT_GZIP)    != 0)
-#define U_http_is_accept_gzip_save    ((U_http_flag_save & HTTP_IS_ACCEPT_GZIP)    != 0)
 
 #define U_HTTP_INFO_INIT(c)  (void) U_SYSCALL(memset, "%p,%d,%u", &(u_clientimage_info.http_info),               c, sizeof(uhttpinfo))
 #define U_HTTP_INFO_RESET(c) (void) U_SYSCALL(memset, "%p,%d,%u", &(u_clientimage_info.http_info.nResponseCode), c, 52)

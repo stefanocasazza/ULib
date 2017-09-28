@@ -70,12 +70,7 @@ int U_EXPORT main(int argc, char* argv[])
 
    U_TRACE(5, "main(%d)", argc)
 
-   if (argc < 2)
-      {
-      raise(SIGUSR2); // trace on/off
-
-      u_trace_handlerSignal();
-      }
+   if (argc < 2) raise(SIGUSR2); // trace on/off
 
    int c = routine1(2, 3);
 

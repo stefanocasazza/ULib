@@ -230,7 +230,7 @@ public:
       U_RETURN(false);
       }
 
-   static bool casellaUpdate(const UString& key)
+   static bool casellaUpdate(UString& key)
       {
       U_TRACE(5, "Application::casellaUpdate(%.*S)", U_STRING_TO_TRACE(key))
 
@@ -380,7 +380,7 @@ public:
 
          if (*ptipo == ' ')
             {
-            (void) callForAllEntryField(U_destinatari, Application::casellaUpdate);
+            (void) callForAllEntryField(U_destinatari, (bPFstr)Application::casellaUpdate);
 
             return;
             }

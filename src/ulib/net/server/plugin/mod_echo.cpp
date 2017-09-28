@@ -42,6 +42,7 @@ int UEchoPlugIn::handlerRequest()
 
    UClientImage_Base::body->clear();
 
+   UClientImage_Base::setRequestProcessed();
    UClientImage_Base::setNoHeaderForResponse();
 
 #ifndef U_ECHO_RESPONSE_FOR_TEST

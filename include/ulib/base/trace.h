@@ -26,8 +26,8 @@ extern "C" {
 #endif
 
 extern U_EXPORT int      u_trace_fd;
-extern U_EXPORT int      u_trace_signal;
 extern U_EXPORT int      u_trace_suspend;  /* on-off */
+extern U_EXPORT bool     u_trace_signal;
 extern U_EXPORT char     u_trace_tab[256]; /* 256 max indent */
 extern U_EXPORT void*    u_trace_mask_level;
 extern U_EXPORT uint32_t u_trace_num_tab;
@@ -37,7 +37,8 @@ U_EXPORT void u_trace_close(void);
 U_EXPORT void u_trace_unlock(void);
 U_EXPORT void u_trace_initFork(void);
 U_EXPORT void u_trace_check_init(void);
-U_EXPORT void u_trace_init(int bsignal);
+U_EXPORT void u_print_status_trace(void);
+U_EXPORT void u_trace_init(bool bsignal);
 U_EXPORT void u_trace_handlerSignal(void);
 U_EXPORT void u_trace_check_if_interrupt(void); /* check for context manage signal event - interrupt */
 U_EXPORT int  u_trace_check_if_active(int level);

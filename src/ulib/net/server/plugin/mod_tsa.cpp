@@ -86,19 +86,18 @@ int UTsaPlugIn::handlerRequest()
 
    if (UHTTP::isTSARequest())
       {
-      // process TSA request
+      // NB: process the HTTP tsa request with fork....
+
+      if (UServer_Base::startParallelization()) U_RETURN(U_PLUGIN_HANDLER_PROCESSED); // parent 
 
       UString body;
 
-      if (command->execute(UClientImage_Base::body, &body))
+      if (command->execute(UClientImage_Base::body, &body) == false) UHTTP::setInternalError();
+      else
          {
          U_http_info.nResponseCode = HTTP_OK;
 
          UHTTP::setResponse(true, *UString::str_ctype_tsa, &body);
-         }
-      else
-         {
-         UHTTP::setInternalError();
          }
 
 #  ifndef U_LOG_DISABLE

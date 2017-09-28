@@ -897,6 +897,7 @@ void UStringRep::_release()
                 str -= resto;
             _length += resto;
             }
+      // else _length += PAGESIZE;
 
          (void) U_SYSCALL(munmap, "%p,%lu", (void*)str, _length);
          }
@@ -1275,6 +1276,7 @@ void UString::mmap(const char* map, uint32_t len)
       }
 
    U_INTERNAL_ASSERT(invariant())
+// U_INTERNAL_ASSERT(isNullTerminated())
 }
 
 char* UString::__replace(uint32_t pos, uint32_t n1, uint32_t n2)
@@ -1347,7 +1349,7 @@ void UString::unQuote()
 
    uint32_t len = rep->_length;
 
-        if (len            <= 2) clear();
+        if (len            <= 2) _assign(UStringRep::string_rep_null);
    else if (rep->_capacity == 0) rep->unQuote();
    else
       {
@@ -1416,44 +1418,6 @@ UString& UString::append(uint32_t n, char c)
    U_INTERNAL_ASSERT(invariant())
 
    return *this;
-}
-
-void UString::duplicate() const
-{
-   U_TRACE_NO_PARAM(0, "UString::duplicate()")
-
-   uint32_t sz = size();
-
-   if (sz) ((UString*)this)->_set(UStringRep::create(sz, sz, rep->str));
-   else
-      {
-      ((UString*)this)->_set(UStringRep::create(0, 100U, U_NULLPTR));
-
-      *(((UString*)this)->UString::rep->data()) = '\0';
-      }
-
-   U_INTERNAL_ASSERT(invariant())
-   U_INTERNAL_ASSERT(isNullTerminated())
-}
-
-void UString::setNullTerminated() const
-{
-   U_TRACE_NO_PARAM(0, "UString::setNullTerminated()")
-
-   // A file is mapped in multiples of the page size. For a file that is not a multiple of the page size,
-   // the remaining memory is zeroed when mapped, and writes to that region are not written out to the file
-
-   if (writeable() == false ||
-       (isMmap() && (rep->_length % PAGESIZE) == 0))
-      {
-      duplicate();
-      }
-   else
-      {
-      rep->setNullTerminated();
-      }
-
-   U_ASSERT_EQUALS(u__strlen(rep->str, __PRETTY_FUNCTION__), rep->_length)
 }
 
 void UString::resize(uint32_t n, unsigned char c)
@@ -1848,7 +1812,11 @@ float UStringRep::strtof() const
       {
       char* eos = (char*)str + _length;
 
-      if (isNullTerminated() == false && writeable()) *eos = '\0';
+      if (isNullTerminated() == false &&
+          writeable())
+         {
+         *eos = '\0';
+         }
 
 #  ifndef DEBUG
       float result = ::strtof(str, 0);
@@ -1878,7 +1846,11 @@ long double UStringRep::strtold() const
       {
       char* eos = (char*)str + _length;
 
-      if (isNullTerminated() == false && writeable()) *eos = '\0';
+      if (isNullTerminated() == false &&
+          writeable())
+         {
+         *eos = '\0';
+         }
 
 #  ifndef DEBUG
       long double result = ::strtold(str, U_NULLPTR);

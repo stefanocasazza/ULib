@@ -77,9 +77,7 @@ public:
       {
       U_TRACE(5, "Element::setFileName(%.*S)", U_STRING_TO_TRACE(namefile))
 
-      filename = namefile;
-
-      filename.duplicate();
+      filename = namefile.copy();
 
       namefile.clear();
       }

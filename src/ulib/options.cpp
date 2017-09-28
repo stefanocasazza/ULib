@@ -53,9 +53,14 @@
 #  define LIBZ_ENABLE        "no"
 #endif
 #ifdef USE_LIBZOPFLI
-#  define LIBZOPFLI_ENABLE   "yes ( " _LIBZOPFLI_VERSION " )"
+#  define LIBZOPFLI_ENABLE   "yes ( " _LIBBROTLI_VERSION " )"
 #else
 #  define LIBZOPFLI_ENABLE   "no"
+#endif
+#ifdef USE_LIBBROTLI
+#  define LIBBROTLI_ENABLE   "yes ( " _LIBBROTLI_VERSION " )"
+#else
+#  define LIBBROTLI_ENABLE   "no"
 #endif
 #ifdef USE_LIBTDB
 #  define LIBTDB_ENABLE      "yes ( " _LIBTDB_VERSION " )"
@@ -715,6 +720,7 @@ PYTHON language support: yes ( 2.7 )
       "memory pool support....:%W " MEMORY_POOL_ENABLE "%W\n\n" \
       "LIBZ support...........:%W " LIBZ_ENABLE "%W\n" \
       "LIBZOPFLI support......:%W " LIBZOPFLI_ENABLE "%W\n" \
+      "LIBBROTLI support......:%W " LIBBROTLI_ENABLE "%W\n" \
       "LIBTDB support.........:%W " LIBTDB_ENABLE "%W\n" \
       "PCRE support...........:%W " LIBPCRE_ENABLE "%W\n" \
       "SSL support............:%W " LIBSSL_ENABLE "%W\n" \
@@ -763,6 +769,7 @@ PYTHON language support: yes ( 2.7 )
                BRIGHTWHITE, RESET,
                BRIGHTWHITE, RESET,
                // support
+               BRIGHTGREEN, RESET,
                BRIGHTGREEN, RESET,
                BRIGHTGREEN, RESET,
                BRIGHTGREEN, RESET,

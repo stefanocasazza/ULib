@@ -183,6 +183,10 @@ handle_data:
          {
          UClientImage_Base::close();
          }
+      else
+         {
+         UClientImage_Base::setRequestProcessed();
+         }
 
       U_RETURN(U_PLUGIN_HANDLER_PROCESSED);
       }

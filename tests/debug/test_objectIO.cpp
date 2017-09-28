@@ -89,8 +89,6 @@ int U_EXPORT main(int argc, char** argv)
 
    raise(SIGUSR2); // trace on/off
 
-   u_trace_handlerSignal();
-
    U_TRACE(5, "main(%d)", argc)
 
    U_SET_LOCATION_INFO;

@@ -91,8 +91,6 @@ void UCommand::setCommand()
 {
    U_TRACE_NO_PARAM(0, "UCommand::setCommand()")
 
-   U_INTERNAL_ASSERT(command)
-
    command.duplicate();
 
    freeCommand();
@@ -158,7 +156,7 @@ int32_t UCommand::setEnvironment(const UString& env, char**& _envp)
    U_RETURN(_nenv);
 }
 
-U_NO_EXPORT void UCommand::setEnvironment(const UString& env)
+U_NO_EXPORT void UCommand::setEnvironment(UString& env)
 {
    U_TRACE(0, "UCommand::setEnvironment(%V)", env.rep)
 

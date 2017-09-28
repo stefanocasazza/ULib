@@ -571,7 +571,7 @@ void UServices::releaseEngine(ENGINE* e, bool bkey)
       }
 }
 
-EVP_PKEY* UServices::loadKey(const UString& x, const char* format, bool _private, const char* password, ENGINE* e)
+EVP_PKEY* UServices::loadKey(UString& x, const char* format, bool _private, const char* password, ENGINE* e)
 {
    U_TRACE(0, "UServices::loadKey(%V,%S,%b,%S,%p)", x.rep, format, _private, password, e)
 
@@ -629,7 +629,7 @@ done:
  * passwd is the corresponding password for the private key
  */
 
-UString UServices::getSignatureValue(int alg, const UString& data, const UString& pkey, const UString& passwd, int base64, ENGINE* e)
+UString UServices::getSignatureValue(int alg, const UString& data, UString& pkey, UString& passwd, int base64, ENGINE* e)
 {
    U_TRACE(0,"UServices::getSignatureValue(%d,%V,%V,%V,%d,%p)", alg, data.rep, pkey.rep, passwd.rep, base64, e)
 
@@ -668,7 +668,7 @@ UString UServices::getSignatureValue(int alg, const UString& data, const UString
    U_RETURN_STRING(output);
 }
 
-bool UServices::verifySignature(int alg, const UString& data, const UString& signature, const UString& pkey, ENGINE* e)
+bool UServices::verifySignature(int alg, const UString& data, const UString& signature, UString& pkey, ENGINE* e)
 {
    U_TRACE(0, "UServices::verifySignature(%d,%V,%V,%V,%p)", alg, data.rep, signature.rep, pkey.rep, e)
 

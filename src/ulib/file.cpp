@@ -355,9 +355,9 @@ bool UFile::isNameDosMatch(const char* mask, uint32_t mask_len) const
 
    UString basename = getName();
 
-   bool result = UServices::dosMatchWithOR(U_STRING_TO_PARAM(basename), mask, mask_len, 0);
+   if (UServices::dosMatchWithOR(U_STRING_TO_PARAM(basename), mask, mask_len, 0)) U_RETURN(true);
 
-   U_RETURN(result);
+   U_RETURN(false);
 }
 
 UString UFile::getDirName() const
@@ -370,8 +370,6 @@ UString UFile::getDirName() const
    U_INTERNAL_ASSERT_MAJOR(path_relativ_len, 0)
 
    UString result = UStringExt::dirname(path_relativ, path_relativ_len);
-
-   U_INTERNAL_ASSERT(result.isNullTerminated())
 
    U_RETURN_STRING(result);
 }
@@ -686,6 +684,9 @@ try_from_file_system:
 #endif
 }
 
+// A file is mapped in multiples of the page size. For a file that is not a multiple of the page size,
+// the remaining memory is zeroed when mapped, and writes to that region are not written out to the file
+
 bool UFile::memmap(int prot, UString* str, uint32_t offset, uint32_t length)
 {
    U_TRACE(0, "UFile::memmap(%d,%p,%u,%u)", prot, str, offset, length)
@@ -721,7 +722,7 @@ bool UFile::memmap(int prot, UString* str, uint32_t offset, uint32_t length)
    U_INTERNAL_ASSERT_MINOR_MSG(length, U_STRING_MAX_SIZE, "we can't manage file size bigger than 4G...") // limit of UString
 #endif
 
-   U_INTERNAL_ASSERT_EQUALS((offset % PAGESIZE), 0) // offset should be a multiple of the page size as returned by getpagesize(2)
+   U_INTERNAL_ASSERT_EQUALS(offset % PAGESIZE, 0) // offset should be a multiple of the page size as returned by getpagesize(2)
 
    if (map != (char*)MAP_FAILED)
       {
@@ -736,7 +737,7 @@ bool UFile::memmap(int prot, UString* str, uint32_t offset, uint32_t length)
    if (prot == PROT_READ) flags |= MAP_POPULATE;
 #endif
 
-   map = (char*) U_SYSCALL(mmap, "%p,%u,%d,%d,%d,%I", U_NULLPTR, length, prot, flags, fd, offset);
+   map = (char*) U_SYSCALL(mmap, "%p,%u,%d,%d,%d,%I", U_NULLPTR, length, prot, flags, fd, offset); // (str ? getMmapSize(length) : length)
 
    if (map != (char*)MAP_FAILED)
       {
@@ -746,6 +747,7 @@ bool UFile::memmap(int prot, UString* str, uint32_t offset, uint32_t length)
          {
          str->mmap(map + resto, length - resto);
 
+         /*
 #     if defined(U_LINUX) && defined(MADV_SEQUENTIAL)
          if (prot == PROT_READ &&
              length > (32 * PAGESIZE))
@@ -753,6 +755,7 @@ bool UFile::memmap(int prot, UString* str, uint32_t offset, uint32_t length)
             (void) U_SYSCALL(madvise, "%p,%u,%d", (void*)map, length, MADV_SEQUENTIAL);
             }
 #     endif
+         */
          }
 
       U_RETURN(true);
@@ -821,7 +824,7 @@ UString UFile::_getContent(bool bsize, bool brdonly, bool bmap)
    if (st_size)
       {
       if (bmap ||
-          st_size > (off_t)(4L * PAGESIZE))
+          st_size >= (off_t)(4L * PAGESIZE))
          {
          int                   prot  = PROT_READ;
          if (brdonly == false) prot |= PROT_WRITE;

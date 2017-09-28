@@ -121,7 +121,7 @@ public:
       U_RETURN(false);
       }
 
-   bool isAllowed(const UString& ip_client) { return isAllowed(ip_client.c_str()); }
+   bool isAllowed(UString& ip_client) { return isAllowed(ip_client.c_str()); }
 
    bool isAllowed(in_addr_t client) __pure;
    bool isAllowed(in_addr_t ifa_addr, in_addr_t ifa_netmask)

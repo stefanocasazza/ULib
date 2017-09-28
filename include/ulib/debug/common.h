@@ -18,6 +18,7 @@
 #include <ulib/internal/error.h>
 
 #ifdef DEBUG
+U_EXPORT void  u_debug_print_info();
 U_EXPORT void  u_debug_exit(int exit_value);
 U_EXPORT pid_t u_debug_fork( pid_t pid, int trace_active);
 U_EXPORT pid_t u_debug_vfork(pid_t pid, int trace_active);

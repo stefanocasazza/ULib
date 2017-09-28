@@ -1285,7 +1285,6 @@ data_missing:
 cls:  if (U_ClientImage_parallelization == U_PARALLELIZATION_PARENT)
          {
          U_ASSERT(wbuffer->empty())
-         U_ASSERT_EQUALS(isRequestNeedProcessing(), false)
          U_INTERNAL_ASSERT_EQUALS(U_ClientImage_data_missing, false)
 
          endRequest();
@@ -1786,9 +1785,9 @@ void UClientImage_Base::close()
 {
    U_TRACE_NO_PARAM(0, "UClientImage_Base::close()")
 
-   UServer_Base::csocket->close();
-
    setRequestProcessed();
+
+   UServer_Base::csocket->close();
 
    resetPipelineAndSetCloseConnection();
 }

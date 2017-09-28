@@ -78,7 +78,10 @@ U_EXPORT main (int argc, char* argv[])
 
    U_TRACE(5,"main(%d)",argc)
 
-   U_INTERNAL_DUMP("argv[0] = %S argv[1] = %S argv[2] = %S argv[3] = %S", argv[0], argv[1], argv[2], argv[3])
+   UString str = UFile::contentOf(U_STRING_FROM_CONSTANT("inp/16k.txt"));
+
+   // U_INTERNAL_DUMP("*(str.pend()) = %C", *(str.pend()))
+   // U_ASSERT( str.isNullTerminated() )
 
    UFile x;
    UString buffer(500U), tmp = U_STRING_FROM_CONSTANT("/mnt/source");
@@ -87,6 +90,8 @@ U_EXPORT main (int argc, char* argv[])
    U_ASSERT( x.getPath() == tmp )
 
    UFile::close( UFile::mkTemp() );
+
+   U_INTERNAL_DUMP("argv[0] = %S argv[1] = %S argv[2] = %S argv[3] = %S", argv[0], argv[1], argv[2], argv[3])
 
 #ifndef __MINGW32__
    buffer.assign(argv[1]);
@@ -128,7 +133,8 @@ U_EXPORT main (int argc, char* argv[])
    UString name;
    name = U_STRING_FROM_CONSTANT("/tmp/test_rdb"); // evitare NFS lock...
 
-   if (y.creat(name) && y.lock())
+   if (y.creat(name) &&
+       y.lock())
       {
       y.ftruncate(6000);
       y.memmap();
@@ -167,9 +173,7 @@ U_EXPORT main (int argc, char* argv[])
    tmp1.c_str();
 #endif
 
-#ifdef U_LINUX_BUG
-   // test CRESCIOLI
-
+#ifdef U_LINUX_BUG // test CRESCIOLI
    UString buffer1;
    ofstream of("DA_BUTTARE");
 

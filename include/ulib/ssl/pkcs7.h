@@ -179,7 +179,7 @@ public:
 
    static PKCS7* sign(const UString& data,
                       const UString& signcert,
-                      const UString& pkey,
+                            UString& pkey,
                       const UString& passwd,
                       const UString& certs, int flags = PKCS7_BINARY);
 

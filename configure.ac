@@ -1203,6 +1203,7 @@ dnl initialize all the info variables to 'no'
      ulib_ldap_msg="no (--with-ldap)"
      ulib_libz_msg="no (--with-libz)"
 ulib_libzopfli_msg="no (--with-libzopfli)"
+ulib_libbrotli_msg="no (--with-libbrotli)"
    ulib_libtdb_msg="no (--with-libtdb)"
      ulib_curl_msg="no (--with-curl)"
     ulib_expat_msg="no (--with-expat)"
@@ -1354,6 +1355,7 @@ AC_MSG_RESULT($use_distcc)
 
 libz_version="unknow"
 libzopfli_version="unknown"
+libbrotli_version="unknown"
 libtdb_version="unknown"
 pcre_version="unknown"
 ldap_version="unknown"
@@ -1407,6 +1409,10 @@ fi
 
 if test "$USE_LIBZOPFLI" = "yes"; then
 	ulib_libzopfli_msg="yes ( $libzopfli_version )"
+fi
+
+if test "$USE_LIBBROTLI" = "yes"; then
+	ulib_libbrotli_msg="yes ( $libbrotli_version )"
 fi
 
 if test "$USE_LIBTDB" = "yes"; then
@@ -1830,6 +1836,7 @@ AC_DEFINE_UNQUOTED(_LDAP_VERSION,		 "$ldap_version",			[Ldap version])
 AC_DEFINE_UNQUOTED(_EXPAT_VERSION,		 "$expat_version",		[Expat version])
 AC_DEFINE_UNQUOTED(_LIBZ_VERSION,		 "$libz_version",			[libz - general purpose compression library version])
 AC_DEFINE_UNQUOTED(_LIBZOPFLI_VERSION,	 "$libzopfli_version",	[libzopfli - google compression library version])
+AC_DEFINE_UNQUOTED(_LIBBROTLI_VERSION,	 "$libbrotli_version",	[libbrotli - google compression library version])
 AC_DEFINE_UNQUOTED(_LIBTDB_VERSION,		 "$libtdb_version",		[libtdb - samba Trivial DB library version])
 AC_DEFINE_UNQUOTED(_LIBSSH_VERSION,		 "$libssh_version",		[libSSH version])
 AC_DEFINE_UNQUOTED(_SSL_VERSION,			 "$ssl_version",			[SSL version])
@@ -2779,6 +2786,7 @@ AC_MSG_NOTICE([Configured to build src/ulib/lib${ULIB}:
 
            LIBZ support: ${ulib_libz_msg}
       LIBZOPFLI support: ${ulib_libzopfli_msg}
+      LIBBROTLI support: ${ulib_libbrotli_msg}
          LIBTDB support: ${ulib_libtdb_msg}
            PCRE support: ${ulib_pcre_msg}
             SSL support: ${ulib_ssl_msg}

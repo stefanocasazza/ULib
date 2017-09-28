@@ -2504,10 +2504,12 @@ next:
       {
       U_TRACE_NO_PARAM(5, "WiAuthUser::checkTypeUID()")
 
-      U_INTERNAL_ASSERT(*uid)
+      uint32_t sz = uid->size();
+
+      if (sz == 0) U_RETURN(false);
+
       U_ASSERT_EQUALS(*uid, UStringExt::trim(*uid))
 
-      uint32_t sz     = uid->size();
       const char* ptr = uid->data();
 
       isIP  = u_isIPv4Addr(ptr, sz);
@@ -4251,8 +4253,7 @@ static bool askNodogToLogoutUser(const UString& _ip, const UString& _mac, bool b
       }
    else
       {
-      if (U_http_info.nResponseCode == 0 ||
-          U_http_info.nResponseCode == HTTP_MOVED_TEMP)
+      if (U_http_info.nResponseCode == HTTP_MOVED_TEMP)
          {
          // 4) (302) => (response from redirect to portal with request GET /info?... but portal NOT responding
 
@@ -4280,7 +4281,7 @@ static bool askNodogToLogoutUser(const UString& _ip, const UString& _mac, bool b
          U_RETURN(false);
          }
 
-      U_INTERNAL_DUMP("U_http_info.nResponseCode = %d", U_http_info.nResponseCode)
+      U_INTERNAL_DUMP("U_http_info.nResponseCode = %u", U_http_info.nResponseCode)
       }
 
 // U_LOGGER("*** LOGOUT SUCCESS: UID(%v) IP(%v) MAC(%v) AP(%v) ***", uid->rep, _ip.rep, _mac.rep, ap_address->rep);

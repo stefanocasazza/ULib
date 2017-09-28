@@ -165,8 +165,6 @@ public:
       return vec[--_length];
       }
 
-   const void* pop_front() { return pop(); } // remove last element
-
    // LIST OPERATIONS
 
    void insert(uint32_t pos,             const void* elem); // add           elem before pos
@@ -517,8 +515,6 @@ public:
 
       U_RETURN_POINTER(elem, T);
       }
-
-   T* pop_front() { return pop(); } // remove last element
 
    // LIST OPERATIONS
 
@@ -1071,8 +1067,6 @@ public:
 
       U_RETURN_STRING(str);
       }
-
-   UString pop_front() { return pop(); } // remove last element
 
    // LIST OPERATIONS
 

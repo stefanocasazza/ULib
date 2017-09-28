@@ -304,9 +304,9 @@ U_NO_EXPORT uint32_t     UHashMapObjectDumpable::table_size;
 UHashMapObjectDumpable*  UHashMapObjectDumpable::node;
 UHashMapObjectDumpable** UHashMapObjectDumpable::table;
 
-void UObjectDB::init(bool flag, bool info)
+void UObjectDB::init(bool flag)
 {
-   U_INTERNAL_TRACE("UObjectDB::init(%d,%d)", flag, info)
+   U_INTERNAL_TRACE("UObjectDB::init(%b)", flag)
 
    char* env = getenv("UOBJDUMP");
 
@@ -372,18 +372,6 @@ void UObjectDB::init(bool flag, bool info)
 
             u_atexit(&UObjectDB::close); // register function of close dump at exit...
             }
-         }
-      }
-
-   if (info)
-      {
-      if (fd == -1)
-         {
-         U_MESSAGE("OBJDUMP%W<%Woff%W>%W", YELLOW, RED, YELLOW, RESET);
-         }
-      else
-         {
-         U_MESSAGE("OBJDUMP%W<%Won%W>: Level<%W%d%W> MaxSize<%W%d%W>%W", YELLOW, GREEN, YELLOW, CYAN, level_active, YELLOW, CYAN, file_size, YELLOW, RESET);
          }
       }
 }
@@ -455,7 +443,7 @@ void UObjectDB::initFork()
 
    (void) ::close(fd);
 
-   init(false, true);
+   init(false);
 }
 
 void UObjectDB::registerObject(UObjectDumpable* dumper)

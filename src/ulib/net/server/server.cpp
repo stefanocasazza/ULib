@@ -493,6 +493,8 @@ public:
       U_INTERNAL_DUMP("krate = %u min_limit = %u max_limit = %u num_sending = %u bytes_since_avg = %llu", UServer_Base::throttling_rec->krate, UServer_Base::throttling_rec->min_limit,
                         UServer_Base::throttling_rec->max_limit, UServer_Base::throttling_rec->num_sending, UServer_Base::throttling_rec->bytes_since_avg)
 
+      U_INTERNAL_ASSERT_MAJOR(UServer_Base::throttling_rec->num_sending, 0)
+
       uint32_t l = UServer_Base::throttling_rec->max_limit / UServer_Base::throttling_rec->num_sending;
 
       UServer_Base::pClientImage->max_limit = (UServer_Base::pClientImage->max_limit == U_NOT_FOUND
@@ -734,13 +736,17 @@ bool UServer_Base::checkThrottlingBeforeSend(bool bwrite)
                   kbytes_sent = pClientImage->bytes_sent / 1024ULL,
                   krate       = (elapsed > 1 ? kbytes_sent / elapsed : kbytes_sent);
 
-         U_INTERNAL_DUMP("krate = %u", krate)
+         U_INTERNAL_DUMP("krate = %u elapsed = %u", krate, elapsed)
 
          if (krate > pClientImage->max_limit)
             {
             // how long should we wait to get back on schedule? If less than a second (integer math rounding), use 1/2 second
 
-            time_t coast = kbytes_sent / pClientImage->max_limit - elapsed;
+            uint32_t div = pClientImage->max_limit - elapsed;
+
+            if (div == 0) div = 1;
+
+            time_t coast = kbytes_sent / div;
 
             // set up the wakeup timer
 
@@ -1036,9 +1042,17 @@ bool UServer_Base::checkHitUriStats()
           u_get_unalignedp32(ptr+8) != U_MULTICHAR_CONSTANT32('.','i','c','o'))
          {
          char key[260];
-         uint32_t key_sz = (sz < 256 ? sz : 256);
+         uint32_t key_sz = (sz < 256 ? sz : 256),
+                  addr = UServer_Base::csocket->remoteIPAddress().getInAddr();
 
-         u_put_unalignedp32(key, UServer_Base::csocket->remoteIPAddress().getInAddr());
+         union uukey {
+            char*     k;
+            uint32_t* u;
+         };
+
+         union uukey ukey = { &key[0] };
+
+         u_put_unalignedp32(ukey.u, addr);
 
          U_MEMCPY(key+4, ptr, key_sz);
 
@@ -2366,7 +2380,11 @@ void UServer_Base::pluginsHandlerRequest()
 
          U_INTERNAL_ASSERT_EQUALS(result, U_PLUGIN_HANDLER_PROCESSED)
 
-         UClientImage_Base::setRequestProcessed();
+         if (UClientImage_Base::isRequestAlreadyProcessed() ||
+             U_ClientImage_parallelization == U_PARALLELIZATION_PARENT)
+            {
+            return;
+            }
          }
       }
 }
@@ -2399,7 +2417,11 @@ void UServer_Base::pluginsHandlerRequest()
 
             U_INTERNAL_ASSERT_EQUALS(result, U_PLUGIN_HANDLER_PROCESSED)
 
-            UClientImage_Base::setRequestProcessed();
+            if (UClientImage_Base::isRequestAlreadyProcessed() ||
+                U_ClientImage_parallelization == U_PARALLELIZATION_PARENT)
+               {
+               return;
+               }
             }
 
          continue;
@@ -2426,12 +2448,11 @@ void UServer_Base::pluginsHandlerRequest()
 
          U_INTERNAL_ASSERT_EQUALS(result, U_PLUGIN_HANDLER_PROCESSED)
 
-         if (U_ClientImage_parallelization != U_PARALLELIZATION_PARENT)
-            {
-            UClientImage_Base::setRequestProcessed();
+         if (U_ClientImage_parallelization == U_PARALLELIZATION_PARENT) return;
 
-            log->log(U_CONSTANT_TO_PARAM("Request phase of plugin %V success"), name.rep);
-            }
+         log->log(U_CONSTANT_TO_PARAM("Request phase of plugin %V success"), name.rep);
+
+         if (UClientImage_Base::isRequestAlreadyProcessed()) return;
          }
       }
 }
@@ -4248,7 +4269,9 @@ bool UServer_Base::startParallelization(uint32_t nclient)
          {
          // NB: from now it is responsability of the child to services the request from the client on the same connection...
 
-         pClientImage->close();
+         csocket->close();
+
+         UClientImage_Base::resetPipelineAndSetCloseConnection();
 
          U_ClientImage_parallelization = U_PARALLELIZATION_PARENT;
 
