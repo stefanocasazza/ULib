@@ -110,6 +110,9 @@ uint32_t UHTTP::is_response_compressed;
 uint32_t UHTTP::limit_request_body = U_STRING_MAX_SIZE;
 uint32_t UHTTP::request_read_timeout;
 
+// https://www.google.com/url?q=https%3A%2F%2Fblogs.akamai.com%2F2016%2F02%2Funderstanding-brotlis-potential.html&sa=D&sntz=1&usg=AFQjCNGP4Nu9yPm65RKkAThsWxJ8qy49Sw
+uint32_t UHTTP::brotli_level_for_dynamic_content = 2;
+
 UCommand*                         UHTTP::pcmd;
 UDataSession*                     UHTTP::data_session;
 UDataSession*                     UHTTP::data_storage;
@@ -4815,31 +4818,28 @@ U_NO_EXPORT void UHTTP::setResponseCompressed(const UString& data)
    U_INTERNAL_DUMP("U_http_is_accept_gzip = %b U_http_is_accept_brotli = %b", U_http_is_accept_gzip, U_http_is_accept_brotli)
 
 #ifdef USE_LIBBROTLI
-   if (U_http_is_accept_brotli)
+   if (U_http_is_accept_brotli &&
+       (*UClientImage_Base::body = UStringExt::brotli(data, brotli_level_for_dynamic_content)))
       {
+#  ifndef U_CACHE_REQUEST_DISABLE
+      is_response_compressed = 2; // brotli
+#  endif
+
       (void) ext->append(U_CONSTANT_TO_PARAM("Content-Encoding: br\r\n"));
 
-      if ((*UClientImage_Base::body = UStringExt::brotli(data, 6)))
-         {
-#     ifndef U_CACHE_REQUEST_DISABLE
-         is_response_compressed = 2; // brotli
-#     endif
-
-         return;
-         }
+      return;
       }
 #endif
 
 #ifdef USE_LIBZ
-   if (U_http_is_accept_gzip)
+   if (U_http_is_accept_gzip &&
+       (*UClientImage_Base::body = UStringExt::deflate(data, 1)))
       {
 #  ifndef U_CACHE_REQUEST_DISABLE
       is_response_compressed = 1; // gzip
 #  endif
 
       (void) ext->append(U_CONSTANT_TO_PARAM("Content-Encoding: gzip\r\n"));
-
-      *UClientImage_Base::body = UStringExt::deflate(data, 1);
 
       return;
       }
@@ -6966,32 +6966,20 @@ void UHTTP::setDynamicResponse()
 
    U_INTERNAL_ASSERT_MAJOR(U_http_info.nResponseCode, 0)
 
-   char* ptr;
    char* ptr1;
    UString compressed;
-   bool bcompress = false;
    const char* pEndHeader;
    uint32_t sz = 0, csz, ratio, clength = UClientImage_Base::wbuffer->size();
 
-   ext->setBuffer(U_CAPACITY);
-
-   ptr = ext->data();
-
-   U_INTERNAL_DUMP("U_http_is_accept_gzip = %b U_http_is_accept_brotli = %b", U_http_is_accept_gzip, U_http_is_accept_brotli)
-
-#if defined(USE_LIBZ) || defined(USE_LIBBROTLI)
-   if (UClientImage_Base::wbuffer->size() > (U_http_info.endHeader + U_MIN_SIZE_FOR_DEFLATE))
-      {
-#  ifdef USE_LIBBROTLI
-      if (U_http_is_accept_brotli) bcompress = true;
-#  endif
-#  ifdef USE_LIBZ
-      if (U_http_is_accept_gzip) bcompress = true;
-#  endif
-      }
+#if !defined(USE_LIBZ) && !defined(USE_LIBBROTLI)
+   bool bcompress = false;
+#else
+   bool bcompress = checkForCompression(clength);
 #endif
 
-   U_INTERNAL_DUMP("bcompress = %b", bcompress)
+   ext->setBuffer(U_CAPACITY);
+
+   char* ptr = ext->data();
 
    if (U_http_info.endHeader)
       {
@@ -7028,7 +7016,7 @@ void UHTTP::setDynamicResponse()
 
 #ifdef USE_LIBBROTLI
    if (U_http_is_accept_brotli &&
-       (compressed = UStringExt::brotli(UClientImage_Base::wbuffer->c_pointer(U_http_info.endHeader), clength, 6)))
+       (compressed = UStringExt::brotli(UClientImage_Base::wbuffer->c_pointer(U_http_info.endHeader), clength, brotli_level_for_dynamic_content)))
       {
       bcompress = false;
 
@@ -8000,6 +7988,23 @@ U_NO_EXPORT void UHTTP::setHeaderForCache(UHTTP::UFileCacheData* ptr, const UStr
 #endif
 }
 
+#ifdef USE_LIBBROTLI
+U_NO_EXPORT void UHTTP::checkArrayCompressData(UFileCacheData* ptr)
+{
+   U_TRACE(0, "UHTTP::checkArrayCompressData(%p)", ptr)
+
+   if (ptr->array->size() == 2)
+      {
+      ptr->array->push_back(UString::getStringNull()); // 2 gzip(content) 
+      ptr->array->push_back(UString::getStringNull()); // 3 gzip(header)
+
+#  ifndef U_HTTP2_DISABLE
+      ptr->http2->push_back(UString::getStringNull()); // 1 gzip(header)
+#  endif
+      }
+}
+#endif
+
 U_NO_EXPORT void UHTTP::putDataInCache(const UString& fmt, UString& content)
 {
    U_TRACE(0, "UHTTP::putDataInCache(%V,%V)", fmt.rep, content.rep)
@@ -8155,16 +8160,6 @@ next:
          }
 #  endif
 
-      if (file_data->array->size() == 2)
-         {
-         file_data->array->push_back(UString::getStringNull()); // 2 gzip(content) 
-         file_data->array->push_back(UString::getStringNull()); // 3 gzip(header)
-
-#     ifndef U_HTTP2_DISABLE
-         file_data->http2->push_back(UString::getStringNull()); // 1 gzip(header)
-#     endif
-         }
-
 #  ifdef USE_LIBBROTLI
       UString content2 = UStringExt::brotli(content);
 
@@ -8172,6 +8167,8 @@ next:
 
       if ((size = content2.size()) < file_data->size)
          {
+         checkArrayCompressData(file_data);
+
          if (size) ratio2 = (size * 100U) / file_data->size;
 
          U_INTERNAL_DUMP("ratio2 = %u (%u%%)", ratio2, 100-ratio2)
@@ -11601,27 +11598,21 @@ U_EXPORT istream& operator>>(istream& is, UHTTP::UFileCacheData& d)
                   UHTTP::setHeaderForCache(&d, decoded);
                   }
 #           ifdef USE_LIBZ
-               else
+               else if (u_is_img(d.mime_index) == false)
                   {
-                  if (u_is_img(d.mime_index))
-                     {
-                     d.array->push_back(UString::getStringNull()); // 2 gzip(content) 
-                     d.array->push_back(UString::getStringNull()); // 3 gzip(header)
-                     }
-                  else
-                     {
-                     d.array->push_back(UStringExt::deflate(content, 2)); // 2 gzip(content) 
+                  d.array->push_back(UStringExt::deflate(content, 2)); // 2 gzip(content) 
 
-                     decoded = U_STRING_FROM_CONSTANT("Content-Encoding: gzip\r\n") + header;
+                  decoded = U_STRING_FROM_CONSTANT("Content-Encoding: gzip\r\n") + header;
 
-                     UHTTP::setHeaderForCache(&d, decoded); // 3 gzip(header)
-                     }
+                  UHTTP::setHeaderForCache(&d, decoded); // 3 gzip(header)
                   }
 #           endif
 
 #           ifdef USE_LIBBROTLI
                if (u_is_img(d.mime_index) == false)
                   {
+                  UHTTP::checkArrayCompressData(&d);
+
                   d.array->push_back(UStringExt::brotli(content)); // 4 brotli(content)
 
                   decoded = U_STRING_FROM_CONSTANT("Content-Encoding: br\r\n") + header;

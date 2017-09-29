@@ -1055,7 +1055,9 @@ int USSIPlugIn::handlerRequest()
             U_INTERNAL_ASSERT_POINTER(UHTTP::file_data->array)
             U_INTERNAL_ASSERT_EQUALS( UHTTP::file_data->array->size(), 2)
 
-            (void) header->append(UHTTP::getHeaderFromCache()); // NB: after now 'file_data' can change...
+            U_INTERNAL_DUMP("U_http_version = %C", U_http_version)
+
+            (void) header->append(UHTTP::getDataFromCache(UHTTP::file_data->array, 1)); // NB: after now 'file_data' can change...
 
             *body = (UHTTP::isGETorHEAD() &&
                      *UClientImage_Base::body
@@ -1069,27 +1071,27 @@ int USSIPlugIn::handlerRequest()
 
          U_INTERNAL_DUMP("alternative_response = %d output(%u) = %V", alternative_response, output.size(), output.rep)
 
+         U_http_info.nResponseCode = HTTP_OK;
+
          if (alternative_response == 0)
             {
             uint32_t size = output.size();
 
-            U_INTERNAL_ASSERT_MAJOR(size,0)
-
-#        ifdef USE_LIBZ
-            U_INTERNAL_DUMP("U_http_is_accept_gzip = %b", U_http_is_accept_gzip)
-
-            if (U_http_is_accept_gzip &&
-                size > U_MIN_SIZE_FOR_DEFLATE)
+#        if !defined(USE_LIBZ) && !defined(USE_LIBBROTLI)
+            bool bcompress = false;
+#        else
+            bool bcompress = UHTTP::checkForCompression(size);
 #        endif
+
+            if (bcompress == false) *UClientImage_Base::body = output;
+            else
                {
-               output = UStringExt::deflate(output, 1);
+               UHTTP::setResponseCompressed(output);
 
-               size = output.size();
-
-               (void) header->insert(0, U_CONSTANT_TO_PARAM("Content-Encoding: gzip\r\n"));
+               size = UClientImage_Base::body->size();
                }
 
-            *UHTTP::ext = *header;
+            (void) UHTTP::ext->append(*header);
 
             if (bcache) (void) UHTTP::checkContentLength(size); // NB: adjusting the size of response...
             else
@@ -1098,10 +1100,6 @@ int USSIPlugIn::handlerRequest()
 
                (void) UHTTP::ext->append(UHTTP::getHeaderMimeType(U_NULLPTR, size, U_CTYPE_HTML));
                }
-
-            U_http_info.nResponseCode = HTTP_OK;
-
-            *UClientImage_Base::body = output;
 
             UHTTP::handlerResponse();
             }
@@ -1122,8 +1120,7 @@ int USSIPlugIn::handlerRequest()
             (void) UClientImage_Base::wbuffer->replace(*header);
             (void) UClientImage_Base::wbuffer->append(U_CONSTANT_TO_PARAM(U_CRLF));
 
-            U_http_info.endHeader     = UClientImage_Base::wbuffer->size(); 
-            U_http_info.nResponseCode = HTTP_OK;
+            U_http_info.endHeader = UClientImage_Base::wbuffer->size(); 
 
             (void) UClientImage_Base::wbuffer->append(alternative_response == 2 ? output : *body);
 

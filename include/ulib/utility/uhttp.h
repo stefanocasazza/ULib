@@ -184,7 +184,7 @@ public:
    static char response_buffer[64];
    static int mime_index, cgi_timeout; // the time-out value in seconds for output cgi process
    static bool enable_caching_by_proxy_servers, skip_check_cookie_ip_address;
-   static uint32_t limit_request_body, request_read_timeout, range_start, range_size;
+   static uint32_t limit_request_body, request_read_timeout, range_start, range_size, brotli_level_for_dynamic_content;
 
    static bool readRequest();
    static bool handlerCache();
@@ -1340,8 +1340,33 @@ private:
 #endif
 
 #if defined(USE_LIBZ) || defined(USE_LIBBROTLI)
+   static bool checkForCompression(uint32_t size)
+      {
+      U_TRACE(0, "UHTTP::checkForCompression(%u)", size)
+
+      U_INTERNAL_ASSERT_MAJOR(size, 0)
+
+      U_INTERNAL_DUMP("U_http_is_accept_gzip = %b U_http_is_accept_brotli = %b", U_http_is_accept_gzip, U_http_is_accept_brotli)
+
+      if (size > U_MIN_SIZE_FOR_DEFLATE)
+         {
+#     ifdef USE_LIBBROTLI
+         if (U_http_is_accept_brotli) U_RETURN(true);
+#     endif
+#     ifdef USE_LIBZ
+      if (U_http_is_accept_gzip) U_RETURN(true);
+#     endif
+         }
+
+      U_RETURN(false);
+      }
+
+# ifdef USE_LIBBROTLI
+   static void checkArrayCompressData(UFileCacheData* ptr) U_NO_EXPORT;
+# endif
+
    static inline void setAcceptEncoding(const char* ptr, uint32_t len) U_NO_EXPORT;
-#endif      
+#endif
 
 #ifdef U_STATIC_ONLY
    static void loadStaticLinkedServlet(const char* name, uint32_t len, vPFi runDynamicPage) U_NO_EXPORT;
