@@ -805,6 +805,10 @@ ENABLE_SHARED_FALSE
 ENABLE_SHARED_TRUE
 ENABLE_EXAMPLES_FALSE
 ENABLE_EXAMPLES_TRUE
+USERVER_UDP_FALSE
+USERVER_UDP_TRUE
+USERVER_IPC_FALSE
+USERVER_IPC_TRUE
 POW_LIB
 LIBOBJS
 SEM_TIMEDWAIT_FALSE
@@ -1039,6 +1043,8 @@ enable_thread
 enable_pth
 with_ipv6
 enable_examples
+with_userver_ipc
+with_userver_udp
 enable_plugins
 enable_memory_pool
 enable_LFS
@@ -1836,6 +1842,8 @@ Optional Packages:
                           compiler's sysroot if not specified).
   --with-libc=path        specify path to alternate libc [[default=c]]
   --with-ipv6             Enable ipv6, default is disabled
+  --with-userver-ipc      Enable building of userver_ipc, default is disabled
+  --with-userver-udp      Enable building of userver_udp, default is disabled
   --with-parser           use parser generator bison/yacc
   --with-distcc           using distcc we must avoid to use some gcc flags (-mtune=native,-flto,...)
   --with-libz             use system     LIBZ library - [will check /usr /usr/local] [default=use if present]
@@ -27818,6 +27826,23 @@ if test -z "$enable_examples" -a "$enable_shared" = "yes"; then
 	enable_examples="yes"
 fi
 
+ if false; then
+  USERVER_IPC_TRUE=
+  USERVER_IPC_FALSE='#'
+else
+  USERVER_IPC_TRUE='#'
+  USERVER_IPC_FALSE=
+fi
+
+ if false; then
+  USERVER_UDP_TRUE=
+  USERVER_UDP_FALSE='#'
+else
+  USERVER_UDP_TRUE='#'
+  USERVER_UDP_FALSE=
+fi
+
+
 if test "$enable_examples" = "yes"; then
    { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
@@ -27830,6 +27855,60 @@ else
   ENABLE_EXAMPLES_FALSE=
 fi
 
+
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if you want to build userver_ipc" >&5
+$as_echo_n "checking if you want to build userver_ipc... " >&6; }
+
+# Check whether --with-userver-ipc was given.
+if test "${with_userver_ipc+set}" = set; then :
+  withval=$with_userver_ipc; use_userver_ipc=$withval
+else
+  use_userver_ipc=no
+fi
+
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $use_userver_ipc" >&5
+$as_echo "$use_userver_ipc" >&6; }
+
+	if test "$use_userver_ipc" = "yes" ; then
+		 if true; then
+  USERVER_IPC_TRUE=
+  USERVER_IPC_FALSE='#'
+else
+  USERVER_IPC_TRUE='#'
+  USERVER_IPC_FALSE=
+fi
+
+
+$as_echo "#define USERVER_IPC 1" >>confdefs.h
+
+	fi
+
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if you want to build userver_udp" >&5
+$as_echo_n "checking if you want to build userver_udp... " >&6; }
+
+# Check whether --with-userver-udp was given.
+if test "${with_userver_udp+set}" = set; then :
+  withval=$with_userver_udp; use_userver_udp=$withval
+else
+  use_userver_udp=no
+fi
+
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $use_userver_udp" >&5
+$as_echo "$use_userver_udp" >&6; }
+
+	if test "$use_userver_udp" = "yes" ; then
+		 if true; then
+  USERVER_UDP_TRUE=
+  USERVER_UDP_FALSE='#'
+else
+  USERVER_UDP_TRUE='#'
+  USERVER_UDP_FALSE=
+fi
+
+
+$as_echo "#define USERVER_UDP 1" >>confdefs.h
+
+	fi
 else
    { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
@@ -28501,6 +28580,7 @@ fi
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $use_parser" >&5
 $as_echo "$use_parser" >&6; }
+
 if test "$use_parser" = "yes" ; then
 	for ac_prog in 'bison -y' byacc
 do
@@ -35873,8 +35953,24 @@ if test -z "${NANOSLEEP_TRUE}" && test -z "${NANOSLEEP_FALSE}"; then
   as_fn_error $? "conditional \"NANOSLEEP\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
+if test -z "${USERVER_IPC_TRUE}" && test -z "${USERVER_IPC_FALSE}"; then
+  as_fn_error $? "conditional \"USERVER_IPC\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${USERVER_UDP_TRUE}" && test -z "${USERVER_UDP_FALSE}"; then
+  as_fn_error $? "conditional \"USERVER_UDP\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
 if test -z "${ENABLE_EXAMPLES_TRUE}" && test -z "${ENABLE_EXAMPLES_FALSE}"; then
   as_fn_error $? "conditional \"ENABLE_EXAMPLES\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${USERVER_IPC_TRUE}" && test -z "${USERVER_IPC_FALSE}"; then
+  as_fn_error $? "conditional \"USERVER_IPC\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${USERVER_UDP_TRUE}" && test -z "${USERVER_UDP_FALSE}"; then
+  as_fn_error $? "conditional \"USERVER_UDP\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${ENABLE_EXAMPLES_TRUE}" && test -z "${ENABLE_EXAMPLES_FALSE}"; then

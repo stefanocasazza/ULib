@@ -43,7 +43,7 @@ static void do_cipher(int fd, int operation)
             }
          }
 
-      if (operation == U_ENCODE) ebuflen = u_gz_deflate(buf, readlen, ebuf, true);
+      if (operation == U_ENCODE) ebuflen = u_gz_deflate(buf, readlen, ebuf, Z_DEFAULT_COMPRESSION);
       else                       ebuflen = u_gz_inflate(buf, readlen, ebuf);
 
       write(STDOUT_FILENO, ebuf, ebuflen);

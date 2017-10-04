@@ -91,7 +91,7 @@ void USSIPlugIn::setAlternativeRedirect(const char* fmt, ...)
 
    UClientImage_Base::setCloseConnection();
 
-   UHTTP::setResponse(true, buffer, U_NULLPTR);
+   UHTTP::setResponse(buffer, U_NULLPTR);
 }
 
 void USSIPlugIn::setBadRequest()
@@ -134,7 +134,7 @@ void USSIPlugIn::setAlternativeResponse(UString& _body)
       {
       U_http_info.nResponseCode = HTTP_OK;
 
-      UHTTP::setResponse(true, *(u_is_know(UHTTP::mime_index) ? UString::str_ctype_txt : UString::str_ctype_html), &_body);
+      UHTTP::setResponse(*(u_is_know(UHTTP::mime_index) ? UString::str_ctype_txt : UString::str_ctype_html), &_body);
       }
 }
 
@@ -1057,7 +1057,9 @@ int USSIPlugIn::handlerRequest()
 
             U_INTERNAL_DUMP("U_http_version = %C", U_http_version)
 
-            (void) header->append(UHTTP::getDataFromCache(UHTTP::file_data->array, 1)); // NB: after now 'file_data' can change...
+            // NB: after now 'file_data' can change...
+
+            (void) header->append(UHTTP::getDataFromCache(UHTTP::file_data->array, 1)); // NB: we must consider HTTP/2
 
             *body = (UHTTP::isGETorHEAD() &&
                      *UClientImage_Base::body
@@ -1073,37 +1075,8 @@ int USSIPlugIn::handlerRequest()
 
          U_http_info.nResponseCode = HTTP_OK;
 
-         if (alternative_response == 0)
-            {
-            uint32_t size = output.size();
-
-#        if !defined(USE_LIBZ) && !defined(USE_LIBBROTLI)
-            bool bcompress = false;
-#        else
-            bool bcompress = UHTTP::checkForCompression(size);
-#        endif
-
-            if (bcompress == false) *UClientImage_Base::body = output;
-            else
-               {
-               UHTTP::setResponseCompressed(output);
-
-               size = UClientImage_Base::body->size();
-               }
-
-            (void) UHTTP::ext->append(*header);
-
-            if (bcache) (void) UHTTP::checkContentLength(size); // NB: adjusting the size of response...
-            else
-               {
-               UHTTP::mime_index = U_unknow;
-
-               (void) UHTTP::ext->append(UHTTP::getHeaderMimeType(U_NULLPTR, size, U_CTYPE_HTML));
-               }
-
-            UHTTP::handlerResponse();
-            }
-         else if (alternative_response > 1)
+              if (alternative_response == 0) UHTTP::setDynamicResponse(output, *header);
+         else if (alternative_response  > 1)
             {
             // -----------------------------------------------------------------------------------------------------
             // 1 => response already complete (nothing to do)

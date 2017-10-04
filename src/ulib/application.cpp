@@ -50,7 +50,8 @@ void UApplication::printMemUsage()
 {
    U_TRACE_NO_PARAM(0, "UApplication::printMemUsage()")
 
-   if (U_SYSCALL(getenv, "%S", "UMEMUSAGE"))
+   if (UServer_Base::budp == false &&
+       U_SYSCALL(getenv, "%S", "UMEMUSAGE"))
       {
       if (UServer_Base::preforked_num_kids) U_WARNING("UMEMUSAGE must be used with PREFORK_CHILD == 0");
 

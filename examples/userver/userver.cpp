@@ -5,14 +5,17 @@
 #ifdef U_SSL_SOCKET
 #  include <ulib/ssl/net/sslsocket.h>
 #  define Server UServer<USSLSocket>
-#elif defined(U_TCP_SOCKET)
-#  include <ulib/net/tcpsocket.h>
-#  define Server UServer<UTCPSocket>
+#elif defined(U_UDP_SOCKET)
+#  include <ulib/net/udpsocket.h>
+#  define Server UServer<UUDPSocket>
 #elif defined(U_UNIX_SOCKET)
 #  include <ulib/net/unixsocket.h>
 #  define Server UServer<UUnixSocket>
+#elif defined(U_TCP_SOCKET)
+#  include <ulib/net/tcpsocket.h>
+#  define Server UServer<UTCPSocket>
 #else
-#  error "you must define the socket type (U_SSL_SOCKET | U_TCP_SOCKET | U_UNIX_SOCKET)"
+#  error "you must define the socket type (U_SSL_SOCKET | U_TCP_SOCKET | U_UNIX_SOCKET | U_UDP_SOCKET)"
 #endif
 
 #include <ulib/net/server/server.h>
@@ -132,11 +135,14 @@ public:
       // DOS_LOGFILE         the file to write DOS event
       // ---------------------------------------------------------------------------------------------------------------------------------------
 
-#  ifdef U_SSL_SOCKET
+#  if defined(U_SSL_SOCKET)
       UServer_Base::bssl = true;
+#  elif defined(U_UDP_SOCKET)
+      UServer_Base::budp = true;
 #  elif defined(U_UNIX_SOCKET)
       UServer_Base::bipc = true;
 #  endif
+
       server = new Server(&cfg);
 
       server->run();

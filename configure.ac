@@ -1253,10 +1253,37 @@ if test -z "$enable_examples" -a "$enable_shared" = "yes"; then
 	enable_examples="yes"
 fi
 
+AM_CONDITIONAL(USERVER_IPC, false)
+AM_CONDITIONAL(USERVER_UDP, false)
+
 if test "$enable_examples" = "yes"; then
    AC_MSG_RESULT(yes)
 	ulib_examples="enabled"
 	AM_CONDITIONAL(ENABLE_EXAMPLES, true)
+
+	AC_MSG_CHECKING(if you want to build userver_ipc)
+	AC_ARG_WITH(userver-ipc,
+	[  --with-userver-ipc      Enable building of userver_ipc, default is disabled],
+	[use_userver_ipc=$withval],
+	[use_userver_ipc=no])
+	AC_MSG_RESULT($use_userver_ipc)
+
+	if test "$use_userver_ipc" = "yes" ; then
+		AM_CONDITIONAL(USERVER_IPC, true)
+		AC_DEFINE(USERVER_IPC, 1, [Define if use userver_ipc])
+	fi
+
+	AC_MSG_CHECKING(if you want to build userver_udp)
+	AC_ARG_WITH(userver-udp,
+	[  --with-userver-udp      Enable building of userver_udp, default is disabled],
+	[use_userver_udp=$withval],
+	[use_userver_udp=no])
+	AC_MSG_RESULT($use_userver_udp)
+
+	if test "$use_userver_udp" = "yes" ; then
+		AM_CONDITIONAL(USERVER_UDP, true)
+		AC_DEFINE(USERVER_UDP, 1, [Define if use userver_udp])
+	fi
 else
    AC_MSG_RESULT(no)
 	AM_CONDITIONAL(ENABLE_EXAMPLES, false)
@@ -1299,6 +1326,7 @@ AC_ARG_WITH(parser,
 	[use_parser=$withval],
 	[use_parser=no])
 AC_MSG_RESULT($use_parser)
+
 if test "$use_parser" = "yes" ; then
 	AC_PROG_YACC
 	AC_PROG_LEX

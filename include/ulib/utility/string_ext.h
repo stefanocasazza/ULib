@@ -68,25 +68,30 @@ public:
    static UString   compress(const UString& s) { return   compress(U_STRING_TO_PARAM(s)); }
    static UString decompress(const UString& s) { return decompress(U_STRING_TO_PARAM(s)); }
 
-#ifdef USE_LIBBROTLI
+   static uint32_t ratio, ratio_threshold;
+
+   static bool isGzip(const char* s)    { return (u_get_unalignedp16(s) == U_MULTICHAR_CONSTANT16('\x1F','\x8B')); }
+   static bool isGzip(const UString& s) { return isGzip(s.data()); }
+
+   static UString gunzip(const char* s, uint32_t n, uint32_t sz_orig); // .gz uncompress
+   static UString gunzip(const UString& s, uint32_t sz_orig = 0) { return  gunzip(U_STRING_TO_PARAM(s), sz_orig); }
+
+#ifdef USE_LIBZ
+   static UString deflate(const char* s, uint32_t n, uint32_t quality = 0); // .gz compress (0 => zopfli)
+   static UString deflate(const UString& s, uint32_t quality = 0) { return deflate(U_STRING_TO_PARAM(s), quality); }
+#endif
+
+   static bool isBrotli(const char* s)    { return false; } // (u_get_unalignedp32(s) == U_MULTICHAR_CONSTANT32('\xCE','\xB2','\xCF','\x81'))
+   static bool isBrotli(const UString& s) { return isBrotli(s.data()); }
+
    static UString unbrotli(const char* s, uint32_t n);
    static UString unbrotli(const UString& s) { return unbrotli(U_STRING_TO_PARAM(s)); }
 
+#ifdef USE_LIBBROTLI
    static UString brotli(const char* s, uint32_t n, uint32_t quality = BROTLI_MAX_QUALITY, uint32_t mode = BROTLI_MODE_TEXT, uint32_t lgwin = BROTLI_DEFAULT_WINDOW);
    static UString brotli(const UString& s,          uint32_t quality = BROTLI_MAX_QUALITY, uint32_t mode = BROTLI_MODE_TEXT, uint32_t lgwin = BROTLI_DEFAULT_WINDOW)
       { return brotli(U_STRING_TO_PARAM(s), quality, mode, lgwin); }
 #endif
-
-   // GZIP method
-
-   static bool isGzip(const char* s)        { return (u_get_unalignedp16(s) == U_MULTICHAR_CONSTANT16('\x1F','\x8B')); }
-   static bool isGzip(const UString& s)     { return isGzip(s.data()); }
-
-   static UString deflate(const char* s, uint32_t n, int type);         // .gz   compress
-   static UString  gunzip(const char* s, uint32_t n, uint32_t sz_orig); // .gz uncompress
-
-   static UString deflate(const UString& s, int type)             { return deflate(U_STRING_TO_PARAM(s), type); }
-   static UString  gunzip(const UString& s, uint32_t sz_orig = 0) { return  gunzip(U_STRING_TO_PARAM(s), sz_orig); }
 
    // Convert numeric to string
 

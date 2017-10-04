@@ -17,6 +17,8 @@
 
 #include <ulib/base/coder/gzio.h>
 
+bool u_gz_deflate_header = true;
+
 /**
  * Synopsis: Compress and Decompresses the source buffer into the destination buffer
  *
@@ -38,13 +40,13 @@ static const char* get_error_string(int err)
 
    switch (err)
       {
-      case Z_ERRNO:           p = "Error occured while reading file";                                          break;  
-      case Z_STREAM_ERROR:    p = "The stream state was inconsistent (e.g., next_in or next_out was NULL)";    break;  
-      case Z_DATA_ERROR:      p = "The deflate data was invalid or incomplete";                                break;  
-      case Z_MEM_ERROR:       p = "Memory could not be allocated for processing";                              break;  
-      case Z_BUF_ERROR:       p = "Ran out of output buffer for writing compressed bytes";                     break;  
-      case Z_VERSION_ERROR:   p = "The version of zlib.h and the version of the library linked do not match";  break;  
-      default:                p = "Unknown error code.";                                                       break;
+      case Z_ERRNO:         p = "Error occured while reading file";                                         break;  
+      case Z_STREAM_ERROR:  p = "The stream state was inconsistent (e.g., next_in or next_out was NULL)";   break;  
+      case Z_DATA_ERROR:    p = "The deflate data was invalid or incomplete";                               break;  
+      case Z_MEM_ERROR:     p = "Memory could not be allocated for processing";                             break;  
+      case Z_BUF_ERROR:     p = "Ran out of output buffer for writing compressed bytes";                    break;  
+      case Z_VERSION_ERROR: p = "The version of zlib.h and the version of the library linked do not match"; break;  
+      default:              p = "Unknown error code.";                                                      break;
       }
 
    return p;
@@ -56,21 +58,21 @@ static int workspacesize = zlib_deflate_workspacesize();
 static char workspace[workspacesize];
 #endif
 
-uint32_t u_gz_deflate(const char* restrict input, uint32_t len, char* restrict result, bool bheader)
+uint32_t u_gz_deflate(const char* restrict input, uint32_t len, char* restrict result, int level)
 {
    int err;
    z_stream stream;
 
    /**
-    * stream.zalloc    = // Set zalloc, zfree, and opaque to Z_NULL so  
-    * stream.zfree     = // that when we call deflateInit2 they will be  
-    * stream.opaque    = // updated to use default allocation functions.  
-    * stream.total_out = // Total number of output bytes produced so far  
-    * stream.next_in   = // Pointer to input bytes  
-    * stream.avail_in  = // Number of input bytes left to process
+    * stream.zalloc    // Set zalloc, zfree, and opaque to Z_NULL so
+    * stream.zfree     // that when we call deflateInit2 they will be
+    * stream.opaque    // updated to use default allocation functions.
+    * stream.total_out // Total number of output bytes produced so far
+    * stream.next_in   // Pointer to input bytes
+    * stream.avail_in  // Number of input bytes left to process
     */
 
-   U_INTERNAL_TRACE("u_gz_deflate(%p,%u,%p,%d)", input, len, result, bheader)
+   U_INTERNAL_TRACE("u_gz_deflate(%p,%u,%p,%d)", input, len, result, level)
 
    U_INTERNAL_ASSERT_POINTER(input)
 
@@ -103,7 +105,7 @@ uint32_t u_gz_deflate(const char* restrict input, uint32_t len, char* restrict r
     * The parameters are as follows:
     *
     * z_streamp strm - Pointer to a zstream struct 
-    * int level      - Compression level. Must be Z_DEFAULT_COMPRESSION, or between 0 and 9:
+    * int level      - Compression level. Must be Z_DEFAULT_COMPRESSION(-1), or between 0 and 9:
     *                  1 gives best speed, 9 gives best compression, 0 gives no compression. 
     *
     * int method     - Compression method. Only method supported is "Z_DEFLATED". 
@@ -127,7 +129,7 @@ uint32_t u_gz_deflate(const char* restrict input, uint32_t len, char* restrict r
     *                  force Huffman encoding only (no string match)
     */
 
-   err = deflateInit2(&stream, Z_DEFAULT_COMPRESSION, Z_DEFLATED, (bheader ? MAX_WBITS+16 : -MAX_WBITS), MAX_MEM_LEVEL, Z_DEFAULT_STRATEGY);
+   err = deflateInit2(&stream, level, Z_DEFLATED, (u_gz_deflate_header ? MAX_WBITS+16 : -MAX_WBITS), MAX_MEM_LEVEL, Z_DEFAULT_STRATEGY);
 
    if (err != Z_OK)
       {
@@ -199,7 +201,7 @@ uint32_t u_gz_deflate(const char* restrict input, uint32_t len, char* restrict r
    U_INTERNAL_ASSERT_EQUALS(stream.total_in, len)
 
 #ifdef DEBUG
-   if (bheader)
+   if (u_gz_deflate_header)
       {
       uint32_t   size_original;
       uint32_t* psize_original = (uint32_t*)(result + stream.total_out - 4);

@@ -235,7 +235,6 @@ protected:
    static bool checkPeerInfo(UStringRep* key, void* value);
    static bool checkPeerStatus(UStringRep* key, void* value);
    static bool getPeerListInfo(UStringRep* key, void* value);
-   static void setHTTPResponse(const UString& content, int mime_index);
    static void permit(UString& UserDownloadRate, UString& UserUploadRate);
    static void sendMsgToPortal(uint32_t index_AUTH, const UString& msg, UString* poutput);
    static void sendData(uint32_t index_AUTH, const UString& data, const char* service, uint32_t service_len);

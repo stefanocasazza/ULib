@@ -19,6 +19,8 @@
 #include <ulib/command.h>
 #include <ulib/notifier.h>
 #include <ulib/file_config.h>
+#include <ulib/net/udpsocket.h>
+#include <ulib/net/unixsocket.h>
 #include <ulib/utility/interrupt.h>
 #include <ulib/utility/socket_ext.h>
 #include <ulib/net/server/client_image.h>
@@ -209,7 +211,7 @@ public:
    static void run(); // loop waiting for connection
 
    static UFileConfig* cfg;
-   static bool bssl, bipc, flag_loop;
+   static bool bssl, bipc, budp, flag_loop;
    static unsigned int port; // the port number to bind to
 
    static int          getReqTimeout()  { return (ptime ? ptime->UTimeVal::tv_sec : 0); }
@@ -610,8 +612,10 @@ public:
    static int iAddressType, socket_flags, tcp_linger_set;
    static uint32_t client_address_len, min_size_for_sendfile;
 
-#define U_CLIENT_ADDRESS_TO_PARAM  UServer_Base::client_address, UServer_Base::client_address_len
-#define U_CLIENT_ADDRESS_TO_TRACE  UServer_Base::client_address_len, UServer_Base::client_address
+#define U_CLIENT_ADDRESS_TO_PARAM UServer_Base::client_address, UServer_Base::client_address_len
+#define U_CLIENT_ADDRESS_TO_TRACE UServer_Base::client_address_len, UServer_Base::client_address
+
+   static void setClientAddress() { setClientAddress(csocket, client_address, client_address_len); }
 
    static UString getIPAddress()                         { return *IP_address; }
    static UString getNetworkDevice( const char* exclude) { return USocketExt::getNetworkDevice(exclude); }
@@ -641,6 +645,7 @@ public:
 
    static USocket* socket;
    static USocket* csocket;
+   static UString* name_sock;  // name file for the listening socket
 protected:
    static int timeoutMS,       // the time-out value in milliseconds for client request
               verify_mode;     // mode of verification ssl connection
@@ -653,7 +658,6 @@ protected:
    static UString* password;   // password for private key of server
    static UString* ca_file;    // locations of trusted CA certificates used in the verification
    static UString* ca_path;    // locations of trusted CA certificates used in the verification
-   static UString* name_sock;  // name file for the listening socket
    static UString* IP_address; // IP address of this server
 
    static int rkids;
@@ -681,6 +685,10 @@ protected:
    static void runLoop(const char* user);
    static bool handlerTimeoutConnection(void* cimg);
 
+#ifndef U_LOG_DISABLE
+   static void logNewClient(USocket* psocket, UClientImage_Base* lClientImage);
+#endif
+
 #ifdef U_WELCOME_SUPPORT
    static UString* msg_welcome;
 #endif
@@ -702,6 +710,28 @@ protected:
    static uint32_t max_depth, wakeup_for_nothing, nread, nread_again, stats_connections, stats_simultaneous;
 
    static UString getStats();
+#endif
+
+#ifdef USERVER_UDP
+   static vPFi runDynamicPage_udp;
+
+   static int handlerUDP()
+      {
+      U_TRACE_NO_PARAM(0, "UServer_Base::handlerUDP()")
+
+      U_INTERNAL_DUMP("runDynamicPage_udp = %p", runDynamicPage_udp) 
+
+      if (runDynamicPage_udp) runDynamicPage_udp(0);
+      else
+         {
+         *UClientImage_Base::wbuffer = *UClientImage_Base::rbuffer; // echo server
+         }
+
+      UClientImage_Base::setRequestProcessed();
+      UClientImage_Base::setNoHeaderForResponse();
+
+      U_RETURN(U_PLUGIN_HANDLER_FINISHED);
+      }
 #endif
 
 #ifdef U_THROTTLING_SUPPORT
@@ -872,9 +902,9 @@ protected:
       U_RETURN(false);
       }
 
-   static RETSIGTYPE handlerForSigHUP(  int signo);
-   static RETSIGTYPE handlerForSigTERM( int signo);
-// static RETSIGTYPE handlerForSigCHLD( int signo);
+   static RETSIGTYPE handlerForSigHUP( int signo);
+   static RETSIGTYPE handlerForSigTERM(int signo);
+// static RETSIGTYPE handlerForSigCHLD(int signo);
 
    static void sendSignalToAllChildren(int signo, sighandler_t handler);
 
@@ -899,6 +929,18 @@ private:
 #  endif
 
       if (pluginsHandlerSigHUP() != U_PLUGIN_HANDLER_FINISHED) U_WARNING("Plugins stage SigHUP failed...");
+      }
+
+   static void setClientAddress(USocket* psocket, char*& pclient_address, uint32_t& pclient_address_len)
+      {
+      U_TRACE(0, "UServer_Base::setClientAddress(%p,%p,%u)", psocket, pclient_address, pclient_address_len)
+
+      U_INTERNAL_ASSERT(psocket->isConnected())
+
+      pclient_address     = UIPAddress::resolveStrAddress(iAddressType, psocket->cRemoteAddress.pcAddress.p, psocket->cRemoteAddress.pcStrAddress);
+      pclient_address_len = u__strlen(pclient_address, __PRETTY_FUNCTION__);
+
+      U_INTERNAL_DUMP("client_address = %.*S", pclient_address_len, pclient_address)
       }
 
    static void logMemUsage(const char* signame)
@@ -1036,6 +1078,8 @@ public:
 #  endif
 
       U_NEW(USSLSocket, socket, USSLSocket(UClientImage_Base::bIPv6, U_NULLPTR, true));
+
+      if (pcfg) ((USSLSocket*)socket)->ciphersuite_model = pcfg->readLong(U_CONSTANT_TO_PARAM("CIPHER_SUITE"));
       }
 
    virtual ~UServer()
@@ -1082,6 +1126,142 @@ protected:
 
 private:
    U_DISALLOW_COPY_AND_ASSIGN(UServer<USSLSocket>)
+};
+#endif
+
+#ifdef USERVER_UDP
+template <> class U_EXPORT UServer<UUDPSocket> : public UServer_Base {
+public:
+
+   typedef UClientImage<UUDPSocket> client_type;
+
+   UServer(UFileConfig* pcfg) : UServer_Base(pcfg)
+      {
+      U_TRACE_REGISTER_OBJECT(0, UServer<UUDPSocket>, "%p", pcfg)
+
+#  ifdef DEBUG
+      if (pcfg &&
+          budp == false)
+         {
+         U_ERROR("You need to set budp var before loading the configuration");
+         }
+#  endif
+
+      U_NEW(UUDPSocket, socket, UUDPSocket(UClientImage_Base::bIPv6));
+      }
+
+   virtual ~UServer()
+      {
+      U_TRACE_UNREGISTER_OBJECT(0, UServer<UUDPSocket>)
+      }
+
+   // DEBUG
+
+#if defined(DEBUG) && defined(U_STDCPP_ENABLE)
+   const char* dump(bool reset) const { return UServer_Base::dump(reset); }
+#endif
+
+protected:
+
+   // ---------------------------------------------------------------------------------------------------------------
+   // method VIRTUAL to redefine
+   // ---------------------------------------------------------------------------------------------------------------
+   // Create a new UClientImage object representing a client connection to the server.
+   // Derived classes that have overridden UClientImage object may call this function to implement the creation logic
+   // ---------------------------------------------------------------------------------------------------------------
+
+   virtual void preallocate() U_DECL_OVERRIDE
+      {
+      U_TRACE_NO_PARAM(0+256, "UServer<UUDPSocket>::preallocate()")
+
+      // NB: array are not pointers (virtual table can shift the address of this)...
+
+      vClientImage = new client_type[UNotifier::max_connection];
+      }
+
+#ifdef DEBUG
+   virtual void deallocate() U_DECL_OVERRIDE
+      {
+      U_TRACE_NO_PARAM(0+256, "UServer<UUDPSocket>::deallocate()")
+
+      // NB: array are not pointers (virtual table can shift the address of this)...
+
+      delete[] (client_type*)vClientImage;
+      }
+
+   virtual bool check_memory() U_DECL_OVERRIDE { return u_check_memory_vector<client_type>((client_type*)vClientImage, UNotifier::max_connection); }
+#endif
+
+private:
+   U_DISALLOW_COPY_AND_ASSIGN(UServer<UUDPSocket>)
+};
+#endif
+
+#ifdef USERVER_IPC
+template <> class U_EXPORT UServer<UUnixSocket> : public UServer_Base {
+public:
+
+   typedef UClientImage<UUnixSocket> client_type;
+
+   UServer(UFileConfig* pcfg) : UServer_Base(pcfg)
+      {
+      U_TRACE_REGISTER_OBJECT(0, UServer<UUnixSocket>, "%p", pcfg)
+
+#  ifdef DEBUG
+      if (pcfg &&
+          bipc == false)
+         {
+         U_ERROR("You need to set bipc var before loading the configuration");
+         }
+#  endif
+
+      U_NEW(UUnixSocket, socket, UUnixSocket(UClientImage_Base::bIPv6));
+      }
+
+   virtual ~UServer()
+      {
+      U_TRACE_UNREGISTER_OBJECT(0, UServer<UUnixSocket>)
+      }
+
+   // DEBUG
+
+#if defined(DEBUG) && defined(U_STDCPP_ENABLE)
+   const char* dump(bool reset) const { return UServer_Base::dump(reset); }
+#endif
+
+protected:
+
+   // ---------------------------------------------------------------------------------------------------------------
+   // method VIRTUAL to redefine
+   // ---------------------------------------------------------------------------------------------------------------
+   // Create a new UClientImage object representing a client connection to the server.
+   // Derived classes that have overridden UClientImage object may call this function to implement the creation logic
+   // ---------------------------------------------------------------------------------------------------------------
+
+   virtual void preallocate() U_DECL_OVERRIDE
+      {
+      U_TRACE_NO_PARAM(0+256, "UServer<UUnixSocket>::preallocate()")
+
+      // NB: array are not pointers (virtual table can shift the address of this)...
+
+      vClientImage = new client_type[UNotifier::max_connection];
+      }
+
+#ifdef DEBUG
+   virtual void deallocate() U_DECL_OVERRIDE
+      {
+      U_TRACE_NO_PARAM(0+256, "UServer<UUnixSocket>::deallocate()")
+
+      // NB: array are not pointers (virtual table can shift the address of this)...
+
+      delete[] (client_type*)vClientImage;
+      }
+
+   virtual bool check_memory() U_DECL_OVERRIDE { return u_check_memory_vector<client_type>((client_type*)vClientImage, UNotifier::max_connection); }
+#endif
+
+private:
+   U_DISALLOW_COPY_AND_ASSIGN(UServer<UUnixSocket>)
 };
 #endif
 #endif

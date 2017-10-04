@@ -205,51 +205,16 @@ int UProxyPlugIn::handlerRequest()
             {
             // NB: in this case we broke the transparency of the response to avoid a duplication of effort to read chunked data...
 
-            uint32_t sz, csz, ratio;
-            UString body = client_http->getContent();
+            UString body         = client_http->getContent(),
+                    content_type = client_http->getResponseHeader()->getContentType();
 
             U_INTERNAL_ASSERT(body)
 
             if (UHTTP::service->isReplaceResponse()) body = UHTTP::service->replaceResponse(body); 
 
-            UString content_type = client_http->getResponseHeader()->getContentType();
-
             content_type.rep->_length += 2; // NB: we add "\r\n"...
 
-#        if defined(USE_LIBZ) || defined(USE_LIBBROTLI)
-            if ((sz = body.size()) > U_MIN_SIZE_FOR_DEFLATE)
-               {
-               UString compressed;
-
-               U_INTERNAL_DUMP("U_http_is_accept_gzip = %b U_http_is_accept_brotli = %b", U_http_is_accept_gzip, U_http_is_accept_brotli)
-
-#           ifdef USE_LIBBROTLI
-               if (U_http_is_accept_brotli &&
-                   (compressed = UStringExt::brotli(body, 6)))
-                  {
-                  goto next;
-                  }
-#           endif
-#           ifdef USE_LIBZ
-               if (U_http_is_accept_gzip) compressed = UStringExt::deflate(body, 1);
-#           endif
-
-next:          csz = compressed.size(), ratio = (csz * 100U) / sz;
-
-               U_INTERNAL_DUMP("ratio = %u (%u%%)", ratio, 100-ratio)
-
-               // NB: we accept new data only if ratio compression is better than 15%...
-
-               if (ratio < 85)
-                  {
-                  body = compressed;
-
-                  U_SRV_LOG("proxy response: %u bytes - (%u%%) compression ratio", csz, 100-ratio);
-                  }
-               }
-#        endif
-
-            UHTTP::setResponse(true, content_type, &body);
+            UHTTP::setDynamicResponse(body, UString::getStringNull(), content_type);
             }
          }
 

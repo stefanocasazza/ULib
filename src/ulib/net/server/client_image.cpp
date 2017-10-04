@@ -656,6 +656,15 @@ const char* UClientImage_Base::getRequestUri(uint32_t& sz)
    ptr = U_http_info.uri;
 
    U_INTERNAL_DUMP("U_http_info.uri(%u) = %.*S", sz, sz, ptr)
+
+#ifdef USERVER_UDP
+   if (sz == 0 &&
+       UServer_Base::budp)
+      {
+      sz  = U_CONSTANT_SIZE("unknow");
+      ptr =                 "unknow";
+      }
+#endif
    }
 
    return ptr;
@@ -1070,10 +1079,6 @@ bool UClientImage_Base::genericRead()
 
    U_INTERNAL_ASSERT_EQUALS(socket->iSockDesc, UEventFd::fd)
 
-   U_gettimeofday // NB: optimization if it is enough a time resolution of one second...
-
-   startRequest();
-
    rstart = 0;
 
    request->clear(); // reset buffer before read
@@ -1094,6 +1099,25 @@ bool UClientImage_Base::genericRead()
 
    socket->iState = USocket::CONNECT; // prepare socket before read
 
+#ifdef USERVER_UDP
+   if (UServer_Base::budp)
+      {
+      uint32_t sz = rbuffer->size();
+      int iBytesTransferred = socket->recvFrom(rbuffer->data()+sz, rbuffer->capacity());
+
+      if (iBytesTransferred <= 0) U_RETURN(false);
+
+      rbuffer->size_adjust(sz+iBytesTransferred);
+
+      UServer_Base::setClientAddress();
+
+#  ifndef U_LOG_DISABLE
+      UServer_Base::logNewClient(socket, this);
+#  endif
+      }
+   else
+#endif
+   {
    if (USocketExt::read(socket, *rbuffer, U_SINGLE_READ, 0) == false) // NB: timeout == 0 means that we put the socket fd on epoll queue if EAGAIN...
       {
       U_ClientImage_state = (socket->isOpen() ? U_PLUGIN_HANDLER_AGAIN
@@ -1101,6 +1125,7 @@ bool UClientImage_Base::genericRead()
 
       U_RETURN(false);
       }
+   }
 
    if (data_pending)
       {
@@ -1118,6 +1143,10 @@ bool UClientImage_Base::genericRead()
       delete data_pending;
              data_pending = U_NULLPTR;
       }
+
+   U_gettimeofday // NB: optimization if it is enough a time resolution of one second...
+
+   startRequest();
 
 #ifdef U_SERVER_CHECK_TIME_BETWEEN_REQUEST
    if (U_ClientImage_advise_for_parallelization)
@@ -1146,6 +1175,9 @@ int UClientImage_Base::handlerRead() // Connection-wide hooks
    int result;
    uint32_t sz;
 
+# ifdef USERVER_UDP
+   if (UServer_Base::budp == false)
+# endif
    prepareForRead();
 
 start:
@@ -1586,10 +1618,21 @@ bool UClientImage_Base::writeResponse()
       {
       U_INTERNAL_ASSERT_EQUALS(nrequest, 0)
 
+      U_SRV_LOG_WITH_ADDR("send response (%u bytes) %.*s%#.*S to", ncount, msg_len, "[pipeline] ", iov_vec[2].iov_len, iov_vec[2].iov_base);
+
+#  ifdef USERVER_UDP
+      if (UServer_Base::budp)
+         {
+         iBytesWrite = socket->sendTo(iov_vec[2].iov_base, iov_vec[2].iov_len);
+
+         if (iBytesWrite == (int)ncount) U_RETURN(true);
+
+         U_RETURN(false);
+         }
+#  endif
+
       idx    = 2;
       iovcnt = 2;
-
-      U_SRV_LOG_WITH_ADDR("send response (%u bytes) %.*s%#.*S to", ncount, msg_len, "[pipeline] ", iov_vec[2].iov_len, iov_vec[2].iov_base);
       }
    else
       {

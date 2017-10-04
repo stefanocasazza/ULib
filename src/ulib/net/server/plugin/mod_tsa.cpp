@@ -97,7 +97,7 @@ int UTsaPlugIn::handlerRequest()
          {
          U_http_info.nResponseCode = HTTP_OK;
 
-         UHTTP::setResponse(true, *UString::str_ctype_tsa, &body);
+         UHTTP::setResponse(*UString::str_ctype_tsa, &body);
          }
 
 #  ifndef U_LOG_DISABLE

@@ -23,6 +23,15 @@ userver_ssl_CPPFLAGS = -DU_SSL_SOCKET $(CPPFLAGS)
 bin_PROGRAMS  	  	  += userver_ssl
 endif
 
+if USERVER_UDP
+userver_udp_LDADD    = $(ulib_la)
+userver_udp_SOURCES  = userver.cpp
+userver_udp_LDFLAGS  = $(PRG_LDFLAGS)
+userver_udp_CPPFLAGS = -DU_UDP_SOCKET $(CPPFLAGS)
+bin_PROGRAMS  	  	  += userver_udp
+endif
+
+if USERVER_IPC
 ## MINGW don't have unix socket...
 if !MINGW
 userver_ipc_LDADD    = $(ulib_la)
@@ -30,6 +39,7 @@ userver_ipc_SOURCES  = userver.cpp
 userver_ipc_LDFLAGS  = $(PRG_LDFLAGS)
 userver_ipc_CPPFLAGS = -DU_UNIX_SOCKET $(CPPFLAGS)
 bin_PROGRAMS  	  	  += userver_ipc
+endif
 endif
 
 install-exec-hook:

@@ -90,9 +90,11 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 target_triplet = @target@
-bin_PROGRAMS = userver_tcp$(EXEEXT) $(am__EXEEXT_1) $(am__EXEEXT_2)
+bin_PROGRAMS = userver_tcp$(EXEEXT) $(am__EXEEXT_1) $(am__EXEEXT_2) \
+	$(am__EXEEXT_3)
 @SSL_TRUE@am__append_1 = userver_ssl
-@MINGW_FALSE@am__append_2 = userver_ipc
+@USERVER_UDP_TRUE@am__append_2 = userver_udp
+@MINGW_FALSE@@USERVER_IPC_TRUE@am__append_3 = userver_ipc
 subdir = examples/userver
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/ac_check_package.m4 \
@@ -123,14 +125,17 @@ CONFIG_CLEAN_FILES = web_server.spec wagsmserver.spec tsaserver.spec \
 	cspserver.spec rsignserver.spec
 CONFIG_CLEAN_VPATH_FILES =
 @SSL_TRUE@am__EXEEXT_1 = userver_ssl$(EXEEXT)
-@MINGW_FALSE@am__EXEEXT_2 = userver_ipc$(EXEEXT)
+@USERVER_UDP_TRUE@am__EXEEXT_2 = userver_udp$(EXEEXT)
+@MINGW_FALSE@@USERVER_IPC_TRUE@am__EXEEXT_3 = userver_ipc$(EXEEXT)
 am__installdirs = "$(DESTDIR)$(bindir)" "$(DESTDIR)$(sysconfdir)"
 PROGRAMS = $(bin_PROGRAMS)
 am__userver_ipc_SOURCES_DIST = userver.cpp
-@MINGW_FALSE@am_userver_ipc_OBJECTS = userver_ipc-userver.$(OBJEXT)
+@MINGW_FALSE@@USERVER_IPC_TRUE@am_userver_ipc_OBJECTS =  \
+@MINGW_FALSE@@USERVER_IPC_TRUE@	userver_ipc-userver.$(OBJEXT)
 userver_ipc_OBJECTS = $(am_userver_ipc_OBJECTS)
 am__DEPENDENCIES_1 = $(top_builddir)/src/ulib/lib@ULIB@.la
-@MINGW_FALSE@userver_ipc_DEPENDENCIES = $(am__DEPENDENCIES_1)
+@MINGW_FALSE@@USERVER_IPC_TRUE@userver_ipc_DEPENDENCIES =  \
+@MINGW_FALSE@@USERVER_IPC_TRUE@	$(am__DEPENDENCIES_1)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
@@ -151,6 +156,14 @@ userver_tcp_DEPENDENCIES = $(am__DEPENDENCIES_1)
 userver_tcp_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CXXLD) $(AM_CXXFLAGS) \
 	$(CXXFLAGS) $(userver_tcp_LDFLAGS) $(LDFLAGS) -o $@
+am__userver_udp_SOURCES_DIST = userver.cpp
+@USERVER_UDP_TRUE@am_userver_udp_OBJECTS =  \
+@USERVER_UDP_TRUE@	userver_udp-userver.$(OBJEXT)
+userver_udp_OBJECTS = $(am_userver_udp_OBJECTS)
+@USERVER_UDP_TRUE@userver_udp_DEPENDENCIES = $(am__DEPENDENCIES_1)
+userver_udp_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CXXLD) $(AM_CXXFLAGS) \
+	$(CXXFLAGS) $(userver_udp_LDFLAGS) $(LDFLAGS) -o $@
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
 am__v_P_0 = false
@@ -185,9 +198,10 @@ am__v_CXXLD_ = $(am__v_CXXLD_@AM_DEFAULT_V@)
 am__v_CXXLD_0 = @echo "  CXXLD   " $@;
 am__v_CXXLD_1 = 
 SOURCES = $(userver_ipc_SOURCES) $(userver_ssl_SOURCES) \
-	$(userver_tcp_SOURCES)
+	$(userver_tcp_SOURCES) $(userver_udp_SOURCES)
 DIST_SOURCES = $(am__userver_ipc_SOURCES_DIST) \
-	$(am__userver_ssl_SOURCES_DIST) $(userver_tcp_SOURCES)
+	$(am__userver_ssl_SOURCES_DIST) $(userver_tcp_SOURCES) \
+	$(am__userver_udp_SOURCES_DIST)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -451,10 +465,14 @@ userver_tcp_CPPFLAGS = -DU_TCP_SOCKET $(CPPFLAGS)
 @SSL_TRUE@userver_ssl_SOURCES = userver.cpp
 @SSL_TRUE@userver_ssl_LDFLAGS = $(PRG_LDFLAGS)
 @SSL_TRUE@userver_ssl_CPPFLAGS = -DU_SSL_SOCKET $(CPPFLAGS)
-@MINGW_FALSE@userver_ipc_LDADD = $(ulib_la)
-@MINGW_FALSE@userver_ipc_SOURCES = userver.cpp
-@MINGW_FALSE@userver_ipc_LDFLAGS = $(PRG_LDFLAGS)
-@MINGW_FALSE@userver_ipc_CPPFLAGS = -DU_UNIX_SOCKET $(CPPFLAGS)
+@USERVER_UDP_TRUE@userver_udp_LDADD = $(ulib_la)
+@USERVER_UDP_TRUE@userver_udp_SOURCES = userver.cpp
+@USERVER_UDP_TRUE@userver_udp_LDFLAGS = $(PRG_LDFLAGS)
+@USERVER_UDP_TRUE@userver_udp_CPPFLAGS = -DU_UDP_SOCKET $(CPPFLAGS)
+@MINGW_FALSE@@USERVER_IPC_TRUE@userver_ipc_LDADD = $(ulib_la)
+@MINGW_FALSE@@USERVER_IPC_TRUE@userver_ipc_SOURCES = userver.cpp
+@MINGW_FALSE@@USERVER_IPC_TRUE@userver_ipc_LDFLAGS = $(PRG_LDFLAGS)
+@MINGW_FALSE@@USERVER_IPC_TRUE@userver_ipc_CPPFLAGS = -DU_UNIX_SOCKET $(CPPFLAGS)
 all: all-am
 
 .SUFFIXES:
@@ -560,6 +578,10 @@ userver_tcp$(EXEEXT): $(userver_tcp_OBJECTS) $(userver_tcp_DEPENDENCIES) $(EXTRA
 	@rm -f userver_tcp$(EXEEXT)
 	$(AM_V_CXXLD)$(userver_tcp_LINK) $(userver_tcp_OBJECTS) $(userver_tcp_LDADD) $(LIBS)
 
+userver_udp$(EXEEXT): $(userver_udp_OBJECTS) $(userver_udp_DEPENDENCIES) $(EXTRA_userver_udp_DEPENDENCIES) 
+	@rm -f userver_udp$(EXEEXT)
+	$(AM_V_CXXLD)$(userver_udp_LINK) $(userver_udp_OBJECTS) $(userver_udp_LDADD) $(LIBS)
+
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
 
@@ -569,6 +591,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/userver_ipc-userver.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/userver_ssl-userver.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/userver_tcp-userver.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/userver_udp-userver.Po@am__quote@
 
 .cpp.o:
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.o$$||'`;\
@@ -635,6 +658,20 @@ userver_tcp-userver.obj: userver.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='userver.cpp' object='userver_tcp-userver.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(userver_tcp_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o userver_tcp-userver.obj `if test -f 'userver.cpp'; then $(CYGPATH_W) 'userver.cpp'; else $(CYGPATH_W) '$(srcdir)/userver.cpp'; fi`
+
+userver_udp-userver.o: userver.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(userver_udp_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT userver_udp-userver.o -MD -MP -MF $(DEPDIR)/userver_udp-userver.Tpo -c -o userver_udp-userver.o `test -f 'userver.cpp' || echo '$(srcdir)/'`userver.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/userver_udp-userver.Tpo $(DEPDIR)/userver_udp-userver.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='userver.cpp' object='userver_udp-userver.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(userver_udp_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o userver_udp-userver.o `test -f 'userver.cpp' || echo '$(srcdir)/'`userver.cpp
+
+userver_udp-userver.obj: userver.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(userver_udp_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT userver_udp-userver.obj -MD -MP -MF $(DEPDIR)/userver_udp-userver.Tpo -c -o userver_udp-userver.obj `if test -f 'userver.cpp'; then $(CYGPATH_W) 'userver.cpp'; else $(CYGPATH_W) '$(srcdir)/userver.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/userver_udp-userver.Tpo $(DEPDIR)/userver_udp-userver.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='userver.cpp' object='userver_udp-userver.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(userver_udp_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o userver_udp-userver.obj `if test -f 'userver.cpp'; then $(CYGPATH_W) 'userver.cpp'; else $(CYGPATH_W) '$(srcdir)/userver.cpp'; fi`
 
 mostlyclean-libtool:
 	-rm -f *.lo

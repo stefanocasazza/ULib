@@ -2068,47 +2068,17 @@ U_EXPORT main(int argc, char* argv[])
    */
 
 #ifdef USE_LIBZ
-   #define TEXT3 \
-   "Apr 12 10:03:22 www sm-mta[2031]: l3C834YF002031: from=<tddiaz@thai.com>, size=2426, class=0, nrcpts=1, msgid=<c69d01c77cd8$9471501e$6aa9eea9@thai.com>, proto=SMTP, daemon=MTA, relay=adsl-d36.87-197-150.t-com.sk [87.197.150.36]\n" \
-   "Apr 12 10:03:22 www sm-mta[2034]: l3C834YF002031: to=<marcodd@unirel.it>, delay=00:00:13, xdelay=00:00:00, mailer=cyrusv2, pri=122426, relay=localhost, dsn=5.1.1, stat=User unknown\n" \
-   "Apr 12 10:03:22 www sm-mta[2034]: l3C834YF002031: l3C83MYF002034: DSN: User unknown" \
-   "Apr 12 10:03:22 www sm-mta[2031]: l3C834YF002031: from=<tddiaz@thai.com>, size=2426, class=0, nrcpts=1, msgid=<c69d01c77cd8$9471501e$6aa9eea9@thai.com>, proto=SMTP, daemon=MTA, relay=adsl-d36.87-197-150.t-com.sk [87.197.150.36]\n" \
-   "Apr 12 10:03:22 www sm-mta[2034]: l3C834YF002031: to=<marcodd@unirel.it>, delay=00:00:13, xdelay=00:00:00, mailer=cyrusv2, pri=122426, relay=localhost, dsn=5.1.1, stat=User unknown\n" \
-   "Apr 12 10:03:22 www sm-mta[2034]: l3C834YF002031: l3C83MYF002034: DSN: User unknown" \
-   "Apr 12 10:03:22 www sm-mta[2031]: l3C834YF002031: from=<tddiaz@thai.com>, size=2426, class=0, nrcpts=1, msgid=<c69d01c77cd8$9471501e$6aa9eea9@thai.com>, proto=SMTP, daemon=MTA, relay=adsl-d36.87-197-150.t-com.sk [87.197.150.36]\n" \
-   "Apr 12 10:03:22 www sm-mta[2034]: l3C834YF002031: to=<marcodd@unirel.it>, delay=00:00:13, xdelay=00:00:00, mailer=cyrusv2, pri=122426, relay=localhost, dsn=5.1.1, stat=User unknown\n" \
-   "Apr 12 10:03:22 www sm-mta[2034]: l3C834YF002031: l3C83MYF002034: DSN: User unknown" \
-   "Apr 12 10:03:22 www sm-mta[2031]: l3C834YF002031: from=<tddiaz@thai.com>, size=2426, class=0, nrcpts=1, msgid=<c69d01c77cd8$9471501e$6aa9eea9@thai.com>, proto=SMTP, daemon=MTA, relay=adsl-d36.87-197-150.t-com.sk [87.197.150.36]\n" \
-   "Apr 12 10:03:22 www sm-mta[2034]: l3C834YF002031: to=<marcodd@unirel.it>, delay=00:00:13, xdelay=00:00:00, mailer=cyrusv2, pri=122426, relay=localhost, dsn=5.1.1, stat=User unknown\n" \
-   "Apr 12 10:03:22 www sm-mta[2034]: l3C834YF002031: l3C83MYF002034: DSN: User unknown" \
-   "Apr 12 10:03:22 www sm-mta[2031]: l3C834YF002031: from=<tddiaz@thai.com>, size=2426, class=0, nrcpts=1, msgid=<c69d01c77cd8$9471501e$6aa9eea9@thai.com>, proto=SMTP, daemon=MTA, relay=adsl-d36.87-197-150.t-com.sk [87.197.150.36]\n" \
-   "Apr 12 10:03:22 www sm-mta[2034]: l3C834YF002031: to=<marcodd@unirel.it>, delay=00:00:13, xdelay=00:00:00, mailer=cyrusv2, pri=122426, relay=localhost, dsn=5.1.1, stat=User unknown\n" \
-   "Apr 12 10:03:22 www sm-mta[2034]: l3C834YF002031: l3C83MYF002034: DSN: User unknown" \
-   "Apr 12 10:03:22 www sm-mta[2031]: l3C834YF002031: from=<tddiaz@thai.com>, size=2426, class=0, nrcpts=1, msgid=<c69d01c77cd8$9471501e$6aa9eea9@thai.com>, proto=SMTP, daemon=MTA, relay=adsl-d36.87-197-150.t-com.sk [87.197.150.36]\n" \
-   "Apr 12 10:03:22 www sm-mta[2034]: l3C834YF002031: to=<marcodd@unirel.it>, delay=00:00:13, xdelay=00:00:00, mailer=cyrusv2, pri=122426, relay=localhost, dsn=5.1.1, stat=User unknown\n" \
-   "Apr 12 10:03:22 www sm-mta[2034]: l3C834YF002031: l3C83MYF002034: DSN: User unknown" \
-   "Apr 12 10:03:22 www sm-mta[2031]: l3C834YF002031: from=<tddiaz@thai.com>, size=2426, class=0, nrcpts=1, msgid=<c69d01c77cd8$9471501e$6aa9eea9@thai.com>, proto=SMTP, daemon=MTA, relay=adsl-d36.87-197-150.t-com.sk [87.197.150.36]\n" \
-   "Apr 12 10:03:22 www sm-mta[2034]: l3C834YF002031: to=<marcodd@unirel.it>, delay=00:00:13, xdelay=00:00:00, mailer=cyrusv2, pri=122426, relay=localhost, dsn=5.1.1, stat=User unknown\n" \
-   "Apr 12 10:03:22 www sm-mta[2034]: l3C834YF002031: l3C83MYF002034: DSN: User unknown" \
-   "Apr 12 10:03:22 www sm-mta[2031]: l3C834YF002031: from=<tddiaz@thai.com>, size=2426, class=0, nrcpts=1, msgid=<c69d01c77cd8$9471501e$6aa9eea9@thai.com>, proto=SMTP, daemon=MTA, relay=adsl-d36.87-197-150.t-com.sk [87.197.150.36]\n" \
-   "Apr 12 10:03:22 www sm-mta[2034]: l3C834YF002031: to=<marcodd@unirel.it>, delay=00:00:13, xdelay=00:00:00, mailer=cyrusv2, pri=122426, relay=localhost, dsn=5.1.1, stat=User unknown\n" \
-   "Apr 12 10:03:22 www sm-mta[2034]: l3C834YF002031: l3C83MYF002034: DSN: User unknown" \
-   "Apr 12 10:03:22 www sm-mta[2034]: l3C834YF002031: l3C83MYF002034: DSN: User unknown" \
-   "Apr 12 10:03:22 www sm-mta[2031]: l3C834YF002031: from=<tddiaz@thai.com>, size=2426, class=0, nrcpts=1, msgid=<c69d01c77cd8$9471501e$6aa9eea9@thai.com>, proto=SMTP, daemon=MTA, relay=adsl-d36.87-197-150.t-com.sk [87.197.150.36]\n" \
-   "Apr 12 10:03:22 www sm-mta[2034]: l3C834YF002031: to=<marcodd@unirel.it>, delay=00:00:13, xdelay=00:00:00, mailer=cyrusv2, pri=122426, relay=localhost, dsn=5.1.1, stat=User unknown\n" \
-   "Apr 12 10:03:22 www sm-mta[2034]: l3C834YF002031: l3C83MYF002034: DSN: User unknown" \
-   "Apr 12 10:03:22 www sm-mta[2031]: l3C834YF002031: from=<tddiaz@thai.com>, size=2426, class=0, nrcpts=1, msgid=<c69d01c77cd8$9471501e$6aa9eea9@thai.com>, proto=SMTP, daemon=MTA, relay=adsl-d36.87-197-150.t-com.sk [87.197.150.36]\n" \
-   "Apr 12 10:03:22 www sm-mta[2034]: l3C834YF002031: to=<marcodd@unirel.it>, delay=00:00:13, xdelay=00:00:00, mailer=cyrusv2, pri=122426, relay=localhost, dsn=5.1.1, stat=User unknown\n"
+   z = U_STRING_FROM_CONSTANT("########################################################################################################################"
+                              "########################################################################################################################"
+                              "########################################################################################################################");
 
-   z = U_STRING_FROM_CONSTANT(TEXT3);
-
-   x = UStringExt::deflate(z, 1);
+   x = UStringExt::deflate(z);
 
    y = UStringExt::gunzip(x);
 
    U_ASSERT( z == y )
 
-   x = UStringExt::deflate(z, 2);
+   x = UStringExt::deflate(z, Z_BEST_COMPRESSION);
 
    y = UStringExt::gunzip(x);
 

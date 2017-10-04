@@ -483,7 +483,7 @@ void ULog::write(const struct iovec* iov, int n)
                checkForLogRotateDataToWrite(); // check if there are previous data to write
 #           endif
 
-               ptr_log_data->gzip_len = u_gz_deflate(UFile::map, file_ptr, (char*)ptr_log_data+sizeof(log_data), true);
+               ptr_log_data->gzip_len = u_gz_deflate(UFile::map, file_ptr, (char*)ptr_log_data+sizeof(log_data), Z_DEFAULT_COMPRESSION);
 
                U_INTERNAL_DUMP("u_gz_deflate(%u) = %u", file_ptr, ptr_log_data->gzip_len)
                }
@@ -491,7 +491,7 @@ void ULog::write(const struct iovec* iov, int n)
                {
                U_INTERNAL_ASSERT_EQUALS(ptr_log_data->gzip_len, 0)
 
-               UString data_to_write = UStringExt::deflate(UFile::map, file_ptr, 1);
+               UString data_to_write = UStringExt::deflate(UFile::map, file_ptr, 0);
 
                char* ptr1 = buf_path_compress->c_pointer(index_path_compress);
 

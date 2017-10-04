@@ -1234,6 +1234,9 @@ UString UStringExt::decompress(const char* s, uint32_t n)
    U_RETURN_STRING(out);
 }
 
+uint32_t UStringExt::ratio;
+uint32_t UStringExt::ratio_threshold = 90; // NB: we accept compressed data only if ratio compression is better than 10%...
+
 #ifdef USE_LIBBROTLI
 UString UStringExt::brotli(const char* s, uint32_t len, uint32_t quality, uint32_t mode, uint32_t lgwin) // .br compress
 {
@@ -1248,9 +1251,17 @@ UString UStringExt::brotli(const char* s, uint32_t len, uint32_t quality, uint32
       {
       rc = U_SYSCALL(BrotliEncoderCompress, "%u,%u,%u,%u,%p,%p,%p", quality, lgwin, (BrotliEncoderMode)mode, (size_t)len, (uint8_t*)s, &sz, (uint8_t*)UFile::pfree);
 
-      U_INTERNAL_DUMP("BrotliEncoderCompress() = %d (%u => %u)", rc, len, sz)
+      ratio = (sz * 100U) / len;
 
-      if (rc == 0) return UString::getStringNull();
+      U_INTERNAL_DUMP("BrotliEncoderCompress() = %d ratio = %u (%u%%)", rc, ratio, 100-ratio)
+
+      if (rc == 0 ||
+          ratio > ratio_threshold)
+         {
+         return UString::getStringNull();
+         }
+
+      U_INTERNAL_DUMP("BrotliEncoderCompress() = %#.4S", UFile::pfree)
 
       len = UFile::getSizeAligned(sz);
 
@@ -1259,6 +1270,8 @@ UString UStringExt::brotli(const char* s, uint32_t len, uint32_t quality, uint32
       UFile::pfree += len;
       UFile::nfree -= len;
 
+   // U_INTERNAL_ASSERT(isBrotli(result)) // check magic byte
+
       U_RETURN_STRING(result);
       }
 
@@ -1266,19 +1279,31 @@ UString UStringExt::brotli(const char* s, uint32_t len, uint32_t quality, uint32
 
    rc = U_SYSCALL(BrotliEncoderCompress, "%u,%u,%u,%u,%p,%p,%p", quality, lgwin, (BrotliEncoderMode)mode, (size_t)len, (uint8_t*)s, &sz, (uint8_t*)r.data());
 
-   U_INTERNAL_DUMP("BrotliEncoderCompress() = %d (%u => %u)", rc, len, sz)
+   ratio = (sz * 100U) / len;
 
-   if (rc == 0) return UString::getStringNull();
+   U_INTERNAL_DUMP("BrotliEncoderCompress() = %d ratio = %u (%u%%)", rc, ratio, 100-ratio)
+
+   if (rc == 0 ||
+       ratio > ratio_threshold)
+      {
+      return UString::getStringNull();
+      }
+
+   U_INTERNAL_DUMP("BrotliEncoderCompress() = %#.4S", r.data())
 
    r.rep->_length = sz;
 
+// U_INTERNAL_ASSERT(isBrotli(r)) // check magic byte
+
    U_RETURN_STRING(r);
 }
+#endif
 
 UString UStringExt::unbrotli(const char* ptr, uint32_t sz) // .br uncompress
 {
    U_TRACE(0, "UStringExt::unbrotli(%.*S,%u)", sz, ptr, sz)
 
+#ifdef USE_LIBBROTLI
    UString r(sz);
    const uint8_t* next_out;
    BrotliDecoderResult result;
@@ -1308,16 +1333,15 @@ UString UStringExt::unbrotli(const char* ptr, uint32_t sz) // .br uncompress
    U_SYSCALL_VOID(BrotliDecoderDestroyInstance, "%p", state);
 
    U_RETURN_STRING(r);
-}
-#endif
-
-UString UStringExt::deflate(const char* s, uint32_t len, int type) // .gz compress
-{
-   U_TRACE(1, "UStringExt::deflate(%.*S,%u,%d)", len, s, len, type)
-
-#ifndef USE_LIBZ
+#else
    return UString::getStringNull();
 #endif
+}
+
+#ifdef USE_LIBZ
+UString UStringExt::deflate(const char* s, uint32_t len, uint32_t quality) // .gz compress
+{
+   U_TRACE(1, "UStringExt::deflate(%.*S,%u,%u)", len, s, len, quality)
 
    // The zlib documentation states that destination buffer size must be at least 0.1% larger than avail_in plus 12 bytes 
 
@@ -1326,17 +1350,7 @@ UString UStringExt::deflate(const char* s, uint32_t len, int type) // .gz compre
    if (UFile::isAllocableFromPool(sz))
       {
 #  ifdef USE_LIBZOPFLI
-      if (type <= 1)
-#  endif
-         {
-#     ifdef USE_LIBZ
-         len = u_gz_deflate(s, len, UFile::pfree, type);
-#     endif
-
-         U_INTERNAL_DUMP("u_gz_deflate() = %u", len)
-         }
-#  ifdef USE_LIBZOPFLI
-      else
+      if (quality == 0)
          {
          size_t outsize = 0;
          ZopfliOptions options;
@@ -1346,54 +1360,68 @@ UString UStringExt::deflate(const char* s, uint32_t len, int type) // .gz compre
 
          U_SYSCALL_VOID(ZopfliCompress, "%p,%d,%p,%u,%p,%p", &options, ZOPFLI_FORMAT_GZIP, (unsigned char*)s, (size_t)len, &out, &outsize);
 
-         U_INTERNAL_DUMP("ZopfliCompress(%u) = %u", len, outsize)
+         ratio = (outsize * 100U) / len;
 
-         len = outsize;
+         U_INTERNAL_DUMP("ZopfliCompress(%u) = %u ratio = %u (%u%%)", len, outsize, ratio, 100-ratio)
 
-         U_MEMCPY(UFile::pfree, out, len);
+         if (ratio > ratio_threshold) return UString::getStringNull();
+
+         U_MEMCPY(UFile::pfree, out, sz = outsize);
 
          U_SYSCALL_VOID(free, "%p", out);
          }
+      else
 #  endif
+      {
+      sz = u_gz_deflate(s, len, UFile::pfree, (quality ? quality : Z_BEST_COMPRESSION));
 
-      sz = UFile::getSizeAligned(len);
+      ratio = (sz * 100U) / len;
 
-      UString result(len, sz, UFile::pfree);
+      U_INTERNAL_DUMP("u_gz_deflate(%u) = %u ratio = %u (%u%%)", len, sz, ratio, 100-ratio)
 
-      UFile::pfree += sz;
-      UFile::nfree -= sz;
+      if (ratio > ratio_threshold) return UString::getStringNull();
+      }
+
+      UString result(sz, len = UFile::getSizeAligned(sz), UFile::pfree);
+
+      UFile::pfree += len;
+      UFile::nfree -= len;
+
+      U_INTERNAL_ASSERT(isGzip(result)) // check magic byte
 
       U_RETURN_STRING(result);
       }
 
    UString r(sz);
 
-#ifdef USE_LIBZ
-   r.rep->_length = u_gz_deflate(s, len, r.rep->data(), (type ? true : false));
-#endif
+   r.rep->_length = u_gz_deflate(s, len, r.rep->data(), (quality ? quality : Z_BEST_COMPRESSION));
 
-   U_INTERNAL_DUMP("u_gz_deflate(%u) = %u", len, r.size())
+   ratio = (r.rep->_length * 100U) / len;
+
+   U_INTERNAL_DUMP("u_gz_deflate(%u) = %u ratio = %u (%u%%)", len, r.rep->_length, ratio, 100-ratio)
+
+   if (ratio > ratio_threshold) return UString::getStringNull();
 
 #ifdef DEBUG
-   if (type)
-      {
-      uint32_t* psize_original = (uint32_t*)r.c_pointer(r.size() - 4);
-
+   uint32_t* psize_original = (uint32_t*)r.c_pointer(r.size() - 4);
 #  if __BYTE_ORDER == __LITTLE_ENDIAN
-      U_INTERNAL_DUMP("size original = %u (LE)",            *psize_original)
+   U_INTERNAL_DUMP("size original = %u (LE)",            *psize_original)
 #  else
-      U_INTERNAL_DUMP("size original = %u (BE)", u_invert32(*psize_original))
+   U_INTERNAL_DUMP("size original = %u (BE)", u_invert32(*psize_original))
 #  endif
-      }
 #endif
+
+   U_INTERNAL_ASSERT(isGzip(r)) // check magic byte
 
    U_RETURN_STRING(r);
 }
+#endif
 
 UString UStringExt::gunzip(const char* ptr, uint32_t sz, uint32_t space) // .gz uncompress
 {
    U_TRACE(0, "UStringExt::gunzip(%.*S,%u,%u)", sz, ptr, sz, space)
 
+#ifdef USE_LIBZ
    if (space == 0)
       {
       if (isGzip(ptr)) // check magic byte
@@ -1412,7 +1440,6 @@ UString UStringExt::gunzip(const char* ptr, uint32_t sz, uint32_t space) // .gz 
       if (space == 0) space = sz * 4;
       }
 
-#ifdef USE_LIBZ // decompress with zlib
    UString result(space);
 
    result.rep->_length = u_gz_inflate(ptr, sz, result.rep->data());

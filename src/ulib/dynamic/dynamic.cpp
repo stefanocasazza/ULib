@@ -70,6 +70,19 @@ HINSTANCE UDynamic::dload(const char* name, uint32_t name_len)
    return dload(buffer);
 }
 
+void UDynamic::dclose(HINSTANCE handle)
+{
+   U_TRACE(0, "UDynamic::dclose(%p)", handle)
+
+   U_INTERNAL_ASSERT_POINTER(handle)
+
+#ifdef _MSWINDOWS_
+   ::FreeLibrary(handle);
+#else
+   (void) U_SYSCALL(dlclose, "%p", handle);
+#endif
+}
+
 void* UDynamic::lookup(HINSTANCE handle, const char* sym)
 {
    U_TRACE(0, "UDynamic::lookup(%p,%S)", handle, sym)

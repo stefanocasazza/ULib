@@ -6,7 +6,7 @@ start_msg uclient
 
 DOC_ROOT=docroot
 
-rm -f uclient.log $DOC_ROOT//webserver_uclient.log \
+rm -f uclient.log $DOC_ROOT/webserver_uclient.log \
 		out/uclient.out err/uclient.err out/userver_tcp.out err/userver_tcp.err \
 					 trace.*uclient*.[0-9]*					  object.*uclient*.[0-9]*					 stack.*uclient*.[0-9]*					  mempool.*uclient*.[0-9]* \
 					 trace.*userver_*.[0-9]*				  object.*userver_*.[0-9]*					 stack.*userver_*.[0-9]*				  mempool.*userver_*.[0-9]* \

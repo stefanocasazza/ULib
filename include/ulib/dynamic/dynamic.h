@@ -143,15 +143,8 @@ public:
 
       U_CHECK_MEMORY
 
-      U_INTERNAL_ASSERT_POINTER(handle)
-
-#  ifdef _MSWINDOWS_
-      ::FreeLibrary(handle);
-#  else
-      (void) U_SYSCALL(dlclose, "%p", handle);
-#  endif
-
-      handle = U_NULLPTR;
+      dclose(handle);
+             handle = U_NULLPTR;
       }
 
    /**
@@ -189,6 +182,7 @@ protected:
 
    static UString* plugin_dir;
 
+   static void dclose(HINSTANCE handle);
    static HINSTANCE dload(const char* pathname);
    static void* lookup(HINSTANCE handle, const char* sym);
    static HINSTANCE dload(const char* name, uint32_t name_len);

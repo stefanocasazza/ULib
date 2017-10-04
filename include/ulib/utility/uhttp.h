@@ -44,6 +44,7 @@ class UPageSpeed;
 class USSIPlugIn;
 class UHttpPlugIn;
 class USSLSession;
+class UProxyPlugIn;
 class UMimeMultipart;
 class UModProxyService;
 class UClientImage_Base;
@@ -184,7 +185,7 @@ public:
    static char response_buffer[64];
    static int mime_index, cgi_timeout; // the time-out value in seconds for output cgi process
    static bool enable_caching_by_proxy_servers, skip_check_cookie_ip_address;
-   static uint32_t limit_request_body, request_read_timeout, range_start, range_size, brotli_level_for_dynamic_content;
+   static uint32_t limit_request_body, request_read_timeout, range_start, range_size, gzip_level_for_dynamic_content, brotli_level_for_dynamic_content;
 
    static bool readRequest();
    static bool handlerCache();
@@ -419,10 +420,6 @@ public:
       NETWORK_AUTHENTICATION_REQUIRED = 0x008
    };
 
-   static void setDynamicResponse();
-   static void setResponse(bool btype, const UString& content_type, UString* pbody);
-   static void setRedirectResponse(int mode, const char* ptr_location, uint32_t len_location);
-   static void setErrorResponse(const UString& content_type, int code, const char* fmt, uint32_t fmt_size, bool bformat = true);
 
    static void setResponse()
       {
@@ -434,6 +431,12 @@ public:
 
       handlerResponse();
       }
+
+   static void setDynamicResponse();
+   static void setResponseMimeIndex(const UString& content, int mime_index);
+   static void setResponse(const UString& content_type, UString* pbody = U_NULLPTR);
+   static void setRedirectResponse(int mode, const char* ptr_location, uint32_t len_location);
+   static void setErrorResponse(const UString& content_type, int code, const char* fmt, uint32_t fmt_size, bool bformat = true);
 
    // set HTTP main error message
 
@@ -1282,6 +1285,7 @@ private:
    static int handlerREAD();
    static void processRequest();
    static void handlerResponse();
+   static void setDynamicResponse(const UString& body, const UString& header = UString::getStringNull(), const UString& content_type = UString::getStringNull());
 
 #ifndef U_LOG_DISABLE
    static int handlerREADWithLog()
@@ -1365,6 +1369,7 @@ private:
    static void checkArrayCompressData(UFileCacheData* ptr) U_NO_EXPORT;
 # endif
 
+   static inline bool compress(const UString& body) U_NO_EXPORT;
    static inline void setAcceptEncoding(const char* ptr, uint32_t len) U_NO_EXPORT;
 #endif
 
@@ -1385,19 +1390,20 @@ private:
    static bool checkGetRequestIfRange() U_NO_EXPORT;
    static void setCGIShellScript(UString& command) U_NO_EXPORT;
    static bool checkIfSourceHasChangedAndCompileUSP() U_NO_EXPORT;
-   static void setResponseCompressed(const UString& data) U_NO_EXPORT;
    static bool compileUSP(const char* path, uint32_t len) U_NO_EXPORT;
    static int  checkGetRequestForRange(const UString& data) U_NO_EXPORT;
    static int  sortRange(const void* a, const void* b) __pure U_NO_EXPORT;
    static bool addHTTPVariables(UStringRep* key, void* value) U_NO_EXPORT;
+   static void setContentResponse(const UString& content_type) U_NO_EXPORT;
    static bool splitCGIOutput(const char*& ptr1, const char* ptr2) U_NO_EXPORT;
    static void putDataInCache(const UString& fmt, UString& content) U_NO_EXPORT;
-   static void setHeaderForCache(UFileCacheData* ptr, const UString& data) U_NO_EXPORT;
+   static void setHeaderForCache(UFileCacheData* ptr, UString& data) U_NO_EXPORT;
    static bool readDataChunked(USocket* sk, UString* pbuffer, UString& body) U_NO_EXPORT;
    static void setResponseForRange(uint32_t start, uint32_t end, uint32_t header) U_NO_EXPORT;
    static void manageDataForCache(const UString& basename, const UString& suffix) U_NO_EXPORT;
    static bool checkDataSession(const UString& token, time_t expire, UString* data) U_NO_EXPORT;
    static bool processAuthorization(const char* ptr = U_NULLPTR, uint32_t sz = 0, const char* pattern = U_NULLPTR, uint32_t len = 0) U_NO_EXPORT;
+   static void setDataInCache(const UString& fmt, const UString& content, const char* encoding = U_NULLPTR, uint32_t encoding_len = 0) U_NO_EXPORT;
 
    static inline void resetFileCache() U_NO_EXPORT;
    static inline void setUpgrade(const char* ptr) U_NO_EXPORT;
@@ -1425,6 +1431,7 @@ private:
    friend class UHTTP2;
    friend class USSIPlugIn;
    friend class UHttpPlugIn;
+   friend class UProxyPlugIn;
    friend class UClientImage_Base;
 
 #ifdef U_STDCPP_ENABLE

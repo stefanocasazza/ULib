@@ -5667,7 +5667,7 @@ static void GET_get_config()
                if (U_http_is_accept_gzip &&
                    _body.size() > U_MIN_SIZE_FOR_DEFLATE)
                   {
-                  _body = UStringExt::deflate(_body, 1);
+                  _body = UStringExt::deflate(_body, Z_DEFAULT_COMPRESSION);
                   }
 #           endif
                }

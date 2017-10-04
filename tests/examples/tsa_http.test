@@ -6,7 +6,7 @@
 
 start_msg tsa_http
 
- UTRACE="0 75M 0"
+#UTRACE="0 75M 0"
 #UOBJDUMP="0 10M 10"
 #USIMERR="error.sim"
  export UTRACE UOBJDUMP USIMERR
@@ -78,6 +78,8 @@ $SLEEP
 kill_server userver_tcp
 
 mv err/userver_tcp.err err/tsa_http.err
+
+#exit
 
 if [ -s out/TSA_response.out ]; then
 	tail -c +155 out/TSA_response.out > TSA/response/response.tsr

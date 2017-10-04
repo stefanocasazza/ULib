@@ -606,11 +606,15 @@ public:
 
    int recvFrom(void* pBuffer, uint32_t iBufLength, uint32_t uiFlags, UIPAddress& cSourceIP, unsigned int& iSourcePortNumber);
 
+   int recvFrom(void* pBuffer, uint32_t iBufLength, uint32_t uiFlags = 0) { return recvFrom(pBuffer, iBufLength, uiFlags, cRemoteAddress, iRemotePort); }
+
    /**
-    * The socket transmits the data to the remote socket
+    * The socket transmits the data to the remote socket. The number of bytes written is returned
     */
 
    int sendTo(void* pPayload, uint32_t iPayloadLength, uint32_t uiFlags, UIPAddress& cDestinationIP, unsigned int iDestinationPortNumber);
+
+   int sendTo(void* pPayload, uint32_t iPayloadLength, uint32_t uiFlags = 0) { return sendTo(pPayload, iPayloadLength, uiFlags, cRemoteAddress, iRemotePort); }
 
    /**
     * This method is called to read a 16-bit binary value from the remote connection.
@@ -770,6 +774,9 @@ protected:
    static SocketAddress* cLocal;
    static bool breuseport, bincoming_cpu;
    static int iBackLog, incoming_cpu, accept4_flags; // If flags is 0, then accept4() is the same as accept()
+
+   static void setLocalInfo( USocket* p, SocketAddress* cLocal);
+   static void setRemoteInfo(USocket* p, SocketAddress* cRemote);
 
    /**
     * The _socket() function is called to create the socket of the specified type.

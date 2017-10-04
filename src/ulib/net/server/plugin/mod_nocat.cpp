@@ -440,7 +440,7 @@ void UNoCatPlugIn::setStatusContent(const UString& ap_label)
       *status_content = buffer;
       }
 
-   setHTTPResponse(*status_content, U_html);
+   UHTTP::setResponseMimeIndex(*status_content, U_html);
 }
 
 void UNoCatPlugIn::getTraffic()
@@ -1809,7 +1809,7 @@ void UNoCatPlugIn::sendData(uint32_t index_AUTH, const UString& data, const char
    UString body = data, url = getUrlForSendMsgToPortal(index_AUTH, service, service_len);
 
 #ifdef USE_LIBZ
-   if (sz > U_MIN_SIZE_FOR_DEFLATE) body = UStringExt::deflate(data, 1);
+   if (sz > U_MIN_SIZE_FOR_DEFLATE) body = UStringExt::deflate(data, Z_DEFAULT_COMPRESSION);
 #endif
 
 #ifndef U_LOG_DISABLE
@@ -1819,7 +1819,9 @@ void UNoCatPlugIn::sendData(uint32_t index_AUTH, const UString& data, const char
       {
       UString str = UStringExt::substitute(data.data(), U_min(sz,200), '%', U_CONSTANT_TO_PARAM("%%")); // NB: we need this because we have a message with url encoded char...
 
-      (void) u__snprintf(buffer, sizeof(buffer), U_CONSTANT_TO_PARAM("[nocat] Sent %.*s %%s (%u bytes) after %%d attempts to AUTH(%u): %V"), service_len, service, sz, index_AUTH, str.rep);
+      (void) u__snprintf(buffer, sizeof(buffer),
+                         U_CONSTANT_TO_PARAM("[nocat] Sent %.*s %%s (%u bytes) after %%d attempts to AUTH(%u): %V"),
+                         service_len, service, sz, index_AUTH, str.rep);
 
       log_msg = buffer;
       }
@@ -1871,26 +1873,6 @@ void UNoCatPlugIn::notifyAuthOfUsersInfo(uint32_t index_AUTH)
    UClientImage_Base::setCloseConnection();
 
    UHTTP::setResponse();
-}
-
-void UNoCatPlugIn::setHTTPResponse(const UString& content, int mime_index)
-{
-   U_TRACE(0, "UNoCatPlugIn::setHTTPResponse(%V%d)", content.rep, mime_index)
-
-   if (content.empty())
-      {
-      U_http_info.nResponseCode = HTTP_NO_CONTENT;
-
-      UHTTP::setResponse();
-      }
-   else
-      {
-      U_http_info.endHeader       = 0;
-      U_http_info.nResponseCode   = HTTP_OK;
-      *UClientImage_Base::wbuffer = content;
-
-      UHTTP::setDynamicResponse();
-      }
 }
 
 bool UNoCatPlugIn::getPeerFromMAC(const UString& mac)
@@ -2472,7 +2454,7 @@ int UNoCatPlugIn::handlerRequest()
 
             status_content->setFromNumber32(u_get_uptime());
 
-            setHTTPResponse(*status_content, U_unknow);
+            UHTTP::setResponseMimeIndex(*status_content, U_unknow);
             }
          else if (U_HTTP_URI_STREQ("/users"))
             {
@@ -2482,7 +2464,7 @@ int UNoCatPlugIn::handlerRequest()
 
             peers->callForAllEntry(getPeerListInfo);
 
-            setHTTPResponse(*status_content, U_html);
+            UHTTP::setResponseMimeIndex(*status_content, U_html);
 
             U_SRV_LOG("AUTH request to get list info on peers permitted");
             }
@@ -2637,7 +2619,7 @@ next:       (void) getARPCache();
                   }
                }
 
-            setHTTPResponse(*status_content, U_txt);
+            UHTTP::setResponseMimeIndex(*status_content, U_txt);
             }
 #     endif
          else
@@ -2685,7 +2667,7 @@ next:       (void) getARPCache();
          /*
          if (u_find(U_HTTP_USER_AGENT_TO_PARAM, U_CONSTANT_TO_PARAM("CaptiveNetworkSupport")) != 0)
             {
-            setHTTPResponse(UString::str_IPHONE_SUCCESS, U_html);
+            UHTTP::setResponseMimeIndex(UString::str_IPHONE_SUCCESS, U_html);
 
             goto end;
             }
@@ -2830,7 +2812,7 @@ set_redirect_to_AUTH:
           (check_type & U_CHECK_MAC) != 0 && // not unifi (L2)
           (peer->mac == *UString::str_without_mac || peer->mac.empty()))
          {
-         mode = UHTTP::REFRESH | UHTTP::NO_BODY;
+         mode |= UHTTP::REFRESH;
 
          (void) location->reserve(7 + U_http_host_len + U_http_info.uri_len + 1 + U_http_info.query_len);
 

@@ -3813,8 +3813,6 @@ void UHTTP2::sendGoAway(USocket* psocket)
       {
       psocket->close();
 
-      UClientImage_Base::setRequestProcessed();
-
       UClientImage_Base::resetPipelineAndSetCloseConnection();
       }
 }

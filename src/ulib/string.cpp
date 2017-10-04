@@ -1212,11 +1212,7 @@ void UString::moveToBeginDataInBuffer(uint32_t n)
 
    rep->_length -= n;
 
-#ifdef U_APEX_ENABLE
-   (void) U_SYSCALL(apex_memmove, "%p,%p,%u", (void*)rep->str, rep->str + n, rep->_length);
-#else
-   (void) U_SYSCALL(     memmove, "%p,%p,%u", (void*)rep->str, rep->str + n, rep->_length);
-#endif
+   (void) U_SYSCALL(memmove, "%p,%p,%u", (void*)rep->str, rep->str + n, rep->_length);
 
    U_INTERNAL_ASSERT(invariant())
 }

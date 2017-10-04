@@ -111,6 +111,7 @@ uint32_t UHTTP::limit_request_body = U_STRING_MAX_SIZE;
 uint32_t UHTTP::request_read_timeout;
 
 // https://www.google.com/url?q=https%3A%2F%2Fblogs.akamai.com%2F2016%2F02%2Funderstanding-brotlis-potential.html&sa=D&sntz=1&usg=AFQjCNGP4Nu9yPm65RKkAThsWxJ8qy49Sw
+uint32_t UHTTP::gzip_level_for_dynamic_content = 3;
 uint32_t UHTTP::brotli_level_for_dynamic_content = 2;
 
 UCommand*                         UHTTP::pcmd;
@@ -1554,9 +1555,7 @@ __pure bool UHTTP::isMobile()
 }
 
 /**
- * HTTP message
- * ---------------------------------------------------------------------------------------------------------------------------
- * There are four parts to an HTTP request:
+ * HTTP message: there are four parts to an HTTP request:
  * ---------------------------------------------------------------------------------------------------------------------------
  * 1) the request line    [REQUIRED]: the method, the URL, the version of the protocol
  * 2) the request headers [OPTIONAL]: a series of lines (one per) in the format of name, colon(:), and the value of the header
@@ -2101,7 +2100,7 @@ bool UHTTP::checkContentLength(const UString& response)
 
          U_INTERNAL_DUMP("U_http_info.clength = %u U_http_data_chunked = %b", U_http_info.clength, U_http_data_chunked)
 
-         // check for double content-length
+         // check for duolicate content-length header
 
          pos = response.distance(s);
 
@@ -4809,43 +4808,90 @@ U_NO_EXPORT inline void UHTTP::resetFileCache()
    file_data->fd = -1;
 }
 
-U_NO_EXPORT void UHTTP::setResponseCompressed(const UString& data)
+#if defined(USE_LIBZ) || defined(USE_LIBBROTLI)
+U_NO_EXPORT inline bool UHTTP::compress(const UString& body)
 {
-   U_TRACE(0, "UHTTP::setResponseCompressed(%V)", data.rep)
+   U_TRACE(0, "UHTTP::compress(%V)", body.rep)
 
-   ext->setBuffer(U_CAPACITY);
-
-   U_INTERNAL_DUMP("U_http_is_accept_gzip = %b U_http_is_accept_brotli = %b", U_http_is_accept_gzip, U_http_is_accept_brotli)
+   char* ptr = ext->data();
 
 #ifdef USE_LIBBROTLI
    if (U_http_is_accept_brotli &&
-       (*UClientImage_Base::body = UStringExt::brotli(data, brotli_level_for_dynamic_content)))
+       (*UClientImage_Base::body = UStringExt::brotli(body, (U_PARALLELIZATION_CHILD ? BROTLI_MAX_QUALITY : brotli_level_for_dynamic_content))))
       {
 #  ifndef U_CACHE_REQUEST_DISABLE
       is_response_compressed = 2; // brotli
 #  endif
 
-      (void) ext->append(U_CONSTANT_TO_PARAM("Content-Encoding: br\r\n"));
+      u_put_unalignedp64(ptr,    U_MULTICHAR_CONSTANT64('C','o','n','t','e','n','t','-'));
+      u_put_unalignedp64(ptr+8,  U_MULTICHAR_CONSTANT64('E','n','c','o','d','i','n','g'));
+      u_put_unalignedp32(ptr+16, U_MULTICHAR_CONSTANT32(':',' ','b','r'));
+      u_put_unalignedp16(ptr+20, U_MULTICHAR_CONSTANT16('\r','\n'));
 
-      return;
+      ext->rep->_length = U_CONSTANT_SIZE("Content-Encoding: br\r\n");
+
+      U_SRV_LOG("dynamic response: %u bytes - (%u%%) brotli compression ratio", UClientImage_Base::body->size(), 100-UStringExt::ratio);
+
+      U_RETURN(true);
       }
 #endif
 
 #ifdef USE_LIBZ
    if (U_http_is_accept_gzip &&
-       (*UClientImage_Base::body = UStringExt::deflate(data, 1)))
+       (*UClientImage_Base::body = UStringExt::deflate(body, (U_PARALLELIZATION_CHILD ? 0 : gzip_level_for_dynamic_content))))
       {
 #  ifndef U_CACHE_REQUEST_DISABLE
       is_response_compressed = 1; // gzip
 #  endif
 
-      (void) ext->append(U_CONSTANT_TO_PARAM("Content-Encoding: gzip\r\n"));
+      u_put_unalignedp64(ptr,    U_MULTICHAR_CONSTANT64('C','o','n','t','e','n','t','-'));
+      u_put_unalignedp64(ptr+8,  U_MULTICHAR_CONSTANT64('E','n','c','o','d','i','n','g'));
+      u_put_unalignedp64(ptr+16, U_MULTICHAR_CONSTANT64(':',' ','g','z','i','p','\r','\n'));
 
-      return;
+      ext->rep->_length = U_CONSTANT_SIZE("Content-Encoding: gzip\r\n");
+
+      U_SRV_LOG("dynamic response: %u bytes - (%u%%) gzip compression ratio", UClientImage_Base::body->size(), 100-UStringExt::ratio);
+
+      U_RETURN(true);
       }
-#  endif
+#endif
 
-   *UClientImage_Base::body = data;
+   U_RETURN(false);
+}
+#endif
+
+void UHTTP::setDynamicResponse(const UString& body, const UString& header, const UString& content_type)
+{
+   U_TRACE(0, "UHTTP::setDynamicResponse(%V,%V,%V)", body.rep, header.rep, content_type.rep)
+
+   ext->setBuffer(U_CAPACITY);
+
+#if defined(USE_LIBZ) || defined(USE_LIBBROTLI)
+   if (checkForCompression(body.size()) == false ||
+       compress(body) == false)
+#endif
+   {
+   *UClientImage_Base::body = body;
+   }
+
+   if (header)
+      {
+      (void) ext->append(header);
+
+      (void) checkContentLength(UClientImage_Base::body->size()); // NB: adjusting the size of response...
+      }
+   else
+      {
+      if (content_type) setContentResponse(content_type);
+      else
+         {
+         mime_index = U_unknow;
+
+         (void) ext->append(getHeaderMimeType(U_NULLPTR, UClientImage_Base::body->size(), U_CTYPE_HTML));
+         }
+      }
+
+   handlerResponse();
 }
 
 void UHTTP::processRequest()
@@ -5065,13 +5111,9 @@ void UHTTP::processRequest()
          {
          // check if it's OK to do directory listing via authentication (digest|basic)
 
-         if (processAuthorization() == false) return;
+         if (processAuthorization()) setDynamicResponse(getHTMLDirectoryList());
 
-         setResponseCompressed(getHTMLDirectoryList());
-
-         mime_index = U_unknow;
-
-         (void) ext->append(getHeaderMimeType(U_NULLPTR, UClientImage_Base::body->size(), U_CTYPE_HTML));
+         return;
          }
 
       goto end;
@@ -6685,79 +6727,122 @@ void UHTTP::handlerResponse()
    U_INTERNAL_DUMP("UClientImage_Base::body(%u) = %V",     UClientImage_Base::body->size(),    UClientImage_Base::body->rep)
 }
 
-void UHTTP::setResponse(bool btype, const UString& content_type, UString* pbody)
+void UHTTP::setResponseMimeIndex(const UString& content, int mime_idx)
 {
-   U_TRACE(0, "UHTTP::setResponse(%b,%V,%p)", btype, content_type.rep, pbody)
+   U_TRACE(0, "UHTTP::setResponseMimeIndex(%V,%d)", content.rep, mime_idx)
 
-   U_INTERNAL_ASSERT_POINTER(UClientImage_Base::body)
-   U_INTERNAL_ASSERT_MAJOR(U_http_info.nResponseCode, 0)
+   if (content.empty())
+      {
+      U_http_info.nResponseCode = HTTP_NO_CONTENT;
+
+      setResponse();
+
+      return;
+      }
+
+   U_INTERNAL_ASSERT_EQUALS(U_http_info.nResponseCode, HTTP_OK)
+
+   U_http_info.endHeader       = 0;
+   *UClientImage_Base::wbuffer = content;
+
+   setDynamicResponse();
+}
+
+U_NO_EXPORT void UHTTP::setContentResponse(const UString& content_type)
+{
+   U_TRACE(0, "UHTTP::setContentResponse(%V)", content_type.rep)
 
    U_INTERNAL_ASSERT(u_endsWith(U_STRING_TO_PARAM(content_type), U_CONSTANT_TO_PARAM(U_CRLF)))
 
-   ext->setBuffer(U_CAPACITY);
+   char* ptr = ext->pend();
 
-   char* start = ext->data();
-   char* ptr   = start;
+   u_put_unalignedp64(ptr,    U_MULTICHAR_CONSTANT64('C','o','n','t','e','n','t','-'));
+   u_put_unalignedp32(ptr+8,  U_MULTICHAR_CONSTANT32('T','y','p','e'));
+   u_put_unalignedp16(ptr+12, U_MULTICHAR_CONSTANT16(':',' '));
+
+   ptr += U_CONSTANT_SIZE("Content-Type: ");
+
    uint32_t sz = content_type.size();
 
-   U_INTERNAL_ASSERT_RANGE(1,sz,U_CAPACITY)
-
-   if (btype)
-      {
-      u_put_unalignedp64(ptr,    U_MULTICHAR_CONSTANT64('C','o','n','t','e','n','t','-'));
-      u_put_unalignedp32(ptr+8,  U_MULTICHAR_CONSTANT32('T','y','p','e'));
-      u_put_unalignedp16(ptr+12, U_MULTICHAR_CONSTANT16(':',' '));
-
-      ptr += U_CONSTANT_SIZE("Content-Type: ");
-      }
-
    U_MEMCPY(ptr, content_type.data(), sz);
-
-   ptr += sz;
+            ptr +=                    sz;
 
    u_put_unalignedp64(ptr,   U_MULTICHAR_CONSTANT64('C','o','n','t','e','n','t','-'));
    u_put_unalignedp64(ptr+8, U_MULTICHAR_CONSTANT64('L','e','n','g','t','h',':',' '));
 
-   ptr += U_CONSTANT_SIZE("Content-Length: ");
+   ptr = u_num2str32(UClientImage_Base::body->size(), ptr + U_CONSTANT_SIZE("Content-Length: "));
+
+   u_put_unalignedp32(ptr, U_MULTICHAR_CONSTANT32('\r','\n','\r','\n'));
+
+   ext->size_adjust(ptr + U_CONSTANT_SIZE(U_CRLF2));
+}
+
+void UHTTP::setResponse(const UString& content_type, UString* pbody)
+{
+   U_TRACE(0, "UHTTP::setResponse(%V,%p)", content_type.rep, pbody)
+
+   U_INTERNAL_ASSERT_MAJOR(U_http_info.nResponseCode, 0)
+
+   ext->setBuffer(U_CAPACITY);
 
    if (pbody == U_NULLPTR)
       {
-      *ptr++ = '0';
-
       UClientImage_Base::body->clear(); // clean body to avoid writev() in response...
 
-      goto end;
-      }
-
-#ifdef USE_LIBZ
-   if (UStringExt::isGzip(*pbody))
-      {
-      if (U_http_is_accept_gzip == false) *pbody = UStringExt::gunzip(*pbody);
-
-      ptr = u_num2str32(pbody->size(), ptr);
-
-      if (U_http_is_accept_gzip)
-         {
-         u_put_unalignedp64(ptr,    U_MULTICHAR_CONSTANT64('\r','\n','C','o','n','t','e','n'));
-         u_put_unalignedp64(ptr+8,  U_MULTICHAR_CONSTANT64('t', '-','E','n','c','o','d','i'));
-         u_put_unalignedp64(ptr+16, U_MULTICHAR_CONSTANT64('n', 'g',':',' ','g','z','i','p'));
-
-         ptr += U_CONSTANT_SIZE("\r\nContent-Encoding: gzip");
-         }
+      pbody = UClientImage_Base::body;
       }
    else
+      {
+#  ifdef USE_LIBBROTLI
+      if (UStringExt::isBrotli(*pbody))
+         {
+         if (U_http_is_accept_brotli == false) *UClientImage_Base::body = UStringExt::unbrotli(*pbody);
+         else
+            {
+            char* ptr = ext->data();
+
+            u_put_unalignedp64(ptr,    U_MULTICHAR_CONSTANT64('C','o','n','t','e','n','t','-'));
+            u_put_unalignedp64(ptr+8,  U_MULTICHAR_CONSTANT64('E','n','c','o','d','i','n','g'));
+            u_put_unalignedp32(ptr+16, U_MULTICHAR_CONSTANT32(':',' ','b','r'));
+            u_put_unalignedp16(ptr+20, U_MULTICHAR_CONSTANT16('\r','\n'));
+
+            ext->rep->_length = U_CONSTANT_SIZE("Content-Encoding: br\r\n");
+
+            *UClientImage_Base::body = *pbody;
+            }
+
+         goto next;
+         }
+#  endif
+
+#  ifdef USE_LIBZ
+      if (UStringExt::isGzip(*pbody))
+         {
+         if (U_http_is_accept_gzip == false) *UClientImage_Base::body = UStringExt::gunzip(*pbody);
+         else
+            {
+            char* ptr = ext->data();
+
+            u_put_unalignedp64(ptr,    U_MULTICHAR_CONSTANT64('C','o','n','t','e','n','t','-'));
+            u_put_unalignedp64(ptr+8,  U_MULTICHAR_CONSTANT64('E','n','c','o','d','i','n','g'));
+            u_put_unalignedp64(ptr+16, U_MULTICHAR_CONSTANT64(':',' ','g','z','i','p','\r','\n'));
+
+            ext->rep->_length = U_CONSTANT_SIZE("Content-Encoding: gzip\r\n");
+
+            *UClientImage_Base::body = *pbody;
+            }
+
+         goto next;
+         }
+#  endif
+
+      *UClientImage_Base::body = *pbody;
+      }
+
+#if defined(USE_LIBBROTLI) || defined(USE_LIBZ)
+next:
 #endif
-   {
-   ptr = u_num2str32(pbody->size(), ptr);
-   }
-
-   *UClientImage_Base::body = *pbody;
-
-end:
-   u_put_unalignedp32(ptr, U_MULTICHAR_CONSTANT32('\r','\n','\r','\n'));
-                      ptr += U_CONSTANT_SIZE(U_CRLF2);
-
-   ext->size_adjust(ptr - start);
+   setContentResponse(content_type);
 
    handlerResponse();
 }
@@ -6838,35 +6923,54 @@ void UHTTP::setRedirectResponse(int mode, const char* ptr_location, uint32_t len
 #  endif
       }
 
-   if ((mode & NO_BODY) != 0) setResponse(false, tmp, U_NULLPTR);
+   if ((mode & NO_BODY) != 0)
+      {
+      ext->setBuffer(U_CAPACITY);
+
+      UClientImage_Base::body->clear(); // clean body to avoid writev() in response...
+
+      char* ptr = ext->data();
+      uint32_t sz = tmp.size();
+
+      U_MEMCPY(ptr, tmp.data(), sz);
+               ptr           += sz;
+
+      u_put_unalignedp64(ptr,    U_MULTICHAR_CONSTANT64('C','o','n','t','e','n','t','-'));
+      u_put_unalignedp64(ptr+8,  U_MULTICHAR_CONSTANT64('L','e','n','g','t','h',':',' '));
+      u_put_unalignedp64(ptr+16, U_MULTICHAR_CONSTANT64('0','\r','\n','\r','\n','\0','\0','\0'));
+
+      ext->size_adjust(ptr + U_CONSTANT_SIZE("Content-Length: 0\r\n\r\n"));
+
+      handlerResponse();
+
+      return;
+      }
+
+   char msg[4096];
+   uint32_t sz, len;
+
+   if ((mode & NETWORK_AUTHENTICATION_REQUIRED) != 0)
+      {
+      len = u__snprintf(msg, sizeof(msg), U_CONSTANT_TO_PARAM("You need to <a href=\"%.*s\">authenticate with the local network</a> in order to get access"),
+                        len_location, ptr_location);
+      }
    else
       {
-      char msg[4096];
-      uint32_t sz, len;
-
-      if ((mode & NETWORK_AUTHENTICATION_REQUIRED) != 0)
-         {
-         len = u__snprintf(msg, sizeof(msg), U_CONSTANT_TO_PARAM("You need to <a href=\"%.*s\">authenticate with the local network</a> in order to get access"),
-                           len_location, ptr_location);
-         }
-      else
-         {
-         len = u__snprintf(msg, sizeof(msg), U_CONSTANT_TO_PARAM("The document has moved <a href=\"%.*s\">here</a>"), len_location, ptr_location);
-         }
-
-      const char* status = getStatusDescription(&sz);
-      UString body(500U + len_location), content_type(U_CAPACITY);
-
-      body.snprintf(U_CONSTANT_TO_PARAM(U_STR_FMR_BODY),
-                    U_http_info.nResponseCode, sz, status,
-                                               sz, status,
-                    len, msg);
-
-      (void) content_type.assign(U_CONSTANT_TO_PARAM(U_CTYPE_HTML "\r\n"));
-      (void) content_type.append(tmp);
-
-      setResponse(true, content_type, &body);
+      len = u__snprintf(msg, sizeof(msg), U_CONSTANT_TO_PARAM("The document has moved <a href=\"%.*s\">here</a>"), len_location, ptr_location);
       }
+
+   const char* status = getStatusDescription(&sz);
+   UString body(500U + len_location), content_type(U_CAPACITY);
+
+   body.snprintf(U_CONSTANT_TO_PARAM(U_STR_FMR_BODY),
+                 U_http_info.nResponseCode, sz, status,
+                                            sz, status,
+                 len, msg);
+
+   (void) content_type.assign(U_CONSTANT_TO_PARAM(U_CTYPE_HTML "\r\n"));
+   (void) content_type.append(tmp);
+
+   setResponse(content_type, &body);
 }
 
 void UHTTP::setErrorResponse(const UString& content_type, int code, const char* fmt, uint32_t fmt_size, bool bformat)
@@ -6928,7 +7032,7 @@ void UHTTP::setErrorResponse(const UString& content_type, int code, const char* 
          }
       }
 
-   setResponse(true, content_type, &body);
+   setResponse(content_type, &body);
 }
 
 void UHTTP::setUnAuthorized()
@@ -6966,10 +7070,9 @@ void UHTTP::setDynamicResponse()
 
    U_INTERNAL_ASSERT_MAJOR(U_http_info.nResponseCode, 0)
 
-   char* ptr1;
-   UString compressed;
+   char* ptr;
    const char* pEndHeader;
-   uint32_t sz = 0, csz, ratio, clength = UClientImage_Base::wbuffer->size();
+   uint32_t clength = UClientImage_Base::wbuffer->size();
 
 #if !defined(USE_LIBZ) && !defined(USE_LIBBROTLI)
    bool bcompress = false;
@@ -6979,111 +7082,21 @@ void UHTTP::setDynamicResponse()
 
    ext->setBuffer(U_CAPACITY);
 
-   char* ptr = ext->data();
-
    if (U_http_info.endHeader)
       {
       U_INTERNAL_ASSERT(clength >= U_http_info.endHeader)
 
       clength -= U_http_info.endHeader;
 
-      if (clength == 0) // no response
-         {
-         UClientImage_Base::body->clear(); // clean body to avoid writev() in response...
-
-         UClientImage_Base::wbuffer->clear();
-
-         goto no_response;
-         }
+      if (clength == 0) goto no_response;
 
       pEndHeader = UClientImage_Base::wbuffer->data();
 
-      if (bcompress == false) goto no_compress;
-      }
-   else
-      {
-      pEndHeader = U_NULLPTR;
-
-      if (bcompress == false)
-         {
-         *UClientImage_Base::body = *UClientImage_Base::wbuffer; 
-
-         if (clength == 0) goto no_response;
-
-         goto end;
-         }
-      }
-
-#ifdef USE_LIBBROTLI
-   if (U_http_is_accept_brotli &&
-       (compressed = UStringExt::brotli(UClientImage_Base::wbuffer->c_pointer(U_http_info.endHeader), clength, brotli_level_for_dynamic_content)))
-      {
-      bcompress = false;
-
-      goto next;
-      }
-#endif
-#ifdef USE_LIBZ
-   if (U_http_is_accept_gzip) compressed = UStringExt::deflate(UClientImage_Base::wbuffer->c_pointer(U_http_info.endHeader), clength, 1);
-#endif
-
-#ifdef USE_LIBBROTLI
-next:
-#endif
-   csz = compressed.size(), ratio = (csz * 100U) / clength;
-
-   U_INTERNAL_DUMP("ratio = %u (%u%%)", ratio, 100-ratio)
-
-   // NB: we accept new data only if ratio compression is better than 15%...
-
-   if (ratio < 85)
-      {
-      clength = csz;
-
-      *UClientImage_Base::body = compressed;
-
-      U_SRV_LOG("cgi response: %u bytes - (%u%%) compression ratio", csz, 100-ratio);
-
-#  ifdef USE_LIBBROTLI
-      if (bcompress == false)
-         {
-         U_INTERNAL_ASSERT(U_http_is_accept_brotli)
-
-         sz = U_CONSTANT_SIZE("Content-Encoding: br\r\n");
-
-         u_put_unalignedp64(ptr,    U_MULTICHAR_CONSTANT64('C','o','n','t','e','n','t','-'));
-         u_put_unalignedp64(ptr+8,  U_MULTICHAR_CONSTANT64('E','n','c','o','d','i','n','g'));
-         u_put_unalignedp32(ptr+16, U_MULTICHAR_CONSTANT32(':',' ','b','r'));
-         u_put_unalignedp16(ptr+20, U_MULTICHAR_CONSTANT16('\r','\n'));
-
-         goto end;
-         }
-#  endif
-#  ifdef USE_LIBZ
-      U_INTERNAL_ASSERT(U_http_is_accept_gzip)
-
-      sz = U_CONSTANT_SIZE("Content-Encoding: gzip\r\n");
-
-      u_put_unalignedp64(ptr,    U_MULTICHAR_CONSTANT64('C','o','n','t','e','n','t','-'));
-      u_put_unalignedp64(ptr+8,  U_MULTICHAR_CONSTANT64('E','n','c','o','d','i','n','g'));
-      u_put_unalignedp64(ptr+16, U_MULTICHAR_CONSTANT64(':',' ','g','z','i','p','\r','\n'));
-#  endif
-      }
-   else
-      {
-no_compress:
-      (void) UClientImage_Base::body->replace(pEndHeader + U_http_info.endHeader, clength);
-      }
-
-end:
-   if (U_http_content_type_len != 1)
-      {
-      // NB: we assume that we don't have a HTTP content-type header...
-
 #  if defined(DEBUG) && defined(USE_LIBMAGIC)
-      if (clength > 4)
+      if (clength > 4 &&
+          U_http_content_type_len != 1) // NB: we assume that we don't have a HTTP content-type header...
          {
-         const char* p = UClientImage_Base::wbuffer->c_pointer(U_http_info.endHeader);
+         const char* p = pEndHeader + U_http_info.endHeader;
 
          if (u_isText((const unsigned char*)p, clength))
             {
@@ -7094,67 +7107,111 @@ end:
          }
 #  endif
 
-      ptr1 = ptr+sz;
+      if (bcompress == false)
+         {
+         (void) UClientImage_Base::body->replace(pEndHeader + U_http_info.endHeader, clength);
 
-      u_put_unalignedp64(ptr1,    U_MULTICHAR_CONSTANT64('C','o','n','t','e','n','t','-'));
-      u_put_unalignedp64(ptr1+8,  U_MULTICHAR_CONSTANT64('T','y','p','e',':',' ','t','e'));
-      u_put_unalignedp16(ptr1+16, U_MULTICHAR_CONSTANT16('x','t'));
+         goto next;
+         }
+      }
+   else
+      {
+      if (clength == 0)
+         {
+no_response:
+         UClientImage_Base::body->clear(); // clean body to avoid writev() in response...
 
-      ptr1 += U_CONSTANT_SIZE("Content-Type: text");
+         handlerResponse();
+
+         return;
+         }
+
+      pEndHeader = U_NULLPTR;
+
+      if (bcompress == false)
+         {
+         *UClientImage_Base::body = *UClientImage_Base::wbuffer; 
+
+         goto next;
+         }
+      }
+
+   U_INTERNAL_ASSERT(bcompress)
+
+#if defined(USE_LIBZ) || defined(USE_LIBBROTLI)
+   if (compress(UClientImage_Base::wbuffer->substr(U_http_info.endHeader, clength))) clength = UClientImage_Base::body->size();
+   else
+      {
+      U_INTERNAL_ASSERT_MAJOR(clength, 0)
+      U_INTERNAL_ASSERT_POINTER(pEndHeader)
+
+      (void) UClientImage_Base::body->replace(pEndHeader + U_http_info.endHeader, clength);
+      }
+#endif
+
+next:
+   ptr = ext->pend();
+
+   if (U_http_content_type_len != 1)
+      {
+      // NB: we assume that we don't have a HTTP content-type header...
+
+      u_put_unalignedp64(ptr,    U_MULTICHAR_CONSTANT64('C','o','n','t','e','n','t','-'));
+      u_put_unalignedp64(ptr+8,  U_MULTICHAR_CONSTANT64('T','y','p','e',':',' ','t','e'));
+      u_put_unalignedp16(ptr+16, U_MULTICHAR_CONSTANT16('x','t'));
+
+      ptr += U_CONSTANT_SIZE("Content-Type: text");
 
       if (u_is_html(mime_index))
          {
-         u_put_unalignedp64(ptr1,    U_MULTICHAR_CONSTANT64('/','h','t','m','l',';',' ','c'));
-         u_put_unalignedp64(ptr1+8,  U_MULTICHAR_CONSTANT64('h','a','r','s','e','t','=','U'));
-         u_put_unalignedp32(ptr1+16, U_MULTICHAR_CONSTANT32('T','F','-','8'));
-         u_put_unalignedp16(ptr1+20, U_MULTICHAR_CONSTANT16('\r','\n'));
+         u_put_unalignedp64(ptr,    U_MULTICHAR_CONSTANT64('/','h','t','m','l',';',' ','c'));
+         u_put_unalignedp64(ptr+8,  U_MULTICHAR_CONSTANT64('h','a','r','s','e','t','=','U'));
+         u_put_unalignedp32(ptr+16, U_MULTICHAR_CONSTANT32('T','F','-','8'));
+         u_put_unalignedp16(ptr+20, U_MULTICHAR_CONSTANT16('\r','\n'));
 
-         sz += U_CONSTANT_SIZE("Content-Type: " U_CTYPE_HTML "\r\n");
+         ptr += U_CONSTANT_SIZE("/html; charset=UTF-8\r\n");
          }
       else
          {
 #     ifdef U_SERVER_CAPTIVE_PORTAL
-         u_put_unalignedp64(ptr1, U_MULTICHAR_CONSTANT64('/','p','l','a','i','n','\r','\n'));
+         u_put_unalignedp64(ptr, U_MULTICHAR_CONSTANT64('/','p','l','a','i','n','\r','\n'));
 
-         sz += U_CONSTANT_SIZE("Content-Type: text/plain\r\n");
+         ptr += U_CONSTANT_SIZE("/plain\r\n");
 #     else
-         u_put_unalignedp64(ptr1,    U_MULTICHAR_CONSTANT64('/','p','l','a','i','n',';',' '));
-         u_put_unalignedp64(ptr1+8,  U_MULTICHAR_CONSTANT64('c','h','a','r','s','e','t','='));
-         u_put_unalignedp32(ptr1+16, U_MULTICHAR_CONSTANT32('U','T','F','-'));
-                            ptr1[20] = '8';
-         u_put_unalignedp16(ptr1+21, U_MULTICHAR_CONSTANT16('\r','\n'));
+         u_put_unalignedp64(ptr,    U_MULTICHAR_CONSTANT64('/','p','l','a','i','n',';',' '));
+         u_put_unalignedp64(ptr+8,  U_MULTICHAR_CONSTANT64('c','h','a','r','s','e','t','='));
+         u_put_unalignedp32(ptr+16, U_MULTICHAR_CONSTANT32('U','T','F','-'));
+                            ptr[20] = '8';
+         u_put_unalignedp16(ptr+21, U_MULTICHAR_CONSTANT16('\r','\n'));
 
-         sz += U_CONSTANT_SIZE("Content-Type: " U_CTYPE_TEXT_WITH_CHARSET "\r\n");
+         ptr += U_CONSTANT_SIZE("/plain; charset=UTF-8\r\n");
 #     endif
          }
       }
 
-   ptr1 = ptr+sz;
+   u_put_unalignedp64(ptr,   U_MULTICHAR_CONSTANT64('C','o','n','t','e','n','t','-'));
+   u_put_unalignedp64(ptr+8, U_MULTICHAR_CONSTANT64('L','e','n','g','t','h',':',' '));
 
-   u_put_unalignedp64(ptr1,   U_MULTICHAR_CONSTANT64('C','o','n','t','e','n','t','-'));
-   u_put_unalignedp64(ptr1+8, U_MULTICHAR_CONSTANT64('L','e','n','g','t','h',':',' '));
-
-   ptr1 = u_num2str32(clength, ptr1 + U_CONSTANT_SIZE("Content-Length: "));
+   ptr = u_num2str32(clength, ptr + U_CONSTANT_SIZE("Content-Length: "));
 
    if (pEndHeader == U_NULLPTR)
       {
-      u_put_unalignedp32(ptr1, U_MULTICHAR_CONSTANT32('\r','\n','\r','\n'));
-                         ptr1 += 4;
+      u_put_unalignedp32(ptr, U_MULTICHAR_CONSTANT32('\r','\n','\r','\n'));
+                         ptr += U_CONSTANT_SIZE(U_CRLF2);
       }
    else
       {
-      u_put_unalignedp16(ptr1, U_MULTICHAR_CONSTANT16('\r','\n'));
-                         ptr1 += 2;
+      u_put_unalignedp16(ptr, U_MULTICHAR_CONSTANT16('\r','\n'));
+                         ptr += U_CONSTANT_SIZE(U_CRLF);
 
       U_INTERNAL_ASSERT(u_endsWith(pEndHeader, U_http_info.endHeader, U_CONSTANT_TO_PARAM(U_CRLF2)))
 
-      U_MEMCPY(ptr1, pEndHeader, U_http_info.endHeader);
-               ptr1 +=           U_http_info.endHeader;
+      U_MEMCPY(ptr, pEndHeader, U_http_info.endHeader);
+               ptr +=           U_http_info.endHeader;
       }
 
-   ext->size_adjust(ptr1);
+   ext->size_adjust(ptr);
 
-no_response:
    handlerResponse();
 }
 
@@ -7968,11 +8025,13 @@ next:
    U_RETURN_STRING(header);
 }
 
-U_NO_EXPORT void UHTTP::setHeaderForCache(UHTTP::UFileCacheData* ptr, const UString& data)
+U_NO_EXPORT void UHTTP::setHeaderForCache(UHTTP::UFileCacheData* ptr, UString& data)
 {
    U_TRACE(0, "UHTTP::setHeaderForCache(%p,%V)", ptr, data.rep)
 
    U_INTERNAL_ASSERT_POINTER(ptr)
+
+   (void) data.shrink();
 
    ptr->array->push_back(data);
 
@@ -7986,6 +8045,29 @@ U_NO_EXPORT void UHTTP::setHeaderForCache(UHTTP::UFileCacheData* ptr, const UStr
 
    ptr->http2->push_back(hpack);
 #endif
+}
+
+U_NO_EXPORT void UHTTP::setDataInCache(const UString& fmt, const UString& content, const char* encoding, uint32_t encoding_len)
+{
+   U_TRACE(0, "UHTTP::setDataInCache(%V,%V,%.*S,%u)", fmt.rep, content.rep, encoding_len, encoding, encoding_len)
+
+   uint32_t size = content.size();
+
+   file_data->array->push_back(content);
+
+   UString header(U_CAPACITY);
+
+   if (encoding_len == 0) header.snprintf(U_STRING_TO_PARAM(fmt), size); 
+   else
+      {
+      U_INTERNAL_ASSERT_POINTER(encoding)
+
+      (void) header.append(encoding, encoding_len);
+
+      header.snprintf_add(U_STRING_TO_PARAM(fmt), size);
+      }
+
+   setHeaderForCache(file_data, header);
 }
 
 #ifdef USE_LIBBROTLI
@@ -8015,28 +8097,23 @@ U_NO_EXPORT void UHTTP::putDataInCache(const UString& fmt, UString& content)
    U_INTERNAL_ASSERT_MAJOR(file_data->size, 0)
    U_INTERNAL_ASSERT_EQUALS(file_data->mime_index, mime_index)
 
-   UString header(U_CAPACITY);
-   uint32_t size = file_data->size, ratio1 = 100, ratio2 = 100;
-
    U_NEW(UVector<UString>, file_data->array, UVector<UString>(6U));
 #ifndef U_HTTP2_DISABLE
    U_NEW(UVector<UString>, file_data->http2, UVector<UString>(3U));
 #endif
 
-   file_data->array->push_back(content);
-
-   header.snprintf(U_STRING_TO_PARAM(fmt), size);
-
-   (void) header.shrink();
-
-   setHeaderForCache(file_data, header);
+   setDataInCache(fmt, content);
 
    if (content.empty())
       {
-      U_SRV_LOG("File cached (sendfile): %V - %u bytes", pathname->rep, size);
+      U_SRV_LOG("File cached (sendfile): %V - %u bytes", pathname->rep, file_data->size);
 
       return;
       }
+
+   U_INTERNAL_ASSERT_EQUALS(file_data->size, content.size())
+
+   uint32_t ratio1 = 100, ratio2 = 100;
 
    if (u_is_img(mime_index))
       {
@@ -8051,10 +8128,10 @@ U_NO_EXPORT void UHTTP::putDataInCache(const UString& fmt, UString& content)
       else if (u_is_png(mime_index)) page_speed->optimize_png(content);
       else                           page_speed->optimize_jpg(content);
 
-      if (content.size() < size) U_SRV_LOG("WARNING: found image not optimized: %V", pathname->rep);
+      if (content.size() < file_data->size) U_SRV_LOG("WARNING: found image not optimized: %V", pathname->rep);
 #  endif
 
-      U_SRV_LOG("File cached (image): %V - %u bytes", pathname->rep, size);
+      U_SRV_LOG("File cached (image): %V - %u bytes", pathname->rep, file_data->size);
 
       return;
       }
@@ -8102,8 +8179,8 @@ U_NO_EXPORT void UHTTP::putDataInCache(const UString& fmt, UString& content)
 
 next:
 #if defined(USE_LIBZ) || defined(USE_LIBBROTLI)
-   if (size > U_MIN_SIZE_FOR_DEFLATE &&
-       u_is_compressable(mime_index))
+   if (u_is_compressable(mime_index) &&
+       file_data->size > U_MIN_SIZE_FOR_DEFLATE)
       {
 #  ifdef USE_LIBZ
       /**
@@ -8133,60 +8210,26 @@ next:
        * Sending raw DEFLATE data is just not a good idea. As Mark says "[it's] simply more reliable to only use GZIP"
        */
 
-      UString content1 = UStringExt::deflate(content, 2); // 2 => zopfli...
+      UString content1 = UStringExt::deflate(content); // zopfli...
 
-      // NB: we accept compress data only if ratio compression is better than 15%...
-
-      if ((size = content1.size()) < file_data->size)
+      if (content1)
          {
-         if (size) ratio1 = (size * 100U) / file_data->size;
+         ratio1 = UStringExt::ratio;
 
-         U_INTERNAL_DUMP("ratio1 = %u (%u%%)", ratio1, 100-ratio1)
-
-         if (ratio1 < 85)
-            {
-            file_data->array->push_back(content1); // gzip content... 
-
-            header.setBuffer(U_CAPACITY);
-
-            (void) header.replace(U_CONSTANT_TO_PARAM("Content-Encoding: gzip\r\n"));
-
-            header.snprintf_add(U_STRING_TO_PARAM(fmt), size);
-
-            (void) header.shrink();
-
-            setHeaderForCache(file_data, header);
-            }
+         setDataInCache(fmt, content1, U_CONSTANT_TO_PARAM("Content-Encoding: gzip\r\n"));
          }
 #  endif
 
 #  ifdef USE_LIBBROTLI
       UString content2 = UStringExt::brotli(content);
 
-      // NB: we accept compress data only if ratio compression is better than 15%...
-
-      if ((size = content2.size()) < file_data->size)
+      if (content2)
          {
+         ratio2 = UStringExt::ratio;
+
          checkArrayCompressData(file_data);
 
-         if (size) ratio2 = (size * 100U) / file_data->size;
-
-         U_INTERNAL_DUMP("ratio2 = %u (%u%%)", ratio2, 100-ratio2)
-
-         if (ratio2 < 85)
-            {
-            file_data->array->push_back(content2); // brotli content... 
-
-            header.setBuffer(U_CAPACITY);
-
-            (void) header.replace(U_CONSTANT_TO_PARAM("Content-Encoding: br\r\n"));
-
-            header.snprintf_add(U_STRING_TO_PARAM(fmt), size);
-
-            (void) header.shrink();
-
-            setHeaderForCache(file_data, header);
-            }
+         setDataInCache(fmt, content2, U_CONSTANT_TO_PARAM("Content-Encoding: br\r\n"));
          }
 #  endif
       }
@@ -10405,7 +10448,7 @@ void UHTTP::checkContentLength(uint32_t length)
 
    if (pos != U_NOT_FOUND)
       {
-      const char* ptr = ext->c_pointer(pos += U_CONSTANT_SIZE("Content-Length") + 1);
+      const char* ptr = ext->c_pointer((pos += sizeof("Content-Length")));
 
       if (u__isblank(*ptr)) // NB: weighttp fail if we don't put at least one space...
          {
@@ -11600,7 +11643,7 @@ U_EXPORT istream& operator>>(istream& is, UHTTP::UFileCacheData& d)
 #           ifdef USE_LIBZ
                else if (u_is_img(d.mime_index) == false)
                   {
-                  d.array->push_back(UStringExt::deflate(content, 2)); // 2 gzip(content) 
+                  d.array->push_back(UStringExt::deflate(content)); // 2 gzip(content) 
 
                   decoded = U_STRING_FROM_CONSTANT("Content-Encoding: gzip\r\n") + header;
 

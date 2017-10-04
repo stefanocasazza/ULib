@@ -26,7 +26,9 @@ extern "C" {
  * #define GZIP_MAGIC "\037\213" Magic header for gzip files, 1F 8B
  */
 
-U_EXPORT uint32_t u_gz_deflate(const char* restrict input, uint32_t len, char* restrict result, bool bheader);
+extern U_EXPORT bool u_gz_deflate_header; /* deflate, gzip */
+
+U_EXPORT uint32_t u_gz_deflate(const char* restrict input, uint32_t len, char* restrict result, int level);
 U_EXPORT uint32_t u_gz_inflate(const char* restrict input, uint32_t len, char* restrict result);
 
 #ifdef __cplusplus

@@ -16,8 +16,9 @@
 
 #include <ulib/net/socket.h>
 
-#ifdef _WIN32
+#ifdef _MSWINDOWS_
 #  include <io.h>
+typedef struct sockaddr_un { char sun_path[108]; } sockaddr_un;
 #else
 #  include <sys/un.h>
 #endif
@@ -57,8 +58,8 @@
 */
 
 union uusockaddr_un {
-   struct sockaddr     psaGeneric;
-   struct sockaddr_un  psaUnixAddr;
+   struct sockaddr    psaGeneric;
+   struct sockaddr_un psaUnixAddr;
 };
 
 class UServer_Base;

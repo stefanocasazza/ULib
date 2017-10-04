@@ -696,6 +696,12 @@
 /* ULib version */
 #undef ULIB_VERSION
 
+/* Define if use userver_ipc */
+#undef USERVER_IPC
+
+/* Define if use userver_udp */
+#undef USERVER_UDP
+
 /* Define if enable c-ares support */
 #undef USE_C_ARES
 

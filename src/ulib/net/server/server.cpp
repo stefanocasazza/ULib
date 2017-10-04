@@ -88,6 +88,7 @@ int           UServer_Base::tcp_linger_set = -2;
 int           UServer_Base::preforked_num_kids;
 bool          UServer_Base::bssl;
 bool          UServer_Base::bipc;
+bool          UServer_Base::budp;
 bool          UServer_Base::binsert;
 bool          UServer_Base::flag_loop;
 bool          UServer_Base::public_address;
@@ -159,6 +160,9 @@ UVector<UServerPlugIn*>*          UServer_Base::vplugin;
 UVector<UServerPlugIn*>*          UServer_Base::vplugin_static;
 UVector<UServer_Base::file_LOG*>* UServer_Base::vlog;
 
+#ifdef USERVER_UDP
+vPFi UServer_Base::runDynamicPage_udp;
+#endif
 #ifdef U_WELCOME_SUPPORT
 UString* UServer_Base::msg_welcome;
 #endif
@@ -1097,40 +1101,44 @@ public:
 
       U_SRV_LOG("UTimeThread optimization for time resolution of one second activated (tid %u)", u_gettid());
 
-#    ifdef USE_LOAD_BALANCE
-      uusockaddr addr;
+#   ifdef USE_LOAD_BALANCE
       int fd_sock = -1;
-      uint32_t laddr = 0;
+      uint32_t addr = 0;
+      uusockaddr srv_addr, cli_addr;
       UUDPSocket udp_sock(UClientImage_Base::bIPv6);
 
-      if (UServer_Base::bipc == false)
+#   if defined(USERVER_UDP) || defined(USERVER_IPC)
+      if (UServer_Base::budp == false &&
+          UServer_Base::bipc == false)
+#   endif
+      {
+      if (UServer_Base::ifname == U_NULLPTR) U_NEW(UString, UServer_Base::ifname, UString(UServer_Base::getNetworkDevice(U_NULLPTR)));
+
+      if (*UServer_Base::ifname)
          {
-         if (UServer_Base::ifname == U_NULLPTR) U_NEW(UString, UServer_Base::ifname, UString(UServer_Base::getNetworkDevice(U_NULLPTR)));
+         srv_addr.psaIP4Addr.sin_family        = PF_INET;
+         srv_addr.psaIP4Addr.sin_addr.s_addr = htonl(INADDR_ANY);
 
-         if (*UServer_Base::ifname)
+         if (udp_sock.setServer(UServer_Base::port, &srv_addr) == false) U_ERROR("Can't bind on udp socket");
+
+         if (UIPAddress::setBroadcastAddress(srv_addr, *UServer_Base::ifname) == false)
             {
-            (void) memset(&addr, 0, sizeof(addr));
-
-            addr.psaIP4Addr.sin_family      = PF_INET;
-            addr.psaIP4Addr.sin_addr.s_addr = htonl(INADDR_ANY);
-
-            if (udp_sock.setServer(UServer_Base::port, &addr) == false) U_ERROR("Can't bind on udp socket");
-
-            if (UIPAddress::setBroadcastAddress(addr, *UServer_Base::ifname) == false) U_ERROR("Can't get broadcast address on interface %V", UServer_Base::ifname->rep);
-
-            if (udp_sock.setSockOpt(SOL_SOCKET, SO_BROADCAST, (const int[]){ 1 }) == false) U_ERROR("Can't enable SO_BROADCAST on udp socket");
-
-            udp_sock.setNonBlocking();
-
-            laddr   = UServer_Base::socket->cLocalAddress.get_addr();
-            fd_sock = udp_sock.getFd();
-
-            U_DUMP("laddr = %V", UIPAddress::toString(laddr).rep)
-
-            U_SRV_LOG("Load balance activated (by udp socket: %u): loadavg_threshold = %u brodacast address = (%v:%v)",
-                        fd_sock, UServer_Base::loadavg_threshold, UServer_Base::ifname->rep, UIPAddress::toString(addr.psaIP4Addr.sin_addr.s_addr).rep);
+            U_ERROR("Can't get broadcast address on interface %V", UServer_Base::ifname->rep);
             }
+
+         if (udp_sock.setSockOpt(SOL_SOCKET, SO_BROADCAST, (const int[]){ 1 }) == false) U_ERROR("Can't enable SO_BROADCAST on udp socket");
+
+         udp_sock.setNonBlocking();
+
+         addr    = UServer_Base::socket->cLocalAddress.get_addr();
+         fd_sock = udp_sock.getFd();
+
+         U_DUMP("addr = %V", UIPAddress::toString(addr).rep)
+
+         U_SRV_LOG("Load balance activated (by udp socket: %u): loadavg_threshold = %u brodacast address = (%v:%v)",
+                     fd_sock, UServer_Base::loadavg_threshold, UServer_Base::ifname->rep, UIPAddress::toString(srv_addr.psaIP4Addr.sin_addr.s_addr).rep);
          }
+      }
 #    endif
 
       u_gettimenow();
@@ -1168,26 +1176,28 @@ public:
 
             U_INTERNAL_DUMP("U_SRV_MY_LOAD = %u", U_SRV_MY_LOAD)
 
-            int iBytesTransferred = U_SYSCALL(sendto, "%d,%p,%u,%u,%p,%d", fd_sock, &U_SRV_MY_LOAD, sizeof(char), MSG_DONTROUTE, (sockaddr*)&(addr.psaGeneric), sizeof(addr));
+            int iBytesTransferred = U_SYSCALL(sendto, "%d,%p,%u,%u,%p,%d", fd_sock, &U_SRV_MY_LOAD, sizeof(char), MSG_DONTROUTE,
+                                                                           (sockaddr*)&(srv_addr.psaGeneric), sizeof(srv_addr));
 
             if (iBytesTransferred == sizeof(char))
                {
-               uusockaddr saddr;
                unsigned char datagram[4096];
-               socklen_t slDummy = sizeof(addr);
+               socklen_t slDummy = sizeof(cli_addr);
 
                uint8_t  min_loadavg_remote    = 255;
                uint32_t min_loadavg_remote_ip = 0;
 
-               while ((iBytesTransferred = U_SYSCALL(recvfrom,"%d,%p,%u,%u,%p,%p",fd_sock,datagram,sizeof(datagram),MSG_DONTWAIT,(sockaddr*)&(saddr.psaGeneric),&slDummy)) > 0)
+               while ((iBytesTransferred = U_SYSCALL(recvfrom,"%d,%p,%u,%u,%p,%p", fd_sock, datagram, sizeof(datagram), MSG_DONTWAIT,
+                                                                           (sockaddr*)&(cli_addr.psaGeneric),&slDummy)) > 0)
                   {
-                  U_DUMP("Received datagram from (%S:%u) = (%u,%#.*S)",
-                           UIPAddress::toString(saddr.psaIP4Addr.sin_addr.s_addr).rep, ntohs(saddr.psaIP4Addr.sin_port), iBytesTransferred, iBytesTransferred, datagram)
+                  U_DUMP("Received datagram from (%V:%u) = (%u,%#.*S)",
+                           UIPAddress::toString(cli_addr.psaIP4Addr.sin_addr.s_addr).rep,
+                                          ntohs(cli_addr.psaIP4Addr.sin_port), iBytesTransferred, iBytesTransferred, datagram)
 
                   if (iBytesTransferred == 1)
                      {
-                     if ((saddr.psaIP4Addr.sin_addr.s_addr == laddr && ntohs(saddr.psaIP4Addr.sin_port) == UServer_Base::port) ||
-                         (UServer_Base::vallow_cluster && UIPAllow::isAllowed(saddr.psaIP4Addr.sin_addr.s_addr, *UServer_Base::vallow_cluster) == false))
+                     if ((cli_addr.psaIP4Addr.sin_addr.s_addr == addr && ntohs(cli_addr.psaIP4Addr.sin_port) == UServer_Base::port) ||
+                         (UServer_Base::vallow_cluster && UIPAllow::isAllowed(cli_addr.psaIP4Addr.sin_addr.s_addr, *UServer_Base::vallow_cluster) == false))
                         {
                         continue;
                         }
@@ -1196,7 +1206,7 @@ public:
                         {
                         min_loadavg_remote = datagram[0];
 
-                        u_put_unalignedp32(&min_loadavg_remote_ip, addr.psaIP4Addr.sin_addr.s_addr);
+                        u_put_unalignedp32(&min_loadavg_remote_ip, srv_addr.psaIP4Addr.sin_addr.s_addr);
                         }
                      }
                   }
@@ -1399,8 +1409,6 @@ UServer_Base::~UServer_Base()
    U_TRACE_UNREGISTER_OBJECT(0, UServer_Base)
 
    U_INTERNAL_ASSERT_POINTER(socket)
-   U_INTERNAL_ASSERT_POINTER(vplugin)
-   U_INTERNAL_ASSERT_POINTER(vplugin_static)
 
 #ifdef ENABLE_THREAD
 # if !defined(USE_LIBEVENT) && defined(U_SERVER_THREAD_APPROACH_SUPPORT)
@@ -1437,8 +1445,12 @@ UServer_Base::~UServer_Base()
    UClientImage_Base::clear();
 
    delete socket;
-   delete vplugin_name;
-   delete vplugin;
+
+   if (vplugin)
+      {
+      delete vplugin_name;
+      delete vplugin;
+      }
 
    UOrmDriver::clear();
 
@@ -1743,16 +1755,22 @@ void UServer_Base::loadConfigParam()
    // DOS_LOGFILE         the file to write DOS event
    // --------------------------------------------------------------------------------------------------------------------------------------
 
-#ifdef USE_LIBSSL
-   U_INTERNAL_DUMP("bssl = %b", bssl)
-#endif
+   U_INTERNAL_DUMP("bssl = %b budp = %b bipc = %b", bssl, budp, bipc)
 
-#if !defined(HAVE_EPOLL_WAIT) && !defined(USE_LIBEVENT) && defined(DEBUG)
-   U_INTERNAL_DUMP("SOMAXCONN = %d FD_SETSIZE = %d", SOMAXCONN, FD_SETSIZE)
+#ifdef USERVER_IPC
+   if (bipc)
+      {
+#  ifdef _MSWINDOWS_
+      U_ERROR("Sorry, I was compiled on Windows so there isn't UNIX domain sockets");
+#  endif
+
+      *name_sock = cfg->at(U_CONSTANT_TO_PARAM("SOCKET_NAME"));
+
+      if (name_sock->empty()) U_ERROR("Sorry, I cannot run without SOCKET_NAME value");
+      }
 #endif
 
    UString x  = cfg->at(U_CONSTANT_TO_PARAM("SERVER"));
-   *name_sock = cfg->at(U_CONSTANT_TO_PARAM("SOCKET_NAME"));
 
    if (x) U_NEW(UString, server, UString(x));
 
@@ -1778,6 +1796,8 @@ void UServer_Base::loadConfigParam()
       port = _port;
       }
 
+   U_INTERNAL_DUMP("SOMAXCONN = %d FD_SETSIZE = %d", SOMAXCONN, FD_SETSIZE)
+
    set_tcp_keep_alive    = cfg->readBoolean(U_CONSTANT_TO_PARAM("TCP_KEEP_ALIVE"));
    set_realtime_priority = cfg->readBoolean(U_CONSTANT_TO_PARAM("SET_REALTIME_PRIORITY"), true);
 
@@ -1785,11 +1805,16 @@ void UServer_Base::loadConfigParam()
    tcp_linger_set                 = cfg->readLong(U_CONSTANT_TO_PARAM("TCP_LINGER_SET"), -2);
    USocket::iBackLog              = cfg->readLong(U_CONSTANT_TO_PARAM("LISTEN_BACKLOG"), SOMAXCONN);
    min_size_for_sendfile          = cfg->readLong(U_CONSTANT_TO_PARAM("MIN_SIZE_FOR_SENDFILE"), 500 * 1024); // 500k: for major size we assume is better to use sendfile()
-   UNotifier::max_connection      = cfg->readLong(U_CONSTANT_TO_PARAM("MAX_KEEP_ALIVE"));
-   u_printf_string_max_length     = cfg->readLong(U_CONSTANT_TO_PARAM("LOG_MSG_SIZE"));
-
    num_client_threshold           = cfg->readLong(U_CONSTANT_TO_PARAM("CLIENT_THRESHOLD"));
+   UNotifier::max_connection      = cfg->readLong(U_CONSTANT_TO_PARAM("MAX_KEEP_ALIVE"));
    num_client_for_parallelization = cfg->readLong(U_CONSTANT_TO_PARAM("CLIENT_FOR_PARALLELIZATION"));
+
+#ifdef USERVER_UDP
+   if (budp == false)
+#endif
+   {
+   u_printf_string_max_length = cfg->readLong(U_CONSTANT_TO_PARAM("LOG_MSG_SIZE"));
+   }
 
    x = cfg->at(U_CONSTANT_TO_PARAM("CRASH_EMAIL_NOTIFY"));
 
@@ -1862,16 +1887,19 @@ void UServer_Base::loadConfigParam()
    if (preforked_num_kids > 1) monitoring_process = true;
 
 #ifdef USE_LIBSSL
-   *dh_file   = cfg->at(U_CONSTANT_TO_PARAM("DH_FILE"));
-   *ca_file   = cfg->at(U_CONSTANT_TO_PARAM("CA_FILE"));
-   *ca_path   = cfg->at(U_CONSTANT_TO_PARAM("CA_PATH"));
-   *key_file  = cfg->at(U_CONSTANT_TO_PARAM("KEY_FILE"));
-   *password  = cfg->at(U_CONSTANT_TO_PARAM("PASSWORD"));
-   *cert_file = cfg->at(U_CONSTANT_TO_PARAM("CERT_FILE"));
+   if (bssl)
+      {
+      *dh_file   = cfg->at(U_CONSTANT_TO_PARAM("DH_FILE"));
+      *ca_file   = cfg->at(U_CONSTANT_TO_PARAM("CA_FILE"));
+      *ca_path   = cfg->at(U_CONSTANT_TO_PARAM("CA_PATH"));
+      *key_file  = cfg->at(U_CONSTANT_TO_PARAM("KEY_FILE"));
+      *password  = cfg->at(U_CONSTANT_TO_PARAM("PASSWORD"));
+      *cert_file = cfg->at(U_CONSTANT_TO_PARAM("CERT_FILE"));
 
-   verify_mode = cfg->readLong(U_CONSTANT_TO_PARAM("VERIFY_MODE"));
+      verify_mode = cfg->readLong(U_CONSTANT_TO_PARAM("VERIFY_MODE"));
 
-   if (bssl) min_size_for_sendfile = U_NOT_FOUND; // NB: we can't use sendfile with SSL...
+      min_size_for_sendfile = U_NOT_FOUND; // NB: we can't use sendfile with SSL...
+      }
 #endif
 
    U_INTERNAL_DUMP("min_size_for_sendfile = %u", min_size_for_sendfile)
@@ -1964,7 +1992,12 @@ void UServer_Base::loadConfigParam()
 
    // DOCUMENT_ROOT: The directory out of which we will serve your documents
 
+#ifdef USERVER_UDP
+   if (budp == false)
+#endif
+   {
    if (setDocumentRoot(cfg->at(U_CONSTANT_TO_PARAM("DOCUMENT_ROOT"))) == false) U_ERROR("Setting DOCUMENT ROOT to %V failed", document_root->rep);
+   }
 
 #ifndef U_LOG_DISABLE
    x = cfg->at(U_CONSTANT_TO_PARAM("LOG_FILE"));
@@ -1980,7 +2013,12 @@ void UServer_Base::loadConfigParam()
 
       log->init(U_CONSTANT_TO_PARAM(U_SERVER_LOG_PREFIX));
 
+#  ifdef USERVER_UDP
+      if (budp == false)
+#  endif
+      {
       U_SRV_LOG("Working directory (DOCUMENT_ROOT) changed to %.*S", u_cwd_len, u_cwd);
+      }
 
       if (bmsg) U_SRV_LOG("WARNING: the \"RUN_AS_USER\" directive makes sense only if the master process runs with super-user privileges, ignored");
       }
@@ -2011,6 +2049,10 @@ void UServer_Base::loadConfigParam()
       }
 
 #ifdef USE_LOAD_BALANCE
+# ifdef USERVER_UDP
+   if (budp == false)
+# endif
+   {
    x = cfg->at(U_CONSTANT_TO_PARAM("LOAD_BALANCE_DEVICE_NETWORK"));
 
    if (x)
@@ -2040,9 +2082,14 @@ void UServer_Base::loadConfigParam()
                 vallow_cluster = U_NULLPTR;
          }
       }
+   }
 #endif
 
 #ifdef U_EVASIVE_SUPPORT
+# ifdef USERVER_UDP
+   if (budp == false)
+# endif
+   {
    /**
     * This is the threshold for the number of requests for the same page (or URI) per page interval.
     * Once the threshold for that interval has been exceeded (defaults to 2), the IP address of the client will be added to the blocking list
@@ -2140,6 +2187,7 @@ void UServer_Base::loadConfigParam()
 
       U_NEW(UFile, dos_LOG, UFile(x));
       }
+   }
 #endif
 
    // load ORM driver modules...
@@ -2153,10 +2201,15 @@ void UServer_Base::loadConfigParam()
 
    // load plugin modules and call server-wide hooks handlerConfig()...
 
+#ifdef USERVER_UDP
+   if (budp == false)
+#endif
+   {
    UString plugin_dir  = cfg->at(U_CONSTANT_TO_PARAM("PLUGIN_DIR")),
            plugin_list = cfg->at(U_CONSTANT_TO_PARAM("PLUGIN"));
 
    if (loadPlugins(plugin_dir, plugin_list) != U_PLUGIN_HANDLER_FINISHED) U_ERROR("Plugins stage load failed");
+   }
 }
 
 U_NO_EXPORT void UServer_Base::loadStaticLinkedModules(const char* name)
@@ -2563,14 +2616,28 @@ void UServer_Base::init()
 
    U_INTERNAL_ASSERT_POINTER(socket)
 
+   U_INTERNAL_DUMP("bssl = %b budp = %b bipc = %b", bssl, budp, bipc)
+
+#ifdef USERVER_UDP
+   if (budp)
+      {
+      uusockaddr srv_addr;
+
+      U_ASSERT(socket->isUDP())
+
+      if (socket->setServer(port, &srv_addr) == false)
+         {
+         U_ERROR("Run as server UDP with port '%u' failed", port);
+         }
+
+      goto next;
+      }
+#endif
+
 #ifdef USE_LIBSSL
    if (bssl)
       {
       U_ASSERT(((USSLSocket*)socket)->isSSL())
-
-      if (cfg) ((USSLSocket*)socket)->ciphersuite_model = cfg->readLong(U_CONSTANT_TO_PARAM("CIPHER_SUITE"));
-
-      // Load our certificate
 
       U_INTERNAL_ASSERT(  dh_file->isNullTerminated())
       U_INTERNAL_ASSERT(  ca_file->isNullTerminated())
@@ -2579,28 +2646,26 @@ void UServer_Base::init()
       U_INTERNAL_ASSERT( password->isNullTerminated())
       U_INTERNAL_ASSERT(cert_file->isNullTerminated())
 
+      // Load our certificate
+
       if (((USSLSocket*)socket)->setContext( dh_file->data(), cert_file->data(), key_file->data(),
                                             password->data(),   ca_file->data(),  ca_path->data(), verify_mode) == false)
          {
          U_ERROR("SSL: server setContext() failed");
          }
       }
-   else
 #endif
-   {
+
+#ifdef USERVER_IPC
    if (bipc)
       {
       U_ASSERT(socket->isIPC())
 
-#  ifdef _MSWINDOWS_
-      U_ERROR("Sorry, I was compiled on Windows so I can't accept SOCKET_NAME");
-#  else
-      if (*name_sock) UUnixSocket::setPath(name_sock->data());
+      UUnixSocket::setPath(name_sock->data());
 
       if (UUnixSocket::path == U_NULLPTR) U_ERROR("UNIX domain socket is not bound to a file system pathname");
-#  endif
       }
-   }
+#endif
 
    if (socket->setServer(port, server) == false)
       {
@@ -2609,7 +2674,11 @@ void UServer_Base::init()
       U_ERROR("Run as server with local address '%v:%u' failed", x.rep, port);
       }
 
-   U_SRV_LOG("TCP SO_REUSEPORT status is: %susing", (USocket::breuseport ? "" : "NOT "));
+#ifdef USERVER_UDP
+next:
+#endif
+
+   U_SRV_LOG("SO_REUSEPORT status is: %susing", (USocket::breuseport ? "" : "NOT "));
 
    // get name host
 
@@ -2639,7 +2708,8 @@ void UServer_Base::init()
       {
       U_ERROR("On windows we need a valid IP_ADDRESS value on configuration file");
       }
-#else
+#endif
+
    /**
     * This code does NOT make a connection or send any packets (to 8.8.8.8 which is google DNS).
     * Since UDP is a stateless protocol connect() merely makes a system call which figures out how to
@@ -2648,101 +2718,102 @@ void UServer_Base::init()
     * is what we want) of the socket
     */
 
+#ifdef USERVER_IPC
    if (bipc == false)
+#endif
+   {
+   UUDPSocket cClientSocket(UClientImage_Base::bIPv6);
+
+   if (cClientSocket.connectServer(U_STRING_FROM_CONSTANT("8.8.8.8"), 1001))
       {
-      UUDPSocket cClientSocket(UClientImage_Base::bIPv6);
+      socket->setLocal(cClientSocket.cLocalAddress);
 
-      if (cClientSocket.connectServer(U_STRING_FROM_CONSTANT("8.8.8.8"), 1001))
+      const char* p = socket->getLocalInfo();
+
+      UString ip(p, u__strlen(p, __PRETTY_FUNCTION__));
+
+           if ( IP_address->empty()) *IP_address = ip;
+      else if (*IP_address != ip)
          {
-         socket->setLocal(cClientSocket.cLocalAddress);
-
-         const char* p = socket->getLocalInfo();
-
-         UString ip(p, u__strlen(p, __PRETTY_FUNCTION__));
-
-              if ( IP_address->empty()) *IP_address = ip;
-         else if (*IP_address != ip)
-            {
-            U_SRV_LOG("WARNING: SERVER IP ADDRESS from configuration (%V) differ from system interface (%V)", IP_address->rep, ip.rep);
-            }
+         U_SRV_LOG("WARNING: SERVER IP ADDRESS from configuration (%V) differ from system interface (%V)", IP_address->rep, ip.rep);
          }
-
-      if (IP_address->empty())
-         {
-         (void) IP_address->assign(U_CONSTANT_TO_PARAM("127.0.0.1"));
-
-         socket->cLocalAddress.setLocalHost(UClientImage_Base::bIPv6);
-
-         U_WARNING("getting IP_ADDRESS from system interface fail, we try using localhost");
-         }
-      else
-         {
-         struct in_addr ia;
-
-         if (inet_aton(IP_address->c_str(), &ia) == 0) U_ERROR("IP_ADDRESS conversion fail: %V", IP_address->rep);
-
-         socket->setAddress(&ia);
-
-         public_address = (socket->cLocalAddress.isPrivate() == false);
-         }
-
-      U_SRV_LOG("SERVER IP ADDRESS registered as: %v (%s)", IP_address->rep, (public_address ? "public" : "private"));
-
-      u_need_root(false);
-
-#  ifdef U_LINUX
-      /**
-       * timeout_timewait parameter: Determines the time that must elapse before TCP/IP can release a closed connection
-       * and reuse its resources. This interval between closure and release is known as the TIME_WAIT state or twice the
-       * maximum segment lifetime (2MSL) state. During this time, reopening the connection to the client and server cost
-       * less than establishing a new connection. By reducing the value of this entry, TCP/IP can release closed connections
-       * faster, providing more resources for new connections. Adjust this parameter if the running application requires rapid
-       * release, the creation of new connections, and a low throughput due to many connections sitting in the TIME_WAIT state
-       */
-
-                                tcp_fin_timeout = UFile::getSysParam("/proc/sys/net/ipv4/tcp_fin_timeout");
-      if (tcp_fin_timeout > 30) tcp_fin_timeout = UFile::setSysParam("/proc/sys/net/ipv4/tcp_fin_timeout", 30, true);
-
-      /**
-       * sysctl_somaxconn (SOMAXCONN: 128) specifies the maximum number of sockets in state SYN_RECV per listen socket queue.
-       * At listen(2) time the backlog is adjusted to this limit if bigger then that.
-       *
-       * sysctl_max_syn_backlog on the other hand is dynamically adjusted, depending on the memory characteristic of the system.
-       * Default is 256, 128 for small systems and up to 1024 for bigger systems.
-       *
-       * The system limits (somaxconn & tcp_max_syn_backlog) specify a _maximum_, the user cannot exceed this limit with listen(2).
-       * The backlog argument for listen on the other  hand  specify a _minimum_
-       */
-
-      if (USocket::iBackLog == 1)
-         {
-         // sysctl_tcp_abort_on_overflow when its on, new connections are reset once the backlog is exhausted
-
-         tcp_abort_on_overflow = UFile::setSysParam("/proc/sys/net/ipv4/tcp_abort_on_overflow", 1, true);
-         }
-      else if (USocket::iBackLog > SOMAXCONN)
-         {
-         // NB: take a look at `netstat -s | grep overflowed`
-
-         sysctl_somaxconn = UFile::getSysParam("/proc/sys/net/core/somaxconn");
-
-         if (sysctl_somaxconn < USocket::iBackLog)
-            {
-            int value = UFile::setSysParam("/proc/sys/net/core/somaxconn", USocket::iBackLog);
-
-            if (value == USocket::iBackLog) sysctl_max_syn_backlog = UFile::setSysParam("/proc/sys/net/ipv4/tcp_max_syn_backlog", value * 8);
-            else
-               {
-               U_WARNING("The TCP backlog (LISTEN_BACKLOG) setting of %u cannot be enforced because of OS error - "
-                         "/proc/sys/net/core/somaxconn is set to the lower value of %d", USocket::iBackLog, sysctl_somaxconn);
-               }
-            }
-         }
-
-      U_INTERNAL_DUMP("sysctl_somaxconn = %d tcp_abort_on_overflow = %b sysctl_max_syn_backlog = %d",
-                       sysctl_somaxconn,     tcp_abort_on_overflow,     sysctl_max_syn_backlog)
-#  endif
       }
+
+   if (IP_address->empty())
+      {
+      (void) IP_address->assign(U_CONSTANT_TO_PARAM("127.0.0.1"));
+
+      socket->cLocalAddress.setLocalHost(UClientImage_Base::bIPv6);
+
+      U_WARNING("getting IP_ADDRESS from system interface fail, we try using localhost");
+      }
+   else
+      {
+      struct in_addr ia;
+
+      if (inet_aton(IP_address->c_str(), &ia) == 0) U_ERROR("IP_ADDRESS conversion fail: %V", IP_address->rep);
+
+      socket->setAddress(&ia);
+
+      public_address = (socket->cLocalAddress.isPrivate() == false);
+      }
+   }
+
+   U_SRV_LOG("SERVER IP ADDRESS registered as: %v (%s)", IP_address->rep, (public_address ? "public" : "private"));
+
+#ifdef U_LINUX
+   u_need_root(false);
+
+   /**
+    * timeout_timewait parameter: Determines the time that must elapse before TCP/IP can release a closed connection
+    * and reuse its resources. This interval between closure and release is known as the TIME_WAIT state or twice the
+    * maximum segment lifetime (2MSL) state. During this time, reopening the connection to the client and server cost
+    * less than establishing a new connection. By reducing the value of this entry, TCP/IP can release closed connections
+    * faster, providing more resources for new connections. Adjust this parameter if the running application requires rapid
+    * release, the creation of new connections, and a low throughput due to many connections sitting in the TIME_WAIT state
+    */
+
+                             tcp_fin_timeout = UFile::getSysParam("/proc/sys/net/ipv4/tcp_fin_timeout");
+   if (tcp_fin_timeout > 30) tcp_fin_timeout = UFile::setSysParam("/proc/sys/net/ipv4/tcp_fin_timeout", 30, true);
+
+   /**
+    * sysctl_somaxconn (SOMAXCONN: 128) specifies the maximum number of sockets in state SYN_RECV per listen socket queue.
+    * At listen(2) time the backlog is adjusted to this limit if bigger then that.
+    *
+    * sysctl_max_syn_backlog on the other hand is dynamically adjusted, depending on the memory characteristic of the system.
+    * Default is 256, 128 for small systems and up to 1024 for bigger systems.
+    *
+    * The system limits (somaxconn & tcp_max_syn_backlog) specify a _maximum_, the user cannot exceed this limit with listen(2).
+    * The backlog argument for listen on the other  hand  specify a _minimum_
+    */
+
+   if (USocket::iBackLog == 1)
+      {
+      // sysctl_tcp_abort_on_overflow when its on, new connections are reset once the backlog is exhausted
+
+      tcp_abort_on_overflow = UFile::setSysParam("/proc/sys/net/ipv4/tcp_abort_on_overflow", 1, true);
+      }
+   else if (USocket::iBackLog > SOMAXCONN)
+      {
+      // NB: take a look at `netstat -s | grep overflowed`
+
+      sysctl_somaxconn = UFile::getSysParam("/proc/sys/net/core/somaxconn");
+
+      if (sysctl_somaxconn < USocket::iBackLog)
+         {
+         int value = UFile::setSysParam("/proc/sys/net/core/somaxconn", USocket::iBackLog);
+
+         if (value == USocket::iBackLog) sysctl_max_syn_backlog = UFile::setSysParam("/proc/sys/net/ipv4/tcp_max_syn_backlog", value * 8);
+         else
+            {
+            U_WARNING("The TCP backlog (LISTEN_BACKLOG) setting of %u cannot be enforced because of OS error - "
+                      "/proc/sys/net/core/somaxconn is set to the lower value of %d", USocket::iBackLog, sysctl_somaxconn);
+            }
+         }
+      }
+
+   U_INTERNAL_DUMP("sysctl_somaxconn = %d tcp_abort_on_overflow = %b sysctl_max_syn_backlog = %d",
+                    sysctl_somaxconn,     tcp_abort_on_overflow,     sysctl_max_syn_backlog)
 #endif
 
    UTimer::init(UTimer::NOSIGNAL);
@@ -2771,7 +2842,12 @@ void UServer_Base::init()
 
    // init plugin modules, must run after the setting for shared log
 
+#ifdef USERVER_UDP
+   if (budp == false)
+#endif
+   {
    if (pluginsHandlerInit() != U_PLUGIN_HANDLER_FINISHED) U_ERROR("Plugins stage init failed");
+   }
 
    // manage shared data...
 
@@ -2820,6 +2896,7 @@ void UServer_Base::init()
    U_MEMCPY(ULog::ptr_shared_date, &ULog::date, sizeof(ULog::log_date));
 
    // NB: we block SIGHUP and SIGTERM; the threads created will inherit a copy of the signal mask...
+
 # ifdef sigemptyset
                     sigemptyset(&mask);
 # else
@@ -2893,68 +2970,79 @@ void UServer_Base::init()
       }
 #endif
 
+   socket_flags |= O_RDWR | O_CLOEXEC;
+
+#ifdef USERVER_UDP
+   if (budp)
+      {
+      UNotifier::max_connection = 1;
+      UNotifier::num_connection =
+      UNotifier::min_connection = 0;
+      }
+   else
+#endif
+   {
    // ---------------------------------------------------------------------------------------------------------
    // init notifier event manager
    // ---------------------------------------------------------------------------------------------------------
 
-   socket_flags |= O_RDWR | O_CLOEXEC;
-
 #if defined(ENABLE_THREAD) && !defined(USE_LIBEVENT) && defined(U_SERVER_THREAD_APPROACH_SUPPORT)
    if (preforked_num_kids != -1)
 #endif
+   {
+   // ---------------------------------------------------------------------------------------------------------
+   // NB: in the classic model we don't need to be notified for request of connection (loop: accept-fork)
+   //     and the forked child don't accept new client, but we need anyway the event manager because
+   //     the forked child must feel the possibly timeout for request from the new client...
+   // ---------------------------------------------------------------------------------------------------------
+
+   if (timeoutMS > 0 ||
+       isClassic() == false)
       {
-      // ---------------------------------------------------------------------------------------------------------
-      // NB: in the classic model we don't need to be notified for request of connection (loop: accept-fork)
-      //     and the forked child don't accept new client, but we need anyway the event manager because
-      //     the forked child must feel the possibly timeout for request from the new client...
-      // ---------------------------------------------------------------------------------------------------------
+      binsert = true; // NB: we ask to be notified for request of connection (=> accept)
 
-      if (timeoutMS > 0 ||
-          isClassic() == false)
-         {
-         binsert = true; // NB: we ask to be notified for request of connection (=> accept)
+      UNotifier::min_connection = 1;
 
-         UNotifier::min_connection = 1;
+#  ifndef USE_LIBEVENT
+      if (timeoutMS > 0) U_NEW(UTimeoutConnection, ptime, UTimeoutConnection);
+#  endif
 
-#     ifndef USE_LIBEVENT
-         if (timeoutMS > 0) U_NEW(UTimeoutConnection, ptime, UTimeoutConnection);
-#     endif
+      pthis->UEventFd::op_mask |=  EPOLLET;
+      pthis->UEventFd::op_mask &= ~EPOLLRDHUP;
 
-         pthis->UEventFd::op_mask |=  EPOLLET;
-         pthis->UEventFd::op_mask &= ~EPOLLRDHUP;
+      U_INTERNAL_ASSERT_EQUALS(pthis->UEventFd::op_mask, EPOLLIN | EPOLLET)
 
-         U_INTERNAL_ASSERT_EQUALS(pthis->UEventFd::op_mask, EPOLLIN | EPOLLET)
+      /**
+       * There may not always be a connection waiting after a SIGIO is delivered or select(2) or poll(2) return a readability
+       * event because the connection might have been removed by an asynchronous network error or another thread before
+       * accept() is called. If this happens then the call will block waiting for the next connection to arrive. To ensure
+       * that accept() never blocks, the passed socket sockfd needs to have the O_NONBLOCK flag set (see socket(7))
+       */
 
-         /**
-          * There may not always be a connection waiting after a SIGIO is delivered or select(2) or poll(2) return a readability
-          * event because the connection might have been removed by an asynchronous network error or another thread before
-          * accept() is called. If this happens then the call will block waiting for the next connection to arrive. To ensure
-          * that accept() never blocks, the passed socket sockfd needs to have the O_NONBLOCK flag set (see socket(7))
-          */
-
-         socket_flags |= O_NONBLOCK;
-         }
-
-      if (handler_other)
-         {
-         UNotifier::min_connection++;
-
-         handler_other->UEventFd::op_mask &= ~EPOLLRDHUP;
-         }
-
-      if (handler_inotify)
-         {
-         UNotifier::min_connection++;
-
-         handler_inotify->UEventFd::op_mask &= ~EPOLLRDHUP;
-         }
+      socket_flags |= O_NONBLOCK;
       }
+
+   if (handler_other)
+      {
+      UNotifier::min_connection++;
+
+      handler_other->UEventFd::op_mask &= ~EPOLLRDHUP;
+      }
+
+   if (handler_inotify)
+      {
+      UNotifier::min_connection++;
+
+      handler_inotify->UEventFd::op_mask &= ~EPOLLRDHUP;
+      }
+   }
 
    UNotifier::max_connection = (UNotifier::max_connection ? UNotifier::max_connection : USocket::iBackLog) + (UNotifier::num_connection = UNotifier::min_connection);
 
    if (num_client_threshold == 0) num_client_threshold = U_NOT_FOUND;
 
    if (num_client_for_parallelization == 0) num_client_for_parallelization = UNotifier::max_connection / 2;
+   }
 
    U_INTERNAL_DUMP("UNotifier::max_connection = %u UNotifier::min_connection = %u num_client_for_parallelization = %u num_client_threshold = %u",
                     UNotifier::max_connection,     UNotifier::min_connection,     num_client_for_parallelization,     num_client_threshold)
@@ -2969,7 +3057,12 @@ void UServer_Base::init()
       }
 #endif
 
+#ifdef USERVER_UDP
+   if (budp == false)
+#endif
+   {
    if (pluginsHandlerRun() != U_PLUGIN_HANDLER_FINISHED) U_ERROR("Plugins stage run failed");
+   }
 
    if (u_start_time     == 0 &&
        u_setStartTime() == false)
@@ -2978,10 +3071,16 @@ void UServer_Base::init()
       }
 
 #ifdef U_THROTTLING_SUPPORT
+# ifdef USERVER_UDP
+   if (budp == false)
+# endif
    if (throttling_mask) initThrottlingServer();
 #endif
 
 #ifdef U_EVASIVE_SUPPORT
+# ifdef USERVER_UDP
+   if (budp == false)
+# endif
    initEvasive();
 #endif
 
@@ -3186,6 +3285,7 @@ U_NO_EXPORT bool UServer_Base::clientImageHandlerRead()
 {
    U_TRACE_NO_PARAM(0, "UServer_Base::clientImageHandlerRead()")
 
+   U_INTERNAL_ASSERT_POINTER(csocket)
    U_INTERNAL_ASSERT(csocket->isOpen())
    U_INTERNAL_ASSERT_EQUALS(csocket, pClientImage->socket)
 
@@ -3205,6 +3305,33 @@ U_NO_EXPORT bool UServer_Base::clientImageHandlerRead()
 
    U_RETURN(true);
 }
+
+#ifndef U_LOG_DISABLE
+void UServer_Base::logNewClient(USocket* psocket, UClientImage_Base* lClientImage)
+{
+   U_TRACE(0, "UServer_Base::logNewClient(%p,%p)", psocket, lClientImage)
+
+   if (isLog())
+      {
+#  ifdef USE_LIBSSL
+      if (bssl) lClientImage->logCertificate();
+#  endif
+
+      USocketExt::setRemoteInfo(psocket, *(lClientImage->logbuf));
+
+      U_INTERNAL_ASSERT(lClientImage->logbuf->isNullTerminated())
+
+      char buffer[32];
+      uint32_t len = setNumConnection(buffer);
+
+      log->log(U_CONSTANT_TO_PARAM("New client connected from %v, %.*s clients currently connected"), lClientImage->logbuf->rep, len, buffer);
+
+#  ifdef U_WELCOME_SUPPORT
+      if (msg_welcome) log->log(U_CONSTANT_TO_PARAM("Sending welcome message to %v"), lClientImage->logbuf->rep);
+#  endif
+      }
+}
+#endif
 
 #if defined(ENABLE_THREAD) && !defined(USE_LIBEVENT) && defined(U_SERVER_THREAD_APPROACH_SUPPORT)
 #  define CSOCKET psocket
@@ -3387,12 +3514,7 @@ try_accept:
       goto end;
       }
 
-   U_INTERNAL_ASSERT(CSOCKET->isConnected())
-
-   CLIENT_ADDRESS     = UIPAddress::resolveStrAddress(iAddressType, CSOCKET->cRemoteAddress.pcAddress.p, CSOCKET->cRemoteAddress.pcStrAddress);
-   CLIENT_ADDRESS_LEN = u__strlen(CLIENT_ADDRESS, __PRETTY_FUNCTION__);
-
-   U_INTERNAL_DUMP("client_address = %.*S", CLIENT_ADDRESS_LEN, CLIENT_ADDRESS)
+   setClientAddress(CSOCKET, CLIENT_ADDRESS, CLIENT_ADDRESS_LEN);
 
 #ifdef U_EVASIVE_SUPPORT
    if (checkHold(CSOCKET->remoteIPAddress().getInAddr()))
@@ -3564,25 +3686,7 @@ retry:   pid = UProcess::waitpid(-1, &status, WNOHANG); // NB: to avoid too much
 #endif
 
 #ifndef U_LOG_DISABLE
-   if (isLog())
-      {
-#  ifdef USE_LIBSSL
-      if (bssl) CLIENT_IMAGE->logCertificate();
-#  endif
-
-      USocketExt::setRemoteInfo(CSOCKET, *CLIENT_IMAGE->logbuf);
-
-      U_INTERNAL_ASSERT(CLIENT_IMAGE->logbuf->isNullTerminated())
-
-      char buffer[32];
-      uint32_t len = setNumConnection(buffer);
-
-      log->log(U_CONSTANT_TO_PARAM("New client connected from %v, %.*s clients currently connected"), CLIENT_IMAGE->logbuf->rep, len, buffer);
-
-#  ifdef U_WELCOME_SUPPORT
-      if (msg_welcome) log->log(U_CONSTANT_TO_PARAM("Sending welcome message to %v"), CLIENT_IMAGE->logbuf->rep);
-#  endif
-      }
+   logNewClient(CSOCKET, CLIENT_IMAGE);
 #endif
 
 #ifdef U_WELCOME_SUPPORT
@@ -3688,6 +3792,11 @@ uint32_t UServer_Base::setNumConnection(char* ptr)
 {
    U_TRACE(0, "UServer_Base::setNumConnection(%p)", ptr)
 
+# ifdef USERVER_UDP
+   *ptr = '0';
+
+   U_RETURN(1);
+# else
    uint32_t len, sz = UNotifier::num_connection - UNotifier::min_connection - 1;
 
    if (preforked_num_kids <= 0) len = u_num2str32(sz, ptr) - ptr;
@@ -3717,6 +3826,7 @@ uint32_t UServer_Base::setNumConnection(char* ptr)
       }
 
    U_RETURN(len);
+# endif
 }
 #endif
 
@@ -3784,54 +3894,59 @@ void UServer_Base::runLoop(const char* user)
 {
    U_TRACE(0, "UServer_Base::runLoop(%S)", user)
 
+#ifdef USERVER_UDP
+   if (budp == false)
+#endif
+   {
    if (pluginsHandlerFork() != U_PLUGIN_HANDLER_FINISHED) U_ERROR("Plugins stage fork failed");
+   }
 
    socket->reusePort(socket_flags);
 
 #ifdef U_LINUX
-   if (bipc == false)
-      {
-      U_ASSERT_EQUALS(socket->isUDP(), false)
+# if defined(USERVER_UDP) || defined(USERVER_IPC)
+   if (budp == false &&
+       bipc == false)
+# endif
+   {
+   /**
+    * Let's say an application just issued a request to send a small block of data. Now, we could
+    * either send the data immediately or wait for more data. Some interactive and client-server
+    * applications will benefit greatly if we send the data right away. For example, when we are
+    * sending a short request and awaiting a large response, the relative overhead is low compared
+    * to the total amount of data transferred, and the response time could be much better if the
+    * request is sent immediately. This is achieved by setting the TCP_NODELAY option on the socket,
+    * which disables the Nagle algorithm.
+    *
+    * Linux (along with some other OSs) includes a TCP_DEFER_ACCEPT option in its TCP implementation.
+    * Set on a server-side listening socket, it instructs the kernel not to wait for the final ACK packet
+    * and not to initiate the process until the first packet of real data has arrived. After sending the SYN/ACK,
+    * the server will then wait for a data packet from a client. Now, only three packets will be sent over the
+    * network, and the connection establishment delay will be significantly reduced, which is typical for HTTP.
+    * NB: Takes an integer value (seconds)
+    *
+    * Another way to prevent delays caused by sending useless packets is to use the TCP_QUICKACK option.
+    * This option is different from TCP_DEFER_ACCEPT, as it can be used not only to manage the process of
+    * connection establishment, but it can be used also during the normal data transfer process. In addition,
+    * it can be set on either side of the client-server connection. Delaying sending of the ACK packet could
+    * be useful if it is known that the user data will be sent soon, and it is better to set the ACK flag on
+    * that data packet to minimize overhead. When the sender is sure that data will be immediately be sent
+    * (multiple packets), the TCP_QUICKACK option can be set to 0. The default value of this option is 1 for
+    * sockets in the connected state, which will be reset by the kernel to 1 immediately after the first use.
+    * (This is a one-time option)
+    */
 
-      /**
-       * Let's say an application just issued a request to send a small block of data. Now, we could
-       * either send the data immediately or wait for more data. Some interactive and client-server
-       * applications will benefit greatly if we send the data right away. For example, when we are
-       * sending a short request and awaiting a large response, the relative overhead is low compared
-       * to the total amount of data transferred, and the response time could be much better if the
-       * request is sent immediately. This is achieved by setting the TCP_NODELAY option on the socket,
-       * which disables the Nagle algorithm.
-       *
-       * Linux (along with some other OSs) includes a TCP_DEFER_ACCEPT option in its TCP implementation.
-       * Set on a server-side listening socket, it instructs the kernel not to wait for the final ACK packet
-       * and not to initiate the process until the first packet of real data has arrived. After sending the SYN/ACK,
-       * the server will then wait for a data packet from a client. Now, only three packets will be sent over the
-       * network, and the connection establishment delay will be significantly reduced, which is typical for HTTP.
-       * NB: Takes an integer value (seconds)
-       *
-       * Another way to prevent delays caused by sending useless packets is to use the TCP_QUICKACK option.
-       * This option is different from TCP_DEFER_ACCEPT, as it can be used not only to manage the process of
-       * connection establishment, but it can be used also during the normal data transfer process. In addition,
-       * it can be set on either side of the client-server connection. Delaying sending of the ACK packet could
-       * be useful if it is known that the user data will be sent soon, and it is better to set the ACK flag on
-       * that data packet to minimize overhead. When the sender is sure that data will be immediately be sent
-       * (multiple packets), the TCP_QUICKACK option can be set to 0. The default value of this option is 1 for
-       * sockets in the connected state, which will be reset by the kernel to 1 immediately after the first use.
-       * (This is a one-time option)
-       */
+   if (tcp_linger_set > -2) socket->setTcpLinger(tcp_linger_set);
 
-#  if defined(U_LINUX) && (!defined(U_SERVER_CAPTIVE_PORTAL) || defined(ENABLE_THREAD))
-                               socket->setTcpNoDelay();
-                               socket->setTcpFastOpen();
-                               socket->setTcpDeferAccept();
-      if (bssl == false)       socket->setBufferSND(500 * 1024); // 500k: for major size we assume is better to use sendfile()
-      if (set_tcp_keep_alive ) socket->setTcpKeepAlive();
-#  endif
-      if (tcp_linger_set > -2) socket->setTcpLinger(tcp_linger_set);
-      }
-#endif
+# if !defined(U_SERVER_CAPTIVE_PORTAL) || defined(ENABLE_THREAD)
+                           socket->setTcpNoDelay();
+                           socket->setTcpFastOpen();
+                           socket->setTcpDeferAccept();
+   if (bssl == false)      socket->setBufferSND(500 * 1024); // 500k: for major size we assume is better to use sendfile()
+   if (set_tcp_keep_alive) socket->setTcpKeepAlive();
+# endif
+   }
 
-#ifndef _MSWINDOWS_
    if (user)
       {
       if (u_runAsUser(user, false) == false) U_ERROR("Set user %S context failed", user);
@@ -3850,6 +3965,10 @@ void UServer_Base::runLoop(const char* user)
 
    pthis->UEventFd::fd = socket->iSockDesc;
 
+#ifdef USERVER_UDP
+   if (budp == false)
+#endif
+   {
    UNotifier::init();
 
    U_INTERNAL_DUMP("UNotifier::min_connection = %d", UNotifier::min_connection)
@@ -3860,8 +3979,6 @@ void UServer_Base::runLoop(const char* user)
       if (handler_other)   UNotifier::insert(handler_other,   EPOLLEXCLUSIVE | EPOLLROUNDROBIN); // NB: we ask to be notified for request from generic system
       if (handler_inotify) UNotifier::insert(handler_inotify, EPOLLEXCLUSIVE | EPOLLROUNDROBIN); // NB: we ask to be notified for change of file system (=> inotify)
       }
-
-   U_SRV_LOG("Waiting for connection on port %u", port);
 
 #if defined(ENABLE_THREAD) && !defined(USE_LIBEVENT) && defined(U_SERVER_THREAD_APPROACH_SUPPORT)
    U_INTERNAL_ASSERT_EQUALS(UNotifier::pthread, U_NULLPTR)
@@ -3881,6 +3998,9 @@ void UServer_Base::runLoop(const char* user)
       U_ASSERT(proc->parent())
       }
 #endif
+   }
+
+   U_SRV_LOG("Waiting for connection on port %u", port);
 
 #if defined(U_LINUX) && defined(ENABLE_THREAD)
    (void) U_SYSCALL(pthread_sigmask, "%d,%p,%p", SIG_UNBLOCK, &mask, U_NULLPTR);
@@ -3895,6 +4015,60 @@ void UServer_Base::runLoop(const char* user)
 #  endif
       }
 
+#ifdef USERVER_UDP
+   if (budp)
+      {
+      struct stat st;
+      char buffer[U_PATH_MAX];
+      HINSTANCE handle = U_NULLPTR;
+      uint32_t len = u__snprintf(buffer, sizeof(buffer), U_CONSTANT_TO_PARAM(U_LIBEXECDIR "/usp/udp.%s"), U_LIB_SUFFIX);
+
+      if (U_SYSCALL(stat, "%S,%p", buffer, &st))
+         {
+         U_WARNING("I can't found the usp page: %.*S", len, buffer);
+         }
+      else
+         {
+         if ((handle = UDynamic::dload(buffer)) == U_NULLPTR ||
+             (runDynamicPage_udp = (vPFi)UDynamic::lookup(handle, "runDynamicPage_udp")) == U_NULLPTR)
+            {
+            U_WARNING("load failed of usp page: %.*S", len, buffer);
+            }
+         else
+            {
+            runDynamicPage_udp(U_DPAGE_INIT);
+            runDynamicPage_udp(U_DPAGE_FORK);
+            }
+         }
+
+      csocket                    =
+      pClientImage->socket       = socket;
+      pClientImage->UEventFd::fd = socket->iSockDesc;
+
+      UClientImage_Base::callerHandlerRead = UServer_Base::handlerUDP;
+
+      U_INTERNAL_DUMP("handler_other = %p handler_inotify = %p UNotifier::num_connection = %u UNotifier::min_connection = %u",
+                       handler_other,     handler_inotify,     UNotifier::num_connection,     UNotifier::min_connection)
+
+      // NB: we can go directly on recvFrom() and block on it...
+
+      U_INTERNAL_ASSERT_EQUALS(socket_flags & O_NONBLOCK, 0)
+
+      while (flag_loop)
+         {
+         if (pClientImage->handlerRead() == U_NOTIFIER_DELETE) break;
+         }
+
+      if (runDynamicPage_udp)
+         {
+         runDynamicPage_udp(U_DPAGE_DESTROY);
+
+         UDynamic::dclose(handle);
+         }
+      }
+   else
+#endif
+   {
    while (flag_loop)
       {
       U_INTERNAL_DUMP("handler_other = %p handler_inotify = %p UNotifier::num_connection = %u UNotifier::min_connection = %u",
@@ -3934,13 +4108,12 @@ void UServer_Base::runLoop(const char* user)
 
       (void) pthis->UServer_Base::handlerRead();
       }
+   }
 }
 
 void UServer_Base::run()
 {
    U_TRACE_NO_PARAM(1, "UServer_Base::run()")
-
-   U_INTERNAL_ASSERT_POINTER(pthis)
 
    init();
 
@@ -3960,6 +4133,8 @@ void UServer_Base::run()
     *  1 - classic, forking after accept client
     * >1 - pool of process serialize plus monitoring process
     */
+
+   U_INTERNAL_DUMP("monitoring_process = %b", monitoring_process)
 
    if (monitoring_process == false)
       {
@@ -4182,7 +4357,12 @@ void UServer_Base::run()
    U_INTERNAL_ASSERT(proc->parent())
 
 stop:
+#ifdef USERVER_UDP
+   if (budp == false)
+#endif
+   {
    if (pluginsHandlerStop() != U_PLUGIN_HANDLER_FINISHED) U_WARNING("Plugins stage stop failed");
+   }
 
    manageWaitAll();
 

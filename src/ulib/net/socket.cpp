@@ -52,11 +52,9 @@ void USocket::setAddress(void* address)
 {
    U_TRACE(0, "USocket::setAddress(%p)", address)
 
-   U_INTERNAL_ASSERT_POINTER(cLocal)
-
    cLocalAddress.setAddress(address, (bool)U_socket_IPv6(this));
 
-   cLocal->setIPAddress(cLocalAddress);
+   if (cLocal) cLocal->setIPAddress(cLocalAddress);
 
    U_socket_LocalSet(this) = true;
 }
@@ -184,20 +182,34 @@ bool USocket::checkTime(long time_limit, long& timeout)
    U_RETURN(true);
 }
 
+void USocket::setLocalInfo(USocket* p, SocketAddress* cLocal)
+{
+   U_TRACE(0, "USocket::setLocalInfo(%p,%p)", p, cLocal)
+
+   p->iLocalPort = cLocal->getPortNumber();
+                   cLocal->getIPAddress(p->cLocalAddress);
+}
+
+void USocket::setRemoteInfo(USocket* p, SocketAddress* cRemote)
+{
+   U_TRACE(0, "USocket::setRemoteInfo(%p,%p)", p, cRemote)
+
+   p->iRemotePort = cRemote->getPortNumber();
+                    cRemote->getIPAddress(p->cRemoteAddress);
+}
+
 void USocket::setLocal()
 {
    U_TRACE_NO_PARAM(1, "USocket::setLocal()")
 
    U_CHECK_MEMORY
 
-   SocketAddress tmp;
+   SocketAddress cLocal;
+   socklen_t slDummy = cLocal.sizeOf();
 
-   socklen_t slDummy = tmp.sizeOf();
-
-   if (U_SYSCALL(getsockname, "%d,%p,%p", getFd(), (sockaddr*)tmp, &slDummy) == 0)
+   if (U_SYSCALL(getsockname, "%d,%p,%p", getFd(), (sockaddr*)cLocal, &slDummy) == 0)
       {
-      iLocalPort = tmp.getPortNumber();
-                   tmp.getIPAddress(cLocalAddress);
+      setLocalInfo(this, &cLocal);
 
       U_socket_LocalSet(this) = true;
       }
@@ -406,6 +418,8 @@ bool USocket::setServer(unsigned int port, void* localAddress)
 
    if (isUDP())
       {
+      U_INTERNAL_ASSERT_POINTER(localAddress)
+
       ((uusockaddr*)localAddress)->psaIP4Addr.sin_port = htons(port);
 
       if (U_SYSCALL(bind, "%d,%p,%d", iSockDesc, &(((uusockaddr*)localAddress)->psaGeneric), sizeof(uusockaddr)) == 0)
@@ -560,14 +574,9 @@ void USocket::setRemote()
    U_INTERNAL_ASSERT(isOpen())
 
    SocketAddress cRemote;
-
    socklen_t slDummy = cRemote.sizeOf();
 
-   if (U_SYSCALL(getpeername, "%d,%p,%p", getFd(), (sockaddr*)cRemote, &slDummy) == 0)
-      {
-      iRemotePort = cRemote.getPortNumber();
-                    cRemote.getIPAddress(cRemoteAddress);
-      }
+   if (U_SYSCALL(getpeername, "%d,%p,%p", getFd(), (sockaddr*)cRemote, &slDummy) == 0) setRemoteInfo(this, &cRemote);
 }
 
 bool USocket::connect()
@@ -627,15 +636,13 @@ int USocket::recvFrom(void* pBuffer, uint32_t iBufLength, uint32_t uiFlags, UIPA
 
    int iBytesRead;
    SocketAddress cSource;
-
    socklen_t slDummy = cSource.sizeOf();
 
-loop:
    iBytesRead = U_SYSCALL(recvfrom, "%d,%p,%u,%u,%p,%p", getFd(), CAST(pBuffer), iBufLength, uiFlags, (sockaddr*)cSource, &slDummy);
 
    if (iBytesRead > 0)
       {
-      U_INTERNAL_DUMP("BytesRead(%d) = %#.*S", iBytesRead, iBytesRead, CAST(pBuffer))
+      U_INTERNAL_DUMP("BytesRead(%u) = %#.*S", iBytesRead, iBytesRead, CAST(pBuffer))
 
       iSourcePortNumber = cSource.getPortNumber();
                           cSource.getIPAddress(cSourceIP);
@@ -643,12 +650,7 @@ loop:
       U_RETURN(iBytesRead);
       }
 
-   if (errno == EINTR)
-      {
-      UInterrupt::checkForEventSignalPending();
-
-      goto loop;
-      }
+   if (errno == EINTR) UInterrupt::checkForEventSignalPending(); // NB: we never restart recvfrom(), in general the socket server is NOT blocking...
 
    U_RETURN(-1);
 }
@@ -672,7 +674,7 @@ loop:
 
    if (iBytesWrite > 0)
       {
-      U_INTERNAL_DUMP("BytesWrite(%d) = %#.*S", iBytesWrite, iBytesWrite, CAST(pPayload))
+      U_INTERNAL_DUMP("BytesWrite(%u) = %#.*S", iBytesWrite, iBytesWrite, CAST(pPayload))
 
       U_RETURN(iBytesWrite);
       }
@@ -896,7 +898,6 @@ bool USocket::acceptClient(USocket* pcNewConnection)
    U_INTERNAL_ASSERT_POINTER(pcNewConnection)
 
    SocketAddress cRemote;
-
    socklen_t slDummy = cRemote.sizeOf();
 
 #ifdef HAVE_ACCEPT4
@@ -917,8 +918,7 @@ bool USocket::acceptClient(USocket* pcNewConnection)
       {
       pcNewConnection->iState = CONNECT;
 
-      pcNewConnection->iRemotePort = cRemote.getPortNumber();
-                                     cRemote.getIPAddress( pcNewConnection->cRemoteAddress);
+      setRemoteInfo(pcNewConnection, &cRemote);
 
       U_INTERNAL_DUMP("pcNewConnection->iSockDesc = %d pcNewConnection->flags = %d %B",
                        pcNewConnection->iSockDesc, pcNewConnection->flags, pcNewConnection->flags)

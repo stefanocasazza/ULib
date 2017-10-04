@@ -54,11 +54,14 @@ U_EXPORT main (int argc, char* argv[], char* env[])
    U_TRACE(5,"main(%d)",argc)
 
    UFileConfig fcg;
-   UUnixServer s(0);
-   UUnixSocket::setPath(argv[1]);
+   UUnixServer s(U_NULLPTR);
    UString plugin_dir(argv[2]), plugin_list(argv[3]);
 
    UServer_Base::bipc = true;
+
+   (void) s.name_sock->assign(argv[1]);
+
+   UUnixSocket::setPath(s.name_sock->data());
 
    if (argv[4])
       {
