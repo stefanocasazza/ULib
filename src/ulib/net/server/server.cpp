@@ -640,7 +640,7 @@ void UServer_Base::initThrottlingServer()
          UString pattern, number;
          UVector<UString> vec(*throttling_mask);
 
-         U_SRV_LOG("db initialization of BandWidthThrottling success: size(%u)", db_throttling->size());
+         U_SRV_LOG("db BandWidthThrottling initialization success: size(%u)", db_throttling->size());
 
          db_throttling->reset(); // Initialize the db to contain no entries
 
@@ -1116,22 +1116,27 @@ public:
 
       if (*UServer_Base::ifname)
          {
-         srv_addr.psaIP4Addr.sin_family        = PF_INET;
+         udp_sock._socket();
+         udp_sock.setReuseAddress();
+
+         fd_sock = udp_sock.getFd();
+
+         srv_addr.psaIP4Addr.sin_port        = htons(UServer_Base::port);
+         srv_addr.psaIP4Addr.sin_family      = PF_INET;
          srv_addr.psaIP4Addr.sin_addr.s_addr = htonl(INADDR_ANY);
 
-         if (udp_sock.setServer(UServer_Base::port, &srv_addr) == false) U_ERROR("Can't bind on udp socket");
+         if (U_SYSCALL(bind, "%d,%p,%d", fd_sock, &(srv_addr.psaGeneric), sizeof(uusockaddr))) U_ERROR("bind on udp socket failed");
 
          if (UIPAddress::setBroadcastAddress(srv_addr, *UServer_Base::ifname) == false)
             {
-            U_ERROR("Can't get broadcast address on interface %V", UServer_Base::ifname->rep);
+            U_ERROR("set broadcast address on interface %V failed", UServer_Base::ifname->rep);
             }
 
-         if (udp_sock.setSockOpt(SOL_SOCKET, SO_BROADCAST, (const int[]){ 1 }) == false) U_ERROR("Can't enable SO_BROADCAST on udp socket");
+         if (udp_sock.setSockOpt(SOL_SOCKET, SO_BROADCAST, (const int[]){ 1 }) == false) U_ERROR("setting SO_BROADCAST on udp socket failed");
 
          udp_sock.setNonBlocking();
 
-         addr    = UServer_Base::socket->cLocalAddress.get_addr();
-         fd_sock = udp_sock.getFd();
+         addr = UServer_Base::socket->cLocalAddress.get_addr();
 
          U_DUMP("addr = %V", UIPAddress::toString(addr).rep)
 
@@ -1196,8 +1201,10 @@ public:
 
                   if (iBytesTransferred == 1)
                      {
-                     if ((cli_addr.psaIP4Addr.sin_addr.s_addr == addr && ntohs(cli_addr.psaIP4Addr.sin_port) == UServer_Base::port) ||
-                         (UServer_Base::vallow_cluster && UIPAllow::isAllowed(cli_addr.psaIP4Addr.sin_addr.s_addr, *UServer_Base::vallow_cluster) == false))
+                     if ((      cli_addr.psaIP4Addr.sin_addr.s_addr == addr          &&
+                          ntohs(cli_addr.psaIP4Addr.sin_port) == UServer_Base::port) ||
+                         (UServer_Base::vallow_cluster                               &&
+                          UIPAllow::isAllowed(cli_addr.psaIP4Addr.sin_addr.s_addr, *UServer_Base::vallow_cluster) == false))
                         {
                         continue;
                         }
@@ -1421,11 +1428,12 @@ UServer_Base::~UServer_Base()
 # endif
 
 # ifdef U_LINUX
-   U_INTERNAL_ASSERT_POINTER(u_pthread_time)
+   if (u_pthread_time)
+      {
+      delete (UTimeThread*)u_pthread_time;
 
-   delete (UTimeThread*)u_pthread_time;
-
-   (void) pthread_rwlock_destroy(ULog::prwlock);
+      (void) pthread_rwlock_destroy(ULog::prwlock);
+      }
 
 #  if defined(USE_LIBSSL) && !defined(OPENSSL_NO_OCSP) && defined(SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB)
    if (bssl)
@@ -2621,11 +2629,9 @@ void UServer_Base::init()
 #ifdef USERVER_UDP
    if (budp)
       {
-      uusockaddr srv_addr;
-
       U_ASSERT(socket->isUDP())
 
-      if (socket->setServer(port, &srv_addr) == false)
+      if (socket->setServer(port, U_NULLPTR) == false)
          {
          U_ERROR("Run as server UDP with port '%u' failed", port);
          }
@@ -2916,11 +2922,17 @@ next:
    U_INTERNAL_ASSERT_EQUALS(ULog::prwlock,  U_NULLPTR)
    U_INTERNAL_ASSERT_EQUALS(u_pthread_time, U_NULLPTR)
 
+# ifdef USERVER_UDP
+   if (budp == false ||
+       UServer_Base::update_date)
+# endif
+   {
    U_NEW_ULIB_OBJECT(UTimeThread, u_pthread_time, UTimeThread);
 
    (void) UThread::initRwLock((ULog::prwlock = &(ptr_shared_data->rwlock)));
 
    ((UTimeThread*)u_pthread_time)->start(50);
+   }
 #endif
 
 #if !defined(U_LOG_DISABLE) && defined(USE_LIBZ)
@@ -3130,9 +3142,7 @@ void UServer_Base::sendSignalToAllChildren(int signo, sighandler_t handler)
    U_INTERNAL_ASSERT(proc->parent())
 
 #if defined(U_LINUX) && defined(ENABLE_THREAD)
-   U_INTERNAL_ASSERT_POINTER(u_pthread_time)
-
-   ((UTimeThread*)u_pthread_time)->suspend();
+   if (u_pthread_time) ((UTimeThread*)u_pthread_time)->suspend();
 
 # if defined(USE_LIBSSL) && !defined(OPENSSL_NO_OCSP) && defined(SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB)
    if (pthread_ocsp) pthread_ocsp->suspend();
@@ -3154,9 +3164,7 @@ void UServer_Base::sendSignalToAllChildren(int signo, sighandler_t handler)
 #endif
 
 #if defined(U_LINUX) && defined(ENABLE_THREAD)
-   U_INTERNAL_ASSERT_POINTER(u_pthread_time)
-
-   ((UTimeThread*)u_pthread_time)->resume();
+   if (u_pthread_time) ((UTimeThread*)u_pthread_time)->resume();
 
 #  if defined(USE_LIBSSL) && !defined(OPENSSL_NO_OCSP) && defined(SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB)
    if (pthread_ocsp) pthread_ocsp->resume();
@@ -3244,9 +3252,7 @@ RETSIGTYPE UServer_Base::handlerForSigTERM(int signo)
    if (proc->parent())
       {
 #  if defined(U_LINUX) && defined(ENABLE_THREAD)
-      U_INTERNAL_ASSERT_POINTER(u_pthread_time)
-
-      ((UTimeThread*)u_pthread_time)->suspend();
+      if (u_pthread_time) ((UTimeThread*)u_pthread_time)->suspend();
 #  endif
 
       // NB: we can't use UInterrupt::erase() because it restore the old action (UInterrupt::init)...
@@ -4057,6 +4063,15 @@ void UServer_Base::runLoop(const char* user)
       while (flag_loop)
          {
          if (pClientImage->handlerRead() == U_NOTIFIER_DELETE) break;
+
+#     ifndef U_LOG_DISABLE
+         if (isLog())
+            {
+            pClientImage->logbuf->setEmpty();
+
+            log->log(U_CONSTANT_TO_PARAM("Waiting for connection on port %u"), port);
+            }
+#     endif
          }
 
       if (runDynamicPage_udp)

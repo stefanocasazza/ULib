@@ -280,8 +280,6 @@ void ULog::updateDate2()
     */
 
 #if defined(U_LINUX) && defined(ENABLE_THREAD)
-   U_INTERNAL_ASSERT_POINTER(u_pthread_time)
-
 # ifndef U_SERVER_CAPTIVE_PORTAL
    (void) U_SYSCALL(pthread_rwlock_rdlock, "%p", prwlock);
 # endif
@@ -314,8 +312,6 @@ void ULog::updateDate2()
    (void) U_SYSCALL(pthread_rwlock_unlock, "%p", prwlock);
 # endif
 #else
-   U_INTERNAL_ASSERT_EQUALS(u_pthread_time, U_NULLPTR)
-
    u_gettimenow();
 
    if (tv_sec_old_2 != u_now->tv_sec)
@@ -354,8 +350,6 @@ void ULog::updateDate3(char* ptr_date)
     */
 
 #if defined(U_LINUX) && defined(ENABLE_THREAD)
-   U_INTERNAL_ASSERT_POINTER(u_pthread_time)
-
 # ifndef U_SERVER_CAPTIVE_PORTAL
    (void) U_SYSCALL(pthread_rwlock_rdlock, "%p", prwlock);
 # endif
@@ -400,8 +394,6 @@ void ULog::updateDate3(char* ptr_date)
    (void) U_SYSCALL(pthread_rwlock_unlock, "%p", prwlock);
 # endif
 #else
-   U_INTERNAL_ASSERT_EQUALS(u_pthread_time, U_NULLPTR)
-
    u_gettimenow();
 
    if (tv_sec_old_3 != u_now->tv_sec)

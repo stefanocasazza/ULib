@@ -263,7 +263,6 @@ static void UDPEchoServer(unsigned int iPortNumber, bool bIPv6)
 {
    U_TRACE(5, "::UDPEchoServer(%u,%b)", iPortNumber, bIPv6)
 
-   uusockaddr addr;
    char pcBuffer[65535];
    UIPAddress cIPSource;
    int iBytesTransferred;
@@ -271,12 +270,7 @@ static void UDPEchoServer(unsigned int iPortNumber, bool bIPv6)
 
    UUDPSocket cServerSocket(bIPv6);
 
-   (void) memset(&addr, 0, sizeof(addr));
-
-   addr.psaIP4Addr.sin_family      = PF_INET;
-   addr.psaIP4Addr.sin_addr.s_addr = htonl(INADDR_ANY);
-
-   cServerSocket.setServer(iPortNumber, &addr);
+   cServerSocket.setServer(iPortNumber, U_NULLPTR);
    cServerSocket.reusePort(O_RDWR | O_CLOEXEC);
    cServerSocket.setLocal();
 

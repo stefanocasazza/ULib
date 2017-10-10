@@ -22,7 +22,7 @@ cat <<EOF >inp/webserver.cfg
 userver {
  PORT 8080
  RUN_AS_USER nobody
- LOG_FILE /tmp/userver_udp.log
+#LOG_FILE /tmp/userver_udp.log
  LOG_FILE_SZ 10M
  PID_FILE /var/run/userver_udp.pid
  PREFORK_CHILD 0

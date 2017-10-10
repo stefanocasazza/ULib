@@ -749,7 +749,6 @@ protected:
       {
       U_TRACE_NO_PARAM(0, "USocket::setReusePort()")
 
-      U_ASSERT_EQUALS(isUDP(), false)
       U_ASSERT_EQUALS(isIPC(), false)
 
       /**
@@ -766,6 +765,19 @@ protected:
 #   endif
       breuseport = setSockOpt(SOL_SOCKET, SO_REUSEPORT, (const int[]){ 1 });
 #  endif
+      }
+
+   bool listen()
+      {
+      U_TRACE_NO_PARAM(0, "USocket::listen()")
+
+      if (isUDP() ||
+          U_SYSCALL(listen, "%d,%d", iSockDesc, iBackLog) == 0)
+         {
+         U_RETURN(true);
+         }
+
+      U_RETURN(false);
       }
 
    void  close_socket();

@@ -219,8 +219,5 @@ extern U_EXPORT void runDynamicPage_ir_web(int param);
    );
    
    UHTTP::putDataSession();
-   
-   UClientImage_Base::setRequestNoCache();
-   
-   
+      
 } }

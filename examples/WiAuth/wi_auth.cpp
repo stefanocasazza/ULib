@@ -109,7 +109,5 @@ extern U_EXPORT void runDynamicPage_wi_auth(int param);
    
    if (U_http_info.nResponseCode == 0) (void) UClientImage_Base::environment->append(U_CONSTANT_TO_PARAM("HTTP_RESPONSE_CODE=0\n"));
    
-   UClientImage_Base::setRequestNoCache();
-   
    
 } }

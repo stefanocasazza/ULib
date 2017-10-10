@@ -1956,6 +1956,36 @@ U_EXPORT main(int argc, char* argv[])
 
    U_ASSERT( z == "############################################################################################################################ellllo")
 
+   y = U_STRING_FROM_CONSTANT(" uno due tre quattro cinque \n"
+                              " uno due tre quattro cinque \n"
+                              " uno due tre quattro cinque \n"
+                              " uno due tre quattro cinque \n"
+                              " uno due tre quattro cinque \n");
+
+   z = UStringExt::substitute(y, U_CONSTANT_TO_PARAM("uno"), U_CONSTANT_TO_PARAM("primo"));
+
+   U_ASSERT( z == " primo due tre quattro cinque \n"
+                  " primo due tre quattro cinque \n"
+                  " primo due tre quattro cinque \n"
+                  " primo due tre quattro cinque \n"
+                  " primo due tre quattro cinque \n")
+
+   z = U_STRING_FROM_CONSTANT("uno primo due secondo tre terzo quattro quarto cinque quinto");
+
+   vec.clear();
+
+   (void) vec.split(z);
+
+   y = UStringExt::substitute(y, vec);
+
+   vec.clear();
+
+   U_ASSERT( y == " primo secondo terzo quarto quinto \n"
+                  " primo secondo terzo quarto quinto \n"
+                  " primo secondo terzo quarto quinto \n"
+                  " primo secondo terzo quarto quinto \n"
+                  " primo secondo terzo quarto quinto \n")
+
    y = U_STRING_FROM_CONSTANT("Hello\n\n");
 
    z = UStringExt::dos2unix(y, true);

@@ -980,6 +980,10 @@ void UClientImage_Base::prepareForRead()
 
    u_clientimage_info.flag.u = 0; // NB: U_ClientImage_parallelization is reset by this...
 
+#ifdef USERVER_UDP
+   if (UServer_Base::budp == false)
+#endif
+   {
 #ifdef U_CLASSIC_SUPPORT
    if (UServer_Base::isClassic())
       {
@@ -1053,6 +1057,7 @@ void UClientImage_Base::prepareForRead()
 #ifdef U_THROTTLING_SUPPORT
    UServer_Base::initThrottlingClient();
 #endif
+   }
 }
 
 bool UClientImage_Base::genericRead()
@@ -1175,9 +1180,6 @@ int UClientImage_Base::handlerRead() // Connection-wide hooks
    int result;
    uint32_t sz;
 
-# ifdef USERVER_UDP
-   if (UServer_Base::budp == false)
-# endif
    prepareForRead();
 
 start:
@@ -1653,7 +1655,6 @@ bool UClientImage_Base::writeResponse()
       U_INTERNAL_ASSERT_MAJOR(iov_sav[0].iov_len, 0)
 
 #  if defined(U_LINUX) && defined(ENABLE_THREAD)
-      U_INTERNAL_ASSERT_POINTER(u_pthread_time)
       U_INTERNAL_ASSERT_EQUALS(iov_vec[1].iov_base, ULog::ptr_shared_date->date3)
 #  else
       U_INTERNAL_ASSERT_EQUALS(iov_vec[1].iov_base, ULog::date.date3)

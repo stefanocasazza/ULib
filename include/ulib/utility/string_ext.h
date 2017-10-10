@@ -250,7 +250,11 @@ public:
    static UString substitute(const UString& s,          const char* a, uint32_t n1,       char  b)              { return substitute(U_STRING_TO_PARAM(s),  a, n1, &b,  1); }
    static UString substitute(const UString& s,          const char* a, uint32_t n1, const char* b, uint32_t n2) { return substitute(U_STRING_TO_PARAM(s),  a, n1,  b, n2); }
 
-   static UString substitute(const UString& s, const UString& a, const UString& b) { return substitute(U_STRING_TO_PARAM(s), U_STRING_TO_PARAM(a), U_STRING_TO_PARAM(b)); }
+   static UString substitute(const char* s, uint32_t n, const UString& a, const UString& b) { return substitute(s, n,                 U_STRING_TO_PARAM(a), U_STRING_TO_PARAM(b)); }
+   static UString substitute(const UString& s,          const UString& a, const UString& b) { return substitute(U_STRING_TO_PARAM(s), U_STRING_TO_PARAM(a), U_STRING_TO_PARAM(b)); }
+
+   static UString substitute(const char* s, uint32_t n, UVector<UString>& vec);
+   static UString substitute(const UString& s,          UVector<UString>& vec) { return substitute(U_STRING_TO_PARAM(s), vec); }
 
    // ERASE
 

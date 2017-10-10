@@ -182,12 +182,12 @@ bool USocket::checkTime(long time_limit, long& timeout)
    U_RETURN(true);
 }
 
-void USocket::setLocalInfo(USocket* p, SocketAddress* cLocal)
+void USocket::setLocalInfo(USocket* p, SocketAddress* pLocal)
 {
-   U_TRACE(0, "USocket::setLocalInfo(%p,%p)", p, cLocal)
+   U_TRACE(0, "USocket::setLocalInfo(%p,%p)", p, pLocal)
 
-   p->iLocalPort = cLocal->getPortNumber();
-                   cLocal->getIPAddress(p->cLocalAddress);
+   p->iLocalPort = pLocal->getPortNumber();
+                   pLocal->getIPAddress(p->cLocalAddress);
 }
 
 void USocket::setRemoteInfo(USocket* p, SocketAddress* cRemote)
@@ -204,12 +204,12 @@ void USocket::setLocal()
 
    U_CHECK_MEMORY
 
-   SocketAddress cLocal;
-   socklen_t slDummy = cLocal.sizeOf();
+   SocketAddress local;
+   socklen_t slDummy = local.sizeOf();
 
-   if (U_SYSCALL(getsockname, "%d,%p,%p", getFd(), (sockaddr*)cLocal, &slDummy) == 0)
+   if (U_SYSCALL(getsockname, "%d,%p,%p", getFd(), (sockaddr*)local, &slDummy) == 0)
       {
-      setLocalInfo(this, &cLocal);
+      setLocalInfo(this, &local);
 
       U_socket_LocalSet(this) = true;
       }
@@ -305,7 +305,7 @@ bool USocket::bind()
    int result, counter = 0;
 
 loop:
-   result = U_SYSCALL(bind, "%d,%p,%d", getFd(), (sockaddr*)&(cLocal->addr.psaGeneric), cLocal->sizeOf());
+   result = U_SYSCALL(bind, "%d,%p,%d", getFd(), (sockaddr*)(*cLocal), cLocal->sizeOf());
 
    if (result == -1         &&
        errno  == EADDRINUSE &&
@@ -416,25 +416,6 @@ bool USocket::setServer(unsigned int port, void* localAddress)
       }
 #endif
 
-   if (isUDP())
-      {
-      U_INTERNAL_ASSERT_POINTER(localAddress)
-
-      ((uusockaddr*)localAddress)->psaIP4Addr.sin_port = htons(port);
-
-      if (U_SYSCALL(bind, "%d,%p,%d", iSockDesc, &(((uusockaddr*)localAddress)->psaGeneric), sizeof(uusockaddr)) == 0)
-         {
-          iLocalPort =
-         iRemotePort = port;
-
-         U_socket_LocalSet(this) = true;
-
-         U_RETURN(true);
-         }
-
-      U_RETURN(false);
-      }
-   
    setReusePort();
 
    U_INTERNAL_DUMP("cLocal = %p", cLocal)
@@ -504,8 +485,7 @@ bool USocket::setServer(unsigned int port, void* localAddress)
    U_INTERNAL_DUMP("breuseport = %b", breuseport)
 
    if (breuseport ||
-       (bind()    &&
-        U_SYSCALL(listen, "%d,%d", iSockDesc, iBackLog) == 0))
+       (bind() && listen()))
       {
       U_RETURN(true);
       }
@@ -526,7 +506,6 @@ void USocket::reusePort(int _flags)
 
    if (breuseport)
       {
-      U_ASSERT_EQUALS(isUDP(), false)
       U_ASSERT_EQUALS(isIPC(), false)
 
       int old         = iSockDesc,
@@ -547,7 +526,7 @@ void USocket::reusePort(int _flags)
       if (isClosed()                                                           ||
           (setReuseAddress(), setReusePort(),
            cLocal->setIPAddressWildCard(U_socket_IPv6(this)), bind()) == false ||
-          U_SYSCALL(listen, "%d,%d", iSockDesc, iBackLog) != 0)
+          listen() == false)
          {
          U_ERROR("SO_REUSEPORT failed, port %d", iLocalPort);
          }

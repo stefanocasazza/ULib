@@ -86,7 +86,11 @@ void UVector<void*>::insert(uint32_t pos, const void* elem) // add elem before p
    U_INTERNAL_ASSERT(pos <= _length)
    U_INTERNAL_ASSERT(_length <= _capacity)
 
-   if (_length == _capacity)
+   if (_length != _capacity)
+      {
+      (void) U_SYSCALL(memmove, "%p,%p,%u", vec + pos + 1, vec + pos, (_length - pos) * sizeof(void*));
+      }
+   else
       {
       const void** old_vec  = vec;
       uint32_t old_capacity = _capacity;
@@ -99,14 +103,6 @@ void UVector<void*>::insert(uint32_t pos, const void* elem) // add elem before p
       U_MEMCPY(vec + pos + 1, old_vec + pos, (_length - pos) * sizeof(void*));
 
       UMemoryPool::_free(old_vec, old_capacity, sizeof(void*));
-      }
-   else
-      {
-#  ifdef U_APEX_ENABLE
-      (void) U_SYSCALL(apex_memmove, "%p,%p,%u", vec + pos + 1, vec + pos, (_length - pos) * sizeof(void*));
-#  else
-      (void) U_SYSCALL(     memmove, "%p,%p,%u", vec + pos + 1, vec + pos, (_length - pos) * sizeof(void*));
-#  endif
       }
 
    vec[pos] = elem;
@@ -126,7 +122,11 @@ void UVector<void*>::insert(uint32_t pos, uint32_t n, const void* elem) // add n
 
    uint32_t new_length = _length + n;
 
-   if (new_length > _capacity)
+   if (new_length <= _capacity)
+      {
+      (void) U_SYSCALL(memmove, "%p,%p,%u", vec + pos + n, vec + pos, (_length - pos) * sizeof(void*));
+      }
+   else
       {
       const void** old_vec  = vec;
       uint32_t old_capacity = _capacity;
@@ -139,14 +139,6 @@ void UVector<void*>::insert(uint32_t pos, uint32_t n, const void* elem) // add n
       U_MEMCPY(vec + pos + n, old_vec + pos, (_length - pos) * sizeof(void*));
 
       UMemoryPool::_free(old_vec, old_capacity, sizeof(void*));
-      }
-   else
-      {
-#  ifdef U_APEX_ENABLE
-      (void) U_SYSCALL(apex_memmove, "%p,%p,%u", vec + pos + n, vec + pos, (_length - pos) * sizeof(void*));
-#  else
-      (void) U_SYSCALL(     memmove, "%p,%p,%u", vec + pos + n, vec + pos, (_length - pos) * sizeof(void*));
-#  endif
       }
 
    for (uint32_t i = 0; i < n; ++i) vec[pos++] = elem;

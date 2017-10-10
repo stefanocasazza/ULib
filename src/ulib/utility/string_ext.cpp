@@ -223,47 +223,237 @@ UString UStringExt::substitute(const char* s, uint32_t n, const char* a, uint32_
 {
    U_TRACE(1, "UStringExt::substitute(%.*S,%u,%.*S,%u,%.*S,%u)", n, s, n, n1, a, n1, n2, b, n2)
 
+   U_INTERNAL_ASSERT_MAJOR(n, 0)
    U_INTERNAL_ASSERT_MAJOR(n1, 0)
 
-   void* p;
-   uint32_t start = 0, len, capacity = (n / n1);
+   uint32_t capacity;
+   bool breserve = false;
 
-   if (capacity == 0)                     capacity  = 22U;
-   if (n2)                                capacity *= n2;
-   if (capacity > (256U * 1024U * 1024U)) capacity  = (256U * 1024U * 1024U); // worst case... 
-
-   UString x(capacity);
-
-   while ((p = u_find(s + start, n - start, a, n1)))
+   if (n2 <= n1) capacity = n;
+   else
       {
-      uint32_t _end = (const char*)p - s;
+      capacity = n2*((n+n1)/n1);
 
-      len  = (_end > start ? _end - start : 0);
+      if (capacity > (256U * 1024U * 1024U)) capacity = (breserve = true, (256U * 1024U * 1024U)); // worst case... 
+      }
 
-      U_INTERNAL_DUMP("start = %u _end = %u len = %u", start, _end, len)
+   uint32_t len1;
+   const char* p1;
+   UString x(capacity);
+   char* p2 = x.data();
 
-      (void) x.reserve(len + n2);
+   while ((p1 = (const char*)u_find(s, n, a, n1)))
+      {
+      len1 = (p1-s);
 
-      if (len)
+      U_INTERNAL_DUMP("len1 = %u", len1)
+
+      if (breserve)
          {
-         U_MEMCPY(x.pend(), s + start, len);
+         uint32_t len2 = len1 + n2;
 
-         x.rep->_length += len;
+         x.rep->_length = x.distance(p2);
+
+         if (x.space() < len2)
+            {
+            UString::_reserve(x, len2);
+
+            p2 = x.pend();
+            }
          }
+
+      if (len1)
+         {
+         U_MEMCPY(p2, s, len1);
+                  p2 +=  len1;
+
+         s  = p1;
+         n -= len1;
+         }
+
+      n -= n1;
+      s += n1;
 
       if (n2)
          {
-         U_MEMCPY(x.pend(), b, n2);
-
-         x.rep->_length += n2;
+         U_MEMCPY(p2, b, n2);
+                  p2 +=  n2;
          }
-
-      start = _end + n1;
       }
 
-   len = n - start;
+   x.rep->_length = x.distance(p2);
 
-   if (len) (void) x.append(s + start, len);
+   U_INTERNAL_DUMP("n = %u", n)
+
+   if (n)
+      {
+      if (breserve &&
+          x.space() < n)
+         {
+         UString::_reserve(x, n);
+
+         p2 = x.pend();
+         }
+
+      U_MEMCPY(p2, s, n);
+
+      x.rep->_length += n;
+      }
+
+   U_INTERNAL_ASSERT(x.invariant())
+
+   U_RETURN_STRING(x);
+}
+
+UString UStringExt::substitute(const char* s, uint32_t len, UVector<UString>& vec)
+{
+   U_TRACE(1, "UStringExt::substitute(%.*S,%u,%p)", len, s, len, &vec)
+
+   U_INTERNAL_ASSERT_MAJOR(len, 0)
+
+   uint32_t n = vec.size();
+
+   if (n == 2) return substitute(s, len, U_STRING_TO_PARAM(vec[0]), U_STRING_TO_PARAM(vec[1]));
+
+   char c;
+   int32_t i;
+   UString item;
+   bool breserve = false, bdigit = false, bspace = false;
+   uint32_t n1 = 0, n2 = 0, capacity, mask_lower = 0, mask_upper = 0;
+
+   uint32_t maskFirstChar[] = { 0x00000001, 0x00000002, 0x00000004, 0x00000008, 0x00000010,
+                                0x00000020, 0x00000040, 0x00000080, 0x00000100, 0x00000200,
+                                0x00000400, 0x00000800, 0x00001000, 0x00002000, 0x00004000,
+                                0x00008000, 0x00010000, 0x00020000, 0x00040000, 0x00080000,
+                                0x00100000, 0x00200000, 0x00400000, 0x00800000, 0x01000000,
+                                0x02000000 };
+
+   for (i = 0; i < (int32_t)n; i += 2)
+      {
+      item = vec[i];
+
+      n1 +=     item.size();
+      n2 += vec[i+1].size();
+
+      c = item.first_char();
+
+           if (u__islower(c)) mask_lower |= maskFirstChar[c-'a'];
+      else if (u__isupper(c)) mask_upper |= maskFirstChar[c-'A'];
+      else if (u__isdigit(c)) bdigit = true;
+      else if (u__isspace(c)) bspace = true;
+      }
+
+   U_INTERNAL_DUMP("n1 = %u n2 = %u mask_lower = %B mask_upper = %B bdigit = %b bspace = %b", n1, n2, mask_lower, mask_upper, bdigit, bspace)
+
+   if (n2 <= n1) capacity = len;
+   else
+      {
+      capacity = n2*((len+n1)/n1);
+
+      if (capacity > (256U * 1024U * 1024U)) capacity = (breserve = true, (256U * 1024U * 1024U)); // worst case... 
+      }
+
+   uint32_t len1;
+   const char* p1;
+   UString x(capacity);
+   char* p2 = x.data();
+   const char* end = s + len;
+
+loop:
+   for (p1 = s; p1 < end; ++p1)
+      {
+      c = *p1;
+
+      if ((u__islower(c)                             &&
+           (mask_lower & maskFirstChar[c-'a']) == 0) ||
+          (u__isupper(c)                             &&
+           (mask_upper & maskFirstChar[c-'A']) == 0) ||
+          (u__isdigit(c)                             &&
+           bdigit == false)                          ||
+          (u__isspace(c)                             &&
+           bspace == false))
+         {
+         continue;
+         }
+
+      for (i = 0; i < (int32_t)n; i += 2)
+         {
+         item = vec[i];
+
+         if (memcmp(p1, U_STRING_TO_PARAM(item)) == 0)
+            {
+            n1 =  item.size();
+            n2 = (item = vec[i+1]).size();
+
+            U_INTERNAL_DUMP("n1 = %u item(%u) = %V", n1, n2, item.rep)
+
+            goto found;
+            }
+         }
+      }
+
+   if (p1 < end)
+      {
+found:
+      len1 = (p1-s);
+
+      U_INTERNAL_DUMP("len1 = %u", len1)
+
+      if (breserve)
+         {
+         uint32_t len2 = len1 + n2;
+
+         x.rep->_length = x.distance(p2);
+
+         if (x.space() < len2)
+            {
+            UString::_reserve(x, len2);
+
+            p2 = x.pend();
+            }
+         }
+
+      if (len1)
+         {
+         U_MEMCPY(p2, s, len1);
+                  p2 +=  len1;
+
+           s  = p1;
+         len -= len1;
+         }
+
+      len -= n1;
+        s += n1;
+
+      if (n2)
+         {
+         U_MEMCPY(p2, item.data(), n2);
+                  p2 +=            n2;
+         }
+
+      goto loop;
+      }
+
+   x.rep->_length = x.distance(p2);
+
+   U_INTERNAL_DUMP("len = %u", len)
+
+   if (len)
+      {
+      if (breserve &&
+          x.space() < len)
+         {
+         UString::_reserve(x, len);
+
+         p2 = x.pend();
+         }
+
+      U_MEMCPY(p2, s, len);
+
+      x.rep->_length += len;
+      }
+
+   U_INTERNAL_ASSERT(x.invariant())
 
    U_RETURN_STRING(x);
 }

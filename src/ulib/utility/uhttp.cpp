@@ -5537,14 +5537,14 @@ void UHTTP::initSession()
 
       if (db_session->open(8 * U_1M, false, true, true, U_SRV_LOCK_DATA_SESSION)) // NB: we don't want truncate (we have only the journal)...
          {
-         U_SRV_LOG("db initialization of HTTP session success");
+         U_SRV_LOG("db HTTP session initialization success");
 
               if (data_session) db_session->setPointerToDataStorage(data_session);
          else if (data_storage) db_session->setPointerToDataStorage(data_storage);
          }
       else
          {
-         U_SRV_LOG("WARNING: db initialization of HTTP session failed");
+         U_SRV_LOG("WARNING: db HTTP session initialization failed");
 
          delete db_session;
                 db_session = U_NULLPTR;
@@ -5580,7 +5580,7 @@ void UHTTP::initSessionSSL()
 
    if (db_session_ssl->open(8 * U_1M, false, true, true, U_SRV_LOCK_SSL_SESSION)) // NB: we don't want truncate (we have only the journal)...
       {
-      U_SRV_LOG("db initialization of SSL session success");
+      U_SRV_LOG("db SSL session initialization success");
 
       db_session_ssl->reset(); // Initialize the cache to contain no entries
 
@@ -5623,7 +5623,7 @@ void UHTTP::initSessionSSL()
       }
    else
       {
-      U_SRV_LOG("WARNING: db initialization of SSL session failed");
+      U_SRV_LOG("WARNING: db SSL session initialization failed");
 
       delete db_session_ssl;
              db_session_ssl = U_NULLPTR;
@@ -6612,6 +6612,8 @@ void UHTTP::handlerResponse()
    {
    UClientImage_Base::setHeaderForResponse(6+29+2+12+2); // Date: Wed, 20 Jun 2012 11:43:17 GMT\r\nServer: ULib\r\n
 
+   setStatusDescription();
+
    // NB: all other responses must include an entity body or a Content-Length header field defined with a value of zero (0)
 
    char* ptr;
@@ -6619,32 +6621,7 @@ void UHTTP::handlerResponse()
    const char* ptr2;
    uint32_t sz1 = set_cookie->size(), sz2 = ext->size();
 
-   if (sz2) ptr2 = ext->data();
-   else
-      {
-      ptr2 =                 "Content-Length: 0\r\n\r\n";
-       sz2 = U_CONSTANT_SIZE("Content-Length: 0\r\n\r\n");
-
-      if (U_http_info.nResponseCode == HTTP_OK)
-         {
-         if (isGETorHEAD()) U_http_info.nResponseCode = HTTP_NO_CONTENT;
-
-         // A server implements an HSTS policy by supplying a header over an HTTPS connection (HSTS headers over HTTP are ignored)
-
-#     if defined(USE_LIBSSL) && defined(U_HTTP_STRICT_TRANSPORT_SECURITY)
-         if (UServer_Base::bssl &&
-             uri_strict_transport_security_mask == (void*)1L)
-            {
-            ptr2 =                 "Strict-Transport-Security: max-age=31536000; includeSubDomains; preload\r\nContent-Length: 0\r\n\r\n";
-             sz2 = U_CONSTANT_SIZE("Strict-Transport-Security: max-age=31536000; includeSubDomains; preload\r\nContent-Length: 0\r\n\r\n");
-            }
-#     endif
-         }
-      }
-
-   setStatusDescription();
-
-   UClientImage_Base::wbuffer->setBuffer(200U + sz1 + sz2);
+   UClientImage_Base::wbuffer->setBuffer(300U + sz1 + sz2);
 
     ptr =
    base = UClientImage_Base::wbuffer->data();
@@ -6718,9 +6695,53 @@ void UHTTP::handlerResponse()
          }
       }
 
+   sz1 = ptr-base;
+
+   U_INTERNAL_DUMP("sz1 = %u", sz1)
+
+   if (sz2)
+      {
+      U_INTERNAL_DUMP("ext(%u) = %V", sz2, ext->rep)
+
+   // U_INTERNAL_ASSERT(u_endsWith(U_STRING_TO_PARAM(*ext), U_CONSTANT_TO_PARAM(U_CRLF2)))
+
+      if (sz1 == 0)
+         {
+         UClientImage_Base::wbuffer->swap(*ext);
+
+         U_INTERNAL_DUMP("UClientImage_Base::wbuffer(%u) = %#V", UClientImage_Base::wbuffer->size(), UClientImage_Base::wbuffer->rep)
+         U_INTERNAL_DUMP("UClientImage_Base::body(%u) = %V",     UClientImage_Base::body->size(),    UClientImage_Base::body->rep)
+
+         return;
+         }
+
+      ptr2 = ext->data();
+      }
+   else
+      {
+      ptr2 =                 "Content-Length: 0\r\n\r\n";
+       sz2 = U_CONSTANT_SIZE("Content-Length: 0\r\n\r\n");
+
+      if (U_http_info.nResponseCode == HTTP_OK)
+         {
+         if (isGETorHEAD()) U_http_info.nResponseCode = HTTP_NO_CONTENT;
+
+         // A server implements an HSTS policy by supplying a header over an HTTPS connection (HSTS headers over HTTP are ignored)
+
+#     if defined(USE_LIBSSL) && defined(U_HTTP_STRICT_TRANSPORT_SECURITY)
+         if (UServer_Base::bssl &&
+             uri_strict_transport_security_mask == (void*)1L)
+            {
+            ptr2 =                 "Strict-Transport-Security: max-age=31536000; includeSubDomains; preload\r\nContent-Length: 0\r\n\r\n";
+             sz2 = U_CONSTANT_SIZE("Strict-Transport-Security: max-age=31536000; includeSubDomains; preload\r\nContent-Length: 0\r\n\r\n");
+            }
+#     endif
+         }
+      }
+
    U_MEMCPY(ptr, ptr2, sz2);
 
-   UClientImage_Base::wbuffer->size_adjust((ptr - base) + sz2);
+   UClientImage_Base::wbuffer->size_adjust(sz1 + sz2);
    }
 
    U_INTERNAL_DUMP("UClientImage_Base::wbuffer(%u) = %#V", UClientImage_Base::wbuffer->size(), UClientImage_Base::wbuffer->rep)
@@ -7194,12 +7215,7 @@ next:
 
    ptr = u_num2str32(clength, ptr + U_CONSTANT_SIZE("Content-Length: "));
 
-   if (pEndHeader == U_NULLPTR)
-      {
-      u_put_unalignedp32(ptr, U_MULTICHAR_CONSTANT32('\r','\n','\r','\n'));
-                         ptr += U_CONSTANT_SIZE(U_CRLF2);
-      }
-   else
+   if (pEndHeader)
       {
       u_put_unalignedp16(ptr, U_MULTICHAR_CONSTANT16('\r','\n'));
                          ptr += U_CONSTANT_SIZE(U_CRLF);
@@ -7208,6 +7224,11 @@ next:
 
       U_MEMCPY(ptr, pEndHeader, U_http_info.endHeader);
                ptr +=           U_http_info.endHeader;
+      }
+   else
+      {
+      u_put_unalignedp32(ptr, U_MULTICHAR_CONSTANT32('\r','\n','\r','\n'));
+                         ptr += U_CONSTANT_SIZE(U_CRLF2);
       }
 
    ext->size_adjust(ptr);
@@ -8113,7 +8134,9 @@ U_NO_EXPORT void UHTTP::putDataInCache(const UString& fmt, UString& content)
 
    U_INTERNAL_ASSERT_EQUALS(file_data->size, content.size())
 
+#ifndef U_LOG_DISABLE
    uint32_t ratio1 = 100, ratio2 = 100;
+#endif
 
    if (u_is_img(mime_index))
       {
@@ -8214,7 +8237,9 @@ next:
 
       if (content1)
          {
+#     ifndef U_LOG_DISABLE
          ratio1 = UStringExt::ratio;
+#     endif
 
          setDataInCache(fmt, content1, U_CONSTANT_TO_PARAM("Content-Encoding: gzip\r\n"));
          }
@@ -8225,7 +8250,9 @@ next:
 
       if (content2)
          {
+#     ifndef U_LOG_DISABLE
          ratio2 = UStringExt::ratio;
+#     endif
 
          checkArrayCompressData(file_data);
 
@@ -11155,7 +11182,11 @@ U_NO_EXPORT bool UHTTP::UServletPage::load()
    // NB: dlopen() fail if the module name is not prefixed with "./"...
 
    char buffer[U_PATH_MAX];
+#ifndef U_LOG_DISABLE
    uint32_t sz = u__snprintf(buffer, sizeof(buffer), U_CONSTANT_TO_PARAM("./%v.%s"), path.rep, U_LIB_SUFFIX);
+#else
+          (void) u__snprintf(buffer, sizeof(buffer), U_CONSTANT_TO_PARAM("./%v.%s"), path.rep, U_LIB_SUFFIX);
+#endif
 
    if (UDynamic::load(buffer) == false)
       {
@@ -11384,8 +11415,6 @@ next:       if (*ptr1 == '?')
             usp->runDynamicPage(0);
 
             setDynamicResponse();
-
-            ext->clear();
 
             (void) UServer_Base::pClientImage->writeResponse();
 

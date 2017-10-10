@@ -2679,7 +2679,6 @@ void UHTTP2::handlerResponse()
    if (dyntbl->num_entries == 0)
       {
 #  if defined(U_LINUX) && defined(ENABLE_THREAD)
-      U_INTERNAL_ASSERT_POINTER(u_pthread_time)
       U_INTERNAL_ASSERT_EQUALS(UClientImage_Base::iov_vec[1].iov_base, ULog::ptr_shared_date->date3)
 #  else
       U_INTERNAL_ASSERT_EQUALS(UClientImage_Base::iov_vec[1].iov_base, ULog::date.date3)
@@ -2709,7 +2708,6 @@ void UHTTP2::handlerResponse()
       char* ptr_date = entry->value->data();
 
 #  if defined(U_LINUX) && defined(ENABLE_THREAD)
-      U_INTERNAL_ASSERT_POINTER(u_pthread_time)
       U_INTERNAL_ASSERT_EQUALS(UClientImage_Base::iov_vec[1].iov_base, ULog::ptr_shared_date->date3)
 #  else
       U_INTERNAL_ASSERT_EQUALS(UClientImage_Base::iov_vec[1].iov_base, ULog::date.date3)
