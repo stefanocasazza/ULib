@@ -16,11 +16,15 @@
 
 /* Manage the header files to include */
 
-#ifdef HAVE_CONFIG_H
-#  include <ulib/internal/config.h>
-#  include <ulib/base/replace/replace.h>
-#else
-/* Minimal environment configuration */
+#include <ulib/internal/config.h>
+#include <ulib/base/replace/replace.h>
+
+#ifndef U_LIBEXECDIR
+#define U_LIBEXECDIR "/usr/local/libexec/ulib"
+#endif
+
+/*
+#ifndef HAVE_CONFIG_H
 #  define HAVE_CXX11 1
 #  define HAVE_CXX14 1
 #  define ENABLE_LFS 1
@@ -39,21 +43,18 @@
 #  define PACKAGE_NAME "ULib"
 #  define HAVE_NETINET_IN_H 1
 #  define ULIB_VERSION "1.4.2"
-#  define USE_HARDWARE_CRC32 1
 #  define HAVE_SYS_SENDFILE_H 1
 #  define PACKAGE_VERSION "1.4.2"
 #  define HAVE_NETPACKET_PACKET_H 1
-#  define FNM_PATHNAME (1 << 0) /* No wildcard can ever match '/' */
-#  define FNM_NOESCAPE (1 << 1) /* Backslashes don't quote special chars */
-#  define FNM_PERIOD   (1 << 2) /* Leading '.' is matched only explicitly */
+#  define FNM_PATHNAME (1 << 0)
+#  define FNM_NOESCAPE (1 << 1)
+#  define FNM_PERIOD   (1 << 2)
 #  define U_CACHE_REQUEST_DISABLE 1
 #  define U_PIPELINE_HOMOGENEOUS_DISABLE 1
 #  define restrict
 #  include <ulib/internal/platform.h>
-#  ifndef U_LIBEXECDIR
-#  define U_LIBEXECDIR "/usr/libexec/ulib"
-#  endif
 #endif
+*/
 
 #ifdef U_LINUX
 # ifdef HAVE__USR_SRC_LINUX_INCLUDE_GENERATED_UAPI_LINUX_VERSION_H
@@ -106,6 +107,9 @@ U_DO_PRAGMA(message ("Sorry I was compiled with http2 enabled so I cannot suppor
 #if defined(U_HTTP_INOTIFY_SUPPORT) && defined(U_SERVER_CAPTIVE_PORTAL)
 #     undef U_HTTP_INOTIFY_SUPPORT
 U_DO_PRAGMA(message ("Sorry I was compiled with server captive portal mode enabled so I cannot support http inotify"))
+#endif
+#if defined(USE_HARDWARE_CRC32) && defined(__GNUC__) && !defined(HAVE_CONFIG_H) /* The built-in functions __builtin_ia32_crc32 are available when -mcrc32 is used */
+U_DO_PRAGMA(message ("ULib is configured with support for crc32 intrinsics, so you must use the -mcrc32 g++ option for compilation"))
 #endif
 
 #include <stddef.h>

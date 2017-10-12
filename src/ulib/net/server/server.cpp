@@ -27,6 +27,7 @@
 #  include <ws2tcpip.h>
 #else
 #  include <pwd.h>
+#  include <sys/prctl.h>
 #  include <ulib/net/unixsocket.h>
 #  ifdef HAVE_SCHED_GETCPU
 #     include <sched.h>
@@ -1815,14 +1816,16 @@ void UServer_Base::loadConfigParam()
    min_size_for_sendfile          = cfg->readLong(U_CONSTANT_TO_PARAM("MIN_SIZE_FOR_SENDFILE"), 500 * 1024); // 500k: for major size we assume is better to use sendfile()
    num_client_threshold           = cfg->readLong(U_CONSTANT_TO_PARAM("CLIENT_THRESHOLD"));
    UNotifier::max_connection      = cfg->readLong(U_CONSTANT_TO_PARAM("MAX_KEEP_ALIVE"));
+   u_printf_string_max_length     = cfg->readLong(U_CONSTANT_TO_PARAM("LOG_MSG_SIZE"));
    num_client_for_parallelization = cfg->readLong(U_CONSTANT_TO_PARAM("CLIENT_FOR_PARALLELIZATION"));
 
 #ifdef USERVER_UDP
-   if (budp == false)
+   if (budp &&
+       u_printf_string_max_length == -1)
+      {
+      u_printf_string_max_length = 128;
+      }
 #endif
-   {
-   u_printf_string_max_length = cfg->readLong(U_CONSTANT_TO_PARAM("LOG_MSG_SIZE"));
-   }
 
    x = cfg->at(U_CONSTANT_TO_PARAM("CRASH_EMAIL_NOTIFY"));
 
@@ -4269,6 +4272,10 @@ void UServer_Base::run()
              */
 
             UInterrupt::setHandlerForSignal(SIGHUP, (sighandler_t)SIG_IGN); // NB: we can't use UInterrupt::erase() because it restore the old action (UInterrupt::init)...
+
+#        ifdef U_LINUX
+            (void) U_SYSCALL(prctl, "%d,%lu", PR_SET_PDEATHSIG, SIGINT);
+#        endif
 
             runLoop(user);
 

@@ -1,0 +1,55 @@
+HTTP/1.1 200 OK
+Date: Thu, 12 Oct 2017 15:11:29 GMT
+Server: ULib
+Content-Type: text/html; charset=UTF-8
+Content-Length: 332
+
+<html>
+<head></head>
+<body>
+
+<nav> 
+<a href="/staff/home">Home</a>
+<a href="/staff/logout">Logout</a> </nav>
+
+<div class="wrapper">
+<div class="fullscreen-content">
+
+
+<h1>Hello </h1>
+</div>
+</div>
+
+<div class="footer"> <p style="text-align: center;"> "Copyright &#169; Nemsys Enterprises"  "2017"</p> </div>
+
+</div>
+
+</body>
+</html>HTTP/1.1 200 OK
+Date: Thu, 12 Oct 2017 15:11:29 GMT
+Server: ULib
+Content-Type: text/html; charset=UTF-8
+Content-Length: 332
+
+<html>
+<head></head>
+<body>
+
+<nav> 
+<a href="/staff/home">Home</a>
+<a href="/staff/logout">Logout</a> </nav>
+
+<div class="wrapper">
+<div class="fullscreen-content">
+
+
+<h1>Hello </h1>
+</div>
+</div>
+
+<div class="footer"> <p style="text-align: center;"> "Copyright &#169; Nemsys Enterprises"  "2017"</p> </div>
+
+</div>
+
+</body>
+</html>

@@ -81,6 +81,14 @@ public:
    Application()
       {
       U_TRACE_NO_PARAM(5, "Application::Application()")
+
+      bvar                  = 
+      bsession              =
+      bstorage              =
+      bfirst_pass           =
+           is_html          =
+      test_if_html          =
+      bpreprocessing_failed = false;
       }
 
    ~Application()
@@ -201,7 +209,7 @@ public:
 
       const char* directive = token.c_pointer(2); // "-#"...
 
-      U_INTERNAL_DUMP("directive(10) = %.*S", 10, directive)
+      U_INTERNAL_DUMP("directive(10) = %.10S", directive)
 
       if (bfirst_pass)
          {
@@ -213,50 +221,58 @@ public:
          if (bdefine ||
              binclude)
             {
-            UString block(100U);
-            UVector<UString> vec;
+            uint32_t pos;
+            const char* ptr;
+            UString block(100U + token.size());
 
             block.snprintf(U_CONSTANT_TO_PARAM("<!-%v-->"), token.rep);
 
-            for (const char* ptr = t.getPointer(); u__isspace(*ptr); ++ptr) block.push_back(*ptr);
+            pos = t.getDistance() - block.size();
 
-            vec.push_back(block);
+            U_INTERNAL_DUMP("usp(%u) = %.10S", pos, t.getPointer())
 
-            if (binclude)
+            for (ptr = t.getPointer(); u__isspace(*ptr); ++ptr) block.push_back(*ptr);
+
+            if (bdefine)
+               {
+               vdefine.push_back(block);
+               vdefine.push_back(UString::getStringNull());
+
+               setDirectiveItem(directive, U_CONSTANT_SIZE("define"));
+
+               ptr = token.data();
+
+               do { ++ptr; } while (u__isspace(*ptr) == false);
+
+               pos = token.distance(ptr);
+
+               UString    id(token, 0, pos),
+                       value(token,    pos);
+
+               vdefine.push_back(id);
+               vdefine.push_back(value);
+               }
+            else
                {
                setDirectiveItem(directive, U_CONSTANT_SIZE("include"));
 
                UString content = UFile::contentOf(token);
 
-               if (content) vec.push_back(vdefine.empty() ? content : UStringExt::substitute(content, vdefine));
-               else
+               if (content.empty())
                   {
-                  vec.push_back(UString::getStringNull());
-
                   U_WARNING("load of include usp %V failed", token.rep);
                   }
+               else
+                  {
+#              ifdef DEBUG
+                  token.clear(); // NB: to avoid DEAD OF SOURCE STRING WITH CHILD ALIVE...
+#              endif
+
+                  t.setData((usp = UStringExt::substitute(usp, block, content)));
+
+                  t.setDistance(pos);
+                  }
                }
-            else
-               {
-               U_INTERNAL_ASSERT(bdefine)
-
-               setDirectiveItem(directive, U_CONSTANT_SIZE("define"));
-
-               vec.push_back(UString::getStringNull());
-
-               (void) vec.split(U_STRING_TO_PARAM(token));
-
-               U_ASSERT_EQUALS(vec.size(), 4)
-
-               vdefine.push_back(vec[2]);
-               vdefine.push_back(vec[3]);
-               }
-
-#        ifdef DEBUG
-            token.clear(); // NB: to avoid DEAD OF SOURCE STRING WITH CHILD ALIVE...
-#        endif
-
-            t.setData((usp = UStringExt::substitute(usp, vec)));
             }
 
          return;
@@ -476,10 +492,6 @@ public:
       const char* ptr;
       uint32_t distance, pos, size;
 
-#  ifdef DEBUG
-      token.clear(); // NB: to avoid DEAD OF SOURCE STRING WITH CHILD ALIVE...
-#  endif
-
       t.setData(usp);
 
 loop: distance = t.getDistance();
@@ -546,24 +558,9 @@ loop: distance = t.getDistance();
          }
       }
 
-   void firstPass()
-      {
-      U_TRACE_NO_PARAM(5, "Application::firstPass()")
-
-      // NB: we check for <!--#define ... --> and <!--#include ... -->
-
-      bfirst_pass = true;
-
-      processUSP();
-      }
-
    bool execPreProcessing()
       {
       U_TRACE_NO_PARAM(5, "Application::execPreProcessing()")
-
-#  ifndef DEBUG
-      bpreprocessing_failed = false;
-#  endif
 
       if (U_STRING_FIND(usp, 0, "\n#ifdef DEBUG") != U_NOT_FOUND)
          {
@@ -572,29 +569,13 @@ loop: distance = t.getDistance();
          if (cfg.processData(false)) usp = UStringExt::substitute(cfg.getData(), U_CONSTANT_TO_PARAM("//#include"), U_CONSTANT_TO_PARAM("#include"));
          else
             {
-#        ifndef DEBUG
             bpreprocessing_failed = true;
-#        endif
 
             U_RETURN(false);
             }
          }
 
       U_RETURN(true);
-      }
-
-   void secondPass()
-      {
-      U_TRACE_NO_PARAM(5, "Application::secondPass()")
-
-      bvar         = 
-      bsession     =
-      bstorage     =
-      bfirst_pass  =
-           is_html =
-      test_if_html = false;
-
-      processUSP();
       }
 
    void run(int argc, char* argv[], char* env[])
@@ -613,13 +594,21 @@ loop: distance = t.getDistance();
 
       t.setGroup(U_CONSTANT_TO_PARAM("<!--->"));
 
-      firstPass();
+      bfirst_pass = true; // NB: we check for <!--#define ... --> and <!--#include ... -->
 
-      if (usp.empty()) U_ERROR("first pass for %V failed", filename.rep);
+      processUSP();
+
+#  ifdef DEBUG
+      token.clear(); // NB: to avoid DEAD OF SOURCE STRING WITH CHILD ALIVE...
+#  endif
+
+      if (vdefine.empty() == false) usp = UStringExt::substitute(usp, vdefine);
 
       if (execPreProcessing() == false) U_WARNING("preprocessing of %V failed", filename.rep);
 
-      secondPass();
+      bfirst_pass = false;
+
+      processUSP();
 
       U_INTERNAL_DUMP("declaration = %V", declaration.rep)
 
@@ -634,9 +623,16 @@ loop: distance = t.getDistance();
             char  ptr4[100] = { '\0' };
             char  ptr5[100] = { '\0' };
       const char* ptr6      = "";
-      const char* ptr7      = (u_get_unalignedp32(usp.data()) == U_MULTICHAR_CONSTANT32('<','!','-','-') && usp.c_char(4) == '#' && u__isspace(usp.c_char(5)) // <!--# --> (comment)
-                                 ? "\n\tUClientImage_Base::setRequestNoCache();\n\t\n"
-                                 : "");
+      const char* ptr7      = "";
+      
+#  ifndef U_CACHE_REQUEST_DISABLE
+      if (usp.c_char(4) == '#'      &&
+          u__isspace(usp.c_char(5)) &&
+          u_get_unalignedp32(usp.data()) == U_MULTICHAR_CONSTANT32('<','!','-','-')) // <!--# --> (comment)
+         {
+         ptr7 = "\n\tUClientImage_Base::setRequestNoCache();\n\t\n";
+         }
+#  endif
 
       UString basename = UStringExt::basename(filename);
 
@@ -769,7 +765,7 @@ private:
    UTokenizer t;
    UVector<UString> vdefine;
    UString usp, token, output0, output1, declaration, vcode, http_header;
-   bool test_if_html, is_html, bpreprocessing_failed, bfirst_pass, bvar, bsession, bstorage;
+   bool bvar, bsession, bstorage, bfirst_pass, is_html, test_if_html, bpreprocessing_failed;
 
    U_DISALLOW_COPY_AND_ASSIGN(Application)
 };

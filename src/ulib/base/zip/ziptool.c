@@ -809,6 +809,7 @@ unsigned zip_extract(const char* zipfile, const char** files, char*** filenames,
 
    U_INTERNAL_TRACE("zip_extract(%s,%p,%p,%p)", zipfile, files, filenames, filenames_len)
 
+#ifndef U_COVERITY_FALSE_POSITIVE
    if (zip_open(zipfile)) return 0; /* open the zipfile */
 
    if (files) while (files[file_num] != 0) ++file_num;
@@ -901,8 +902,6 @@ unsigned zip_extract(const char* zipfile, const char** files, char*** filenames,
                   return 0;
                   }
 
-#           ifndef U_COVERITY_FALSE_POSITIVE
-               /* coverity[toctou] */
                if (stat(tmp_buff, &sbuf) < 0)
                   {
                   if (errno != ENOENT)
@@ -929,7 +928,6 @@ unsigned zip_extract(const char* zipfile, const char** files, char*** filenames,
 
                   return 0;
                   }
-#           endif
                }
             }
 
@@ -992,18 +990,14 @@ unsigned zip_extract(const char* zipfile, const char** files, char*** filenames,
                {
                perror("read");
 
-#           ifndef U_COVERITY_FALSE_POSITIVE // NEGATIVE_RETURNS
                (void) close(f_fd);
 
                return 0;
-#           endif
                }
 
             ze.crc = crc32(ze.crc, (Bytef*)rd_buff, rdamt);
 
-#        ifndef U_COVERITY_FALSE_POSITIVE // NEGATIVE_RETURNS
             (void) write(f_fd, rd_buff, rdamt);
-#        endif
 
              in_a -= rdamt;
             out_a += rdamt;
@@ -1014,9 +1008,7 @@ unsigned zip_extract(const char* zipfile, const char** files, char*** filenames,
          if (eflen) consume(eflen);
          }
 
-#  ifndef U_COVERITY_FALSE_POSITIVE // NEGATIVE_RETURNS
       (void) close(f_fd);
-#  endif
 
       /* if there is a data descriptor left, compare the CRC */
 
@@ -1069,6 +1061,7 @@ unsigned zip_extract(const char* zipfile, const char** files, char*** filenames,
       *filenames = 0;
       *filenames_len = 0;
       }
+#endif
 
    return n;
 }

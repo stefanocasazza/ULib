@@ -1,0 +1,58 @@
+#!/bin/sh
+
+. ../.function
+
+## usp_include.test -- Test prototype for Jon 
+
+start_msg usp_include
+
+ UTRACE="0 15M 0"
+#UOBJDUMP="0 10M 10"
+#USIMERR="error.sim"
+ export UTRACE UOBJDUMP USIMERR
+
+DOC_ROOT=JONATHAN/docroot
+
+rm -rf $DOC_ROOT/*log /tmp/request.* /tmp/response.* \
+		 out/userver_tcp.out err/userver_tcp.err \
+                trace.*userver_*.[0-9]*           object.*userver_*.[0-9]*           stack.*userver_*.[0-9]*           mempool.*userver_*.[0-9]* \
+      $DOC_ROOT/trace.*userver_*.[0-9]* $DOC_ROOT/object.*userver_*.[0-9]* $DOC_ROOT/stack.*userver_*.[0-9]* $DOC_ROOT/mempool.*userver_*.[0-9]*
+
+cat <<EOF >inp/webserver.cfg
+userver {
+ PORT 8080
+ LOG_FILE usp_include.log
+ LOG_FILE_SZ 1M
+ PID_FILE /var/run/userver_tcp.pid
+ DOCUMENT_ROOT $DOC_ROOT
+ PREFORK_CHILD 0
+ PLUGIN_DIR ../../../../src/ulib/net/server/plugin/.libs
+#ORM_DRIVER mysql
+#ORM_DRIVER sqlite
+#ORM_DRIVER_DIR ../../../../src/ulib/orm/driver/.libs
+}
+EOF
+
+check_for_netcat
+
+DIR_CMD="../../examples/userver"
+
+#export ORM_DRIVER="sqlite"
+#export ORM_OPTION="host=localhost dbname=../db/hello_world"
+
+start_prg_background userver_tcp -c inp/webserver.cfg
+
+wait_server_ready localhost 8080
+
+#sync
+#echo "PID = `cat /var/run/userver_tcp.pid`"
+#exit 0
+
+send_req $NCAT localhost 8080 inp/http/usp_include.req usp_include 2 kill
+
+kill_server userver_tcp
+
+mv err/userver_tcp.err err/one.err
+
+# Test against expected output
+test_output_wc l usp_include
