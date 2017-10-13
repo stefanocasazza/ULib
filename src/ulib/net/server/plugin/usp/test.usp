@@ -1,2 +1,1 @@
-<!--#define HEADER plaintext.usp -->
-<!--#include HEADER -->
+<!--#include plaintext.usp -->

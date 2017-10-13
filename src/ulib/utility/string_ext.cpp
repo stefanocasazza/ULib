@@ -318,8 +318,8 @@ UString UStringExt::substitute(const char* s, uint32_t len, UVector<UString>& ve
    char c;
    int32_t i;
    UString item;
-   bool breserve = false, bdigit = false, bspace = false;
-   uint32_t n1 = 0, n2 = 0, capacity, mask_lower = 0, mask_upper = 0;
+   bool breserve = false, bdigit = false, bspace = false, bdollar;
+   uint32_t n1 = 0, n2 = 0, capacity, mask_lower = 0, mask_upper = 0, dollar = 0;
 
    uint32_t maskFirstChar[] = { 0x00000001, 0x00000002, 0x00000004, 0x00000008, 0x00000010,
                                 0x00000020, 0x00000040, 0x00000080, 0x00000100, 0x00000200,
@@ -337,13 +337,23 @@ UString UStringExt::substitute(const char* s, uint32_t len, UVector<UString>& ve
 
       c = item.first_char();
 
+      if (c == '$')
+         {
+         ++dollar;
+
+         continue;
+         }
+
            if (u__islower(c)) mask_lower |= maskFirstChar[c-'a'];
       else if (u__isupper(c)) mask_upper |= maskFirstChar[c-'A'];
-      else if (u__isdigit(c)) bdigit = true;
-      else if (u__isspace(c)) bspace = true;
+      else if (u__isdigit(c)) bdigit  = true;
+      else if (u__isspace(c)) bspace  = true;
       }
 
-   U_INTERNAL_DUMP("n1 = %u n2 = %u mask_lower = %B mask_upper = %B bdigit = %b bspace = %b", n1, n2, mask_lower, mask_upper, bdigit, bspace)
+   bdollar = (dollar == n);
+
+   U_INTERNAL_DUMP("n1 = %u n2 = %u mask_lower = %B mask_upper = %B bdigit = %b bspace = %b dollar = %u bdollar = %b",
+                    n1,     n2,     mask_lower,     mask_upper,     bdigit,     bspace,     dollar,     bdollar)
 
    if (n2 <= n1) capacity = len;
    else
@@ -364,19 +374,26 @@ loop:
       {
       c = *p1;
 
-      if ((u__islower(c)                             &&
-           (mask_lower & maskFirstChar[c-'a']) == 0) ||
-          (u__isupper(c)                             &&
-           (mask_upper & maskFirstChar[c-'A']) == 0) ||
-          (u__isdigit(c)                             &&
-           bdigit == false)                          ||
-          (u__isspace(c)                             &&
-           bspace == false))
+      U_INTERNAL_DUMP("c = %C p1 = %.10S", c, p1)
+
+      if (c == '$')
+         {
+         if (dollar) goto chk;
+
+         continue;
+         }
+
+      if (bdollar) continue;
+
+      if ((u__isdigit(c) && bdigit == false)                          ||
+          (u__isspace(c) && bspace == false)                          ||
+          (u__islower(c) && (mask_lower & maskFirstChar[c-'a']) == 0) ||
+          (u__isupper(c) && (mask_upper & maskFirstChar[c-'A']) == 0))
          {
          continue;
          }
 
-      for (i = 0; i < (int32_t)n; i += 2)
+chk:  for (i = 0; i < (int32_t)n; i += 2)
          {
          item = vec[i];
 

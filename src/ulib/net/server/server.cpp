@@ -4105,6 +4105,14 @@ void UServer_Base::runLoop(const char* user)
             {
 #        if !defined(U_LOG_DISABLE) && defined(DEBUG)
             last_event = u_now->tv_sec;
+
+#          ifndef _MSWINDOWS_
+            if (monitoring_process &&
+                U_SYSCALL_NO_PARAM(getppid) == 1)
+               {
+               U_ERROR("the monitoring process has crashed, exiting...");
+               }
+#          endif
 #        endif
 
             UTimer::updateTimeToExpire(ptime);
@@ -4274,7 +4282,7 @@ void UServer_Base::run()
             UInterrupt::setHandlerForSignal(SIGHUP, (sighandler_t)SIG_IGN); // NB: we can't use UInterrupt::erase() because it restore the old action (UInterrupt::init)...
 
 #        ifdef U_LINUX
-            (void) U_SYSCALL(prctl, "%d,%lu", PR_SET_PDEATHSIG, SIGINT);
+            (void) U_SYSCALL(prctl, "%d,%lu", PR_SET_PDEATHSIG, SIGTERM);
 #        endif
 
             runLoop(user);

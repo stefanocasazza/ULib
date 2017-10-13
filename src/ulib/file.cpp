@@ -894,6 +894,35 @@ UString UFile::contentOf(const UString& _pathname, int flags, bool bstat, const 
    U_RETURN_STRING(content);
 }
 
+UString UFile::contentOf(const UString& _pathname, const UString& pinclude)
+{
+   U_TRACE(0, "UFile::contentOf(%V,%V)", _pathname.rep, pinclude.rep)
+
+   UFile file;
+   UString content;
+
+   file.reset();
+   file.setPath(_pathname);
+
+   if (file.open(O_RDONLY))
+      {
+      content = file.getContent();
+
+      U_RETURN_STRING(content);
+      }
+
+   if (pinclude)
+      {
+      file.reset();
+
+      file.setPath(pinclude + '/' + UStringExt::basename(_pathname));
+
+      if (file.open(O_RDONLY)) content = file.getContent();
+      }
+
+   U_RETURN_STRING(content);
+}
+
 void UFile::printf(const char* format, uint32_t fmt_size, ...)
 {
    U_TRACE(0, "UFile::printf(%.*S,%u)", fmt_size, format, fmt_size)

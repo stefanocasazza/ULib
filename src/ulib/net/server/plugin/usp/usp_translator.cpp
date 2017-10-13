@@ -24,8 +24,9 @@
 #undef  ARGS
 #define ARGS "[filename usp]"
 
-#define U_OPTIONS ""
 #define U_PURPOSE "program for dynamic page translation ([xxx].usp => [xxx].cpp)"
+#define U_OPTIONS \
+"option I include 1 \"path of local include directory\" \"\"\n"
 
 #include <ulib/application.h>
 
@@ -221,30 +222,30 @@ public:
          if (bdefine ||
              binclude)
             {
-            uint32_t pos;
-            const char* ptr;
-            UString block(100U + token.size());
+            const char* ptr = usp.data();
+            UString content, x(U_CAPACITY);
+            uint32_t pos2 = t.getDistance(),
+                     pos1 = pos2 - token.size() - U_CONSTANT_SIZE("<!--->");
 
-            block.snprintf(U_CONSTANT_TO_PARAM("<!-%v-->"), token.rep);
+            U_INTERNAL_DUMP("pos1(%u) = %.10S pos2(%u) = %.10S", pos1, usp.c_pointer(pos1), pos2, t.getPointer())
 
-            pos = t.getDistance() - block.size();
+            U_INTERNAL_ASSERT_MAJOR(pos2, 0)
 
-            U_INTERNAL_DUMP("usp(%u) = %.10S", pos, t.getPointer())
+            if (pos1) (void) x.append(ptr, pos1);
 
-            for (ptr = t.getPointer(); u__isspace(*ptr); ++ptr) block.push_back(*ptr);
+            ptr += pos2;
 
             if (bdefine)
                {
-               vdefine.push_back(block);
-               vdefine.push_back(UString::getStringNull());
-
                setDirectiveItem(directive, U_CONSTANT_SIZE("define"));
 
-               ptr = token.data();
+               U_INTERNAL_ASSERT(token)
 
-               do { ++ptr; } while (u__isspace(*ptr) == false);
+               const char* ptr1 = token.data();
 
-               pos = token.distance(ptr);
+               do { ++ptr1; } while (u__isspace(*ptr1) == false);
+
+               uint32_t pos = token.distance(ptr1);
 
                UString    id(token, 0, pos),
                        value(token,    pos);
@@ -256,23 +257,27 @@ public:
                {
                setDirectiveItem(directive, U_CONSTANT_SIZE("include"));
 
-               UString content = UFile::contentOf(token);
+               U_INTERNAL_ASSERT(token)
+
+               content = UFile::contentOf(token, pinclude);
 
                if (content.empty())
                   {
-                  U_WARNING("load of include usp %V failed", token.rep);
+                  U_ERROR("load of include usp %V failed: path = %V", token.rep, pinclude.rep);
                   }
-               else
-                  {
-#              ifdef DEBUG
-                  token.clear(); // NB: to avoid DEAD OF SOURCE STRING WITH CHILD ALIVE...
-#              endif
 
-                  t.setData((usp = UStringExt::substitute(usp, block, content)));
-
-                  t.setDistance(pos);
-                  }
+               (void) x.append(content);
                }
+
+            (void) x.append(ptr, usp.remain(ptr));
+
+#        ifdef DEBUG
+            token.clear(); // NB: to avoid DEAD OF SOURCE STRING WITH CHILD ALIVE...
+#        endif
+
+            t.setData((usp = x));
+
+            t.setDistance(pos1);
             }
 
          return;
@@ -285,6 +290,8 @@ public:
          U_INTERNAL_ASSERT_EQUALS(bfirst_pass, false)
 
          setDirectiveItem(directive, U_CONSTANT_SIZE("declaration"));
+
+         U_INTERNAL_ASSERT(token)
 
          declaration = UStringExt::substitute(token, '\n', U_CONSTANT_TO_PARAM("\n\t"));
          }
@@ -357,6 +364,8 @@ public:
 
          setDirectiveItem(directive, U_CONSTANT_SIZE("vcode"));
 
+         U_INTERNAL_ASSERT(token)
+
          token = UStringExt::substitute(token, '\n', U_CONSTANT_TO_PARAM("\n\t"));
 
          vcode.setBuffer(20U + token.size());
@@ -368,6 +377,8 @@ public:
          U_INTERNAL_ASSERT_EQUALS(bfirst_pass, false)
 
          setDirectiveItem(directive, U_CONSTANT_SIZE("pcode"));
+
+         U_INTERNAL_ASSERT(token)
 
          token = UStringExt::substitute(token, '\n', U_CONSTANT_TO_PARAM("\n\t"));
 
@@ -382,6 +393,8 @@ public:
          U_INTERNAL_ASSERT_EQUALS(bfirst_pass, false)
 
          setDirectiveItem(directive, U_CONSTANT_SIZE("lcode"));
+
+         U_INTERNAL_ASSERT(token)
 
          token = UStringExt::substitute(token, '\n', U_CONSTANT_TO_PARAM("\n\t"));
 
@@ -401,6 +414,8 @@ public:
 
          setDirectiveItem(directive, U_CONSTANT_SIZE("code"));
 
+         U_INTERNAL_ASSERT(token)
+
          token = UStringExt::substitute(token, '\n', U_CONSTANT_TO_PARAM("\n\t"));
 
          (void) output0.reserve(20U + token.size());
@@ -413,6 +428,8 @@ public:
 
          setDirectiveItem(directive, U_CONSTANT_SIZE("number"));
 
+         U_INTERNAL_ASSERT(token)
+
          (void) output0.reserve(100U + token.size());
 
          output0.snprintf_add(U_CONSTANT_TO_PARAM("\n\tUStringExt::appendNumber32(*UClientImage_Base::wbuffer, (%v));\n\t"), token.rep);
@@ -423,6 +440,8 @@ public:
 
          setDirectiveItem(directive, U_CONSTANT_SIZE("puts"));
 
+         U_INTERNAL_ASSERT(token)
+
          (void) output0.reserve(100U + token.size());
 
          output0.snprintf_add(U_CONSTANT_TO_PARAM("\n\t(void) UClientImage_Base::wbuffer->append((%v));\n\t"), token.rep);
@@ -432,6 +451,8 @@ public:
          U_INTERNAL_ASSERT_EQUALS(bfirst_pass, false)
 
          setDirectiveItem(directive, U_CONSTANT_SIZE("xmlputs"));
+
+         U_INTERNAL_ASSERT(token)
 
          (void) output0.reserve(100U + token.size());
 
@@ -444,6 +465,8 @@ public:
          bvar = true;
 
          setDirectiveItem(directive, U_CONSTANT_SIZE("cout"));
+
+         U_INTERNAL_ASSERT(token)
 
          (void) output0.reserve(200U + token.size());
 
@@ -459,6 +482,8 @@ public:
          bool bfor = (strncmp(directive + U_CONSTANT_SIZE("print"), U_CONSTANT_TO_PARAM("for")) == 0);
 
          setDirectiveItem(directive, (bfor ? U_CONSTANT_SIZE("printfor") : U_CONSTANT_SIZE("print")));
+
+         U_INTERNAL_ASSERT(token)
 
          (void) output0.reserve(200U + token.size());
 
@@ -584,9 +609,15 @@ loop: distance = t.getDistance();
 
       UApplication::run(argc, argv, env);
 
-      if (argv[1] == U_NULLPTR) U_ERROR("filename usp not specified");
+      // manage options
 
-      UString filename(argv[1]);
+      if (UApplication::isOptions()) pinclude = opt['I'];
+
+      // manage arg
+
+      if (argv[optind] == U_NULLPTR) U_ERROR("filename usp not specified");
+
+      UString filename(argv[optind]);
 
       usp = UFile::contentOf(filename);
 
@@ -764,7 +795,7 @@ loop: distance = t.getDistance();
 private:
    UTokenizer t;
    UVector<UString> vdefine;
-   UString usp, token, output0, output1, declaration, vcode, http_header;
+   UString pinclude, usp, token, output0, output1, declaration, vcode, http_header;
    bool bvar, bsession, bstorage, bfirst_pass, is_html, test_if_html, bpreprocessing_failed;
 
    U_DISALLOW_COPY_AND_ASSIGN(Application)

@@ -59,7 +59,7 @@ test "$libsuffix" || libsuffix=so
 export UMEMPOOL="0,0,0,48,-20,-20,-20,-20,0"
 export PATH="/sbin:/usr/sbin:/usr/local/sbin:/bin:/usr/bin:/usr/local/bin"
 
-@ULIB_PREFIXDIR@/bin/usp_translator $file.usp &&
+@ULIB_PREFIXDIR@/bin/usp_translator ${local_includedir} $file.usp &&
 @ULIB_PREFIXDIR@/bin/usp_libtool.sh --silent --tag=CXX --mode=compile \
 	@CXX@ ${local_includedir} -IULIB_PREFIXDIR@/include -DHAVE_CONFIG_H @CPPFLAGS@ @CXXFLAGS@ @USP_FLAGS@ -MT $basen.lo -MD -MP -c -o $basen.lo $basen.cpp &&
 @ULIB_PREFIXDIR@/bin/usp_libtool.sh --silent --tag=CXX --mode=link \

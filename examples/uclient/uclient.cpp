@@ -67,7 +67,7 @@ public:
 
       // manage arg operation
 
-      p = argv[optind++];
+      p = argv[optind];
 
       UString url(p, strlen(p));
 

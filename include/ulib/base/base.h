@@ -108,8 +108,11 @@ U_DO_PRAGMA(message ("Sorry I was compiled with http2 enabled so I cannot suppor
 #     undef U_HTTP_INOTIFY_SUPPORT
 U_DO_PRAGMA(message ("Sorry I was compiled with server captive portal mode enabled so I cannot support http inotify"))
 #endif
+#if defined(HAVE_CXX17) && defined(__GNUC__) && !defined(HAVE_CONFIG_H)
+U_DO_PRAGMA(message ("ULib is configured with C++17 support, so you must use the -std=gnu++17 g++ option for compilation"))
+#endif
 #if defined(USE_HARDWARE_CRC32) && defined(__GNUC__) && !defined(HAVE_CONFIG_H) /* The built-in functions __builtin_ia32_crc32 are available when -mcrc32 is used */
-U_DO_PRAGMA(message ("ULib is configured with support for crc32 intrinsics, so you must use the -mcrc32 g++ option for compilation"))
+U_DO_PRAGMA(message ("ULib is configured with crc32 intrinsics support, so you must use the -mcrc32 g++ option for compilation"))
 #endif
 
 #include <stddef.h>
