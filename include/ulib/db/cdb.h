@@ -310,6 +310,8 @@ protected:
 
    // Save memory hash table as Constant DataBase
 
+   static bool writeTo(UStringRep* key, void* elem); // callWithDeleteForAllEntry()...
+
    static bool writeTo(UCDB& cdb, UHashMap<void*>* table, uint32_t tbl_space, pvPFpvpb f = U_NULLPTR);
 
    // FOR RDB

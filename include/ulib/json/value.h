@@ -1992,7 +1992,7 @@ public:
 
       uhashmap* pmap = (uhashmap*)pval;
 
-      if (pmap->first() == 0) (void) json.append(U_CONSTANT_TO_PARAM("{}"));
+      if (pmap->empty()) (void) json.append(U_CONSTANT_TO_PARAM("{}"));
       else
          {
          json.push_back('{');
@@ -2013,8 +2013,7 @@ public:
 
       uhashmap* pmap = (uhashmap*)pval;
 
-      if (pmap->first() == U_NULLPTR) UValue::o.ival = UValue::listToValue(U_OBJECT_VALUE, U_NULLPTR);
-      else
+      if (pmap->first())
          {
          ++UValue::pos;
 
@@ -2035,6 +2034,10 @@ public:
          U_INTERNAL_ASSERT_EQUALS(UValue::sd[UValue::pos].keys, 0)
 
          UValue::o.ival = UValue::listToValue(U_OBJECT_VALUE, UValue::sd[UValue::pos--].tails);
+         }
+      else
+         {
+         UValue::o.ival = UValue::listToValue(U_OBJECT_VALUE, U_NULLPTR);
          }
 
       if (UValue::pos != -1) UValue::nextParser();
@@ -2062,9 +2065,7 @@ public:
 
          U_INTERNAL_DUMP("pelement->pkey(%p) = %V", rep, rep)
 
-         ((uhashmap*)pval)->lookup(rep);
-
-         ((uhashmap*)pval)->insertAfterFind(rep, pitem);
+         ((uhashmap*)pval)->insert(rep, pitem);
 
          pelement = pelement->next;
          }
@@ -2090,14 +2091,17 @@ public:
 
       UHashMap<UString>* pmap = (UHashMap<UString>*)pval;
 
-      if (pmap->first() == U_NULLPTR) (void) json.append(U_CONSTANT_TO_PARAM("{}"));
-      else
+      if (pmap->first())
          {
          json.push_back('{');
 
          do { json.toJSON<UStringRep>(pmap->getKey(), UJsonTypeHandler<UStringRep>(*(UStringRep*)(pmap->elem()))); } while (pmap->next());
 
          json.setLastChar('}');
+         }
+      else
+         {
+         (void) json.append(U_CONSTANT_TO_PARAM("{}"));
          }
 
       U_INTERNAL_DUMP("json(%u) = %V", json.size(), json.rep)
@@ -2109,8 +2113,7 @@ public:
 
       UHashMap<UString>* pmap = (UHashMap<UString>*)pval;
 
-      if (pmap->first() == U_NULLPTR) UValue::o.ival = UValue::listToValue(U_OBJECT_VALUE, U_NULLPTR);
-      else
+      if (pmap->first())
          {
          ++UValue::pos;
 
@@ -2137,6 +2140,10 @@ public:
 
          UValue::o.ival = UValue::listToValue(U_OBJECT_VALUE, UValue::sd[UValue::pos--].tails);
          }
+      else
+         {
+         UValue::o.ival = UValue::listToValue(U_OBJECT_VALUE, U_NULLPTR);
+         }
 
       if (UValue::pos != -1) UValue::nextParser();
       }
@@ -2161,9 +2168,7 @@ public:
 
          U_INTERNAL_DUMP("pelement->pkey(%p) = %V", rep, rep)
 
-         ((UHashMap<UString>*)pval)->lookup(rep);
-
-         ((uhashmapbase*)pval)->insertAfterFind(rep, item.rep);
+         ((uhashmapbase*)pval)->insert(rep, item.rep);
 
          pelement = pelement->next;
          }

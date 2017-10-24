@@ -95,37 +95,37 @@ U_EXPORT main (int argc, char* argv[])
 
 #ifndef __MINGW32__
    buffer.assign(argv[1]);
-   x.setPath(U_STRING_FROM_CONSTANT("~"));
+   x.setPath(U_STRING_FROM_CONSTANT("~"), U_NULLPTR);
    U_ASSERT( x.getPath() == buffer )
 
    buffer.push_back('/');
-   x.setPath(U_STRING_FROM_CONSTANT("~/"));
+   x.setPath(U_STRING_FROM_CONSTANT("~/"), U_NULLPTR);
    U_ASSERT( x.getPath() == buffer )
 
    buffer.assign(argv[2]);
-   x.setPath(U_STRING_FROM_CONSTANT("~root/"));
+   x.setPath(U_STRING_FROM_CONSTANT("~root/"), U_NULLPTR);
    U_ASSERT( x.getPath() == buffer )
 
    buffer.assign(argv[1]);
    buffer.append("/.bash_profile");
-   x.setPath(U_STRING_FROM_CONSTANT("~/.bash_profile"));
+   x.setPath(U_STRING_FROM_CONSTANT("~/.bash_profile"), U_NULLPTR);
    U_ASSERT( x.getPath() == buffer )
 
    buffer.assign(argv[2]);
    buffer.append(".bash_profile");
-   x.setPath(U_STRING_FROM_CONSTANT("~root/.bash_profile"));
+   x.setPath(U_STRING_FROM_CONSTANT("~root/.bash_profile"), U_NULLPTR);
    U_ASSERT( x.getPath() == buffer )
 
    buffer.assign(argv[3]);
-   x.setPath(U_STRING_FROM_CONSTANT("$PWD"));
+   x.setPath(U_STRING_FROM_CONSTANT("$PWD"), U_NULLPTR);
    U_ASSERT( x.getPath() == buffer )
 
    buffer.append("/");
-   x.setPath(U_STRING_FROM_CONSTANT("$PWD/"));
+   x.setPath(U_STRING_FROM_CONSTANT("$PWD/"), U_NULLPTR);
    U_ASSERT( x.getPath() == buffer )
 
    buffer.append("test_file.cpp");
-   x.setPath(U_STRING_FROM_CONSTANT("$PWD/test_file.cpp"));
+   x.setPath(U_STRING_FROM_CONSTANT("$PWD/test_file.cpp"), U_NULLPTR);
    U_ASSERT( x.getPath() == buffer )
 #endif
 

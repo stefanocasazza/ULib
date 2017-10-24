@@ -1069,9 +1069,9 @@ void UNotifier::callForAllEntryDynamic(bPFpv function)
          }
       }
 
-   UGenericHashMap<unsigned int,UEventFd*>::UGenericHashMapNode* _node;
+   UGenericHashMap<unsigned int,UEventFd*>::UGenericHashMapNode* pnode;
 
-   if ((_node = hi_map_fd->first()))
+   if ((pnode = hi_map_fd->first()))
       {
       do {
          item = hi_map_fd->elem();
@@ -1080,7 +1080,7 @@ void UNotifier::callForAllEntryDynamic(bPFpv function)
 
          if (function(item))
             {
-            U_DEBUG("UNotifier::callForAllEntryDynamic(): hi_map_fd(%p) = %p %u", _node, item, item->fd);
+            U_DEBUG("UNotifier::callForAllEntryDynamic(): hi_map_fd(%p) = %p %u", pnode, item, item->fd);
 
             handlerDelete(item);
 
@@ -1089,7 +1089,7 @@ void UNotifier::callForAllEntryDynamic(bPFpv function)
             if (num_connection == min_connection) return;
             }
          }
-      while ((_node = hi_map_fd->next(_node)));
+      while ((pnode = hi_map_fd->next(pnode)));
       }
 }
 
@@ -1125,9 +1125,9 @@ void UNotifier::clear()
             }
          }
 
-      UGenericHashMap<unsigned int,UEventFd*>::UGenericHashMapNode* _node;
+      UGenericHashMap<unsigned int,UEventFd*>::UGenericHashMapNode* pnode;
 
-      if ((_node = hi_map_fd->first()))
+      if ((pnode = hi_map_fd->first()))
          {
          do {
             item = hi_map_fd->elem();
@@ -1136,7 +1136,7 @@ void UNotifier::clear()
 
             if (item->fd != -1) handlerDelete(item);
             }
-         while ((_node = hi_map_fd->next(_node)));
+         while ((pnode = hi_map_fd->next(pnode)));
          }
       }
 

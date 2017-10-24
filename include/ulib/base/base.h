@@ -208,6 +208,8 @@ typedef int   (*qcompare)  (const void*,const void*);
 typedef void  (*vPFpvpcpc) (void*,char*,char*);
 typedef void* (*pvPFpvpvs) (void*,const void*,size_t);
 
+typedef uint32_t (*uPFpcu) (const char*,uint32_t);
+
 typedef struct U_DATA {
    unsigned char* dptr;
    size_t dsize;

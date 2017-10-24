@@ -116,6 +116,7 @@ class UProxyPlugIn;
 class Application;
 class UServer_Base;
 class UHashMapNode;
+class UHashTableNode;
 class UMongoDBClient;
 class URDBClient_Base;
 class UQuotedPrintable;
@@ -124,7 +125,11 @@ class UREDISClient_Base;
 
 template <class T> class UVector;
 template <class T> class UHashMap;
+template <class T> class UHashTable;
 template <class T> class UJsonTypeHandler;
+
+typedef void (*vPFprpv)(UStringRep*,void*);
+typedef bool (*bPFprpv)(UStringRep*,void*);
 
 class U_EXPORT UStringRep {
 public:
@@ -933,13 +938,15 @@ private:
       str        = ptr;
       }
 
-   // Equal lookup use case
+   // equal lookup use case
 
    static bool equal_lookup(UStringRep* key1, const char* s2, uint32_t n2, bool ignore_case)
       {
       U_TRACE(0, "UStringRep::equal_lookup(%V,%.*S,%u,%b)", key1, n2, s2, n2, ignore_case)
 
+      U_INTERNAL_ASSERT_POINTER(s2)
       U_INTERNAL_ASSERT_MAJOR(n2, 0)
+      U_INTERNAL_ASSERT_POINTER(key1)
 
       const char* s1;
       uint32_t n1 = key1->size();
@@ -956,21 +963,25 @@ private:
       U_RETURN(false);
       }
 
-   static bool equal_lookup(const UStringRep* key1, const char* s1, uint32_t n1, const UStringRep* key2, uint32_t n2, bool ignore_case)
+   static bool equal_lookup(const UStringRep* key1, const UStringRep* key2, bool ignore_case)
       {
-      U_TRACE(0, "UStringRep::equal_lookup(%V,%.*S,%u,%V,%u,%b)", key1, n1, s1, n1, key2, n2, ignore_case)
+      U_TRACE(0, "UStringRep::equal_lookup(%V,%V,%b)", key1, key2, ignore_case)
+
+      U_INTERNAL_ASSERT_POINTER(key1)
+      U_INTERNAL_ASSERT_POINTER(key2)
+
+      const char* s1;
+      const char* s2;
+      uint32_t n1 = key1->size(),
+               n2 = key2->size();
 
       U_INTERNAL_ASSERT_MAJOR(n1, 0)
       U_INTERNAL_ASSERT_MAJOR(n2, 0)
-      U_INTERNAL_ASSERT_EQUALS(key1->data(), s1)
-      U_INTERNAL_ASSERT_EQUALS(key1->size(), n1)
-      U_INTERNAL_ASSERT_EQUALS(key2->size(), n2)
 
-      const char* s2;
-
-      if (n1 == n2                                          &&
+      if (   n1 ==   n2                                     &&
           (key1 == key2                                     ||
-           (s2 = key2->data(),     memcmp(s1, s2, n1) == 0) ||
+           (s1 = key1->data(),
+            s2 = key2->data(),     memcmp(s1, s2, n1) == 0) ||
            (ignore_case && u__strncasecmp(s1, s2, n1) == 0)))
          {
          U_RETURN(true);
@@ -1008,6 +1019,7 @@ private:
    friend class UProxyPlugIn;
    friend class UHashMapNode;
    friend class UServer_Base;
+   friend class UHashTableNode;
    friend class UMongoDBClient;
    friend class URDBClient_Base;
    friend class UQuotedPrintable;
@@ -1017,6 +1029,7 @@ private:
 
    template <class T> friend class UVector;
    template <class T> friend class UHashMap;
+   template <class T> friend class UHashTable;
    template <class T> friend class UJsonTypeHandler;
    template <class T> friend void u_construct(const T*, uint32_t);
 };
@@ -1191,6 +1204,7 @@ public:
       }
 
 protected:
+   static UStringRep* pkey;
    static UString* string_null;
 
    friend class ULib;
@@ -1203,6 +1217,7 @@ protected:
 
    template <class T> friend class UVector;
    template <class T> friend class UHashMap;
+   template <class T> friend class UHashTable;
 
    explicit UString(UStringRep** pr) : rep(*pr) // NB: for toUTF8() and fromUTF8()...
       {
@@ -1750,10 +1765,7 @@ public:
       U_INTERNAL_ASSERT_MAJOR(rep->_length, 0)
 
       if (writeable()) rep->setNullTerminated();
-      else
-         {
-         duplicate();
-         }
+      else             duplicate();
 
       U_ASSERT_EQUALS(u__strlen(rep->str, __PRETTY_FUNCTION__), rep->_length)
       }

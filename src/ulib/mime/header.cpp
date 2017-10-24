@@ -108,7 +108,7 @@ uint32_t UMimeHeader::parse(const char* ptr, uint32_t len)
 
          // Check for duplication of header
 
-         if (containsHeader(key) == false) table.insertAfterFind(key, value);
+         if (containsHeader(key) == false) table.insertAfterFind(value);
          else
             {
             UStringRep* rep = table.elem();
@@ -313,9 +313,12 @@ void UMimeHeader::writeHeaders(UString& buffer)
 
    if (table.first())
       {
+      UStringRep* value;
+      const UStringRep* key;
+
       do {
-         const UStringRep* key = table.key();
-         UStringRep* value     = table.elem();
+         key   = table.key();
+         value = table.elem();
 
          tmp.setBuffer(key->size() + 2 + value->size() + 2);
 
@@ -373,9 +376,12 @@ U_EXPORT ostream& operator<<(ostream& os, UMimeHeader& h)
 
    if (h.table.first())
       {
+      UStringRep* value;
+      const UStringRep* key;
+
       do {
-         const UStringRep* key = h.table.key();
-         UStringRep* value     = h.table.elem();
+         key   = h.table.key();
+         value = h.table.elem();
 
          os.write(key->data(), key->size());
          os.write(": ", 2);

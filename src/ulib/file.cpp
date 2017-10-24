@@ -51,17 +51,8 @@ void UFile::inc_num_file_object(UFile* pthis)
    U_INTERNAL_ASSERT_EQUALS((void*)pthis, (void*)&(pthis->st_dev))
 }
 
-void UFile::dec_num_file_object(int fd)
-{
-   --num_file_object;
-
-   if (fd != -1) U_WARNING("File descriptor %d not closed...", fd);
-}
-
-void UFile::chk_num_file_object()
-{
-   if (num_file_object) U_WARNING("UFile::chdir() with num file object = %d", num_file_object);
-}
+void UFile::chk_num_file_object()       { if (num_file_object) U_WARNING("UFile::chdir() with num file object = %d", num_file_object); }
+void UFile::dec_num_file_object(int fd) {   --num_file_object; if (fd != -1) U_WARNING("File descriptor %d not closed...", fd); }
 #endif
 
 #ifndef MREMAP_MAYMOVE
@@ -72,68 +63,20 @@ void UFile::setPathRelativ(const UString* environment)
 {
    U_TRACE(0, "UFile::setPathRelativ(%p)", environment)
 
-   U_CHECK_MEMORY
-
    U_INTERNAL_ASSERT(pathname)
 
-   reset();
-
-   const char* ptr = (pathname.isNullTerminated() ? pathname.data() : pathname.c_str());
-
-   char c = *ptr;
+   char c = pathname.first_char();
 
    if (c == '~' ||
        c == '$')
       {
       UString x = UStringExt::expandPath(pathname, environment);
 
-      if (x)
-         {
-         pathname = x;
-
-         ptr = pathname.data();
-         }
+      if (x) pathname = x;
       }
 
-   // NB: the string can be not writable...
-
-   path_relativ_len = pathname.size();
-   path_relativ     = u_getPathRelativ(ptr, &path_relativ_len);
-
-   U_INTERNAL_ASSERT_MAJOR(path_relativ_len, 0)
-
-   // we don't need this... (I think)
-
-   /*
-   if (pathname.writeable() &&
-       pathname.size() != path_relativ_len)
-      {
-      path_relativ[path_relativ_len] = '\0';
-      }
-   */
-
-   U_INTERNAL_DUMP("u_cwd(%u) = %S", u_cwd_len, u_cwd)
-   U_INTERNAL_DUMP("pathname(%u) = %V", pathname.size(), pathname.rep)
-   U_INTERNAL_DUMP("path_relativ(%u) = %.*S", path_relativ_len, path_relativ_len, path_relativ)
+   setPathRelativ();
 }
-
-void UFile::setRoot()
-{
-   U_TRACE_NO_PARAM(0, "UFile::setRoot()")
-
-   reset();
-
-   pathname.setConstant(U_CONSTANT_TO_PARAM("/"));
-
-   st_mode          = S_IFDIR|0755;
-   path_relativ     = pathname.data();
-   path_relativ_len = 1;
-
-   U_INTERNAL_DUMP("u_cwd(%u) = %S", u_cwd_len, u_cwd)
-   U_INTERNAL_DUMP("path_relativ(%u) = %.*S", path_relativ_len, path_relativ_len, path_relativ)
-}
-
-// gcc - call is unlikely and code size would grow
 
 bool UFile::open(int flags)
 {
@@ -153,20 +96,6 @@ bool UFile::open(int flags)
    if (fd != -1) U_RETURN(true);
 
    U_RETURN(false);
-}
-
-int UFile::open(const char* _pathname, int flags, mode_t mode)
-{
-   U_TRACE(1, "UFile::open(%S,%d,%d)", _pathname, flags, mode)
-
-   U_INTERNAL_ASSERT_POINTER(_pathname)
-   U_INTERNAL_ASSERT_MAJOR(u__strlen(_pathname, __PRETTY_FUNCTION__), 0)
-
-   // NB: we centralize here O_BINARY...
-
-   int _fd = U_SYSCALL(open, "%S,%d,%d", U_PATH_CONV(_pathname), flags | O_CLOEXEC | O_BINARY, mode);
-
-   U_RETURN(_fd);
 }
 
 bool UFile::creat(int flags, mode_t mode)
@@ -727,8 +656,7 @@ bool UFile::memmap(int prot, UString* str, uint32_t offset, uint32_t length)
    if (map != (char*)MAP_FAILED)
       {
       munmap(map, map_size);
-
-      map_size = 0;
+                  map_size = 0;
       }
 
    int flags = MAP_SHARED;
@@ -774,7 +702,7 @@ void UFile::munmap()
 
    U_INTERNAL_ASSERT_POINTER(path_relativ)
 
-   U_INTERNAL_ASSERT_MAJOR(map_size,0UL)
+   U_INTERNAL_ASSERT_MAJOR(map_size, 0)
    U_INTERNAL_ASSERT_DIFFERS(map,(char*)MAP_FAILED)
 
    UFile::munmap(map, map_size);
@@ -877,50 +805,28 @@ UString UFile::getContent(bool brdonly, bool bstat, bool bmap)
    U_RETURN_STRING(fileContent);
 }
 
-UString UFile::contentOf(const UString& _pathname, int flags, bool bstat, const UString* environment)
+UString UFile::contentOf(const UString& pathname, const UString& pinclude)
 {
-   U_TRACE(0, "UFile::contentOf(%V,%d,%b,%p)", _pathname.rep, flags, bstat, environment)
+   U_TRACE(0, "UFile::contentOf(%V,%V)", pathname.rep, pinclude.rep)
 
-   U_INTERNAL_ASSERT(_pathname)
+   UFile file(pathname);
 
-   UFile file;
-   UString content;
-
-   file.reset();
-   file.setPath(_pathname, environment);
-
-   if (file.open(flags)) content = file.getContent((((flags & O_RDWR) | (flags & O_WRONLY)) == 0), bstat);
-
-   U_RETURN_STRING(content);
-}
-
-UString UFile::contentOf(const UString& _pathname, const UString& pinclude)
-{
-   U_TRACE(0, "UFile::contentOf(%V,%V)", _pathname.rep, pinclude.rep)
-
-   UFile file;
-   UString content;
-
-   file.reset();
-   file.setPath(_pathname);
-
-   if (file.open(O_RDONLY))
-      {
-      content = file.getContent();
-
-      U_RETURN_STRING(content);
-      }
+   if (file.open()) return file.getContent();
 
    if (pinclude)
       {
-      file.reset();
+      UString x(U_CAPACITY);
 
-      file.setPath(pinclude + '/' + UStringExt::basename(_pathname));
+      (void) x.append(pinclude);
+             x.push_back('/');
+      (void) x.append(UStringExt::basename(pathname));
 
-      if (file.open(O_RDONLY)) content = file.getContent();
+      file.setPath(x);
+
+      if (file.open()) return file.getContent();
       }
 
-   U_RETURN_STRING(content);
+   return UString::getStringNull();
 }
 
 void UFile::printf(const char* format, uint32_t fmt_size, ...)

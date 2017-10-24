@@ -19,6 +19,7 @@
 vpFpcu      UString::printValueToBuffer;
 UString*    UString::string_null        = ULib::uustringnull.p2;
 UStringRep* UStringRep::string_rep_null = ULib::uustringrepnull.p2;
+UStringRep* UString::pkey;
 
 // OPTMIZE APPEND (BUFFERED)
 char* UString::appbuf;
@@ -351,7 +352,7 @@ void UString::str_allocate(int which)
       U_INTERNAL_ASSERT_EQUALS(str_nostat, U_NULLPTR)
       U_INTERNAL_ASSERT_EQUALS(str_tsa, U_NULLPTR)
       U_INTERNAL_ASSERT_EQUALS(str_soap, U_NULLPTR)
-      U_INTERNAL_ASSERT_EQUALS(UHashMap<void*>::pkey, U_NULLPTR)
+      U_INTERNAL_ASSERT_EQUALS(pkey, U_NULLPTR)
 
       U_NEW_ULIB_OBJECT(UString, str_host,             UString(stringrep_storage+0));
       U_NEW_ULIB_OBJECT(UString, str_chunked,          UString(stringrep_storage+1));
@@ -373,9 +374,9 @@ void UString::str_allocate(int which)
 
       uustringrep key1 = { stringrep_storage+17 };
 
-      UHashMap<void*>::pkey = key1.p2;
+      pkey = key1.p2;
 
-      U_INTERNAL_ASSERT(UHashMap<void*>::pkey->invariant())
+      U_INTERNAL_ASSERT(pkey->invariant())
 
       U_INTERNAL_ASSERT_EQUALS(*str_without_mac,      "00:00:00:00:00:00")
       U_INTERNAL_ASSERT_EQUALS(*str_CLIENT_QUEUE_DIR, "/tmp/uclient")

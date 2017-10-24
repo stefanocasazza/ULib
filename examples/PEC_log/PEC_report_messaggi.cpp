@@ -246,9 +246,13 @@ public:
             {
             vc = new VCasellaIdCounter();
 
-            key.duplicate(); // NB: need duplicate string because depends on mmap()'s content of document...
+            // NB: need duplicate string because depends on mmap()'s content of document...
 
-            table->insertAfterFind(key, vc);
+            key.duplicate();
+
+            UHashMap<void*>::lkey = key.rep;
+
+            table->insertAfterFind(vc);
             }
 
          CasellaIdCounter* c;

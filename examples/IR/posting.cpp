@@ -518,7 +518,7 @@ U_NO_EXPORT void UPosting::add()
 
    U_INTERNAL_ASSERT(*word)
 
-   bool present = (tbl_words ?          tbl_words->find(*word)
+   bool present = (tbl_words ?         tbl_words->find(*word)
                              : ((URDB*)cdb_words)->find(*word));
 
    if (present == false)
@@ -540,11 +540,13 @@ U_NO_EXPORT void UPosting::add()
 
       if (tbl_words)
          {
-         word->duplicate(); // NB: need duplicate string because depends on mmap()'s content of document...
-
          tbl_words_space += word->size() + posting->capacity();
 
-         tbl_words->insertAfterFind(*word, *posting);
+         word->duplicate(); // NB: need duplicate string because depends on mmap()'s content of document...
+
+         UHashMap<void*>::lkey = word->rep;
+
+         tbl_words->insertAfterFind(*posting);
          }
       }
    else

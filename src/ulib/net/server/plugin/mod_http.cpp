@@ -569,8 +569,6 @@ int UHttpPlugIn::handlerRun() // NB: we use this method instead of handlerInit()
       }
       }
 
-   U_ASSERT(UHTTP::cache_file_check_memory())
-
    U_SET_MODULE_NAME(usp_init);
 
 #ifndef U_LOG_DISABLE

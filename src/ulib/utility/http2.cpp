@@ -122,9 +122,9 @@ const UHTTP2::Settings UHTTP2::settings = {
    /* max_header_list_size */ UINT32_MAX
 };
 
-UHTTP2::Connection::Connection() : itable(53, setIndexStaticTable)
+UHTTP2::Connection::Connection() : itable(64, setIndexStaticTable)
 #ifdef DEBUG
-, dtable(53, setIndexStaticTable)
+, dtable(64, setIndexStaticTable)
 #endif
 {
    U_TRACE_REGISTER_OBJECT(0, Connection, "", 0)
@@ -1057,7 +1057,7 @@ check1:
                }
             }
 
-         table->hash = name.hashIgnoreCase();
+         UHashMap<void*>::lhash = name.hashIgnoreCase();
 
          goto insert;
          }
@@ -1079,7 +1079,7 @@ check2:
 
             name._assign(entry->name);
 
-            table->hash = entry->name->hashIgnoreCase();
+            UHashMap<void*>::lhash = entry->name->hashIgnoreCase();
 
             if (binsert_dynamic_table == false)
                {
@@ -1154,9 +1154,9 @@ cdefault:
 
       name._assign(entry->name);
 
-      table->hash = hash_static_table[index];
+      UHashMap<void*>::lhash = hash_static_table[index];
 
-      U_INTERNAL_DUMP("table->hash = %u name = %V value = %V", table->hash, name.rep, value.rep)
+      U_INTERNAL_DUMP("UHashMap<void*>::lhash = %u name = %V value = %V", UHashMap<void*>::lhash, name.rep, value.rep)
 
       goto insert;
 
@@ -1164,7 +1164,7 @@ case_38: // host
 
       name = *UString::str_host;
 
-      table->hash = hash_static_table[37]; // host
+      UHashMap<void*>::lhash = hash_static_table[37]; // host
 
       goto host;
 
@@ -1172,7 +1172,7 @@ case_1: // authority (a.k.a. the Host header)
 
       name = *UString::str_authority;
 
-      table->hash = hash_static_table[0]; // authority
+      UHashMap<void*>::lhash = hash_static_table[0]; // authority
 
 host: U_INTERNAL_ASSERT_EQUALS(bdecodeHeadersDebug, false)
 
@@ -1337,7 +1337,7 @@ case_4_5: // :path => / /index.html
          setURI(value);
          }
 
-      table->hash = hash_static_table[3]; // path
+      UHashMap<void*>::lhash = hash_static_table[3]; // path
 
       goto insert;
 
@@ -1415,7 +1415,7 @@ case_14: // :status 500
             if (isHpackError()) return;
             }
 
-         table->hash = hash_static_table[7]; // status
+         UHashMap<void*>::lhash = hash_static_table[7]; // status
 
          goto insert;
          }
@@ -1448,7 +1448,7 @@ case_16: // accept-encoding: gzip, deflate
 
       setEncoding(value);
 
-      table->hash = hash_static_table[15]; // accept_encoding
+      UHashMap<void*>::lhash = hash_static_table[15]; // accept_encoding
 
       goto insert;
 
@@ -1474,7 +1474,7 @@ case_17: // accept-language
 
       U_INTERNAL_DUMP("Accept-Language: = %.*S", U_HTTP_ACCEPT_LANGUAGE_TO_TRACE)
 
-      table->hash = hash_static_table[16]; // accept_language
+      UHashMap<void*>::lhash = hash_static_table[16]; // accept_language
 
       goto insert;
 
@@ -1500,7 +1500,7 @@ case_19: // accept
 
       U_INTERNAL_DUMP("Accept: = %.*S", U_HTTP_ACCEPT_TO_TRACE)
 
-      table->hash = hash_static_table[18]; // accept
+      UHashMap<void*>::lhash = hash_static_table[18]; // accept
 
       goto insert;
 
@@ -1528,7 +1528,7 @@ case_28: // content_length
       U_INTERNAL_DUMP("Content-Length: = %.*S pStream->clength = %u", U_STRING_TO_TRACE(value), pStream->clength)
       }
 
-      table->hash = hash_static_table[27]; // content_length 
+      UHashMap<void*>::lhash = hash_static_table[27]; // content_length 
 
       goto insert;
 
@@ -1557,7 +1557,7 @@ case_31: // content_type
       U_INTERNAL_DUMP("Content-Type(%u): = %.*S", U_http_content_type_len, U_HTTP_CTYPE_TO_TRACE)
       }
 
-      table->hash = hash_static_table[30]; // content_type 
+      UHashMap<void*>::lhash = hash_static_table[30]; // content_type 
 
       goto insert;
 
@@ -1585,7 +1585,7 @@ case_32: // cookie
 
       U_INTERNAL_DUMP("Cookie(%u): = %.*S", U_http_info.cookie_len, U_HTTP_COOKIE_TO_TRACE)
 
-      table->hash = hash_static_table[31]; // cookie 
+      UHashMap<void*>::lhash = hash_static_table[31]; // cookie 
 
       goto insert;
 
@@ -1614,7 +1614,7 @@ case_35: // expect
          {
          name = *UString::str_expect;
 
-         table->hash = hash_static_table[34]; // expect 
+         UHashMap<void*>::lhash = hash_static_table[34]; // expect 
 
          goto insert;
          }
@@ -1642,7 +1642,7 @@ case_40: // if-modified-since
 
       U_INTERNAL_DUMP("If-Modified-Since = %u", U_http_info.if_modified_since)
 
-      table->hash = hash_static_table[39]; // if_modified_since 
+      UHashMap<void*>::lhash = hash_static_table[39]; // if_modified_since 
 
       goto insert;
 
@@ -1668,7 +1668,7 @@ case_50: // range
 
       U_INTERNAL_DUMP("Range = %.*S", U_HTTP_RANGE_TO_TRACE)
 
-      table->hash = hash_static_table[49]; // range 
+      UHashMap<void*>::lhash = hash_static_table[49]; // range 
 
       goto insert;
 
@@ -1694,7 +1694,7 @@ case_51: // referer
 
       U_INTERNAL_DUMP("Referer(%u): = %.*S", U_http_info.referer_len, U_HTTP_REFERER_TO_TRACE)
 
-      table->hash = hash_static_table[50]; // referer 
+      UHashMap<void*>::lhash = hash_static_table[50]; // referer 
 
       goto insert;
 
@@ -1728,12 +1728,12 @@ case_58: // user-agent
 
       U_INTERNAL_DUMP("User-Agent: = %.*S", U_HTTP_USER_AGENT_TO_TRACE)
 
-      table->hash = hash_static_table[57]; // user_agent
+      UHashMap<void*>::lhash = hash_static_table[57]; // user_agent
 
 insert:
       U_INTERNAL_ASSERT(name)
       U_INTERNAL_ASSERT(value)
-      U_INTERNAL_ASSERT(table->hash)
+      U_INTERNAL_ASSERT(UHashMap<void*>::lhash)
 
       U_INTERNAL_DUMP("dyntbl->num_entries = %u binsert_dynamic_table = %b", dyntbl->num_entries, binsert_dynamic_table)
 
@@ -1806,7 +1806,7 @@ void UHTTP2::decodeHeaders()
 
       if (U_http_info.uri_len == 0)
          {
-         table->hash = hash_static_table[3]; // path
+         UHashMap<void*>::lhash = hash_static_table[3]; // path
 
          UString value = table->at(UString::str_path->rep);
 
@@ -1818,7 +1818,7 @@ void UHTTP2::decodeHeaders()
 
       if (U_http_host_len == 0)
          {
-         table->hash = hash_static_table[0]; // authority
+         UHashMap<void*>::lhash = hash_static_table[0]; // authority
 
          UString value = table->at(UString::str_authority->rep);
 
@@ -1832,7 +1832,7 @@ void UHTTP2::decodeHeaders()
 
       if (U_http_info.user_agent_len == 0)
          {
-         table->hash = hash_static_table[57]; // user-agent
+         UHashMap<void*>::lhash = hash_static_table[57]; // user-agent
 
          UString value = table->at(UString::str_user_agent->rep);
 
@@ -1847,7 +1847,7 @@ void UHTTP2::decodeHeaders()
 
       if (U_http_is_accept_gzip == false)
          {
-         table->hash = hash_static_table[15]; // accept-encoding
+         UHashMap<void*>::lhash = hash_static_table[15]; // accept-encoding
 
          UString value = table->at(UString::str_accept_encoding->rep);
 
@@ -1946,7 +1946,7 @@ void UHTTP2::manageHeaders()
 
          UHashMap<UString>* table = &(pConnection->itable);
 
-         table->hash = u_hash_ignore_case((unsigned char*)U_CONSTANT_TO_PARAM("trailer"));
+         UHashMap<void*>::lhash = u_hash_ignore_case((unsigned char*)U_CONSTANT_TO_PARAM("trailer"));
 
          UString trailer = table->at(U_CONSTANT_TO_PARAM("trailer"));
 
@@ -3068,11 +3068,9 @@ void UHTTP2::downgradeRequest()
 
    if (U_http_is_accept_gzip)
       {
-      pConnection->itable.hash = hash_static_table[15]; // accept_encoding
+      UHashMap<void*>::lhash = hash_static_table[15]; // accept_encoding
 
-      pConnection->itable.lookup(hpack_static_table[15].name);
-
-      U_INTERNAL_ASSERT_POINTER(pConnection->itable.node)
+      (void) pConnection->itable.lookup(hpack_static_table[15].name);
 
       UClientImage_Base::request->snprintf_add(U_CONSTANT_TO_PARAM("Accept-Encoding: %v\r\n"), pConnection->itable.elem());
       }

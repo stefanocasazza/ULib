@@ -39,6 +39,8 @@ template <class T> class UVector;
 template <class T> class UOrmTypeHandler;
 template <class T> class UJsonTypeHandler;
 
+typedef UVector<UString> UVectorUString;
+
 //#define U_RING_BUFFER
 
 template <> class U_EXPORT UVector<void*> {
@@ -1181,9 +1183,22 @@ public:
    uint32_t find(     const char* s, uint32_t n) __pure;
    uint32_t findRange(const char* s, uint32_t n, uint32_t start, uint32_t end) __pure;
 
-   // Check equality with string at pos
+   // check equality with string at pos
 
-   bool isEqual(uint32_t pos, const UString& str, bool ignore_case = false) __pure;
+   __pure bool isEqual(uint32_t pos, const UString& str, bool ignore_case = false)
+      {
+      U_TRACE(0, "UVector<UString>::isEqual(%u,%V,%b)", pos, str.rep, ignore_case)
+
+      U_CHECK_MEMORY
+
+      if (_length &&
+          UStringRep::equal_lookup(UVector<UStringRep*>::at(pos), str.rep, ignore_case))
+         {
+         U_RETURN(true);
+         }
+
+      U_RETURN(false);
+      }
 
    // Check equality with an existing vector object
 

@@ -93,6 +93,7 @@ static void fp_test(void)
 {
    char buf[7];
    char tp[20];
+   int i, j, k, l;
    char* prefix = buf;
 
    puts("\nFormatted output test");
@@ -101,13 +102,13 @@ static void fp_test(void)
 
    strcpy(prefix, "%");
 
-   for (int i = 0; i < 2; i++)
+   for (i = 0; i < 2; i++)
       {
-      for (int j = 0; j < 2; j++)
+      for (j = 0; j < 2; j++)
          {
-         for (int k = 0; k < 2; k++)
+         for (k = 0; k < 2; k++)
             {
-            for (int l = 0; l < 2; l++)
+            for (l = 0; l < 2; l++)
                {
                strcpy(prefix, "%");
                if (i == 0) strcat(prefix, "-");

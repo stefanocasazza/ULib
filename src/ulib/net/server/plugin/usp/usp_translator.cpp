@@ -30,52 +30,6 @@
 
 #include <ulib/application.h>
 
-#define USP_SESSION_INIT \
-"\n\t\nstatic void usp_init_%.*s()\n" \
-"{\n" \
-"\tU_TRACE(5, \"::usp_init_%.*s()\")\n" \
-"\t\n" \
-"%s" \
-"%s" \
-"\n\tif (UHTTP::db_session == U_NULLPTR) UHTTP::initSession();\n" \
-"}"
-
-#define USP_TEMPLATE \
-"// %.*s.cpp - dynamic page translation (%.*s.usp => %.*s.cpp)\n" \
-"\t\n" \
-"#include <ulib/net/server/usp_macro.h>\n" \
-"\t\n" \
-"%v" \
-"\t\n" \
-"\t\n" \
-"extern \"C\" {\n" \
-"extern U_EXPORT void runDynamicPage_%.*s(int param);\n" \
-"       U_EXPORT void runDynamicPage_%.*s(int param)\n" \
-"{\n" \
-"\tU_TRACE(0, \"::runDynamicPage_%.*s(%%d)\", param)\n" \
-"\t\n" \
-"%s" \
-"\t\n" \
-"\tif (param)\n" \
-"\t\t{\n" \
-"%s" \
-"%s" \
-"%s" \
-"%s" \
-"%s" \
-"%s" \
-"\t\t}\n" \
-"\t\n" \
-"%v" \
-"%v" \
-"\t\n" \
-"%v" \
-"%v" \
-"%v" \
-"%s" \
-"\t\n" \
-"} }\n"
-
 class Application : public UApplication {
 public:
 
@@ -706,11 +660,19 @@ loop: distance = t.getDistance();
 
          (void) declaration.reserve(500U);
 
-         declaration.snprintf_add(U_CONSTANT_TO_PARAM(USP_SESSION_INIT),
-                         basename_sz, basename_ptr,
-                         basename_sz, basename_ptr,
-                         (bsession ? "\n\tif (UHTTP::data_session == U_NULLPTR)   U_NEW(UDataSession, UHTTP::data_session, UDataSession);\n\t" : ""),
-                         (bstorage ? "\n\tif (UHTTP::data_storage == U_NULLPTR) { U_NEW(UDataSession, UHTTP::data_storage, UDataSession(*UString::str_storage_keyid)); }\n\t" : ""));
+         declaration.snprintf_add(U_CONSTANT_TO_PARAM(
+               "\n\t\nstatic void usp_init_%.*s()\n"
+               "{\n"
+               "\tU_TRACE(5, \"::usp_init_%.*s()\")\n"
+               "\t\n"
+               "%s"
+               "%s"
+               "\n\tif (UHTTP::db_session == U_NULLPTR) UHTTP::initSession();\n"
+               "}"),
+               basename_sz, basename_ptr,
+               basename_sz, basename_ptr,
+               (bsession ? "\n\tif (UHTTP::data_session == U_NULLPTR)   U_NEW(UDataSession, UHTTP::data_session, UDataSession);\n\t" : ""),
+               (bstorage ? "\n\tif (UHTTP::data_storage == U_NULLPTR) { U_NEW(UDataSession, UHTTP::data_storage, UDataSession(*UString::str_storage_keyid)); }\n\t" : ""));
          }
 
       if (binit) (void) u__snprintf(ptr1, 100, U_CONSTANT_TO_PARAM("\n\t\tif (param == U_DPAGE_INIT) { usp_init_%.*s(); return; }\n\t"), basename_sz, basename_ptr);
@@ -759,31 +721,65 @@ loop: distance = t.getDistance();
                                                          "\n\t(void) UClientImage_Base::wbuffer->insert(0, U_CONSTANT_TO_PARAM(%v));\n\t\n"), n, encoded.rep);
          }
 
-      UString result(1024U + sizeof(USP_TEMPLATE) + declaration.size() + http_header.size() + output0.size() + output1.size() + output2.size());
+      UString result(1024U + declaration.size() + http_header.size() + output0.size() + output1.size() + output2.size());
 
-      result.snprintf(U_CONSTANT_TO_PARAM(USP_TEMPLATE),
-                      basename_sz, basename_ptr,
-                      basename_sz, basename_ptr,
-                      basename_sz, basename_ptr,
-                      declaration.rep,
-                      basename_sz, basename_ptr,
-                      basename_sz, basename_ptr,
-                      basename_sz, basename_ptr,
-                      bvar ? "\n\tuint32_t usp_sz = 0;"
-                             "\n\tchar usp_buffer[10 * 4096];\n"
-                           : "",
-                      ptr1,
-                      ptr2,
-                      ptr3,
-                      ptr4,
-                      ptr5,
-                      ptr6,
-                      vcode.rep,
-                      http_header.rep,
-                      output0.rep,
-                      output1.rep,
-                      output2.rep,
-                      ptr7);
+      result.snprintf(U_CONSTANT_TO_PARAM(
+            "// %.*s.cpp - dynamic page translation (%.*s.usp => %.*s.cpp)\n"
+            "\t\n"
+            "#include <ulib/net/server/usp_macro.h>\n"
+            "\t\n"
+            "%v"
+            "\t\n"
+            "\t\n"
+            "extern \"C\" {\n"
+            "extern U_EXPORT void runDynamicPage_%.*s(int param);\n"
+            "       U_EXPORT void runDynamicPage_%.*s(int param)\n"
+            "{\n"
+            "\tU_TRACE(0, \"::runDynamicPage_%.*s(%%d)\", param)\n"
+            "\t\n"
+            "%s"
+            "\t\n"
+            "\tif (param)\n"
+            "\t\t{\n"
+            "%s"
+            "%s"
+            "%s"
+            "%s"
+            "%s"
+            "%s"
+            "\t\t}\n"
+            "\t\n"
+            "%v"
+            "%v"
+            "\t\n"
+            "%v"
+            "%v"
+            "%v"
+            "%s"
+            "\t\n"
+            "} }\n"),
+            basename_sz, basename_ptr,
+            basename_sz, basename_ptr,
+            basename_sz, basename_ptr,
+            declaration.rep,
+            basename_sz, basename_ptr,
+            basename_sz, basename_ptr,
+            basename_sz, basename_ptr,
+            bvar ? "\n\tuint32_t usp_sz = 0;"
+                   "\n\tchar usp_buffer[10 * 4096];\n"
+                 : "",
+            ptr1,
+            ptr2,
+            ptr3,
+            ptr4,
+            ptr5,
+            ptr6,
+            vcode.rep,
+            http_header.rep,
+            output0.rep,
+            output1.rep,
+            output2.rep,
+            ptr7);
 
       UString name(200U);
 

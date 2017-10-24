@@ -950,7 +950,7 @@ int USSIPlugIn::handlerConfig(UFileConfig& cfg)
 
       if (x)
          {
-         U_NEW(UString, environment, UString(UStringExt::prepareForEnvironmentVar(UFile::contentOf(x))));
+         U_NEW(UString, environment, UString(UStringExt::prepareForEnvironmentVar(UFile::contentOf(x, O_RDONLY, false, U_NULLPTR))));
 
          const char* home = U_SYSCALL(getenv, "%S", "HOME");
 

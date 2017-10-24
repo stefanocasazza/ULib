@@ -1,7 +1,6 @@
 inp/des3/URLengine.o
 inp/pkcs7.input
 inp/soap.input
-inp/test.db
 inp/soap.fault
 inp/tokenizer.input
 inp/pcre.input

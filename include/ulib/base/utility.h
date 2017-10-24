@@ -681,6 +681,8 @@ static inline unsigned long u_atoi(const char* restrict s)
 #endif
 }
 
+U_EXPORT int8_t u_log2(uint64_t value) __pure;
+
 static inline unsigned u__octc2int(unsigned char c) { return ((c - '0') & 07); }
 
 /**

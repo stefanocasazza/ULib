@@ -301,24 +301,6 @@ __pure uint32_t UVector<UString>::find(const UString& str, bool ignore_case)
    U_RETURN(U_NOT_FOUND);
 }
 
-// Check equality with string at pos
-
-__pure bool UVector<UString>::isEqual(uint32_t pos, const UString& str, bool ignore_case)
-{
-   U_TRACE(0, "UVector<UString>::isEqual(%u,%V,%b)", pos, str.rep, ignore_case)
-
-   U_CHECK_MEMORY
-
-   if (_length)
-      {
-      UStringRep* rep = UVector<UStringRep*>::at(pos);
-
-      if (UStringRep::equal_lookup(rep, U_STRING_TO_PARAM(*rep), str.rep, str.size(), ignore_case)) U_RETURN(true);
-      }
-
-   U_RETURN(false);
-}
-
 __pure uint32_t UVector<UString>::findSorted(const UString& str, bool ignore_case, bool bcouple)
 {
    U_TRACE(0, "UVector<UString>::findSorted(%V,%b,%b)", str.rep, ignore_case, bcouple)

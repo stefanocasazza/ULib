@@ -1503,6 +1503,9 @@ U_EXPORT main(int argc, char* argv[])
    /*
    double val1 = U_STRING_FROM_CONSTANT("0").strtod();
    u__printf(1, U_CONSTANT_TO_PARAM("0 = %lf %g"), val1, val1);
+   UString data = U_STRING_FROM_CONSTANT("0$&$&$&$&$&$&$&$&$&$&fileName");
+   UVector<UString> vec(data, "$&$&$");
+   for (auto part : vec) cout << "part = " << part << '\n';
    exit(0);
    */
 

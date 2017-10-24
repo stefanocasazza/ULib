@@ -522,13 +522,13 @@ protected:
    static void wrapRequest();
 #endif
 
-   static bool setIndexStaticTable(UHashMap<void*>* table, const char* key, uint32_t length)
+   static bool setIndexStaticTable(UHashMap<void*>* table)
       {
-      U_TRACE(0, "UHTTP2::setIndexStaticTable(%p,%.*S,%u)", table, length, key, length)
+      U_TRACE(0, "UHTTP2::setIndexStaticTable(%p)", table)
 
-   // if (bhash) table->hash = u_hash_ignore_case((unsigned char*)key, length);
+   // if (bhash) UHashMap<void*>::lhash = u_hash_ignore_case((unsigned char*)U_STRING_TO_PARAM(*UHashMap<void*>::lkey));
 
-      UHashMap<void*>::_setIndex(table);
+      UHashMap<void*>::setIdx(table);
 
       U_RETURN(true); // NB: ignore case...
       }
@@ -774,13 +774,9 @@ protected:
       {
       U_TRACE(0, "UHTTP2::findHeader(%u)", index)
 
-      UHashMap<UString>* table = &(pConnection->dtable);
+      UHashMap<void*>::lhash = hash_static_table[index];
 
-      table->hash = hash_static_table[index];
-
-      table->lookup(hpack_static_table[index].name);
-
-      if (table->node) U_RETURN(true);
+      if (pConnection->dtable.lookup(hpack_static_table[index].name)) U_RETURN(true);
 
       U_RETURN(false);
       }
@@ -810,13 +806,11 @@ protected:
     * {
     * U_TRACE(0, "UHTTP2::eraseHeader(%u)", index)
     *
+    * UHashMap<void*>::lhash = hash_static_table[index];
+    *
     * UHashMap<UString>* table = &(pConnection->itable);
     *
-    * table->hash = hash_static_table[index];
-    *
-    * table->lookup(hpack_static_table[index].name);
-    *
-    * if (table->node) table->eraseAfterFind();
+    * if (table->lookup(hpack_static_table[index].name)) table->eraseAfterFind();
     * }
     *
     * static void decodeHeadersResponse(unsigned char* ptr, uint32_t length)

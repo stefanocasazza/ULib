@@ -299,7 +299,7 @@ public:
 
          ++nmsg;
 
-         table->insertAfterFind(Messaggio::msg->identifier, Messaggio::msg);
+         table->insertAfterFind(Messaggio::msg);
          }
 
       processLine(bnew);

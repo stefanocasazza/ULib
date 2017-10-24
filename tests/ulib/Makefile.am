@@ -18,7 +18,7 @@ PRG = test_timeval test_timer test_notifier test_string \
 		test_services test_base64 test_header test_entity \
 		test_ipaddress test_socket test_ftp test_http test_rdb_client \
 		test_tokenizer test_query_parser test_multipart test_command test_dialog test_json test_redis test_elasticsearch \
-		test_smtp test_pop3 test_imap
+		test_smtp test_pop3 test_imap test_hash_map
 ##		test_twilio
 
 TST = timeval.test timer.test notifier.test string.test \
@@ -26,7 +26,7 @@ TST = timeval.test timer.test notifier.test string.test \
 		vector.test options.test application.test tree.test compress.test cache.test date.test \
 		services.test base64.test header.test entity.test \
 		ipaddress.test socket.test ftp.test http.test \
-		tokenizer.test query_parser.test multipart.test command.test json.test
+		tokenizer.test query_parser.test multipart.test command.test json.test hash_map.test
 ## 	pop3.test imap.test smtp.test dialog.test redis.test elasticsearch.test twilio.test
 
 if ENABLE_SHARED
@@ -101,6 +101,7 @@ test_server_SOURCES = test_server.cpp
 test_redis_SOURCES = test_redis.cpp
 test_mongodb_SOURCES = test_mongodb.cpp
 test_elasticsearch_SOURCES = test_elasticsearch.cpp
+test_hash_map_SOURCES = test_hash_map.cpp
 
 if PTHREAD
 PRG += test_thread
@@ -241,7 +242,7 @@ TESTS = $(TST) ../reset.color
 ## arping.test event.test curl.test ftp.test imap.test ldap.test pop3.test sigslot.test smtp.test ssh_client.test
 test: all-am
 	$(MAKE) $(AM_MAKEFLAGS) $(check_PROGRAMS)
-	../make_test.sh application.test base64.test bit_array.test cache.test cdb.test certificate.test command.test compress.test crl.test date.test des3.test dialog.test digest.test entity.test expat.test file.test file_config.test header.test http.test https.test interrupt.test json.test log.test memory_pool.test multipart.test notifier.test options.test pcre.test pkcs10.test pkcs7.test plugin.test process.test query_parser.test rdb.test rdb_client_server.test server.test server_rpc.test services.test soap_client.test soap_server.test ssl_client_server.test string.test timer.test timestamp.test timeval.test tokenizer.test tree.test unixsocket.test url.test vector.test zip.test ../reset.color
+	../make_test.sh application.test base64.test bit_array.test cache.test cdb.test certificate.test command.test compress.test crl.test date.test des3.test dialog.test digest.test entity.test expat.test file.test file_config.test header.test http.test https.test interrupt.test json.test log.test memory_pool.test multipart.test notifier.test options.test pcre.test pkcs10.test pkcs7.test plugin.test process.test query_parser.test rdb.test rdb_client_server.test server.test server_rpc.test services.test soap_client.test soap_server.test ssl_client_server.test string.test timer.test timestamp.test timeval.test tokenizer.test tree.test unixsocket.test url.test vector.test zip.test hash_map.test ../reset.color
 
 clean-local:
 	-rm -rf out err core .libs *.bb* *.da *.gc* *.log test_log.log* tmp/* \

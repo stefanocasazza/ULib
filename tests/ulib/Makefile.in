@@ -226,14 +226,14 @@ am__EXEEXT_19 = test_timeval$(EXEEXT) test_timer$(EXEEXT) \
 	test_multipart$(EXEEXT) test_command$(EXEEXT) \
 	test_dialog$(EXEEXT) test_json$(EXEEXT) test_redis$(EXEEXT) \
 	test_elasticsearch$(EXEEXT) test_smtp$(EXEEXT) \
-	test_pop3$(EXEEXT) test_imap$(EXEEXT) $(am__EXEEXT_1) \
-	$(am__EXEEXT_2) $(am__EXEEXT_3) $(am__EXEEXT_4) \
-	$(am__EXEEXT_5) $(am__EXEEXT_6) $(am__EXEEXT_7) \
-	$(am__EXEEXT_8) $(am__EXEEXT_9) $(am__EXEEXT_10) \
-	$(am__EXEEXT_2) $(am__EXEEXT_3) $(am__EXEEXT_11) \
-	$(am__EXEEXT_12) $(am__EXEEXT_13) $(am__EXEEXT_14) \
-	$(am__EXEEXT_15) $(am__EXEEXT_16) $(am__EXEEXT_17) \
-	$(am__EXEEXT_18)
+	test_pop3$(EXEEXT) test_imap$(EXEEXT) test_hash_map$(EXEEXT) \
+	$(am__EXEEXT_1) $(am__EXEEXT_2) $(am__EXEEXT_3) \
+	$(am__EXEEXT_4) $(am__EXEEXT_5) $(am__EXEEXT_6) \
+	$(am__EXEEXT_7) $(am__EXEEXT_8) $(am__EXEEXT_9) \
+	$(am__EXEEXT_10) $(am__EXEEXT_2) $(am__EXEEXT_3) \
+	$(am__EXEEXT_11) $(am__EXEEXT_12) $(am__EXEEXT_13) \
+	$(am__EXEEXT_14) $(am__EXEEXT_15) $(am__EXEEXT_16) \
+	$(am__EXEEXT_17) $(am__EXEEXT_18)
 am_test_application_OBJECTS = test_application.$(OBJEXT)
 test_application_OBJECTS = $(am_test_application_OBJECTS)
 test_application_LDADD = $(LDADD)
@@ -336,6 +336,10 @@ am_test_ftp_OBJECTS = test_ftp.$(OBJEXT)
 test_ftp_OBJECTS = $(am_test_ftp_OBJECTS)
 test_ftp_LDADD = $(LDADD)
 test_ftp_DEPENDENCIES = $(top_builddir)/src/ulib/lib@ULIB@.la
+am_test_hash_map_OBJECTS = test_hash_map.$(OBJEXT)
+test_hash_map_OBJECTS = $(am_test_hash_map_OBJECTS)
+test_hash_map_LDADD = $(LDADD)
+test_hash_map_DEPENDENCIES = $(top_builddir)/src/ulib/lib@ULIB@.la
 am_test_header_OBJECTS = test_header.$(OBJEXT)
 test_header_OBJECTS = $(am_test_header_OBJECTS)
 test_header_LDADD = $(LDADD)
@@ -608,28 +612,29 @@ SOURCES = $(product1_la_SOURCES) $(product2_la_SOURCES) \
 	$(test_entity_SOURCES) $(test_event_SOURCES) \
 	$(test_expat_SOURCES) $(test_file_SOURCES) \
 	$(test_file_config_SOURCES) $(test_ftp_SOURCES) \
-	$(test_header_SOURCES) $(test_http_SOURCES) \
-	$(test_https_SOURCES) $(test_imap_SOURCES) \
-	$(test_interrupt_SOURCES) $(test_ipaddress_SOURCES) \
-	$(test_json_SOURCES) $(test_ldap_SOURCES) $(test_log_SOURCES) \
-	$(test_magic_SOURCES) $(test_memory_pool_SOURCES) \
-	$(test_mongodb_SOURCES) $(test_multipart_SOURCES) \
-	$(test_notifier_SOURCES) $(test_options_SOURCES) \
-	$(test_orm_SOURCES) $(test_pcre_SOURCES) \
-	$(test_pkcs10_SOURCES) $(test_pkcs7_SOURCES) \
-	$(test_plugin_SOURCES) $(test_pop3_SOURCES) \
-	$(test_process_SOURCES) $(test_query_parser_SOURCES) \
-	$(test_rdb_SOURCES) $(test_rdb_client_SOURCES) \
-	$(test_rdb_server_SOURCES) $(test_redis_SOURCES) \
-	$(test_server_SOURCES) $(test_services_SOURCES) \
-	$(test_smtp_SOURCES) $(test_soap_client_SOURCES) \
-	$(test_soap_server_SOURCES) $(test_socket_SOURCES) \
-	$(test_ssh_client_SOURCES) $(test_ssl_client_SOURCES) \
-	$(test_ssl_server_SOURCES) $(test_string_SOURCES) \
-	$(test_tdb_SOURCES) $(test_thread_SOURCES) \
-	$(test_timer_SOURCES) $(test_timestamp_SOURCES) \
-	$(test_timeval_SOURCES) $(test_tokenizer_SOURCES) \
-	$(test_tree_SOURCES) $(test_unixsocket_client_SOURCES) \
+	$(test_hash_map_SOURCES) $(test_header_SOURCES) \
+	$(test_http_SOURCES) $(test_https_SOURCES) \
+	$(test_imap_SOURCES) $(test_interrupt_SOURCES) \
+	$(test_ipaddress_SOURCES) $(test_json_SOURCES) \
+	$(test_ldap_SOURCES) $(test_log_SOURCES) $(test_magic_SOURCES) \
+	$(test_memory_pool_SOURCES) $(test_mongodb_SOURCES) \
+	$(test_multipart_SOURCES) $(test_notifier_SOURCES) \
+	$(test_options_SOURCES) $(test_orm_SOURCES) \
+	$(test_pcre_SOURCES) $(test_pkcs10_SOURCES) \
+	$(test_pkcs7_SOURCES) $(test_plugin_SOURCES) \
+	$(test_pop3_SOURCES) $(test_process_SOURCES) \
+	$(test_query_parser_SOURCES) $(test_rdb_SOURCES) \
+	$(test_rdb_client_SOURCES) $(test_rdb_server_SOURCES) \
+	$(test_redis_SOURCES) $(test_server_SOURCES) \
+	$(test_services_SOURCES) $(test_smtp_SOURCES) \
+	$(test_soap_client_SOURCES) $(test_soap_server_SOURCES) \
+	$(test_socket_SOURCES) $(test_ssh_client_SOURCES) \
+	$(test_ssl_client_SOURCES) $(test_ssl_server_SOURCES) \
+	$(test_string_SOURCES) $(test_tdb_SOURCES) \
+	$(test_thread_SOURCES) $(test_timer_SOURCES) \
+	$(test_timestamp_SOURCES) $(test_timeval_SOURCES) \
+	$(test_tokenizer_SOURCES) $(test_tree_SOURCES) \
+	$(test_unixsocket_client_SOURCES) \
 	$(test_unixsocket_server_SOURCES) $(test_url_SOURCES) \
 	$(test_vector_SOURCES) $(test_zip_SOURCES)
 DIST_SOURCES = $(am__product1_la_SOURCES_DIST) \
@@ -645,11 +650,12 @@ DIST_SOURCES = $(am__product1_la_SOURCES_DIST) \
 	$(test_entity_SOURCES) $(am__test_event_SOURCES_DIST) \
 	$(am__test_expat_SOURCES_DIST) $(test_file_SOURCES) \
 	$(test_file_config_SOURCES) $(test_ftp_SOURCES) \
-	$(test_header_SOURCES) $(test_http_SOURCES) \
-	$(am__test_https_SOURCES_DIST) $(test_imap_SOURCES) \
-	$(am__test_interrupt_SOURCES_DIST) $(test_ipaddress_SOURCES) \
-	$(test_json_SOURCES) $(am__test_ldap_SOURCES_DIST) \
-	$(test_log_SOURCES) $(am__test_magic_SOURCES_DIST) \
+	$(test_hash_map_SOURCES) $(test_header_SOURCES) \
+	$(test_http_SOURCES) $(am__test_https_SOURCES_DIST) \
+	$(test_imap_SOURCES) $(am__test_interrupt_SOURCES_DIST) \
+	$(test_ipaddress_SOURCES) $(test_json_SOURCES) \
+	$(am__test_ldap_SOURCES_DIST) $(test_log_SOURCES) \
+	$(am__test_magic_SOURCES_DIST) \
 	$(am__test_memory_pool_SOURCES_DIST) $(test_mongodb_SOURCES) \
 	$(test_multipart_SOURCES) $(test_notifier_SOURCES) \
 	$(test_options_SOURCES) $(am__test_orm_SOURCES_DIST) \
@@ -1111,7 +1117,7 @@ PRG = test_timeval test_timer test_notifier test_string test_file \
 	test_header test_entity test_ipaddress test_socket test_ftp \
 	test_http test_rdb_client test_tokenizer test_query_parser \
 	test_multipart test_command test_dialog test_json test_redis \
-	test_elasticsearch test_smtp test_pop3 test_imap \
+	test_elasticsearch test_smtp test_pop3 test_imap test_hash_map \
 	$(am__append_1) $(am__append_3) $(am__append_4) \
 	$(am__append_5) $(am__append_6) $(am__append_8) \
 	$(am__append_10) $(am__append_12) $(am__append_14) \
@@ -1125,12 +1131,12 @@ TST = timeval.test timer.test notifier.test string.test file.test \
 	cache.test date.test services.test base64.test header.test \
 	entity.test ipaddress.test socket.test ftp.test http.test \
 	tokenizer.test query_parser.test multipart.test command.test \
-	json.test $(am__append_2) $(am__append_7) $(am__append_9) \
-	$(am__append_11) $(am__append_13) $(am__append_15) \
-	$(am__append_17) $(am__append_19) $(am__append_21) \
-	$(am__append_23) $(am__append_25) $(am__append_27) \
-	$(am__append_29) $(am__append_31) $(am__append_33) \
-	$(am__append_35) $(am__append_37)
+	json.test hash_map.test $(am__append_2) $(am__append_7) \
+	$(am__append_9) $(am__append_11) $(am__append_13) \
+	$(am__append_15) $(am__append_17) $(am__append_19) \
+	$(am__append_21) $(am__append_23) $(am__append_25) \
+	$(am__append_27) $(am__append_29) $(am__append_31) \
+	$(am__append_33) $(am__append_35) $(am__append_37)
 @ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@test_plugin_SOURCES = test_plugin.cpp
 @ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@product1_la_SOURCES = plugin/product1.cpp
 @ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@product1_la_LIBADD = $(LDADD)
@@ -1179,6 +1185,7 @@ test_server_SOURCES = test_server.cpp
 test_redis_SOURCES = test_redis.cpp
 test_mongodb_SOURCES = test_mongodb.cpp
 test_elasticsearch_SOURCES = test_elasticsearch.cpp
+test_hash_map_SOURCES = test_hash_map.cpp
 @PTHREAD_TRUE@test_thread_SOURCES = test_thread.cpp
 @ZIP_TRUE@test_zip_SOURCES = test_zip.cpp
 @LIBTDB_TRUE@test_tdb_SOURCES = test_tdb.cpp
@@ -1374,6 +1381,10 @@ test_file_config$(EXEEXT): $(test_file_config_OBJECTS) $(test_file_config_DEPEND
 test_ftp$(EXEEXT): $(test_ftp_OBJECTS) $(test_ftp_DEPENDENCIES) $(EXTRA_test_ftp_DEPENDENCIES) 
 	@rm -f test_ftp$(EXEEXT)
 	$(AM_V_CXXLD)$(CXXLINK) $(test_ftp_OBJECTS) $(test_ftp_LDADD) $(LIBS)
+
+test_hash_map$(EXEEXT): $(test_hash_map_OBJECTS) $(test_hash_map_DEPENDENCIES) $(EXTRA_test_hash_map_DEPENDENCIES) 
+	@rm -f test_hash_map$(EXEEXT)
+	$(AM_V_CXXLD)$(CXXLINK) $(test_hash_map_OBJECTS) $(test_hash_map_LDADD) $(LIBS)
 
 test_header$(EXEEXT): $(test_header_OBJECTS) $(test_header_DEPENDENCIES) $(EXTRA_test_header_DEPENDENCIES) 
 	@rm -f test_header$(EXEEXT)
@@ -1602,6 +1613,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_file.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_file_config.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_ftp.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_hash_map.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_header.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_http.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_https.Po@am__quote@
@@ -2065,7 +2077,7 @@ uninstall-am:
 
 test: all-am
 	$(MAKE) $(AM_MAKEFLAGS) $(check_PROGRAMS)
-	../make_test.sh application.test base64.test bit_array.test cache.test cdb.test certificate.test command.test compress.test crl.test date.test des3.test dialog.test digest.test entity.test expat.test file.test file_config.test header.test http.test https.test interrupt.test json.test log.test memory_pool.test multipart.test notifier.test options.test pcre.test pkcs10.test pkcs7.test plugin.test process.test query_parser.test rdb.test rdb_client_server.test server.test server_rpc.test services.test soap_client.test soap_server.test ssl_client_server.test string.test timer.test timestamp.test timeval.test tokenizer.test tree.test unixsocket.test url.test vector.test zip.test ../reset.color
+	../make_test.sh application.test base64.test bit_array.test cache.test cdb.test certificate.test command.test compress.test crl.test date.test des3.test dialog.test digest.test entity.test expat.test file.test file_config.test header.test http.test https.test interrupt.test json.test log.test memory_pool.test multipart.test notifier.test options.test pcre.test pkcs10.test pkcs7.test plugin.test process.test query_parser.test rdb.test rdb_client_server.test server.test server_rpc.test services.test soap_client.test soap_server.test ssl_client_server.test string.test timer.test timestamp.test timeval.test tokenizer.test tree.test unixsocket.test url.test vector.test zip.test hash_map.test ../reset.color
 
 clean-local:
 	-rm -rf out err core .libs *.bb* *.da *.gc* *.log test_log.log* tmp/* \

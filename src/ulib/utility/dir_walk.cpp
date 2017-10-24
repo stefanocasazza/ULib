@@ -462,7 +462,7 @@ U_NO_EXPORT int UDirWalk::cmp_modify(const void* a, const void* b)
 
       (void) ra->stat();
 
-      cache_file_for_compare->insertAfterFind(key, ra);
+      cache_file_for_compare->insertAfterFind(ra);
       }
 
    UFile* rb = (*cache_file_for_compare)[*(UStringRep**)b];
@@ -475,7 +475,7 @@ U_NO_EXPORT int UDirWalk::cmp_modify(const void* a, const void* b)
 
       (void) rb->stat();
 
-      cache_file_for_compare->insertAfterFind(key, rb);
+      cache_file_for_compare->insertAfterFind(rb);
       }
 
    U_INTERNAL_DUMP("ra = %.*S", U_FILE_TO_TRACE(*ra))

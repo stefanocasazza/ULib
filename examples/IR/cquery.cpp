@@ -55,7 +55,7 @@ void WeightWord::push()
          return;
          }
 
-      tbl->insertAfterFind(*UPosting::filename, item);
+      tbl->insertAfterFind(item);
       }
 
    if (vec == U_NULLPTR) U_NEW(UVector<WeightWord*>, vec, UVector<WeightWord*>);

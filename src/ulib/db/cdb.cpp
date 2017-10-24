@@ -738,6 +738,68 @@ UString UCDB::print()
 
 // Save memory hash table as constant database
 
+static char*    writeTo_ptr;
+static UCDB*    writeTo_cdb;
+static pvPFpvpb writeTo_func;
+
+bool UCDB::writeTo(UStringRep* key, void* elem) // callWithDeleteForAllEntry()...
+{
+   U_TRACE(0, "UCDB::writeTo(%V,%p)", key, elem)
+
+   UStringRep* value;
+   bool bdelete = false;
+
+   if (writeTo_func == U_NULLPTR) value = (UStringRep*)UHashMap<void*>::node->elem;
+   else
+      {
+      value = (UStringRep*) writeTo_func((void*)UHashMap<void*>::node->elem, &bdelete);
+
+      U_INTERNAL_DUMP("bdelete = %b", bdelete)
+      }
+
+   if (value)
+      {
+      const UStringRep* k = UHashMap<void*>::node->key;
+
+      uint32_t klen =     k->size(), //  key length
+               dlen = value->size(); // data length
+
+      UCDB::cdb_record_header* _hr = (UCDB::cdb_record_header*) writeTo_ptr;
+
+      u_put_unaligned32(_hr->klen, klen);
+      u_put_unaligned32(_hr->dlen, dlen);
+
+      U_INTERNAL_DUMP("hr = { %u, %u }", klen, dlen)
+
+      writeTo_ptr += sizeof(UCDB::cdb_record_header);
+
+      U_MEMCPY(writeTo_ptr, k->data(), klen);
+
+      U_INTERNAL_DUMP("key = %.*S", klen, writeTo_ptr)
+
+      writeTo_ptr += klen;
+
+      U_MEMCPY(writeTo_ptr, value->data(), dlen);
+
+      U_INTERNAL_DUMP("data = %.*S", dlen, writeTo_ptr)
+
+      writeTo_ptr += dlen;
+
+      if (writeTo_func)
+         {
+         writeTo_cdb->nrecord++;
+
+         value->release();
+         }
+      }
+
+   // check if asked to delete node of the table...
+
+   if (bdelete) U_RETURN(true);
+
+   U_RETURN(false);
+}
+
 bool UCDB::writeTo(UCDB& cdb, UHashMap<void*>* table, uint32_t tbl_space, pvPFpvpb func)
 {
    U_TRACE(1, "UCDB::writeTo(%p,%p,%u,%p)", &cdb, table, tbl_space, func)
@@ -750,110 +812,14 @@ bool UCDB::writeTo(UCDB& cdb, UHashMap<void*>* table, uint32_t tbl_space, pvPFpv
 
    if (result)
       {
-      result = cdb.memmap(PROT_READ | PROT_WRITE);
+      if (cdb.memmap(PROT_READ | PROT_WRITE) == false) U_RETURN(false);
 
-      if (result == false) U_RETURN(false);
+      writeTo_ptr  = (writeTo_cdb = &cdb)->start(); // init of DATA
+      writeTo_func = func;
 
-      bool bdelete;
-      UStringRep* value;
-      const UStringRep* _key;
-      char* ptr = cdb.start(); // init of DATA
-      UCDB::cdb_record_header* _hr;
+      table->callWithDeleteForAllEntry(writeTo);
 
-      U_INTERNAL_DUMP("table->_length = %u", table->_length)
-
-      UHashMapNode* node;
-      UHashMapNode** pnode;
-      UHashMapNode** tbl = table->table;
-
-      uint32_t klen; //  key length
-      uint32_t dlen; // data length
-
-      for (uint32_t index = 0, capacity = table->_capacity; index < capacity; ++index)
-         {
-         if (tbl[index])
-            {
-            node  = tbl[index];
-            pnode = tbl + index;
-
-            do {
-               if (func == U_NULLPTR) value = (UStringRep*) node->elem;
-               else
-                  {
-                  value = (UStringRep*) func((void*)node->elem, &bdelete);
-
-                  U_INTERNAL_DUMP("bdelete = %b", bdelete)
-
-                  if (bdelete) // ask for to delete node of table...
-                     {
-                     *pnode = node->next; // lo si toglie dalla lista collisioni...
-
-                     /**
-                      * NB: it must be do in the function
-                      * ---------------------------------
-                      * elem = (T*) node->elem;
-                      *
-                      * u_destroy<T>(elem);
-                      * ---------------------------------
-                      */
-
-                     delete node;
-
-                     table->_length--;
-                     }
-                  }
-
-               if (value)
-                  {
-                  _key = node->key;
-
-                  klen =  _key->size(); //  key length
-                  dlen = value->size(); // data length
-
-                  _hr = (UCDB::cdb_record_header*) ptr;
-
-                  u_put_unaligned32(_hr->klen, klen);
-                  u_put_unaligned32(_hr->dlen, dlen);
-
-                  U_INTERNAL_DUMP("hr = { %u, %u }", klen, dlen)
-
-                  ptr += sizeof(UCDB::cdb_record_header);
-
-                  U_MEMCPY(ptr, _key->data(), klen);
-
-                  U_INTERNAL_DUMP("key = %.*S", klen, ptr)
-
-                  ptr += klen;
-
-                  U_MEMCPY(ptr, value->data(), dlen);
-
-                  U_INTERNAL_DUMP("data = %.*S", dlen, ptr)
-
-                  ptr += dlen;
-
-                  if (func)
-                     {
-                     cdb.nrecord++;
-
-                     value->release();
-                     }
-                  }
-
-               // check if asked to delete node of the table...
-
-               if (func == U_NULLPTR ||
-                   bdelete == false)
-                  {
-                  pnode = &(*pnode)->next;
-                  }
-               }
-            while ((node = *pnode));
-            }
-         }
-
-      U_INTERNAL_DUMP("table->_length = %u", table->_length)
-
-      cdb.hr = (UCDB::cdb_record_header*) ptr; // end of DATA
+      cdb.hr = (UCDB::cdb_record_header*) writeTo_ptr; // end of DATA
 
       uint32_t pos = cdb.makeFinish(true);
 

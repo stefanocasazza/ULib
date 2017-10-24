@@ -1149,15 +1149,13 @@ void UHTTP::init()
          U_ASSERT_MAJOR(cache_file->size(), 0)
 
          U_SRV_LOG("Loaded cache file store: %V", cache_file_store->rep);
-
-         U_ASSERT(cache_file_check_memory())
          }
 #  endif
       }
 
    sz = n + (15 * (n / 100)) + 32;
 
-   if (sz > cache_file->capacity()) cache_file->reserve(u_nextPowerOfTwo(sz));
+   if (sz > cache_file->capacity()) cache_file->allocate(u_nextPowerOfTwo(sz));
 
    U_INTERNAL_ASSERT_POINTER(pathname)
 
@@ -1224,8 +1222,6 @@ void UHTTP::init()
       }
 #endif
 
-   U_ASSERT(cache_file_check_memory())
-
    UServices::generateKey(UServices::key, U_NULLPTR); // for ULib facility request TODO session cookies... 
 
    U_INTERNAL_DUMP("htdigest = %p htpasswd = %p", htdigest, htpasswd)
@@ -1250,8 +1246,6 @@ void UHTTP::init()
          U_ASSERT_MAJOR(cache_file->size(), 0)
 
          U_SRV_LOG("Loaded cache icon store for directory listing");
-
-         U_ASSERT(cache_file_check_memory())
          }
       }
 
@@ -1272,8 +1266,6 @@ void UHTTP::init()
       U_ASSERT_MAJOR(cache_file->size(), 0)
 
       U_SRV_LOG("Loaded cache favicon.ico");
-
-      U_ASSERT(cache_file_check_memory())
       }
 
 #ifdef U_HTML_PAGINATION_SUPPORT // manage css for HTML Pagination
@@ -1292,8 +1284,6 @@ void UHTTP::init()
       U_ASSERT_MAJOR(cache_file->size(), 0)
 
       U_SRV_LOG("Loaded cache css store for HTML pagination");
-
-      U_ASSERT(cache_file_check_memory())
       }
 #endif
 
@@ -1357,34 +1347,6 @@ void UHTTP::init()
    UHTTP2::ctor();
 #endif
 }
-
-#ifdef DEBUG
-U_NO_EXPORT bool UHTTP::check_memory(UStringRep* key, void* value)
-{
-   U_TRACE(0, "UHTTP::check_memory(%V,%p)", key, value)
-
-   U_INTERNAL_ASSERT_POINTER(value)
-
-   UHTTP::UFileCacheData* cptr = (UHTTP::UFileCacheData*)value;
-
-   if (cptr->array) (void) cptr->array->check_memory();
-
-   U_RETURN(true);
-}
-
-bool UHTTP::cache_file_check_memory()
-{
-   U_TRACE_NO_PARAM(0, "UHTTP::cache_file_check_memory()")
-
-   U_INTERNAL_ASSERT_POINTER(cache_file)
-
-   cache_file->check_memory();
-
-   cache_file->callForAllEntry(check_memory);
-
-   U_RETURN(true);
-}
-#endif
 
 #ifdef U_ALIAS
 void UHTTP::setGlobalAlias(const UString& _alias) // NB: automatic alias for all uri request without suffix...
@@ -2247,7 +2209,7 @@ const char* UHTTP::getHeaderValuePtr(const char* name, uint32_t name_len, bool n
 
    if (U_http_version == '2')
       {
-      UHTTP2::pConnection->itable.hash = u_hash_ignore_case((unsigned char*)name, name_len);
+      UHashMap<void*>::lhash = u_hash_ignore_case((unsigned char*)name, name_len);
 
       *UClientImage_Base::request = UHTTP2::pConnection->itable.at(name, name_len);
 
@@ -3586,7 +3548,8 @@ U_NO_EXPORT bool UHTTP::runDynamicPage()
       U_INTERNAL_ASSERT_MINOR(n, 4096)
 
       for (i = 0; i < n; ++i) argv[i] = (*form_name_value)[i].c_str();
-                              argv[i] = U_NULLPTR;
+
+      argv[i] = U_NULLPTR;
 
       (void) csp->prog_main(n, argv);
 
@@ -9088,7 +9051,7 @@ nocontent:  UClientImage_Base::setCloseConnection();
 #     ifndef USE_HARDWARE_CRC32
          db_not_found->UCDB::setHash(ptr, len);
 #     else
-         db_not_found->UCDB::setHash(cache_file->hash);
+         db_not_found->UCDB::setHash(UHashMap<void*>::lhash);
 #     endif
 
          if (db_not_found->_fetch())

@@ -1319,11 +1319,6 @@ private:
 
    static UString getHTMLDirectoryList() U_NO_EXPORT;
 
-#ifdef DEBUG
-   static bool cache_file_check_memory();
-   static bool check_memory(UStringRep* key, void* value) U_NO_EXPORT;
-#endif
-
 #if defined(U_ALIAS) && defined(USE_LIBPCRE) // REWRITE RULE
    static void processRewriteRule() U_NO_EXPORT;
 #endif
