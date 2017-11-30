@@ -313,6 +313,8 @@ UString UStringExt::substitute(const char* s, uint32_t len, UVector<UString>& ve
 
    uint32_t n = vec.size();
 
+   U_INTERNAL_ASSERT_EQUALS(n & 1, 0)
+
    if (n == 2) return substitute(s, len, U_STRING_TO_PARAM(vec[0]), U_STRING_TO_PARAM(vec[1]));
 
    char c;
@@ -344,16 +346,13 @@ UString UStringExt::substitute(const char* s, uint32_t len, UVector<UString>& ve
          continue;
          }
 
-           if (u__islower(c)) mask_lower |= maskFirstChar[c-'a'];
+           if (u__isdigit(c)) bdigit = true;
+      else if (u__isspace(c)) bspace = true;
+      else if (u__islower(c)) mask_lower |= maskFirstChar[c-'a'];
       else if (u__isupper(c)) mask_upper |= maskFirstChar[c-'A'];
-      else if (u__isdigit(c)) bdigit  = true;
-      else if (u__isspace(c)) bspace  = true;
       }
 
-   bdollar = (dollar == n);
-
-   U_INTERNAL_DUMP("n1 = %u n2 = %u mask_lower = %B mask_upper = %B bdigit = %b bspace = %b dollar = %u bdollar = %b",
-                    n1,     n2,     mask_lower,     mask_upper,     bdigit,     bspace,     dollar,     bdollar)
+   U_INTERNAL_DUMP("n1 = %u n2 = %u", n1, n2)
 
    if (n2 <= n1) capacity = len;
    else
@@ -368,6 +367,11 @@ UString UStringExt::substitute(const char* s, uint32_t len, UVector<UString>& ve
    UString x(capacity);
    char* p2 = x.data();
    const char* end = s + len;
+
+   bdollar = (dollar == n);
+
+   U_INTERNAL_DUMP("mask_lower = %B mask_upper = %B bdigit = %b bspace = %b dollar = %u bdollar = %b",
+                    mask_lower,     mask_upper,     bdigit,     bspace,     dollar,     bdollar)
 
 loop:
    for (p1 = s; p1 < end; ++p1)
@@ -447,6 +451,125 @@ found:
          U_MEMCPY(p2, item.data(), n2);
                   p2 +=            n2;
          }
+
+      goto loop;
+      }
+
+   x.rep->_length = x.distance(p2);
+
+   U_INTERNAL_DUMP("len = %u", len)
+
+   if (len)
+      {
+      if (breserve &&
+          x.space() < len)
+         {
+         UString::_reserve(x, len);
+
+         p2 = x.pend();
+         }
+
+      U_MEMCPY(p2, s, len);
+
+      x.rep->_length += len;
+      }
+
+   U_INTERNAL_ASSERT(x.invariant())
+
+   U_RETURN_STRING(x);
+}
+
+// The format s uses positional identifiers indicated by a dollar sign ($) and single digit
+// positional ids to indicate which substitution arguments to use at that location within the format s
+
+UString UStringExt::substituteIds(const char* s, uint32_t len, UVector<UString>& vec)
+{
+   U_TRACE(1, "UStringExt::substituteIds(%.*S,%u,%p)", len, s, len, &vec)
+
+   U_INTERNAL_ASSERT_MAJOR(len, 0)
+
+   UString item;
+   uint32_t len1;
+   const char* p1;
+   bool breserve = false;
+   const char* end = s + len;
+   uint32_t i, n = vec.size(), n1 = n*2, n2 = 0, capacity, ids, old_ids = U_NOT_FOUND;
+
+   for (i = 0; i < n; ++i) n2 += vec[i].size();
+
+   if (n2 <= n1) capacity = len;
+   else
+      {
+      capacity = n2*((len+n1)/n1);
+
+      if (capacity > (256U * 1024U * 1024U)) capacity = (breserve = true, (256U * 1024U * 1024U)); // worst case... 
+      }
+
+   U_INTERNAL_DUMP("n1 = %u n2 = %u breserve = %b", n1, n2, breserve)
+
+   UString x(capacity);
+   char* p2 = x.data();
+
+loop:
+   for (p1 = s; p1 < end; ++p1)
+      {
+      U_INTERNAL_DUMP("p1 = %.10S", p1)
+
+      if (*p1 != '$') continue;
+
+      if (u__isdigit(p1[2]) == false) ids = (n1 = 2, p1[1] - '0');
+      else
+         {
+         for (i = 3; u__isdigit(p1[i]); ++i) {}
+
+         ids = (n1 = i, u__strtoul(p1+1, n1-1));
+         }
+
+      U_INTERNAL_DUMP("n1 = %u ids = %u old_ids = %u", n1, ids, old_ids)
+
+      if (ids != old_ids)
+         {
+         old_ids = ids;
+
+         n2 = (item = vec.at(ids)).size();
+
+         U_INTERNAL_DUMP("item(%u) = %V", n2, item.rep)
+
+         U_INTERNAL_ASSERT_MAJOR(n2, 0)
+         }
+
+      len1 = (p1-s);
+
+      U_INTERNAL_DUMP("len1 = %u", len1)
+
+      if (breserve)
+         {
+         uint32_t len2 = len1 + n2;
+
+         x.rep->_length = x.distance(p2);
+
+         if (x.space() < len2)
+            {
+            UString::_reserve(x, len2);
+
+            p2 = x.pend();
+            }
+         }
+
+      if (len1)
+         {
+         U_MEMCPY(p2, s, len1);
+                  p2 +=  len1;
+
+           s  = p1;
+         len -= len1;
+         }
+
+      len -= n1;
+        s += n1;
+
+      U_MEMCPY(p2, item.data(), n2);
+               p2 +=            n2;
 
       goto loop;
       }

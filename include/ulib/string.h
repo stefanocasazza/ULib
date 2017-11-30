@@ -114,6 +114,7 @@ class UPop3Client;
 class UHttpPlugIn;
 class UProxyPlugIn;
 class Application;
+class UFlatBuffer;
 class UServer_Base;
 class UHashMapNode;
 class UHashTableNode;
@@ -1016,6 +1017,7 @@ private:
    friend class UMimeHeader;
    friend class UHttpPlugIn;
    friend class Application;
+   friend class UFlatBuffer;
    friend class UProxyPlugIn;
    friend class UHashMapNode;
    friend class UServer_Base;
@@ -1918,7 +1920,6 @@ public:
    // STREAM
 
 #ifdef U_STDCPP_ENABLE
-
    istream& getline(istream& is, unsigned char delim = '\n');
 
    friend U_EXPORT istream& operator>>(istream& is,       UString& str);
@@ -2240,6 +2241,20 @@ public:
       char* ptr   = c_pointer(sz);
 
       rep->_length = sz + u_dtoa(number, ptr) - ptr;
+
+      U_INTERNAL_ASSERT(invariant())
+      }
+
+   void appendData(const char* t, uint32_t tlen)
+      {
+      U_TRACE(0, "UString::appendData(%.*S,%u)", tlen, t, tlen)
+
+      uint32_t sz = size();
+      char* ptr   = c_pointer(sz);
+
+      U_MEMCPY(ptr, t, tlen);
+
+      rep->_length = sz + tlen;
 
       U_INTERNAL_ASSERT(invariant())
       }

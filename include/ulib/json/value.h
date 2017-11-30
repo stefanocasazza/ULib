@@ -14,7 +14,7 @@
 #ifndef ULIB_VALUE_H
 #define ULIB_VALUE_H 1
 
-#include <ulib/container/hash_map.h>
+#include <ulib/serialize/flatbuffers.h>
 
 #include <math.h>
 
@@ -71,10 +71,8 @@ public:
    U_MEMORY_DEALLOCATOR
 
    union jval {
-           int sint;
-  unsigned int uint;
-      uint64_t ival;
-        double real;
+       uint64_t ival;
+         double real;
    };
 
    static int jsonParseFlags;
@@ -222,7 +220,7 @@ public:
       U_RETURN(false);
       }
 
-   uint32_t getTag() const { return getTag(value.ival); }
+   uint8_t getTag() const { return getTag(value.ival); }
 
    bool isNull() const
       {
@@ -233,20 +231,7 @@ public:
       U_RETURN(false);
       }
 
-   bool isBool() const
-      {
-      U_TRACE_NO_PARAM(0, "UValue::isBool()")
-
-      uint32_t type = getTag();
-
-      if (type ==  U_TRUE_VALUE ||
-          type == U_FALSE_VALUE)
-         {
-         U_RETURN(true);
-         }
-
-      U_RETURN(false);
-      }
+   bool isBool() const { return isBool(getTag()); }
 
    bool isInt() const
       {
@@ -271,15 +256,6 @@ public:
       U_TRACE_NO_PARAM(0, "UValue::isDouble()")
 
       if (getTag() == U_REAL_VALUE) U_RETURN(true);
-
-      U_RETURN(false);
-      }
-
-   bool isNumeric() const
-      {
-      U_TRACE_NO_PARAM(0, "UValue::isNumeric()")
-
-      if (getTag() <= U_UINT_VALUE) U_RETURN(true);
 
       U_RETURN(false);
       }
@@ -313,21 +289,23 @@ public:
 
    union jval getKey() const { return pkey; }
 
-            int getInt() const  { return value.sint; }
-   unsigned int getUInt() const { return value.uint; }
+    int64_t getInt64() const  { return -(long)getPayload(); }
+   uint64_t getUInt64() const { return  (long)getPayload(); }
 
    UString getString() { return getString(value.ival); }
 
    bool   getBool() const   { return (getTag() == U_TRUE_VALUE); }
    double getDouble() const { return value.real; }
 
+   bool isNumeric() const       { return isNumeric(getTag(value.ival)); }
    bool isStringUTF() const     { return isStringUTF(value.ival); }
    bool isStringOrUTF() const   { return isStringOrUTF(value.ival); }
-   bool isArrayOrObject() const { return isArrayOrObject(value.ival); }
+   bool isArrayOrObject() const { return isArrayOrObject(getTag(value.ival)); }
 
    static uint32_t getStringSize(const union jval value) { return getString(value.ival).size(); }
 
-   long long getNumber() const { return (isDouble() ? llrint(value.real) : (long long)(long)getPayload()); } 
+   int64_t getInt() const    { return (isInt() ? getInt64() : getUInt64()); } 
+   int64_t getNumber() const { return (isDouble() ? llrint(value.real) : getInt()); } 
 
    // manage values in array or object
 
@@ -375,7 +353,7 @@ public:
       {
       U_TRACE_NO_PARAM(0, "UValue::output()")
 
-      UString result(size+100U);
+      UString result(U_max(size+100U,U_CAPACITY));
 
       pstringify = result.data(); // buffer to stringify json
 
@@ -418,11 +396,11 @@ public:
       U_INTERNAL_DUMP("result(%u) = %V", result.size(), result.rep)
       }
 
-  template <typename T> static void toJSON(const UString& name, UJsonTypeHandler<T> member)
+   template <typename T> static void toJSON(const UString& name, UJsonTypeHandler<T> member)
       {
       U_TRACE(0, "UValue::toJSON<T>(%V,%p)", name.rep, &member)
 
-      addString(name);
+      addStringParser(U_STRING_TO_PARAM(name));
 
       member.toJSON();
       }
@@ -431,7 +409,7 @@ public:
       {
       U_TRACE(0, "UValue::toJSON<T>(%.*S,%u,%p)", len, name, len, &member)
 
-      addString(name, len);
+      addStringParser(name, len);
 
       member.toJSON();
       }
@@ -444,6 +422,42 @@ public:
 
       if (node) member.fromJSON(*node);
       else      member.clear();
+      }
+
+   // JSON <=> UFlatBuffer 
+
+   UString toFlatBuffer() const
+      {
+      U_TRACE_NO_PARAM(0, "UValue::toFlatBuffer()")
+
+      UString result;
+      UFlatBuffer fb;
+      
+      toFlatBuffer(fb, result);
+
+      U_RETURN_STRING(result);
+      }
+
+   void toFlatBuffer(UFlatBuffer& fb) const
+      {
+      U_TRACE(0, "UValue::toFlatBuffer(%p)", &fb)
+
+      UString result;
+
+      toFlatBuffer(fb, result);
+      }
+
+   void fromFlatBuffer(UFlatBuffer& fb)
+      {
+      U_TRACE(0, "UValue::fromFlatBuffer(%p)", &fb)
+
+      U_ASSERT(empty())
+
+      initParser();
+
+      fromFlatBufferToJSON(fb);
+
+      value.ival = o.ival;
       }
 
    // =======================================================================================================================
@@ -570,7 +584,7 @@ public:
    const char* dump(bool _reset) const;
 
    static const char* getJReadErrorDescription();
-   static const char* getDataTypeDescription(uint32_t type);
+   static const char* getDataTypeDescription(uint8_t type);
 #else
    static const char* getJReadErrorDescription()       { return ""; }
    static const char* getDataTypeDescription(uint32_t) { return ""; }
@@ -582,6 +596,7 @@ protected:
               value;
 
    static uint32_t size;
+   static UFlatBuffer* pfb;
    static char* pstringify; // buffer to stringify json
 
    typedef struct parser_stack_data {
@@ -603,12 +618,44 @@ protected:
       }
 
    static void nextParser();
- 
-   static uint32_t getTag(uint64_t val)
+
+   static void initStackParser(bool obj)
+      {
+      U_TRACE(0, "UValue::initStackParser(%b)", obj)
+
+      ++pos;
+
+      U_INTERNAL_DUMP("pos = %u", pos)
+
+      U_INTERNAL_ASSERT_MINOR(pos, U_JSON_PARSE_STACK_SIZE)
+
+#  ifndef HAVE_OLD_IOSTREAM
+      sd[pos] = {0, U_NULLPTR, obj};
+#  else
+      sd[pos].keys  = 0;
+      sd[pos].tails = U_NULLPTR;
+      sd[pos].obj   = obj;
+#  endif
+      }
+
+   static bool isBool(uint8_t type)
+      {
+      U_TRACE(0, "UValue::isBool(%u)", type)
+
+      if (type ==  U_TRUE_VALUE ||
+          type == U_FALSE_VALUE)
+         {
+         U_RETURN(true);
+         }
+
+      U_RETURN(false);
+      }
+
+   static uint8_t getTag(uint64_t val)
       {
       U_TRACE(0, "UValue::getTag(%#llx)", val)
 
-      uint32_t tag = ((int64_t)val <= (int64_t)U_VALUE_NAN_MASK ? (uint32_t)U_REAL_VALUE : u_getTag(val));
+      uint8_t tag = ((int64_t)val <= (int64_t)U_VALUE_NAN_MASK ? (uint32_t)U_REAL_VALUE : u_getTag(val));
 
       U_INTERNAL_DUMP("tag = %u", tag)
 
@@ -617,9 +664,9 @@ protected:
       U_RETURN(tag);
       }
 
-   static uint64_t getValue(uint16_t tag, void* payload)
+   static uint64_t getValue(uint8_t tag, void* payload)
       {
-      U_TRACE(0+256, "UValue::getValue(%hu,%p)", tag, payload)
+      U_TRACE(0, "UValue::getValue(%u,%p)", tag, payload)
 
       U_INTERNAL_ASSERT(payload <= (void*)U_VALUE_PAYLOAD_MASK)
 
@@ -631,30 +678,6 @@ protected:
 
       U_RETURN(val);
       }
-
-   static void addString(const char* ptr, uint32_t sz)
-      {
-      U_TRACE(0, "UValue::addString(%.*S,%u)", sz, ptr, sz)
-
-      if (sz)
-         {
-         UStringRep* rep;
-
-         U_NEW(UStringRep, rep, UStringRep(ptr, sz));
-
-         o.ival = getValue(U_STRING_VALUE, rep);
-         }
-      else
-         {
-         UStringRep::string_rep_null->hold();
-
-         o.ival = getValue(U_STRING_VALUE, UStringRep::string_rep_null);
-         }
-
-      nextParser();
-      }
-
-   static void addString(const UString& str) { addString(U_STRING_TO_PARAM(str)); }
 
 #ifdef DEBUG
    static uint32_t cnt_real, cnt_mreal;
@@ -733,7 +756,7 @@ protected:
       {
       U_TRACE_NO_PARAM(0, "UValue::emitKey()")
 
-      uint32_t type = getTag(pkey.ival);
+      uint8_t type = getTag(pkey.ival);
 
       if (type == U_STRING_VALUE) emitString((UStringRep*)u_getPayload(pkey.ival));
       else
@@ -746,6 +769,11 @@ protected:
 
    void stringify() const;
    void prettify(uint32_t indent) const;
+
+   void toFlatBufferFromJSON() const;
+   void fromFlatBufferToJSON(UFlatBuffer& fb);
+
+   void toFlatBuffer(UFlatBuffer& fb, UString& result) const;
 
    UValue* toNode() const { return toNode(value.ival); }
 
@@ -773,7 +801,7 @@ protected:
       {
       U_TRACE(0+256, "UValue::isStringOrUTF(%#llx)", value)
 
-      uint32_t type = getTag(value);
+      uint8_t type = getTag(value);
 
       if (type == U_STRING_VALUE ||
           type ==    U_UTF_VALUE)
@@ -784,13 +812,24 @@ protected:
       U_RETURN(false);
       }
 
-   static bool isArrayOrObject(uint64_t value)
+   static bool isNumeric(uint8_t type)
       {
-      U_TRACE(0+256, "UValue::isArrayOrObject(%#llx)", value)
+      U_TRACE(0, "UValue::isNumeric(%u)", type)
 
-      uint32_t type = getTag(value);
+      U_DUMP("type = %S", getDataTypeDescription(type))
 
-      if (type ==  U_ARRAY_VALUE ||
+      if (type <= U_UINT_VALUE) U_RETURN(true);
+
+      U_RETURN(false);
+      }
+
+   static bool isArrayOrObject(uint8_t type)
+      {
+      U_TRACE(0, "UValue::isArrayOrObject(%u)", type)
+
+      U_DUMP("type = %S", getDataTypeDescription(type))
+
+      if (type == U_ARRAY_VALUE ||
           type == U_OBJECT_VALUE)
          {
          U_RETURN(true);
@@ -814,6 +853,47 @@ protected:
       return getValue(tag, U_NULLPTR);
       }
 
+   static void setArrayEmpty()
+      {
+      U_TRACE_NO_PARAM(0, "UValue::setArrayEmpty()")
+
+      o.ival = listToValue(U_ARRAY_VALUE, U_NULLPTR);
+      }
+
+   static void setObjectEmpty()
+      {
+      U_TRACE_NO_PARAM(0, "UValue::setObjectEmpty()")
+
+      o.ival = listToValue(U_OBJECT_VALUE, U_NULLPTR);
+      }
+
+   static void setArray()
+      {
+      U_TRACE_NO_PARAM(0, "UValue::setArray()")
+
+      U_INTERNAL_DUMP("pos = %d sd[0].obj = %b sd[0].tails = %p sd[0].keys = %#llx",
+                       pos,     sd[0].obj,     sd[0].tails,     sd[0].keys)
+
+      U_INTERNAL_ASSERT_DIFFERS(pos, -1)
+      U_INTERNAL_ASSERT_EQUALS(sd[pos].obj, false)
+
+      o.ival = listToValue(U_ARRAY_VALUE, sd[pos--].tails);
+      }
+
+   static void setObject()
+      {
+      U_TRACE_NO_PARAM(0, "UValue::setObject()")
+
+      U_INTERNAL_DUMP("pos = %d sd[0].obj = %b sd[0].tails = %p sd[0].keys = %#llx",
+                       pos,     sd[0].obj,     sd[0].tails,     sd[0].keys)
+
+      U_INTERNAL_ASSERT(sd[pos].obj)
+      U_INTERNAL_ASSERT_DIFFERS(pos, -1)
+      U_INTERNAL_ASSERT_EQUALS(sd[pos].keys, 0)
+
+      o.ival = listToValue(U_OBJECT_VALUE, sd[pos--].tails);
+      }
+
    static UValue* insertAfter(UValue* tail, uint64_t value)
       {
       U_TRACE(0, "UValue::insertAfter(%p,%#llx)", tail, value)
@@ -835,16 +915,147 @@ protected:
       U_RETURN_POINTER(node, UValue);
       }
 
-   void setString(UStringRep* rep)
+   static void setNull()
       {
-      U_TRACE(0, "UValue::setString(%p)", rep)
+      U_TRACE_NO_PARAM(0, "UValue::setNull()")
 
-      U_INTERNAL_DUMP("rep = %V", rep)
-
-      rep->hold();
-
-      value.ival = getValue(U_STRING_VALUE, rep);
+      o.ival = u_getValue(U_NULL_VALUE, U_NULLPTR);
       }
+
+   static void setBool(bool flag)
+      {
+      U_TRACE(0, "UValue::setBool(%b)", flag)
+
+      o.ival = u_getValue(flag ? U_TRUE_VALUE : U_FALSE_VALUE, U_NULLPTR);
+      }
+
+   static void setDouble(double f)
+      {
+      U_TRACE(0, "UValue::setDouble(%g)", f)
+
+      o.real = f;
+
+      U_ASSERT_EQUALS(getTag(o.ival), U_REAL_VALUE)
+      }
+
+   void setString(const UString& x)
+      {
+      U_TRACE(0, "UValue::setString(%V)", x.rep)
+
+      x.rep->hold();
+
+      o.ival = getValue(U_STRING_VALUE, x.rep);
+      }
+
+   static void setValue(uint8_t tag, void* payload)
+      {
+      U_TRACE(0, "UValue::setValue(%u,%p)", tag, payload)
+
+      o.ival = u_getValue(tag, payload);
+
+      U_ASSERT_EQUALS(getTag(o.ival), tag)
+
+      U_INTERNAL_DUMP("o.ival = %llu", o.ival)
+      }
+
+#if SIZEOF_LONG == 4
+   static void setValue(uint8_t tag,           char* pval) { setValue(tag, (void*)*pval); }
+   static void setValue(uint8_t tag, unsigned  char* pval) { setValue(tag, (void*)*pval); }
+   static void setValue(uint8_t tag,          short* pval) { setValue(tag, (void*)*pval); }
+   static void setValue(uint8_t tag, unsigned short* pval) { setValue(tag, (void*)*pval); }
+   static void setValue(uint8_t tag,            int* pval) { setValue(tag, (void*)*pval); }
+   static void setValue(uint8_t tag, unsigned   int* pval) { setValue(tag, (void*)*pval); }
+#else
+   static void setValue(uint8_t tag,           char* pval) { setValue(tag, (void*)(*pval & 0x00000000FFFFFFFFULL)); }
+   static void setValue(uint8_t tag, unsigned  char* pval) { setValue(tag, (void*)(*pval & 0x00000000FFFFFFFFULL)); }
+   static void setValue(uint8_t tag,          short* pval) { setValue(tag, (void*)(*pval & 0x00000000FFFFFFFFULL)); }
+   static void setValue(uint8_t tag, unsigned short* pval) { setValue(tag, (void*)(*pval & 0x00000000FFFFFFFFULL)); }
+   static void setValue(uint8_t tag,            int* pval) { setValue(tag, (void*)(*pval & 0x00000000FFFFFFFFULL)); }
+   static void setValue(uint8_t tag, unsigned   int* pval) { setValue(tag, (void*)(*pval & 0x00000000FFFFFFFFULL)); }
+#endif
+
+   static void setUInt64(uint64_t l)
+      {
+      U_TRACE(0, "UValue::setUInt64(%llu)", l)
+
+      if (l > U_VALUE_PAYLOAD_MASK) setDouble(l);
+      else                          setValue(U_UINT_VALUE, (void*)(l & U_VALUE_PAYLOAD_MASK));
+      }
+
+   static void setInt64(int64_t l)
+      {
+      U_TRACE(0, "UValue::setInt64(%lld)", l)
+
+      U_INTERNAL_ASSERT_MINOR(l, 0)
+
+      uint64_t i = -l;
+
+      if (i > U_VALUE_PAYLOAD_MASK) setDouble(i);
+      else                          setValue(U_INT_VALUE, (void*)(i & U_VALUE_PAYLOAD_MASK));
+      }
+
+   static void setNumber64(int64_t l)
+      {
+      U_TRACE(0, "UValue::setNumber(%lld)", l)
+
+      if (l < 0) setInt64(l);
+      else       setUInt64(l);
+      }
+
+   static void setNumber32(int32_t l)
+      {
+      U_TRACE(0, "UValue::setNumber32(%ld)", l)
+
+      if (l < 0) setValue(U_INT_VALUE,  (void*)(-l & 0x00000000FFFFFFFFULL));
+      else       setValue(U_UINT_VALUE, (void*)( l & 0x00000000FFFFFFFFULL));
+      }
+
+   static void setLong(long l)
+      {
+      U_TRACE(0, "UValue::setLong(%ld)", l)
+
+#  if SIZEOF_LONG == 4
+      setNumber32(l);
+#  else
+      setNumber64(l);
+#  endif
+      }
+
+   static void setULong(unsigned long l)
+      {
+      U_TRACE(0, "UValue::setULong(%lu)", l)
+
+#  if SIZEOF_LONG == 8
+      setUInt64(l);
+#  else
+      setValue(U_UINT_VALUE, (void*)l);
+#  endif
+      }
+
+   static void addString(const char* ptr, uint32_t sz)
+      {
+      U_TRACE(0, "UValue::addString(%.*S,%u)", sz, ptr, sz)
+
+      if (sz)
+         {
+         UStringRep* rep;
+
+         U_NEW(UStringRep, rep, UStringRep(ptr, sz));
+
+         setValue(U_STRING_VALUE, rep);
+         }
+      else
+         {
+         UStringRep::string_rep_null->hold();
+
+         setValue(U_STRING_VALUE, UStringRep::string_rep_null);
+         }
+      }
+
+   static void addStringParser(const char* ptr, uint32_t sz) { addString(ptr, sz); nextParser(); }
+
+   static void addString(      const UString& x) { addString(      U_STRING_TO_PARAM(x)); }
+   static void addStringParser(const UString& x) { addStringParser(U_STRING_TO_PARAM(x)); }
 
    static UString getString(uint64_t value);
 
@@ -856,6 +1067,7 @@ private:
    static UString jread_object(UTokenizer& tok) U_NO_EXPORT;
    static UString jread_object(UTokenizer& tok, uint32_t keyIndex) U_NO_EXPORT;
 
+   friend class UString;
    friend class UValueIter;
    friend class UTokenizer;
    friend UValueIter begin(const union jval);
@@ -939,7 +1151,7 @@ private:
  *
  * Take as example the following (simplified) class:
  *
- *   class Person {
+ * class Person {
  *   public:
  *      int age;
  *      UString  lastName;
@@ -1009,28 +1221,11 @@ public:
       {
       U_TRACE_NO_PARAM(0, "UJsonTypeHandler<T>::toJSON()")
 
-      ++UValue::pos;
-
-      U_INTERNAL_ASSERT_MINOR(UValue::pos, U_JSON_PARSE_STACK_SIZE)
-
-#     ifndef HAVE_OLD_IOSTREAM
-         UValue::sd[UValue::pos] = {0, U_NULLPTR, true};
-#     else
-         UValue::sd[UValue::pos].keys  = 0;
-         UValue::sd[UValue::pos].tails = U_NULLPTR;
-         UValue::sd[UValue::pos].obj   = true;
-#     endif
+      UValue::initStackParser(true);
 
       ((T*)pval)->toJSON();
 
-      U_INTERNAL_DUMP("UValue::pos = %d UValue::sd[0].obj = %b UValue::sd[0].tails = %p UValue::sd[0].keys = %#llx",
-                       UValue::pos,     UValue::sd[0].obj,     UValue::sd[0].tails,     UValue::sd[0].keys)
-
-      U_INTERNAL_ASSERT_DIFFERS(UValue::pos, -1)
-      U_INTERNAL_ASSERT(UValue::sd[UValue::pos].obj)
-      U_INTERNAL_ASSERT_EQUALS(UValue::sd[UValue::pos].keys, 0)
-
-      UValue::o.ival = UValue::listToValue(U_OBJECT_VALUE, UValue::sd[UValue::pos--].tails);
+      UValue::setObject();
 
       if (UValue::pos != -1) UValue::nextParser();
       }
@@ -1112,7 +1307,7 @@ public:
       {
       U_TRACE_NO_PARAM(0, "UJsonTypeHandler<null>::toJSON()")
 
-      UValue::o.ival = UValue::getValue(U_NULL_VALUE, U_NULLPTR);
+      UValue::setNull();
 
       UValue::nextParser();
       }
@@ -1149,7 +1344,7 @@ public:
       {
       U_TRACE_NO_PARAM(0, "UJsonTypeHandler<bool>::toJSON()")
 
-      UValue::o.ival = UValue::getValue(*(bool*)pval ? U_TRUE_VALUE : U_FALSE_VALUE, U_NULLPTR);
+      UValue::setBool(*(bool*)pval);
 
       UValue::nextParser();
       }
@@ -1186,7 +1381,7 @@ public:
       {
       U_TRACE_NO_PARAM(0, "UJsonTypeHandler<char>::toJSON()")
 
-      UValue::o.ival = UValue::getValue(U_UINT_VALUE, (void*)(*(char*)pval & 0x00000000FFFFFFFFULL));
+      UValue::setValue(U_UINT_VALUE, (char*)pval);
 
       UValue::nextParser();
       }
@@ -1195,7 +1390,7 @@ public:
       {
       U_TRACE(0, "UJsonTypeHandler<char>::fromJSON(%p)", &json)
 
-      *(char*)pval = json.getUInt();
+      *(char*)pval = json.getUInt64();
       }
 };
 
@@ -1223,7 +1418,7 @@ public:
       {
       U_TRACE_NO_PARAM(0, "UJsonTypeHandler<unsigned char>::toJSON()")
 
-      UValue::o.ival = UValue::getValue(U_UINT_VALUE, (void*)(*(unsigned char*)pval & 0x00000000FFFFFFFFULL));
+      UValue::setValue(U_UINT_VALUE, (unsigned char*)pval);
 
       UValue::nextParser();
       }
@@ -1232,7 +1427,7 @@ public:
       {
       U_TRACE(0, "UJsonTypeHandler<unsigned char>::fromJSON(%p)", &json)
 
-      *(unsigned char*)pval = json.getUInt();
+      *(unsigned char*)pval = json.getUInt64();
       }
 };
 
@@ -1260,7 +1455,7 @@ public:
       {
       U_TRACE_NO_PARAM(0, "UJsonTypeHandler<short>::toJSON()")
 
-      UValue::o.ival = UValue::getValue(U_INT_VALUE, (void*)(*(short*)pval & 0x00000000FFFFFFFFULL));
+      UValue::setValue(U_INT_VALUE, (short*)pval);
 
       UValue::nextParser();
       }
@@ -1269,7 +1464,7 @@ public:
       {
       U_TRACE(0, "UJsonTypeHandler<short>::fromJSON(%p)", &json)
 
-      *(short*)pval = json.getUInt();
+      *(short*)pval = json.getUInt64();
       }
 };
 
@@ -1297,7 +1492,7 @@ public:
       {
       U_TRACE_NO_PARAM(0, "UJsonTypeHandler<unsigned short>::toJSON()")
 
-      UValue::o.ival = UValue::getValue(U_UINT_VALUE, (void*)(*(unsigned short*)pval & 0x00000000FFFFFFFFULL));
+      UValue::setValue(U_UINT_VALUE, (unsigned short*)pval);
 
       UValue::nextParser();
       }
@@ -1306,7 +1501,7 @@ public:
       {
       U_TRACE(0, "UJsonTypeHandler<unsigned short>::fromJSON(%p)", &json)
 
-      *(unsigned short*)pval = json.getUInt();
+      *(unsigned short*)pval = json.getUInt64();
       }
 };
 
@@ -1334,7 +1529,7 @@ public:
       {
       U_TRACE_NO_PARAM(0, "UJsonTypeHandler<int>::toJSON()")
 
-      UValue::o.ival = UValue::getValue(U_INT_VALUE, (void*)(*(int*)pval & 0x00000000FFFFFFFFULL));
+      UValue::setNumber32(*(int*)pval);
 
       UValue::nextParser();
       }
@@ -1371,7 +1566,7 @@ public:
       {
       U_TRACE_NO_PARAM(0, "UJsonTypeHandler<unsigned int>::toJSON()")
 
-      UValue::o.ival = UValue::getValue(U_UINT_VALUE, (void*)(*(unsigned int*)pval & 0x00000000FFFFFFFFULL));
+      UValue::setValue(U_UINT_VALUE, (unsigned int*)pval);
 
       UValue::nextParser();
       }
@@ -1380,7 +1575,7 @@ public:
       {
       U_TRACE(0, "UJsonTypeHandler<unsigned int>::fromJSON(%p)", &json)
 
-      *(unsigned int*)pval = json.getUInt();
+      *(unsigned int*)pval = json.getUInt64();
       }
 };
 
@@ -1412,18 +1607,7 @@ public:
       {
       U_TRACE_NO_PARAM(0, "UJsonTypeHandler<long>::toJSON()")
 
-      long l = *(long*)pval;
-
-      U_INTERNAL_DUMP("pval = %ld", *(long*)pval)
-
-#  if SIZEOF_LONG == 4
-      uint32_t type = U_INT_VALUE; 
-#  else
-      uint32_t type = (l > UINT_MAX || l < INT_MIN ? U_REAL_VALUE :
-                       l > 0                       ? U_UINT_VALUE : U_INT_VALUE);
-#  endif
-
-      UValue::o.ival = UValue::getValue(type, (void*)(l & 0x00000000FFFFFFFFULL));
+      UValue::setLong(*(long*)pval);
 
       UValue::nextParser();
       }
@@ -1433,8 +1617,6 @@ public:
       U_TRACE(0, "UJsonTypeHandler<long>::fromJSON(%p)", &json)
 
       *(long*)pval = json.getNumber();
-
-      U_INTERNAL_DUMP("pval = %ld", *(long*)pval)
       }
 };
 
@@ -1466,15 +1648,7 @@ public:
       {
       U_TRACE_NO_PARAM(0, "UJsonTypeHandler<unsigned long>::toJSON()")
 
-      unsigned long l = *(unsigned long*)pval;
-
-#  if SIZEOF_LONG == 4
-      uint32_t type = U_UINT_VALUE; 
-#  else
-      uint32_t type = (l > UINT_MAX ? U_REAL_VALUE : U_UINT_VALUE);
-#  endif
-
-      UValue::o.ival = UValue::getValue(type, (void*)(l & 0x00000000FFFFFFFFULL));
+      UValue::setULong(*(unsigned long*)pval);
 
       UValue::nextParser();
       }
@@ -1511,14 +1685,7 @@ public:
       {
       U_TRACE_NO_PARAM(0, "UJsonTypeHandler<long long>::toJSON()")
 
-      long long l = *(long long*)pval;
-
-      uint32_t type = (l > UINT_MAX || l < INT_MIN ? U_REAL_VALUE :
-                       l > 0                       ? U_UINT_VALUE : U_INT_VALUE);
-
-      U_INTERNAL_DUMP("l = %ld type = %u", l, type)
-
-      UValue::o.ival = UValue::getValue(type, (void*)(l & 0x00000000FFFFFFFFULL));
+      UValue::setNumber64(*(int64_t*)pval);
 
       UValue::nextParser();
       }
@@ -1555,9 +1722,7 @@ public:
       {
       U_TRACE_NO_PARAM(0, "UJsonTypeHandler<unsigned long long>::toJSON()")
 
-      unsigned long long l = *(unsigned long long*)pval;
-
-      UValue::o.ival = UValue::getValue(l > UINT_MAX ? U_REAL_VALUE : U_UINT_VALUE, (void*)(l & 0x00000000FFFFFFFFULL));
+      UValue::setUInt64(*(uint64_t*)pval);
 
       UValue::nextParser();
       }
@@ -1594,7 +1759,7 @@ public:
       {
       U_TRACE_NO_PARAM(0, "UJsonTypeHandler<float>::toJSON()")
 
-      UValue::o.ival = UValue::getValue(U_REAL_VALUE, (void*)lrintf(*(float*)pval));
+      UValue::setDouble(*(float*)pval);
 
       UValue::nextParser();
       }
@@ -1631,7 +1796,7 @@ public:
       {
       U_TRACE_NO_PARAM(0, "UJsonTypeHandler<double>::toJSON()")
 
-      UValue::o.ival = UValue::getValue(U_REAL_VALUE, (void*)lrint(*(double*)pval));
+      UValue::setDouble(*(double*)pval);
 
       UValue::nextParser();
       }
@@ -1668,11 +1833,7 @@ public:
       {
       U_TRACE_NO_PARAM(0, "UJsonTypeHandler<long double>::toJSON()")
 
-#  ifdef HAVE_LRINTL
-      UValue::o.ival = UValue::getValue(U_REAL_VALUE, (void*)lrintl(*(long double*)pval));
-#  else
-      UValue::o.ival = UValue::getValue(U_REAL_VALUE, (void*)lrint(*(       double*)pval));
-#  endif
+      UValue::setDouble(*(long double*)pval);
 
       UValue::nextParser();
       }
@@ -1709,7 +1870,7 @@ public:
       {
       U_TRACE_NO_PARAM(0, "UJsonTypeHandler<UStringRep>::toJSON()")
 
-      UValue::addString(U_STRING_TO_PARAM(*(UStringRep*)pval));
+      UValue::addStringParser(U_STRING_TO_PARAM(*(UStringRep*)pval));
       }
 
    void fromJSON(UValue& json)
@@ -1752,7 +1913,7 @@ public:
       {
       U_TRACE_NO_PARAM(0, "UJsonTypeHandler<UString>::toJSON()")
 
-      UValue::addString(*(UString*)pval);
+      UValue::addStringParser(U_STRING_TO_PARAM(*(UString*)pval));
       }
 
    void fromJSON(UValue& json)
@@ -1820,30 +1981,17 @@ public:
 
       uvector* pvec = (uvector*)pval;
 
-      if (pvec->_length == 0) UValue::o.ival = UValue::listToValue(U_ARRAY_VALUE, U_NULLPTR);
+      if (pvec->_length == 0) UValue::setArrayEmpty();
       else
          {
          const void** ptr = pvec->vec;
          const void** end = pvec->vec + pvec->_length;
 
-         ++UValue::pos;
-
-         U_INTERNAL_ASSERT_MINOR(UValue::pos, U_JSON_PARSE_STACK_SIZE)
-
-#     ifndef HAVE_OLD_IOSTREAM
-         UValue::sd[UValue::pos] = {0, U_NULLPTR, false};
-#     else
-         UValue::sd[UValue::pos].keys  = 0;
-         UValue::sd[UValue::pos].tails = U_NULLPTR;
-         UValue::sd[UValue::pos].obj   = false;
-#     endif
+         UValue::initStackParser(false);
 
          do { UJsonTypeHandler<T>(*(T*)(*ptr)).toJSON(); } while (++ptr < end);
 
-         U_INTERNAL_ASSERT_DIFFERS(UValue::pos, -1)
-         U_INTERNAL_ASSERT_EQUALS(UValue::sd[UValue::pos].obj, false)
-
-         UValue::o.ival = UValue::listToValue(U_ARRAY_VALUE, UValue::sd[UValue::pos--].tails);
+         UValue::setArray();
          }
 
       if (UValue::pos != -1) UValue::nextParser();
@@ -1863,7 +2011,8 @@ public:
 
          U_NEW(T, pitem, T);
 
-         U_DUMP("pelement = %p pelement->next = %p pelement->type = (%u,%S)", pelement, pelement->next, pelement->getTag(), UValue::getDataTypeDescription(pelement->getTag()))
+         U_DUMP("pelement = %p pelement->next = %p pelement->type = (%u,%S)",
+                 pelement,     pelement->next, pelement->getTag(), UValue::getDataTypeDescription(pelement->getTag()))
 
          UJsonTypeHandler<T>(*pitem).fromJSON(*pelement);
 
@@ -1921,30 +2070,17 @@ public:
 
       uvectorbase* pvec = (uvectorbase*)pval;
 
-      if (pvec->_length == 0) UValue::o.ival = UValue::listToValue(U_ARRAY_VALUE, U_NULLPTR);
+      if (pvec->_length == 0) UValue::setArrayEmpty();
       else
          {
          const void** ptr = pvec->vec;
          const void** end = pvec->vec + pvec->_length;
 
-         ++UValue::pos;
+         UValue::initStackParser(false);
 
-         U_INTERNAL_ASSERT_MINOR(UValue::pos, U_JSON_PARSE_STACK_SIZE)
+         do { UValue::addStringParser(U_STRING_TO_PARAM(*(const UStringRep*)(*ptr))); } while (++ptr < end);
 
-#     ifndef HAVE_OLD_IOSTREAM
-         UValue::sd[UValue::pos] = {0, U_NULLPTR, false};
-#     else
-         UValue::sd[UValue::pos].keys  = 0;
-         UValue::sd[UValue::pos].tails = U_NULLPTR;
-         UValue::sd[UValue::pos].obj   = false;
-#     endif
-
-         do { UValue::addString(U_STRING_TO_PARAM(*(const UStringRep*)(*ptr))); } while (++ptr < end);
-
-         U_INTERNAL_ASSERT_DIFFERS(UValue::pos, -1)
-         U_INTERNAL_ASSERT_EQUALS(UValue::sd[UValue::pos].obj, false)
-
-         UValue::o.ival = UValue::listToValue(U_ARRAY_VALUE, UValue::sd[UValue::pos--].tails);
+         UValue::setArray();
          }
 
       if (UValue::pos != -1) UValue::nextParser();
@@ -1962,7 +2098,8 @@ public:
          {
          UString item;
 
-         U_DUMP("pelement = %p pelement->next = %p pelement->type = (%u,%S)", pelement, pelement->next, pelement->getTag(), UValue::getDataTypeDescription(pelement->getTag()))
+         U_DUMP("pelement = %p pelement->next = %p pelement->type = (%u,%S)",
+                 pelement,     pelement->next, pelement->getTag(), UValue::getDataTypeDescription(pelement->getTag()))
 
          UJsonTypeHandler<UString>(item).fromJSON(*pelement);
 
@@ -2013,31 +2150,14 @@ public:
 
       uhashmap* pmap = (uhashmap*)pval;
 
-      if (pmap->first())
+      if (pmap->first() == false) UValue::setObjectEmpty();
+      else
          {
-         ++UValue::pos;
-
-         U_INTERNAL_ASSERT_MINOR(UValue::pos, U_JSON_PARSE_STACK_SIZE)
-
-#     ifndef HAVE_OLD_IOSTREAM
-         UValue::sd[UValue::pos] = {0, U_NULLPTR, true};
-#     else
-         UValue::sd[UValue::pos].keys  = 0;
-         UValue::sd[UValue::pos].tails = U_NULLPTR;
-         UValue::sd[UValue::pos].obj   = true;
-#     endif
+         UValue::initStackParser(true);
 
          do { UValue::toJSON<T>(pmap->getKey(), *(pmap->elem())); } while (pmap->next());
 
-         U_INTERNAL_ASSERT_DIFFERS(UValue::pos, -1)
-         U_INTERNAL_ASSERT(UValue::sd[UValue::pos].obj)
-         U_INTERNAL_ASSERT_EQUALS(UValue::sd[UValue::pos].keys, 0)
-
-         UValue::o.ival = UValue::listToValue(U_OBJECT_VALUE, UValue::sd[UValue::pos--].tails);
-         }
-      else
-         {
-         UValue::o.ival = UValue::listToValue(U_OBJECT_VALUE, U_NULLPTR);
+         UValue::setObject();
          }
 
       if (UValue::pos != -1) UValue::nextParser();
@@ -2057,7 +2177,8 @@ public:
 
          U_NEW(T, pitem, T);
 
-         U_DUMP("pelement = %p pelement->next = %p pelement->type = (%u,%S)", pelement, pelement->next, pelement->getTag(), UValue::getDataTypeDescription(pelement->getTag()))
+         U_DUMP("pelement = %p pelement->next = %p pelement->type = (%u,%S)",
+                 pelement,     pelement->next, pelement->getTag(), UValue::getDataTypeDescription(pelement->getTag()))
 
          UJsonTypeHandler<T>(*pitem).fromJSON(*pelement);
 
@@ -2113,36 +2234,19 @@ public:
 
       UHashMap<UString>* pmap = (UHashMap<UString>*)pval;
 
-      if (pmap->first())
+      if (pmap->first() == false) UValue::setObjectEmpty();
+      else
          {
-         ++UValue::pos;
-
-         U_INTERNAL_ASSERT_MINOR(UValue::pos, U_JSON_PARSE_STACK_SIZE)
-
-#     ifndef HAVE_OLD_IOSTREAM
-         UValue::sd[UValue::pos] = {0, U_NULLPTR, true};
-#     else
-         UValue::sd[UValue::pos].keys  = 0;
-         UValue::sd[UValue::pos].tails = U_NULLPTR;
-         UValue::sd[UValue::pos].obj   = true;
-#     endif
+         UValue::initStackParser(true);
 
          do {
-            UValue::addString(pmap->getKey());
+            UValue::addStringParser(U_STRING_TO_PARAM(pmap->getKey()));
 
-            UValue::addString(U_STRING_TO_PARAM(*(const UStringRep*)pmap->elem()));
+            UValue::addStringParser(U_STRING_TO_PARAM(*(const UStringRep*)pmap->elem()));
             }
          while (pmap->next());
 
-         U_INTERNAL_ASSERT_DIFFERS(UValue::pos, -1)
-         U_INTERNAL_ASSERT(UValue::sd[UValue::pos].obj)
-         U_INTERNAL_ASSERT_EQUALS(UValue::sd[UValue::pos].keys, 0)
-
-         UValue::o.ival = UValue::listToValue(U_OBJECT_VALUE, UValue::sd[UValue::pos--].tails);
-         }
-      else
-         {
-         UValue::o.ival = UValue::listToValue(U_OBJECT_VALUE, U_NULLPTR);
+         UValue::setObject();
          }
 
       if (UValue::pos != -1) UValue::nextParser();
@@ -2160,7 +2264,8 @@ public:
          {
          UString item;
 
-         U_DUMP("pelement = %p pelement->next = %p pelement->type = (%u,%S)", pelement, pelement->next, pelement->getTag(), UValue::getDataTypeDescription(pelement->getTag()))
+         U_DUMP("pelement = %p pelement->next = %p pelement->type = (%u,%S)",
+                 pelement,     pelement->next, pelement->getTag(), UValue::getDataTypeDescription(pelement->getTag()))
 
          UJsonTypeHandler<UString>(item).fromJSON(*pelement);
 
@@ -2176,7 +2281,7 @@ public:
 };
 
 #ifdef U_STDCPP_ENABLE
-#  include <vector>
+# include <vector>
 
 template <class T> class U_EXPORT UJsonTypeHandler<std::vector<T> > : public UJsonTypeHandler_Base {
 public:
@@ -2222,27 +2327,14 @@ public:
 
       uint32_t n = pvec->size();
 
-      if (n == 0) UValue::o.ival = UValue::listToValue(U_ARRAY_VALUE, U_NULLPTR);
+      if (n == 0) UValue::setArrayEmpty();
       else
          {
-         ++UValue::pos;
-
-         U_INTERNAL_ASSERT_MINOR(UValue::pos, U_JSON_PARSE_STACK_SIZE)
-
-#     ifndef HAVE_OLD_IOSTREAM
-         UValue::sd[UValue::pos] = {0, U_NULLPTR, false};
-#     else
-         UValue::sd[UValue::pos].keys  = 0;
-         UValue::sd[UValue::pos].tails = U_NULLPTR;
-         UValue::sd[UValue::pos].obj   = false;
-#     endif
+         UValue::initStackParser(false);
 
          for (uint32_t i = 0; i < n; ++i) UJsonTypeHandler<T>(pvec->at(i)).toJSON();
 
-         U_INTERNAL_ASSERT_DIFFERS(UValue::pos, -1)
-         U_INTERNAL_ASSERT_EQUALS(UValue::sd[UValue::pos].obj, false)
-
-         UValue::o.ival = UValue::listToValue(U_ARRAY_VALUE, UValue::sd[UValue::pos--].tails);
+         UValue::setArray();
          }
 
       if (UValue::pos != -1) UValue::nextParser();
@@ -2260,7 +2352,8 @@ public:
          {
          T item;
 
-         U_DUMP("pelement = %p pelement->next = %p pelement->type = (%u,%S)", pelement, pelement->next, pelement->getTag(), UValue::getDataTypeDescription(pelement->getTag()))
+         U_DUMP("pelement = %p pelement->next = %p pelement->type = (%u,%S)",
+                 pelement,     pelement->next, pelement->getTag(), UValue::getDataTypeDescription(pelement->getTag()))
 
          UJsonTypeHandler<T>(item).fromJSON(*pelement);
 
@@ -2273,8 +2366,8 @@ public:
 
 // by Victor Stewart
 
-#  if defined(HAVE_CXX17) && !defined(__clang__)
-#     include <unordered_map>
+# if defined(HAVE_CXX17) && !defined(__clang__)
+#  include <unordered_map>
 
 template <class T> class U_EXPORT UJsonTypeHandler<std::unordered_map<UString, T> > : public UJsonTypeHandler_Base {
 public:
@@ -2333,6 +2426,6 @@ public:
          }
       }
 };
-#  endif
+# endif
 #endif
 #endif

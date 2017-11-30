@@ -35,6 +35,17 @@
 #undef snprintf
 #endif
 
+#define PHP_MAJOR_VERSION 7
+#define PHP_MINOR_VERSION 1
+#define PHP_RELEASE_VERSION 8
+#define PHP_EXTRA_VERSION "-1ubuntu1"
+#define PHP_VERSION "7.1.8-1ubuntu1"
+#define PHP_VERSION_ID 70108
+
+#define PHP_VERSION_NUM (PHP_MAJOR_VERSION * 10000 + \
+                         PHP_MINOR_VERSION *   100 + \
+                         PHP_RELEASE_VERSION)
+
 extern "C" {
 
 static void UPHP_set_environment(void* env, char* name, char* value)
@@ -103,12 +114,21 @@ static char* read_cookies()
    return 0;
 }
 
+#if PHP_VERSION_NUM < 70108
 static void log_message(char* message)
 {
    U_TRACE(0, "PHP::log_message(%S)", message)
 
    U_SRV_LOG("%s", message);
 }
+#else
+static void log_message(char* message, int len)
+{
+   U_TRACE(0, "PHP::log_message(%.*S,%u)", len, message, len)
+
+   U_SRV_LOG("%.*s", len, message);
+}
+#endif
 
 extern U_EXPORT bool initPHP();
        U_EXPORT bool initPHP()

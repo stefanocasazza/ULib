@@ -227,13 +227,13 @@ am__EXEEXT_19 = test_timeval$(EXEEXT) test_timer$(EXEEXT) \
 	test_dialog$(EXEEXT) test_json$(EXEEXT) test_redis$(EXEEXT) \
 	test_elasticsearch$(EXEEXT) test_smtp$(EXEEXT) \
 	test_pop3$(EXEEXT) test_imap$(EXEEXT) test_hash_map$(EXEEXT) \
-	$(am__EXEEXT_1) $(am__EXEEXT_2) $(am__EXEEXT_3) \
-	$(am__EXEEXT_4) $(am__EXEEXT_5) $(am__EXEEXT_6) \
-	$(am__EXEEXT_7) $(am__EXEEXT_8) $(am__EXEEXT_9) \
-	$(am__EXEEXT_10) $(am__EXEEXT_2) $(am__EXEEXT_3) \
-	$(am__EXEEXT_11) $(am__EXEEXT_12) $(am__EXEEXT_13) \
-	$(am__EXEEXT_14) $(am__EXEEXT_15) $(am__EXEEXT_16) \
-	$(am__EXEEXT_17) $(am__EXEEXT_18)
+	test_serialize$(EXEEXT) $(am__EXEEXT_1) $(am__EXEEXT_2) \
+	$(am__EXEEXT_3) $(am__EXEEXT_4) $(am__EXEEXT_5) \
+	$(am__EXEEXT_6) $(am__EXEEXT_7) $(am__EXEEXT_8) \
+	$(am__EXEEXT_9) $(am__EXEEXT_10) $(am__EXEEXT_2) \
+	$(am__EXEEXT_3) $(am__EXEEXT_11) $(am__EXEEXT_12) \
+	$(am__EXEEXT_13) $(am__EXEEXT_14) $(am__EXEEXT_15) \
+	$(am__EXEEXT_16) $(am__EXEEXT_17) $(am__EXEEXT_18)
 am_test_application_OBJECTS = test_application.$(OBJEXT)
 test_application_OBJECTS = $(am_test_application_OBJECTS)
 test_application_LDADD = $(LDADD)
@@ -462,6 +462,10 @@ am_test_redis_OBJECTS = test_redis.$(OBJEXT)
 test_redis_OBJECTS = $(am_test_redis_OBJECTS)
 test_redis_LDADD = $(LDADD)
 test_redis_DEPENDENCIES = $(top_builddir)/src/ulib/lib@ULIB@.la
+am_test_serialize_OBJECTS = test_serialize.$(OBJEXT)
+test_serialize_OBJECTS = $(am_test_serialize_OBJECTS)
+test_serialize_LDADD = $(LDADD)
+test_serialize_DEPENDENCIES = $(top_builddir)/src/ulib/lib@ULIB@.la
 am_test_server_OBJECTS = test_server.$(OBJEXT)
 test_server_OBJECTS = $(am_test_server_OBJECTS)
 test_server_LDADD = $(LDADD)
@@ -625,16 +629,16 @@ SOURCES = $(product1_la_SOURCES) $(product2_la_SOURCES) \
 	$(test_pop3_SOURCES) $(test_process_SOURCES) \
 	$(test_query_parser_SOURCES) $(test_rdb_SOURCES) \
 	$(test_rdb_client_SOURCES) $(test_rdb_server_SOURCES) \
-	$(test_redis_SOURCES) $(test_server_SOURCES) \
-	$(test_services_SOURCES) $(test_smtp_SOURCES) \
-	$(test_soap_client_SOURCES) $(test_soap_server_SOURCES) \
-	$(test_socket_SOURCES) $(test_ssh_client_SOURCES) \
-	$(test_ssl_client_SOURCES) $(test_ssl_server_SOURCES) \
-	$(test_string_SOURCES) $(test_tdb_SOURCES) \
-	$(test_thread_SOURCES) $(test_timer_SOURCES) \
-	$(test_timestamp_SOURCES) $(test_timeval_SOURCES) \
-	$(test_tokenizer_SOURCES) $(test_tree_SOURCES) \
-	$(test_unixsocket_client_SOURCES) \
+	$(test_redis_SOURCES) $(test_serialize_SOURCES) \
+	$(test_server_SOURCES) $(test_services_SOURCES) \
+	$(test_smtp_SOURCES) $(test_soap_client_SOURCES) \
+	$(test_soap_server_SOURCES) $(test_socket_SOURCES) \
+	$(test_ssh_client_SOURCES) $(test_ssl_client_SOURCES) \
+	$(test_ssl_server_SOURCES) $(test_string_SOURCES) \
+	$(test_tdb_SOURCES) $(test_thread_SOURCES) \
+	$(test_timer_SOURCES) $(test_timestamp_SOURCES) \
+	$(test_timeval_SOURCES) $(test_tokenizer_SOURCES) \
+	$(test_tree_SOURCES) $(test_unixsocket_client_SOURCES) \
 	$(test_unixsocket_server_SOURCES) $(test_url_SOURCES) \
 	$(test_vector_SOURCES) $(test_zip_SOURCES)
 DIST_SOURCES = $(am__product1_la_SOURCES_DIST) \
@@ -664,9 +668,9 @@ DIST_SOURCES = $(am__product1_la_SOURCES_DIST) \
 	$(test_pop3_SOURCES) $(am__test_process_SOURCES_DIST) \
 	$(test_query_parser_SOURCES) $(test_rdb_SOURCES) \
 	$(test_rdb_client_SOURCES) $(test_rdb_server_SOURCES) \
-	$(test_redis_SOURCES) $(test_server_SOURCES) \
-	$(test_services_SOURCES) $(test_smtp_SOURCES) \
-	$(am__test_soap_client_SOURCES_DIST) \
+	$(test_redis_SOURCES) $(test_serialize_SOURCES) \
+	$(test_server_SOURCES) $(test_services_SOURCES) \
+	$(test_smtp_SOURCES) $(am__test_soap_client_SOURCES_DIST) \
 	$(am__test_soap_server_SOURCES_DIST) $(test_socket_SOURCES) \
 	$(am__test_ssh_client_SOURCES_DIST) \
 	$(am__test_ssl_client_SOURCES_DIST) \
@@ -1105,7 +1109,7 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 AUTOMAKE_OPTIONS = ## dist-shar dist-zip
 EXTRA_DIST = random.cdb plugin inp ok *.test *.cpp CA private server_rpc.cfg file_config.cf file_config.gperf \
-				 file_config.gperf.sh file_config.key test_bison.h dialog.test redis.test elasticsearch.test twilio.test
+				 file_config.gperf.sh file_config.key test_bison.h dialog.test redis.test elasticsearch.test twilio.test json_obj.h
 
 MAINTAINERCLEANFILES = Makefile.in
 DEFAULT_INCLUDES = -I. -I$(top_builddir)/include
@@ -1118,7 +1122,7 @@ PRG = test_timeval test_timer test_notifier test_string test_file \
 	test_http test_rdb_client test_tokenizer test_query_parser \
 	test_multipart test_command test_dialog test_json test_redis \
 	test_elasticsearch test_smtp test_pop3 test_imap test_hash_map \
-	$(am__append_1) $(am__append_3) $(am__append_4) \
+	test_serialize $(am__append_1) $(am__append_3) $(am__append_4) \
 	$(am__append_5) $(am__append_6) $(am__append_8) \
 	$(am__append_10) $(am__append_12) $(am__append_14) \
 	$(am__append_16) $(am__append_18) $(am__append_20) \
@@ -1131,12 +1135,13 @@ TST = timeval.test timer.test notifier.test string.test file.test \
 	cache.test date.test services.test base64.test header.test \
 	entity.test ipaddress.test socket.test ftp.test http.test \
 	tokenizer.test query_parser.test multipart.test command.test \
-	json.test hash_map.test $(am__append_2) $(am__append_7) \
-	$(am__append_9) $(am__append_11) $(am__append_13) \
-	$(am__append_15) $(am__append_17) $(am__append_19) \
-	$(am__append_21) $(am__append_23) $(am__append_25) \
-	$(am__append_27) $(am__append_29) $(am__append_31) \
-	$(am__append_33) $(am__append_35) $(am__append_37)
+	json.test hash_map.test serialize.test $(am__append_2) \
+	$(am__append_7) $(am__append_9) $(am__append_11) \
+	$(am__append_13) $(am__append_15) $(am__append_17) \
+	$(am__append_19) $(am__append_21) $(am__append_23) \
+	$(am__append_25) $(am__append_27) $(am__append_29) \
+	$(am__append_31) $(am__append_33) $(am__append_35) \
+	$(am__append_37)
 @ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@test_plugin_SOURCES = test_plugin.cpp
 @ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@product1_la_SOURCES = plugin/product1.cpp
 @ENABLE_PLUGINS_TRUE@@ENABLE_SHARED_TRUE@product1_la_LIBADD = $(LDADD)
@@ -1186,6 +1191,7 @@ test_redis_SOURCES = test_redis.cpp
 test_mongodb_SOURCES = test_mongodb.cpp
 test_elasticsearch_SOURCES = test_elasticsearch.cpp
 test_hash_map_SOURCES = test_hash_map.cpp
+test_serialize_SOURCES = test_serialize.cpp
 @PTHREAD_TRUE@test_thread_SOURCES = test_thread.cpp
 @ZIP_TRUE@test_zip_SOURCES = test_zip.cpp
 @LIBTDB_TRUE@test_tdb_SOURCES = test_tdb.cpp
@@ -1494,6 +1500,10 @@ test_redis$(EXEEXT): $(test_redis_OBJECTS) $(test_redis_DEPENDENCIES) $(EXTRA_te
 	@rm -f test_redis$(EXEEXT)
 	$(AM_V_CXXLD)$(CXXLINK) $(test_redis_OBJECTS) $(test_redis_LDADD) $(LIBS)
 
+test_serialize$(EXEEXT): $(test_serialize_OBJECTS) $(test_serialize_DEPENDENCIES) $(EXTRA_test_serialize_DEPENDENCIES) 
+	@rm -f test_serialize$(EXEEXT)
+	$(AM_V_CXXLD)$(CXXLINK) $(test_serialize_OBJECTS) $(test_serialize_LDADD) $(LIBS)
+
 test_server$(EXEEXT): $(test_server_OBJECTS) $(test_server_DEPENDENCIES) $(EXTRA_test_server_DEPENDENCIES) 
 	@rm -f test_server$(EXEEXT)
 	$(AM_V_CXXLD)$(CXXLINK) $(test_server_OBJECTS) $(test_server_LDADD) $(LIBS)
@@ -1641,6 +1651,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_rdb_client.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_rdb_server.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_redis.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_serialize.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_server.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_services.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_smtp.Po@am__quote@
@@ -2077,7 +2088,7 @@ uninstall-am:
 
 test: all-am
 	$(MAKE) $(AM_MAKEFLAGS) $(check_PROGRAMS)
-	../make_test.sh application.test base64.test bit_array.test cache.test cdb.test certificate.test command.test compress.test crl.test date.test des3.test dialog.test digest.test entity.test expat.test file.test file_config.test header.test http.test https.test interrupt.test json.test log.test memory_pool.test multipart.test notifier.test options.test pcre.test pkcs10.test pkcs7.test plugin.test process.test query_parser.test rdb.test rdb_client_server.test server.test server_rpc.test services.test soap_client.test soap_server.test ssl_client_server.test string.test timer.test timestamp.test timeval.test tokenizer.test tree.test unixsocket.test url.test vector.test zip.test hash_map.test ../reset.color
+	../make_test.sh application.test base64.test bit_array.test cache.test cdb.test certificate.test command.test compress.test crl.test date.test des3.test dialog.test digest.test entity.test expat.test file.test file_config.test header.test http.test https.test interrupt.test json.test log.test memory_pool.test multipart.test notifier.test options.test pcre.test pkcs10.test pkcs7.test plugin.test process.test query_parser.test rdb.test rdb_client_server.test server.test server_rpc.test services.test soap_client.test soap_server.test ssl_client_server.test string.test timer.test timestamp.test timeval.test tokenizer.test tree.test unixsocket.test url.test vector.test zip.test hash_map.test serialize.test ../reset.color
 
 clean-local:
 	-rm -rf out err core .libs *.bb* *.da *.gc* *.log test_log.log* tmp/* \

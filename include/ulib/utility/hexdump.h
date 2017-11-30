@@ -18,6 +18,8 @@
 
 #include <ulib/string.h>
 
+#define U_HEXDUMP(str) UHexDump::decode(U_CONSTANT_TO_PARAM(str))
+
 struct U_EXPORT UHexDump {
 
    static void encode(const char* s, uint32_t n, UString& buffer)
@@ -44,6 +46,8 @@ struct U_EXPORT UHexDump {
       }
 
    static void decode(const UString& s, UString& buffer) { decode(U_STRING_TO_PARAM(s), buffer); }
+
+   static UString decode(const char* s, uint32_t n) { UString tmp(U_CAPACITY); decode(s, n, tmp); return tmp; }
 };
 
 #endif

@@ -256,6 +256,9 @@ public:
    static UString substitute(const char* s, uint32_t n, UVector<UString>& vec);
    static UString substitute(const UString& s,          UVector<UString>& vec) { return substitute(U_STRING_TO_PARAM(s), vec); }
 
+   static UString substituteIds(const char* s, uint32_t n, UVector<UString>& vec);
+   static UString substituteIds(const UString& s,          UVector<UString>& vec) { return substituteIds(U_STRING_TO_PARAM(s), vec); }
+
    // ERASE
 
    static UString erase(const UString& s, char a)                     { return substitute(U_STRING_TO_PARAM(s), &a, 1,                U_NULLPTR, 0); } 

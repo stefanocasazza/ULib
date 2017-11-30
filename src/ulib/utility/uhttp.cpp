@@ -883,7 +883,7 @@ void UHTTP::init()
 #endif
 
 #ifdef USE_LIBSSL
-// if (UServer_Base::bssl) enable_caching_by_proxy_servers = true;
+   // if (UServer_Base::bssl) enable_caching_by_proxy_servers = true;
 #endif
 
 #if defined(USE_PAGE_SPEED) || defined(USE_LIBV8) || defined(USE_RUBY) || defined(USE_PHP) || defined(USE_PYTHON)
@@ -1135,27 +1135,29 @@ void UHTTP::init()
 
    if (cache_file_store)
       {
+#  ifdef U_STDCPP_ENABLE
       content_cache = (UStringExt::endsWith(U_STRING_TO_PARAM(*cache_file_store), U_CONSTANT_TO_PARAM(".gz"))
                         ? UStringExt::gunzip(UFile::contentOf(*cache_file_store))
                         :                    UFile::contentOf(*cache_file_store));
 
-#  ifdef U_STDCPP_ENABLE
-      if (content_cache)
-         {
-         n += (content_cache.size() / (1024 + 512)); // NB: we assume as medium file size something like ~1.5k...
-
-         UString2Object(U_STRING_TO_PARAM(content_cache), *cache_file);
-
-         U_ASSERT_MAJOR(cache_file->size(), 0)
-
-         U_SRV_LOG("Loaded cache file store: %V", cache_file_store->rep);
-         }
+      if (content_cache) n += (content_cache.size() / (1024 + 512)); // NB: we assume as medium file size something like ~1.5k...
 #  endif
       }
 
    sz = n + (15 * (n / 100)) + 32;
 
    if (sz > cache_file->capacity()) cache_file->allocate(u_nextPowerOfTwo(sz));
+
+#ifdef U_STDCPP_ENABLE
+   if (content_cache)
+      {
+      UString2Object(U_STRING_TO_PARAM(content_cache), *cache_file);
+
+      U_ASSERT_MAJOR(cache_file->size(), 0)
+
+      U_SRV_LOG("Loaded cache file store: %V", cache_file_store->rep);
+      }
+#endif
 
    U_INTERNAL_ASSERT_POINTER(pathname)
 
@@ -1177,6 +1179,7 @@ void UHTTP::init()
          }
       }
 
+#ifdef U_STDCPP_ENABLE
    if (cache_file_store &&
        content_cache.empty())
       {
@@ -1188,6 +1191,7 @@ void UHTTP::init()
 
       if (UFile::writeTo(*cache_file_store, buffer, sz)) U_SRV_LOG("Saved (%u bytes) cache file store: %V", sz, cache_file_store->rep);
       }
+#endif
 
 #ifdef USE_PHP
    U_INTERNAL_ASSERT_EQUALS(php_embed, U_NULLPTR)
@@ -1226,6 +1230,7 @@ void UHTTP::init()
 
    U_INTERNAL_DUMP("htdigest = %p htpasswd = %p", htdigest, htpasswd)
 
+#ifdef U_STDCPP_ENABLE
    if (htdigest ||
        htpasswd)
       {
@@ -1268,7 +1273,7 @@ void UHTTP::init()
       U_SRV_LOG("Loaded cache favicon.ico");
       }
 
-#ifdef U_HTML_PAGINATION_SUPPORT // manage css for HTML Pagination
+# ifdef U_HTML_PAGINATION_SUPPORT // manage css for HTML Pagination
    file_data = cache_file->at(U_CONSTANT_TO_PARAM("css/pagination.min.css"));
 
    if (file_data == U_NULLPTR)
@@ -1285,6 +1290,7 @@ void UHTTP::init()
 
       U_SRV_LOG("Loaded cache css store for HTML pagination");
       }
+# endif
 #endif
 
    sz = cache_file->size();
@@ -7786,6 +7792,15 @@ void UHTTP::manageRequest(service_info*  GET_table, uint32_t n1,
    const char* target = UClientImage_Base::getRequestUri(target_len);
 
    U_INTERNAL_ASSERT_EQUALS(target[0], '/')
+
+   if (target[1] == '/')
+      {
+      do {
+         ++target;
+         --target_len;
+         }
+      while (target[1] == '/');
+      }
 
    if (high == 0 ||
        --target_len == 0)

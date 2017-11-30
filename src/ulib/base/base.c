@@ -1970,11 +1970,12 @@ empty:      u_put_unalignedp16(bp, U_MULTICHAR_CONSTANT16('"','"'));
          n         = 0;
          remaining = buffer_size - (bp-buffer);
 
-         if ((flags & ALT) != 0) /* NB: # -> force print of all binary string (compatibly with buffer size)... */
+         if ((flags & ALT) != 0) /* NB: # -> force print of all binary string (compatible with buffer size)... */
             {
             remaining >>= 1;
 
-            if (u__isprint(*cp) == false &&
+            if (ch != 'V'                &&
+                u__isprint(*cp) == false &&
                 u__isspace(*cp) == false)
                {
                sign = 1; /* we want to print buffer as exadecimal... */
@@ -1998,7 +1999,7 @@ empty:      u_put_unalignedp16(bp, U_MULTICHAR_CONSTANT16('"','"'));
             else
                {
                if (c == '\0' &&
-                   (flags & ALT) == 0) /* NB: # -> force print of all binary string (compatibly with buffer size)... */
+                   (flags & ALT) == 0) /* NB: # -> force print of all binary string (compatible with buffer size)... */
                   {
                   break;
                   }

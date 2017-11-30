@@ -100,7 +100,7 @@ AC_DEFUN([AX_LIB_POSTGRESQL],
             POSTGRESQL_CPPFLAGS="-I`$PG_CONFIG --includedir` -I`$PG_CONFIG --includedir-server`"
             POSTGRESQL_VERSION=`$PG_CONFIG --version | sed -e 's#PostgreSQL ##'`
 
-				if test -f "$postgresql_libdir/libpgport.a" -o -f "$postgresql_libdir/libpgport.so" -o -f "/usr/lib/libpgport.a" -o -f "/usr/lib/libpgport.so"; then
+				if test -f "$postgresql_libdir/libpgport.so" -o -f "/usr/lib/libpgport.so"; then
 					POSTGRESQL_LIBS="-lpq -lpgport"
 				else
 					POSTGRESQL_LIBS="-lpq"

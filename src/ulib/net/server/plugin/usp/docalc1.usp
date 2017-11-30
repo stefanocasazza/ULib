@@ -1,0 +1,17 @@
+<!--#args
+arg1;
+arg2;
+-->
+<!--#code
+double val1   =  std::stod(arg1.data());
+double check1 =  arg1.strtod();
+double val2   =  std::stod(arg2.data());
+double check2 =  arg2.strtod(); 
+double result = 0.0;
+
+result = val1 + val2;  
+USP_PRINTF("<hr>\n%g + %g = %g", val1, val2, result);
+
+result = check1 + check2;
+USP_PRINTF("<hr>\n%g + %g = %g", check1, check2, result);
+-->

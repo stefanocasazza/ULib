@@ -208,13 +208,15 @@ int UProxyPlugIn::handlerRequest()
             UString body         = client_http->getContent(),
                     content_type = client_http->getResponseHeader()->getContentType();
 
-            U_INTERNAL_ASSERT(body)
+            if (body &&
+                content_type)
+               {
+               if (UHTTP::service->isReplaceResponse()) body = UHTTP::service->replaceResponse(body); 
 
-            if (UHTTP::service->isReplaceResponse()) body = UHTTP::service->replaceResponse(body); 
+               content_type.rep->_length += 2; // NB: we add "\r\n"...
 
-            content_type.rep->_length += 2; // NB: we add "\r\n"...
-
-            UHTTP::setDynamicResponse(body, UString::getStringNull(), content_type);
+               UHTTP::setDynamicResponse(body, UString::getStringNull(), content_type);
+               }
             }
          }
 

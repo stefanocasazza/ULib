@@ -38,7 +38,6 @@ static void print_size()
    U_PRINT_SIZEOF(UFtpClient);
 // U_PRINT_SIZEOF(UFuncSlot);
    U_PRINT_SIZEOF(UHashMap<UString>);
-   U_PRINT_SIZEOF(UHashMapNode);
    U_PRINT_SIZEOF(UHttpClient<UTCPSocket>);
    U_PRINT_SIZEOF(UIPAddress);
 #ifdef HAVE_LDAP

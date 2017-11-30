@@ -747,12 +747,12 @@ U_BOOLEAN_VALUE = 10, // bool value
   U_LREAL_VALUE = 20  // long double value
 } ValueType;
 
-static inline uint32_t u_getTag(    uint64_t val) { return (val >> U_VALUE_TAG_SHIFT) & U_VALUE_TAG_MASK; }
+static inline uint8_t  u_getTag(    uint64_t val) { return (val >> U_VALUE_TAG_SHIFT) & U_VALUE_TAG_MASK; }
 static inline uint64_t u_getPayload(uint64_t val) { return (val & U_VALUE_PAYLOAD_MASK); }
 
-static inline uint64_t u_getValue(uint16_t tag, void* payload)
+static inline uint64_t u_getValue(uint8_t tag, void* payload)
 {
-   U_INTERNAL_TRACE("u_getValue(%hu,%p)", tag, payload)
+   U_INTERNAL_TRACE("u_getValue(%u,%p)", tag, payload)
 
    U_INTERNAL_ASSERT(payload <= (void*)U_VALUE_PAYLOAD_MASK)
 
@@ -761,7 +761,7 @@ static inline uint64_t u_getValue(uint16_t tag, void* payload)
           ((uint64_t)(long)payload & U_VALUE_PAYLOAD_MASK);
 }
 
-static inline void u_setTag(uint16_t tag, uint64_t* pval) { uint64_t payload = u_getPayload(*pval); *pval = u_getValue(tag, (void*)(long)payload); }
+static inline void u_setTag(uint8_t tag, uint64_t* pval) { uint64_t payload = u_getPayload(*pval); *pval = u_getValue(tag, (void*)(long)payload); }
 
 #if defined(USE_PGSQL) && defined(LIBPGPORT_NOT_FOUND)
 static inline void pg_qsort(void* a, size_t n, size_t es, int (*cmp)(const void*, const void*)) { qsort(a, n, es, cmp); }

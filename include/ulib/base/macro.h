@@ -350,6 +350,15 @@ static inline void     u_put_unalignedp64(      void* p, uint64_t val) {       s
 #  define u_parse_unalignedp32(p) ((uint32_t)(p)[0]<<24|(p)[1]<<16|(ptr)[2]<< 8|(ptr)[3])
 #endif
 
+#if defined(__GNUC__) && __GNUC__ * 100 + __GNUC_MINOR__ < 408 && !defined(__clang__) // __builtin_bswap16 was missing prior to GCC 4.8
+#  define U_BYTESWAP16(x) (uint16_t)(__builtin_bswap32((uint32_t)(x) << 16))
+#else
+#  define U_BYTESWAP16 __builtin_bswap16
+#endif
+
+#define U_BYTESWAP32 __builtin_bswap32
+#define U_BYTESWAP64 __builtin_bswap64
+
 /**
  * u_get_unaligned - get value from possibly mis-aligned location
  *

@@ -26849,6 +26849,8 @@ main ()
     if (*(data + i) != *(data3 + i))
       return 14;
   close (fd);
+  free (data);
+  free (data3);
   return 0;
 }
 _ACEOF
@@ -30476,7 +30478,7 @@ $as_echo_n "checking for PostgreSQL client libraries... " >&6; }
             POSTGRESQL_CPPFLAGS="-I`$PG_CONFIG --includedir` -I`$PG_CONFIG --includedir-server`"
             POSTGRESQL_VERSION=`$PG_CONFIG --version | sed -e 's#PostgreSQL ##'`
 
-				if test -f "$postgresql_libdir/libpgport.a" -o -f "$postgresql_libdir/libpgport.so" -o -f "/usr/lib/libpgport.a" -o -f "/usr/lib/libpgport.so"; then
+				if test -f "$postgresql_libdir/libpgport.so" -o -f "/usr/lib/libpgport.so"; then
 					POSTGRESQL_LIBS="-lpq -lpgport"
 				else
 					POSTGRESQL_LIBS="-lpq"
@@ -34202,7 +34204,7 @@ fi
 		## -------------------------------------------------------------------------------------
 
 		if test "$enable_debug" != "yes"; then
-			MAYBE_FLAGS="$MAYBE_FLAGS -Winline -Wno-unused-parameter -Wno-unused-variable"
+			MAYBE_FLAGS="$MAYBE_FLAGS -Wno-unused-parameter -Wno-unused-variable" # -Winline
 		else
 			## _FORTIFY_SOURCE is enabled by default from g++ 4.7.2
 			MAYBE_FLAGS="$MAYBE_FLAGS -Wunsafe-loop-optimizations -Wno-unused-parameter -rdynamic -fdiagnostics-color=auto -Wmisleading-indentation"

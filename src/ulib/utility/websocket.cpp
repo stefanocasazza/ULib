@@ -250,10 +250,12 @@ loop:
             payload_length                 = 0;
             payload_length_bytes_remaining = 0;
 
-            if (block_offset >= block_size) goto next; /* FALLTHRU */
+            if (block_offset >= block_size) goto next;
+
+            U_INTERNAL_DUMP("framing_state = %d", framing_state)
             }
 
-         U_INTERNAL_DUMP("framing_state = %d", framing_state)
+         /* FALLTHRU */
 
          case DATA_FRAMING_PAYLOAD_LENGTH: // 2
             {
@@ -290,10 +292,12 @@ loop:
 
             framing_state = DATA_FRAMING_PAYLOAD_LENGTH_EXT; // 3
 
-            if (block_offset >= block_size) goto next; /* FALLTHRU */
+            if (block_offset >= block_size) goto next;
+
+            U_INTERNAL_DUMP("framing_state = %d", framing_state)
             }
 
-         U_INTERNAL_DUMP("framing_state = %d", framing_state)
+         /* FALLTHRU */
 
          case DATA_FRAMING_PAYLOAD_LENGTH_EXT: // 3
             {
@@ -330,10 +334,12 @@ loop:
                framing_state = DATA_FRAMING_MASK; // 0
                }
 
-            if (block_offset >= block_size) goto next; /* FALLTHRU */
+            if (block_offset >= block_size) goto next;
+
+            U_INTERNAL_DUMP("framing_state = %d", framing_state)
             }
 
-         U_INTERNAL_DUMP("framing_state = %d", framing_state)
+         /* FALLTHRU */
 
          case DATA_FRAMING_MASK: // 0
             {
@@ -357,12 +363,10 @@ loop:
                masking = 0;
                }
 
-            U_INTERNAL_DUMP("masking = %d", masking)
-
-            /* FALLTHRU */
+            U_INTERNAL_DUMP("masking = %d framing_state = %d", masking, framing_state)
             }
 
-         U_INTERNAL_DUMP("framing_state = %d", framing_state)
+         /* FALLTHRU */
 
          case DATA_FRAMING_EXTENSION_DATA: // 4
             {
@@ -382,10 +386,10 @@ loop:
                framing_state = DATA_FRAMING_APPLICATION_DATA; // 5
                }
 
-            /* FALLTHRU */
+            U_INTERNAL_DUMP("framing_state = %d", framing_state)
             }
 
-         U_INTERNAL_DUMP("framing_state = %d", framing_state)
+         /* FALLTHRU */
 
          case DATA_FRAMING_APPLICATION_DATA: // 5
             {

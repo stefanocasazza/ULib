@@ -462,6 +462,7 @@ TO_INC = ulib/README \
 			ulib/json/*.h \
 			ulib/query/*.h \
 			ulib/replace/*.h \
+			ulib/serialize/*.h \
 			ulib/ssh/net/*.h \
 			ulib/ssl/*.h \
 			ulib/ssl/mime/*.h \

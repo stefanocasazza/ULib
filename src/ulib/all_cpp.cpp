@@ -51,6 +51,7 @@
 #include "utility/string_ext.cpp"
 #include "utility/socket_ext.cpp"
 #include "utility/data_session.cpp"
+#include "serialize/flatbuffers.cpp"
 #include "lemon/expression.cpp"
 #include "dynamic/dynamic.cpp"
 #include "dynamic/plugin.cpp"

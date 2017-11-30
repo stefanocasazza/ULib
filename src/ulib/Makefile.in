@@ -263,21 +263,21 @@ am__lib@ULIB@_la_SOURCES_DIST = base/base.c base/base_error.c \
 	net/client/smtp.cpp net/client/ftp.cpp net/client/pop3.cpp \
 	net/client/imap.cpp net/client/http.cpp net/client/client.cpp \
 	net/client/redis.cpp net/client/elasticsearch.cpp \
-	net/ipt_ACCOUNT.cpp json/value.cpp query/query_parser.cpp \
-	event/event_time.cpp timeval.cpp timer.cpp notifier.cpp \
-	string.cpp file.cpp process.cpp file_config.cpp log.cpp \
-	options.cpp application.cpp cache.cpp date.cpp url.cpp \
-	tokenizer.cpp command.cpp db/tdb.cpp net/client/mongodb.cpp \
-	utility/http2.cpp internal/objectIO.cpp thread.cpp \
-	debug/debug_common.cpp debug/trace.cpp debug/error_memory.cpp \
-	debug/error_simulation.cpp debug/objectDB.cpp \
-	internal/memory_pool.cpp zip/zip.cpp flex/flexer.cpp \
-	flex/bison.cpp pcre/pcre.cpp ssl/certificate.cpp ssl/pkcs7.cpp \
-	ssl/crl.cpp ssl/pkcs10.cpp net/client/twilio.cpp \
-	ssl/mime/mime_pkcs7.cpp ssl/net/sslsocket.cpp \
-	ssl/net/ssl_session.cpp utility/des3.cpp ssl/timestamp.cpp \
-	ssh/net/sshsocket.cpp ldap/ldap.cpp curl/curl.cpp \
-	xml/expat/attribute.cpp xml/expat/element.cpp \
+	net/ipt_ACCOUNT.cpp json/value.cpp serialize/flatbuffers.cpp \
+	query/query_parser.cpp event/event_time.cpp timeval.cpp \
+	timer.cpp notifier.cpp string.cpp file.cpp process.cpp \
+	file_config.cpp log.cpp options.cpp application.cpp cache.cpp \
+	date.cpp url.cpp tokenizer.cpp command.cpp db/tdb.cpp \
+	net/client/mongodb.cpp utility/http2.cpp internal/objectIO.cpp \
+	thread.cpp debug/debug_common.cpp debug/trace.cpp \
+	debug/error_memory.cpp debug/error_simulation.cpp \
+	debug/objectDB.cpp internal/memory_pool.cpp zip/zip.cpp \
+	flex/flexer.cpp flex/bison.cpp pcre/pcre.cpp \
+	ssl/certificate.cpp ssl/pkcs7.cpp ssl/crl.cpp ssl/pkcs10.cpp \
+	net/client/twilio.cpp ssl/mime/mime_pkcs7.cpp \
+	ssl/net/sslsocket.cpp ssl/net/ssl_session.cpp utility/des3.cpp \
+	ssl/timestamp.cpp ssh/net/sshsocket.cpp ldap/ldap.cpp \
+	curl/curl.cpp xml/expat/attribute.cpp xml/expat/element.cpp \
 	xml/expat/xml_parser.cpp xml/expat/xml2txt.cpp \
 	xml/soap/soap_fault.cpp xml/soap/soap_gen_method.cpp \
 	xml/soap/soap_parser.cpp xml/soap/soap_encoder.cpp \
@@ -422,23 +422,24 @@ am__objects_67 = internal/common.lo internal/error.lo ui/dialog.lo \
 	net/client/ftp.lo net/client/pop3.lo net/client/imap.lo \
 	net/client/http.lo net/client/client.lo net/client/redis.lo \
 	net/client/elasticsearch.lo net/ipt_ACCOUNT.lo json/value.lo \
-	query/query_parser.lo event/event_time.lo timeval.lo timer.lo \
-	notifier.lo string.lo file.lo process.lo file_config.lo log.lo \
-	options.lo application.lo cache.lo date.lo url.lo tokenizer.lo \
-	command.lo $(am__objects_27) $(am__objects_28) \
-	$(am__objects_29) $(am__objects_30) $(am__objects_31) \
-	$(am__objects_32) $(am__objects_33) $(am__objects_34) \
-	$(am__objects_35) $(am__objects_36) $(am__objects_37) \
-	$(am__objects_38) $(am__objects_39) $(am__objects_40) \
-	$(am__objects_41) $(am__objects_42) $(am__objects_43) \
-	$(am__objects_44) $(am__objects_45) $(am__objects_46) \
-	$(am__objects_47) $(am__objects_48) $(am__objects_49) \
-	$(am__objects_50) $(am__objects_51) $(am__objects_52) \
-	$(am__objects_53) $(am__objects_54) $(am__objects_55) \
-	$(am__objects_56) $(am__objects_57) $(am__objects_58) \
-	$(am__objects_59) $(am__objects_60) $(am__objects_61) \
-	$(am__objects_62) $(am__objects_63) $(am__objects_64) \
-	$(am__objects_65) $(am__objects_66)
+	serialize/flatbuffers.lo query/query_parser.lo \
+	event/event_time.lo timeval.lo timer.lo notifier.lo string.lo \
+	file.lo process.lo file_config.lo log.lo options.lo \
+	application.lo cache.lo date.lo url.lo tokenizer.lo command.lo \
+	$(am__objects_27) $(am__objects_28) $(am__objects_29) \
+	$(am__objects_30) $(am__objects_31) $(am__objects_32) \
+	$(am__objects_33) $(am__objects_34) $(am__objects_35) \
+	$(am__objects_36) $(am__objects_37) $(am__objects_38) \
+	$(am__objects_39) $(am__objects_40) $(am__objects_41) \
+	$(am__objects_42) $(am__objects_43) $(am__objects_44) \
+	$(am__objects_45) $(am__objects_46) $(am__objects_47) \
+	$(am__objects_48) $(am__objects_49) $(am__objects_50) \
+	$(am__objects_51) $(am__objects_52) $(am__objects_53) \
+	$(am__objects_54) $(am__objects_55) $(am__objects_56) \
+	$(am__objects_57) $(am__objects_58) $(am__objects_59) \
+	$(am__objects_60) $(am__objects_61) $(am__objects_62) \
+	$(am__objects_63) $(am__objects_64) $(am__objects_65) \
+	$(am__objects_66)
 @FINAL_FALSE@am_lib@ULIB@_la_OBJECTS = $(am__objects_26) \
 @FINAL_FALSE@	$(am__objects_67)
 @FINAL_TRUE@am_lib@ULIB@_la_OBJECTS = all_c.lo base/xxhash/xxhash.lo \
@@ -753,24 +754,24 @@ SRC_CPP = internal/common.cpp internal/error.cpp ui/dialog.cpp \
 	net/client/smtp.cpp net/client/ftp.cpp net/client/pop3.cpp \
 	net/client/imap.cpp net/client/http.cpp net/client/client.cpp \
 	net/client/redis.cpp net/client/elasticsearch.cpp \
-	net/ipt_ACCOUNT.cpp json/value.cpp query/query_parser.cpp \
-	event/event_time.cpp timeval.cpp timer.cpp notifier.cpp \
-	string.cpp file.cpp process.cpp file_config.cpp log.cpp \
-	options.cpp application.cpp cache.cpp date.cpp url.cpp \
-	tokenizer.cpp command.cpp $(am__append_1) $(am__append_2) \
-	$(am__append_3) $(am__append_4) $(am__append_5) \
-	$(am__append_7) $(am__append_8) $(am__append_28) \
-	$(am__append_31) $(am__append_33) $(am__append_34) \
-	$(am__append_36) $(am__append_37) $(am__append_38) \
-	$(am__append_39) $(am__append_40) $(am__append_41) \
-	$(am__append_42) $(am__append_43) $(am__append_44) \
-	$(am__append_45) $(am__append_47) $(am__append_48) \
-	$(am__append_49) $(am__append_50) $(am__append_51) \
-	$(am__append_52) $(am__append_53) $(am__append_54) \
-	$(am__append_55) $(am__append_56) $(am__append_57) \
-	$(am__append_58) $(am__append_59) $(am__append_60) \
-	$(am__append_61) $(am__append_62) $(am__append_63) \
-	$(am__append_64) $(am__append_65)
+	net/ipt_ACCOUNT.cpp json/value.cpp serialize/flatbuffers.cpp \
+	query/query_parser.cpp event/event_time.cpp timeval.cpp \
+	timer.cpp notifier.cpp string.cpp file.cpp process.cpp \
+	file_config.cpp log.cpp options.cpp application.cpp cache.cpp \
+	date.cpp url.cpp tokenizer.cpp command.cpp $(am__append_1) \
+	$(am__append_2) $(am__append_3) $(am__append_4) \
+	$(am__append_5) $(am__append_7) $(am__append_8) \
+	$(am__append_28) $(am__append_31) $(am__append_33) \
+	$(am__append_34) $(am__append_36) $(am__append_37) \
+	$(am__append_38) $(am__append_39) $(am__append_40) \
+	$(am__append_41) $(am__append_42) $(am__append_43) \
+	$(am__append_44) $(am__append_45) $(am__append_47) \
+	$(am__append_48) $(am__append_49) $(am__append_50) \
+	$(am__append_51) $(am__append_52) $(am__append_53) \
+	$(am__append_54) $(am__append_55) $(am__append_56) \
+	$(am__append_57) $(am__append_58) $(am__append_59) \
+	$(am__append_60) $(am__append_61) $(am__append_62) \
+	$(am__append_63) $(am__append_64) $(am__append_65)
 
 #lib@ULIB@_la_CXXFLAGS =
 lib@ULIB@_la_LDFLAGS = @ULIB_LIBS@ -version-info 1:0:0 -release \
@@ -1178,6 +1179,14 @@ json/$(DEPDIR)/$(am__dirstamp):
 	@$(MKDIR_P) json/$(DEPDIR)
 	@: > json/$(DEPDIR)/$(am__dirstamp)
 json/value.lo: json/$(am__dirstamp) json/$(DEPDIR)/$(am__dirstamp)
+serialize/$(am__dirstamp):
+	@$(MKDIR_P) serialize
+	@: > serialize/$(am__dirstamp)
+serialize/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) serialize/$(DEPDIR)
+	@: > serialize/$(DEPDIR)/$(am__dirstamp)
+serialize/flatbuffers.lo: serialize/$(am__dirstamp) \
+	serialize/$(DEPDIR)/$(am__dirstamp)
 query/$(am__dirstamp):
 	@$(MKDIR_P) query
 	@: > query/$(am__dirstamp)
@@ -1490,6 +1499,8 @@ mostlyclean-compile:
 	-rm -f query/*.lo
 	-rm -f replace/*.$(OBJEXT)
 	-rm -f replace/*.lo
+	-rm -f serialize/*.$(OBJEXT)
+	-rm -f serialize/*.lo
 	-rm -f ssh/net/*.$(OBJEXT)
 	-rm -f ssh/net/*.lo
 	-rm -f ssl/*.$(OBJEXT)
@@ -1654,6 +1665,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@replace/$(DEPDIR)/strndup.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@replace/$(DEPDIR)/strptime.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@replace/$(DEPDIR)/timegm.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@serialize/$(DEPDIR)/flatbuffers.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@ssh/net/$(DEPDIR)/sshsocket.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@ssl/$(DEPDIR)/certificate.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@ssl/$(DEPDIR)/crl.Plo@am__quote@
@@ -1781,6 +1793,7 @@ clean-libtool:
 	-rm -rf pcre/.libs pcre/_libs
 	-rm -rf query/.libs query/_libs
 	-rm -rf replace/.libs replace/_libs
+	-rm -rf serialize/.libs serialize/_libs
 	-rm -rf ssh/net/.libs ssh/net/_libs
 	-rm -rf ssl/.libs ssl/_libs
 	-rm -rf ssl/mime/.libs ssl/mime/_libs
@@ -1955,6 +1968,8 @@ distclean-generic:
 	-rm -f query/$(am__dirstamp)
 	-rm -f replace/$(DEPDIR)/$(am__dirstamp)
 	-rm -f replace/$(am__dirstamp)
+	-rm -f serialize/$(DEPDIR)/$(am__dirstamp)
+	-rm -f serialize/$(am__dirstamp)
 	-rm -f ssh/net/$(DEPDIR)/$(am__dirstamp)
 	-rm -f ssh/net/$(am__dirstamp)
 	-rm -f ssl/$(DEPDIR)/$(am__dirstamp)
@@ -1986,7 +2001,7 @@ clean-am: clean-generic clean-libLTLIBRARIES clean-libtool clean-local \
 	mostlyclean-am
 
 distclean: distclean-am
-	-rm -rf ./$(DEPDIR) base/$(DEPDIR) base/apex/$(DEPDIR) base/coder/$(DEPDIR) base/miniz/$(DEPDIR) base/ssl/$(DEPDIR) base/win32/$(DEPDIR) base/xxhash/$(DEPDIR) base/zip/$(DEPDIR) container/$(DEPDIR) curl/$(DEPDIR) db/$(DEPDIR) dbi/$(DEPDIR) debug/$(DEPDIR) dynamic/$(DEPDIR) event/$(DEPDIR) flex/$(DEPDIR) internal/$(DEPDIR) json/$(DEPDIR) ldap/$(DEPDIR) lemon/$(DEPDIR) libevent/$(DEPDIR) magic/$(DEPDIR) mime/$(DEPDIR) net/$(DEPDIR) net/client/$(DEPDIR) net/rpc/$(DEPDIR) net/server/$(DEPDIR) net/server/plugin/$(DEPDIR) net/server/plugin/mod_geoip/$(DEPDIR) net/server/plugin/mod_shib/$(DEPDIR) orm/$(DEPDIR) orm/driver/$(DEPDIR) pcre/$(DEPDIR) query/$(DEPDIR) replace/$(DEPDIR) ssh/net/$(DEPDIR) ssl/$(DEPDIR) ssl/mime/$(DEPDIR) ssl/net/$(DEPDIR) ui/$(DEPDIR) utility/$(DEPDIR) xml/expat/$(DEPDIR) xml/libxml2/$(DEPDIR) xml/soap/$(DEPDIR) zip/$(DEPDIR)
+	-rm -rf ./$(DEPDIR) base/$(DEPDIR) base/apex/$(DEPDIR) base/coder/$(DEPDIR) base/miniz/$(DEPDIR) base/ssl/$(DEPDIR) base/win32/$(DEPDIR) base/xxhash/$(DEPDIR) base/zip/$(DEPDIR) container/$(DEPDIR) curl/$(DEPDIR) db/$(DEPDIR) dbi/$(DEPDIR) debug/$(DEPDIR) dynamic/$(DEPDIR) event/$(DEPDIR) flex/$(DEPDIR) internal/$(DEPDIR) json/$(DEPDIR) ldap/$(DEPDIR) lemon/$(DEPDIR) libevent/$(DEPDIR) magic/$(DEPDIR) mime/$(DEPDIR) net/$(DEPDIR) net/client/$(DEPDIR) net/rpc/$(DEPDIR) net/server/$(DEPDIR) net/server/plugin/$(DEPDIR) net/server/plugin/mod_geoip/$(DEPDIR) net/server/plugin/mod_shib/$(DEPDIR) orm/$(DEPDIR) orm/driver/$(DEPDIR) pcre/$(DEPDIR) query/$(DEPDIR) replace/$(DEPDIR) serialize/$(DEPDIR) ssh/net/$(DEPDIR) ssl/$(DEPDIR) ssl/mime/$(DEPDIR) ssl/net/$(DEPDIR) ui/$(DEPDIR) utility/$(DEPDIR) xml/expat/$(DEPDIR) xml/libxml2/$(DEPDIR) xml/soap/$(DEPDIR) zip/$(DEPDIR)
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic
 
@@ -2031,7 +2046,7 @@ install-ps-am:
 installcheck-am:
 
 maintainer-clean: maintainer-clean-am
-	-rm -rf ./$(DEPDIR) base/$(DEPDIR) base/apex/$(DEPDIR) base/coder/$(DEPDIR) base/miniz/$(DEPDIR) base/ssl/$(DEPDIR) base/win32/$(DEPDIR) base/xxhash/$(DEPDIR) base/zip/$(DEPDIR) container/$(DEPDIR) curl/$(DEPDIR) db/$(DEPDIR) dbi/$(DEPDIR) debug/$(DEPDIR) dynamic/$(DEPDIR) event/$(DEPDIR) flex/$(DEPDIR) internal/$(DEPDIR) json/$(DEPDIR) ldap/$(DEPDIR) lemon/$(DEPDIR) libevent/$(DEPDIR) magic/$(DEPDIR) mime/$(DEPDIR) net/$(DEPDIR) net/client/$(DEPDIR) net/rpc/$(DEPDIR) net/server/$(DEPDIR) net/server/plugin/$(DEPDIR) net/server/plugin/mod_geoip/$(DEPDIR) net/server/plugin/mod_shib/$(DEPDIR) orm/$(DEPDIR) orm/driver/$(DEPDIR) pcre/$(DEPDIR) query/$(DEPDIR) replace/$(DEPDIR) ssh/net/$(DEPDIR) ssl/$(DEPDIR) ssl/mime/$(DEPDIR) ssl/net/$(DEPDIR) ui/$(DEPDIR) utility/$(DEPDIR) xml/expat/$(DEPDIR) xml/libxml2/$(DEPDIR) xml/soap/$(DEPDIR) zip/$(DEPDIR)
+	-rm -rf ./$(DEPDIR) base/$(DEPDIR) base/apex/$(DEPDIR) base/coder/$(DEPDIR) base/miniz/$(DEPDIR) base/ssl/$(DEPDIR) base/win32/$(DEPDIR) base/xxhash/$(DEPDIR) base/zip/$(DEPDIR) container/$(DEPDIR) curl/$(DEPDIR) db/$(DEPDIR) dbi/$(DEPDIR) debug/$(DEPDIR) dynamic/$(DEPDIR) event/$(DEPDIR) flex/$(DEPDIR) internal/$(DEPDIR) json/$(DEPDIR) ldap/$(DEPDIR) lemon/$(DEPDIR) libevent/$(DEPDIR) magic/$(DEPDIR) mime/$(DEPDIR) net/$(DEPDIR) net/client/$(DEPDIR) net/rpc/$(DEPDIR) net/server/$(DEPDIR) net/server/plugin/$(DEPDIR) net/server/plugin/mod_geoip/$(DEPDIR) net/server/plugin/mod_shib/$(DEPDIR) orm/$(DEPDIR) orm/driver/$(DEPDIR) pcre/$(DEPDIR) query/$(DEPDIR) replace/$(DEPDIR) serialize/$(DEPDIR) ssh/net/$(DEPDIR) ssl/$(DEPDIR) ssl/mime/$(DEPDIR) ssl/net/$(DEPDIR) ui/$(DEPDIR) utility/$(DEPDIR) xml/expat/$(DEPDIR) xml/libxml2/$(DEPDIR) xml/soap/$(DEPDIR) zip/$(DEPDIR)
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 

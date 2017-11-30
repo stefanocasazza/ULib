@@ -93,8 +93,6 @@ public:
       {
       U_TRACE_UNREGISTER_OBJECT(0, UHashMap<void*>)
 
-      U_INTERNAL_ASSERT_EQUALS(_length, 0)
-
       if (_capacity) _deallocate();
       }
 
@@ -216,13 +214,6 @@ public:
    void* operator[](const UString& k)    { return (lkey = k.rep, at()); }
    void* operator[](const UStringRep* k) { return (lkey = k,     at()); }
 
-   template <typename T> T* get(const UString& k)
-      {
-      U_TRACE(0, "UHashMap<void*>::get(%V)", k.rep)
-
-      return (T*) operator[](k);
-      }
-
    // after called find() (don't make the lookup)
 
    void   eraseAfterFind();
@@ -264,6 +255,8 @@ public:
    void setNodePointer(uint32_t idx) const { setNodePointer(table,   idx); }
 
    static void setNodePointer(char* table, uint32_t idx) { node = (UHashMapNode*)(table + (idx * UHashMapNode::size())); }
+
+   static void nextNodePointer() { node = (UHashMapNode*)((char*)node + UHashMapNode::size()); }
 
    // traverse the hash table for all entry
 
@@ -435,6 +428,7 @@ protected:
 
       U_CHECK_MEMORY
 
+      U_INTERNAL_ASSERT_EQUALS(_length, 0)
       U_INTERNAL_ASSERT_MAJOR(_capacity, 1)
 
       UMemoryPool::_free(info, _capacity, 1+UHashMapNode::size());

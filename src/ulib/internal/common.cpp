@@ -39,6 +39,7 @@
 #include <ulib/json/value.h>
 #include <ulib/application.h>
 #include <ulib/utility/interrupt.h>
+#include <ulib/serialize/flatbuffers.h>
 
 #ifndef HAVE_POLL_H
 #  include <ulib/notifier.h>
@@ -158,8 +159,8 @@ void ULib::init(char** argv, const char* mempool)
 
    // allocation from memory pool
 
-#if defined(ENABLE_MEMPOOL) // check if we want some preallocation for memory pool
-   const char* ptr = (mempool ? (UValue::jsonParseFlags = 2, mempool) : U_SYSCALL(getenv, "%S", "UMEMPOOL")); // start from 1... (Ex: 768,768,0,1536,2085,0,0,0,121)
+#if defined(ENABLE_MEMPOOL) // check if we want some preallocation for memory pool - start from 1... (Ex: 768,768,0,1536,2085,0,0,0,121)
+   const char* ptr = (mempool ? (UValue::jsonParseFlags = 2, mempool) : U_SYSCALL(getenv, "%S", "UMEMPOOL"));
 
    // coverity[tainted_scalar]
    if (           ptr &&
@@ -190,6 +191,9 @@ void ULib::init(char** argv, const char* mempool)
    UMemoryError::pbuffer = (char*) U_SYSCALL(malloc, "%u", U_MAX_SIZE_PREALLOCATE);
 # endif
 #endif
+
+   UFlatBuffer::setStack((uint8_t*)u_err_buffer, 256);
+   UFlatBuffer::setBuffer((uint8_t*)u_buffer, U_BUFFER_SIZE);
 
    UString::ptrbuf =
    UString::appbuf = (char*)UMemoryPool::pop(U_SIZE_TO_STACK_INDEX(1024));

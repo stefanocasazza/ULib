@@ -1515,6 +1515,7 @@ U_EXPORT main(int argc, char* argv[])
    U_ASSERT( U_STRING_FROM_CONSTANT("-0.0").strtod() == -0.0 )
    U_ASSERT( U_STRING_FROM_CONSTANT("1.89").strtod() == 1.89 )
    U_ASSERT( U_STRING_FROM_CONSTANT("1e30").strtod() == 1e30 )
+   U_ASSERT( U_STRING_FROM_CONSTANT("1000").strtod() == 1000.0 )
    U_ASSERT( U_STRING_FROM_CONSTANT("1.2345").strtod() == 1.2345 )
    U_ASSERT( U_STRING_FROM_CONSTANT("5e-324").strtod() == 5e-324 ) // Min subnormal positive double
    U_ASSERT( U_STRING_FROM_CONSTANT("-1E-10").strtod() == -1e-10 )
@@ -1967,11 +1968,11 @@ U_EXPORT main(int argc, char* argv[])
 
    z = UStringExt::substitute(y, U_CONSTANT_TO_PARAM("uno"), U_CONSTANT_TO_PARAM("primo"));
 
-   U_ASSERT( z == " primo due tre quattro cinque \n"
-                  " primo due tre quattro cinque \n"
-                  " primo due tre quattro cinque \n"
-                  " primo due tre quattro cinque \n"
-                  " primo due tre quattro cinque \n")
+   U_ASSERT(z == " primo due tre quattro cinque \n"
+                 " primo due tre quattro cinque \n"
+                 " primo due tre quattro cinque \n"
+                 " primo due tre quattro cinque \n"
+                 " primo due tre quattro cinque \n")
 
    z = U_STRING_FROM_CONSTANT("uno primo due secondo tre terzo quattro quarto cinque quinto");
 
@@ -1983,11 +1984,31 @@ U_EXPORT main(int argc, char* argv[])
 
    vec.clear();
 
-   U_ASSERT( y == " primo secondo terzo quarto quinto \n"
-                  " primo secondo terzo quarto quinto \n"
-                  " primo secondo terzo quarto quinto \n"
-                  " primo secondo terzo quarto quinto \n"
-                  " primo secondo terzo quarto quinto \n")
+   U_ASSERT(y == " primo secondo terzo quarto quinto \n"
+                 " primo secondo terzo quarto quinto \n"
+                 " primo secondo terzo quarto quinto \n"
+                 " primo secondo terzo quarto quinto \n"
+                 " primo secondo terzo quarto quinto \n")
+
+   z = U_STRING_FROM_CONSTANT("5 Bob Apples");
+
+   (void) vec.split(z);
+
+   y = UStringExt::substituteIds(U_CONSTANT_TO_PARAM("$1 purchased $0 $2. Thanks $1!"), vec);
+
+   vec.clear();
+
+   U_ASSERT_EQUALS(y, "Bob purchased 5 Apples. Thanks Bob!")
+
+   z = U_STRING_FROM_CONSTANT("0 1 2 3 4 5 6 7 8 9 5 Bob Apples");
+
+   (void) vec.split(z);
+
+   y = UStringExt::substituteIds(U_CONSTANT_TO_PARAM("$11 purchased $10 $12. Thanks $11!"), vec);
+
+   vec.clear();
+
+   U_ASSERT_EQUALS(y, "Bob purchased 5 Apples. Thanks Bob!")
 
    y = U_STRING_FROM_CONSTANT("Hello\n\n");
 

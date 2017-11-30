@@ -18,7 +18,7 @@ The current version offers the following features :
    * Browser cache management (headers: If-Modified-Since/Last-modified).
    * Chunk-encoding transfers support.
    * HTTP multi-range request support.
-   * Memory caching of document root for (small) static pages with smart gzip compression and CSS/JS reduction.
+   * Memory caching of document root for (small) static pages with smart (gzip-zopfli,brotli) compression and CSS/JS reduction.
    * Support for automatic update of caching document root with inotify (on Linux).
    * Support for pipelining.
    * Support for virtual hosts (also with SSL).
@@ -43,6 +43,7 @@ The current version offers the following features :
    * Support for running Ruby on Rails applications natively (experimental).
    * Support for running natively PHP applications whith a php (embedded) library (experimental).
    * Support for load balance between physical server via udp brodcast (experimental).
+   * Support for serialize object by [FlatBuffer schema-less](http://google.github.io/flatbuffers/index.html) like implementation.
    * Preforking mode to improve concurrency with dedicated process for long-time request.
    * Support for Windows (without preforking).
    * Customizable builds (you can remove unneeded functionality).

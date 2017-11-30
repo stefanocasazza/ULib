@@ -1,0 +1,19 @@
+#!/bin/sh
+
+. ../.function
+
+## serialize.test -- Test serialize feature
+
+start_msg serialize
+
+#UTRACE="0 30M -1"
+#UOBJDUMP="0 100k 10"
+#USIMERR="error.sim"
+ export UTRACE UOBJDUMP USIMERR
+
+#STRACE=$LTRUSS
+#VALGRIND=valgrind
+start_prg serialize <inp/file_config.input
+
+# Test against expected output
+test_output_wc l serialize

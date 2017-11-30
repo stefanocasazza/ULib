@@ -2433,7 +2433,7 @@ if test "$ac_cv_c_compiler_gnu" = "yes" -a "x$OPERATINGSYSTEM" = xlinux; then
 		## -------------------------------------------------------------------------------------
 
 		if test "$enable_debug" != "yes"; then
-			MAYBE_FLAGS="$MAYBE_FLAGS -Winline -Wno-unused-parameter -Wno-unused-variable"
+			MAYBE_FLAGS="$MAYBE_FLAGS -Wno-unused-parameter -Wno-unused-variable" # -Winline
 		else
 			## _FORTIFY_SOURCE is enabled by default from g++ 4.7.2
 			MAYBE_FLAGS="$MAYBE_FLAGS -Wunsafe-loop-optimizations -Wno-unused-parameter -rdynamic -fdiagnostics-color=auto -Wmisleading-indentation"

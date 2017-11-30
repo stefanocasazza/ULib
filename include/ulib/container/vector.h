@@ -38,6 +38,7 @@ class UNoCatPlugIn;
 template <class T> class UVector;
 template <class T> class UOrmTypeHandler;
 template <class T> class UJsonTypeHandler;
+template <class T> class UFlatBufferTypeHandler;
 
 typedef UVector<UString> UVectorUString;
 
@@ -429,6 +430,7 @@ private:
 
    template <class T> friend class UOrmTypeHandler;
    template <class T> friend class UJsonTypeHandler;
+   template <class T> friend class UFlatBufferTypeHandler;
 };
 
 template <class T> class U_EXPORT UVector<T*> : public UVector<void*> {

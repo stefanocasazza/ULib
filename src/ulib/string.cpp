@@ -1952,7 +1952,14 @@ double UString::strtod() const
       {
       UValue json;
 
-      if (json.parse(*this)) return json.getDouble();
+      if (json.parse(*this))
+         {
+         double result = (json.isDouble() ? json.getDouble() : (double)json.getPayload());
+
+         U_INTERNAL_DUMP("json.getDouble() = %g", json.getDouble())
+
+         U_RETURN(result);
+         }
       }
 
    U_RETURN(.0);

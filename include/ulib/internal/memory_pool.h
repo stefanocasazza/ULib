@@ -56,7 +56,6 @@
  *   32 sizeof(UQueryNode)
  *   32 sizeof(USOAPFault)
  *   32 sizeof(UTokenizer)
- *   32 sizeof(UHashMapNode) <==
  *   32 sizeof(UXMLAttribute)
  *   32 sizeof(UTree<UString>)
  * -------------------------
@@ -145,7 +144,6 @@
  *   40 sizeof(UStringRep) <==
  *   40 sizeof(UTokenizer)
  *   40 sizeof(USOAPObject)
- *   40 sizeof(UHashMapNode) <==
  *   40 sizeof(UTree<UString>)
  * -------------------------
  * U_STACK_TYPE_1
@@ -238,7 +236,6 @@
  *   16 sizeof(UTokenizer)
  *   16 sizeof(UStringRep) <==
  *   16 sizeof(USOAPObject)
- *   16 sizeof(UHashMapNode) <==
  * -------------------------
  * U_STACK_TYPE_1
  * 
@@ -324,7 +321,6 @@
  *   20 sizeof(UQueryNode)
  *   20 sizeof(USOAPFault)
  *   20 sizeof(UTokenizer)
- *   20 sizeof(UHashMapNode) <==
  *   24 sizeof(USOAPObject)
  *   24 sizeof(UTree<UString>)
  *   28 sizeof(UStringRep) <==

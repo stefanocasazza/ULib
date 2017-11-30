@@ -70,7 +70,7 @@ int U_EXPORT main(int argc, char* argv[], char* env[])
             U_INTERNAL_ASSERT_POINTER(total)
             U_ASSERT(total->isNumeric())
 
-            cout << "We found " << total->getUInt() << std::endl;
+            cout << "We found " << total->getNumber() << std::endl;
             }
          }
 
@@ -133,7 +133,7 @@ int U_EXPORT main(int argc, char* argv[], char* env[])
             U_INTERNAL_ASSERT_POINTER(total)
             U_ASSERT(total->isNumeric())
 
-            cout << "We found " << total->getUInt() << std::endl;
+            cout << "We found " << total->getNumber() << std::endl;
             }
          }
 
