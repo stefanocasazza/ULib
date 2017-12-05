@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<head>
+   <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+   <script type="text/javascript" src="jquery.min.js"></script>
+   <title>SSE example</title>
+</head>
+<body>
+<h1>Stock Price</h1>
+<script type="text/javascript">
+        
+ function read_data() {
+	var stream = new EventSource('/get_ticker');
+	stream.onmessage = function(e){
+	  document.getElementById('price').innerHTML=e.data;
+	};
+
+  stream.onerror = function(e){
+	  console.log(e);
+   };
+ }
+
+ read_data();
+</script>
+<p>Price: <span id="price"></span></p>
+</body>

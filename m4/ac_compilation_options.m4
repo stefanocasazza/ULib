@@ -209,6 +209,21 @@ AC_DEFUN([AC_COMPILATION_OPTIONS],[
 	fi
 	AC_MSG_RESULT([$enable_HPRS])
 
+	AC_MSG_CHECKING(if you want to enable Server-Sent Events support)
+	AC_ARG_ENABLE(SSE,
+				[  --enable-SSE              enable Server-Sent Events Support [[default=yes]]])
+	if test -z "$enable_SSE"; then
+		if test "$USP_FLAGS" = "-DAS_cpoll_cppsp_DO"; then
+			enable_SSE="no"
+		else
+			enable_SSE="yes"
+		fi
+	fi
+	if test "$enable_SSE" = "yes"; then
+		AC_DEFINE(U_SSE_ENABLE, 1, [enable Server-Sent Events support])
+	fi
+	AC_MSG_RESULT([$enable_SSE])
+
 	AC_MSG_CHECKING(if you want to enable HTTP/2 support)
 	AC_ARG_ENABLE(http2,
 				[  --enable-http2            enable HTTP/2 support [[default=no]]])

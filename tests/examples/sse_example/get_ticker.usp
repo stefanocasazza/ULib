@@ -1,0 +1,27 @@
+<!--#declaration
+static uint32_t counter;
+
+static UString getPrice()
+{
+	U_TRACE_NO_PARAM(5, "::getPrice()")
+
+	static double price = 1.2;
+
+	if (counter++)
+		{
+		price = price + (double)rand() / RAND_MAX * 2.0 - 1;
+
+		if (price <= 0.01) price = 0.01;
+		}
+
+	UString x = UStringExt::numberToString(price);
+
+	U_RETURN_STRING(x);
+}
+-->
+<!--#ssecode
+UHTTP::writeSSE(1, getPrice());
+-->
+<!--#sseloop:5
+UHTTP::sendSSE(counter, getPrice());
+-->

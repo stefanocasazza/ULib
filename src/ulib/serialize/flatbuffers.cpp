@@ -271,11 +271,11 @@ loop:
 
    // First create a vector out of all keys
 
-   uint8_t keys[20];
+   UFlatBufferValue keys;
 
-   CreateVector(start, len, 2, true, false, (UFlatBufferValue*)keys);
+   CreateVector(start, len, 2, true, false, &keys);
 
-   pkeys = (UFlatBufferValue*)keys;
+   pkeys = &keys;
 
    CreateVector(start+1, len, 2, false, false, U_NULLPTR);
 

@@ -311,7 +311,7 @@ loop:
        errno  == EADDRINUSE &&
        ++counter <= 3)
       {
-      UTimeVal::nanosleep(1L);
+      UTimeVal::nanosleep(1000L);
 
       goto loop;
       }

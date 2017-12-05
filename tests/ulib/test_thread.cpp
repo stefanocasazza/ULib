@@ -23,7 +23,7 @@ static bool WaitNValue(int value)
       {
       if (n == value) U_RETURN(true);
 
-      UThread::nanosleep(10);
+      UThread::nanosleep(100);
       }
 
    U_RETURN(false);
@@ -39,7 +39,7 @@ static bool WaitChangeNValue(int value)
       {
       if (n != value) U_RETURN(true);
 
-      UThread::nanosleep(10);
+      UThread::nanosleep(100);
       }
 
    U_RETURN(false);

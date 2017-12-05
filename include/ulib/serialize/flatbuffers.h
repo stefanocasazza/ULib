@@ -103,7 +103,7 @@ class UFlatBuffer;
 
 template <class T> class UFlatBufferTypeHandler;
 
-class U_NO_EXPORT UFlatBufferValue {
+class U_EXPORT UFlatBufferValue {
 public:
 
    /**
@@ -337,6 +337,8 @@ protected:
       }
 
 private:
+   UFlatBufferValue() {}
+
    friend class UFlatBuffer;
 
    U_DISALLOW_COPY_AND_ASSIGN(UFlatBufferValue)
@@ -355,6 +357,11 @@ public:
    UFlatBuffer()
       {
       U_TRACE_REGISTER_OBJECT(0, UFlatBuffer, "", 0)
+
+      // coverity[uninit_ctor]
+#  ifdef U_COVERITY_FALSE_POSITIVE
+      reset();
+#  endif
       }
 
    ~UFlatBuffer()
@@ -363,6 +370,17 @@ public:
       }
 
    // SERVICES
+
+   void reset()
+      {
+      U_TRACE_NO_PARAM(0, "UFlatBuffer::reset()")
+
+      data_         = U_NULLPTR;
+      buffer_idx    = 0;
+      type_         = UFlatBufferValue::TYPE_NULL;
+        byte_width_ =
+      parent_width_ = UFlatBufferValue::BIT_WIDTH_8;
+      }
 
    uint8_t GetType() const { return type_; }
 
@@ -675,14 +693,11 @@ public:
 
       // Reset all state so we can re-use the buffers
 
-      setStackPointer(stack_idx = buffer_idx = 0);
+      reset();
+
+      setStackPointer((stack_idx = 0));
 
       pvalue->reset();
-
-      data_         = U_NULLPTR;
-      type_         = UFlatBufferValue::TYPE_NULL;
-        byte_width_ =
-      parent_width_ = UFlatBufferValue::BIT_WIDTH_8;
       }
 
    uint32_t EndBuild()

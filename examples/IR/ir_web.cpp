@@ -53,14 +53,13 @@
       delete query;
       delete crono;
       delete footer;
-   }  
+   }
    
 extern "C" {
 extern U_EXPORT void runDynamicPage_ir_web(int param);
        U_EXPORT void runDynamicPage_ir_web(int param)
 {
    U_TRACE(0, "::runDynamicPage_ir_web(%d)", param)
-   
    
    if (param)
       {

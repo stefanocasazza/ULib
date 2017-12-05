@@ -365,7 +365,7 @@ fd_set* UPing::checkForPingAsyncCompletion(uint32_t nfds)
    if (nfds &&
        SHM_counter < nfds)
       {
-      UTimeVal::nanosleep(1L);
+      UTimeVal::nanosleep(1000L);
 
       U_INTERNAL_DUMP("SHM_counter = %u addrmask = %B", SHM_counter, __FDS_BITS(addrmask)[0])
 

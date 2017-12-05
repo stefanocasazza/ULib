@@ -676,6 +676,59 @@ public:
       U_RETURN_STRING(keyid);
       }
 
+#ifdef U_SSE_ENABLE // SERVER SENT EVENTS (SSE)
+   static bool bsse;
+
+   static uint32_t getSSELastEventID()
+      {
+      U_TRACE_NO_PARAM(0, "UHTTP::getSSELastEventID()")
+
+      U_INTERNAL_ASSERT(bsse)
+
+      const char* ptr = UHTTP::getHeaderValuePtr(U_CONSTANT_TO_PARAM("last-event-id"), true);
+
+      uint32_t last_event_id = (ptr ? u_atoi(ptr) : 0);
+
+      U_RETURN(last_event_id);
+      }
+
+   static void writeSSE(uint32_t id, const UString& data, const UString* pevent = U_NULLPTR)
+      {
+      U_TRACE(0, "UHTTP::writeSSE(%u,%V,%p)", id, data.rep, pevent)
+
+      if (pevent) UClientImage_Base::wbuffer->snprintf_add(U_CONSTANT_TO_PARAM("id:%u\nevent:%v\ndata:"), id, pevent->rep);
+      else        UClientImage_Base::wbuffer->snprintf_add(U_CONSTANT_TO_PARAM("id:%u\ndata:"),           id);
+
+      UVector<UString> vec(data, '\n');
+
+      UClientImage_Base::wbuffer->append(vec[0]);
+
+      for (uint32_t i = 1, n = vec.size(); i < n; ++i)
+         {
+         UClientImage_Base::wbuffer->snprintf_add(U_CONSTANT_TO_PARAM("\ndata:%v"), vec[i].rep);
+         }
+
+      UClientImage_Base::wbuffer->append(U_CONSTANT_TO_PARAM("\n\n"));
+      }
+
+   static void sendSSE(uint32_t id, const UString& data, const UString* pevent = U_NULLPTR)
+      {
+      U_TRACE(0, "UHTTP::sendSSE(%u,%V,%p)", id, data.rep, pevent)
+
+      U_INTERNAL_ASSERT(bsse)
+
+      UClientImage_Base::wbuffer->setBuffer(U_CAPACITY);
+
+      writeSSE(id, data, pevent);
+
+      uint32_t sz = UClientImage_Base::wbuffer->size();
+
+      U_SRV_LOG_WITH_ADDR("send message (%u bytes) %#.*S to", sz, sz, UClientImage_Base::wbuffer->data());
+
+      if (USocketExt::write(UServer_Base::csocket, UClientImage_Base::wbuffer->data(), sz, UServer_Base::timeoutMS) != (int32_t)sz) UServer_Base::endNewChild(); // no return
+      }
+#endif
+
    // HTML Pagination
 
    static uint32_t num_page_end,
@@ -842,7 +895,7 @@ public:
    const char* dump(bool reset) const U_EXPORT;
 #endif
 
-   private:
+private:
    bool load() U_NO_EXPORT;
    bool isPath(const char* pathname, uint32_t len)
       {
@@ -859,6 +912,7 @@ public:
    template <class T> friend void u_construct(const T**,bool);
    };
 
+   static UServletPage* usp;
    static bool bcallInitForAllUSP;
    static UVector<UServletPage*>* vusp;
 
@@ -867,8 +921,8 @@ public:
    static void    callSigHUPForAllUSP();
    static void callAfterForkForAllUSP();
 
-   static bool          checkForUSP();
-   static UServletPage* getUSP(const char* key, uint32_t key_len);
+   static bool checkForUSP();
+   static bool getUSP(const char* key, uint32_t key_len);
 
    // CSP (C Servlet Page)
 

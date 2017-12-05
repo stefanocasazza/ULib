@@ -1060,6 +1060,7 @@ enable_log
 enable_GSDS
 enable_HCRS
 enable_HPRS
+enable_SSE
 enable_http2
 enable_check_time
 enable_classic
@@ -1804,6 +1805,7 @@ Optional Features:
   --enable-GSDS             enable GDB Stack Dump Support [default=no]
   --enable-HCRS             enable Cache Request Support [default=no]
   --enable-HPRS             enable Homogeneous Pipeline Request Support [default=no]
+  --enable-SSE              enable Server-Sent Events Support [default=yes]
   --enable-http2            enable HTTP/2 support [default=no]
   --enable-check-time       enable server check time between request for parallelization [default=no]
   --enable-classic          enable server classic model support [default=no]
@@ -28325,6 +28327,28 @@ $as_echo "#define U_PIPELINE_HOMOGENEOUS_DISABLE 1" >>confdefs.h
 	fi
 	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $enable_HPRS" >&5
 $as_echo "$enable_HPRS" >&6; }
+
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if you want to enable Server-Sent Events support" >&5
+$as_echo_n "checking if you want to enable Server-Sent Events support... " >&6; }
+	# Check whether --enable-SSE was given.
+if test "${enable_SSE+set}" = set; then :
+  enableval=$enable_SSE;
+fi
+
+	if test -z "$enable_SSE"; then
+		if test "$USP_FLAGS" = "-DAS_cpoll_cppsp_DO"; then
+			enable_SSE="no"
+		else
+			enable_SSE="yes"
+		fi
+	fi
+	if test "$enable_SSE" = "yes"; then
+
+$as_echo "#define U_SSE_ENABLE 1" >>confdefs.h
+
+	fi
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $enable_SSE" >&5
+$as_echo "$enable_SSE" >&6; }
 
 	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if you want to enable HTTP/2 support" >&5
 $as_echo_n "checking if you want to enable HTTP/2 support... " >&6; }

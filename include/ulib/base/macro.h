@@ -258,8 +258,13 @@ typedef enum {
    U_HASH_RIPEMD160 = 9
 } UHashType;
 
+#if SIZEOF_LONG == 4
+#  define U_INT2PTR(x) ((void*)(long)(x))
+#else
+#  define U_INT2PTR(x) ((void*)((long)(x) & 0x00000000FFFFFFFFULL))
+#endif
+
 #define U_PTR2INT(x) ((unsigned int)(long)x)
-#define U_INT2PTR(x) (       (void*)(long)x)
 
 union uucflag {
    unsigned char c[4];

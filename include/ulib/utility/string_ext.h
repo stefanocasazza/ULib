@@ -26,7 +26,6 @@
 
 class U_EXPORT UStringExt {
 public:
-
 #ifdef USE_LIBSSL
    static UString BIOtoString(BIO* bio);
    static UString ASN1TimetoString(ASN1_GENERALIZEDTIME* t);
@@ -39,6 +38,10 @@ public:
 
 #ifdef USE_LIBEXPAT // to strip out the HTML tags
    static UString stripTags(const UString& html, UString* list_tags_allowed = U_NULLPTR);
+#endif
+
+#ifndef U_LOG_DISABLE
+   static const char* deflate_agent;
 #endif
 
    static bool isDelimited(const UString& s, const char* delimiter = "()")

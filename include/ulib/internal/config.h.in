@@ -868,6 +868,9 @@
 /* enable server thread approach support */
 #undef U_SERVER_THREAD_APPROACH_SUPPORT
 
+/* enable Server-Sent Events support */
+#undef U_SSE_ENABLE
+
 /* STATIC_HANDLER_ECHO */
 #undef U_STATIC_HANDLER_ECHO
 

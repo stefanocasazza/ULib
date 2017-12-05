@@ -6,11 +6,12 @@ plugin/product1.lo: plugin/product1.cpp /usr/include/stdc-predef.h \
  ../../include/ulib/base/base.h ../../include/ulib/internal/config.h \
  ../../include/ulib/internal/platform.h /usr/include/sys/mman.h \
  /usr/include/features.h /usr/include/sys/cdefs.h \
- /usr/include/bits/wordsize.h /usr/include/gnu/stubs.h \
- /usr/include/gnu/stubs-64.h /usr/include/bits/types.h \
- /usr/include/bits/typesizes.h /usr/include/bits/mman.h \
- /usr/include/bits/mman-linux.h /usr/include/stdio.h /usr/include/libio.h \
- /usr/include/_G_config.h /usr/include/wchar.h \
+ /usr/include/bits/wordsize.h /usr/include/bits/long-double.h \
+ /usr/include/gnu/stubs.h /usr/include/gnu/stubs-64.h \
+ /usr/include/bits/types.h /usr/include/bits/typesizes.h \
+ /usr/include/bits/mman.h /usr/include/bits/mman-linux.h \
+ /usr/include/stdio.h /usr/include/bits/libc-header-start.h \
+ /usr/include/libio.h /usr/include/_G_config.h /usr/include/wchar.h \
  /usr/lib/gcc/x86_64-pc-linux-gnu/7.2.0/include/stdarg.h \
  /usr/include/bits/stdio_lim.h /usr/include/bits/sys_errlist.h \
  /usr/include/bits/stdio.h /usr/include/bits/stdio2.h \
@@ -19,15 +20,21 @@ plugin/product1.lo: plugin/product1.cpp /usr/include/stdc-predef.h \
  /usr/include/bits/posix_opt.h /usr/include/bits/environments.h \
  /usr/include/bits/confname.h /usr/include/getopt.h \
  /usr/include/bits/unistd.h /usr/include/sys/uio.h \
- /usr/include/sys/types.h /usr/include/time.h /usr/include/endian.h \
+ /usr/include/sys/types.h /usr/include/bits/types/clock_t.h \
+ /usr/include/bits/types/clockid_t.h /usr/include/bits/types/time_t.h \
+ /usr/include/bits/types/timer_t.h /usr/include/endian.h \
  /usr/include/bits/endian.h /usr/include/bits/byteswap.h \
- /usr/include/bits/byteswap-16.h /usr/include/sys/select.h \
- /usr/include/bits/select.h /usr/include/bits/sigset.h \
- /usr/include/bits/time.h /usr/include/bits/select2.h \
- /usr/include/sys/sysmacros.h /usr/include/bits/pthreadtypes.h \
- /usr/include/bits/uio.h /usr/include/sys/stat.h /usr/include/bits/stat.h \
- /usr/include/pthread.h /usr/include/sched.h /usr/include/bits/sched.h \
- /usr/include/bits/timex.h /usr/include/xlocale.h \
+ /usr/include/bits/byteswap-16.h /usr/include/bits/uintn-identity.h \
+ /usr/include/sys/select.h /usr/include/bits/select.h \
+ /usr/include/bits/sigset.h /usr/include/bits/types/struct_timeval.h \
+ /usr/include/bits/types/struct_timespec.h /usr/include/bits/select2.h \
+ /usr/include/sys/sysmacros.h /usr/include/bits/sysmacros.h \
+ /usr/include/bits/pthreadtypes.h /usr/include/bits/uio.h \
+ /usr/include/sys/stat.h /usr/include/bits/stat.h /usr/include/pthread.h \
+ /usr/include/sched.h /usr/include/bits/sched.h /usr/include/time.h \
+ /usr/include/bits/time.h /usr/include/bits/timex.h \
+ /usr/include/bits/types/struct_tm.h \
+ /usr/include/bits/types/struct_itimerspec.h /usr/include/xlocale.h \
  /usr/include/bits/setjmp.h /usr/include/signal.h \
  /usr/include/bits/signum.h /usr/include/bits/siginfo.h \
  /usr/include/bits/sigaction.h /usr/include/bits/sigcontext.h \
@@ -46,8 +53,9 @@ plugin/product1.lo: plugin/product1.cpp /usr/include/stdc-predef.h \
  /usr/include/ctype.h ../../include/ulib/base/replace/replace.h \
  /usr/src/linux/include/generated/uapi/linux/version.h \
  /usr/include/openssl/opensslv.h /usr/include/string.h \
- /usr/include/bits/string3.h /usr/include/fcntl.h \
- /usr/include/bits/fcntl.h /usr/include/bits/fcntl-linux.h \
+ /usr/include/bits/string3.h /usr/include/bits/strings_fortified.h \
+ /usr/include/fcntl.h /usr/include/bits/fcntl.h \
+ /usr/include/bits/fcntl-linux.h /usr/include/linux/falloc.h \
  /usr/include/bits/fcntl2.h /usr/include/errno.h \
  /usr/include/bits/errno.h /usr/include/linux/errno.h \
  /usr/include/asm/errno.h /usr/include/asm-generic/errno.h \
@@ -191,6 +199,8 @@ plugin/product.h:
 
 /usr/include/bits/wordsize.h:
 
+/usr/include/bits/long-double.h:
+
 /usr/include/gnu/stubs.h:
 
 /usr/include/gnu/stubs-64.h:
@@ -204,6 +214,8 @@ plugin/product.h:
 /usr/include/bits/mman-linux.h:
 
 /usr/include/stdio.h:
+
+/usr/include/bits/libc-header-start.h:
 
 /usr/include/libio.h:
 
@@ -243,7 +255,13 @@ plugin/product.h:
 
 /usr/include/sys/types.h:
 
-/usr/include/time.h:
+/usr/include/bits/types/clock_t.h:
+
+/usr/include/bits/types/clockid_t.h:
+
+/usr/include/bits/types/time_t.h:
+
+/usr/include/bits/types/timer_t.h:
 
 /usr/include/endian.h:
 
@@ -253,17 +271,23 @@ plugin/product.h:
 
 /usr/include/bits/byteswap-16.h:
 
+/usr/include/bits/uintn-identity.h:
+
 /usr/include/sys/select.h:
 
 /usr/include/bits/select.h:
 
 /usr/include/bits/sigset.h:
 
-/usr/include/bits/time.h:
+/usr/include/bits/types/struct_timeval.h:
+
+/usr/include/bits/types/struct_timespec.h:
 
 /usr/include/bits/select2.h:
 
 /usr/include/sys/sysmacros.h:
+
+/usr/include/bits/sysmacros.h:
 
 /usr/include/bits/pthreadtypes.h:
 
@@ -279,7 +303,15 @@ plugin/product.h:
 
 /usr/include/bits/sched.h:
 
+/usr/include/time.h:
+
+/usr/include/bits/time.h:
+
 /usr/include/bits/timex.h:
+
+/usr/include/bits/types/struct_tm.h:
+
+/usr/include/bits/types/struct_itimerspec.h:
 
 /usr/include/xlocale.h:
 
@@ -339,11 +371,15 @@ plugin/product.h:
 
 /usr/include/bits/string3.h:
 
+/usr/include/bits/strings_fortified.h:
+
 /usr/include/fcntl.h:
 
 /usr/include/bits/fcntl.h:
 
 /usr/include/bits/fcntl-linux.h:
+
+/usr/include/linux/falloc.h:
 
 /usr/include/bits/fcntl2.h:
 

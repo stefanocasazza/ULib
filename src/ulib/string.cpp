@@ -881,7 +881,7 @@ void UStringRep::_release()
       {
       if (_capacity != U_NOT_FOUND)
          {
-#     if defined(USE_LIBTDB) || defined(USE_MONGODB)
+#     if defined(USE_LIBZOPFLI) || defined(USE_LIBTDB) || defined(USE_MONGODB)
          if (_capacity == U_TO_FREE) { U_SYSCALL_VOID(free, "%p", (void*)str); }
          else
 #     endif
@@ -1197,53 +1197,6 @@ void UString::setBuffer(uint32_t n)
       }
 
    U_INTERNAL_ASSERT(invariant())
-}
-
-void UString::moveToBeginDataInBuffer(uint32_t n)
-{
-   U_TRACE(1, "UString::moveToBeginDataInBuffer(%u)", n)
-
-   U_INTERNAL_ASSERT_MAJOR(rep->_length, n)
-   U_INTERNAL_ASSERT_RANGE(1, n, max_size())
-   U_INTERNAL_ASSERT_MAJOR(rep->_capacity, n)
-
-#if defined(DEBUG) && !defined(U_SUBSTR_INC_REF)
-   U_INTERNAL_ASSERT(rep->references == 0)
-#endif
-
-   rep->_length -= n;
-
-   (void) U_SYSCALL(memmove, "%p,%p,%u", (void*)rep->str, rep->str + n, rep->_length);
-
-   U_INTERNAL_ASSERT(invariant())
-}
-
-void UString::_reserve(UString& buffer, uint32_t n)
-{
-   U_TRACE(0, "UString::_reserve(%V,%u)", buffer.rep, n)
-
-   UStringRep* rep = buffer.rep;
-
-   U_INTERNAL_DUMP("rep = %p rep->parent = %p rep->references = %u rep->child = %d rep->_length = %u rep->_capacity = %u",
-                    rep,     rep->parent,     rep->references,     rep->child,     rep->_length,     rep->_capacity)
-
-   U_ASSERT(rep->space() < n)
-   U_INTERNAL_ASSERT(n <= max_size())
-
-   uint32_t need = rep->_length + n;
-
-        if (need < U_CAPACITY) need = U_CAPACITY;
-   else if (need > U_CAPACITY)
-      {
-      if (need < 2*1024*1024) need  = (need * 2) + (PAGESIZE * 2);
-
-      need += PAGESIZE; // NB: to avoid duplication on realloc...
-      }
-
-   buffer._set(UStringRep::create(rep->_length, need, rep->str));
-
-   U_INTERNAL_ASSERT(buffer.invariant())
-   U_INTERNAL_ASSERT(buffer.space() >= n)
 }
 
 // manage UString as memory mapped area...
@@ -1983,7 +1936,7 @@ void UString::printKeyValue(const char* key, uint32_t keylen, const char* _data,
       n += u_buffer_len;
       }
 
-   if (rep->space() < n) _reserve(*this, n);
+   if (rep->space() < n) _reserve(*this, rep->_length + n);
 
    char* ptr = (char*)rep->str + rep->_length;
 

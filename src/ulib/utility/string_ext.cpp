@@ -36,6 +36,10 @@
 #  include <pwd.h>
 #endif
 
+#ifndef U_LOG_DISABLE
+const char* UStringExt::deflate_agent = "gzip";
+#endif
+
 #ifdef USE_LIBSSL
 UString UStringExt::BIOtoString(BIO* bio)
 {
@@ -256,7 +260,7 @@ UString UStringExt::substitute(const char* s, uint32_t n, const char* a, uint32_
 
          if (x.space() < len2)
             {
-            UString::_reserve(x, len2);
+            UString::_reserve(x, x.rep->_length + len2);
 
             p2 = x.pend();
             }
@@ -290,7 +294,7 @@ UString UStringExt::substitute(const char* s, uint32_t n, const char* a, uint32_
       if (breserve &&
           x.space() < n)
          {
-         UString::_reserve(x, n);
+         UString::_reserve(x, x.rep->_length + n);
 
          p2 = x.pend();
          }
@@ -428,7 +432,7 @@ found:
 
          if (x.space() < len2)
             {
-            UString::_reserve(x, len2);
+            UString::_reserve(x, x.rep->_length + len2);
 
             p2 = x.pend();
             }
@@ -464,7 +468,7 @@ found:
       if (breserve &&
           x.space() < len)
          {
-         UString::_reserve(x, len);
+         UString::_reserve(x, x.rep->_length + len);
 
          p2 = x.pend();
          }
@@ -550,7 +554,7 @@ loop:
 
          if (x.space() < len2)
             {
-            UString::_reserve(x, len2);
+            UString::_reserve(x, x.rep->_length + len2);
 
             p2 = x.pend();
             }
@@ -583,7 +587,7 @@ loop:
       if (breserve &&
           x.space() < len)
          {
-         UString::_reserve(x, len);
+         UString::_reserve(x, x.rep->_length + len);
 
          p2 = x.pend();
          }
@@ -1572,42 +1576,15 @@ UString UStringExt::brotli(const char* s, uint32_t len, uint32_t quality, uint32
 {
    U_TRACE(1, "UStringExt::brotli(%.*S,%u,%u,%u,%u)", len, s, len, quality, mode, lgwin)
 
-   int rc;
    size_t sz = U_SYSCALL(BrotliEncoderMaxCompressedSize, "%u", len); /* Get an estimation about the output buffer... */
 
    if (sz == 0) return UString::getStringNull();
 
-   if (UFile::isAllocableFromPool(sz))
-      {
-      rc = U_SYSCALL(BrotliEncoderCompress, "%u,%u,%u,%u,%p,%p,%p", quality, lgwin, (BrotliEncoderMode)mode, (size_t)len, (uint8_t*)s, &sz, (uint8_t*)UFile::pfree);
+   UString result;
+   bool bpool = UFile::isAllocableFromPool(sz);
+   char* ptr = (bpool ? (result.setConstant(UFile::pfree, sz), UFile::pfree) : (UString::_reserve(result, sz), result.data()));
 
-      ratio = (sz * 100U) / len;
-
-      U_INTERNAL_DUMP("BrotliEncoderCompress() = %d ratio = %u (%u%%)", rc, ratio, 100-ratio)
-
-      if (rc == 0 ||
-          ratio > ratio_threshold)
-         {
-         return UString::getStringNull();
-         }
-
-      U_INTERNAL_DUMP("BrotliEncoderCompress() = %#.4S", UFile::pfree)
-
-      len = UFile::getSizeAligned(sz);
-
-      UString result(sz, len, UFile::pfree);
-
-      UFile::pfree += len;
-      UFile::nfree -= len;
-
-   // U_INTERNAL_ASSERT(isBrotli(result)) // check magic byte
-
-      U_RETURN_STRING(result);
-      }
-
-   UString r(sz);
-
-   rc = U_SYSCALL(BrotliEncoderCompress, "%u,%u,%u,%u,%p,%p,%p", quality, lgwin, (BrotliEncoderMode)mode, (size_t)len, (uint8_t*)s, &sz, (uint8_t*)r.data());
+   int rc = U_SYSCALL(BrotliEncoderCompress, "%u,%u,%u,%u,%p,%p,%p", quality, lgwin, (BrotliEncoderMode)mode, (size_t)len, (uint8_t*)s, &sz, (uint8_t*)ptr);
 
    ratio = (sz * 100U) / len;
 
@@ -1619,13 +1596,19 @@ UString UStringExt::brotli(const char* s, uint32_t len, uint32_t quality, uint32
       return UString::getStringNull();
       }
 
-   U_INTERNAL_DUMP("BrotliEncoderCompress() = %#.4S", r.data())
+   result.rep->_length = sz;
 
-   r.rep->_length = sz;
+   if (bpool)
+      {
+      len = UFile::getSizeAligned(sz);
 
-// U_INTERNAL_ASSERT(isBrotli(r)) // check magic byte
+      UFile::pfree += len;
+      UFile::nfree -= len;
+      }
 
-   U_RETURN_STRING(r);
+// U_INTERNAL_ASSERT(isBrotli(result)) // check magic byte
+
+   U_RETURN_STRING(result);
 }
 #endif
 
@@ -1673,77 +1656,77 @@ UString UStringExt::deflate(const char* s, uint32_t len, uint32_t quality) // .g
 {
    U_TRACE(1, "UStringExt::deflate(%.*S,%u,%u)", len, s, len, quality)
 
-   // The zlib documentation states that destination buffer size must be at least 0.1% larger than avail_in plus 12 bytes 
-
-   uint32_t sz = len + (len / 10) + 12U;
-
-   if (UFile::isAllocableFromPool(sz))
+#ifdef USE_LIBZOPFLI
+   if (quality == 0)
       {
-#  ifdef USE_LIBZOPFLI
-      if (quality == 0)
-         {
-         size_t outsize = 0;
-         ZopfliOptions options;
-         unsigned char* out = U_NULLPTR;
+      size_t outsize = 0;
+      ZopfliOptions options;
+      unsigned char* out = U_NULLPTR;
 
-         U_SYSCALL_VOID(ZopfliInitOptions, "%p", &options);
-
-         U_SYSCALL_VOID(ZopfliCompress, "%p,%d,%p,%u,%p,%p", &options, ZOPFLI_FORMAT_GZIP, (unsigned char*)s, (size_t)len, &out, &outsize);
-
-         ratio = (outsize * 100U) / len;
-
-         U_INTERNAL_DUMP("ZopfliCompress(%u) = %u ratio = %u (%u%%)", len, outsize, ratio, 100-ratio)
-
-         if (ratio > ratio_threshold) return UString::getStringNull();
-
-         U_MEMCPY(UFile::pfree, out, sz = outsize);
-
-         U_SYSCALL_VOID(free, "%p", out);
-         }
-      else
+#  ifndef U_LOG_DISABLE
+      deflate_agent = "zopfli";
 #  endif
-      {
-      sz = u_gz_deflate(s, len, UFile::pfree, (quality ? quality : Z_BEST_COMPRESSION));
 
-      ratio = (sz * 100U) / len;
+      U_SYSCALL_VOID(ZopfliInitOptions, "%p", &options);
 
-      U_INTERNAL_DUMP("u_gz_deflate(%u) = %u ratio = %u (%u%%)", len, sz, ratio, 100-ratio)
+      U_SYSCALL_VOID(ZopfliCompress, "%p,%d,%p,%u,%p,%p", &options, ZOPFLI_FORMAT_GZIP, (unsigned char*)s, (size_t)len, &out, &outsize);
 
-      if (ratio > ratio_threshold) return UString::getStringNull();
+      ratio = (outsize * 100U) / len;
+
+      U_INTERNAL_DUMP("ZopfliCompress(%u) = %u ratio = %u (%u%%)", len, outsize, ratio, 100-ratio)
+
+      if (ratio > ratio_threshold)
+         {
+         U_SYSCALL_VOID(free, "%p", out);
+
+         return UString::getStringNull();
+         }
+
+      UString str((const char*)out, outsize);
+
+      str.rep->_capacity = U_TO_FREE;
+
+      U_RETURN_STRING(str);
       }
+#endif
 
-      UString result(sz, len = UFile::getSizeAligned(sz), UFile::pfree);
+   UString result;
+   uint32_t sz = len + (len / 10) + 12U; // The zlib documentation states that destination buffer size must be at least 0.1% larger than avail_in plus 12 bytes 
+   bool bpool = UFile::isAllocableFromPool(sz);
+   char* ptr = (bpool ? (result.setConstant(UFile::pfree, sz), UFile::pfree) : (UString::_reserve(result, sz), result.data()));
 
-      UFile::pfree += len;
-      UFile::nfree -= len;
+#ifndef U_LOG_DISABLE
+   deflate_agent = "gzip";
+#endif
 
-      U_INTERNAL_ASSERT(isGzip(result)) // check magic byte
+   ratio = ((sz = u_gz_deflate(s, len, ptr, (quality ? quality : Z_BEST_COMPRESSION))) * 100U) / len;
 
-      U_RETURN_STRING(result);
-      }
-
-   UString r(sz);
-
-   r.rep->_length = u_gz_deflate(s, len, r.rep->data(), (quality ? quality : Z_BEST_COMPRESSION));
-
-   ratio = (r.rep->_length * 100U) / len;
-
-   U_INTERNAL_DUMP("u_gz_deflate(%u) = %u ratio = %u (%u%%)", len, r.rep->_length, ratio, 100-ratio)
+   U_INTERNAL_DUMP("u_gz_deflate(%u) = %u ratio = %u (%u%%)", len, sz, ratio, 100-ratio)
 
    if (ratio > ratio_threshold) return UString::getStringNull();
 
+   result.rep->_length = sz;
+
+   if (bpool)
+      {
+      len = UFile::getSizeAligned(sz);
+
+      UFile::pfree += len;
+      UFile::nfree -= len;
+      }
+
 #ifdef DEBUG
-   uint32_t* psize_original = (uint32_t*)r.c_pointer(r.size() - 4);
-#  if __BYTE_ORDER == __LITTLE_ENDIAN
+   uint32_t* psize_original = (uint32_t*)result.c_pointer(sz - 4);
+# if __BYTE_ORDER == __LITTLE_ENDIAN
    U_INTERNAL_DUMP("size original = %u (LE)",            *psize_original)
-#  else
+# else
    U_INTERNAL_DUMP("size original = %u (BE)", u_invert32(*psize_original))
-#  endif
+# endif
 #endif
 
-   U_INTERNAL_ASSERT(isGzip(r)) // check magic byte
+   U_INTERNAL_ASSERT(isGzip(result)) // check magic byte
 
-   U_RETURN_STRING(r);
+   U_RETURN_STRING(result);
 }
 #endif
 
@@ -1827,7 +1810,7 @@ next:
 
    do { ++ptr_header_value; } while (u__isspace(*ptr_header_value));
 
-   U_INTERNAL_DUMP("ptr_header_value = %.*S", 20, ptr_header_value)
+   U_INTERNAL_DUMP("ptr_header_value = %.20S", ptr_header_value)
 
    return ptr_header_value;
 }

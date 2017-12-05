@@ -6,6 +6,10 @@
 typedef _Bool bool;
 #endif
 
+#ifndef _SYS_SYSMACROS_H_OUTER
+#define _SYS_SYSMACROS_H_OUTER 1
+#endif
+
 #define U_CSP_INTERFACE
 #include <ulib/base/base.h>
 #include <ulib/internal/chttp.h>

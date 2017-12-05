@@ -4,7 +4,7 @@ MAINTAINERCLEANFILES	= Makefile.in
 
 DEFAULT_INCLUDES =  -I. -I$(top_srcdir) -I$(top_srcdir)/include -I$(top_srcdir)/examples/http_header/include
 
-EXTRA_DIST = inp ok CA CSP LCSP TSA RSIGN XAdES nocat wi-auth WAGSM RA IR/WEB IR/benchmark IR/doc_dir *.cfg .htpasswd .htdigest python \
+EXTRA_DIST = inp ok CA CSP LCSP TSA RSIGN XAdES nocat wi-auth WAGSM RA IR/WEB IR/benchmark IR/doc_dir *.cfg .htpasswd .htdigest python sse_example \
 				 *.properties *.test *.sh error_msg workflow doc_parse robots.txt alias.txt throttling.txt css js benchmark websocket docroot php.sh test_http_parser.h
 
 ## DEFS  = -DU_TEST @DEFS@

@@ -70,7 +70,7 @@ bool USocketExt::read(USocket* sk, UString& buffer, uint32_t count, int timeoutM
    if (UNLIKELY(ncount < chunk))
       {
       if (sk == UServer_Base::csocket) UClientImage_Base::manageReadBufferResize(chunk);
-      else                                             UString::_reserve(buffer, chunk);
+      else                             UString::_reserve(buffer, buffer.getReserveNeed(chunk));
 
       ncount = buffer.space();
       }
@@ -193,7 +193,7 @@ error:   U_INTERNAL_DUMP("errno = %d", errno)
       buffer.rep->_length = start + byte_read;
 
       if (sk == UServer_Base::csocket) UClientImage_Base::manageReadBufferResize(ncount * 2);
-      else                                             UString::_reserve(buffer, ncount * 2);
+      else                             UString::_reserve(buffer, buffer.getReserveNeed(ncount * 2));
 
       ptr       = buffer.c_pointer(start);
       ncount    = buffer.space();

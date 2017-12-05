@@ -900,7 +900,7 @@ void UClientImage_Base::manageReadBufferResize(uint32_t n)
       {
       const char* ptr = rbuffer->data();
 
-      UString::_reserve(*rbuffer, n);
+      UString::_reserve(*rbuffer, rbuffer->getReserveNeed(n));
 
       diff += rbuffer->data() - ptr;
       }

@@ -6,14 +6,13 @@ static void usp_end_wi_auth();
    static void usp_init_wi_auth();
    static void usp_sighup_wi_auth();
    
-   #include <ulib/examples/wi_auth_declaration.h>  
+   #include <ulib/examples/wi_auth_declaration.h>
    
 extern "C" {
 extern U_EXPORT void runDynamicPage_wi_auth(int param);
        U_EXPORT void runDynamicPage_wi_auth(int param)
 {
    U_TRACE(0, "::runDynamicPage_wi_auth(%d)", param)
-   
    
    if (param)
       {

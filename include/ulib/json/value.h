@@ -289,8 +289,20 @@ public:
 
    union jval getKey() const { return pkey; }
 
-    int64_t getInt64() const  { return -(long)getPayload(); }
-   uint64_t getUInt64() const { return  (long)getPayload(); }
+   uint64_t getUInt64() const
+      {
+      U_TRACE_NO_PARAM(0, "UValue::getUInt64()")
+
+      uint64_t n = u_getPayload(value.ival);
+
+      U_INTERNAL_DUMP("n = %llu", n)
+
+      U_INTERNAL_ASSERT(n <= 140737488355327ULL)
+
+      U_RETURN(n);
+      }
+
+   int64_t getInt64() const { return -getUInt64(); }
 
    UString getString() { return getString(value.ival); }
 
@@ -958,21 +970,12 @@ protected:
       U_INTERNAL_DUMP("o.ival = %llu", o.ival)
       }
 
-#if SIZEOF_LONG == 4
-   static void setValue(uint8_t tag,           char* pval) { setValue(tag, (void*)*pval); }
-   static void setValue(uint8_t tag, unsigned  char* pval) { setValue(tag, (void*)*pval); }
-   static void setValue(uint8_t tag,          short* pval) { setValue(tag, (void*)*pval); }
-   static void setValue(uint8_t tag, unsigned short* pval) { setValue(tag, (void*)*pval); }
-   static void setValue(uint8_t tag,            int* pval) { setValue(tag, (void*)*pval); }
-   static void setValue(uint8_t tag, unsigned   int* pval) { setValue(tag, (void*)*pval); }
-#else
-   static void setValue(uint8_t tag,           char* pval) { setValue(tag, (void*)(*pval & 0x00000000FFFFFFFFULL)); }
-   static void setValue(uint8_t tag, unsigned  char* pval) { setValue(tag, (void*)(*pval & 0x00000000FFFFFFFFULL)); }
-   static void setValue(uint8_t tag,          short* pval) { setValue(tag, (void*)(*pval & 0x00000000FFFFFFFFULL)); }
-   static void setValue(uint8_t tag, unsigned short* pval) { setValue(tag, (void*)(*pval & 0x00000000FFFFFFFFULL)); }
-   static void setValue(uint8_t tag,            int* pval) { setValue(tag, (void*)(*pval & 0x00000000FFFFFFFFULL)); }
-   static void setValue(uint8_t tag, unsigned   int* pval) { setValue(tag, (void*)(*pval & 0x00000000FFFFFFFFULL)); }
-#endif
+   static void setValue(uint8_t tag,           char* pval) { setValue(tag, U_INT2PTR(*pval)); }
+   static void setValue(uint8_t tag, unsigned  char* pval) { setValue(tag, U_INT2PTR(*pval)); }
+   static void setValue(uint8_t tag,          short* pval) { setValue(tag, U_INT2PTR(*pval)); }
+   static void setValue(uint8_t tag, unsigned short* pval) { setValue(tag, U_INT2PTR(*pval)); }
+   static void setValue(uint8_t tag,            int* pval) { setValue(tag, U_INT2PTR(*pval)); }
+   static void setValue(uint8_t tag, unsigned   int* pval) { setValue(tag, U_INT2PTR(*pval)); }
 
    static void setUInt64(uint64_t l)
       {

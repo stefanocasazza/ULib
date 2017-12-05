@@ -1213,7 +1213,9 @@ protected:
    friend class UFile;
    friend class UHTTP2;
    friend class UValue;
+   friend class UServices;
    friend class UStringExt;
+   friend class USocketExt;
    friend class UClientImage_Base;
    friend class UREDISClient_Base;
 
@@ -1243,7 +1245,7 @@ protected:
    void setFromData(const char** ptr, uint32_t sz, unsigned char delim);
 
 public:
-// mutable
+   // mutable
    UStringRep* rep;
 
    // SERVICES
@@ -1304,6 +1306,23 @@ protected:
       rep = _rep->substr(pos, _rep->fold(pos, n));
 
       U_INTERNAL_ASSERT(invariant())
+      }
+
+   uint32_t getReserveNeed(uint32_t n)
+      {
+      U_TRACE(0, "UString::getReserveNeed(%u)", n)
+
+      uint32_t need = rep->_length + n;
+
+           if (need < U_CAPACITY) need = U_CAPACITY;
+      else if (need > U_CAPACITY)
+         {
+         if (need < 2*1024*1024) need  = (need * 2) + (PAGESIZE * 2);
+
+         need += PAGESIZE; // NB: to avoid duplication on realloc...
+         }
+
+      U_RETURN(need);
       }
 
 public:
@@ -1620,7 +1639,7 @@ public:
 
       if (rep->space() < n)
          {
-         _reserve(*this, n);
+         _reserve(*this, rep->_length + n);
 
          U_RETURN(true); // return true if it has changed rep...
          }
@@ -1628,7 +1647,23 @@ public:
       U_RETURN(false);
       }
 
-   static void _reserve(UString& buffer, uint32_t n);
+   static void _reserve(UString& buffer, uint32_t n)
+      {
+      U_TRACE(0, "UString::_reserve(%V,%u)", buffer.rep, n)
+
+      UStringRep* rep = buffer.rep;
+
+      U_INTERNAL_DUMP("rep = %p rep->parent = %p rep->references = %u rep->child = %d rep->_length = %u rep->_capacity = %u",
+                       rep,     rep->parent,     rep->references,     rep->child,     rep->_length,     rep->_capacity)
+
+      U_ASSERT(rep->space() < n)
+      U_INTERNAL_ASSERT(n <= max_size())
+      U_INTERNAL_ASSERT_MAJOR(n, rep->_length)
+
+      buffer._set(UStringRep::create(rep->_length, n, rep->str));
+
+      U_INTERNAL_ASSERT(buffer.invariant())
+      }
 
    // Element access
 
@@ -1637,8 +1672,8 @@ public:
 
    char* pend() const { return rep->pend(); }
 
-// operator const char *() const { return rep->data(); }
-// operator       char *()       { return rep->data(); }
+   // operator const char *() const { return rep->data(); }
+   // operator       char *()       { return rep->data(); }
 
    // Modifiers
 
@@ -2061,7 +2096,25 @@ public:
       }
 
    void setBuffer(uint32_t n);
-   void moveToBeginDataInBuffer(uint32_t n);
+
+   void moveToBeginDataInBuffer(uint32_t n)
+      {
+      U_TRACE(1, "UString::moveToBeginDataInBuffer(%u)", n)
+
+      U_INTERNAL_ASSERT_MAJOR(rep->_length, n)
+      U_INTERNAL_ASSERT_RANGE(1, n, max_size())
+      U_INTERNAL_ASSERT_MAJOR(rep->_capacity, n)
+
+#  if defined(DEBUG) && !defined(U_SUBSTR_INC_REF)
+      U_INTERNAL_ASSERT(rep->references == 0)
+#  endif
+
+      rep->_length -= n;
+
+      (void) U_SYSCALL(memmove, "%p,%p,%u", (void*)rep->str, rep->str + n, rep->_length);
+
+      U_INTERNAL_ASSERT(invariant())
+      }
 
    static vpFpcu printValueToBuffer;
 
@@ -2179,7 +2232,7 @@ public:
       {
       U_TRACE(0, "UString::appendNumber32(%u)", number)
 
-      (void) reserve(12U);
+      U_ASSERT_MAJOR(space(), 12)
 
       uint32_t sz = size();
       char* ptr   = c_pointer(sz);
@@ -2193,7 +2246,7 @@ public:
       {
       U_TRACE(0, "UString::appendNumber32s(%d)", number)
 
-      (void) reserve(12U);
+      U_ASSERT_MAJOR(space(), 12)
 
       uint32_t sz = size();
       char* ptr   = c_pointer(sz);
@@ -2207,7 +2260,7 @@ public:
       {
       U_TRACE(0, "UString::appendNumber64(%llu)", number)
 
-      (void) reserve(22U);
+      U_ASSERT_MAJOR(space(), 22)
 
       uint32_t sz = size();
       char* ptr   = c_pointer(sz);
@@ -2221,7 +2274,7 @@ public:
       {
       U_TRACE(0, "UString::appendNumber64s(%lld)", number)
 
-      (void) reserve(22U);
+      U_ASSERT_MAJOR(space(), 22)
 
       uint32_t sz = size();
       char* ptr   = c_pointer(sz);
@@ -2235,7 +2288,7 @@ public:
       {
       U_TRACE(0, "UString::appendNumberDouble(%g)", number)
 
-      (void) reserve(32U);
+      U_ASSERT_MAJOR(space(), 32)
 
       uint32_t sz = size();
       char* ptr   = c_pointer(sz);
@@ -2248,6 +2301,8 @@ public:
    void appendData(const char* t, uint32_t tlen)
       {
       U_TRACE(0, "UString::appendData(%.*S,%u)", tlen, t, tlen)
+
+      U_ASSERT_MAJOR(space(), tlen)
 
       uint32_t sz = size();
       char* ptr   = c_pointer(sz);

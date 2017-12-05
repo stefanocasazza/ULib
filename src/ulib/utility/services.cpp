@@ -115,7 +115,7 @@ bool UServices::read(int fd, UString& buffer, uint32_t count, int timeoutMS)
 
    if (ncount < chunk)
       {
-      UString::_reserve(buffer, chunk);
+      UString::_reserve(buffer, buffer.getReserveNeed(chunk));
 
       ncount = buffer.space();
       }
@@ -165,7 +165,7 @@ read:
 
       // NB: may be there are available more bytes to read...
 
-      UString::_reserve(buffer, ncount * 2);
+      UString::_reserve(buffer, buffer.getReserveNeed(ncount * 2));
       
       ptr = buffer.c_pointer(start);
 

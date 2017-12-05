@@ -515,6 +515,8 @@ void UMemoryPool::deallocate(void* ptr, uint32_t length)
 {
    U_TRACE(1, "UMemoryPool::deallocate(%p,%u)", ptr, length)
 
+   U_INTERNAL_ASSERT_MINOR(length, U_TO_FREE)
+
    if (UFile::isLastAllocation(ptr, length))
       {
       UFile::pfree  = (char*)ptr;

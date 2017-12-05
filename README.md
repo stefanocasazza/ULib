@@ -44,6 +44,7 @@ The current version offers the following features :
    * Support for running natively PHP applications whith a php (embedded) library (experimental).
    * Support for load balance between physical server via udp brodcast (experimental).
    * Support for serialize object by [FlatBuffer schema-less](http://google.github.io/flatbuffers/index.html) like implementation.
+   * Support for [SSE (Server Sent Event)](http://en.wikipedia.org/wiki/Server-sent_events) via ULib Servlet Page (USP) dedicate process.
    * Preforking mode to improve concurrency with dedicated process for long-time request.
    * Support for Windows (without preforking).
    * Customizable builds (you can remove unneeded functionality).

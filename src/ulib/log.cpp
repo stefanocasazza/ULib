@@ -717,12 +717,15 @@ void ULog::logResponse(const UString& data, const char* format, uint32_t fmt_siz
    len  = (UServer_Base::mod_name[0][0] ? u__snprintf(buffer, sizeof(buffer), U_CONSTANT_TO_PARAM("%s"), UServer_Base::mod_name) : 0);
    len += u__snprintf(buffer-len, sizeof(buffer)-len, U_CONSTANT_TO_PARAM("received response (%u bytes) %#.*S"), sz, sz, ptr);
 
-   va_list argp;
-   va_start(argp, fmt_size);
+   if (fmt_size)
+      {
+      va_list argp;
+      va_start(argp, fmt_size);
 
-   len += u__vsnprintf(buffer+len, sizeof(buffer)-len, format, fmt_size, argp);
+      len += u__vsnprintf(buffer+len, sizeof(buffer)-len, format, fmt_size, argp);
 
-   va_end(argp);
+      va_end(argp);
+      }
 
    write(buffer, len);
 

@@ -78,15 +78,13 @@ int UWebSocketPlugIn::handlerRun()
 
    U_NEW(UString, UWebSocket::rbuffer, UString(U_CAPACITY));
 
-   UHTTP::UServletPage* usp = UHTTP::getUSP(U_CONSTANT_TO_PARAM("modsocket"));
-
-   if (usp)
+   if (UHTTP::getUSP(U_CONSTANT_TO_PARAM("modsocket")))
       {
-      U_INTERNAL_DUMP("modsocket->runDynamicPage = %p", usp->runDynamicPage)
+      U_INTERNAL_DUMP("modsocket->runDynamicPage = %p", UHTTP::usp->runDynamicPage)
 
-      U_INTERNAL_ASSERT_POINTER(usp->runDynamicPage)
+      U_INTERNAL_ASSERT_POINTER(UHTTP::usp->runDynamicPage)
 
-      on_message = usp->runDynamicPage;
+      on_message = UHTTP::usp->runDynamicPage;
       }
    else
       {

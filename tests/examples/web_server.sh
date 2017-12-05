@@ -4,8 +4,9 @@
 
 (cd benchmark; rm -f  db; creat_link FrameworkBenchmarks/ULib/db db)
 
+ DOC_ROOT=sse_example
 #DOC_ROOT=ruby/blog
- DOC_ROOT=benchmark/docroot
+#DOC_ROOT=benchmark/docroot
 
 rm -f tmp/usp_compile.sh.err /tmp/*.hpack.* \
       $DOC_ROOT/web_server.log* \
@@ -66,7 +67,7 @@ userver {
 #LOAD_BALANCE_CLUSTER 10.30.0.1,10.30.0.2
 #LOAD_BALANCE_DEVICE_NETWORK enp0s20u1
 #LOAD_BALANCE_LOADAVG_THRESHOLD 4.0
-#PREFORK_CHILD 0
+ PREFORK_CHILD 0
 #CRASH_COUNT 1
 #CRASH_EMAIL_NOTIFY mail.unirel.com:stefano.casazza@unirel.com
 #DOS_SITE_COUNT 1
@@ -75,14 +76,17 @@ userver {
 #REQ_TIMEOUT 300
 #PLUGIN "ssi http"
 #ORM_DRIVER "sqlite mysql"
- ORM_DRIVER sqlite
+#ORM_DRIVER sqlite
+ DOCUMENT_ROOT  sse_example
+ PLUGIN_DIR     ../../../src/ulib/net/server/plugin/.libs
+ ORM_DRIVER_DIR ../../../src/ulib/orm/driver/.libs
 #DOCUMENT_ROOT  docroot
 #PLUGIN_DIR     ../../../src/ulib/net/server/plugin/.libs
 #ORM_DRIVER_DIR ../../../src/ulib/orm/driver/.libs
 #DOCUMENT_ROOT  JONATHAN/docroot
- DOCUMENT_ROOT  benchmark/docroot
- PLUGIN_DIR     ../../../../src/ulib/net/server/plugin/.libs
- ORM_DRIVER_DIR ../../../../src/ulib/orm/driver/.libs
+#DOCUMENT_ROOT  benchmark/docroot
+#PLUGIN_DIR     ../../../../src/ulib/net/server/plugin/.libs
+#ORM_DRIVER_DIR ../../../../src/ulib/orm/driver/.libs
 #DOCUMENT_ROOT  .
 #PLUGIN_DIR     ../../src/ulib/net/server/plugin/.libs
 #ORM_DRIVER_DIR ../../src/ulib/orm/driver/.libs
@@ -101,7 +105,7 @@ http {
  REQUEST_READ_TIMEOUT 30
  APACHE_LIKE_LOG /var/log/httpd/access_log
  LOG_FILE_SZ 10M
-#DIGEST_AUTHENTICATION yes
+ DIGEST_AUTHENTICATION no
 #CACHE_FILE_STORE nocat/webif.gz
 #CACHE_FILE_MASK inp/http/data/file1|*.flv|*.svgz
 #URI_REQUEST_STRICT_TRANSPORT_SECURITY_MASK *
