@@ -3250,7 +3250,7 @@ bool UHTTP2::initRequest()
    pConnection->itable.clear(); // NB: we can't clear it before because UClientImage_Base::getRequestUri() depend on it...
 
    pConnection->state      = CONN_STATE_OPEN;
-   pConnection->bug_client = 0;
+   pConnection->bug_client = U_NULLPTR;
 
    U_RETURN(false);
 }
@@ -3877,7 +3877,7 @@ void UHTTP2::clearHpackDynTbl(HpackDynamicTable* dyntbl)
       dyntbl->entry_capacity    =
       dyntbl->entry_start_index =
       dyntbl->hpack_size        = 0;
-      dyntbl->entries           = 0;
+      dyntbl->entries           = U_NULLPTR;
 
       U_INTERNAL_DUMP("num_entries = %u entry_capacity = %u entry_start_index = %u hpack_size = %u hpack_capacity = %u hpack_max_capacity = %u",
                         dyntbl->num_entries, dyntbl->entry_capacity, dyntbl->entry_start_index, dyntbl->hpack_size, dyntbl->hpack_capacity, dyntbl->hpack_max_capacity)

@@ -18,7 +18,7 @@
 int                       UValue::pos;
 int                       UValue::jsonParseFlags;
 char*                     UValue::pstringify;
-uint32_t                  UValue::size;
+uint32_t                  UValue::size_output;
 UValue::jval              UValue::o;
 UFlatBuffer*              UValue::pfb;
 UValue::parser_stack_data UValue::sd[U_JSON_PARSE_STACK_SIZE];
@@ -994,13 +994,13 @@ void UValue::toFlatBuffer(UFlatBuffer& fb, UString& result) const
 {
    U_TRACE(0, "UValue::toFlatBuffer(%p,%p)", &fb, &result)
 
-   U_INTERNAL_DUMP("size = %u UFlatBuffer::getBufferMax() = %u UFlatBuffer::getStackMax() = %u", size, UFlatBuffer::getBufferMax(), UFlatBuffer::getStackMax())
+   U_INTERNAL_DUMP("size_output = %u UFlatBuffer::getBufferMax() = %u UFlatBuffer::getStackMax() = %u", size_output, UFlatBuffer::getBufferMax(), UFlatBuffer::getStackMax())
 
    uint8_t* prev_stack;
    uint8_t* prev_buffer;
    uint8_t stack[64 * 1024];
    uint32_t end, prev_stack_size, prev_buffer_size;
-   bool breset1 = (size          > UFlatBuffer::getBufferMax()),
+   bool breset1 = (size_output            > UFlatBuffer::getBufferMax()),
         breset2 = (sizeof(stack) > UFlatBuffer::getStackMax());
 
    // buffer to serialize json
@@ -1011,14 +1011,14 @@ void UValue::toFlatBuffer(UFlatBuffer& fb, UString& result) const
       prev_buffer      = UFlatBuffer::getBuffer();
       prev_buffer_size = UFlatBuffer::getBufferMax();
 
-      (void) result.reserve(size+100U);
+      (void) result.reserve(U_max(size_output+100U,U_CAPACITY));
 
       UFlatBuffer::setBuffer((uint8_t*)(pstringify = result.data()), result.capacity());
       }
 
    if (breset2)
       {
-      U_INTERNAL_ASSERT_MINOR(size, sizeof(stack))
+      U_INTERNAL_ASSERT_MINOR(size_output, sizeof(stack))
 
       prev_stack      = UFlatBuffer::getStack();
       prev_stack_size = UFlatBuffer::getStackMax();
@@ -1160,7 +1160,7 @@ bool UValue::parse(const UString& document)
    const char* start;
    uint64_t integerPart;
    const char* s = document.data();
-   const char* end = s + (size = document.size());
+   const char* end = s + (size_output = document.size());
    uint32_t sz, significandDigit, decimalDigit, exponent;
    bool minus = false, colon = false, comma = false, separator = true;
 

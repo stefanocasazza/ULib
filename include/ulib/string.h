@@ -2234,10 +2234,9 @@ public:
 
       U_ASSERT_MAJOR(space(), 12)
 
-      uint32_t sz = size();
-      char* ptr   = c_pointer(sz);
+      char* ptr = pend();
 
-      rep->_length = sz + u_num2str32(number, ptr) - ptr;
+      rep->_length += u_num2str32(number, ptr) - ptr;
 
       U_INTERNAL_ASSERT(invariant())
       }
@@ -2248,10 +2247,9 @@ public:
 
       U_ASSERT_MAJOR(space(), 12)
 
-      uint32_t sz = size();
-      char* ptr   = c_pointer(sz);
+      char* ptr = pend();
 
-      rep->_length = sz + u_num2str32s(number, ptr) - ptr;
+      rep->_length += u_num2str32s(number, ptr) - ptr;
 
       U_INTERNAL_ASSERT(invariant())
       }
@@ -2262,10 +2260,9 @@ public:
 
       U_ASSERT_MAJOR(space(), 22)
 
-      uint32_t sz = size();
-      char* ptr   = c_pointer(sz);
+      char* ptr = pend();
 
-      rep->_length = sz + u_num2str64(number, ptr) - ptr;
+      rep->_length += u_num2str64(number, ptr) - ptr;
 
       U_INTERNAL_ASSERT(invariant())
       }
@@ -2276,10 +2273,9 @@ public:
 
       U_ASSERT_MAJOR(space(), 22)
 
-      uint32_t sz = size();
-      char* ptr   = c_pointer(sz);
+      char* ptr = pend();
 
-      rep->_length = sz + u_num2str64s(number, ptr) - ptr;
+      rep->_length += u_num2str64s(number, ptr) - ptr;
 
       U_INTERNAL_ASSERT(invariant())
       }
@@ -2288,12 +2284,11 @@ public:
       {
       U_TRACE(0, "UString::appendNumberDouble(%g)", number)
 
-      U_ASSERT_MAJOR(space(), 32)
+      U_ASSERT_MAJOR(space(), 22)
 
-      uint32_t sz = size();
-      char* ptr   = c_pointer(sz);
+      char* ptr = pend();
 
-      rep->_length = sz + u_dtoa(number, ptr) - ptr;
+      rep->_length += u_dtoa(number, ptr) - ptr;
 
       U_INTERNAL_ASSERT(invariant())
       }
@@ -2304,12 +2299,11 @@ public:
 
       U_ASSERT_MAJOR(space(), tlen)
 
-      uint32_t sz = size();
-      char* ptr   = c_pointer(sz);
+      char* ptr = pend();
 
       U_MEMCPY(ptr, t, tlen);
 
-      rep->_length = sz + tlen;
+      rep->_length += tlen;
 
       U_INTERNAL_ASSERT(invariant())
       }
@@ -2318,15 +2312,18 @@ public:
       {
       U_TRACE(0, "UString::appendDataQuoted(%.*S,%u)", tlen, t, tlen)
 
+      U_ASSERT_MAJOR(space(), tlen+2)
       U_INTERNAL_ASSERT_EQUALS(u_is_quoted(t, tlen), false)
 
-      char* ptr = __append(U_CONSTANT_SIZE("\"\"") + tlen);
+      char* ptr = pend();
 
       *ptr++ = '"';
 
       if (tlen) U_MEMCPY(ptr, t, tlen);
 
       ptr[tlen] = '"';
+
+      rep->_length += tlen+2;
 
       U_INTERNAL_ASSERT(invariant())
       }
@@ -2413,32 +2410,48 @@ public:
       {
       U_TRACE(0, "UString::toJSON<T>(%.*S,%u,%p)", sz, name, sz, &member)
 
+      U_ASSERT_MAJOR(space(), sz+6)
+      U_INTERNAL_ASSERT_MAJOR(sz, 0)
       U_INTERNAL_ASSERT(u_is_quoted(name, sz))
 
-      (void) append(name, sz);
+      char* ptr = pend();
 
-      push_back(':');
+      U_MEMCPY(ptr, name, sz);
+
+      ptr[sz] = ':';
+
+      rep->_length += sz+1;
 
       member.toJSON(*this);
 
-      push_back(',');
-
-      U_INTERNAL_ASSERT(invariant())
+      __push(',');
       }
 
    template <typename T> void toJSON(const UString& name, UJsonTypeHandler<T> member)
       {
       U_TRACE(0, "UString::toJSON<T>(%V,%p)", name.rep, &member)
 
-      appendDataQuoted(U_STRING_TO_PARAM(name));
+      uint32_t tlen = name.size();
+      const char* t = name.data();
 
-      push_back(':');
+      U_ASSERT_MAJOR(space(), tlen+6)
+      U_INTERNAL_ASSERT_MAJOR(tlen, 0)
+      U_INTERNAL_ASSERT_EQUALS(u_is_quoted(t, tlen), false)
+
+      char* ptr = pend();
+
+      *ptr++ = '"';
+
+      U_MEMCPY(ptr, t, tlen);
+               ptr  += tlen;
+
+      u_put_unalignedp16(ptr, U_MULTICHAR_CONSTANT16('"',':'));
+
+      rep->_length += tlen+3;
 
       member.toJSON(*this);
 
-      push_back(',');
-
-      U_INTERNAL_ASSERT(invariant())
+      __push(',');
       }
 
    // -----------------------------------------------------------------------------------------------------------------------
@@ -2448,6 +2461,19 @@ public:
 private:
    char* __append(uint32_t n);
    char* __replace(uint32_t pos, uint32_t n1, uint32_t n2);
+
+   void __push(uint8_t c)
+      {
+      U_TRACE(0, "UString::__push(%u)", c)
+
+      U_ASSERT_MAJOR(space(), 1)
+
+      uint8_t* ptr = (uint8_t*)(rep->str + rep->_length++);
+
+      *ptr = c;
+
+      U_INTERNAL_ASSERT(invariant())
+      }
 
    template <class T> friend class UJsonTypeHandler;
 };

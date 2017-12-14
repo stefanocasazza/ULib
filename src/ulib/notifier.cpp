@@ -619,20 +619,23 @@ loop2:         if (pevents->events)
                   {
                   handler_event = (UEventFd*)pevents->data.ptr;
 
-                  U_INTERNAL_DUMP("i = %d handler_event->fd = %d ", i, handler_event->fd)
+                  U_INTERNAL_DUMP("i = %d handler_event->fd = %d", i, handler_event->fd)
 
-                  U_INTERNAL_ASSERT_DIFFERS(handler_event->fd, -1)
+               // U_INTERNAL_ASSERT_DIFFERS(handler_event->fd, -1)
 
-                  if (handler_event->handlerRead() == U_NOTIFIER_DELETE)
+                  if (handler_event->fd != -1)
                      {
-                     handlerDelete(handler_event);
+                     if (handler_event->handlerRead() == U_NOTIFIER_DELETE)
+                        {
+                        handlerDelete(handler_event);
 
-                     pevents->events = 0;
-                     }
-                  else
-                     {
-                     if (U_ClientImage_state != U_PLUGIN_HANDLER_AGAIN) bloop1 = true;
-                     else                                               pevents->events = 0;
+                        pevents->events = 0;
+                        }
+                     else
+                        {
+                        if (U_ClientImage_state != U_PLUGIN_HANDLER_AGAIN) bloop1 = true;
+                        else                                               pevents->events = 0;
+                        }
                      }
                   }
 

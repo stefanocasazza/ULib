@@ -136,7 +136,7 @@ public:
       {
       U_TRACE(0+256, "UHTTP2::Connection::preallocate(%u)", max_connection)
 
-      U_INTERNAL_ASSERT_EQUALS(vConnection, 0)
+      U_INTERNAL_ASSERT_EQUALS(vConnection, U_NULLPTR)
 
       U_INTERNAL_DUMP("sizeof(Connection) = %u sizeof(Stream) = %u", sizeof(Connection), sizeof(Stream))
 
@@ -665,7 +665,7 @@ protected:
       entry->value->release();
 
       entry->name  =
-      entry->value = 0;
+      entry->value = U_NULLPTR;
       }
 
    static void evictHpackDynTblFirstEntry(HpackDynamicTable* dyntbl)

@@ -1275,9 +1275,9 @@ private:
       }
 
 #ifdef U_HTTP2_DISABLE
-   static UString getHeaderFromCache(uint32_t idx) { return getDataFromCache(file_data->array, idx); }
+   static UString getHeaderFromCache(uint32_t idx) { return                          getDataFromCache(file_data->array, idx); }
 #else
-   static UString getHeaderFromCache(uint32_t idx) { return getDataFromCache((U_http_version != '2' ? file_data->array : (idx /= 2, file_data->http2)), idx); }
+   static UString getHeaderFromCache(uint32_t idx) { return (U_http_version != '2' ? getDataFromCache(file_data->array, idx) : getDataFromCache(file_data->http2, idx / 2)); }
 #endif
 
    static UString getBodyFromCache()                 { return getDataFromCache(file_data->array, 0); }

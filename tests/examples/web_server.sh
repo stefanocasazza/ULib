@@ -4,7 +4,8 @@
 
 (cd benchmark; rm -f  db; creat_link FrameworkBenchmarks/ULib/db db)
 
- DOC_ROOT=sse_example
+ DOC_ROOT=docroot
+#DOC_ROOT=sse_example
 #DOC_ROOT=ruby/blog
 #DOC_ROOT=benchmark/docroot
 
@@ -77,25 +78,19 @@ userver {
 #PLUGIN "ssi http"
 #ORM_DRIVER "sqlite mysql"
 #ORM_DRIVER sqlite
- DOCUMENT_ROOT  sse_example
- PLUGIN_DIR     ../../../src/ulib/net/server/plugin/.libs
- ORM_DRIVER_DIR ../../../src/ulib/orm/driver/.libs
-#DOCUMENT_ROOT  docroot
-#PLUGIN_DIR     ../../../src/ulib/net/server/plugin/.libs
-#ORM_DRIVER_DIR ../../../src/ulib/orm/driver/.libs
-#DOCUMENT_ROOT  JONATHAN/docroot
-#DOCUMENT_ROOT  benchmark/docroot
-#PLUGIN_DIR     ../../../../src/ulib/net/server/plugin/.libs
-#ORM_DRIVER_DIR ../../../../src/ulib/orm/driver/.libs
 #DOCUMENT_ROOT  .
 #PLUGIN_DIR     ../../src/ulib/net/server/plugin/.libs
 #ORM_DRIVER_DIR ../../src/ulib/orm/driver/.libs
 #DOCUMENT_ROOT  php
-#PLUGIN_DIR     ../../../src/ulib/net/server/plugin/.libs
-#ORM_DRIVER_DIR ../../../src/ulib/orm/driver/.libs
+ DOCUMENT_ROOT  docroot
+#DOCUMENT_ROOT  sse_example
+ PLUGIN_DIR     ../../../src/ulib/net/server/plugin/.libs
+ ORM_DRIVER_DIR ../../../src/ulib/orm/driver/.libs
+#DOCUMENT_ROOT  JONATHAN/docroot
+#DOCUMENT_ROOT  benchmark/docroot
 #DOCUMENT_ROOT  ruby/blog/public
-#PLUGIN_DIR     ../../../../../src/ulib/net/server/plugin/.libs
-#ORM_DRIVER_DIR ../../../../../src/ulib/orm/driver/.libs
+#PLUGIN_DIR     ../../../../src/ulib/net/server/plugin/.libs
+#ORM_DRIVER_DIR ../../../../src/ulib/orm/driver/.libs
 }
 http {
 #ALIAS "[ / /100.html ]"

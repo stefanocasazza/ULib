@@ -361,11 +361,13 @@ public:
     * consumption, but may be usefull to support feature such as RPC where bandwith is limited
     */
 
+   static uint32_t size_output;
+
    UString output() const
       {
       U_TRACE_NO_PARAM(0, "UValue::output()")
 
-      UString result(U_max(size+100U,U_CAPACITY));
+      UString result(U_max(size_output+100U,U_CAPACITY));
 
       pstringify = result.data(); // buffer to stringify json
 
@@ -380,7 +382,7 @@ public:
       {
       U_TRACE_NO_PARAM(0, "UValue::prettify()")
 
-      UString result(size*2+800U);
+      UString result(size_output*2+800U);
 
       pstringify = result.data(); // buffer to stringify json
 
@@ -397,7 +399,7 @@ public:
       {
       U_TRACE(0, "UValue::stringify(%V,%p)", result.rep, &json)
 
-      (void) result.reserve(json.size+100U);
+      (void) result.reserve(U_max(json.size_output+100U,U_CAPACITY));
 
       pstringify = result.pend(); // buffer to stringify json
 
@@ -607,7 +609,6 @@ protected:
    union jval pkey, // only if binded to an object
               value;
 
-   static uint32_t size;
    static UFlatBuffer* pfb;
    static char* pstringify; // buffer to stringify json
 
@@ -1211,7 +1212,7 @@ public:
       {
       U_TRACE(0, "UJsonTypeHandler<T>::toJSON(%V)", json.rep)
 
-      json.push_back('{');
+      json.__push('{');
 
       ((T*)pval)->toJSON(json);
 
@@ -1266,6 +1267,8 @@ template <class T> void JSON_OBJ_stringify(UString& str, T& obj)
 {
    U_TRACE(0, "JSON_OBJ_stringify(%V,%p)", str.rep, &obj)
 
+   (void) str.reserve(U_max(UValue::size_output+100U,U_CAPACITY));
+
    UJsonTypeHandler<T>(obj).toJSON(str);
 
    U_INTERNAL_DUMP("str(%u) = %V", str.size(), str.rep)
@@ -1301,7 +1304,11 @@ public:
       {
       U_TRACE(0, "UJsonTypeHandler<null>::toJSON(%V)", json.rep)
 
-      (void) json.append(U_CONSTANT_TO_PARAM("null"));
+      char* ptr = json.pend();
+
+      u_put_unalignedp32(ptr, U_MULTICHAR_CONSTANT32('n','u','l','l'));
+
+      json.rep->_length += 4;
 
       U_INTERNAL_DUMP("json(%u) = %V", json.size(), json.rep)
       }
@@ -1338,7 +1345,22 @@ public:
       {
       U_TRACE(0, "UJsonTypeHandler<bool>::toJSON(%V)", json.rep)
 
-      (void) json.append(*(*(bool*)pval ? UString::str_true : UString::str_false));
+      char* ptr = json.pend();
+
+      if (*(bool*)pval)
+         {
+         u_put_unalignedp32(ptr, U_MULTICHAR_CONSTANT32('t','r','u','e'));
+
+         json.rep->_length += 4;
+         }
+      else
+         {
+         u_put_unalignedp32(ptr, U_MULTICHAR_CONSTANT32('f','a','l','s'));
+
+         ptr[4] = 'e';
+
+         json.rep->_length += 5;
+         }
 
       U_INTERNAL_DUMP("json(%u) = %V", json.size(), json.rep)
       }
@@ -1375,7 +1397,7 @@ public:
       {
       U_TRACE(0, "UJsonTypeHandler<char>::toJSON(%V)", json.rep)
 
-      json.push_back(*(char*)pval);
+      json.__push(*(char*)pval);
 
       U_INTERNAL_DUMP("json(%u) = %V", json.size(), json.rep)
       }
@@ -1412,7 +1434,7 @@ public:
       {
       U_TRACE(0, "UJsonTypeHandler<unsigned char>::toJSON(%V)", json.rep)
 
-      json.push_back(*(unsigned char*)pval);
+      json.__push(*(unsigned char*)pval);
 
       U_INTERNAL_DUMP("json(%u) = %V", json.size(), json.rep)
       }
@@ -1956,7 +1978,7 @@ public:
 
       uvector* pvec = (uvector*)pval;
 
-      json.push_back('[');
+      json.__push('[');
 
       if (pvec->_length)
          {
@@ -1969,11 +1991,11 @@ public:
 
             if (++ptr >= end) break;
 
-            json.push_back(',');
+            json.__push(',');
             }
          }
 
-      json.push_back(']');
+      json.__push(']');
 
       U_INTERNAL_DUMP("json(%u) = %V", json.size(), json.rep)
       }
@@ -2045,7 +2067,7 @@ public:
 
       uvectorbase* pvec = (uvectorbase*)pval;
 
-      json.push_back('[');
+      json.__push('[');
 
       if (pvec->_length)
          {
@@ -2058,11 +2080,11 @@ public:
 
             if (++ptr >= end) break;
 
-            json.push_back(',');
+            json.__push(',');
             }
          }
 
-      json.push_back(']');
+      json.__push(']');
 
       U_INTERNAL_DUMP("json(%u) = %V", json.size(), json.rep)
       }
@@ -2132,10 +2154,17 @@ public:
 
       uhashmap* pmap = (uhashmap*)pval;
 
-      if (pmap->empty()) (void) json.append(U_CONSTANT_TO_PARAM("{}"));
+      if (pmap->empty())
+         {
+         char* ptr = json.pend();
+
+         u_put_unalignedp16(ptr, U_MULTICHAR_CONSTANT16('{','}'));
+
+         json.rep->_length += 2;
+         }
       else
          {
-         json.push_back('{');
+         json.__push('{');
 
 #     ifndef HAVE_OLD_IOSTREAM
          do { json.toJSON<T>(pmap->getKey(), UJsonTypeHandler<T>(*(pmap->elem()))); } while (pmap->next());
@@ -2217,7 +2246,7 @@ public:
 
       if (pmap->first())
          {
-         json.push_back('{');
+         json.__push('{');
 
          do { json.toJSON<UStringRep>(pmap->getKey(), UJsonTypeHandler<UStringRep>(*(UStringRep*)(pmap->elem()))); } while (pmap->next());
 
@@ -2225,7 +2254,11 @@ public:
          }
       else
          {
-         (void) json.append(U_CONSTANT_TO_PARAM("{}"));
+         char* ptr = json.pend();
+
+         u_put_unalignedp16(ptr, U_MULTICHAR_CONSTANT16('{','}'));
+
+         json.rep->_length += 2;
          }
 
       U_INTERNAL_DUMP("json(%u) = %V", json.size(), json.rep)
@@ -2306,7 +2339,7 @@ public:
       stdvector* pvec = (stdvector*)pval;
       uint32_t i = 0, n = pvec->size();
 
-      json.push_back('[');
+      json.__push('[');
 
       while (true)
          {
@@ -2314,10 +2347,10 @@ public:
 
          if (++i >= n) break;
 
-         json.push_back(',');
+         json.__push(',');
          }
 
-      json.push_back(']');
+      json.__push(']');
 
       U_INTERNAL_DUMP("json(%u) = %V", json.size(), json.rep)
       }
@@ -2391,10 +2424,17 @@ public:
 
       stringtobitmaskmap* pmap = (stringtobitmaskmap*)pval;
 
-      if (pmap->empty()) (void) json.append(U_CONSTANT_TO_PARAM("{}"));
+      if (pmap->empty())
+         {
+         char* ptr = json.pend();
+
+         u_put_unalignedp16(ptr, U_MULTICHAR_CONSTANT16('{','}'));
+
+         json.rep->_length += 2;
+         }
       else
          {
-         json.push_back('{');
+         json.__push('{');
 
          // this is is C++17 vvv
          for (const auto & [ key, value ] : *pmap) json.toJSON<T>(key, UJsonTypeHandler<T>(value)); 

@@ -337,7 +337,12 @@ protected:
       }
 
 private:
-   UFlatBufferValue() {}
+   UFlatBufferValue()
+      {
+      // coverity[uninit_ctor]
+#  ifdef U_COVERITY_FALSE_POSITIVE
+#  endif
+      }
 
    friend class UFlatBuffer;
 
@@ -360,6 +365,9 @@ public:
 
       // coverity[uninit_ctor]
 #  ifdef U_COVERITY_FALSE_POSITIVE
+      u_             = 0ULL;
+      type_          =
+      min_bit_width_ = BIT_WIDTH_8;
       reset();
 #  endif
       }

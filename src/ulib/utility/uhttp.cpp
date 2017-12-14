@@ -2223,7 +2223,7 @@ const char* UHTTP::getHeaderValuePtr(const char* name, uint32_t name_len, bool n
 
       *UClientImage_Base::request = UHTTP2::pConnection->itable.at(name, name_len);
 
-      return (*UClientImage_Base::request ? UClientImage_Base::request->data() : (const char*)0);
+      return (*UClientImage_Base::request ? UClientImage_Base::request->data() : (const char*)U_NULLPTR);
       }
 
    return getHeaderValuePtr(*UClientImage_Base::request, name, name_len, nocase);
