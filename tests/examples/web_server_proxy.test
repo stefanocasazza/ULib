@@ -1,0 +1,89 @@
+#!/bin/sh
+
+. ../.function
+
+DOC_ROOT1=benchmark/docroot
+DOC_ROOT2=docroot
+
+rm -f tmp/usp_compile.sh.err /tmp/*.hpack.* \
+      $DOC_ROOT1/webserver*.log* \
+      $DOC_ROOT2/webserver*.log* \
+      out/userver_*.out err/userver_*.err \
+      out/webserver_*.out err/webserver_*.err \
+                 trace.*userver_*.[0-9]*            object.*userver_*.[0-9]*            stack.*userver_*.[0-9]*            mempool.*userver_*.[0-9]* \
+      $DOC_ROOT1/trace.*userver_*.[0-9]* $DOC_ROOT1/object.*userver_*.[0-9]* $DOC_ROOT1/stack.*userver_*.[0-9]* $DOC_ROOT1/mempool.*userver_*.[0-9]* \
+      $DOC_ROOT2/trace.*userver_*.[0-9]* $DOC_ROOT2/object.*userver_*.[0-9]* $DOC_ROOT2/stack.*userver_*.[0-9]* $DOC_ROOT2/mempool.*userver_*.[0-9]*
+
+#UTRACE="0 10M 0"
+#UOBJDUMP="0 10M 100"
+#USIMERR="error.sim"
+#UMEMUSAGE=yes
+export UTRACE UOBJDUMP USIMERR UTRACE_SIGNAL UMEMUSAGE
+
+DIR_CMD="../../examples/userver"
+
+cat <<EOF >inp/webserver.cfg
+userver {
+ PORT 8080
+ RUN_AS_USER nobody
+ LOG_FILE webserver.log
+ LOG_FILE_SZ 10M
+ LOG_MSG_SIZE -1
+ PID_FILE /var/run/userver_tcp.pid
+ PREFORK_CHILD 0
+ DOCUMENT_ROOT $DOC_ROOT1
+ PLUGIN_DIR ../../../../src/ulib/net/server/plugin/.libs
+}
+http {
+ APACHE_LIKE_LOG /var/log/httpd/access_log
+ LOG_FILE_SZ 10M
+}
+EOF
+
+cat <<EOF >inp/webserver_proxy.cfg
+userver {
+ PORT 8787
+ RUN_AS_USER nobody
+ LOG_FILE webserver_proxy.log
+ LOG_FILE_SZ 10M
+ LOG_MSG_SIZE -1
+ PID_FILE /var/run/userver_tcp_proxy.pid
+ PREFORK_CHILD 0 
+ DOCUMENT_ROOT $DOC_ROOT2
+ PLUGIN "proxy http"
+ PLUGIN_DIR ../../../src/ulib/net/server/plugin/.libs
+}
+http {
+ APACHE_LIKE_LOG /var/log/httpd/access_log
+ LOG_FILE_SZ 10M
+}
+proxy {
+ Service_PROXY {
+  URI /1000.html
+  HOST localhost:8787
+  METHOD_NAME GET
+  PORT 8080
+  SERVER 127.0.0.1 
+  }
+}
+EOF
+
+#STRACE=$TRUSS
+start_prg_background userver_tcp -c inp/webserver.cfg
+wait_server_ready localhost 8080
+start_prg_background userver_tcp -c inp/webserver_proxy.cfg
+wait_server_ready localhost 8787
+
+sync
+#echo "PID1 = `cat /var/run/userver_tcp.pid`"
+#echo "PID2 = `cat /var/run/userver_tcp_proxy.pid`"
+
+$CURL http://localhost:8787 			   >out/webserver_proxy.out 2>>err/userver_tcp.err
+$CURL http://localhost:8787/1000.html >>out/webserver_proxy.out 2>>err/userver_tcp.err
+
+kill_server userver_tcp
+$SLEEP
+pkill userver_tcp 2>/dev/null
+
+cat err/userver_tcp.err >> err/webserver_proxy.err
+rm  err/userver_tcp.err

@@ -712,10 +712,12 @@ void ULog::logResponse(const UString& data, const char* format, uint32_t fmt_siz
       U_INTERNAL_ASSERT_MAJOR(u_printf_string_max_length, 0)
       }
 
-   U_INTERNAL_DUMP("u_printf_string_max_length = %d", u_printf_string_max_length)
+   U_INTERNAL_DUMP("u_printf_string_max_length = %d UServer_Base::mod_name = %S", u_printf_string_max_length, UServer_Base::mod_name)
 
-   len  = (UServer_Base::mod_name[0][0] ? u__snprintf(buffer, sizeof(buffer), U_CONSTANT_TO_PARAM("%s"), UServer_Base::mod_name) : 0);
-   len += u__snprintf(buffer-len, sizeof(buffer)-len, U_CONSTANT_TO_PARAM("received response (%u bytes) %#.*S"), sz, sz, ptr);
+   len = u__snprintf(buffer, sizeof(buffer), U_CONSTANT_TO_PARAM("%sreceived response (%u bytes) %#.*S"),
+                     UServer_Base::mod_name[0][0] ? (const char*)UServer_Base::mod_name : "", sz, sz, ptr);
+
+   U_INTERNAL_DUMP("len = %u", len)
 
    if (fmt_size)
       {

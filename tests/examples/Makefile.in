@@ -628,10 +628,10 @@ EXTRA_DIST = inp ok CA CSP LCSP TSA RSIGN XAdES nocat wi-auth WAGSM RA IR/WEB IR
 				 *.properties *.test *.sh error_msg workflow doc_parse robots.txt alias.txt throttling.txt css js benchmark websocket docroot php.sh test_http_parser.h
 
 TESTS = client_server.test test_manager.test IR.test web_server.test \
-	web_server_multiclient.test web_socket.test $(am__append_1) \
-	$(am__append_2) $(am__append_3) $(am__append_4) \
-	$(am__append_5) $(am__append_6) $(am__append_7) \
-	$(am__append_8) ../reset.color
+	web_server_multiclient.test web_socket.test \
+	web_server_proxy.test $(am__append_1) $(am__append_2) \
+	$(am__append_3) $(am__append_4) $(am__append_5) \
+	$(am__append_6) $(am__append_7) $(am__append_8) ../reset.color
 @DEBUG_TRUE@PRG = bench_http_parser test_http_parser
 @DEBUG_TRUE@bench_http_parser_SOURCES = bench_http_parser.cpp
 @DEBUG_TRUE@test_http_parser_SOURCES = test_http_parser.cpp ctest_http_parser.c
@@ -1128,7 +1128,7 @@ uninstall-am:
 
 test: all-am
 	$(MAKE) $(AM_MAKEFLAGS) $(check_PROGRAMS)
-	../make_test.sh client_server.test test_manager.test IR.test web_server.test web_socket.test tsa_http.test tsa_https.test rsign_rpc.test tsa_rpc.test uclient.test tsa_ssoap.test rsign.test web_server_ssl.test PEC_report_rejected.test PEC_report_messaggi.test PEC_report_virus.test PEC_report_anomalie.test PEC_check_namefile.test doc_parse.test xml2txt.test ../reset.color
+	../make_test.sh client_server.test test_manager.test IR.test web_server.test web_server_proxy.test web_socket.test tsa_http.test tsa_https.test rsign_rpc.test tsa_rpc.test uclient.test tsa_ssoap.test rsign.test web_server_ssl.test PEC_report_rejected.test PEC_report_messaggi.test PEC_report_virus.test PEC_report_anomalie.test PEC_check_namefile.test doc_parse.test xml2txt.test ../reset.color
 
 clean-local:
 	-rm -rf out err core .libs *.bb* *.da *.gc* IR/db* TSA/gSOAP/tsa_client \

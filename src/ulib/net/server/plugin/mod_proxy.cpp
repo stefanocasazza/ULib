@@ -181,14 +181,7 @@ int UProxyPlugIn::handlerRequest()
 
       *UClientImage_Base::wbuffer = client_http->getResponse();
 
-      if (result == false)
-         {
-         UClientImage_Base::setRequestProcessed();
-
-#     ifndef U_LOG_DISABLE
-         if (UServer_Base::isLog()) UServer_Base::log->logResponse(*UClientImage_Base::wbuffer, U_CONSTANT_TO_PARAM(""), 0);
-#     endif
-         }
+      if (result == false) UClientImage_Base::setRequestProcessed();
       else
          {
          UClientImage_Base::setNoHeaderForResponse();

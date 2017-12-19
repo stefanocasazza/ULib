@@ -4,10 +4,11 @@
 
 (cd benchmark; rm -f  db; creat_link FrameworkBenchmarks/ULib/db db)
 
- DOC_ROOT=docroot
+#DOC_ROOT=docroot
 #DOC_ROOT=sse_example
 #DOC_ROOT=ruby/blog
 #DOC_ROOT=benchmark/docroot
+ DOC_ROOT=ShivShankarDayal/docroot
 
 rm -f tmp/usp_compile.sh.err /tmp/*.hpack.* \
       $DOC_ROOT/web_server.log* \
@@ -82,15 +83,16 @@ userver {
 #PLUGIN_DIR     ../../src/ulib/net/server/plugin/.libs
 #ORM_DRIVER_DIR ../../src/ulib/orm/driver/.libs
 #DOCUMENT_ROOT  php
- DOCUMENT_ROOT  docroot
+#DOCUMENT_ROOT  docroot
 #DOCUMENT_ROOT  sse_example
- PLUGIN_DIR     ../../../src/ulib/net/server/plugin/.libs
- ORM_DRIVER_DIR ../../../src/ulib/orm/driver/.libs
+#PLUGIN_DIR     ../../../src/ulib/net/server/plugin/.libs
+#ORM_DRIVER_DIR ../../../src/ulib/orm/driver/.libs
 #DOCUMENT_ROOT  JONATHAN/docroot
 #DOCUMENT_ROOT  benchmark/docroot
 #DOCUMENT_ROOT  ruby/blog/public
-#PLUGIN_DIR     ../../../../src/ulib/net/server/plugin/.libs
-#ORM_DRIVER_DIR ../../../../src/ulib/orm/driver/.libs
+ DOCUMENT_ROOT  ShivShankarDayal/docroot
+ PLUGIN_DIR     ../../../../src/ulib/net/server/plugin/.libs
+ ORM_DRIVER_DIR ../../../../src/ulib/orm/driver/.libs
 }
 http {
 #ALIAS "[ / /100.html ]"

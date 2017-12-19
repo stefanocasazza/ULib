@@ -914,7 +914,7 @@ bool UHttpClient_Base::sendRequest()
 
    U_INTERNAL_ASSERT_RANGE(0,UClient_Base::iovcnt,6)
 
-   U_INTERNAL_DUMP("server_context_flag = %b U_ClientImage_close = %b", server_context_flag, U_ClientImage_close)
+   U_INTERNAL_DUMP("server_context_flag = %b U_ClientImage_close = %b U_http_info.startHeader = %u", server_context_flag, U_ClientImage_close, U_http_info.startHeader)
 
    bool ok;
    uint64_t flag_save = 0;
@@ -953,7 +953,7 @@ bool UHttpClient_Base::sendRequest()
       U_http_info = http_info_save;
       }
 
-   U_INTERNAL_DUMP("server_context_flag = %b U_ClientImage_close = %b", server_context_flag, U_ClientImage_close)
+   U_INTERNAL_DUMP("server_context_flag = %b U_ClientImage_close = %b U_http_info.startHeader = %u", server_context_flag, U_ClientImage_close, U_http_info.startHeader)
 
    U_RETURN(ok);
 }
@@ -979,6 +979,8 @@ bool UHttpClient_Base::sendRequest(const UString& req)
          method_num = U_http_method_num;
 
          (void) UClient_Base::uri.assign(U_HTTP_URI_QUERY_TO_PARAM);
+
+         U_http_info.startHeader += U_CONSTANT_SIZE(U_CRLF);
 
          if (sendRequest()) result = true;
          }

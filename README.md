@@ -30,10 +30,10 @@ The current version offers the following features :
    * Support for URL traffic based throttling (experimental).
    * Support for overriden of error messages by local document (ex. ErrorDocument/400.html).
    * Support for RewriteRule (lighttpd-like) that check for file existence as they do on Apache, some CMS (SilverStripe) require it.
-   * Support for (apache-like) log [NCSA extended/combined format](http://httpd.apache.org/docs/2.0/mod/mod_log_config.html)
+   * Support for (apache-like) log [NCSA extended/combined format](http://httpd.apache.org/docs/2.0/mod/mod_log_config.html).
    * Support for [JSONRequest](http://json.org/JSONRequest.html).
    * Accept HTTP uploads up to 4 GB without increasing memory usage.
-   * General [CGI](http://it.wikipedia.org/wiki/Common_Gateway_Interface) support (run any CGI script) with automatic output compression (using gzip method).
+   * General [CGI](http://it.wikipedia.org/wiki/Common_Gateway_Interface) support (run any CGI script) with automatic output compression (using gzip,brotli method).
    * CGI support for shell script processes (with automatic management of form and cookie).
    * CGI support for the X-Sendfile feature and also supports X-Accel-Redirect headers transparently.
    * Support for minify HTML CGI output by wrapping [google page speed SDK](http://code.google.com/speed/page-speed/download.html#pagespeed-sdk).

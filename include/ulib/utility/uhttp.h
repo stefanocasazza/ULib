@@ -52,6 +52,8 @@ class UClientImage_Base;
 template <class T> class UClient;
 template <class T> class URDBObjectHandler;
 
+extern "C" { extern void runDynamicPage_dirlist(int); };
+
 class U_EXPORT UHTTP {
 public:
 
@@ -1371,7 +1373,7 @@ private:
       }
 #endif
 
-   static UString getHTMLDirectoryList() U_NO_EXPORT;
+   static UString getHTMLDirectoryList();
 
 #if defined(U_ALIAS) && defined(USE_LIBPCRE) // REWRITE RULE
    static void processRewriteRule() U_NO_EXPORT;
@@ -1482,6 +1484,8 @@ private:
    friend class UHttpPlugIn;
    friend class UProxyPlugIn;
    friend class UClientImage_Base;
+
+   friend void runDynamicPage_dirlist(int);
 
 #ifdef U_STDCPP_ENABLE
    friend istream& operator>>(istream&, UHTTP::UFileCacheData&);

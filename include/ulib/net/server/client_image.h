@@ -290,7 +290,8 @@ public:
       {
       U_TRACE_NO_PARAM(0, "UClientImage_Base::setRequestToCache()")
 
-      U_INTERNAL_DUMP("U_ClientImage_pipeline = %b size_request = %u U_http_uri_offset = %u", U_ClientImage_pipeline, size_request, U_http_uri_offset)
+      U_INTERNAL_DUMP("U_ClientImage_pipeline = %b size_request = %u U_http_uri_offset = %u U_http_info.startHeader = %u",
+                       U_ClientImage_pipeline,     size_request,     U_http_uri_offset,     U_http_info.startHeader)
 
 #  if !defined(U_CACHE_REQUEST_DISABLE) || defined(U_SERVER_CHECK_TIME_BETWEEN_REQUEST)
       U_INTERNAL_ASSERT_MAJOR(size_request, 0)

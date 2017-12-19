@@ -786,7 +786,7 @@ void UClientImage_Base::endRequest()
 #     ifndef U_CACHE_REQUEST_DISABLE
          if (U_ClientImage_request_is_cached)
             {
-            U_INTERNAL_DUMP("U_http_uri_offset = %u", U_http_uri_offset)
+            U_INTERNAL_DUMP("U_http_uri_offset = %u U_http_info.startHeader = %u U_http_info.uri_len = %u", U_http_uri_offset, U_http_info.startHeader, U_http_info.uri_len)
 
             U_INTERNAL_ASSERT_RANGE(1,U_http_uri_offset,254)
 

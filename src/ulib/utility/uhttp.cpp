@@ -6113,7 +6113,7 @@ const char* UHTTP::getStatusDescription(uint32_t* plen)
 
 #undef U_HTTP_ENTRY
 
-U_NO_EXPORT UString UHTTP::getHTMLDirectoryList()
+UString UHTTP::getHTMLDirectoryList()
 {
    U_TRACE_NO_PARAM(0, "UHTTP::getHTMLDirectoryList()")
 
