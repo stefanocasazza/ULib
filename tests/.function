@@ -303,7 +303,8 @@ check_for_netcat() {
 	if [ $? -eq 0 ]; then
 		NC_TEST=`netcat -h 2>&1 | head -n 1`
 
-		if [ "$NC_TEST" = "[v1.10]" ]; then
+		if [ "$NC_TEST" = "[v1.10]" ] || \
+			[ "$NC_TEST" = "[v1.10-41]" ]; then
 			NCAT=netcat
 		elif [ "`echo $NC_TEST | cut -d' ' -f1`" = "GNU" ]; then
 			NCAT=netcat

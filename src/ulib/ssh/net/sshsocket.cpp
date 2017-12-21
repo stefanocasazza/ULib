@@ -258,7 +258,9 @@ bool USSHSocket::connectServer(const UString& server, unsigned int iServPort, in
       {
       USocket::iRemotePort = iServPort;
 #endif
-      const char* srv = server.c_str();
+      U_INTERNAL_ASSERT(server.isNullTerminated())
+
+      const char* srv = server.data();
 
       (void) U_SYSCALL(ssh_options_set, "%p,%d,%S", session, SSH_OPTIONS_HOST, srv);
       (void) U_SYSCALL(ssh_options_set, "%p,%d,%p", session, SSH_OPTIONS_PORT, &iServPort);
