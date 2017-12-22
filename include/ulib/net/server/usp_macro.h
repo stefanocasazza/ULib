@@ -45,8 +45,21 @@
 #define USP_STORAGE_VAR_GET(index,varname) \
    { \
    UString varname##_value; \
-   if (UHTTP::getDataStorage(index, varname##_value)) \
-      UString2Object(U_STRING_TO_PARAM(varname##_value), varname); \
+   if (UHTTP::getDataStorage(index, varname##_value) && \
+       (usp_sz = varname##_value.size())) \
+      { \
+      UString2Object(varname##_value.data(), usp_sz, varname); \
+      } \
+   }
+
+#define USP_SESSION_VAR_GET(index,varname) \
+   { \
+   UString varname##_value; \
+        if (UHTTP::getDataSession(index, varname##_value) == false) UHTTP::setSessionCookie(); \
+   else if ((usp_sz = varname##_value.size())) \
+      { \
+      UString2Object(varname##_value.data(), usp_sz, varname); \
+      } \
    }
 
 #define USP_STORAGE_VAR_PUT(index,varname) \
@@ -55,18 +68,11 @@
    UHTTP::putDataStorage(index, usp_buffer, usp_sz); \
    }
 
-#define USP_SESSION_VAR_GET(index,varname) \
-   { \
-   UString varname##_value; \
-   if (UHTTP::getDataSession(index, varname##_value) == false) UHTTP::setSessionCookie(); \
-   else UString2Object(U_STRING_TO_PARAM(varname##_value), varname); \
-   }
-
 #define USP_SESSION_VAR_PUT(index,varname) \
    { \
-   if (UHTTP::isDataSession()) \
+   if (UHTTP::isDataSession() && \
+       (usp_sz = UObject2String(varname, usp_buffer, sizeof(usp_buffer)))) \
       { \
-      usp_sz = UObject2String(varname, usp_buffer, sizeof(usp_buffer)); \
       UHTTP::putDataSession(index, usp_buffer, usp_sz); \
       } \
    }

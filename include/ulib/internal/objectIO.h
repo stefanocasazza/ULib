@@ -40,6 +40,8 @@ template <class T> inline void UString2Object(const char* t, uint32_t tlen, T& o
 {
    U_INTERNAL_TRACE("UString2Object(%.*s,%u,%p)", tlen, t, tlen, &object)
 
+   U_INTERNAL_ASSERT_MAJOR(tlen, 0)
+
 #ifdef U_STDCPP_ENABLE
    UObjectIO::input(t, tlen);
 

@@ -61,21 +61,18 @@ extern U_EXPORT void runDynamicPage_ir_web(int param);
 {
    U_TRACE(0, "::runDynamicPage_ir_web(%d)", param)
    
+   
    if (param)
       {
       if (param == U_DPAGE_INIT) { usp_init_ir_web(); return; }
-   
       if (param == U_DPAGE_DESTROY) { usp_end_ir_web(); return; }
-   
       if (param >= U_DPAGE_FORK) return;
       }
    
    UHTTP::mime_index = U_html;
-   
    U_http_info.endHeader = 0;
    
    if (UHTTP::getDataSession() == false) UHTTP::setSessionCookie();
-   
    const char* ref     = "?ext=help";
    uint32_t num_args   = UHTTP::processForm() / 2;
    bool form_with_help = false;
@@ -142,26 +139,21 @@ extern U_EXPORT void runDynamicPage_ir_web(int param);
    (void) UClientImage_Base::wbuffer->append(
       U_CONSTANT_TO_PARAM("<html>\n<head>\n  <title>ULib search engine: a full-text search system for communities</title>\n  <link title=\"Services\" rel=\"stylesheet\" href=\"/css/pagination.min.css\" type=\"text/css\">\n</head>\n<body>\n  <div id=\"estform\" class=\"estform\">\n    <form action=\"ir_web\" method=\"post\" id=\"form_self\" name=\"form_self\">\n\n      <div class=\"form_navi\">\n        <a href=\"")
    );
-   
    (void) UClientImage_Base::wbuffer->append((ref));
-   
    (void) UClientImage_Base::wbuffer->append(
       U_CONSTANT_TO_PARAM("\" class=\"navilink\">help</a>\n      </div>\n\n      <div class=\"form_basic\">\n        <input type=\"text\" name=\"phrase\" value=\"\" size=\"80\" id=\"phrase\" class=\"text\" tabindex=\"1\" accesskey=\"0\">\n        <input type=\"submit\" value=\"Search\" id=\"search\" class=\"submit\" tabindex=\"2\" accesskey=\"1\">\n      </div>\n\n      <div class=\"form_extension\">\n        <select name=\"perpage\" id=\"perpage\" tabindex=\"3\">\n          <option value=\"10\" selected=\"selected\">10</option>\n          <option value=\"20\">20</option> \n          <option value=\"30\">30</option>\n          <option value=\"50\">50</option>\n          <option value=\"60\">60</option>\n          <option value=\"70\">70</option>\n          <option value=\"80\">80</option>\n          <option value=\"90\">90</option>\n          <option value=\"100\">100</option>\n        </select> per page\n      </div>\n    </form>\n  </div>\n\n")
    );
-   
    if (form_with_help) {
    
    (void) UClientImage_Base::wbuffer->append(
       U_CONSTANT_TO_PARAM("   <div class=\"help\">\n    <h1 class=\"title\">Help</h1>\n\n    <h2>What is This?</h2>\n\n    <p>This is a full-text search system. You can search for documents including some specified words.</p>\n\n    <h2>How to Use</h2>\n\n    <p>Input search phrase into the field at the top of the page. For example, if you search for documents including \"computer\", input the\n    following.</p>\n    <pre>computer</pre>\n\n    <p>If you search for documents including both of \"network\" and \"socket\", input the following.</p>\n    <pre>network socket</pre>\n\n    <p>It is the same as the following.</p>\n    <pre>network AND socket</pre>\n\n    <p>If you search for documents including \"network\" followed by \"socket\", input the following.</p>\n    <pre>\"network socket\"</pre>\n\n    <p>If you search for documents including one or both of \"network\" and \"socket\", input the following.</p>\n    <pre>network OR socket</pre>\n\n    <p>If you search for documents including \"network\" but without \"socket\", input the following.</p>\n    <pre>network AND NOT socket</pre>\n\n    <p>For more complex query, you can use \"<code>(</code>\". Note that the priority of \"<code>(</code>\" is higher than that of \"<code>AND</code>\",\n    \"<code>OR</code>\" and \"<code>NOT</code>\". So, the following is to search for documents including one of \"F1\", \"F-1\", \"Formula One\", and including\n    one of \"champion\" and \"victory\".</p>\n    <pre>(F1 OR F-1 OR \"Formula One\") AND (champion OR victory)</pre>\n\n    <h2>You can use DOS wildcard characters</h2>\n\n    <p>If you search for documents including some words beginning with \"inter\", input the following.</p>\n    <pre>inter*</pre>\n\n    <p>If you search for documents including some words ending with \"sphere\", input the following.</p>\n    <pre>*sphere</pre>\n\n    <p>If you search for documents matching some words matching \"?n*able\" (unable, unavoidable, inevitable, ...), input the following.</p>\n    <pre>?n*able</pre>\n\n    <h2>Other Faculties</h2>\n\n    <p>\"<code>[...] per page</code>\" specifies the number of shown documents per page. If documents over one page correspond, you can move to another\n    page via anchors of \"<code>PREV</code>\" and \"<code>NEXT</code>\" at the bottom of the page.</p>\n\n    <h2>Information</h2>\n\n    <p>See <a href=\"http://www.unirel.com/\">the project site</a> for more detail.</p>\n   </div>\n\n")
    );
-   
    } else {
       if (num_args == 0) {
    
    (void) UClientImage_Base::wbuffer->append(
       U_CONSTANT_TO_PARAM("   <div class=\"logo\">\n      <h1 class=\"title\">ULib search engine</h1>\n      <div class=\"caption\">a full-text search system for communities</div>\n   </div>\n\n")
    );
-   
    } else {
    
          UString link_paginazione = UHTTP::getLinkPagination();
@@ -177,7 +169,6 @@ extern U_EXPORT void runDynamicPage_ir_web(int param);
    (void) UClientImage_Base::wbuffer->append(
       U_CONSTANT_TO_PARAM("         <p class=\"note\">Your search did not match any documents.</p>\n")
    );
-   
    } else {
    
             UString doc, snippet_doc(U_CAPACITY), basename, filename, pathname1(U_CAPACITY), pathname2(U_CAPACITY);
@@ -210,13 +201,10 @@ extern U_EXPORT void runDynamicPage_ir_web(int param);
    (void) UClientImage_Base::wbuffer->append(
       U_CONSTANT_TO_PARAM("  <div id=\"estinfo\" class=\"estinfo\">\n    Powered by <a href=\"http://www.unirel.com/\">ULib search engine</a> ")
    );
-   
    (void) UClientImage_Base::wbuffer->append((*footer));
-   
    (void) UClientImage_Base::wbuffer->append(
       U_CONSTANT_TO_PARAM("  </div>\n</body>\n</html>")
    );
-   
    UHTTP::putDataSession();
-      
+   
 } }

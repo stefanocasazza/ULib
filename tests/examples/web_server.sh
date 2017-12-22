@@ -4,11 +4,11 @@
 
 (cd benchmark; rm -f  db; creat_link FrameworkBenchmarks/ULib/db db)
 
-#DOC_ROOT=docroot
+ DOC_ROOT=docroot
 #DOC_ROOT=sse_example
 #DOC_ROOT=ruby/blog
 #DOC_ROOT=benchmark/docroot
- DOC_ROOT=ShivShankarDayal/docroot
+#DOC_ROOT=ShivShankarDayal/docroot
 
 rm -f tmp/usp_compile.sh.err /tmp/*.hpack.* \
       $DOC_ROOT/web_server.log* \
@@ -20,7 +20,7 @@ rm -f tmp/usp_compile.sh.err /tmp/*.hpack.* \
  UTRACE_SIGNAL="0 50M 0"
 #UOBJDUMP="0 10M 100"
 #USIMERR="error.sim"
- UMEMUSAGE=yes
+#UMEMUSAGE=yes
 export UTRACE UOBJDUMP USIMERR UTRACE_SIGNAL UMEMUSAGE
 
 SOCK1=tmp/fcgi.socket
@@ -73,26 +73,21 @@ userver {
 #CRASH_COUNT 1
 #CRASH_EMAIL_NOTIFY mail.unirel.com:stefano.casazza@unirel.com
 #DOS_SITE_COUNT 1
-#DOS_WHITE_LIST 127.0.0.1
+ DOS_WHITE_LIST 127.0.0.1
 #DOS_LOGFILE /tmp/dos_blacklist.txt
 #REQ_TIMEOUT 300
 #PLUGIN "ssi http"
 #ORM_DRIVER "sqlite mysql"
 #ORM_DRIVER sqlite
 #DOCUMENT_ROOT  .
-#PLUGIN_DIR     ../../src/ulib/net/server/plugin/.libs
-#ORM_DRIVER_DIR ../../src/ulib/orm/driver/.libs
-#DOCUMENT_ROOT  php
-#DOCUMENT_ROOT  docroot
-#DOCUMENT_ROOT  sse_example
-#PLUGIN_DIR     ../../../src/ulib/net/server/plugin/.libs
-#ORM_DRIVER_DIR ../../../src/ulib/orm/driver/.libs
-#DOCUMENT_ROOT  JONATHAN/docroot
+#PLUGIN_DIR            ../../src/ulib/net/server/plugin/.libs
+#ORM_DRIVER_DIR        ../../src/ulib/orm/driver/.libs
+ DOCUMENT_ROOT  $DOC_ROOT
+ PLUGIN_DIR        ../../../src/ulib/net/server/plugin/.libs
+ ORM_DRIVER_DIR    ../../../src/ulib/orm/driver/.libs
 #DOCUMENT_ROOT  benchmark/docroot
-#DOCUMENT_ROOT  ruby/blog/public
- DOCUMENT_ROOT  ShivShankarDayal/docroot
- PLUGIN_DIR     ../../../../src/ulib/net/server/plugin/.libs
- ORM_DRIVER_DIR ../../../../src/ulib/orm/driver/.libs
+#PLUGIN_DIR     ../../../../src/ulib/net/server/plugin/.libs
+#ORM_DRIVER_DIR ../../../../src/ulib/orm/driver/.libs
 }
 http {
 #ALIAS "[ / /100.html ]"

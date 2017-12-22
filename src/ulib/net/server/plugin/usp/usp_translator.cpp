@@ -92,8 +92,8 @@ public:
          (void) output0.reserve(50U + size);
          (void) output1.reserve(50U + size);
 
-         output0.snprintf_add(U_CONSTANT_TO_PARAM("\n\tUSP_%s_VAR_GET(%u,%.*s);\n\t"), name, i, size, ptr);
-         output1.snprintf_add(U_CONSTANT_TO_PARAM("\n\tUSP_%s_VAR_PUT(%u,%.*s);\n\t"), name, i, size, ptr);
+         output0.snprintf_add(U_CONSTANT_TO_PARAM("\n\tUSP_%s_VAR_GET(%u,%.*s);\n"), name, i, size, ptr);
+         output1.snprintf_add(U_CONSTANT_TO_PARAM("\n\tUSP_%s_VAR_PUT(%u,%.*s);\n"), name, i, size, ptr);
 
 #     ifdef DEBUG
          id.clear(); // NB: to avoid DEAD OF SOURCE STRING WITH CHILD ALIVE...
@@ -119,11 +119,11 @@ public:
          pos = tmp.find('(');
           id = (pos == U_NOT_FOUND ? tmp : tmp.substr(0U, pos));
 
-         output0.snprintf_add(U_CONSTANT_TO_PARAM("\n\tUString %v = %s(%u);\n\t"), id.rep, name, i+binc);
+         output0.snprintf_add(U_CONSTANT_TO_PARAM("\n\tUString %v = %s(%u);\n"), id.rep, name, i+binc);
 
          if (pos != U_NOT_FOUND)
             {
-            output0.snprintf_add(U_CONSTANT_TO_PARAM("\n\tif (%v.empty()) %v = U_STRING_FROM_CONSTANT(%.*s);\n\t"), id.rep, id.rep, tmp.size()-pos-2, tmp.c_pointer(pos+1));
+            output0.snprintf_add(U_CONSTANT_TO_PARAM("\n\tif (%v.empty()) %v = U_STRING_FROM_CONSTANT(%.*s);\n"), id.rep, id.rep, tmp.size()-pos-2, tmp.c_pointer(pos+1));
             }
 
 #     ifdef DEBUG
@@ -263,8 +263,8 @@ public:
          if (token) manageDirectiveSessionOrStorage("SESSION");
          else
             {
-            (void) output0.append(U_CONSTANT_TO_PARAM("\n\tif (UHTTP::getDataSession() == false) UHTTP::setSessionCookie();\n\t"));
-            (void) output1.append(U_CONSTANT_TO_PARAM("\n\tUHTTP::putDataSession();\n\t"));
+            (void) output0.append(U_CONSTANT_TO_PARAM("\n\tif (UHTTP::getDataSession() == false) UHTTP::setSessionCookie();\n"));
+            (void) output1.append(U_CONSTANT_TO_PARAM("\n\tUHTTP::putDataSession();\n"));
             }
          }
       else if (strncmp(directive, U_CONSTANT_TO_PARAM("storage")) == 0)
@@ -279,8 +279,8 @@ public:
          if (token) manageDirectiveSessionOrStorage("STORAGE");
          else
             {
-            (void) output0.append(U_CONSTANT_TO_PARAM("\n\t(void) UHTTP::getDataStorage();\n\t"));
-            (void) output1.append(U_CONSTANT_TO_PARAM("\n\tUHTTP::putDataStorage();\n\t"));
+            (void) output0.append(U_CONSTANT_TO_PARAM("\n\t(void) UHTTP::getDataStorage();\n"));
+            (void) output1.append(U_CONSTANT_TO_PARAM("\n\tUHTTP::putDataStorage();\n"));
             }
          }
       else if (strncmp(directive, U_CONSTANT_TO_PARAM("args")) == 0)
@@ -290,7 +290,7 @@ public:
 
          setDirectiveItem(directive, U_CONSTANT_SIZE("args"));
 
-         (void) output0.append(U_CONSTANT_TO_PARAM("\t\n\t\tif (UHTTP::isGETorPOST()) (void) UHTTP::processForm();\n"));
+         (void) output0.append(U_CONSTANT_TO_PARAM("\t\n\tif (UHTTP::isGETorPOST()) (void) UHTTP::processForm();\n"));
 
          if (token) manageDirectiveArgsOrCpath("USP_FORM_VALUE", false);
          }
@@ -430,7 +430,7 @@ public:
 
          char buffer[200];
 
-         (void) vars.append(buffer, u__snprintf(buffer, sizeof(buffer), U_CONSTANT_TO_PARAM("\n\tUTimeVal sse_time_to_sleep(%u, 0L);\n\t\n"), sse_time_to_sleep));
+         (void) vars.append(buffer, u__snprintf(buffer, sizeof(buffer), U_CONSTANT_TO_PARAM("\n\tUTimeVal sse_time_to_sleep(%u, 0L);\n"), sse_time_to_sleep));
 
          sseloop = UStringExt::substitute(data, sz, '\n', U_CONSTANT_TO_PARAM("\n\t"));
 
@@ -483,7 +483,7 @@ public:
 
          (void) output0.reserve(100U + token.size());
 
-         output0.snprintf_add(U_CONSTANT_TO_PARAM("\n\tUStringExt::appendNumber32(*UClientImage_Base::wbuffer, (%v));\n\t"), token.rep);
+         output0.snprintf_add(U_CONSTANT_TO_PARAM("\n\tUStringExt::appendNumber32(*UClientImage_Base::wbuffer, (%v));\n"), token.rep);
          }
       else if (strncmp(directive, U_CONSTANT_TO_PARAM("puts")) == 0)
          {
@@ -495,7 +495,7 @@ public:
 
          (void) output0.reserve(100U + token.size());
 
-         output0.snprintf_add(U_CONSTANT_TO_PARAM("\n\t(void) UClientImage_Base::wbuffer->append((%v));\n\t"), token.rep);
+         output0.snprintf_add(U_CONSTANT_TO_PARAM("\n\t(void) UClientImage_Base::wbuffer->append((%v));\n"), token.rep);
          }
       else if (strncmp(directive, U_CONSTANT_TO_PARAM("xmlputs")) == 0)
          {
@@ -507,7 +507,7 @@ public:
 
          (void) output0.reserve(100U + token.size());
 
-         output0.snprintf_add(U_CONSTANT_TO_PARAM("\n\tUSP_XML_PUTS((%v));\n\t"), token.rep);
+         output0.snprintf_add(U_CONSTANT_TO_PARAM("\n\tUSP_XML_PUTS((%v));\n"), token.rep);
          }
       else if (strncmp(directive, U_CONSTANT_TO_PARAM("cout")) == 0)
          {
@@ -522,7 +522,7 @@ public:
          (void) output0.reserve(200U + token.size());
 
          output0.snprintf_add(U_CONSTANT_TO_PARAM("\n\tusp_sz = UObject2String((%v), usp_buffer, sizeof(usp_buffer));"
-                                                  "\n\t(void) UClientImage_Base::wbuffer->append(usp_buffer, usp_sz);\n\t"), token.rep);
+                                                  "\n\t(void) UClientImage_Base::wbuffer->append(usp_buffer, usp_sz);\n"), token.rep);
          }
       else if (strncmp(directive, U_CONSTANT_TO_PARAM("print")) == 0)
          {
@@ -545,7 +545,7 @@ public:
             U_ASSERT_EQUALS(vec.size(), 5)
 
             output0.snprintf_add(U_CONSTANT_TO_PARAM("\n\tfor (%v; %v; %v) { usp_sz = u__snprintf(usp_buffer, sizeof(usp_buffer), %v, %v);"
-                                                     "(void) UClientImage_Base::wbuffer->append(usp_buffer, usp_sz); }\n\t"),
+                                                     "(void) UClientImage_Base::wbuffer->append(usp_buffer, usp_sz); }\n"),
                                                      vec[0].rep, vec[1].rep, vec[2].rep, vec[3].rep, vec[4].rep);
             }
          else
@@ -553,7 +553,7 @@ public:
             U_ASSERT_EQUALS(vec.size(), 2)
 
             output0.snprintf_add(U_CONSTANT_TO_PARAM("\n\tusp_sz = u__snprintf(usp_buffer, sizeof(usp_buffer), %v, %v);"
-                                                     "(void) UClientImage_Base::wbuffer->append(usp_buffer, usp_sz);\n\t"), vec[0].rep, vec[1].rep);
+                                                     "(void) UClientImage_Base::wbuffer->append(usp_buffer, usp_sz);\n"), vec[0].rep, vec[1].rep);
             }
          }
       }
@@ -611,7 +611,7 @@ loop: distance = t.getDistance();
 
             (void) output0.reserve(100U + tmp.size());
 
-            output0.snprintf_add(U_CONSTANT_TO_PARAM("\n\t(void) UClientImage_Base::wbuffer->append(\n\t\tU_CONSTANT_TO_PARAM(%v)\n\t);\n\t"), tmp.rep);
+            output0.snprintf_add(U_CONSTANT_TO_PARAM("\n\t(void) UClientImage_Base::wbuffer->append(\n\t\tU_CONSTANT_TO_PARAM(%v)\n\t);\n"), tmp.rep);
             }
          }
 
@@ -699,7 +699,7 @@ loop: distance = t.getDistance();
            bsighup, // usp_sighup
            bfork;   // usp_fork
 
-      const char* ptr0      = (sseloop ? "\n\t\tif (UHTTP::bsse) goto sseloop;\n\t" : "");
+      const char* ptr0      = (sseloop ? "\n\t\tif (UHTTP::bsse) goto sseloop;\n" : "");
             char  ptr1[100] = { '\0' };
             char  ptr2[100] = { '\0' };
             char  ptr3[100] = { '\0' };
@@ -729,8 +729,8 @@ loop: distance = t.getDistance();
          bsighup = (U_STRING_FIND(declaration, 0, "static void usp_sighup_") != U_NOT_FOUND);
          bfork   = (U_STRING_FIND(declaration, 0, "static void usp_fork_")   != U_NOT_FOUND);
 
-         if (bfork)   (void) u__snprintf(ptr5, 100, U_CONSTANT_TO_PARAM("\n\t\tif (param == U_DPAGE_FORK) { usp_fork_%.*s(); return; }\n\t"),     basename_sz, basename_ptr);
-         if (bsighup) (void) u__snprintf(ptr4, 100, U_CONSTANT_TO_PARAM("\n\t\tif (param == U_DPAGE_SIGHUP) { usp_sighup_%.*s(); return; }\n\t"), basename_sz, basename_ptr);
+         if (bfork)   (void) u__snprintf(ptr5, 100, U_CONSTANT_TO_PARAM("\n\t\tif (param == U_DPAGE_FORK) { usp_fork_%.*s(); return; }\n"),     basename_sz, basename_ptr);
+         if (bsighup) (void) u__snprintf(ptr4, 100, U_CONSTANT_TO_PARAM("\n\t\tif (param == U_DPAGE_SIGHUP) { usp_sighup_%.*s(); return; }\n"), basename_sz, basename_ptr);
 
          if (bend)
             {
@@ -738,7 +738,7 @@ loop: distance = t.getDistance();
             if (bpreprocessing_failed) bend = false;
             else
 #        endif
-            (void) u__snprintf(ptr3, 100, U_CONSTANT_TO_PARAM("\n\t\tif (param == U_DPAGE_DESTROY) { usp_end_%.*s(); return; }\n\t"), basename_sz, basename_ptr);
+            (void) u__snprintf(ptr3, 100, U_CONSTANT_TO_PARAM("\n\t\tif (param == U_DPAGE_DESTROY) { usp_end_%.*s(); return; }\n"), basename_sz, basename_ptr);
             }
          }
       else
@@ -769,11 +769,11 @@ loop: distance = t.getDistance();
                "}"),
                basename_sz, basename_ptr,
                basename_sz, basename_ptr,
-               (bsession ? "\n\tif (UHTTP::data_session == U_NULLPTR)   U_NEW(UDataSession, UHTTP::data_session, UDataSession);\n\t" : ""),
-               (bstorage ? "\n\tif (UHTTP::data_storage == U_NULLPTR) { U_NEW(UDataSession, UHTTP::data_storage, UDataSession(*UString::str_storage_keyid)); }\n\t" : ""));
+               (bsession ? "\n\tif (UHTTP::data_session == U_NULLPTR) U_NEW(UDataSession, UHTTP::data_session, UDataSession);\n" : ""),
+               (bstorage ? "\n\tif (UHTTP::data_storage == U_NULLPTR) { U_NEW(UDataSession, UHTTP::data_storage, UDataSession(*UString::str_storage_keyid)); }\n" : ""));
          }
 
-      if (binit) (void) u__snprintf(ptr1, 100, U_CONSTANT_TO_PARAM("\n\t\tif (param == U_DPAGE_INIT) { usp_init_%.*s(); return; }\n\t"), basename_sz, basename_ptr);
+      if (binit) (void) u__snprintf(ptr1, 100, U_CONSTANT_TO_PARAM("\n\t\tif (param == U_DPAGE_INIT) { usp_init_%.*s(); return; }\n"), basename_sz, basename_ptr);
 
       if (binit   == false ||
           bend    == false ||
@@ -787,14 +787,14 @@ loop: distance = t.getDistance();
       if (bvar)
          {
          (void) vars.append(U_CONSTANT_TO_PARAM("\n\tuint32_t usp_sz = 0;"
-                                                "\n\tchar usp_buffer[10 * 4096];\n\t"));
+                                                "\n\tchar usp_buffer[10 * 4096];\n"));
          }
 
       // NB: we check for HTML without HTTP headers...
 
       if (http_header.empty())
          {
-         if (is_html) (void) http_header.append(U_CONSTANT_TO_PARAM("\n\tUHTTP::mime_index = U_html;\n\t"));
+         if (is_html) (void) http_header.append(U_CONSTANT_TO_PARAM("\n\tUHTTP::mime_index = U_html;\n"));
 
          (void) http_header.append(U_CONSTANT_TO_PARAM("\n\tU_http_info.endHeader = 0;\n"));
          }
@@ -815,6 +815,7 @@ loop: distance = t.getDistance();
             "\tU_TRACE(0, \"::runDynamicPage_%.*s(%%d)\", param)\n"
             "\t\n"
             "%v"
+            "\t\n"
             "\tif (param)\n"
             "\t\t{\n"
             "%s"
