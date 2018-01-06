@@ -40,13 +40,9 @@
 
 // File-permission-bit symbols
 
-#define U_PERM__rw_r__r__ 0644
-#define U_PERM__r________ 0400
-#define U_PERM__r__r__r__ 0444
-#define U_PERM__r_xr_xr_x 0555
-
-#define PERM_FILE       (S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH) // rw_rw_r__
-#define PERM_DIRECTORY   S_IRWXU                                          // rwx
+#define PERM_FILE       (S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH)           // rw_rw_r__
+#define PERM_FIFO       (S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH) // rw_rw_rw_
+#define PERM_DIRECTORY   S_IRWXU                                                    // rwx
 
 // NB: the UString pathname maybe not writeable so path_relativ[path_relativ_len] maybe != '\0' (not null-terminate)...
 
@@ -980,7 +976,7 @@ public:
 
    // make a FIFO special file (a named pipe)
 
-   static bool mkfifo(const char* _pathname, mode_t mode = S_IRUSR | S_IWUSR)
+   static bool mkfifo(const char* _pathname, mode_t mode = PERM_FIFO)
       {
       U_TRACE(1, "UFile::mkfifo(%S,%d)", _pathname, mode)
 

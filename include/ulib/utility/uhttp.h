@@ -679,55 +679,27 @@ public:
       }
 
 #ifdef U_SSE_ENABLE // SERVER SENT EVENTS (SSE)
-   static bool bsse;
+   typedef UString (*strPF)();
 
-   static uint32_t getSSELastEventID()
+   static strPF sse_func;
+   static int sse_pipe_fd;
+   static const char* sse_corsbase;
+
+   static void readSSE(int timeoutMS) __noreturn;
+   static void sendSSE(const UString& data)
       {
-      U_TRACE_NO_PARAM(0, "UHTTP::getSSELastEventID()")
+      U_TRACE(0, "UHTTP::sendSSE(%V)", data.rep)
 
-      U_INTERNAL_ASSERT(bsse)
+      UString buffer = UServer_Base::printSSE(U_SRV_SSE_CNT1, data, UServer_Base::sse_event);
 
-      const char* ptr = UHTTP::getHeaderValuePtr(U_CONSTANT_TO_PARAM("last-event-id"), true);
+      uint32_t sz = buffer.size();
 
-      uint32_t last_event_id = (ptr ? u_atoi(ptr) : 0);
-
-      U_RETURN(last_event_id);
-      }
-
-   static void writeSSE(uint32_t id, const UString& data, const UString* pevent = U_NULLPTR)
-      {
-      U_TRACE(0, "UHTTP::writeSSE(%u,%V,%p)", id, data.rep, pevent)
-
-      if (pevent) UClientImage_Base::wbuffer->snprintf_add(U_CONSTANT_TO_PARAM("id:%u\nevent:%v\ndata:"), id, pevent->rep);
-      else        UClientImage_Base::wbuffer->snprintf_add(U_CONSTANT_TO_PARAM("id:%u\ndata:"),           id);
-
-      UVector<UString> vec(data, '\n');
-
-      UClientImage_Base::wbuffer->append(vec[0]);
-
-      for (uint32_t i = 1, n = vec.size(); i < n; ++i)
+      if (USocketExt::write(UServer_Base::csocket, buffer.data(), sz, UServer_Base::timeoutMS) != (int32_t)sz)
          {
-         UClientImage_Base::wbuffer->snprintf_add(U_CONSTANT_TO_PARAM("\ndata:%v"), vec[i].rep);
+         UServer_Base::eventSSE(U_CONSTANT_TO_PARAM("DEL %v\n"), UServer_Base::sse_id->rep);
+
+         UServer_Base::endNewChild(); // no return
          }
-
-      UClientImage_Base::wbuffer->append(U_CONSTANT_TO_PARAM("\n\n"));
-      }
-
-   static void sendSSE(uint32_t id, const UString& data, const UString* pevent = U_NULLPTR)
-      {
-      U_TRACE(0, "UHTTP::sendSSE(%u,%V,%p)", id, data.rep, pevent)
-
-      U_INTERNAL_ASSERT(bsse)
-
-      UClientImage_Base::wbuffer->setBuffer(U_CAPACITY);
-
-      writeSSE(id, data, pevent);
-
-      uint32_t sz = UClientImage_Base::wbuffer->size();
-
-      U_SRV_LOG_WITH_ADDR("send message (%u bytes) %#.*S to", sz, sz, UClientImage_Base::wbuffer->data());
-
-      if (USocketExt::write(UServer_Base::csocket, UClientImage_Base::wbuffer->data(), sz, UServer_Base::timeoutMS) != (int32_t)sz) UServer_Base::endNewChild(); // no return
       }
 #endif
 
@@ -1398,8 +1370,6 @@ private:
    static bool checkForCompression(uint32_t size)
       {
       U_TRACE(0, "UHTTP::checkForCompression(%u)", size)
-
-      U_INTERNAL_ASSERT_MAJOR(size, 0)
 
       U_INTERNAL_DUMP("U_http_is_accept_gzip = %b U_http_is_accept_brotli = %b", U_http_is_accept_gzip, U_http_is_accept_brotli)
 

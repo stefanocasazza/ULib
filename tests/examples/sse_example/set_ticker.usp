@@ -1,0 +1,6 @@
+<!--#args
+value("13.333");
+-->
+<!--#code
+UServer_Base::sendToAllSSE(value);
+-->

@@ -123,7 +123,13 @@ public:
 
          if (pos != U_NOT_FOUND)
             {
-            output0.snprintf_add(U_CONSTANT_TO_PARAM("\n\tif (%v.empty()) %v = U_STRING_FROM_CONSTANT(%.*s);\n"), id.rep, id.rep, tmp.size()-pos-2, tmp.c_pointer(pos+1));
+            uint32_t sz = tmp.size()-pos-2;
+            const char* ptr = tmp.c_pointer(pos+1);
+            const char* quote = (*ptr == '"' ? "" : "\"");
+
+            U_INTERNAL_ASSERT_MAJOR(sz, 0)
+
+            output0.snprintf_add(U_CONSTANT_TO_PARAM("\n\tif (%v.empty()) %v = U_STRING_FROM_CONSTANT(%s%.*s%s);\n"), id.rep, id.rep, quote, sz, ptr, quote);
             }
 
 #     ifdef DEBUG
@@ -152,8 +158,7 @@ public:
        * <!--#vcode ... -->
        * <!--#pcode ... -->
        * <!--#lcode ... -->
-       * <!--#ssecode ... -->
-       * <!--#sseloop ... -->
+       * <!--#sse ... -->
        * <!--#number ... -->
        * <!--#puts ... -->
        * <!--#xmlputs ... -->
@@ -249,7 +254,7 @@ public:
 
          U_INTERNAL_ASSERT(token)
 
-         declaration = UStringExt::substitute(token, '\n', U_CONSTANT_TO_PARAM("\n\t"));
+         declaration = token;
          }
       else if (strncmp(directive, U_CONSTANT_TO_PARAM("session")) == 0)
          {
@@ -368,80 +373,73 @@ public:
 
          output0.snprintf_add(U_CONSTANT_TO_PARAM("\n\t%v\n\t\n"), token.rep);
          }
-      else if (strncmp(directive, U_CONSTANT_TO_PARAM("ssecode")) == 0) // SSE code
+      else if (strncmp(directive, U_CONSTANT_TO_PARAM("sse")) == 0) // SSE code
          {
-         U_ASSERT(output2.empty())
+         U_ASSERT(sseloop.empty())
          U_ASSERT(http_header.empty())
          U_INTERNAL_ASSERT_EQUALS(bfirst_pass, false)
 
-         setDirectiveItem(directive, U_CONSTANT_SIZE("ssecode"));
+         (void) sseloop.reserve(100U);
+         (void) http_header.reserve(300U + basename_sz + basename_sz);
 
-         U_INTERNAL_ASSERT(token)
-
-         token = UStringExt::substitute(token, '\n', U_CONSTANT_TO_PARAM("\n\t\t"));
-
-         /**
-          * we must insert:
-          *
-          * <!--#header
-          * Content-Type: text/event-stream 
-          * Cache-Control: no-cache
-          * -->
-          */
-
-         (void) http_header.reserve(1000U + token.size());
-
-         (void) http_header.snprintf(U_CONSTANT_TO_PARAM(
+         (void) http_header.append(U_CONSTANT_TO_PARAM(
                "\n\tif (U_http_accept_len != U_CONSTANT_SIZE(\"text/event-stream\") ||"
-               " u_get_unalignedp64(U_http_info.accept) != U_MULTICHAR_CONSTANT64('t','e','x','t','/','e','v','e')) UHTTP::setBadRequest();"
-               "\n\telse"
+               "\n\t    u_get_unalignedp64(U_http_info.accept) != U_MULTICHAR_CONSTANT64('t','e','x','t','/','e','v','e'))"
                "\n\t\t{"
-               "\n\t\tUHTTP::bsse = true;"
-               "\n\t\t(void) UServer_Base::csocket->shutdown(SHUT_RD);"
-               "\n\t\tU_INTERNAL_ASSERT_EQUALS(UClientImage_Base::wbuffer->findEndHeader(),false)"
-               "\n\t\tU_http_info.endHeader = 61;"
-               "\n\t\t(void) UClientImage_Base::wbuffer->insert(0, U_CONSTANT_TO_PARAM(\"Content-Type: text/event-stream\\r\\nCache-Control: no-cache\\r\\n\\r\\n\"));"
-               "\n\t\tU_http_content_type_len = 1;"
-               "\n\t\t%v"
-               "\n\t\t}"), token.rep);
-         }
-      else if (strncmp(directive, U_CONSTANT_TO_PARAM("sseloop")) == 0) // SSE loop
-         {
-         U_ASSERT(sseloop.empty())
-         U_INTERNAL_ASSERT_EQUALS(bfirst_pass, false)
+               "\n\t\tUHTTP::setBadRequest();"
+               "\n\t\treturn;"
+               "\n\t\t}"));
 
-         setDirectiveItem(directive, U_CONSTANT_SIZE("sseloop"));
+         setDirectiveItem(directive, U_CONSTANT_SIZE("sse"));
 
-         U_INTERNAL_ASSERT(token)
-
-         uint32_t sz      = token.size();
-         const char* data = token.data();
-
-         uint32_t sse_time_to_sleep = 1;
-
-         if (*data == ':')
+         if (token.empty())
             {
-            ++data;
+            (void) declaration.reserve(100U + basename_sz);
 
-            sse_time_to_sleep = u_strtoulp(&data);
+            declaration.snprintf(U_CONSTANT_TO_PARAM("\n#ifdef USE_LIBSSL\nstatic UString sse_%.*s() { return UString::getStringNull(); }\n#endif"), basename_sz, basename_ptr);
 
-            sz = token.remain(data);
+            (void) sseloop.append(U_CONSTANT_TO_PARAM("\n\t\tif (UHTTP::sse_func) UHTTP::readSSE(-1);"));
+
+            http_header.snprintf(U_CONSTANT_TO_PARAM(
+                  "\n#ifdef USE_LIBSSL"
+                  "\n\tif (UServer_Base::bssl) UHTTP::sse_func = sse_%.*s;"
+                  "\n\telse"
+                  "\n#endif"
+                  "\n\tUHTTP::sse_func = (UHTTP::strPF)(void*)1L;"), basename_sz, basename_ptr);
             }
+         else
+            {
+            const char* data = token.data();
+            uint32_t sz = token.size(), sse_timeout = 1000;
 
-         char buffer[200];
+            if (*data == ':')
+               {
+               ++data;
 
-         (void) vars.append(buffer, u__snprintf(buffer, sizeof(buffer), U_CONSTANT_TO_PARAM("\n\tUTimeVal sse_time_to_sleep(%u, 0L);\n"), sse_time_to_sleep));
+               sse_timeout *= u_strtoulp(&data);
 
-         sseloop = UStringExt::substitute(data, sz, '\n', U_CONSTANT_TO_PARAM("\n\t"));
+               sz = token.remain(data);
+               }
 
-         (void) output2.reserve(200U + sseloop.size());
+            UString sse_code = UStringExt::substitute(data, sz, '\n', U_CONSTANT_TO_PARAM("\n\t"));
 
-         output2.snprintf(U_CONSTANT_TO_PARAM(
-                        "\n\treturn;\n\t\n"
-                        "sseloop:"
-                        "\n\tsse_time_to_sleep.nanosleep();"
-                        "\n\t%v"
-                        "\n\tgoto sseloop;"), sseloop.rep);
+            (void) declaration.reserve(100U + basename_sz + basename_sz + sse_code.size());
+
+            declaration.snprintf_add(U_CONSTANT_TO_PARAM(
+                  "\nstatic UString sse_%.*s()"
+                  "\n{"
+                  "\n\tU_TRACE(5, \"::sse_%.*s()\")"
+                  "\n\tUString sse_data;"
+                  "\n\t%v"
+                  "\n\tU_RETURN_STRING(sse_data);"
+                  "\n}"),
+                  basename_sz, basename_ptr,
+                  basename_sz, basename_ptr, sse_code.rep);
+
+            sseloop.snprintf(U_CONSTANT_TO_PARAM("\n\t\tif (UHTTP::sse_func) UHTTP::readSSE(%u);"), sse_timeout);
+
+            http_header.snprintf_add(U_CONSTANT_TO_PARAM("\n\tUHTTP::sse_func = sse_%.*s;"), basename_sz, basename_ptr);
+            }
          }
       else if (strncmp(directive, U_CONSTANT_TO_PARAM("header")) == 0)
          {
@@ -678,6 +676,11 @@ loop: distance = t.getDistance();
 
       bfirst_pass = true; // NB: we check for <!--#define ... --> and <!--#include ... -->
 
+      UString basename = UStringExt::basename(filename);
+
+      basename_sz  = basename.size() - U_CONSTANT_SIZE(".usp");
+      basename_ptr = basename.data();
+
       processUSP();
 
 #  ifdef DEBUG
@@ -699,7 +702,6 @@ loop: distance = t.getDistance();
            bsighup, // usp_sighup
            bfork;   // usp_fork
 
-      const char* ptr0      = (sseloop ? "\n\t\tif (UHTTP::bsse) goto sseloop;\n" : "");
             char  ptr1[100] = { '\0' };
             char  ptr2[100] = { '\0' };
             char  ptr3[100] = { '\0' };
@@ -707,7 +709,7 @@ loop: distance = t.getDistance();
             char  ptr5[100] = { '\0' };
       const char* ptr6      = "";
       const char* ptr7      = "";
-      
+
 #  ifndef U_CACHE_REQUEST_DISABLE
       if (usp.c_char(4) == '#'      &&
           u__isspace(usp.c_char(5)) &&
@@ -716,11 +718,6 @@ loop: distance = t.getDistance();
          ptr7 = "\n\tUClientImage_Base::setRequestNoCache();\n\t\n";
          }
 #  endif
-
-      UString basename = UStringExt::basename(filename);
-
-      uint32_t    basename_sz  = basename.size() - U_CONSTANT_SIZE(".usp");
-      const char* basename_ptr = basename.data();
 
       if (declaration)
          {
@@ -799,7 +796,7 @@ loop: distance = t.getDistance();
          (void) http_header.append(U_CONSTANT_TO_PARAM("\n\tU_http_info.endHeader = 0;\n"));
          }
 
-      UString result(1024U + declaration.size() + http_header.size() + output0.size() + output1.size() + output2.size() + sseloop.size() + vars.size());
+      UString result(1024U + declaration.size() + http_header.size() + output0.size() + output1.size() + output2.size() + vars.size());
 
       result.snprintf(U_CONSTANT_TO_PARAM(
             "// %.*s.cpp - dynamic page translation (%.*s.usp => %.*s.cpp)\n"
@@ -818,7 +815,7 @@ loop: distance = t.getDistance();
             "\t\n"
             "\tif (param)\n"
             "\t\t{\n"
-            "%s"
+            "%v"
             "%s"
             "%s"
             "%s"
@@ -844,7 +841,7 @@ loop: distance = t.getDistance();
             basename_sz, basename_ptr,
             basename_sz, basename_ptr,
             vars.rep,
-            ptr0,
+            sseloop.rep,
             ptr1,
             ptr2,
             ptr3,
@@ -869,6 +866,8 @@ private:
    UTokenizer t;
    UVector<UString> vdefine;
    UString pinclude, usp, token, output0, output1, output2, declaration, vcode, http_header, sseloop, vars;
+   const char* basename_ptr;
+   uint32_t basename_sz;
    bool bvar, bsession, bstorage, bfirst_pass, is_html, test_if_html, bpreprocessing_failed;
 
    U_DISALLOW_COPY_AND_ASSIGN(Application)

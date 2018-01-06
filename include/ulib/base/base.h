@@ -93,19 +93,19 @@ U_DO_PRAGMA(message ("Sorry I was compiled without thread enabled so I cannot us
 #  endif
 #endif
 #if defined(U_THROTTLING_SUPPORT) && !defined(U_HTTP2_DISABLE)
-#     undef U_THROTTLING_SUPPORT
+#  undef U_THROTTLING_SUPPORT
 U_DO_PRAGMA(message ("Sorry I was compiled with http2 enabled so I cannot support bandwidth throttling"))
 #endif
 #if defined(U_SERVER_CHECK_TIME_BETWEEN_REQUEST) && !defined(U_HTTP2_DISABLE)
-#     undef U_SERVER_CHECK_TIME_BETWEEN_REQUEST
+#  undef U_SERVER_CHECK_TIME_BETWEEN_REQUEST
 U_DO_PRAGMA(message ("Sorry I was compiled with http2 enabled so I cannot support check time between request"))
 #endif
 #if !defined(U_CACHE_REQUEST_DISABLE) && !defined(U_HTTP2_DISABLE)
-#     define U_CACHE_REQUEST_DISABLE
+#  define U_CACHE_REQUEST_DISABLE
 U_DO_PRAGMA(message ("Sorry I was compiled with http2 enabled so I cannot support cache request"))
 #endif
 #if defined(U_HTTP_INOTIFY_SUPPORT) && defined(U_SERVER_CAPTIVE_PORTAL)
-#     undef U_HTTP_INOTIFY_SUPPORT
+#  undef U_HTTP_INOTIFY_SUPPORT
 U_DO_PRAGMA(message ("Sorry I was compiled with server captive portal mode enabled so I cannot support http inotify"))
 #endif
 #if defined(HAVE_CXX17) && defined(__GNUC__) && !defined(HAVE_CONFIG_H)
@@ -113,6 +113,15 @@ U_DO_PRAGMA(message ("ULib is configured with C++17 support, so you must use the
 #endif
 #if defined(USE_HARDWARE_CRC32) && defined(__GNUC__) && !defined(HAVE_CONFIG_H) /* The built-in functions __builtin_ia32_crc32 are available when -mcrc32 is used */
 U_DO_PRAGMA(message ("ULib is configured with crc32 intrinsics support, so you must use the -mcrc32 g++ option for compilation"))
+#endif
+#ifdef U_SSE_ENABLE // SERVER SENT EVENTS (SSE)
+#  ifndef U_LINUX
+#     undef U_SSE_ENABLE
+U_DO_PRAGMA(message ("Sorry I was not compiled on Linux so I cannot use SSE"))
+#  elif !defined(ENABLE_THREAD)
+#     undef U_SSE_ENABLE
+U_DO_PRAGMA(message ("Sorry I was compiled without thread enabled so I cannot use SSE"))
+#  endif
 #endif
 
 #include <stddef.h>
@@ -247,7 +256,7 @@ extern U_EXPORT uint32_t u_buffer_len; /* assert that u_buffer is busy if u_buff
 
 /* Startup */
 
-extern U_EXPORT pid_t u_pid;
+extern U_EXPORT pid_t    u_pid;
 extern U_EXPORT char     u_pid_str[10];
 extern U_EXPORT uint32_t u_pid_str_len;
 extern U_EXPORT uint32_t u_progname_len;

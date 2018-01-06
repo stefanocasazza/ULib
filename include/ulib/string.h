@@ -1840,27 +1840,9 @@ public:
    // The `find' function searches string for a specified string (possibly a single character) and returns
    // its starting position. You can supply the parameter pos to specify the position where search must begin
 
+   uint32_t find(unsigned char c,    uint32_t pos = 0,             uint32_t how_much = U_NOT_FOUND) const __pure;
    uint32_t find(const char* s,      uint32_t pos, uint32_t s_len, uint32_t how_much = U_NOT_FOUND) const __pure;
    uint32_t find(const UString& str, uint32_t pos = 0,             uint32_t how_much = U_NOT_FOUND) const { return find(str.data(), pos, str.size(), how_much); }
-
-   uint32_t find(unsigned char c, uint32_t pos = 0) const
-      {
-      U_TRACE(0, "UString::find(%C,%u)", c, pos)
-
-      uint32_t sz  = size(),
-               ret = U_NOT_FOUND;
-
-      if (pos < sz)
-         {
-         const char* str = rep->str;
-
-         void* p = (void*) memchr(str + pos, c, sz - pos);
-
-         if (p) ret = (const char*)p - str;
-         }
-
-      U_RETURN(ret);
-      }
 
    // The `rfind' function searches from end to beginning string for a specified string (possibly a single character)
    // and returns its starting position. You can supply the parameter pos to specify the position where search must begin

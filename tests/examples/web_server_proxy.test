@@ -2,6 +2,12 @@
 
 . ../.function
 
+# set -x
+
+## web_server_proxy.test -- Test web server proxy feature
+
+start_msg web_server_proxy
+
 DOC_ROOT1=benchmark/docroot
 DOC_ROOT2=docroot
 
@@ -87,3 +93,6 @@ pkill userver_tcp 2>/dev/null
 
 cat err/userver_tcp.err >> err/webserver_proxy.err
 rm  err/userver_tcp.err
+
+# Test against expected output
+test_output_wc l webserver_proxy

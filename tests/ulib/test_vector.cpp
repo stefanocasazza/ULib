@@ -5,6 +5,9 @@
 #include <ulib/file.h>
 #include <ulib/base/hash.h>
 #include <ulib/utility/dir_walk.h>
+/*
+#include <ulib/net/server/server.h>
+*/
 
 #ifdef __MINGW32__
 #define _GLIBCXX_USE_C99_DYNAMIC 1
@@ -235,12 +238,110 @@ static void check_equal()
    U_ASSERT( b.find(U_STRING_FROM_CONSTANT("rilevazione-virus"), true) == true )
 }
 
+/**
+static void check_bound(uint32_t last_event_id)
+{
+   U_TRACE(5,"check_bound(%u)", last_event_id)
+
+   UVector<UString> vmessage;
+   uint32_t i, n, pos, start = 0, end = 0;
+   UString tmp, message(100U), output(U_CAPACITY);
+
+   for (i = 0, n = vmessage.capacity() * 1.5; i < n; ++i)
+      {
+      message.snprintf(U_CONSTANT_TO_PARAM("%u"), i);
+
+      tmp = "*="+message;
+
+      if (end < vmessage.capacity()) vmessage.push_back(tmp);
+      else
+         {
+         ++start;
+
+         vmessage.replace(end % vmessage.capacity(), tmp);
+         }
+
+      ++end;
+      }
+
+   if (last_event_id < start) last_event_id = start;
+
+   for (i = last_event_id; i < end; ++i)
+      {
+      message = vmessage[i % vmessage.capacity()];
+
+      pos = message.find('=');
+
+      U_INTERNAL_DUMP("vmessage[%u] = %V pos = %u", i % vmessage.capacity(), message.rep, pos)
+
+      (void) output.append(UServer_Base::printSSE(i+1, message.substr(pos+1), U_NULLPTR));
+      }
+
+   cout << vmessage << "\n" << output;
+
+( *=64 *=65 *=66 *=67 *=68 *=69 *=70 *=71 *=72 *=73 *=74 *=75 *=76 *=77 *=78 *=79 *=80 *=81 *=82 *=83 *=84 *=85 *=86 *=87 *=88 *=89 *=90 *=91 *=92 *=93 *=94 *=95 *=32 *=33 *=34 *=35 *=36 *=37 *=38 *=39 *=40 *=41 *=42 *=43 *=44 *=45 *=46 *=47 *=48 *=49 *=50 *=51 *=52 *=53 *=54 *=55 *=56 *=57 *=58 *=59 *=60 *=61 *=62 *=63 )
+
+id:81
+data:80
+
+id:82
+data:81
+
+id:83
+data:82
+
+id:84
+data:83
+
+id:85
+data:84
+
+id:86
+data:85
+
+id:87
+data:86
+
+id:88
+data:87
+
+id:89
+data:88
+
+id:90
+data:89
+
+id:91
+data:90
+
+id:92
+data:91
+
+id:93
+data:92
+
+id:94
+data:93
+
+id:95
+data:94
+
+id:96
+data:95
+}
+*/
+
 int
 U_EXPORT main (int argc, char* argv[])
 {
    U_ULIB_INIT(argv);
 
    U_TRACE(5,"main(%d)",argc)
+
+   /*
+   check_bound(80);
+   exit(0);
+   */
 
    UString tmp;
 
@@ -325,7 +426,7 @@ U_EXPORT main (int argc, char* argv[])
    // EXTENSION
 
    {
-   UDirWalk dirwalk(0, U_CONSTANT_TO_PARAM("?db.*test*"));
+   UDirWalk dirwalk(U_NULLPTR, U_CONSTANT_TO_PARAM("?db.*test*"));
 
    n = dirwalk.walk(y);
 

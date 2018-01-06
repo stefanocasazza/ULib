@@ -105,6 +105,8 @@ class USSLSocket;
 class USSIPlugIn;
 class UWebSocket;
 class USocketExt;
+class USSEClient;
+class USSEThread;
 class Application;
 class UTimeThread;
 class UFileConfig;
@@ -323,6 +325,13 @@ public:
    // ------------------------------------------------------------------------------
 #  endif
    // ------------------------------------------------------------------------------
+#  ifdef U_SSE_ENABLE // SERVER SENT EVENTS (SSE)
+      sem_t lock_sse;
+#   ifdef USE_LIBSSL
+      sem_t lock_sse_ssl;
+#   endif
+#  endif
+   // ------------------------------------------------------------------------------
 #  if defined(U_LINUX) && defined(ENABLE_THREAD)
       ULog::log_date log_date_shared;
       struct timeval now_shared; // => u_now
@@ -352,6 +361,10 @@ public:
 #define U_SRV_CNT_USR7              UServer_Base::ptr_shared_data->cnt_usr7
 #define U_SRV_CNT_USR8              UServer_Base::ptr_shared_data->cnt_usr8
 #define U_SRV_CNT_USR9              UServer_Base::ptr_shared_data->cnt_usr9
+#define U_SRV_CNT_NOCAT             UServer_Base::ptr_shared_data->cnt_usr7
+#define U_SRV_CNT_WIAUTH            UServer_Base::ptr_shared_data->cnt_usr7
+#define U_SRV_SSE_CNT1              UServer_Base::ptr_shared_data->cnt_usr8
+#define U_SRV_SSE_CNT2              UServer_Base::ptr_shared_data->cnt_usr9
 #define U_SRV_MY_LOAD               UServer_Base::ptr_shared_data->my_load
 #define U_SRV_FLAG_SIGTERM          UServer_Base::ptr_shared_data->flag_sigterm
 #define U_SRV_LEN_OCSP_STAPLE       UServer_Base::ptr_shared_data->len_ocsp_staple
@@ -362,6 +375,8 @@ public:
 #define U_SRV_CNT_PARALLELIZATION   UServer_Base::ptr_shared_data->cnt_parallelization
 #define U_SRV_LOCK_USER1          &(UServer_Base::ptr_shared_data->lock_user1)
 #define U_SRV_LOCK_USER2          &(UServer_Base::ptr_shared_data->lock_user2)
+#define U_SRV_LOCK_SSE            &(UServer_Base::ptr_shared_data->lock_sse)
+#define U_SRV_LOCK_SSE_SSL        &(UServer_Base::ptr_shared_data->lock_sse_ssl)
 #define U_SRV_LOCK_THROTTLING     &(UServer_Base::ptr_shared_data->lock_throttling)
 #define U_SRV_LOCK_RDB_SERVER     &(UServer_Base::ptr_shared_data->lock_rdb_server)
 #define U_SRV_LOCK_SSL_SESSION    &(UServer_Base::ptr_shared_data->lock_ssl_session)
@@ -637,6 +652,109 @@ public:
       }
 #endif
 
+#ifdef U_SSE_ENABLE // SERVER SENT EVENTS (SSE)
+   static ULock* lock_sse;
+# ifdef USE_LIBSSL
+   static ULock* lock_sse_ssl;
+# endif
+
+   static void setLockSSE()
+      {
+      U_TRACE_NO_PARAM(0, "UServer_Base::setLockSSE()")
+
+#  ifdef USE_LIBSSL
+      if (bssl)
+         {
+         U_INTERNAL_ASSERT_EQUALS(lock_sse_ssl, U_NULLPTR)
+
+         U_NEW(ULock, lock_sse_ssl, ULock);
+
+         lock_sse_ssl->init(&(ptr_shared_data->lock_sse_ssl));
+         }
+      else
+#  endif
+      {
+      U_INTERNAL_ASSERT_EQUALS(lock_sse, U_NULLPTR)
+
+      U_NEW(ULock, lock_sse, ULock);
+
+      lock_sse->init(&(ptr_shared_data->lock_sse));
+      }
+      }
+
+   static void lockSSE()
+      {
+      U_TRACE_NO_PARAM(0, "UServer_Base::lockSSE()")
+
+#  ifdef USE_LIBSSL
+      if (bssl) lock_sse_ssl->lock();
+      else
+#  endif
+      lock_sse->lock();
+      }
+
+   static void unlockSSE()
+      {
+      U_TRACE_NO_PARAM(0, "UServer_Base::unlockSSE()")
+
+#  ifdef USE_LIBSSL
+      if (bssl) lock_sse_ssl->unlock();
+      else
+#  endif
+      lock_sse->unlock();
+      }
+
+   static UString printSSE(uint32_t id, const UString& data, UString* pevent = U_NULLPTR)
+      {
+      U_TRACE(0, "UServer_Base::printSSE(%u,%V,%p)", id, data.rep, pevent)
+
+      U_ASSERT_EQUALS(u_find(U_STRING_TO_PARAM(data),"\n",1), U_NULLPTR)
+
+      UString buffer(U_CAPACITY);
+
+      if (pevent == U_NULLPTR) buffer.snprintf(U_CONSTANT_TO_PARAM("id:%u\ndata:%v\n\n"),           id,              data.rep);
+      else                     buffer.snprintf(U_CONSTANT_TO_PARAM("id:%u\nevent:%v\ndata:%v\n\n"), id, pevent->rep, data.rep);
+
+      U_RETURN_STRING(buffer);
+      }
+
+   static void eventSSE(const char* format, uint32_t fmt_size, ...)
+      {
+      U_TRACE(0, "UServer_Base::eventSSE(%.*S,%u)", fmt_size, format, fmt_size)
+
+      U_INTERNAL_ASSERT_POINTER(format)
+      U_INTERNAL_ASSERT_DIFFERS(sse_event_fd, -1)
+
+      uint32_t len;
+      char buffer[4096];
+
+      va_list argp;
+      va_start(argp, fmt_size);
+
+      len = u__vsnprintf(buffer, sizeof(buffer), format, fmt_size, argp);
+
+      va_end(argp);
+
+      lockSSE();
+
+      (void) U_SYSCALL(write, "%u,%S,%u", sse_event_fd, buffer, len);
+      }
+
+   static void sendToAllSSE(const UString& data)
+      {
+      U_TRACE(0, "UServer_Base::sendToAllSSE(%V)", data.rep)
+
+      eventSSE(U_CONSTANT_TO_PARAM("*=%v\n"), data.rep);
+      }
+
+   static void sendToAllExceptSSE(const UString& data)
+      {
+      U_TRACE(0, "UServer_Base::sendToAllExceptSSE(%V)", data.rep)
+
+      eventSSE(U_CONSTANT_TO_PARAM("%v-%v=%v\n"), (sse_event ? sse_event : str_asterisk)->rep, sse_id->rep, data.rep);
+      }
+#endif
+
    // DEBUG
 
 #if defined(DEBUG) && defined(U_STDCPP_ENABLE)
@@ -837,6 +955,34 @@ protected:
    static bool checkHitStats(const char* key, uint32_t key_len, uint32_t interval, uint32_t count);
 #endif
 
+#ifdef U_SSE_ENABLE // SERVER SENT EVENTS (SSE)
+   struct ucmsghdr {
+      size_t cmsg_len; /* Length data in cmsg_data + length of cmsghdr struct */
+      int cmsg_level;  /* Originating protocol.                               */
+      int cmsg_type;   /* Protocol specific type.                             */
+      int cmsg_data;   /* Ancillary data.                                     */
+   };
+
+   static UThread* pthread_sse;
+   static UString* sse_id;
+   static UString* sse_event;
+   static struct msghdr msg;
+   static struct iovec iov[1];
+   static struct ucmsghdr cmsg;
+   static UString* str_asterisk;
+   static uint32_t sse_fifo_pos;
+   static UVector<USSEClient*>* sse_vclient;
+   static char sse_fifo_name[256], iovbuf[1];
+   static int sse_event_fd, sse_socketpair[2];
+
+   static void setFIFOForSSE(const UString& id)
+      {
+      U_TRACE(0, "UServer_Base::setFIFOForSSE(%V)", id.rep)
+
+      (void) u__snprintf(sse_fifo_name+sse_fifo_pos, 256-sse_fifo_pos, U_CONSTANT_TO_PARAM("%v"), id.rep);
+      }
+#endif
+
             UServer_Base(UFileConfig* pcfg = U_NULLPTR);
    virtual ~UServer_Base();
 
@@ -976,6 +1122,8 @@ private:
    friend class USSIPlugIn;
    friend class UWebSocket;
    friend class USocketExt;
+   friend class USSEClient;
+   friend class USSEThread;
    friend class Application;
    friend class UTimeThread;
    friend class UHttpPlugIn;

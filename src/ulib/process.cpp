@@ -37,13 +37,16 @@ bool UProcess::fork()
 
    _pid = U_FORK();
 
-   if (child()) u_setPid();
+   if ((running = (_pid != -1)))
+      {
+      if (child()) u_setPid();
 
-   running = (_pid != -1);
+      U_INTERNAL_DUMP("_pid = %u u_pid = %u %%P = %P running = %b", _pid, u_pid, running)
 
-   U_INTERNAL_DUMP("%P running = %b", running)
+      U_RETURN(true);
+      }
 
-   U_RETURN(running);
+   U_RETURN(false);
 }
 
 // inlining failed in call to 'UProcess::setStdInOutErr(bool, bool, bool)': call is unlikely and code size would grow

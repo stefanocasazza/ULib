@@ -6,15 +6,15 @@
 
 start_msg vector
 
-#UTRACE="0 50M -1"
+#UTRACE="0 50M 0"
 #UOBJDUMP="0 1M 10"
 #USIMERR="error.sim"
  export UTRACE UOBJDUMP USIMERR
 
 start_prg vector inp/words.lst < inp/vector.input
 
-tr ' ' '\n' < vector.sort > word.sort
-rm	-f			  vector.sort
+ tr ' ' '\n' < vector.sort > word.sort
+ rm	-f			vector.sort
 
 # Test against expected output
 test_output_diff vector word.sort

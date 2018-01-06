@@ -1388,6 +1388,29 @@ void UString::resize(uint32_t n, unsigned char c)
 // The `find' function searches string for a specified string (possibly a single character) and returns
 // its starting position. You can supply the parameter pos to specify the position where search must begin
 
+__pure uint32_t UString::find(unsigned char c, uint32_t pos, uint32_t how_much) const
+{
+   U_TRACE(0, "UString::find(%C,%u,%u)", c, pos, how_much)
+
+   uint32_t n = rep->fold(pos, how_much);
+
+   U_INTERNAL_DUMP("rep->_length = %u", rep->_length)
+
+   U_INTERNAL_ASSERT(n <= rep->_length)
+
+   const char* str = rep->str;
+   const char* ptr = (const char*) memchr(str + pos, c, n);
+
+   if (ptr)
+      {
+      n = ptr - str;
+
+      U_RETURN(n);
+      }
+
+   U_RETURN(U_NOT_FOUND);
+}
+
 __pure uint32_t UString::find(const char* s, uint32_t pos, uint32_t s_len, uint32_t how_much) const
 {
    U_TRACE(0, "UString::find(%.*S,%u,%u,%u)", s_len, s, pos, s_len, how_much)
@@ -1406,9 +1429,14 @@ __pure uint32_t UString::find(const char* s, uint32_t pos, uint32_t s_len, uint3
    const char* str = rep->str;
    const char* ptr = (const char*) u_find(str + pos, n, s, s_len);
 
-   n = (ptr ? ptr - str : U_NOT_FOUND);
+   if (ptr)
+      {
+      n = ptr - str;
 
-   U_RETURN(n);
+      U_RETURN(n);
+      }
+
+   U_RETURN(U_NOT_FOUND);
 }
 
 __pure uint32_t UString::findnocase(const char* s, uint32_t pos, uint32_t s_len, uint32_t how_much) const

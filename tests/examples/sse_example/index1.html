@@ -8,7 +8,7 @@
 <script type="text/javascript">
         
  function read_data() {
-	var stream = new EventSource('/get_ticker');
+	var stream = new EventSource('/get_ticker1');
 	stream.onmessage = function(e){
 	  document.getElementById('price').innerHTML=e.data;
 	};

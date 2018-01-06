@@ -1416,8 +1416,9 @@ int UNotifier::read(int fd, char* buffer, int count, int timeoutMS)
 {
    U_TRACE(1, "UNotifier::read(%d,%p,%d,%d)", fd, buffer, count, timeoutMS)
 
-   if (fd < 0          &&
-       timeoutMS != -1 &&
+   U_INTERNAL_ASSERT_DIFFERS(fd, -1)
+
+   if (timeoutMS != -1 &&
        waitForRead(fd, timeoutMS) != 1)
       {
       U_RETURN(-1);

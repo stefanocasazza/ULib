@@ -4,8 +4,8 @@
 
 (cd benchmark; rm -f  db; creat_link FrameworkBenchmarks/ULib/db db)
 
- DOC_ROOT=docroot
-#DOC_ROOT=sse_example
+#DOC_ROOT=docroot
+ DOC_ROOT=sse_example
 #DOC_ROOT=ruby/blog
 #DOC_ROOT=benchmark/docroot
 #DOC_ROOT=ShivShankarDayal/docroot
@@ -18,10 +18,12 @@ rm -f tmp/usp_compile.sh.err /tmp/*.hpack.* \
 
  UTRACE="0 50M 0"
  UTRACE_SIGNAL="0 50M 0"
+ UTRACE_FOLDER=/tmp
+ TMPDIR=/tmp
 #UOBJDUMP="0 10M 100"
 #USIMERR="error.sim"
 #UMEMUSAGE=yes
-export UTRACE UOBJDUMP USIMERR UTRACE_SIGNAL UMEMUSAGE
+export UTRACE UOBJDUMP USIMERR UTRACE_SIGNAL UMEMUSAGE UTRACE_FOLDER TMPDIR
 
 SOCK1=tmp/fcgi.socket
 
@@ -69,7 +71,7 @@ userver {
 #LOAD_BALANCE_CLUSTER 10.30.0.1,10.30.0.2
 #LOAD_BALANCE_DEVICE_NETWORK enp0s20u1
 #LOAD_BALANCE_LOADAVG_THRESHOLD 4.0
- PREFORK_CHILD 0
+ PREFORK_CHILD 2
 #CRASH_COUNT 1
 #CRASH_EMAIL_NOTIFY mail.unirel.com:stefano.casazza@unirel.com
 #DOS_SITE_COUNT 1

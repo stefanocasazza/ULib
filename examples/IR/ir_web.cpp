@@ -3,57 +3,44 @@
 #include <ulib/net/server/usp_macro.h>
    
 #include "ir_session.h"
-   #include <ulib/debug/crono.h>
-   
-   #define IR_SESSION (*(IRDataSession*)UHTTP::data_session)
-   
-   static IR* ir;
-   static Query* query;
-   static UCrono* crono;
-   static UString* footer;
-   
-   static void usp_init_ir_web()
-   {
-      U_TRACE(5, "::usp_init_ir_web()")
-   
-      U_INTERNAL_ASSERT_EQUALS(ir, U_NULLPTR)
-      U_INTERNAL_ASSERT_EQUALS(query, U_NULLPTR)
-      U_INTERNAL_ASSERT_EQUALS(crono, U_NULLPTR)
-      U_INTERNAL_ASSERT_EQUALS(footer, U_NULLPTR)
-   
-      U_NEW(IR, ir, IR);
-      U_NEW(Query, query, Query);
-      U_NEW(UCrono, crono, UCrono);
-      U_NEW(UString, footer, UString(200U));
-   
-      ir->loadFileConfig();
-   
-      if (ir->openCDB(false) == false)
-         {
-         U_ERROR("usp_init() of servlet ir_web failed");
-         }
-   
-      footer->snprintf(U_CONSTANT_TO_PARAM("ver. %.*s, with %u documents and %u words."), U_CONSTANT_TO_TRACE(ULIB_VERSION), cdb_names->size(), cdb_words->size());
-   
-      U_NEW(IRDataSession, UHTTP::data_session, IRDataSession);
-   
-      UHTTP::initSession();
-   }
-   
-   static void usp_end_ir_web()
-   {
-      U_TRACE(5, "::usp_end_ir_web()")
-   
-      U_INTERNAL_ASSERT_POINTER(ir)
-      U_INTERNAL_ASSERT_POINTER(query)
-      U_INTERNAL_ASSERT_POINTER(crono)
-      U_INTERNAL_ASSERT_POINTER(footer)
-   
-      delete ir;
-      delete query;
-      delete crono;
-      delete footer;
-   }
+#include <ulib/debug/crono.h>
+#define IR_SESSION (*(IRDataSession*)UHTTP::data_session)
+static IR* ir;
+static Query* query;
+static UCrono* crono;
+static UString* footer;
+static void usp_init_ir_web()
+{
+   U_TRACE(5, "::usp_init_ir_web()")
+   U_INTERNAL_ASSERT_EQUALS(ir, U_NULLPTR)
+   U_INTERNAL_ASSERT_EQUALS(query, U_NULLPTR)
+   U_INTERNAL_ASSERT_EQUALS(crono, U_NULLPTR)
+   U_INTERNAL_ASSERT_EQUALS(footer, U_NULLPTR)
+   U_NEW(IR, ir, IR);
+   U_NEW(Query, query, Query);
+   U_NEW(UCrono, crono, UCrono);
+   U_NEW(UString, footer, UString(200U));
+   ir->loadFileConfig();
+   if (ir->openCDB(false) == false)
+      {
+      U_ERROR("usp_init() of servlet ir_web failed");
+      }
+   footer->snprintf(U_CONSTANT_TO_PARAM("ver. %.*s, with %u documents and %u words."), U_CONSTANT_TO_TRACE(ULIB_VERSION), cdb_names->size(), cdb_words->size());
+   U_NEW(IRDataSession, UHTTP::data_session, IRDataSession);
+   UHTTP::initSession();
+}
+static void usp_end_ir_web()
+{
+   U_TRACE(5, "::usp_end_ir_web()")
+   U_INTERNAL_ASSERT_POINTER(ir)
+   U_INTERNAL_ASSERT_POINTER(query)
+   U_INTERNAL_ASSERT_POINTER(crono)
+   U_INTERNAL_ASSERT_POINTER(footer)
+   delete ir;
+   delete query;
+   delete crono;
+   delete footer;
+}
    
 extern "C" {
 extern U_EXPORT void runDynamicPage_ir_web(int param);

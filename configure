@@ -1805,7 +1805,7 @@ Optional Features:
   --enable-GSDS             enable GDB Stack Dump Support [default=no]
   --enable-HCRS             enable Cache Request Support [default=no]
   --enable-HPRS             enable Homogeneous Pipeline Request Support [default=no]
-  --enable-SSE              enable Server-Sent Events Support [default=yes]
+  --enable-SSE              enable Server-Sent Events Support [default=no]
   --enable-http2            enable HTTP/2 support [default=no]
   --enable-check-time       enable server check time between request for parallelization [default=no]
   --enable-classic          enable server classic model support [default=no]
@@ -28336,11 +28336,7 @@ if test "${enable_SSE+set}" = set; then :
 fi
 
 	if test -z "$enable_SSE"; then
-		if test "$USP_FLAGS" = "-DAS_cpoll_cppsp_DO"; then
-			enable_SSE="no"
-		else
-			enable_SSE="yes"
-		fi
+		enable_SSE="no"
 	fi
 	if test "$enable_SSE" = "yes"; then
 

@@ -169,7 +169,9 @@ UVector<UIPAllow*>*               UHTTP::vallow_IP;
 URDBObjectHandler<UDataStorage*>* UHTTP::db_session_ssl;
 #endif
 #ifdef U_SSE_ENABLE // SERVER SENT EVENTS (SSE)
-bool UHTTP::bsse;
+int          UHTTP::sse_pipe_fd;
+const char*  UHTTP::sse_corsbase = "*";
+UHTTP::strPF UHTTP::sse_func;
 #endif
 #ifdef USE_LOAD_BALANCE
 UClient<USSLSocket>* UHTTP::client_http;
@@ -5312,19 +5314,15 @@ void UHTTP::setEndRequestProcessing()
                     U_ClientImage_request,     U_http_info.nResponseCode,     U_ClientImage_request_is_cached,     U_http_info.startHeader)
 
 #ifdef U_SSE_ENABLE
-   U_INTERNAL_DUMP("bsse = %b", bsse)
+   U_INTERNAL_DUMP("sse_func = %p", sse_func)
 
-   if (bsse)
+   if (sse_func)
       {
-      U_INTERNAL_DUMP("Accept: = %.*S", U_HTTP_ACCEPT_TO_TRACE)
-
-      U_INTERNAL_ASSERT_EQUALS(u_get_unalignedp64(U_http_info.accept+8), U_MULTICHAR_CONSTANT64('n','t','-','s','t','r','e','a'))
-
       if (UServer_Base::startParallelization())
          {
          // parent
 
-         bsse = false;
+         sse_func = U_NULLPTR;
 
          return;
          }
@@ -5333,6 +5331,24 @@ void UHTTP::setEndRequestProcessing()
       U_INTERNAL_ASSERT_POINTER(usp->runDynamicPage)
 
       U_SET_MODULE_NAME(sse);
+
+      UServer_Base::setFIFOForSSE(*UServer_Base::sse_id);
+
+loop: sse_pipe_fd = UFile::open(UServer_Base::sse_fifo_name, O_RDONLY, 0);
+
+      if (sse_pipe_fd == -1)
+         {
+         U_INTERNAL_DUMP("errno = %u u_errno = %u", errno, u_errno)
+
+         if (errno == ENOENT)
+            {
+            (void) UFile::mkfifo(UServer_Base::sse_fifo_name);
+
+            goto loop;
+            }
+
+         U_ERROR("Error on opening SSE FIFO: %S", UServer_Base::sse_fifo_name);
+         }
 
       usp->runDynamicPage(1);
       }
@@ -7082,14 +7098,175 @@ void UHTTP::setUnAuthorized()
 // end HTTP main error message
 // --------------------------------------------------------------------------------------------------------------------------------------
 
+#ifdef U_SSE_ENABLE // SERVER SENT EVENTS (SSE)
+__noreturn void UHTTP::readSSE(int timeoutMS)
+{
+   U_TRACE(0, "UHTTP::readSSE(%d)", timeoutMS)
+
+   UString input(U_CAPACITY), sse_data;
+
+   while (true)
+      {
+      if (UServices::read(sse_pipe_fd, input, U_SINGLE_READ, timeoutMS))
+         {
+         U_INTERNAL_ASSERT(input)
+
+         // external 
+
+         sendSSE(input);
+
+         input.setEmpty();
+
+         continue;
+         }
+
+      if (U_SRV_FLAG_SIGTERM) U_EXIT(0);
+
+#  ifdef USE_LIBSSL
+      if (UServer_Base::bssl == false)
+#  endif
+      {
+      U_INTERNAL_ASSERT_POINTER(sse_func)
+      U_INTERNAL_ASSERT_DIFFERS(timeoutMS, -1)
+
+      // timeout (internal)
+
+      sse_data = sse_func();
+
+      if (sse_data)
+         {
+         UServer_Base::sendToAllExceptSSE(sse_data);
+
+         sendSSE(sse_data);
+         }
+      }
+      }
+}
+#endif
+
 void UHTTP::setDynamicResponse()
 {
-   U_TRACE_NO_PARAM(0, "UHTTP::setDynamicResponse()")
+   U_TRACE_NO_PARAM(1, "UHTTP::setDynamicResponse()")
 
    U_INTERNAL_DUMP("U_http_info.endHeader = %u U_http_content_type_len = %u mime_index(%d) = %C UClientImage_Base::wbuffer(%u) = %V",
                     U_http_info.endHeader,     U_http_content_type_len,     mime_index, mime_index, UClientImage_Base::wbuffer->size(), UClientImage_Base::wbuffer->rep)
 
    U_INTERNAL_ASSERT_MAJOR(U_http_info.nResponseCode, 0)
+
+#ifdef U_SSE_ENABLE
+   U_INTERNAL_DUMP("sse_func = %p", sse_func)
+
+   if (sse_func)
+      {
+      U_INTERNAL_DUMP("Accept: = %.*S", U_HTTP_ACCEPT_TO_TRACE)
+
+      U_ASSERT(isGET())
+      U_INTERNAL_ASSERT_EQUALS(u_get_unalignedp64(U_http_info.accept+8), U_MULTICHAR_CONSTANT64('n','t','-','s','t','r','e','a'))
+
+      /**
+       * we must insert:
+       *
+       * <!--#args
+       * subscribe;
+       * id;
+       * -->
+       *
+       * <!--#header
+       * Access-Control-Allow-Origin: *
+       * Access-Control-Allow-Methods: GET
+       * Access-Control-Allow-Headers: cache-control, last-event-id, X-Requested-With
+       * Content-Type: text/event-stream 
+       * Cache-Control: no-cache
+       * -->
+       */
+
+      UString subscribe;
+      bool bprocess = (sse_func != (void*)1L);
+      const char* ptr = getHeaderValuePtr(U_CONSTANT_TO_PARAM("last-event-id"), true);
+      uint32_t last_event_id = (ptr ? u_atoi(ptr) : 0);
+
+      UServer_Base::sse_id->clear();
+
+      if (UServer_Base::bssl == false) (void) UServer_Base::csocket->shutdown(SHUT_RD);
+
+      (void) UClientImage_Base::wbuffer->snprintf(U_CONSTANT_TO_PARAM("Access-Control-Allow-Origin: %s\r\n"
+                                                                      "Access-Control-Allow-Methods: GET\r\n"
+                                                                      "Access-Control-Allow-Headers: cache-control, last-event-id, X-Requested-With\r\n"
+                                                                      "Content-Type: text/event-stream\r\n"
+                                                                      "Cache-Control: no-cache\r\n\r\n"), sse_corsbase);
+
+      if (processForm())
+         {
+         getFormValue(subscribe,             1);
+         getFormValue(*UServer_Base::sse_id, 3);
+         }
+
+      if (subscribe) UServer_Base::sse_event = &subscribe;
+      else
+         {
+         subscribe               = *UServer_Base::str_asterisk;
+         UServer_Base::sse_event = U_NULLPTR;
+         }
+
+      if (UServer_Base::sse_id->empty())
+         {
+         U_SRV_SSE_CNT2++;
+
+         U_INTERNAL_DUMP("U_SRV_SSE_CNT2 = %u", U_SRV_SSE_CNT2)
+
+         *UServer_Base::sse_id = UStringExt::numberToString(U_SRV_SSE_CNT2);
+         }
+
+      U_INTERNAL_DUMP("last_event_id = %u U_SRV_SSE_CNT1 = %u", last_event_id, U_SRV_SSE_CNT1)
+
+      UServer_Base::eventSSE(U_CONSTANT_TO_PARAM("NEW %v %v %u %u\n"), UServer_Base::sse_id->rep, subscribe.rep, last_event_id, bprocess);
+
+      if (ptr &&
+          last_event_id < U_SRV_SSE_CNT1)
+         {
+         UString buffer(U_CAPACITY);
+
+         (void) UServices::read(UServer_Base::sse_event_fd, buffer);
+
+         uint32_t sz = buffer.size();
+
+         if (sz > 1)
+            {
+            U_INTERNAL_ASSERT_EQUALS(u_get_unalignedp16(buffer.data()), U_MULTICHAR_CONSTANT16('i','d'))
+
+            UClientImage_Base::wbuffer->append(buffer.data(), sz-1);
+            }
+         }
+
+      if (bprocess)
+         {
+         UString sse_data = sse_func();
+
+         if (sse_data)
+            {
+            UServer_Base::sendToAllExceptSSE(sse_data);
+
+            UClientImage_Base::wbuffer->append(UServer_Base::printSSE(U_SRV_SSE_CNT1, sse_data, UServer_Base::sse_event));
+            }
+         }
+      else
+         {
+         sse_func = U_NULLPTR;
+
+         UServer_Base::cmsg.cmsg_data = UServer_Base::csocket->getFd();
+
+         (void) U_SYSCALL(sendmsg, "%u,%p,%u", UServer_Base::sse_socketpair[1], &UServer_Base::msg, 0);
+
+         UClientImage_Base::resetPipelineAndSetCloseConnection();
+         }
+
+      *ext = *UClientImage_Base::wbuffer;
+
+      handlerResponse();
+
+      return;
+      }
+#endif
 
    char* ptr;
    const char* pEndHeader;
@@ -7125,19 +7302,6 @@ void UHTTP::setDynamicResponse()
 
             U_INTERNAL_ASSERT_EQUALS(memcmp(tmp.data(), U_CONSTANT_TO_PARAM("text")), 0)
             }
-         }
-#  endif
-
-#  ifdef U_SSE_ENABLE
-      U_INTERNAL_DUMP("bsse = %b", bsse)
-
-      if (bsse)
-         {
-         *ext = *UClientImage_Base::wbuffer;
-
-         handlerResponse();
-
-         return;
          }
 #  endif
 

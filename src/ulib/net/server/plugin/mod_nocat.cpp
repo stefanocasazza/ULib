@@ -2309,8 +2309,8 @@ int UNoCatPlugIn::handlerFork()
 
    UString msg(300U), output(U_CAPACITY), allowed_web_hosts(U_CAPACITY);
 
-   msg.snprintf(U_CONSTANT_TO_PARAM("/start_ap?ap=%v@%v&public=%v%%3A%u&pid=%u"), label->rep, hostname->rep, IP_address_trust->rep, UServer_Base::port, U_SRV_CNT_USR9);
-                                                                                                                                                        U_SRV_CNT_USR9 = u_pid;
+   msg.snprintf(U_CONSTANT_TO_PARAM("/start_ap?ap=%v@%v&public=%v%%3A%u&pid=%u"), label->rep, hostname->rep, IP_address_trust->rep, UServer_Base::port, U_SRV_CNT_NOCAT);
+                                                                                                                                                        U_SRV_CNT_NOCAT = u_pid;
 
    for (i = 0, n = vauth_url->size(); i < n; ++i)
       {

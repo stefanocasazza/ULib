@@ -1339,6 +1339,306 @@ private:
 ULock*   UServer_Base::lock_ocsp_staple;
 UThread* UServer_Base::pthread_ocsp;
 #  endif
+
+#  ifdef U_SSE_ENABLE // SERVER SENT EVENTS (SSE)
+int           UServer_Base::sse_event_fd;
+int           UServer_Base::sse_socketpair[2];
+char          UServer_Base::iovbuf[1] = { 0 };
+char          UServer_Base::sse_fifo_name[256];
+ULock*        UServer_Base::lock_sse;
+uint32_t      UServer_Base::sse_fifo_pos;
+UThread*      UServer_Base::pthread_sse;
+UString*      UServer_Base::sse_id;
+UString*      UServer_Base::sse_event;
+UString*      UServer_Base::str_asterisk;
+struct iovec  UServer_Base::iov[1] = { { iovbuf, 1 } };
+struct msghdr UServer_Base::msg = { 0, 0, iov, 1, &cmsg, sizeof(struct ucmsghdr), 0 };
+
+UVector<USSEClient*>*         UServer_Base::sse_vclient;
+struct UServer_Base::ucmsghdr UServer_Base::cmsg = { sizeof(struct ucmsghdr), SOL_SOCKET, SCM_RIGHTS, 0 };
+
+#ifdef USE_LIBSSL
+ULock* UServer_Base::lock_sse_ssl;
+#endif
+
+class USSEThread;
+
+class U_NO_EXPORT USSEClient {
+public:
+
+   // Check for memory error
+   U_MEMORY_TEST
+
+   // Allocator e Deallocator
+   U_MEMORY_ALLOCATOR
+   U_MEMORY_DEALLOCATOR
+
+   USSEClient(const UString& id, const UString& subscribe, int _fd, bool process) : sub(subscribe), uniq_id(id), fd(_fd), bprocess(process)
+      {
+      U_TRACE_REGISTER_OBJECT(0, USSEClient, "%V,%V,%d,%b", id.rep, subscribe.rep, _fd, process)
+
+      U_INTERNAL_ASSERT_DIFFERS(fd, -1)
+      }
+
+   ~USSEClient()
+      {
+      U_TRACE_UNREGISTER_OBJECT(0, USSEClient)
+
+      UFile::close(fd);
+
+      if (bprocess)
+         {
+         UServer_Base::setFIFOForSSE(uniq_id);
+
+         (void) UFile::_unlink(UServer_Base::sse_fifo_name);
+         }
+      }
+
+#if defined(DEBUG) && defined(U_STDCPP_ENABLE)
+   const char* dump(bool _reset) const { return ""; }
+#endif
+
+protected:
+   UString sub,     // Token of subscribe (optional). Can be set by parameter "subscribe"
+           uniq_id; //   unique client id (optional). Can be set by parameter "id"
+   int fd;
+   bool bprocess;
+
+private:
+   friend class USSEThread;
+};
+
+class USSEThread : public UThread {
+public:
+
+   USSEThread() : UThread(PTHREAD_CREATE_DETACHED) {}
+
+   virtual void run() U_DECL_FINAL
+      {
+      U_TRACE_NO_PARAM(0, "USSEThread::run()")
+
+      int fd;
+      const char* ptr;
+      USSEClient* client;
+      UVector<UString> vec;
+      bool ball, bprocess, err;
+      UVector<UString> vmessage;
+      uint32_t pos, mr, sz, last_event_id, i, n, k, start = 0, end = 0;
+      UString input(U_CAPACITY), output(U_CAPACITY), row, _id, token, rID, message, tmp;
+
+      while (U_SRV_FLAG_SIGTERM == false)
+         {
+         if (UNotifier::waitForRead(UServer_Base::sse_event_fd) == 1 &&
+             UServices::read(UServer_Base::sse_event_fd, input))
+            {
+            /**
+             * NEW <id> <token> <last_event_id> <bprocess>
+             * DEL <id>
+             *
+             * LIST - List clients to /tmp/SSE_list.txt
+             *
+             * <token>=<message>       - Send message to the subscribers of <token>
+             * <token>-<rId>=<message> - Send message to the subscribers of <token> (* => all) except <rId>
+             */
+
+            for (k = 0, sz = vec.split(input); k < sz; ++k)
+               {
+               row = vec[k];
+
+               pos = row.find('=');
+
+               if (pos > 32)
+                  {
+                  ptr = row.data();
+
+                  if (u_get_unalignedp32(ptr) == U_MULTICHAR_CONSTANT32('N','E','W',' ')) // NEW <id> <token> <last_event_id> <bprocess>
+                     {
+                               _id = vec[k+1];
+                             token = vec[k+2];
+                     last_event_id = vec[k+3].strtoul();
+                          bprocess = vec[k+4].strtoul();
+
+                     U_INTERNAL_DUMP("_id = %V token = %V bprocess = %b last_event_id = %u U_SRV_SSE_CNT1 = %u", _id.rep, token.rep, bprocess, last_event_id, U_SRV_SSE_CNT1)
+
+                     if ((ball = token.equal(*UServer_Base::str_asterisk))) token = *UServer_Base::str_asterisk;
+                     else                                                   token.duplicate();
+
+                     if (last_event_id &&
+                         last_event_id < U_SRV_SSE_CNT1)
+                        {
+                        if (last_event_id < start) last_event_id = start;
+
+                        for (i = last_event_id; i < end; ++i)
+                           {
+                           message = vmessage[i % vmessage.capacity()];
+
+                           pos = message.find('=');
+
+                           U_INTERNAL_DUMP("vmessage[%u] = %V pos = %u", i % vmessage.capacity(), message.rep, pos)
+
+                           if (ball ||
+                               token.equal(message.data(), pos))
+                              {
+                              (void) output.append(UServer_Base::printSSE(i+1, message.substr(pos+1), (ball ? U_NULLPTR : &token)));
+                              }
+                           }
+
+                        output.push('\n');
+
+                        (void) U_SYSCALL(write, "%u,%S,%u", UServer_Base::sse_event_fd, U_STRING_TO_PARAM(output));
+
+                        output.setEmpty();
+                        }
+
+                     if (bprocess == false) fd = (U_SYSCALL(recvmsg, "%u,%p,%u", UServer_Base::sse_socketpair[0], &UServer_Base::msg, 0) == 1 ? UServer_Base::cmsg.cmsg_data : -1);
+                     else
+                        {
+                        UServer_Base::setFIFOForSSE(_id);
+
+                        (void) UFile::mkfifo(UServer_Base::sse_fifo_name);
+
+                        fd = UFile::open(UServer_Base::sse_fifo_name, O_WRONLY, 0);
+
+                        if (fd == -1) U_ERROR("Error on opening SSE FIFO: %S", UServer_Base::sse_fifo_name);
+                        }
+
+                     U_NEW(USSEClient, client, USSEClient(_id.copy(), token, fd, bprocess));
+
+                     UServer_Base::sse_vclient->push(client);
+
+                     k += 4;
+                     }
+                  else if (u_get_unalignedp32(ptr) == U_MULTICHAR_CONSTANT32('D','E','L',' ')) // DEL <id>
+                     {
+                     _id = vec[k+1];
+
+                     U_INTERNAL_DUMP("_id = %V", _id.rep)
+
+                     for (i = 0, n = UServer_Base::sse_vclient->size(); i < n; ++i)
+                        {
+                        client = UServer_Base::sse_vclient->at(i);
+
+                        U_INTERNAL_DUMP("sse_vclient[%u]->uniq_id = %V", i, client->uniq_id.rep)
+
+                        if (client->uniq_id == _id)
+                           {
+                           --n;
+
+                           delete UServer_Base::sse_vclient->remove(i--);
+
+                           break;
+                           }
+                        }
+
+                     k += 1;
+                     }
+#              ifdef DEBUG
+                  else if (u_get_unalignedp32(ptr) == U_MULTICHAR_CONSTANT32('L','I','S','T'))
+                     {
+                     UString row1(U_CAPACITY);
+
+                     for (i = 0, n = UServer_Base::sse_vclient->size(); i < n; ++i)
+                        {
+                        client = UServer_Base::sse_vclient->at(i);
+
+                        row1.snprintf(U_CONSTANT_TO_PARAM("uniq_id: %V sub: %V fd: %u proc: %b\n"), client->uniq_id.rep, client->sub.rep, client->fd, client->bprocess);
+
+                        (void) output.append(row1);
+                        }
+
+                     (void) UFile::writeToTmp(U_STRING_TO_PARAM(output), O_RDWR | O_TRUNC, U_CONSTANT_TO_PARAM("SSE_client.txt"), 0);
+
+                     output = vmessage.join('\n');
+
+                     (void) UFile::writeToTmp(U_STRING_TO_PARAM(output), O_RDWR | O_TRUNC, U_CONSTANT_TO_PARAM("SSE_message.txt"), 0);
+
+                     output.setEmpty();
+
+                     ++k;
+                     }
+#              endif
+                  else
+                     {
+                     U_WARNING("Wrong formatted message from SSE FIFO, ignored: row = %V", row.rep);
+
+                     ++k;
+                     }
+                  }
+               else
+                  {
+                  mr = row.find('-', 0, pos);
+
+                  if (mr == U_NOT_FOUND) token = row.substr(0U, pos);
+                  else
+                     {
+                     token = row.substr(0U, mr);
+                       rID = row.substr(mr+1, pos-mr-1);
+                     }
+
+                  message = row.substr(pos+1);
+
+                  U_SRV_SSE_CNT1++;
+
+                  U_INTERNAL_DUMP("token = %V rID = %V message = %V U_SRV_SSE_CNT1 = %u", token.rep, rID.rep, message.rep, U_SRV_SSE_CNT1)
+
+                  U_SRV_LOG("[sse] send message(%u) to subscribers of %V%.*s%.*s: %V", U_SRV_SSE_CNT1, token.rep,
+                              rID ? U_CONSTANT_SIZE(" except SSE_") : 0, " except SSE_", rID ? rID.size() : 0, rID.data(), message.rep);
+
+                  tmp = ((ball = token.equal(*UServer_Base::str_asterisk)) ? "*="+message : token+'='+message);
+
+                  if (end < vmessage.capacity()) vmessage.push_back(tmp);
+                  else
+                     {
+                     ++start;
+
+                     vmessage.replace(end % vmessage.capacity(), tmp);
+                     }
+
+                  ++end;
+
+                  for (i = 0, n = UServer_Base::sse_vclient->size(); i < n; ++i)
+                     {
+                     client = UServer_Base::sse_vclient->at(i);
+
+                     if (rID != client->uniq_id &&
+                         (ball                  ||
+                          client->sub.equal(token)))
+                        {
+                        if (client->bprocess) err = (U_SYSCALL(write, "%u,%S,%u", client->fd, U_STRING_TO_PARAM(message)) <= 0);
+                        else
+                           {
+                           U_INTERNAL_ASSERT_EQUALS(UServer_Base::bssl, false)
+
+                           tmp = UServer_Base::printSSE(U_SRV_SSE_CNT1, message, (ball ? U_NULLPTR : &token));
+
+                           err = (U_SYSCALL(write, "%u,%S,%u", client->fd, U_STRING_TO_PARAM(tmp)) <= 0);
+                           }
+
+                        if (err)
+                           {
+                           --n;
+
+                           delete UServer_Base::sse_vclient->remove(i--);
+                           }
+                        }
+                     }
+                  }
+               }
+
+            UServer_Base::unlockSSE();
+
+              vec.clear();
+              rID.clear();
+            token.clear();
+            input.setEmpty();
+            }
+         }
+      }
+
+private:
+   U_DISALLOW_COPY_AND_ASSIGN(USSEThread)
+};
+#  endif
 #endif
 
 #ifdef U_LINUX
@@ -1443,8 +1743,16 @@ UServer_Base::~UServer_Base()
 
       USSLSocket::cleanupStapling();
 
-      if (UServer_Base::lock_ocsp_staple) delete UServer_Base::lock_ocsp_staple;
+      if (lock_ocsp_staple) delete lock_ocsp_staple;
       }
+#  endif
+
+#  ifdef U_SSE_ENABLE // SERVER SENT EVENTS (SSE)
+   if (lock_sse) delete lock_sse;
+#  ifdef USE_LIBSSL
+   if (lock_sse_ssl) delete lock_sse_ssl;
+#  endif
+   if (pthread_sse) delete (USSEThread*)pthread_sse;
 #  endif
 # endif
 #endif
@@ -3099,6 +3407,45 @@ next:
    initEvasive();
 #endif
 
+#ifdef U_SSE_ENABLE // SERVER SENT EVENTS (SSE)
+# ifdef USERVER_UDP
+   if (budp == false)
+# endif
+   {
+   sse_fifo_pos = u__snprintf(sse_fifo_name, 256, U_CONSTANT_TO_PARAM("%s/SSE_%s_EVENT"), u_tmpdir, bssl ? "SSL" : "TCP") - U_CONSTANT_SIZE("EVENT");
+
+   (void) UFile::mkfifo(sse_fifo_name, PERM_FILE);
+
+   sse_event_fd = UFile::open(sse_fifo_name, O_RDWR, PERM_FILE);
+
+   if (sse_event_fd == -1) U_ERROR("Error on opening SSE FIFO: %S", sse_fifo_name);
+
+# ifndef DEBUG
+   (void) UFile::_unlink(sse_fifo_name);
+# endif
+
+   setLockSSE();
+
+   U_INTERNAL_ASSERT_EQUALS(sse_id, U_NULLPTR)
+   U_INTERNAL_ASSERT_EQUALS(sse_vclient, U_NULLPTR)
+   U_INTERNAL_ASSERT_EQUALS(pthread_sse, U_NULLPTR)
+   U_INTERNAL_ASSERT_EQUALS(str_asterisk, U_NULLPTR)
+
+   U_NEW(UString, sse_id, UString);
+   U_NEW(USSEThread, pthread_sse, USSEThread);
+   U_NEW(UString, str_asterisk, U_STRING_FROM_CONSTANT("*"));
+   U_NEW(UVector<USSEClient*>, sse_vclient, UVector<USSEClient*>);
+
+   pthread_sse->start(0);
+
+   (void) U_SYSCALL(socketpair, "%d,%d,%d,%p", AF_UNIX, SOCK_STREAM, 0, sse_socketpair);
+
+   U_INTERNAL_DUMP("sse_socketpair[0] = %u sse_socketpair[1] = %u", sse_socketpair[0], sse_socketpair[1])
+
+   U_SRV_LOG("SSE thread activated: %s(%d)", sse_fifo_name, sse_event_fd);
+   }
+#endif
+
    if (cfg) cfg->clear();
 
    UInterrupt::syscall_restart                 = false;
@@ -3150,6 +3497,10 @@ void UServer_Base::sendSignalToAllChildren(int signo, sighandler_t handler)
 # if defined(USE_LIBSSL) && !defined(OPENSSL_NO_OCSP) && defined(SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB)
    if (pthread_ocsp) pthread_ocsp->suspend();
 # endif
+
+# ifdef U_SSE_ENABLE // SERVER SENT EVENTS (SSE)
+   if (pthread_sse) pthread_sse->suspend();
+# endif
 #endif
 
    // NB: we can't use UInterrupt::erase() because it restore the old action (UInterrupt::init)...
@@ -3169,9 +3520,13 @@ void UServer_Base::sendSignalToAllChildren(int signo, sighandler_t handler)
 #if defined(U_LINUX) && defined(ENABLE_THREAD)
    if (u_pthread_time) ((UTimeThread*)u_pthread_time)->resume();
 
-#  if defined(USE_LIBSSL) && !defined(OPENSSL_NO_OCSP) && defined(SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB)
+# if defined(USE_LIBSSL) && !defined(OPENSSL_NO_OCSP) && defined(SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB)
    if (pthread_ocsp) pthread_ocsp->resume();
-#  endif
+# endif
+
+# ifdef U_SSE_ENABLE // SERVER SENT EVENTS (SSE)
+   if (pthread_sse) pthread_sse->resume();
+# endif
 #endif
 }
 
@@ -4214,6 +4569,10 @@ void UServer_Base::run()
 
          if (proc->child())
             {
+#        ifdef U_SSE_ENABLE // SERVER SENT EVENTS (SSE)
+            UFile::close(sse_socketpair[0]);
+#        endif
+
             U_INTERNAL_DUMP("child = %P UNotifier::num_connection = %d", UNotifier::num_connection)
 
 #        if defined(HAVE_SCHED_GETAFFINITY) && (!defined(U_SERVER_CAPTIVE_PORTAL) || defined(ENABLE_THREAD))
@@ -4411,6 +4770,10 @@ stop:
 
       closeLog();
       }
+
+#ifdef U_SSE_ENABLE // SERVER SENT EVENTS (SSE)
+   if (pthread_sse) sse_vclient->clear();
+#endif
 
 #ifdef DEBUG
    pthis->deallocate();

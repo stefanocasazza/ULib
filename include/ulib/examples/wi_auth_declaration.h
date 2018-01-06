@@ -5711,7 +5711,7 @@ loop:    (void) nodog_rec->sendRequestToNodog(U_CONSTANT_TO_PARAM("check"), 0);
          {
          db_nodog->callForAllEntryWithVector(WiAuthNodog::checkAccessPoint);
 
-         if ((U_SRV_CNT_USR4++ % 10) == 0) resync();
+         if ((U_SRV_CNT_WIAUTH++ % 10) == 0) resync();
          }
 
       USSIPlugIn::setAlternativeResponse();

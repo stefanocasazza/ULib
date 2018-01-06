@@ -211,13 +211,9 @@ AC_DEFUN([AC_COMPILATION_OPTIONS],[
 
 	AC_MSG_CHECKING(if you want to enable Server-Sent Events support)
 	AC_ARG_ENABLE(SSE,
-				[  --enable-SSE              enable Server-Sent Events Support [[default=yes]]])
+				[  --enable-SSE              enable Server-Sent Events Support [[default=no]]])
 	if test -z "$enable_SSE"; then
-		if test "$USP_FLAGS" = "-DAS_cpoll_cppsp_DO"; then
-			enable_SSE="no"
-		else
-			enable_SSE="yes"
-		fi
+		enable_SSE="no"
 	fi
 	if test "$enable_SSE" = "yes"; then
 		AC_DEFINE(U_SSE_ENABLE, 1, [enable Server-Sent Events support])
