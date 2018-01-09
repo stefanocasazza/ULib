@@ -1,7 +1,7 @@
 <!--#sse:10
 static double price = 1.2;
 
-if (U_SRV_SSE_CNT1)
+if (UServer_Base::isSSEStarted())
 	{
 	price = price + (double)rand() / RAND_MAX * 2.0 - 1;
 

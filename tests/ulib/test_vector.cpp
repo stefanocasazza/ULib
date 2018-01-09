@@ -243,6 +243,7 @@ static void check_bound(uint32_t last_event_id)
 {
    U_TRACE(5,"check_bound(%u)", last_event_id)
 
+   UVector<UString> vec;
    UVector<UString> vmessage;
    uint32_t i, n, pos, start = 0, end = 0;
    UString tmp, message(100U), output(U_CAPACITY);
@@ -253,22 +254,14 @@ static void check_bound(uint32_t last_event_id)
 
       tmp = "*="+message;
 
-      if (end < vmessage.capacity()) vmessage.push_back(tmp);
-      else
-         {
-         ++start;
-
-         vmessage.replace(end % vmessage.capacity(), tmp);
-         }
-
-      ++end;
+      vmessage.insertWithBound(tmp, start, end);
       }
 
-   if (last_event_id < start) last_event_id = start;
+   vmessage.getFromLast(last_event_id, start, end, vec);
 
-   for (i = last_event_id; i < end; ++i)
+   for (i = 0, n = vec.size(); i < n; ++i)
       {
-      message = vmessage[i % vmessage.capacity()];
+      message = vec[i];
 
       pos = message.find('=');
 

@@ -1357,9 +1357,9 @@ struct msghdr UServer_Base::msg = { 0, 0, iov, 1, &cmsg, sizeof(struct ucmsghdr)
 UVector<USSEClient*>*         UServer_Base::sse_vclient;
 struct UServer_Base::ucmsghdr UServer_Base::cmsg = { sizeof(struct ucmsghdr), SOL_SOCKET, SCM_RIGHTS, 0 };
 
-#ifdef USE_LIBSSL
+#  ifdef USE_LIBSSL
 ULock* UServer_Base::lock_sse_ssl;
-#endif
+#  endif
 
 class USSEThread;
 
@@ -1404,6 +1404,26 @@ protected:
    int fd;
    bool bprocess;
 
+   bool sendMsg(const UString& message, UString* pevent)
+      {
+      U_TRACE(0, "USSEClient::sendMsg(%V,%p)", message.rep, pevent)
+
+      if (bprocess)
+         {
+         if (U_SYSCALL(write, "%u,%S,%u", fd, U_STRING_TO_PARAM(message)) <= 0) U_RETURN(false);
+         }
+      else
+         {
+         U_INTERNAL_ASSERT_EQUALS(UServer_Base::bssl, false)
+
+         UString tmp = UServer_Base::printSSE(U_SRV_SSE_CNT1, message, pevent);
+
+         if (U_SYSCALL(write, "%u,%S,%u", fd, U_STRING_TO_PARAM(tmp)) <= 0) U_RETURN(false);
+         }
+
+      U_RETURN(true);
+      }
+
 private:
    friend class USSEThread;
 };
@@ -1420,8 +1440,8 @@ public:
       int fd;
       const char* ptr;
       USSEClient* client;
+      bool ball, bprocess;
       UVector<UString> vec;
-      bool ball, bprocess, err;
       UVector<UString> vmessage;
       uint32_t pos, mr, sz, last_event_id, i, n, k, start = 0, end = 0;
       UString input(U_CAPACITY), output(U_CAPACITY), row, _id, token, rID, message, tmp;
@@ -1437,6 +1457,7 @@ public:
              *
              * LIST - List clients to /tmp/SSE_list.txt
              *
+             * MSG <id> <message>      - Send message to the stream <id>
              * <token>=<message>       - Send message to the subscribers of <token>
              * <token>-<rId>=<message> - Send message to the subscribers of <token> (* => all) except <rId>
              */
@@ -1466,11 +1487,13 @@ public:
                      if (last_event_id &&
                          last_event_id < U_SRV_SSE_CNT1)
                         {
-                        if (last_event_id < start) last_event_id = start;
+                        UVector<UString> vec1;
 
-                        for (i = last_event_id; i < end; ++i)
+                        vmessage.getFromLast(last_event_id, start, end, vec1);
+
+                        for (i = 0, n = vec1.size(); i < n; ++i)
                            {
-                           message = vmessage[i % vmessage.capacity()];
+                           message = vec1[i];
 
                            pos = message.find('=');
 
@@ -1557,6 +1580,31 @@ public:
                      ++k;
                      }
 #              endif
+                  else if (u_get_unalignedp32(ptr) == U_MULTICHAR_CONSTANT32('M','S','G',' ')) // MSG <id> <message>
+                     {
+                         _id = vec[k+1];
+                     message = vec[k+2];
+
+                     U_INTERNAL_DUMP("_id = %V message = %V U_SRV_SSE_CNT1 = %u", _id.rep, message.rep, U_SRV_SSE_CNT1)
+
+                     for (i = 0, n = UServer_Base::sse_vclient->size(); i < n; ++i)
+                        {
+                        client = UServer_Base::sse_vclient->at(i);
+
+                        U_INTERNAL_DUMP("sse_vclient[%u]->uniq_id = %V", i, client->uniq_id.rep)
+
+                        if (client->uniq_id == _id)
+                           {
+                           U_SRV_LOG("[sse] send message(%u) to %V: %V", U_SRV_SSE_CNT1, _id.rep, message.rep);
+
+                           if (client->sendMsg(message, U_NULLPTR) == false) delete UServer_Base::sse_vclient->remove(i);
+
+                           break;
+                           }
+                        }
+
+                     k += 2;
+                     }
                   else
                      {
                      U_WARNING("Wrong formatted message from SSE FIFO, ignored: row = %V", row.rep);
@@ -1586,15 +1634,7 @@ public:
 
                   tmp = ((ball = token.equal(*UServer_Base::str_asterisk)) ? "*="+message : token+'='+message);
 
-                  if (end < vmessage.capacity()) vmessage.push_back(tmp);
-                  else
-                     {
-                     ++start;
-
-                     vmessage.replace(end % vmessage.capacity(), tmp);
-                     }
-
-                  ++end;
+                  vmessage.insertWithBound(tmp, start, end);
 
                   for (i = 0, n = UServer_Base::sse_vclient->size(); i < n; ++i)
                      {
@@ -1604,17 +1644,7 @@ public:
                          (ball                  ||
                           client->sub.equal(token)))
                         {
-                        if (client->bprocess) err = (U_SYSCALL(write, "%u,%S,%u", client->fd, U_STRING_TO_PARAM(message)) <= 0);
-                        else
-                           {
-                           U_INTERNAL_ASSERT_EQUALS(UServer_Base::bssl, false)
-
-                           tmp = UServer_Base::printSSE(U_SRV_SSE_CNT1, message, (ball ? U_NULLPTR : &token));
-
-                           err = (U_SYSCALL(write, "%u,%S,%u", client->fd, U_STRING_TO_PARAM(tmp)) <= 0);
-                           }
-
-                        if (err)
+                        if (client->sendMsg(message, (ball ? U_NULLPTR : &token)) == false)
                            {
                            --n;
 
@@ -1627,9 +1657,11 @@ public:
 
             UServer_Base::unlockSSE();
 
-              vec.clear();
-              rID.clear();
-            token.clear();
+                vec.clear();
+                rID.clear();
+                tmp.clear();
+              token.clear();
+            message.clear();
             input.setEmpty();
             }
          }

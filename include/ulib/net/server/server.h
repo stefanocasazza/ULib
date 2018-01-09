@@ -704,6 +704,17 @@ public:
       lock_sse->unlock();
       }
 
+   static bool isSSEStarted()
+      {
+      U_TRACE_NO_PARAM(0, "UServer_Base::isSSEStarted()")
+
+      U_INTERNAL_DUMP("U_SRV_SSE_CNT1 = %u", U_SRV_SSE_CNT1)
+
+      if (U_SRV_SSE_CNT1) U_RETURN(true);
+
+      U_RETURN(false);
+      }
+
    static UString printSSE(uint32_t id, const UString& data, UString* pevent = U_NULLPTR)
       {
       U_TRACE(0, "UServer_Base::printSSE(%u,%V,%p)", id, data.rep, pevent)
@@ -738,6 +749,13 @@ public:
       lockSSE();
 
       (void) U_SYSCALL(write, "%u,%S,%u", sse_event_fd, buffer, len);
+      }
+
+   static void sendToIdSSE(const UString& id, const UString& data)
+      {
+      U_TRACE(0, "UServer_Base::sendToIdSSE(%V,%V)", id.rep, data.rep)
+
+      eventSSE(U_CONSTANT_TO_PARAM("MSG %v %v\n"), id.rep, data.rep);
       }
 
    static void sendToAllSSE(const UString& data)

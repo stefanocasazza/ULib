@@ -1136,6 +1136,32 @@ public:
       }
 #endif
 
+   void insertWithBound(const UString& str, uint32_t& start, uint32_t& end)
+      {
+      U_TRACE(0, "UVector<UString>::insertWithBound(%V,%u,%u)", str.rep, start, end)
+
+      U_INTERNAL_DUMP("_length = %u _capacity = %u", _length, _capacity)
+
+      if (end < _capacity) push_back(str);
+      else
+         {
+         ++start;
+
+         replace(end % _capacity, str);
+         }
+
+      ++end;
+      }
+
+   void getFromLast(uint32_t last, uint32_t start, uint32_t end, UVector<UString>& _vec)
+      {
+      U_TRACE(0, "UVector<UString>::getFromLast(%u,%u,%u,%p)", last, start, end, &_vec)
+
+      U_INTERNAL_DUMP("_length = %u _capacity = %u", _length, _capacity)
+
+      for (uint32_t i = (last < start ? start : last); i < end; ++i) _vec.push_back(at(i % _capacity));
+      }
+
    // BINARY HEAP
 
    UString bh_min() const __pure { return UString(UVector<UStringRep*>::bh_min()); }
