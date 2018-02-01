@@ -135,5 +135,4 @@ private:
 
    void set(int level) U_NO_EXPORT;
 };
-
 #endif

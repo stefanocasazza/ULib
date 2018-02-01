@@ -1,0 +1,8 @@
+<!--#args
+name;
+roomID;
+msg;
+-->
+<!--#code
+UServer_Base::sendToAllSSE(roomID, msg);
+-->

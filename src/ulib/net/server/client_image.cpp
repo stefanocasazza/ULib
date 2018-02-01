@@ -1641,11 +1641,18 @@ bool UClientImage_Base::writeResponse()
       idx    = 0;
       iovcnt = 4;
 
+#  ifdef U_SSE_ENABLE // SERVER SENT EVENTS (SSE)
+      U_INTERNAL_DUMP("UHTTP::sse_func = %p", UHTTP::sse_func)
+
+      if (UHTTP::sse_func != (void*)1L)
+#  endif
+      {
       if (U_ClientImage_close &&
           U_ClientImage_pipeline == false)
          {
          iov_vec[1].iov_len += 17+2; // Connection: close\r\n
          }
+      }
 
       ncount += iov_vec[0].iov_len +
                 iov_vec[1].iov_len;

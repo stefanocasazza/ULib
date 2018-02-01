@@ -746,7 +746,7 @@ public:
 
       va_end(argp);
 
-      lockSSE();
+   // lockSSE();
 
       (void) U_SYSCALL(write, "%u,%S,%u", sse_event_fd, buffer, len);
       }
@@ -755,12 +755,25 @@ public:
       {
       U_TRACE(0, "UServer_Base::sendToIdSSE(%V,%V)", id.rep, data.rep)
 
+      U_ASSERT_EQUALS(u_find(U_STRING_TO_PARAM(data),"\n",1), U_NULLPTR)
+
       eventSSE(U_CONSTANT_TO_PARAM("MSG %v %v\n"), id.rep, data.rep);
+      }
+
+   static void sendToAllSSE(const UString& subscribe, const UString& data)
+      {
+      U_TRACE(0, "UServer_Base::sendToAllSSE(%V,%V)", subscribe.rep, data.rep)
+
+      U_ASSERT_EQUALS(u_find(U_STRING_TO_PARAM(data),"\n",1), U_NULLPTR)
+
+      eventSSE(U_CONSTANT_TO_PARAM("%v=%v\n"), subscribe.rep, data.rep);
       }
 
    static void sendToAllSSE(const UString& data)
       {
       U_TRACE(0, "UServer_Base::sendToAllSSE(%V)", data.rep)
+
+      U_ASSERT_EQUALS(u_find(U_STRING_TO_PARAM(data),"\n",1), U_NULLPTR)
 
       eventSSE(U_CONSTANT_TO_PARAM("*=%v\n"), data.rep);
       }
@@ -768,6 +781,8 @@ public:
    static void sendToAllExceptSSE(const UString& data)
       {
       U_TRACE(0, "UServer_Base::sendToAllExceptSSE(%V)", data.rep)
+
+      U_ASSERT_EQUALS(u_find(U_STRING_TO_PARAM(data),"\n",1), U_NULLPTR)
 
       eventSSE(U_CONSTANT_TO_PARAM("%v-%v=%v\n"), (sse_event ? sse_event : str_asterisk)->rep, sse_id->rep, data.rep);
       }

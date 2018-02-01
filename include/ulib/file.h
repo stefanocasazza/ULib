@@ -49,6 +49,7 @@
 #define U_FILE_TO_PARAM(file)  (file).getPathRelativ(),(file).getPathRelativLen()
 #define U_FILE_TO_TRACE(file)  (file).getPathRelativLen(),(file).getPathRelativ()
 #define U_FILE_TO_STRING(file) (file).getPath().substr((file).getPath().distance((file).getPathRelativ()),(file).getPathRelativLen())
+#define U_FILE_STREQ(file,str) U_STREQ((file).getPathRelativ(),(file).getPathRelativLen(),str)
 
 class URDB;
 class UHTTP;

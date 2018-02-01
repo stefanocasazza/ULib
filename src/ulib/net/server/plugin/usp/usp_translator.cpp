@@ -119,7 +119,8 @@ public:
          pos = tmp.find('(');
           id = (pos == U_NOT_FOUND ? tmp : tmp.substr(0U, pos));
 
-         output0.snprintf_add(U_CONSTANT_TO_PARAM("\n\tUString %v = %s(%u);\n"), id.rep, name, i+binc);
+         if (id.first_char() != '&') output0.snprintf_add(U_CONSTANT_TO_PARAM("\n\tUString %v = %s(%u);\n"), id.rep, name, i+binc);
+         else                        output0.snprintf_add(U_CONSTANT_TO_PARAM("\n\t%.*s = %s(%u);\n"), id.size()-1, id.c_pointer(1), name, i+binc);
 
          if (pos != U_NOT_FOUND)
             {
@@ -295,7 +296,21 @@ public:
 
          setDirectiveItem(directive, U_CONSTANT_SIZE("args"));
 
-         (void) output0.append(U_CONSTANT_TO_PARAM("\t\n\tif (UHTTP::isGETorPOST()) (void) UHTTP::processForm();\n"));
+         if (token &&
+             token.first_char() == ':')
+            {
+            char buffer[128];
+            const char* data = token.c_pointer(1);
+            uint32_t sz = (*data == 'G' ? 3 : 4); // 3 => GET | 4 => POST
+
+            (void) output0.append(buffer, u__snprintf(buffer, sizeof(buffer), U_CONSTANT_TO_PARAM("\t\n\tif (UHTTP::is%.*s()) (void) UHTTP::processForm();\n"), sz, data));
+
+            (void) token.erase(0, 1+sz+1);
+            }
+         else
+            {
+            (void) output0.append(U_CONSTANT_TO_PARAM("\t\n\tif (UHTTP::isGETorPOST()) (void) UHTTP::processForm();\n"));
+            }
 
          if (token) manageDirectiveArgsOrCpath("USP_FORM_VALUE", false);
          }

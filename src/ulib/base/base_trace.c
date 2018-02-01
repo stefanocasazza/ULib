@@ -117,14 +117,17 @@ void u_trace_writev(const struct iovec* restrict iov, int n)
 
    U_INTERNAL_ASSERT_MINOR(u_trace_num_tab, sizeof(u_trace_tab))
 
-   u_trace_lock();
-
-   if (file_size == 0) (void) writev(u_trace_fd, iov, n);
+   if (file_size == 0)
+      {
+      if (u_trace_fd != -1) (void) writev(u_trace_fd, iov, n);
+      }
    else
       {
-      int i = 0;
+      int i;
 
-      for (; i < n; ++i)
+      u_trace_lock();
+
+      for (i = 0; i < n; ++i)
          {
       /* U_INTERNAL_PRINT("iov[%d].iov_len = %d iov[%d].iov_base = %p", i, iov[i].iov_len, i, iov[i].iov_base) */
 
@@ -139,9 +142,9 @@ void u_trace_writev(const struct iovec* restrict iov, int n)
             file_ptr += iov[i].iov_len;
             }
          }
-      }
 
-   u_trace_unlock();
+      u_trace_unlock();
+      }
 }
 
 void u_trace_write(const char* restrict t, uint32_t tlen)
@@ -280,11 +283,13 @@ void u_trace_init(bool bsignal)
 
          /* NB: O_RDWR is needed for mmap(MAP_SHARED)... */
 
-         u_trace_fd = open(name, O_CREAT | O_RDWR | O_BINARY | (u_fork_called ? O_APPEND : 0), 0666);
+         u_trace_fd = open(name, O_CREAT | O_TRUNC | O_RDWR | O_BINARY | O_APPEND, 0666);
 
          if (u_trace_fd == -1)
             {
-            U_WARNING("Failed to create file %S - current working directory: %.*S - UTRACE_FOLDER: %S", name, u_cwd_len, u_cwd, u_trace_folder);
+            U_WARNING("Failed to create file %S%R - current working directory: %.*S - UTRACE_FOLDER: %S", name, 0, u_cwd_len, u_cwd, u_trace_folder);
+
+            file_size = 0;
 
             return;
             }
@@ -387,6 +392,8 @@ int u_trace_check_if_active(int level)
       u_trace_handlerSignal();
 
       u_print_status_trace();
+
+      if (u_trace_fd == -1) return 0;
       }
 
    U_INTERNAL_PRINT("u_trace_fd = %d level_active = %d u_trace_mask_level = %p", u_trace_fd, level_active, u_trace_mask_level)

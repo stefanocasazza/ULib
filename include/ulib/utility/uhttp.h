@@ -685,6 +685,11 @@ public:
    static int sse_pipe_fd;
    static const char* sse_corsbase;
 
+# ifdef USE_LIBSSL
+   static UString SSE_event() { return UString::getStringNull(); }
+# endif
+
+   static void manageSSE();
    static void readSSE(int timeoutMS) __noreturn;
    static void sendSSE(const UString& data)
       {

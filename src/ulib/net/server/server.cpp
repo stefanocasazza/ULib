@@ -1452,7 +1452,7 @@ public:
              UServices::read(UServer_Base::sse_event_fd, input))
             {
             /**
-             * NEW <id> <token> <last_event_id> <bprocess>
+             * NEW <id> <token> <last_event_id> <fd>
              * DEL <id>
              *
              * LIST - List clients to /tmp/SSE_list.txt
@@ -1472,14 +1472,15 @@ public:
                   {
                   ptr = row.data();
 
-                  if (u_get_unalignedp32(ptr) == U_MULTICHAR_CONSTANT32('N','E','W',' ')) // NEW <id> <token> <last_event_id> <bprocess>
+                  if (u_get_unalignedp32(ptr) == U_MULTICHAR_CONSTANT32('N','E','W',' ')) // NEW <id> <token> <last_event_id> <fd>
                      {
-                               _id = vec[k+1];
-                             token = vec[k+2];
-                     last_event_id = vec[k+3].strtoul();
-                          bprocess = vec[k+4].strtoul();
+                                 _id = vec[k+1];
+                               token = vec[k+2];
+                       last_event_id = vec[k+3].strtoul();
+                     bprocess = ((fd = vec[k+4].strtol()) == -1);
 
-                     U_INTERNAL_DUMP("_id = %V token = %V bprocess = %b last_event_id = %u U_SRV_SSE_CNT1 = %u", _id.rep, token.rep, bprocess, last_event_id, U_SRV_SSE_CNT1)
+                     U_INTERNAL_DUMP("_id = %V token = %V fd = %d bprocess = %b last_event_id = %u U_SRV_SSE_CNT1 = %u", _id.rep, token.rep, fd, bprocess, last_event_id, U_SRV_SSE_CNT1)
+
 
                      if ((ball = token.equal(*UServer_Base::str_asterisk))) token = *UServer_Base::str_asterisk;
                      else                                                   token.duplicate();
@@ -1513,7 +1514,16 @@ public:
                         output.setEmpty();
                         }
 
-                     if (bprocess == false) fd = (U_SYSCALL(recvmsg, "%u,%p,%u", UServer_Base::sse_socketpair[0], &UServer_Base::msg, 0) == 1 ? UServer_Base::cmsg.cmsg_data : -1);
+                     if (bprocess == false)
+                        {
+                     // int rfd = fd;
+
+                        fd = (U_SYSCALL(recvmsg, "%u,%p,%u", UServer_Base::sse_socketpair[0], &UServer_Base::msg, 0) == 1 ? UServer_Base::cmsg.cmsg_data : -1);
+
+                        U_INTERNAL_DUMP("fd = %d", fd)
+
+                     // U_INTERNAL_ASSERT_EQUALS(fd, rfd)
+                        }
                      else
                         {
                         UServer_Base::setFIFOForSSE(_id);
@@ -1655,7 +1665,7 @@ public:
                   }
                }
 
-            UServer_Base::unlockSSE();
+         // UServer_Base::unlockSSE();
 
                 vec.clear();
                 rID.clear();

@@ -21,6 +21,10 @@
 #  include <ulib/magic/magic.h>
 #endif
 
+#ifdef HAVE_NUMA
+#  include <numaif.h>
+#endif
+
 char*    UFile::cwd_save;
 char*    UFile::pfree;
 long     UFile::nr_hugepages;
@@ -384,6 +388,9 @@ char* UFile::mmap_anon_huge(uint32_t* plength, int flags)
 {
    U_TRACE(1, "UFile::mmap_anon_huge(%p,%d,%u)", plength, flags)
 
+   char* ptr;
+   uint32_t length;
+
 #ifdef U_LINUX
    if (nr_hugepages)
       {
@@ -394,34 +401,50 @@ char* UFile::mmap_anon_huge(uint32_t* plength, int flags)
 #  ifdef MAP_HUGE_1GB /* (since Linux 3.8) */
       if (*plength >= U_1G)
          {
-         uint32_t length = (*plength + U_1G_MASK) & ~U_1G_MASK; // NB: munmap() length of MAP_HUGETLB memory must be hugepage aligned...
+         length = (*plength + U_1G_MASK) & ~U_1G_MASK; // NB: munmap() length of MAP_HUGETLB memory must be hugepage aligned...
 
          U_INTERNAL_ASSERT_EQUALS(length & U_1G_MASK, 0)
 
          U_DEBUG("We are going to allocate (%u GB - %u bytes) MAP_HUGE_1GB - nfree = %u flags = %B", length / U_1G, length, nfree, flags | U_MAP_ANON_HUGE | MAP_HUGE_1GB)
 
-         char* ptr = (char*) U_SYSCALL(mmap, "%p,%u,%d,%d,%d,%I", U_MAP_ANON_HUGE_ADDR, length, PROT_READ | PROT_WRITE, flags | U_MAP_ANON_HUGE | MAP_HUGE_1GB, -1, 0);
+         ptr = (char*) U_SYSCALL(mmap, "%p,%u,%d,%d,%d,%I", U_MAP_ANON_HUGE_ADDR, length, PROT_READ | PROT_WRITE, flags | U_MAP_ANON_HUGE | MAP_HUGE_1GB, -1, 0);
 
          if (ptr != (char*)MAP_FAILED)
             {
             *plength = length;
+
+#        ifdef HAVE_NUMA
+            if ((flags & MAP_SHARED) == 0 &&
+                U_SYSCALL(mbind, "%p,%lu,%d,%p,%lu,%u", ptr, length, MPOL_PREFERRED, U_NULLPTR, 0UL, MPOL_MF_MOVE) == -1)
+              {
+              WARNING("unable to mbind memory; performance may suffer");
+              }
+#        endif
 
             return ptr;
             }
          }
 #  endif
 #  ifdef MAP_HUGE_2MB /* (since Linux 3.8) */
-      uint32_t length = (*plength + U_2M_MASK) & ~U_2M_MASK; // NB: munmap() length of MAP_HUGETLB memory must be hugepage aligned...
+      length = (*plength + U_2M_MASK) & ~U_2M_MASK; // NB: munmap() length of MAP_HUGETLB memory must be hugepage aligned...
 
       U_INTERNAL_ASSERT_EQUALS(length & U_2M_MASK, 0)
 
       U_DEBUG("We are going to allocate (%u MB - %u bytes) MAP_HUGE_2MB - nfree = %u flags = %B", length / (1024U*1024U), length, nfree, flags | U_MAP_ANON_HUGE | MAP_HUGE_2MB)
 
-      char* ptr = (char*) U_SYSCALL(mmap, "%p,%u,%d,%d,%d,%I", U_MAP_ANON_HUGE_ADDR, length, PROT_READ | PROT_WRITE, flags | U_MAP_ANON_HUGE | MAP_HUGE_2MB, -1, 0);
+      ptr = (char*) U_SYSCALL(mmap, "%p,%u,%d,%d,%d,%I", U_MAP_ANON_HUGE_ADDR, length, PROT_READ | PROT_WRITE, flags | U_MAP_ANON_HUGE | MAP_HUGE_2MB, -1, 0);
 
       if (ptr != (char*)MAP_FAILED)
          {
          *plength = length;
+
+#     ifdef HAVE_NUMA
+         if ((flags & MAP_SHARED) == 0 &&
+             U_SYSCALL(mbind, "%p,%lu,%d,%p,%lu,%u", ptr, length, MPOL_PREFERRED, U_NULLPTR, 0UL, MPOL_MF_MOVE) == -1)
+           {
+           WARNING("unable to mbind memory; performance may suffer");
+           }
+#     endif
 
          return ptr;
          }
@@ -450,7 +473,17 @@ char* UFile::mmap_anon_huge(uint32_t* plength, int flags)
 
    U_DEBUG("We are going to allocate (%u KB - %u bytes) - nfree = %u flags = %B", *plength / 1024U, *plength, nfree, flags)
 
-   return (char*) U_SYSCALL(mmap, "%p,%u,%d,%d,%d,%I", U_NULLPTR, *plength, PROT_READ | PROT_WRITE, flags,  -1, 0);
+   ptr = (char*) U_SYSCALL(mmap, "%p,%u,%d,%d,%d,%I", U_NULLPTR, *plength, PROT_READ | PROT_WRITE, flags,  -1, 0);
+
+#ifdef HAVE_NUMA
+   if ((flags & MAP_SHARED) == 0 &&
+       U_SYSCALL(mbind, "%p,%lu,%d,%p,%lu,%u", ptr, *plength, MPOL_PREFERRED, U_NULLPTR, 0UL, MPOL_MF_MOVE) == -1)
+     {
+     WARNING("unable to mbind memory; performance may suffer");
+     }
+#endif
+
+   return ptr;
 }
 
 char* UFile::mmap(uint32_t* plength, int _fd, int prot, int flags, uint32_t offset)

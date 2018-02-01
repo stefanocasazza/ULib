@@ -2672,7 +2672,7 @@ next:       (void) getARPCache();
             goto end;
             }
          */
-            
+
          (void) buffer.assign(U_CONSTANT_TO_PARAM("IPHONE"));
 
          goto set_redirect_to_AUTH;

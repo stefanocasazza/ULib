@@ -1,0 +1,84 @@
+<!--#declaration
+static UString name, roomID;
+
+static void roomlink(const UString& id, const UString& title)
+{
+	U_TRACE(5, "::roomlink(%V,%V)", id.rep, title.rep)
+
+	U_INTERNAL_ASSERT(id)
+
+	if (roomID.equal(id) == false) USP_PRINTF("<div class=\"roombutton\"><a href=\"/chat?name=%v&room=%v\">%v</a></div>\n", name.rep, id.rep, title.rep);
+	else
+		{
+		roomID = id;
+
+		USP_PRINTF("<div class=\"roombutton selected\">%v</div>\n", title.rep);
+		}
+}
+-->
+<!--#args
+&name;
+&roomID;
+msg;
+-->
+<html>
+<head>
+ <meta charset="UTF-8">
+ <title>SSE (Server Sent Events) demo page</title>
+ <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+ <style>
+  #ftext { background-color: #0af; border: 4px solid #08a; padding: 6px; border-radius: 6px; }
+  .roombutton { float: left; background-color: #aaa; margin: 3px; padding: 6px; border-radius: 6px;}
+  .selected { background-color: green; color: white;}
+  .sep { background-color: #08a; display: block; height: 2px; width: 100%; margin: 1px;}
+  .c { clear: both; }
+  input { padding: 4px; border-radius: 8px; border: 1px solid #08a; }
+  input[type="text"] { width: 300px;}
+  form { display: inline; }
+ </style>
+ <script>
+<!--#code
+if (roomID)
+	{
+	USP_PRINTF(
+	"$(function(){\n"
+	"  var source = new EventSource('/sse_event?subscribe=%v&id=%v');\n"
+	"  source.addEventListener(%V, function (event) {\n" 
+	"	  console.log('Received:'+event.data);\n"
+	"    document.getElementById('ftext').innerHTML += event.data + '<br>';\n"
+	"	});\n"
+	"  $('form').submit(function(e){\n"
+	"   e.preventDefault();\n"
+	"   $.get('/sendchat?name=%v&roomID=%v&msg='+$('form .message').val())\n"
+	"   $('form .message').val('')\n"
+	"  });\n"
+	"});\n", roomID.rep, name.rep, roomID.rep, name.rep, roomID.rep);
+	}
+-->
+ </script>
+</head>
+<body>
+<h1>SSE (Server Sent Events) demo page</h1>
+<!--#code
+if (name.empty()) name = UStringExt::numberToString((uint32_t)rand() % 90U);
+USP_PRINTF("<div id=\"rand\">Client name:%v</div><br/>", name.rep);
+roomlink(U_STRING_FROM_CONSTANT("first"),  U_STRING_FROM_CONSTANT("First room"));
+roomlink(U_STRING_FROM_CONSTANT("second"), U_STRING_FROM_CONSTANT("Second room"));
+roomlink(U_STRING_FROM_CONSTANT("third"),  U_STRING_FROM_CONSTANT("Third room"));
+-->
+<div class="c"></div><br/>
+<!--#code
+if (roomID)
+	{
+	USP_PRINTF(
+	"\n"
+	"<div>You are in room:<strong>%v</strong></div>\n"
+	"<form>\n"
+	" <input class=\"message\"/>\n"
+	" <input type=\"submit\" name=\"Send\" value=\"Send\"/>\n"
+	"</form>\n"
+	"<div class=\"c\"></div><br/>\n"
+	"<div id=\"ftext\">-- You can see chat messages here --<br></div>\n", roomID.rep);
+	}
+-->
+</body></html>

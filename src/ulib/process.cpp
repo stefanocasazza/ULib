@@ -81,11 +81,11 @@ U_NO_EXPORT void UProcess::setStdInOutErr(bool fd_stdin, bool fd_stdout, bool fd
 #  else
       U_INTERNAL_ASSERT_MAJOR(filedes[0], STDERR_FILENO)
 
-#     ifndef HAVE_DUP3
+#    ifndef HAVE_DUP3
       (void) U_SYSCALL(dup2, "%d,%d",    filedes[0], STDIN_FILENO);
-#     else
+#    else
       (void) U_SYSCALL(dup3, "%d,%d,%d", filedes[0], STDIN_FILENO, O_CLOEXEC);
-#     endif
+#    endif
 
       U_INTERNAL_ASSERT_EQUALS(::fcntl(STDIN_FILENO,F_GETFD,FD_CLOEXEC), 0)
 #  endif
@@ -113,11 +113,11 @@ U_NO_EXPORT void UProcess::setStdInOutErr(bool fd_stdin, bool fd_stdout, bool fd
 #  else
       U_INTERNAL_ASSERT_MAJOR(filedes[3], STDOUT_FILENO)
 
-#     ifndef HAVE_DUP3
+#    ifndef HAVE_DUP3
       (void) U_SYSCALL(dup2, "%d,%d",    filedes[3], STDOUT_FILENO);
-#     else
+#    else
       (void) U_SYSCALL(dup3, "%d,%d,%d", filedes[3], STDOUT_FILENO, O_CLOEXEC);
-#     endif
+#    endif
 
       U_INTERNAL_ASSERT_EQUALS(::fcntl(STDOUT_FILENO,F_GETFD,FD_CLOEXEC), 0)
 #  endif
@@ -145,11 +145,11 @@ U_NO_EXPORT void UProcess::setStdInOutErr(bool fd_stdin, bool fd_stdout, bool fd
 #  else
       U_INTERNAL_ASSERT(filedes[5] >= STDIN_FILENO)
 
-#     ifndef HAVE_DUP3
+#    ifndef HAVE_DUP3
       (void) U_SYSCALL(dup2, "%d,%d",    filedes[5], STDERR_FILENO);
-#     else
+#    else
       (void) U_SYSCALL(dup3, "%d,%d,%d", filedes[5], STDERR_FILENO, O_CLOEXEC);
-#     endif
+#    endif
 
       U_INTERNAL_ASSERT_EQUALS(::fcntl(STDERR_FILENO,F_GETFD,FD_CLOEXEC), 0)
 #  endif
