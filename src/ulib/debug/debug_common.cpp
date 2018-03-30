@@ -62,8 +62,8 @@ extern "C" void U_EXPORT u_debug_at_exit(void)
       if ( cmd_on_exit &&
           *cmd_on_exit)
          {
-         char command[U_PATH_MAX];
-         uint32_t len = u__snprintf(command, sizeof(command), U_CONSTANT_TO_PARAM("%s %s %P %N"), cmd_on_exit, u_progpath);
+         char command[U_PATH_MAX+1];
+         uint32_t len = u__snprintf(command, U_PATH_MAX, U_CONSTANT_TO_PARAM("%s %s %P %N"), cmd_on_exit, u_progpath);
 
          U_INTERNAL_PRINT("command = %.*s", len, command)
 
@@ -241,7 +241,7 @@ __noreturn void U_EXPORT u_debug_exec(const char* pathname, char* const argv[], 
                            { (caddr_t)buffer,                    0 },
                            { (caddr_t)"\n",                      1 } };
 
-   iov[1].iov_len = u__snprintf(buffer, sizeof(buffer), U_CONSTANT_TO_PARAM("::execve(%S,%p,%p)"), pathname, argv, envp);
+   iov[1].iov_len = u__snprintf(buffer, U_CONSTANT_SIZE(buffer), U_CONSTANT_TO_PARAM("::execve(%S,%p,%p)"), pathname, argv, envp);
 
    if (trace_active)
       {
@@ -268,13 +268,13 @@ __noreturn void U_EXPORT u_debug_exec(const char* pathname, char* const argv[], 
    if (flag_trace_active == false)
       {
       char buf[64];
-      uint32_t bytes_written = u__snprintf(buf, sizeof(buf), U_CONSTANT_TO_PARAM("%W%N%W: %WWARNING: %W"), BRIGHTCYAN, RESET, YELLOW, RESET);
+      uint32_t bytes_written = u__snprintf(buf, U_CONSTANT_SIZE(buf), U_CONSTANT_TO_PARAM("%W%N%W: %WWARNING: %W"), BRIGHTCYAN, RESET, YELLOW, RESET);
 
       (void) write(STDERR_FILENO, buf, bytes_written);
       (void) write(STDERR_FILENO, buffer, iov[1].iov_len);
       }
 
-   iov[1].iov_len = u__snprintf(buffer, sizeof(buffer), U_CONSTANT_TO_PARAM(" = -1%R"), 0); // NB: the last argument (0) is necessary...
+   iov[1].iov_len = u__snprintf(buffer, U_CONSTANT_SIZE(buffer), U_CONSTANT_TO_PARAM(" = -1%R"), 0); // NB: the last argument (0) is necessary...
 
    if (flag_trace_active == false)
       {
@@ -283,15 +283,15 @@ __noreturn void U_EXPORT u_debug_exec(const char* pathname, char* const argv[], 
       (void) write(STDERR_FILENO, buffer,          iov[1].iov_len);
       (void) write(STDERR_FILENO, iov[2].iov_base, iov[2].iov_len);
 
-      for (i = 0; argv[i]; ++i) (void) write(STDERR_FILENO, buffer,  u__snprintf(buffer, sizeof(buffer), U_CONSTANT_TO_PARAM("argv[%2u] = %p %S\n"), i, argv[i], argv[i]));
+      for (i = 0; argv[i]; ++i) (void) write(STDERR_FILENO, buffer,  u__snprintf(buffer, U_CONSTANT_SIZE(buffer), U_CONSTANT_TO_PARAM("argv[%2u] = %p %S\n"), i, argv[i], argv[i]));
 
-      (void) write(STDERR_FILENO, buffer, u__snprintf(buffer, sizeof(buffer), U_CONSTANT_TO_PARAM("argv[%2u] = %p %S\n"), i, argv[i], argv[i]));
+      (void) write(STDERR_FILENO, buffer, u__snprintf(buffer, U_CONSTANT_SIZE(buffer), U_CONSTANT_TO_PARAM("argv[%2u] = %p %S\n"), i, argv[i], argv[i]));
 
       if (envp)
          {
-         for (i = 0; envp[i]; ++i) (void) write(STDERR_FILENO, buffer,  u__snprintf(buffer, sizeof(buffer), U_CONSTANT_TO_PARAM("envp[%2u] = %p %S\n"), i, envp[i], envp[i]));
+         for (i = 0; envp[i]; ++i) (void) write(STDERR_FILENO, buffer,  u__snprintf(buffer, U_CONSTANT_SIZE(buffer), U_CONSTANT_TO_PARAM("envp[%2u] = %p %S\n"), i, envp[i], envp[i]));
 
-         (void) write(STDERR_FILENO, buffer, u__snprintf(buffer, sizeof(buffer), U_CONSTANT_TO_PARAM("envp[%2u] = %p %S\n"), i, envp[i], envp[i]));
+         (void) write(STDERR_FILENO, buffer, u__snprintf(buffer, U_CONSTANT_SIZE(buffer), U_CONSTANT_TO_PARAM("envp[%2u] = %p %S\n"), i, envp[i], envp[i]));
          }
       }
    else
@@ -300,7 +300,7 @@ __noreturn void U_EXPORT u_debug_exec(const char* pathname, char* const argv[], 
 
       u_trace_writev(iov+1, 2);
 
-      iov[1].iov_len = u__snprintf(buffer, sizeof(buffer), U_CONSTANT_TO_PARAM("::_exit(%d)"), EX_UNAVAILABLE);
+      iov[1].iov_len = u__snprintf(buffer, U_CONSTANT_SIZE(buffer), U_CONSTANT_TO_PARAM("::_exit(%d)"), EX_UNAVAILABLE);
 
       u_trace_writev(iov, 3);
 

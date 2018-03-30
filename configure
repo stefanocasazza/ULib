@@ -679,6 +679,8 @@ STATIC_HANDLER_ECHO_FALSE
 STATIC_HANDLER_ECHO_TRUE
 STATIC_HANDLER_HTTP_FALSE
 STATIC_HANDLER_HTTP_TRUE
+STATIC_HANDLER_NODOG_FALSE
+STATIC_HANDLER_NODOG_TRUE
 STATIC_HANDLER_NOCAT_FALSE
 STATIC_HANDLER_NOCAT_TRUE
 STATIC_HANDLER_TSA_FALSE
@@ -1824,7 +1826,7 @@ Optional Features:
   --enable-mysql-threadsafe use threadsafe version of libmysqlclient
   --enable-static-server-plugin=MODULES
                           rpc shib stream socket scgi fcgi geoip proxy soap
-                          ssi tsa nocat http echo
+                          ssi tsa nocat nodog http echo
   --enable-static-orm-driver=DRIVERS
                           sqlite mysql pgsql
   --enable-static-servlet=NAMES
@@ -20810,7 +20812,6 @@ $as_echo "#define HAVE_CXX11 1" >>confdefs.h
   fi
 
 
-
 	  ax_cxx_compile_alternatives="14 1y"    ax_cxx_compile_cxx14_required=false
   ac_ext=cpp
 ac_cpp='$CXXCPP $CPPFLAGS'
@@ -21709,7 +21710,6 @@ $as_echo "$as_me: No compiler with C++14 support was found" >&6;}
 $as_echo "#define HAVE_CXX14 1" >>confdefs.h
 
   fi
-
 
 
 	  ax_cxx_compile_alternatives="17 1z"    ax_cxx_compile_cxx17_required=false
@@ -23415,8 +23415,6 @@ $as_echo "#define HAVE_CXX17 1" >>confdefs.h
 
   fi
 
-  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: C++17 is not yet standardized, so the checks may change in incompatible ways anytime" >&5
-$as_echo "$as_me: WARNING: C++17 is not yet standardized, so the checks may change in incompatible ways anytime" >&2;}
 
 else
    { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
@@ -33413,7 +33411,7 @@ fi
 
 # SECTION 14: Checks for aggregated features
 
-modules="rpc shib stream nocat socket scgi fcgi geoip proxy soap ssi tsa http echo"
+modules="rpc shib stream nocat nodog socket scgi fcgi geoip proxy soap ssi tsa http echo"
 
 if test "$USE_LIBPCRE" = "yes"; then
 	ulib_pcre_msg="yes ( $pcre_version )"
@@ -33560,6 +33558,7 @@ static_handler_soap=""
 static_handler_ssi=""
 static_handler_tsa=""
 static_handler_nocat=""
+static_handler_nodog=""
 static_handler_http=""
 static_handler_echo=""
 
@@ -33638,6 +33637,11 @@ $as_echo "#define U_STATIC_HANDLER_TSA /**/" >>confdefs.h
 			static_handler_nocat="yes"
 
 $as_echo "#define U_STATIC_HANDLER_NOCAT /**/" >>confdefs.h
+
+		elif test "$mod" = "nodog"; then
+			static_handler_nodog="yes"
+
+$as_echo "#define U_STATIC_HANDLER_NODOG /**/" >>confdefs.h
 
 		elif test "$mod" = "http"; then
 			static_handler_http="yes"
@@ -33759,6 +33763,14 @@ fi
 else
   STATIC_HANDLER_NOCAT_TRUE='#'
   STATIC_HANDLER_NOCAT_FALSE=
+fi
+
+ if test "$static_handler_nodog"  = "yes"; then
+  STATIC_HANDLER_NODOG_TRUE=
+  STATIC_HANDLER_NODOG_FALSE='#'
+else
+  STATIC_HANDLER_NODOG_TRUE='#'
+  STATIC_HANDLER_NODOG_FALSE=
 fi
 
  if test "$static_handler_http"	  = "yes"; then
@@ -34228,7 +34240,7 @@ fi
 		else
 			## _FORTIFY_SOURCE is enabled by default from g++ 4.7.2
 			MAYBE_FLAGS="$MAYBE_FLAGS -Wunsafe-loop-optimizations -Wno-unused-parameter -rdynamic -fdiagnostics-color=auto -Wmisleading-indentation"
-			CXX_MAYBE_FLAGS="$CXX_MAYBE_FLAGS -Wc++11-compat -Wzero-as-null-pointer-constant -Wno-implicit-fallthrough"
+			CXX_MAYBE_FLAGS="$CXX_MAYBE_FLAGS -Wc++11-compat" ## -Wzero-as-null-pointer-constant -Wno-implicit-fallthrough
 		fi
 	fi
 
@@ -35379,7 +35391,7 @@ See include/ulib/internal/config.h for further configuration information
 
 # SECTION 16: `AC_CONFIG_FILES([FILE...])
 
-ac_config_files="$ac_config_files Makefile rpm.sh ULib.spec userver.service m4/Makefile doc/Makefile include/Makefile contrib/Makefile include/ulib/Makefile contrib/HCSP/Makefile contrib/RSIGN/Makefile contrib/signer/Makefile fuzz/Makefile src/ulib/Makefile src/ulib/ULib.rc src/ulib/ULib.pc src/ulib/orm/driver/Makefile src/ulib/net/server/plugin/Makefile src/ulib/net/server/plugin/v8/Makefile src/ulib/net/server/plugin/php/Makefile src/ulib/net/server/plugin/usp/Makefile src/ulib/net/server/plugin/ruby/Makefile src/ulib/net/server/plugin/mod_shib/Makefile src/ulib/net/server/plugin/mod_geoip/Makefile src/ulib/net/server/plugin/usp/usp_compile.sh src/ulib/net/server/plugin/page_speed/Makefile src/ulib/net/server/plugin/python/Makefile examples/Makefile examples/IR/Makefile examples/csp/Makefile examples/lcsp/Makefile examples/rsign/Makefile examples/hello/Makefile examples/WiAuth/Makefile examples/xml2txt/Makefile examples/uclient/Makefile examples/userver/Makefile examples/PEC_log/Makefile examples/workflow/Makefile examples/doc_parse/Makefile examples/lrp_session/Makefile examples/http_header/Makefile examples/test_manager/Makefile examples/doc_classifier/Makefile examples/form_completion/Makefile examples/simple_client_server/Makefile examples/download_accelerator/Makefile examples/XAdES/Makefile examples/XAdES/XAdES.spec examples/xml2txt/xml2txt.spec examples/IR/searchengine-bin.spec examples/lcsp/lcsp.spec examples/lcsp/lcsp_rpc.spec examples/csp/cspclient.spec examples/csp/cspclient_rpc.spec examples/rsign/rsignclient.spec examples/rsign/rsignclient_rpc.spec examples/userver/web_server.spec examples/userver/wagsmserver.spec examples/workflow/workflow.spec examples/PEC_log/PEC_log.spec examples/userver/tsaserver.spec examples/userver/cspserver.spec examples/userver/rsignserver.spec examples/doc_parse/doc_parse.spec tests/Makefile tests/base/Makefile tests/debug/Makefile tests/ulib/Makefile tests/ulib/http2/Makefile tests/examples/Makefile tests/contrib/Makefile"
+ac_config_files="$ac_config_files Makefile rpm.sh ULib.spec userver.service m4/Makefile doc/Makefile include/Makefile contrib/Makefile include/ulib/Makefile contrib/HCSP/Makefile contrib/RSIGN/Makefile contrib/signer/Makefile fuzz/Makefile src/ulib/Makefile src/ulib/ULib.rc src/ulib/ULib.pc src/ulib/orm/driver/Makefile src/ulib/net/server/plugin/Makefile src/ulib/net/server/plugin/v8/Makefile src/ulib/net/server/plugin/php/Makefile src/ulib/net/server/plugin/usp/Makefile src/ulib/net/server/plugin/ruby/Makefile src/ulib/net/server/plugin/mod_shib/Makefile src/ulib/net/server/plugin/mod_geoip/Makefile src/ulib/net/server/plugin/usp/usp_compile.sh src/ulib/net/server/plugin/page_speed/Makefile src/ulib/net/server/plugin/python/Makefile examples/Makefile examples/IR/Makefile examples/csp/Makefile examples/lcsp/Makefile examples/rsign/Makefile examples/hello/Makefile examples/serialize/Makefile examples/WiAuth/Makefile examples/WiAuth/v2/Makefile examples/xml2txt/Makefile examples/uclient/Makefile examples/userver/Makefile examples/PEC_log/Makefile examples/workflow/Makefile examples/doc_parse/Makefile examples/lrp_session/Makefile examples/http_header/Makefile examples/test_manager/Makefile examples/doc_classifier/Makefile examples/form_completion/Makefile examples/simple_client_server/Makefile examples/download_accelerator/Makefile examples/XAdES/Makefile examples/XAdES/XAdES.spec examples/xml2txt/xml2txt.spec examples/IR/searchengine-bin.spec examples/lcsp/lcsp.spec examples/lcsp/lcsp_rpc.spec examples/csp/cspclient.spec examples/csp/cspclient_rpc.spec examples/rsign/rsignclient.spec examples/rsign/rsignclient_rpc.spec examples/userver/web_server.spec examples/userver/wagsmserver.spec examples/workflow/workflow.spec examples/PEC_log/PEC_log.spec examples/userver/tsaserver.spec examples/userver/cspserver.spec examples/userver/rsignserver.spec examples/doc_parse/doc_parse.spec tests/Makefile tests/base/Makefile tests/debug/Makefile tests/ulib/Makefile tests/ulib/http2/Makefile tests/examples/Makefile tests/contrib/Makefile"
 
 
 #	examples/parser/Makefile \
@@ -36209,6 +36221,10 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${STATIC_HANDLER_NOCAT_TRUE}" && test -z "${STATIC_HANDLER_NOCAT_FALSE}"; then
   as_fn_error $? "conditional \"STATIC_HANDLER_NOCAT\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${STATIC_HANDLER_NODOG_TRUE}" && test -z "${STATIC_HANDLER_NODOG_FALSE}"; then
+  as_fn_error $? "conditional \"STATIC_HANDLER_NODOG\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${STATIC_HANDLER_HTTP_TRUE}" && test -z "${STATIC_HANDLER_HTTP_FALSE}"; then
@@ -37295,7 +37311,9 @@ do
     "examples/lcsp/Makefile") CONFIG_FILES="$CONFIG_FILES examples/lcsp/Makefile" ;;
     "examples/rsign/Makefile") CONFIG_FILES="$CONFIG_FILES examples/rsign/Makefile" ;;
     "examples/hello/Makefile") CONFIG_FILES="$CONFIG_FILES examples/hello/Makefile" ;;
+    "examples/serialize/Makefile") CONFIG_FILES="$CONFIG_FILES examples/serialize/Makefile" ;;
     "examples/WiAuth/Makefile") CONFIG_FILES="$CONFIG_FILES examples/WiAuth/Makefile" ;;
+    "examples/WiAuth/v2/Makefile") CONFIG_FILES="$CONFIG_FILES examples/WiAuth/v2/Makefile" ;;
     "examples/xml2txt/Makefile") CONFIG_FILES="$CONFIG_FILES examples/xml2txt/Makefile" ;;
     "examples/uclient/Makefile") CONFIG_FILES="$CONFIG_FILES examples/uclient/Makefile" ;;
     "examples/userver/Makefile") CONFIG_FILES="$CONFIG_FILES examples/userver/Makefile" ;;

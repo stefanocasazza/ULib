@@ -212,7 +212,7 @@ UNoCatPlugIn::UNoCatPlugIn()
 
    client->UClient_Base::setTimeOut(UServer_Base::timeoutMS);
 
-   UString::str_allocate(STR_ALLOCATE_NOCAT);
+   if (UString::str_without_label == U_NULLPTR) UString::str_allocate(STR_ALLOCATE_NOCAT);
 }
 
 UNoCatPlugIn::~UNoCatPlugIn()
@@ -723,9 +723,9 @@ bool UNoCatPlugIn::checkFirewall()
 
       if (n)
          {
-         out = openlist->join(' ');
+         out = openlist->join();
 
-      // (void) UFile::writeToTmp(U_STRING_TO_PARAM(out), O_RDWR | O_TRUNC, U_CONSTANT_TO_PARAM("nodog_chk.out"), 0);
+      // U_FILE_WRITE_TO_TMP(out, "nodog_chk.out");
          }
 
       n = total_connections;
@@ -1804,6 +1804,7 @@ void UNoCatPlugIn::sendData(uint32_t index_AUTH, const UString& data, const char
    // NB: we can't try to send immediately the info data on users to portal because the worst we have a hole
    //     of 10 seconds and the portal can have need to ask us something (to logout some user, the list of peer permitted, ...)
 
+   int log_fd = -1;
    uint32_t sz = data.size();
    const char* log_msg = U_NULLPTR;
    UString body = data, url = getUrlForSendMsgToPortal(index_AUTH, service, service_len);
@@ -1819,15 +1820,16 @@ void UNoCatPlugIn::sendData(uint32_t index_AUTH, const UString& data, const char
       {
       UString str = UStringExt::substitute(data.data(), U_min(sz,200), '%', U_CONSTANT_TO_PARAM("%%")); // NB: we need this because we have a message with url encoded char...
 
-      (void) u__snprintf(buffer, sizeof(buffer),
+      (void) u__snprintf(buffer, U_CONSTANT_SIZE(buffer),
                          U_CONSTANT_TO_PARAM("[nocat] Sent %.*s %%s (%u bytes) after %%d attempts to AUTH(%u): %V"),
                          service_len, service, sz, index_AUTH, str.rep);
 
+      log_fd  = UServer_Base::log->getFd();
       log_msg = buffer;
       }
 #endif
 
-   (void) client->sendPOSTRequestAsync(body, url, true, log_msg);
+   (void) client->sendPOSTRequestAsync(body, url, true, log_msg, log_fd);
 }
 
 void UNoCatPlugIn::sendInfoData(uint32_t index_AUTH)
@@ -2164,13 +2166,13 @@ int UNoCatPlugIn::handlerInit()
 
       if (ip != *UServer_Base::IP_address)
          {
-         (void) UFile::writeToTmp(U_STRING_TO_PARAM(ip), O_RDWR | O_TRUNC, U_CONSTANT_TO_PARAM("IP_ADDRESS"), 0);
+         U_FILE_WRITE_TO_TMP(ip, "IP_ADDRESS");
 
          U_SRV_LOG("WARNING: SERVER IP ADDRESS differ from IP address: %V to connect to AUTH: %V", ip.rep, auth_ip.rep);
          }
       }
 
-   auth_ip = vauth_ip->join(' ');
+   auth_ip = vauth_ip->join();
 
    fw_env->snprintf_add(U_CONSTANT_TO_PARAM("'AuthServiceIP=%v'\n"), auth_ip.rep);
 
@@ -2450,9 +2452,9 @@ int UNoCatPlugIn::handlerRequest()
             }
          else if (U_HTTP_URI_STREQ("/uptime"))
             {
-            status_content->setBuffer(U_CAPACITY);
+            status_content->setBuffer(20U);
 
-            status_content->setFromNumber32(u_get_uptime());
+            status_content->setUpTime();
 
             UHTTP::setResponseMimeIndex(*status_content, U_unknow);
             }

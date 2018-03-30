@@ -1136,30 +1136,30 @@ public:
       }
 #endif
 
-   void insertWithBound(const UString& str, uint32_t& start, uint32_t& end)
+   void insertWithBound(const UString& str, uint32_t& lstart, uint32_t& lend)
       {
-      U_TRACE(0, "UVector<UString>::insertWithBound(%V,%u,%u)", str.rep, start, end)
+      U_TRACE(0, "UVector<UString>::insertWithBound(%V,%u,%u)", str.rep, lstart, lend)
 
       U_INTERNAL_DUMP("_length = %u _capacity = %u", _length, _capacity)
 
-      if (end < _capacity) push_back(str);
+      if (lend < _capacity) push_back(str);
       else
          {
-         ++start;
+         ++lstart;
 
-         replace(end % _capacity, str);
+         replace(lend % _capacity, str);
          }
 
-      ++end;
+      ++lend;
       }
 
-   void getFromLast(uint32_t last, uint32_t start, uint32_t end, UVector<UString>& _vec)
+   void getFromLast(uint32_t llast, uint32_t lstart, uint32_t lend, UVector<UString>& _vec)
       {
-      U_TRACE(0, "UVector<UString>::getFromLast(%u,%u,%u,%p)", last, start, end, &_vec)
+      U_TRACE(0, "UVector<UString>::getFromLast(%u,%u,%u,%p)", llast, lstart, lend, &_vec)
 
       U_INTERNAL_DUMP("_length = %u _capacity = %u", _length, _capacity)
 
-      for (uint32_t i = (last < start ? start : last); i < end; ++i) _vec.push_back(at(i % _capacity));
+      for (uint32_t i = (llast < lstart ? lstart : llast); i < lend; ++i) _vec.push_back(at(i % _capacity));
       }
 
    // BINARY HEAP
@@ -1193,8 +1193,7 @@ public:
 
    // EXTENSION
 
-   UString join(      char  delim);
-   UString join(const char* delim, uint32_t delim_len);
+   UString join(uint32_t start = 0, const char* delim = " ", uint32_t delim_len = 1);
 
    uint32_t split(const    char* str, uint32_t len,       char  delim);
    uint32_t split(const UString& str,                     char  delim);             // NB: use substr(), so dependency from str...
@@ -1253,6 +1252,13 @@ public:
 
       if (ignore_case == false) mksort((UStringRep**)vec, _length, 0);
       else                      UVector<void*>::sort();
+      }
+
+   void copy(UVector<UString>& source)
+      {
+      U_TRACE(0, "UVector<UString>::copy(%p)", &source)
+
+      for (uint32_t i = 0; i < source._length; ++i) push_back(source[i].copy());
       }
 
    void move(UVector<UString>& source) { UVector<void*>::move(source); } // add to end and reset source

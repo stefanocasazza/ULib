@@ -881,43 +881,6 @@ protected:
 #endif
 
 private:
-   explicit UStringRep(const char* t, uint32_t tlen) // NB: to use only with new(UStringRep(t,tlen))...
-      {
-      U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(0, UStringRep, "%.*S,%u", tlen, t, tlen)
-
-      U_INTERNAL_ASSERT_POINTER(t)
-      U_INTERNAL_ASSERT_MAJOR(tlen, 0)
-
-      set(tlen, 0U, t);
-      }
-
-   ~UStringRep()
-      {
-      U_TRACE_NO_PARAM(0, "UStringRep::~UStringRep()")
-
-      // NB: we don't use delete (dtor) because it add a deallocation to the destroy process...
-
-      U_ERROR("I can't use UStringRep on stack");
-      }
-
-   void _release();
-
-   void shift(ptrdiff_t diff)
-      {
-      U_TRACE(0, "UStringRep::shift(%p)", diff)
-
-      U_CHECK_MEMORY
-
-      U_INTERNAL_ASSERT_DIFFERS(diff, 0)
-      U_INTERNAL_ASSERT_EQUALS(_capacity, 0) // mode: 0 -> const
-
-      str += diff;
-
-      U_INTERNAL_ASSERT_DIFFERS(str[0], 0)
-
-      U_INTERNAL_ASSERT(invariant())
-      }
-
    void set(uint32_t __length, uint32_t __capacity, const char* ptr)
       {
       U_TRACE(0, "UStringRep::set(%u,%u,%p)", __length, __capacity, ptr)
@@ -937,6 +900,36 @@ private:
       _capacity  = __capacity; // [0 const | -1 mmap | -2 we must call free()]...
       references = 0;
       str        = ptr;
+      }
+
+   explicit UStringRep(const char* t, uint32_t tlen) // NB: to use only with new(UStringRep(t,tlen))...
+      {
+      U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(0, UStringRep, "%p,%u", t, tlen)
+
+      U_INTERNAL_ASSERT_POINTER(t)
+      U_INTERNAL_ASSERT_MAJOR(tlen, 0)
+
+      set(tlen, 0U, t);
+      }
+
+   ~UStringRep();
+
+   void _release();
+
+   void shift(ptrdiff_t diff)
+      {
+      U_TRACE(0, "UStringRep::shift(%p)", diff)
+
+      U_CHECK_MEMORY
+
+      U_INTERNAL_ASSERT_DIFFERS(diff, 0)
+      U_INTERNAL_ASSERT_EQUALS(_capacity, 0) // mode: 0 -> const
+
+      str += diff;
+
+      U_INTERNAL_ASSERT_DIFFERS(str[0], 0)
+
+      U_INTERNAL_ASSERT(invariant())
       }
 
    // equal lookup use case
@@ -1196,6 +1189,15 @@ public:
 
    static void str_allocate(int which);
 
+   // u_buffer string (for container, etc...)
+
+   static UString& getUBuffer()
+      {
+      U_INTERNAL_ASSERT_EQUALS(u_buffer_len, 0)
+
+      return *string_u_buffer;
+      }
+
    // null string (for container, etc...)
 
    static UString& getStringNull()
@@ -1208,6 +1210,7 @@ public:
 protected:
    static UStringRep* pkey;
    static UString* string_null;
+   static UString* string_u_buffer;
 
    friend class ULib;
    friend class UFile;
@@ -1228,7 +1231,7 @@ protected:
       U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(0, UString, "%V", *pr)
       }
 
-   explicit UString(uint32_t len, uint32_t sz, char* ptr); // NB: for UStringExt::deflate()...
+   explicit UString(uint32_t len, uint32_t sz, char* ptr);
 
    explicit UString(unsigned char* t, uint32_t tlen, uint32_t need) // NB: for UHTTP2::CONTINUATION...
       {
@@ -1243,6 +1246,11 @@ protected:
       }
 
    void setFromData(const char** ptr, uint32_t sz, unsigned char delim);
+
+   // NB: for UStringExt::deflate()...
+
+   void setConstant(uint32_t sz);
+   void size_adjust_constant(uint32_t sz);
 
 public:
    // mutable
@@ -1308,22 +1316,22 @@ protected:
       U_INTERNAL_ASSERT(invariant())
       }
 
-   uint32_t getReserveNeed(uint32_t n)
+   static uint32_t _getReserveNeed(uint32_t need = U_CAPACITY * 2)
       {
-      U_TRACE(0, "UString::getReserveNeed(%u)", n)
-
-      uint32_t need = rep->_length + n;
+      U_TRACE(0, "UString::_getReserveNeed(%u)", need)
 
            if (need < U_CAPACITY) need = U_CAPACITY;
       else if (need > U_CAPACITY)
          {
-         if (need < 2*1024*1024) need  = (need * 2) + (PAGESIZE * 2);
+         if (need < 2*1024*1024) need = (need * 2) + (PAGESIZE * 2);
 
          need += PAGESIZE; // NB: to avoid duplication on realloc...
          }
 
       U_RETURN(need);
       }
+
+   uint32_t getReserveNeed(uint32_t n) { return _getReserveNeed(rep->_length + n); }
 
 public:
    void _assign(UStringRep* r)
@@ -1496,6 +1504,8 @@ public:
       U_INTERNAL_ASSERT_POINTER(rep)
 
       U_CHECK_MEMORY_OBJECT(rep)
+
+      U_INTERNAL_ASSERT_DIFFERS(this, string_u_buffer)
 
       rep->release();
       }
@@ -1811,7 +1821,11 @@ public:
       {
       U_TRACE_NO_PARAM(0, "UString::c_str()")
 
-      if (isNullTerminated() == false) setNullTerminated();
+      if (isNull()           == false &&
+          isNullTerminated() == false)
+         {
+         setNullTerminated();
+         }
 
       U_RETURN(rep->str);
       }
@@ -2009,6 +2023,26 @@ public:
    void   unQuote();
    bool needQuote() const { return rep->needQuote(); }
 
+   UString getUnQuoted()
+      {
+      U_TRACE_NO_PARAM(0, "UString::getUnQuoted()")
+
+      const char* ptr = rep->str;
+
+      if (ptr[0] == '"')
+         {
+         uint32_t sz = rep->_length;
+
+         U_INTERNAL_ASSERT_EQUALS(ptr[sz-1], '"')
+
+         UString copia(ptr+1, sz-2);
+
+         U_RETURN_STRING(copia);
+         }
+
+      return *this;
+      }
+
    uint32_t getSpaceToDump() const { return rep->getSpaceToDump(); }
 
    // set uniq
@@ -2042,6 +2076,8 @@ public:
       _set(r);
 
       U_INTERNAL_ASSERT(invariant())
+
+      U_INTERNAL_ASSERT_EQUALS(data(), t)
       }
 
    // manage UString as memory mapped area...
@@ -2138,12 +2174,29 @@ public:
    void size_adjust_force(uint32_t value)  { rep->size_adjust_force(value); }
    void size_adjust_force(const char* ptr) { rep->size_adjust_force(ptr); }
 
+   void setUpTime()
+      {
+      U_TRACE_NO_PARAM(0, "UString::setUpTime()")
+
+#  ifdef DEBUG
+      vsnprintf_check(U_CONSTANT_TO_PARAM("1234567890"));
+
+      U_ASSERT(uniq())
+#  endif
+
+      char* ptr = (char*)rep->str;
+
+      ptr[(rep->_length = u_set_uptime(ptr))] = '\0';
+
+      U_INTERNAL_ASSERT(invariant())
+      }
+
    void setFromNumber32(uint32_t number)
       {
       U_TRACE(0, "UString::setFromNumber32(%u)", number)
 
 #  ifdef DEBUG
-      vsnprintf_check("1234567890");
+      vsnprintf_check(U_CONSTANT_TO_PARAM("1234567890"));
 
       U_ASSERT(uniq())
 #  endif
@@ -2160,7 +2213,7 @@ public:
       U_TRACE(0, "UString::setFromNumber32s(%d)", number)
 
 #  ifdef DEBUG
-      vsnprintf_check("1234567890");
+      vsnprintf_check(U_CONSTANT_TO_PARAM("1234567890"));
 
       U_ASSERT(uniq())
 #  endif
@@ -2173,7 +2226,7 @@ public:
       }
 
 #ifdef DEBUG
-   void vsnprintf_check(const char* format) const;
+   void vsnprintf_check(const char* format, uint32_t fmt_size) const;
 #endif
 
    void setFromNumber64(uint64_t number)
@@ -2181,7 +2234,7 @@ public:
       U_TRACE(0, "UString::setFromNumber64(%llu)", number)
 
 #  ifdef DEBUG
-      vsnprintf_check("18446744073709551615");
+      vsnprintf_check(U_CONSTANT_TO_PARAM("18446744073709551615"));
 
       U_ASSERT(uniq())
 #  endif
@@ -2198,7 +2251,7 @@ public:
       U_TRACE(0, "UString::setFromNumber64s(%lld)", number)
 
 #  ifdef DEBUG
-      vsnprintf_check("18446744073709551615");
+      vsnprintf_check(U_CONSTANT_TO_PARAM("18446744073709551615"));
 
       U_ASSERT(uniq())
 #  endif
@@ -2315,9 +2368,7 @@ public:
       U_TRACE(0, "UString::vsnprintf(%.*S,%u)", fmt_size, format, fmt_size)
 
 #  ifdef DEBUG
-      vsnprintf_check(format);
-
-      U_ASSERT(uniq())
+      vsnprintf_check(format, fmt_size);
 #  endif
 
       rep->_length = u__vsnprintf(rep->data(), rep->_capacity+1, format, fmt_size, argp); // NB: +1 because we want space for null-terminator...
@@ -2332,7 +2383,7 @@ public:
       U_TRACE(0, "UString::vsnprintf_add(%.*S,%u)", fmt_size, format, fmt_size)
 
 #  ifdef DEBUG
-      vsnprintf_check(format);
+      vsnprintf_check(format, fmt_size);
 #  endif
 
       uint32_t ret = u__vsnprintf(c_pointer(rep->_length), rep->space()+1, format, fmt_size, argp); // NB: +1 because we want space for null-terminator...

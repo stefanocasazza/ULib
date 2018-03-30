@@ -93,7 +93,7 @@ int USoapPlugIn::handlerRequest()
          U_SRV_LOG_WITH_ADDR("method %V process %s for", method.rep, (bSendingFault ? "failed" : "passed"));
 
 #     ifdef DEBUG
-         (void) UFile::writeToTmp(U_STRING_TO_PARAM(body), O_RDWR | O_TRUNC, U_CONSTANT_TO_PARAM("soap.res"), 0);
+         U_FILE_WRITE_TO_TMP(body, "soap.res");
 #     endif
 
          U_http_info.nResponseCode = HTTP_OK;

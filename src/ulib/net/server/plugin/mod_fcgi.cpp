@@ -455,14 +455,15 @@ int UFCGIPlugIn::handlerRequest()
                   goto end;
                   }
                }
-            // NB: lack of break is intentional...
 
-            // not implemented
+            /* FALLTHRU */
 
             case FCGI_UNKNOWN_TYPE:
             case FCGI_GET_VALUES_RESULT:
             default:
                {
+               // not implemented
+
                UHTTP::setInternalError();
 
                goto end;

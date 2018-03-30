@@ -208,7 +208,7 @@ void UOrmDriver::printError(const char* function)
    const char* ptr2 = (SQLSTATE == U_NULLPTR ? (SQLSTATE = "") : " - SQLSTATE: ");
 
    char buffer[4096];
-   uint32_t len = u__snprintf(buffer, sizeof(buffer), U_CONSTANT_TO_PARAM("%V on %V at %S - %s%s(%d, %s)%s%s"),
+   uint32_t len = u__snprintf(buffer, U_CONSTANT_SIZE(buffer), U_CONSTANT_TO_PARAM("%V on %V at %S - %s%s(%d, %s)%s%s"),
                               name.rep, dbname.rep, function, errname, ptr1, errcode, errmsg, ptr2, SQLSTATE);
 
    if (UOrmDriver::bexit == false)

@@ -13,7 +13,7 @@ start_msg ipaddress
 
 if [ "$TERM" = "msys"   ] || \
 	[ "$TERM" = "cygwin" ]; then
- 	ARG1=david
+ 	ARG1=stefano
  	ARG2="unirel.intranet"
 #	echo "This test failed because this system lacks the functionality..."
 else

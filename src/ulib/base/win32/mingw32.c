@@ -1969,7 +1969,7 @@ const char* getSysError_w32(unsigned* len)
       if (pBuffer[lenMsg-1] == '\n') --lenMsg;
       }
 
-   (void) snprintf(buffer, sizeof(buffer), "%s (%d, %.*s)", name, errno, lenMsg, pBuffer);
+   (void) snprintf(buffer, U_CONSTANT_SIZE(buffer), "%s (%d, %.*s)", name, errno, lenMsg, pBuffer);
 
    /* Free the buffer */
 

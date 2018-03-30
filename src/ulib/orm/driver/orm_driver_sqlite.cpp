@@ -139,7 +139,7 @@ UOrmDriver* UOrmDriverSqlite::handlerConnect(const UString& option)
    // -------------------------------------------------------------------------------------------
 
    const char* fullpath;
-   char buffer[U_PATH_MAX];
+   char buffer[U_PATH_MAX+1];
 
    if (pdrv->dbname == *UString::str_memory) fullpath = UString::str_memory->data();
    else
@@ -150,8 +150,8 @@ UOrmDriver* UOrmDriverSqlite::handlerConnect(const UString& option)
 
       U_INTERNAL_DUMP("sz = %u", sz)
 
-      if (sz) sz = u__snprintf(buffer,    sizeof(buffer),    U_CONSTANT_TO_PARAM("%v/"), dbdir.rep);
-            (void) u__snprintf(buffer+sz, sizeof(buffer)-sz, U_CONSTANT_TO_PARAM("%v.db"), pdrv->dbname.rep);
+      if (sz) sz = u__snprintf(buffer,    U_PATH_MAX,    U_CONSTANT_TO_PARAM("%v/"), dbdir.rep);
+            (void) u__snprintf(buffer+sz, U_PATH_MAX-sz, U_CONSTANT_TO_PARAM("%v.db"), pdrv->dbname.rep);
 
       fullpath = buffer;
       }

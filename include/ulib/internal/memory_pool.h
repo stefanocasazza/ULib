@@ -82,11 +82,11 @@
  *   64 sizeof(UPCRE)
  *   64 sizeof(UCommand)
  *   64 sizeof(UApplication)
- *   64 sizeof(UClientImage<UTCPSocket>)
  *   72 sizeof(UMimePKCS7)
  *   80 sizeof(UZIP)
  *   88 sizeof(UMimeMultipartMsg)
  *   96 sizeof(UMimeMessage)
+ *  104 sizeof(UClientImage<UTCPSocket>)
  *  128 sizeof(USOAPParser)
  *  128 sizeof(UMimeMultipart)
  * -------------------------
@@ -172,8 +172,8 @@
  *   88 sizeof(UMimePKCS7)
  *   96 sizeof(UIPAddress)
  *  104 sizeof(UMimeMultipartMsg)
- *  104 sizeof(UClientImage<UTCPSocket>)
  *  112 sizeof(UMimeMessage)
+ *  112 sizeof(UClientImage<UTCPSocket>)
  *  128
  * -------------------------
  * U_STACK_TYPE_4
@@ -197,11 +197,11 @@
  *  320 sizeof(USmtpClient)
  *  328 sizeof(UHttpClient<UTCPSocket>)
  *  344 sizeof(UCDB)
- *  536 sizeof(UFtpClient)
  *  512
  * -------------------------
  * U_STACK_TYPE_6
  *
+ *  536 sizeof(UFtpClient)
  *  592 sizeof(URDB)
  * =========================
  */
@@ -255,43 +255,43 @@
  *   40 sizeof(UPCRE)
  *   40 sizeof(UCommand)
  *   40 sizeof(UMimePKCS7)
- *   44 sizeof(UZIP)
- *   44 sizeof(UHTTP::UFileCacheData) <==
- *   44 sizeof(UClientImage<UTCPSocket>)
+ *   40 sizeof(UHTTP::UFileCacheData) <==
  * -------------------------
  * U_STACK_TYPE_2
  * 
- *   48 sizeof(UIPAddress)
+ *   44 sizeof(UZIP)
  *   56 sizeof(UMimeMessage)
  *   64
  * -------------------------
  * U_STACK_TYPE_3
  * 
  *   68 sizeof(USOAPParser)
+ *   76 sizeof(UClientImage<UTCPSocket>)
+ *   80 sizeof(UIPAddress)
  *   80 sizeof(UMimeMultipart)
  *   80 sizeof(UMimeMultipartMsg)
  *  120 sizeof(UFile)
- *  124 sizeof(USocket)
- *  124 sizeof(UTCPSocket)
- *  124 sizeof(UUDPSocket)
  *  128
  * -------------------------
  * U_STACK_TYPE_4
  * 
- *  144 sizeof(USSLSocket)
  *  148 sizeof(URDBClient<UTCPSocket>)
  *  152 sizeof(ULog)
  *  152 sizeof(USOAPClient<UTCPSocket>)
  *  168 sizeof(UFileConfig)
- *  176 sizeof(USmtpClient)
  *  180 sizeof(UHttpClient<UTCPSocket>)
+ *  188 sizeof(USocket)
+ *  188 sizeof(UTCPSocket)
+ *  188 sizeof(UUDPSocket)
+ *  208 sizeof(USSLSocket)
  *  220 sizeof(UCDB)
+ *  240 sizeof(USmtpClient)
  *  256
  * -------------------------
  * U_STACK_TYPE_5
  * 
- *  300 sizeof(UFtpClient)
  *  368 sizeof(URDB)
+ *  428 sizeof(UFtpClient)
  *  512
  * -------------------------
  * U_STACK_TYPE_6
@@ -299,6 +299,7 @@
  * DEBUG (32 bit) **
  * -------------------------
  *    1 sizeof(UNotifier)
+ *    1 sizeof(UPlugIn<void*>)
  *    4 sizeof(UMagic)
  *    4 sizeof(UString) <==
  * -------------------------
@@ -307,7 +308,6 @@
  *    8 sizeof(UCrl)
  *    8 sizeof(UPKCS10)
  *    8 sizeof(UCertificate)
- *    8 sizeof(UPlugIn<void*>)
  *   12 sizeof(ULock)
  *   12 sizeof(UTimer)
  *   12 sizeof(UPKCS7)
@@ -346,12 +346,12 @@
  * 
  *   48 sizeof(UZIP)
  *   48 sizeof(UMimePKCS7)
- *   48 sizeof(UClientImage<UTCPSocket>)
- *   52 sizeof(UIPAddress)
  *   64 sizeof(UMimeMessage)
  * -------------------------
  * U_STACK_TYPE_3
  * 
+ *   80 sizeof(UClientImage<UTCPSocket>)
+ *   84 sizeof(UIPAddress)
  *   88 sizeof(USOAPParser)
  *   88 sizeof(UMimeMultipart)
  *   88 sizeof(UMimeMultipartMsg)
@@ -360,23 +360,23 @@
  * -------------------------
  * U_STACK_TYPE_4
  * 
- *  136 sizeof(USocket)
- *  136 sizeof(UTCPSocket)
- *  136 sizeof(UUDPSocket)
- *  156 sizeof(USSLSocket)
  *  160 sizeof(URDBClient<UTCPSocket>)
  *  164 sizeof(ULog)
  *  164 sizeof(USOAPClient<UTCPSocket>)
  *  176 sizeof(UFileConfig)
- *  188 sizeof(USmtpClient)
  *  192 sizeof(UHttpClient<UTCPSocket>)
+ *  200 sizeof(USocket)
+ *  200 sizeof(UTCPSocket)
+ *  200 sizeof(UUDPSocket)
+ *  220 sizeof(USSLSocket)
  *  224 sizeof(UCDB)
+ *  252 sizeof(USmtpClient)
  *  256
  * -------------------------
  * U_STACK_TYPE_5
  * 
- *  324 sizeof(UFtpClient)
  *  380 sizeof(URDB)
+ *  452 sizeof(UFtpClient)
  *  512
  * -------------------------
  * U_STACK_TYPE_6
@@ -412,10 +412,11 @@
 #  define U_STACK_TYPE_0  4U
 #  ifndef DEBUG
 #  define U_STACK_TYPE_1 16U
+#  define U_STACK_TYPE_2 40U
 #  else
 #  define U_STACK_TYPE_1 28U
-#  endif
 #  define U_STACK_TYPE_2 44U
+#  endif
 #  define U_STACK_TYPE_3 64U
 #endif
 

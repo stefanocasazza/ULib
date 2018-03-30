@@ -1147,7 +1147,7 @@ void u_bind2cpu(cpu_set_t* cpuset, int n)
     * mask = 13 (1101b): cpu0, 2, 3
     */
 
-#if !defined(U_SERVER_CAPTIVE_PORTAL) && defined(HAVE_SCHED_GETAFFINITY)
+#if (!defined(U_SERVER_CAPTIVE_PORTAL) || defined(ENABLE_THREAD)) && defined(HAVE_SCHED_GETAFFINITY)
    CPU_SET(n, cpuset);
 
    (void) sched_setaffinity(u_pid, sizeof(cpu_set_t), cpuset);
@@ -1162,7 +1162,8 @@ void u_bind2cpu(cpu_set_t* cpuset, int n)
 
 void u_switch_to_realtime_priority(void)
 {
-#if !defined(U_SERVER_CAPTIVE_PORTAL) && defined(_POSIX_PRIORITY_SCHEDULING) && (_POSIX_PRIORITY_SCHEDULING > 0) && (defined(HAVE_SCHED_H) || defined(HAVE_SYS_SCHED_H))
+#if (!defined(U_SERVER_CAPTIVE_PORTAL) || defined(ENABLE_THREAD)) && defined(_POSIX_PRIORITY_SCHEDULING) && \
+    (_POSIX_PRIORITY_SCHEDULING > 0) && (defined(HAVE_SCHED_H) || defined(HAVE_SYS_SCHED_H))
    struct sched_param sp;
 
    U_INTERNAL_TRACE("u_switch_to_realtime_priority()")
@@ -1298,7 +1299,7 @@ uint8_t u_get_loadavg(void)
    return 255;
 }
 
-uint32_t u_get_uptime(void)
+uint32_t u_set_uptime(char* buffer)
 {
    /**
     * /proc/uptime (ex: 1753.44 6478.08)
@@ -1309,7 +1310,7 @@ uint32_t u_get_uptime(void)
 #if defined(U_LINUX) && !defined(U_COVERITY_FALSE_POSITIVE)
    static int fd_uptime;
 
-   char buffer[12];
+   uint8_t i;
    ssize_t bytes_read;
 
    U_INTERNAL_TRACE("u_get_uptime()")
@@ -1318,13 +1319,22 @@ uint32_t u_get_uptime(void)
 
    U_INTERNAL_ASSERT_DIFFERS(fd_uptime, -1)
 
-   bytes_read = pread(fd_uptime, buffer, sizeof(buffer), 0);
+   bytes_read = pread(fd_uptime, buffer, 12, 0);
 
    if (bytes_read > 0)
       {
-      U_INTERNAL_ASSERT_RANGE(1,bytes_read,(int)sizeof(buffer))
+      U_INTERNAL_ASSERT_RANGE(1,bytes_read,12)
 
-      return u_atoi(buffer);
+      U_INTERNAL_PRINT("result = %u", u_atoi(buffer))
+
+      U_INTERNAL_ASSERT_MINOR(u_atoi(buffer), 12 * U_ONE_YEAR_IN_SECOND)
+
+      for (i = 0; i < 12; ++i)
+         {
+         if (buffer[i] == '.') break;
+         }
+
+      return i;
       }
 #endif
 

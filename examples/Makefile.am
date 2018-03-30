@@ -5,6 +5,7 @@ AUTOMAKE_OPTIONS = no-dependencies
 EXTRA_DIST = README \
 				 WiAuth/Makefile.* \
 				 hello/Makefile.* hello/*.cpp \
+				 serialize/Makefile.* serialize/*.cpp \
 				 XAdES/*.h XAdES/*.cpp XAdES/Makefile.* \
 				 IR/*.h IR/*.cpp IR/Makefile.* \
 				 userver/*.cpp userver/Makefile.* \

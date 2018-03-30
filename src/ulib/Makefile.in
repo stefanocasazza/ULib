@@ -147,27 +147,28 @@ target_triplet = @target@
 @MOD_SHIB_TRUE@@STATIC_HANDLER_SHIB_TRUE@am__append_49 = net/server/plugin/mod_shib/mod_shib.cpp
 @STATIC_HANDLER_STREAM_TRUE@am__append_50 = net/server/plugin/mod_stream.cpp
 @STATIC_HANDLER_NOCAT_TRUE@am__append_51 = net/server/plugin/mod_nocat.cpp
-@STATIC_HANDLER_SOCKET_TRUE@am__append_52 = net/server/plugin/mod_socket.cpp
-@STATIC_HANDLER_SCGI_TRUE@am__append_53 = net/server/plugin/mod_scgi.cpp
-@STATIC_HANDLER_FCGI_TRUE@am__append_54 = net/server/plugin/mod_fcgi.cpp
-@GEOIP_TRUE@@STATIC_HANDLER_GEOIP_TRUE@am__append_55 = net/server/plugin/mod_geoip/mod_geoip.cpp
-@PCRE_TRUE@@STATIC_HANDLER_PROXY_TRUE@am__append_56 = net/server/plugin/mod_proxy.cpp
-@EXPAT_TRUE@@STATIC_HANDLER_SOAP_TRUE@am__append_57 = net/server/plugin/mod_soap.cpp
-@STATIC_HANDLER_SSI_TRUE@am__append_58 = net/server/plugin/mod_ssi.cpp
-@STATIC_HANDLER_TSA_TRUE@am__append_59 = net/server/plugin/mod_tsa.cpp
-@STATIC_HANDLER_HTTP_TRUE@am__append_60 = net/server/plugin/mod_http.cpp
-@STATIC_HANDLER_ECHO_TRUE@am__append_61 = net/server/plugin/mod_echo.cpp
+@STATIC_HANDLER_NODOG_TRUE@am__append_52 = net/server/plugin/mod_nodog.cpp
+@STATIC_HANDLER_SOCKET_TRUE@am__append_53 = net/server/plugin/mod_socket.cpp
+@STATIC_HANDLER_SCGI_TRUE@am__append_54 = net/server/plugin/mod_scgi.cpp
+@STATIC_HANDLER_FCGI_TRUE@am__append_55 = net/server/plugin/mod_fcgi.cpp
+@GEOIP_TRUE@@STATIC_HANDLER_GEOIP_TRUE@am__append_56 = net/server/plugin/mod_geoip/mod_geoip.cpp
+@PCRE_TRUE@@STATIC_HANDLER_PROXY_TRUE@am__append_57 = net/server/plugin/mod_proxy.cpp
+@EXPAT_TRUE@@STATIC_HANDLER_SOAP_TRUE@am__append_58 = net/server/plugin/mod_soap.cpp
+@STATIC_HANDLER_SSI_TRUE@am__append_59 = net/server/plugin/mod_ssi.cpp
+@STATIC_HANDLER_TSA_TRUE@am__append_60 = net/server/plugin/mod_tsa.cpp
+@STATIC_HANDLER_HTTP_TRUE@am__append_61 = net/server/plugin/mod_http.cpp
+@STATIC_HANDLER_ECHO_TRUE@am__append_62 = net/server/plugin/mod_echo.cpp
 
 # Handler static orm driver
-@STATIC_ORM_DRIVER_SQLITE_TRUE@am__append_62 = orm/driver/orm_driver_sqlite.cpp
-@STATIC_ORM_DRIVER_MYSQL_TRUE@am__append_63 = orm/driver/orm_driver_mysql.cpp
-@STATIC_ORM_DRIVER_PGSQL_TRUE@am__append_64 = orm/driver/orm_driver_pgsql.cpp
+@STATIC_ORM_DRIVER_SQLITE_TRUE@am__append_63 = orm/driver/orm_driver_sqlite.cpp
+@STATIC_ORM_DRIVER_MYSQL_TRUE@am__append_64 = orm/driver/orm_driver_mysql.cpp
+@STATIC_ORM_DRIVER_PGSQL_TRUE@am__append_65 = orm/driver/orm_driver_pgsql.cpp
 
 # Handler static http servlet
-@STATIC_ONLY_TRUE@@STATIC_SERVLET_TRUE@am__append_65 = net/server/plugin/usp/loader.autoconf.inc 
+@STATIC_ONLY_TRUE@@STATIC_SERVLET_TRUE@am__append_66 = net/server/plugin/usp/loader.autoconf.inc 
 
 # ---------- Win32 stuff ----------
-@MINGW_TRUE@am__append_66 = -export-symbols $(srcdir)/@ULIB@.def -no-undefined -Wl,ULib-win32-res.o
+@MINGW_TRUE@am__append_67 = -export-symbols $(srcdir)/@ULIB@.def -no-undefined -Wl,ULib-win32-res.o
 subdir = src/ulib
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/ac_check_package.m4 \
@@ -288,6 +289,7 @@ am__lib@ULIB@_la_SOURCES_DIST = base/base.c base/base_error.c \
 	net/server/plugin/mod_shib/mod_shib.cpp \
 	net/server/plugin/mod_stream.cpp \
 	net/server/plugin/mod_nocat.cpp \
+	net/server/plugin/mod_nodog.cpp \
 	net/server/plugin/mod_socket.cpp \
 	net/server/plugin/mod_scgi.cpp net/server/plugin/mod_fcgi.cpp \
 	net/server/plugin/mod_geoip/mod_geoip.cpp \
@@ -378,30 +380,32 @@ am__objects_26 = base/base.lo base/base_error.lo base/hash.lo \
 @STATIC_HANDLER_STREAM_TRUE@	net/server/plugin/mod_stream.lo
 @STATIC_HANDLER_NOCAT_TRUE@am__objects_52 =  \
 @STATIC_HANDLER_NOCAT_TRUE@	net/server/plugin/mod_nocat.lo
-@STATIC_HANDLER_SOCKET_TRUE@am__objects_53 =  \
+@STATIC_HANDLER_NODOG_TRUE@am__objects_53 =  \
+@STATIC_HANDLER_NODOG_TRUE@	net/server/plugin/mod_nodog.lo
+@STATIC_HANDLER_SOCKET_TRUE@am__objects_54 =  \
 @STATIC_HANDLER_SOCKET_TRUE@	net/server/plugin/mod_socket.lo
-@STATIC_HANDLER_SCGI_TRUE@am__objects_54 =  \
+@STATIC_HANDLER_SCGI_TRUE@am__objects_55 =  \
 @STATIC_HANDLER_SCGI_TRUE@	net/server/plugin/mod_scgi.lo
-@STATIC_HANDLER_FCGI_TRUE@am__objects_55 =  \
+@STATIC_HANDLER_FCGI_TRUE@am__objects_56 =  \
 @STATIC_HANDLER_FCGI_TRUE@	net/server/plugin/mod_fcgi.lo
-@GEOIP_TRUE@@STATIC_HANDLER_GEOIP_TRUE@am__objects_56 = net/server/plugin/mod_geoip/mod_geoip.lo
-@PCRE_TRUE@@STATIC_HANDLER_PROXY_TRUE@am__objects_57 = net/server/plugin/mod_proxy.lo
-@EXPAT_TRUE@@STATIC_HANDLER_SOAP_TRUE@am__objects_58 = net/server/plugin/mod_soap.lo
-@STATIC_HANDLER_SSI_TRUE@am__objects_59 =  \
+@GEOIP_TRUE@@STATIC_HANDLER_GEOIP_TRUE@am__objects_57 = net/server/plugin/mod_geoip/mod_geoip.lo
+@PCRE_TRUE@@STATIC_HANDLER_PROXY_TRUE@am__objects_58 = net/server/plugin/mod_proxy.lo
+@EXPAT_TRUE@@STATIC_HANDLER_SOAP_TRUE@am__objects_59 = net/server/plugin/mod_soap.lo
+@STATIC_HANDLER_SSI_TRUE@am__objects_60 =  \
 @STATIC_HANDLER_SSI_TRUE@	net/server/plugin/mod_ssi.lo
-@STATIC_HANDLER_TSA_TRUE@am__objects_60 =  \
+@STATIC_HANDLER_TSA_TRUE@am__objects_61 =  \
 @STATIC_HANDLER_TSA_TRUE@	net/server/plugin/mod_tsa.lo
-@STATIC_HANDLER_HTTP_TRUE@am__objects_61 =  \
+@STATIC_HANDLER_HTTP_TRUE@am__objects_62 =  \
 @STATIC_HANDLER_HTTP_TRUE@	net/server/plugin/mod_http.lo
-@STATIC_HANDLER_ECHO_TRUE@am__objects_62 =  \
+@STATIC_HANDLER_ECHO_TRUE@am__objects_63 =  \
 @STATIC_HANDLER_ECHO_TRUE@	net/server/plugin/mod_echo.lo
-@STATIC_ORM_DRIVER_SQLITE_TRUE@am__objects_63 = orm/driver/orm_driver_sqlite.lo
-@STATIC_ORM_DRIVER_MYSQL_TRUE@am__objects_64 =  \
+@STATIC_ORM_DRIVER_SQLITE_TRUE@am__objects_64 = orm/driver/orm_driver_sqlite.lo
+@STATIC_ORM_DRIVER_MYSQL_TRUE@am__objects_65 =  \
 @STATIC_ORM_DRIVER_MYSQL_TRUE@	orm/driver/orm_driver_mysql.lo
-@STATIC_ORM_DRIVER_PGSQL_TRUE@am__objects_65 =  \
+@STATIC_ORM_DRIVER_PGSQL_TRUE@am__objects_66 =  \
 @STATIC_ORM_DRIVER_PGSQL_TRUE@	orm/driver/orm_driver_pgsql.lo
-am__objects_66 =
-am__objects_67 = internal/common.lo internal/error.lo ui/dialog.lo \
+am__objects_67 =
+am__objects_68 = internal/common.lo internal/error.lo ui/dialog.lo \
 	db/cdb.lo db/rdb.lo dynamic/dynamic.lo dynamic/plugin.lo \
 	mime/header.lo mime/entity.lo mime/multipart.lo \
 	container/vector.lo container/hash_map.lo container/tree.lo \
@@ -439,9 +443,9 @@ am__objects_67 = internal/common.lo internal/error.lo ui/dialog.lo \
 	$(am__objects_57) $(am__objects_58) $(am__objects_59) \
 	$(am__objects_60) $(am__objects_61) $(am__objects_62) \
 	$(am__objects_63) $(am__objects_64) $(am__objects_65) \
-	$(am__objects_66)
+	$(am__objects_66) $(am__objects_67)
 @FINAL_FALSE@am_lib@ULIB@_la_OBJECTS = $(am__objects_26) \
-@FINAL_FALSE@	$(am__objects_67)
+@FINAL_FALSE@	$(am__objects_68)
 @FINAL_TRUE@am_lib@ULIB@_la_OBJECTS = all_c.lo base/xxhash/xxhash.lo \
 @FINAL_TRUE@	all_cpp.lo
 lib@ULIB@_la_OBJECTS = $(am_lib@ULIB@_la_OBJECTS)
@@ -771,11 +775,12 @@ SRC_CPP = internal/common.cpp internal/error.cpp ui/dialog.cpp \
 	$(am__append_54) $(am__append_55) $(am__append_56) \
 	$(am__append_57) $(am__append_58) $(am__append_59) \
 	$(am__append_60) $(am__append_61) $(am__append_62) \
-	$(am__append_63) $(am__append_64) $(am__append_65)
+	$(am__append_63) $(am__append_64) $(am__append_65) \
+	$(am__append_66)
 
 #lib@ULIB@_la_CXXFLAGS =
 lib@ULIB@_la_LDFLAGS = @ULIB_LIBS@ -version-info 1:0:0 -release \
-	@ULIB_VERSION@ $(am__append_66)
+	@ULIB_VERSION@ $(am__append_67)
 @FINAL_FALSE@lib@ULIB@_la_SOURCES = $(SRC_C) $(SRC_CPP)
 @FINAL_TRUE@lib@ULIB@_la_SOURCES = all_c.c base/xxhash/xxhash.c all_cpp.cpp
 lib_LTLIBRARIES = lib@ULIB@.la
@@ -1384,6 +1389,8 @@ net/server/plugin/mod_stream.lo: net/server/plugin/$(am__dirstamp) \
 	net/server/plugin/$(DEPDIR)/$(am__dirstamp)
 net/server/plugin/mod_nocat.lo: net/server/plugin/$(am__dirstamp) \
 	net/server/plugin/$(DEPDIR)/$(am__dirstamp)
+net/server/plugin/mod_nodog.lo: net/server/plugin/$(am__dirstamp) \
+	net/server/plugin/$(DEPDIR)/$(am__dirstamp)
 net/server/plugin/mod_socket.lo: net/server/plugin/$(am__dirstamp) \
 	net/server/plugin/$(DEPDIR)/$(am__dirstamp)
 net/server/plugin/mod_scgi.lo: net/server/plugin/$(am__dirstamp) \
@@ -1628,6 +1635,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@net/server/plugin/$(DEPDIR)/mod_fcgi.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@net/server/plugin/$(DEPDIR)/mod_http.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@net/server/plugin/$(DEPDIR)/mod_nocat.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@net/server/plugin/$(DEPDIR)/mod_nodog.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@net/server/plugin/$(DEPDIR)/mod_proxy.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@net/server/plugin/$(DEPDIR)/mod_proxy_service.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@net/server/plugin/$(DEPDIR)/mod_rpc.Plo@am__quote@

@@ -120,7 +120,7 @@ public:
    // the headers into the generated MIME section
    // -----------------------------------------------------------------------------------------------------
 
-   static UString section(const UString& content,
+   static UString section(const char* content, uint32_t content_len,
                           const char* type = "", uint32_t type_len = 0,
                           Encoding encoding = AUTO, const char* charset = "", const char* name = "",
                           const char* header = "", uint32_t header_len = 0);
@@ -145,7 +145,7 @@ protected:
    static const char* str_encoding[4];
 
 private:
-   static inline int encodeAutodetect(const UString& content, const char* charset) U_NO_EXPORT __pure;
+   static inline int encodeAutodetect(const char* content, uint32_t content_len, const char* charset) U_NO_EXPORT __pure;
 
    U_DISALLOW_COPY_AND_ASSIGN(UMimeMultipartMsg)
 };

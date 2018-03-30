@@ -185,9 +185,10 @@ public:
    static UVector<UModProxyService*>* vservice;
 
    static char response_buffer[64];
+   static off_t range_start, range_size;
    static int mime_index, cgi_timeout; // the time-out value in seconds for output cgi process
    static bool enable_caching_by_proxy_servers, skip_check_cookie_ip_address;
-   static uint32_t limit_request_body, request_read_timeout, range_start, range_size, gzip_level_for_dynamic_content, brotli_level_for_dynamic_content;
+   static uint32_t limit_request_body, request_read_timeout, gzip_level_for_dynamic_content, brotli_level_for_dynamic_content;
 
    static bool readRequest();
    static bool handlerCache();
@@ -196,7 +197,7 @@ public:
    static void setStatusDescription();
    static void setEndRequestProcessing();
    static bool callService(const UString& path);
-   static void checkContentLength(uint32_t length);
+   static void checkContentLength(off_t length);
    static bool isUriRequestNeedCertificate() __pure;
    static bool isValidMethod(const char* ptr) __pure;
    static bool checkContentLength(const UString& response);
@@ -297,9 +298,9 @@ public:
       U_RETURN(agent);
       }
 
-   static bool isSizeForSendfile(uint32_t sz)
+   static bool isSizeForSendfile(off_t sz)
       {
-      U_TRACE(0, "UHTTP::isSizeForSendfile(%u)", sz)
+      U_TRACE(0, "UHTTP::isSizeForSendfile(%I)", sz)
 
       U_INTERNAL_DUMP("U_http_version = %C UServer_Base::min_size_for_sendfile = %u UServer_Base::bssl = %b", U_http_version, UServer_Base::min_size_for_sendfile, UServer_Base::bssl)
 
@@ -411,7 +412,7 @@ public:
    static const char* getHeaderValuePtr(                        const UString& name, bool nocase) { return getHeaderValuePtr(         U_STRING_TO_PARAM(name), nocase); }
    static const char* getHeaderValuePtr(const UString& request, const UString& name, bool nocase) { return getHeaderValuePtr(request, U_STRING_TO_PARAM(name), nocase); }
 
-   static UString getHeaderMimeType(const char* content, uint32_t size, const char* content_type, time_t expire = 0L, bool content_length_changeable = false);
+   static UString getHeaderMimeType(const char* content, uint32_t size, const char* content_type, time_t expire = 0L);
 
    // set HTTP response message
 
@@ -421,7 +422,6 @@ public:
       PARAM_DEPENDENCY                = 0x004,
       NETWORK_AUTHENTICATION_REQUIRED = 0x008
    };
-
 
    static void setResponse()
       {
@@ -434,8 +434,35 @@ public:
       handlerResponse();
       }
 
+   static void setResponseBody(const UString& content)
+      {
+      U_TRACE(0, "UHTTP::setResponseBody(%V)", content.rep)
+
+      if (content.empty())
+         {
+         U_http_info.nResponseCode = HTTP_NO_CONTENT;
+
+         setResponse();
+
+         return;
+         }
+
+      U_INTERNAL_ASSERT_EQUALS(U_http_info.nResponseCode, HTTP_OK)
+
+      U_http_info.endHeader       = 0;
+      *UClientImage_Base::wbuffer = content;
+      }
+
+   static void setResponseMimeIndex(const UString& content, int mime_idx = U_unknow)
+      {
+      U_TRACE(0, "UHTTP::setResponseMimeIndex(%V,%d)", content.rep, mime_idx)
+
+      setResponseBody(content);
+
+      setDynamicResponse();
+      }
+
    static void setDynamicResponse();
-   static void setResponseMimeIndex(const UString& content, int mime_index);
    static void setResponse(const UString& content_type, UString* pbody = U_NULLPTR);
    static void setRedirectResponse(int mode, const char* ptr_location, uint32_t len_location);
    static void setErrorResponse(const UString& content_type, int code, const char* fmt, uint32_t fmt_size, bool bformat = true);
@@ -481,6 +508,13 @@ public:
       U_TRACE_NO_PARAM(0, "UHTTP::setMethodNotImplemented()")
 
       setErrorResponse(*UString::str_ctype_html, HTTP_NOT_IMPLEMENTED, U_CONSTANT_TO_PARAM("Sorry, the method you requested is not implemented"), false);
+      }
+
+   static void setEntityTooLarge()
+      {
+      U_TRACE_NO_PARAM(0, "UHTTP::setEntityTooLarge()")
+
+      setErrorResponse(*UString::str_ctype_html, HTTP_ENTITY_TOO_LARGE, U_CONSTANT_TO_PARAM("Sorry, the data you requested is too large"), false);
       }
 
    static void setUnAuthorized();
@@ -1192,13 +1226,37 @@ private:
 
    static void checkFileForCache();
    static void renewFileDataInCache();
+   static void setResponseFromFileCache(UFileCacheData* pdata);
+
+   static UFileCacheData* getFileCachePointer(const char* path, uint32_t len)
+      {
+      U_TRACE(0, "UHTTP::getFileCachePointer(%.*S,%u)", len, path, len)
+
+      return cache_file->at(path, len);
+      }
+
+   static UFileCacheData* getFileCachePointer(const UString& path) { return getFileCachePointer(U_STRING_TO_PARAM(path)); }
+
+   static UFileCacheData* getFileCachePointerVar(const char* format, uint32_t fmt_size, ...)
+      {
+      U_TRACE(0, "UHTTP::getFileCachePointerVar(%.*S,%u)", fmt_size, format, fmt_size)
+
+      U_INTERNAL_ASSERT_EQUALS(u_buffer_len, 0)
+
+      va_list argp;
+      va_start(argp, fmt_size);
+
+      return cache_file->at(u_buffer, u__vsnprintf(u_buffer, U_BUFFER_SIZE, format, fmt_size, argp));
+
+      va_end(argp);
+      }
 
    static bool   getFileInCache(const char* path, uint32_t len);
    static bool checkFileInCache(const char* path, uint32_t len)
       {
       U_TRACE(0, "UHTTP::checkFileInCache(%.*S,%u)", len, path, len)
 
-      if ((file_data = cache_file->at(path, len)))
+      if ((file_data = getFileCachePointer(path, len)))
          {
          file->st_size  = file_data->size;
          file->st_mode  = file_data->mode;
@@ -1270,7 +1328,7 @@ private:
       {
       U_TRACE(0, "UHTTP::contentOfFromCache(%.*S,%u)", len, path, len)
 
-      if ((file_data = cache_file->at(path, len)))
+      if ((file_data = getFileCachePointer(path, len)))
          {
          UString result = getBodyFromCache();
 
@@ -1408,7 +1466,7 @@ private:
    static void checkIPClient() U_NO_EXPORT;
    static bool runDynamicPage() U_NO_EXPORT;
    static bool readBodyRequest() U_NO_EXPORT;
-   static bool processFileCache() U_NO_EXPORT;
+   static void processFileCache() U_NO_EXPORT;
    static bool readHeaderRequest() U_NO_EXPORT;
    static bool processGetRequest() U_NO_EXPORT;
    static void processDataFromCache() U_NO_EXPORT;
@@ -1416,20 +1474,21 @@ private:
    static bool checkGetRequestIfRange() U_NO_EXPORT;
    static void setCGIShellScript(UString& command) U_NO_EXPORT;
    static bool checkIfSourceHasChangedAndCompileUSP() U_NO_EXPORT;
+   static int  checkGetRequestForRange(const char* pdata) U_NO_EXPORT;
    static bool compileUSP(const char* path, uint32_t len) U_NO_EXPORT;
-   static int  checkGetRequestForRange(const UString& data) U_NO_EXPORT;
    static int  sortRange(const void* a, const void* b) __pure U_NO_EXPORT;
    static bool addHTTPVariables(UStringRep* key, void* value) U_NO_EXPORT;
    static void setContentResponse(const UString& content_type) U_NO_EXPORT;
    static bool splitCGIOutput(const char*& ptr1, const char* ptr2) U_NO_EXPORT;
    static void putDataInCache(const UString& fmt, UString& content) U_NO_EXPORT;
    static void setHeaderForCache(UFileCacheData* ptr, UString& data) U_NO_EXPORT;
+   static void setResponseForRange(off_t start, off_t end, uint32_t header) U_NO_EXPORT;
    static bool readDataChunked(USocket* sk, UString* pbuffer, UString& body) U_NO_EXPORT;
-   static void setResponseForRange(uint32_t start, uint32_t end, uint32_t header) U_NO_EXPORT;
    static void manageDataForCache(const UString& basename, const UString& suffix) U_NO_EXPORT;
    static bool checkDataSession(const UString& token, time_t expire, UString* data) U_NO_EXPORT;
+   static void addContentLengthToHeader(UString& header, char* ptr, uint32_t size, const char* pEndHeader = U_NULLPTR) U_NO_EXPORT;
+   static void setDataInCache(const UString& fmt, const UString& content, const char* encoding, uint32_t encoding_len) U_NO_EXPORT;
    static bool processAuthorization(const char* ptr = U_NULLPTR, uint32_t sz = 0, const char* pattern = U_NULLPTR, uint32_t len = 0) U_NO_EXPORT;
-   static void setDataInCache(const UString& fmt, const UString& content, const char* encoding = U_NULLPTR, uint32_t encoding_len = 0) U_NO_EXPORT;
 
    static inline void resetFileCache() U_NO_EXPORT;
    static inline void setUpgrade(const char* ptr) U_NO_EXPORT;
@@ -1437,7 +1496,7 @@ private:
    static inline bool checkGetRequestIfModified() U_NO_EXPORT;
    static inline void setIfModSince(const char* ptr) U_NO_EXPORT;
    static inline void setConnection(const char* ptr) U_NO_EXPORT;
-   static inline bool setSendfile(int fd, uint32_t start, uint32_t count) U_NO_EXPORT;
+   static inline bool setSendfile(int fd, off_t start, off_t count) U_NO_EXPORT;
    static inline void setContentLength(const char* ptr1, const char* ptr2) U_NO_EXPORT;
 
    static inline bool checkDataChunked(UString* pbuffer) U_NO_EXPORT;

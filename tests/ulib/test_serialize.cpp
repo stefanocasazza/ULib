@@ -37,13 +37,11 @@ int U_EXPORT main(int argc, char* argv[], char* env[])
    U_TRACE(5, "main(%d)", argc)
 
    uint64_t i, size;
-   uint8_t stack[1024];
+   UFlatBufferSpace space;
    UFlatBuffer fb, vec, vec0, map, map0;
    uint64_t vec1[] = {1, 2, 3, 7}; 
    bool     vec2[] = {true, false, true};
    double   vec3[] = {1.0, 0.2, 0.5, 5.6};
-
-   UFlatBuffer::setStack(stack, sizeof(stack));
 
    Request().testFlatBuffer();
    Response().testFlatBuffer();
@@ -215,8 +213,6 @@ int U_EXPORT main(int argc, char* argv[], char* env[])
 
    fb.setRoot();
    fb.AsTypedVector(vec);
-
-// (void) UFile::writeToTmp(U_STRING_TO_PARAM(fb.getResult()), O_RDWR | O_TRUNC, U_CONSTANT_TO_PARAM("test_serialize.%P"), 0);
 
    U_ASSERT_EQUALS(vec.GetSize(), 8)
    U_ASSERT_EQUALS(vec.AsTypedOrFixedVectorGet<UString>(0), "9cvxHmjzuQzzCaw2LMTvjmyMeRXM8mzXY")

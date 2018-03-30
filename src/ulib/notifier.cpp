@@ -1529,10 +1529,10 @@ const char* UNotifier::dump(bool reset) const
                   << "fd_write_cnt                " << fd_write_cnt   << '\n';
    *UObjectIO::os << "fd_set_read                 ";
    char buffer[70];
-    UObjectIO::os->write(buffer, u__snprintf(buffer, sizeof(buffer), U_CONSTANT_TO_PARAM("%B"), __FDS_BITS(&fd_set_read)[0]));
+    UObjectIO::os->write(buffer, u__snprintf(buffer, U_CONSTANT_SIZE(buffer), U_CONSTANT_TO_PARAM("%B"), __FDS_BITS(&fd_set_read)[0]));
     UObjectIO::os->put('\n');
    *UObjectIO::os << "fd_set_write                ";
-    UObjectIO::os->write(buffer, u__snprintf(buffer, sizeof(buffer), U_CONSTANT_TO_PARAM("%B"), __FDS_BITS(&fd_set_write)[0]));
+    UObjectIO::os->write(buffer, u__snprintf(buffer, U_CONSTANT_SIZE(buffer), U_CONSTANT_TO_PARAM("%B"), __FDS_BITS(&fd_set_write)[0]));
     UObjectIO::os->put('\n');
 #endif
    *UObjectIO::os << "nfd_ready                   " << nfd_ready      << '\n'

@@ -37,6 +37,7 @@
 
 class UProcess;
 class UNoCatPlugIn;
+class UNoDogPlugIn;
 
 template <class T> class UVector;
 
@@ -180,6 +181,7 @@ private:
    U_DISALLOW_COPY_AND_ASSIGN(UPing)
 
    friend class UNoCatPlugIn;
+   friend class UNoDogPlugIn;
 };
 
 #endif

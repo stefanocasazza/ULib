@@ -49,13 +49,27 @@ UClient_Base::UClient_Base(UFileConfig* pcfg) : response(U_CAPACITY), buffer(U_C
 
       if (cfg->empty() == false) loadConfigParam();
       }
+
+#ifndef U_LOG_DISABLE
+   U_INTERNAL_DUMP("log = %p UServer_Base::isLog() = %b log_shared_with_server = %b", log, UServer_Base::isLog(), log_shared_with_server)
+
+   if (log == U_NULLPTR      &&
+       UServer_Base::isLog() &&
+       log_shared_with_server == false)
+      {
+      log                    = UServer_Base::log;
+      log_shared_with_server = true;
+      }
+#endif
 }
 
 UClient_Base::~UClient_Base()
 {
    U_TRACE_UNREGISTER_OBJECT(0, UClient_Base)
 
+#ifndef U_LOG_DISABLE
    closeLog();
+#endif
 
    U_INTERNAL_ASSERT_POINTER(socket)
 
@@ -67,6 +81,8 @@ UClient_Base::~UClient_Base()
         uri.clear(); // uri can depend on url...
         url.clear(); // url can depend on response... (Location: xxx)
    response.clear(); // NB: to avoid DEAD OF SOURCE STRING WITH CHILD ALIVE... (response may be substr of buffer)
+
+   UStringRep::check_dead_of_source_string_with_child_alive = true;
 #endif
 }
 
@@ -212,29 +228,14 @@ void UClient_Base::loadConfigParam()
 #ifndef U_LOG_DISABLE
    x = cfg->at(U_CONSTANT_TO_PARAM("LOG_FILE"));
 
-   if (x)
+   if (x                               &&
+       log == U_NULLPTR                &&
+       (UServer_Base::isLog() == false ||
+        UServer_Base::log->getPath().equal(x) == false))
       {
-      if (UServer_Base::isLog())
-         {
-         U_ASSERT_EQUALS(x, UServer_Base::log->getPath())
+      U_NEW(ULog, log, ULog(x, cfg->readLong(U_CONSTANT_TO_PARAM("LOG_FILE_SZ"))));
 
-         setLogShared();
-         }
-      else
-         {
-         U_INTERNAL_ASSERT_EQUALS(log, U_NULLPTR)
-
-         U_NEW(ULog, log, ULog(x, cfg->readLong(U_CONSTANT_TO_PARAM("LOG_FILE_SZ"))));
-
-         log->setPrefix(U_CONSTANT_TO_PARAM(U_SERVER_LOG_PREFIX));
-         }
-      }
-
-   if (log == U_NULLPTR      &&
-       UServer_Base::isLog() &&
-       isLogSharedWithServer() == false)
-      {
-      setLogShared();
+      log->setPrefix(U_CONSTANT_TO_PARAM(U_SERVER_LOG_PREFIX));
       }
 #endif
 
@@ -302,9 +303,9 @@ bool UClient_Base::connectServer(const UString& _url)
       {
       U_INTERNAL_ASSERT(*queue_dir)
 
-      char _buffer[U_PATH_MAX];
+      char _buffer[U_PATH_MAX+1];
 
-      (void) u__snprintf(_buffer, sizeof(_buffer), U_CONSTANT_TO_PARAM("%v/%v.%4D"), queue_dir->rep, host_port.rep); // 4D => _millisec
+      (void) u__snprintf(_buffer, U_PATH_MAX, U_CONSTANT_TO_PARAM("%v/%v.%4D"), queue_dir->rep, host_port.rep); // 4D => _millisec
 
       queue_fd = UFile::creat(_buffer, O_RDWR | O_EXCL, PERM_FILE);
 

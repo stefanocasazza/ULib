@@ -127,8 +127,9 @@ public:
    static void end();
    static void init(char** argv, const char* mempool = U_NULLPTR);
 
-private:
+   private:
    static uustring uustringnull;
+   static uustring uustringubuffer;
    static uustringrep uustringrepnull;
 
    friend class UString;

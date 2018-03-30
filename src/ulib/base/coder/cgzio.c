@@ -17,7 +17,7 @@
 
 #include <ulib/base/coder/gzio.h>
 
-bool u_gz_deflate_header = true;
+bool u_gz_deflate_header;
 
 /**
  * Synopsis: Compress and Decompresses the source buffer into the destination buffer

@@ -111,6 +111,9 @@ public:
       {
       U_TRACE(5, "IR::deleteDB(%b)", brdb)
 
+      if (cdb_names->isMapped()) cdb_names->munmap();
+      if (cdb_words->isMapped()) cdb_words->munmap();
+
       if (brdb)
          {
          delete (URDB*)cdb_names;

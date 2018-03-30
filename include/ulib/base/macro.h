@@ -260,11 +260,11 @@ typedef enum {
 
 #if SIZEOF_LONG == 4
 #  define U_INT2PTR(x) ((void*)(long)(x))
+#  define U_PTR2INT(x) ((unsigned int)(long)x)
 #else
 #  define U_INT2PTR(x) ((void*)((long)(x) & 0x00000000FFFFFFFFULL))
+#  define U_PTR2INT(x) ((unsigned long long)(long)x)
 #endif
-
-#define U_PTR2INT(x) ((unsigned int)(long)x)
 
 union uucflag {
    unsigned char c[4];

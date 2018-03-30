@@ -1966,7 +1966,7 @@ fi
 
 # SECTION 14: Checks for aggregated features
 
-modules="rpc shib stream nocat socket scgi fcgi geoip proxy soap ssi tsa http echo"
+modules="rpc shib stream nocat nodog socket scgi fcgi geoip proxy soap ssi tsa http echo"
 
 if test "$USE_LIBPCRE" = "yes"; then
 	ulib_pcre_msg="yes ( $pcre_version )"
@@ -2080,11 +2080,12 @@ static_handler_soap=""
 static_handler_ssi=""
 static_handler_tsa=""
 static_handler_nocat=""
+static_handler_nodog=""
 static_handler_http=""
 static_handler_echo=""
 
 AC_ARG_ENABLE(static-server-plugin,
-				  AS_HELP_STRING([--enable-static-server-plugin=MODULES],[ rpc shib stream socket scgi fcgi geoip proxy soap ssi tsa nocat http echo ]),
+				  AS_HELP_STRING([--enable-static-server-plugin=MODULES],[ rpc shib stream socket scgi fcgi geoip proxy soap ssi tsa nocat nodog http echo ]),
 				  [use_static_module="$enableval"])
 
 for mod in $use_static_module; do
@@ -2132,6 +2133,9 @@ for mod in $use_static_module; do
 		elif test "$mod" = "nocat"; then
 			static_handler_nocat="yes"
 			AC_DEFINE(U_STATIC_HANDLER_NOCAT,, [STATIC_HANDLER_NOCAT])
+		elif test "$mod" = "nodog"; then
+			static_handler_nodog="yes"
+			AC_DEFINE(U_STATIC_HANDLER_NODOG,, [STATIC_HANDLER_NODOG])
 		elif test "$mod" = "http"; then
 			static_handler_http="yes"
 			AC_DEFINE(U_STATIC_HANDLER_HTTP,, [STATIC_HANDLER_HTTP])
@@ -2162,6 +2166,7 @@ AM_CONDITIONAL(STATIC_HANDLER_SOAP,   test "$static_handler_soap"   = "yes")
 AM_CONDITIONAL(STATIC_HANDLER_SSI,    test "$static_handler_ssi"    = "yes")
 AM_CONDITIONAL(STATIC_HANDLER_TSA,    test "$static_handler_tsa"    = "yes")
 AM_CONDITIONAL(STATIC_HANDLER_NOCAT,  test "$static_handler_nocat"  = "yes")
+AM_CONDITIONAL(STATIC_HANDLER_NODOG,  test "$static_handler_nodog"  = "yes")
 AM_CONDITIONAL(STATIC_HANDLER_HTTP,   test "$static_handler_http"	  = "yes")
 AM_CONDITIONAL(STATIC_HANDLER_ECHO,	  test "$static_handler_echo"   = "yes")
 
@@ -2437,7 +2442,7 @@ if test "$ac_cv_c_compiler_gnu" = "yes" -a "x$OPERATINGSYSTEM" = xlinux; then
 		else
 			## _FORTIFY_SOURCE is enabled by default from g++ 4.7.2
 			MAYBE_FLAGS="$MAYBE_FLAGS -Wunsafe-loop-optimizations -Wno-unused-parameter -rdynamic -fdiagnostics-color=auto -Wmisleading-indentation"
-			CXX_MAYBE_FLAGS="$CXX_MAYBE_FLAGS -Wc++11-compat -Wzero-as-null-pointer-constant -Wno-implicit-fallthrough"
+			CXX_MAYBE_FLAGS="$CXX_MAYBE_FLAGS -Wc++11-compat" ## -Wzero-as-null-pointer-constant -Wno-implicit-fallthrough
 		fi
 	fi
 
@@ -2856,8 +2861,8 @@ AC_CONFIG_FILES([
 	src/ulib/net/server/plugin/v8/Makefile src/ulib/net/server/plugin/php/Makefile src/ulib/net/server/plugin/usp/Makefile
 	src/ulib/net/server/plugin/ruby/Makefile src/ulib/net/server/plugin/mod_shib/Makefile src/ulib/net/server/plugin/mod_geoip/Makefile
 	src/ulib/net/server/plugin/usp/usp_compile.sh src/ulib/net/server/plugin/page_speed/Makefile src/ulib/net/server/plugin/python/Makefile
-	examples/Makefile examples/IR/Makefile examples/csp/Makefile examples/lcsp/Makefile examples/rsign/Makefile
-	examples/hello/Makefile examples/WiAuth/Makefile examples/xml2txt/Makefile examples/uclient/Makefile examples/userver/Makefile
+	examples/Makefile examples/IR/Makefile examples/csp/Makefile examples/lcsp/Makefile examples/rsign/Makefile examples/hello/Makefile
+	examples/serialize/Makefile examples/WiAuth/Makefile examples/WiAuth/v2/Makefile examples/xml2txt/Makefile examples/uclient/Makefile examples/userver/Makefile
 	examples/PEC_log/Makefile examples/workflow/Makefile examples/doc_parse/Makefile examples/lrp_session/Makefile examples/http_header/Makefile
 	examples/test_manager/Makefile examples/doc_classifier/Makefile examples/form_completion/Makefile examples/simple_client_server/Makefile
 	examples/download_accelerator/Makefile examples/XAdES/Makefile examples/XAdES/XAdES.spec examples/xml2txt/xml2txt.spec examples/IR/searchengine-bin.spec

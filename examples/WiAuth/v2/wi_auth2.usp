@@ -1,0 +1,22 @@
+<!--#declaration
+static void usp_end_wi_auth2();
+static void usp_init_wi_auth2();
+
+#include "wi_auth_declaration2.h"
+-->
+<!--#code
+static UHTTP::service_info GET_table[] = { // NB: the table must be ordered alphabetically for binary search...
+   GET_ENTRY(get_config),
+   GET_ENTRY(start_ap),
+   GET_ENTRY(welcome)
+};
+
+static UHTTP::service_info POST_table[] = { // NB: the table must be ordered alphabetically for binary search...
+   POST_ENTRY(info),
+   POST_ENTRY(login),
+   POST_ENTRY(notify),
+   POST_ENTRY(strict_notify)
+};
+
+UHTTP::manageRequest(GET_table, U_NUM_ELEMENTS(GET_table), POST_table, U_NUM_ELEMENTS(POST_table));
+-->

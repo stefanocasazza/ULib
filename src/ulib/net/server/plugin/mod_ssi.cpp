@@ -1007,7 +1007,6 @@ int USSIPlugIn::handlerRequest()
          {
          U_INTERNAL_ASSERT_MAJOR(U_http_info.uri_len, 1)
          U_ASSERT(UClientImage_Base::environment->empty())
-         U_INTERNAL_ASSERT_EQUALS(U_HTTP_QUERY_STREQ("_nav_"), false)
          U_INTERNAL_ASSERT_DIFFERS(u_clientimage_info.http_info.uri[u_clientimage_info.http_info.uri_len-1], '/') // directory request
 
          // init
@@ -1069,7 +1068,7 @@ int USSIPlugIn::handlerRequest()
 
          // process the SSI file
 
-         UString output = processSSIRequest(*body, 0);
+         UString output = (U_HTTP_QUERY_STREQ("_nav_") ? *body : processSSIRequest(*body, 0));
 
          U_INTERNAL_DUMP("alternative_response = %d output(%u) = %V", alternative_response, output.size(), output.rep)
 

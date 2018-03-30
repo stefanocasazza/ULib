@@ -41,6 +41,10 @@
 #include <ulib/utility/interrupt.h>
 #include <ulib/serialize/flatbuffers.h>
 
+#ifdef USE_LIBZ
+#  include <ulib/base/coder/gzio.h>
+#endif
+
 #ifndef HAVE_POLL_H
 #  include <ulib/notifier.h>
 #  include <ulib/event/event_time.h>
@@ -110,12 +114,30 @@ static struct ustringrep u_empty_string_rep_storage = {
    0, /* _length */
    0, /* _capacity */
    0, /* references */
-  ""  /* str - NB: we need an address (see c_str() or isNullTerminated()) and must be null terminated... */
+   "" /* str - NB: we need an address (see c_str() or isNullTerminated()) and must be null terminated... */
 };
 
-static struct ustring u_empty_string_storage = { &u_empty_string_rep_storage };
+static struct ustringrep u_buffer_string_rep_storage = {
+# ifdef DEBUG
+   (void*)U_CHECK_MEMORY_SENTINEL, /* memory_error (_this) */
+# endif
+# if defined(U_SUBSTR_INC_REF) || defined(DEBUG)
+   U_NULLPTR, /* parent - substring increment reference of source string */
+#  ifdef DEBUG
+   0, /* child  - substring capture event 'DEAD OF SOURCE STRING WITH CHILD ALIVE'... */
+#  endif
+# endif
+   0, /* _length */
+   U_BUFFER_SIZE, /* _capacity */
+   1, /* references */
+   "" /* str - NB: we need an address (see c_str() or isNullTerminated()) and must be null terminated... */
+};
+
+static struct ustring u_empty_string_storage  = { &u_empty_string_rep_storage };
+static struct ustring u_buffer_string_storage = { &u_buffer_string_rep_storage };
 
 uustring    ULib::uustringnull    = { &u_empty_string_storage };
+uustring    ULib::uustringubuffer = { &u_buffer_string_storage };
 uustringrep ULib::uustringrepnull = { &u_empty_string_rep_storage };
 
 void ULib::init(char** argv, const char* mempool)
@@ -169,7 +191,7 @@ void ULib::init(char** argv, const char* mempool)
       UMemoryPool::allocateMemoryBlocks(ptr);
       }
 
-   U_INTERNAL_ASSERT_EQUALS(U_BUFFER_SIZE, U_MAX_SIZE_PREALLOCATE * 2)
+   U_INTERNAL_ASSERT_EQUALS(U_BUFFER_SIZE+1, U_MAX_SIZE_PREALLOCATE * 2)
 
    ptr      = (char*) UMemoryPool::pop(U_SIZE_TO_STACK_INDEX(U_MAX_SIZE_PREALLOCATE));
    u_buffer = (char*) UMemoryPool::pop(U_SIZE_TO_STACK_INDEX(U_MAX_SIZE_PREALLOCATE));
@@ -195,9 +217,34 @@ void ULib::init(char** argv, const char* mempool)
    UFlatBuffer::setStack((uint8_t*)u_err_buffer, 256);
    UFlatBuffer::setBuffer((uint8_t*)u_buffer, U_BUFFER_SIZE);
 
+#if defined(U_STATIC_ONLY)
+   if (UStringRep::string_rep_null == U_NULLPTR)
+      {
+      UString::string_null        = uustringnull.p2;
+      UString::string_u_buffer    = uustringubuffer.p2;
+      UStringRep::string_rep_null = uustringrepnull.p2;
+      }
+#endif
+
+   U_INTERNAL_ASSERT_EQUALS(sizeof(UStringRep), sizeof(ustringrep))
+
+   UString::string_u_buffer->rep->str = u_buffer;
+
+   U_INTERNAL_DUMP("u_is_tty = %b string_rep_null = %p string_null = %p string_u_buffer = %p string_u_buffer->data() = %p",
+                    u_is_tty, UStringRep::string_rep_null, UString::string_null, UString::string_u_buffer, UString::string_u_buffer->data())
+
+   U_INTERNAL_ASSERT(UString::string_null->invariant())
+   U_INTERNAL_ASSERT(UString::string_u_buffer->invariant())
+
+   UString::str_allocate(0);
+
    UString::ptrbuf =
    UString::appbuf = (char*)UMemoryPool::pop(U_SIZE_TO_STACK_INDEX(1024));
    UFile::cwd_save = (char*)UMemoryPool::pop(U_SIZE_TO_STACK_INDEX(1024));
+
+#ifdef USE_LIBZ
+   u_gz_deflate_header = true;
+#endif
 
 #if defined(DEBUG) && defined(U_STDCPP_ENABLE)
 # ifdef DEBUG
@@ -243,20 +290,6 @@ void ULib::init(char** argv, const char* mempool)
    __asm__("pushf\norl $0x40000,(%rsp)\npopf"); // Enable Alignment Checking on x86_64
 # endif
 #endif
-
-   U_INTERNAL_ASSERT_EQUALS(sizeof(UStringRep), sizeof(ustringrep))
-
-#if defined(U_STATIC_ONLY)
-   if (UStringRep::string_rep_null == U_NULLPTR)
-      {
-      UString::string_null        = uustringnull.p2;
-      UStringRep::string_rep_null = uustringrepnull.p2;
-      }
-#endif
-
-   UString::str_allocate(0);
-
-   U_INTERNAL_DUMP("u_is_tty = %b UStringRep::string_rep_null = %p UString::string_null = %p", u_is_tty, UStringRep::string_rep_null, UString::string_null)
 
    /**
    * NB: there are to many exceptions...

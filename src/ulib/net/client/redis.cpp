@@ -11,6 +11,7 @@
 //
 // ============================================================================
 
+#include <ulib/tokenizer.h>
 #include <ulib/net/client/redis.h>
 
 // Connect to REDIS server
@@ -43,18 +44,6 @@ bool UREDISClient_Base::connect(const char* phost, unsigned int _port)
    if (UClient_Base::setHostPort(host, _port) &&
        UClient_Base::connect())
       {
-      UClient_Base::iovcnt = 4;
-
-      UClient_Base::iov[1].iov_base =
-      UClient_Base::iov[4].iov_base = (caddr_t)" ";
-      UClient_Base::iov[1].iov_len  =
-      UClient_Base::iov[4].iov_len  = 1;
-
-      UClient_Base::iov[3].iov_base =
-      UClient_Base::iov[5].iov_base = (caddr_t)U_CRLF;
-      UClient_Base::iov[3].iov_len  =
-      UClient_Base::iov[5].iov_len  = 2;
-
       U_DUMP("getRedisVersion() = %V", getRedisVersion().rep)
 
       U_RETURN(true);
@@ -86,35 +75,9 @@ UString UREDISClient_Base::getInfoData(const char* section, const char* key, uin
    return UString::getStringNull();
 }
 
-U_NO_EXPORT bool UREDISClient_Base::processRequest(char recvtype)
+U_NO_EXPORT char* UREDISClient_Base::getResponseItem(char* ptr, UVector<UString>& vec, uint32_t depth)
 {
-   U_TRACE(0, "UREDISClient_Base::processRequest(%C)", recvtype)
-
-   if (UClient_Base::sendRequest(false) &&
-       (vitem.clear(), UClient_Base::response.setBuffer(U_CAPACITY), UClient_Base::readResponse(U_SINGLE_READ)))
-      {
-      char prefix = UClient_Base::response[0];
-
-      if (  prefix != recvtype &&
-          recvtype != U_RC_ANY)
-         {
-         err = (prefix == U_RC_ERROR ? U_RC_ERROR
-                                     : U_RC_ERR_PROTOCOL);
-
-         U_RETURN(false);
-         }
-
-      err = U_RC_OK;
-
-      U_RETURN(true);
-      }
-
-   U_RETURN(false);
-}
-
-U_NO_EXPORT char* UREDISClient_Base::getResponseItem(const UString& response, char* ptr, UVector<UString>& vec, uint32_t depth)
-{
-   U_TRACE(0, "UREDISClient_Base::getResponseItem(%p,%p,%p,%u)", response.rep, ptr, &vec, depth)
+   U_TRACE(0, "UREDISClient_Base::getResponseItem(%p,%p,%u)", ptr, &vec, depth)
 
    U_INTERNAL_DUMP("ptr = %.20S", ptr)
 
@@ -129,7 +92,7 @@ U_NO_EXPORT char* UREDISClient_Base::getResponseItem(const UString& response, ch
 
       while (*ptr != '\r') ++ptr;
 
-      vec.push_back(response.substr(start, ptr-start));
+      vec.push_back(UClient_Base::response.substr(start, ptr-start));
 
       return ptr;
       }
@@ -138,15 +101,24 @@ U_NO_EXPORT char* UREDISClient_Base::getResponseItem(const UString& response, ch
 
    U_INTERNAL_DUMP("len = %d errno = %d", len, errno)
 
-   U_INTERNAL_ASSERT_EQUALS(memcmp(ptr, "\r\n", 2), 0)
+   U_INTERNAL_ASSERT_EQUALS(memcmp(ptr, U_CRLF, U_CONSTANT_SIZE(U_CRLF)), 0)
+
+   if (len > UClient_Base::response.remain(ptr+U_CONSTANT_SIZE(U_CRLF)))
+      {
+      uint32_t d = UClient_Base::response.distance(ptr);
+
+      (void) UClient_Base::readResponse(len+U_CONSTANT_SIZE(U_CRLF));
+
+      ptr = UClient_Base::response.c_pointer(d);
+      }
 
    if (prefix == U_RC_BULK) // "$15\r\nmy-value-tester\r\n"
       {
       if (len == -1) vec.push_back(UString::getStringNull());
       else
          {
-         vec.push_back(response.substr(ptr +2,len));
-                                       ptr+=2+len;
+         vec.push_back(UClient_Base::response.substr(ptr +  U_CONSTANT_SIZE(U_CRLF),len));
+                                                     ptr += U_CONSTANT_SIZE(U_CRLF)+len;
          }
 
       return ptr;
@@ -181,11 +153,11 @@ U_NO_EXPORT char* UREDISClient_Base::getResponseItem(const UString& response, ch
 
    for (int i = 0; i < len; ++i)
       {
-      bnested = (ptr[2] == U_RC_MULTIBULK && ++depth);
+      bnested = (ptr[U_CONSTANT_SIZE(U_CRLF)] == U_RC_MULTIBULK && ++depth);
 
-      U_INTERNAL_DUMP("prefix = %C bnested = %b", ptr[2], bnested)
+      U_INTERNAL_DUMP("prefix = %C bnested = %b", ptr[U_CONSTANT_SIZE(U_CRLF)], bnested)
 
-      ptr = getResponseItem(response, ptr+2, vec1, depth);
+      ptr = getResponseItem(ptr+U_CONSTANT_SIZE(U_CRLF), vec1, depth);
 
       if (bnested == false) vec.move(vec1);
       else
@@ -205,7 +177,7 @@ U_NO_EXPORT char* UREDISClient_Base::getResponseItem(const UString& response, ch
    return ptr;
 }
 
-U_NO_EXPORT void UREDISClient_Base::processResponse()
+void UREDISClient_Base::processResponse()
 {
    U_TRACE_NO_PARAM(0, "UREDISClient_Base::processResponse()")
 
@@ -217,7 +189,7 @@ U_NO_EXPORT void UREDISClient_Base::processResponse()
    const char* end = UClient_Base::response.pend();
 
    do {
-      ptr = getResponseItem(UClient_Base::response, ptr, vitem, 0);
+      ptr = getResponseItem(ptr, vitem, 0);
 
       U_DUMP_CONTAINER(vitem)
 
@@ -228,31 +200,25 @@ U_NO_EXPORT void UREDISClient_Base::processResponse()
    while (ptr < end);
 }
 
-bool UREDISClient_Base::processRequest(char recvtype, const char* p1, uint32_t len1)
+bool UREDISClient_Base::processRequest(char recvtype)
 {
-   U_TRACE(0, "UREDISClient_Base::processRequest(%C,%.*S,%u)", recvtype, len1, p1, len1)
+   U_TRACE(0, "UREDISClient_Base::processRequest(%C)", recvtype)
 
-   U_INTERNAL_ASSERT_EQUALS(UClient_Base::iovcnt, 4)
-   U_INTERNAL_ASSERT_EQUALS(UClient_Base::iov[1].iov_len, 1)
-   U_INTERNAL_ASSERT_EQUALS(UClient_Base::iov[3].iov_len, 2)
-
-   UClient_Base::iovcnt = 2;
-
-   UClient_Base::iov[0].iov_base = (caddr_t)p1;
-   UClient_Base::iov[0].iov_len  = len1;
-   UClient_Base::iov[1].iov_base = (caddr_t)U_CRLF;
-   UClient_Base::iov[1].iov_len  = 2;
-
-   bool result = processRequest(recvtype);
-
-   UClient_Base::iovcnt = 4;
-
-   UClient_Base::iov[1].iov_base = (caddr_t)" ";
-   UClient_Base::iov[1].iov_len  = 1;
-
-   if (result)
+   if (UClient_Base::sendRequest(false) &&
+       (vitem.clear(), UClient_Base::response.setBuffer(UString::_getReserveNeed()), UClient_Base::readResponse(U_SINGLE_READ)))
       {
-      processResponse();
+      char prefix = UClient_Base::response[0];
+
+      if (  prefix != recvtype &&
+          recvtype != U_RC_ANY)
+         {
+         err = (prefix == U_RC_ERROR ? U_RC_ERROR
+                                     : U_RC_ERR_PROTOCOL);
+
+         U_RETURN(false);
+         }
+
+      err = U_RC_OK;
 
       U_RETURN(true);
       }
@@ -264,14 +230,16 @@ bool UREDISClient_Base::processRequest(char recvtype, const char* p1, uint32_t l
 {
    U_TRACE(0, "UREDISClient_Base::processRequest(%C,%.*S,%u,%.*S,%u)", recvtype, len1, p1, len1, len2, p2, len2)
 
-   U_INTERNAL_ASSERT_EQUALS(UClient_Base::iovcnt, 4)
-   U_INTERNAL_ASSERT_EQUALS(UClient_Base::iov[1].iov_len, 1)
-   U_INTERNAL_ASSERT_EQUALS(UClient_Base::iov[3].iov_len, 2)
+   UClient_Base::iovcnt = 4;
 
    UClient_Base::iov[0].iov_base = (caddr_t)p1;
    UClient_Base::iov[0].iov_len  = len1;
+   UClient_Base::iov[1].iov_base = (caddr_t)" ";
+   UClient_Base::iov[1].iov_len  = 1;
    UClient_Base::iov[2].iov_base = (caddr_t)p2;
    UClient_Base::iov[2].iov_len  = len2;
+   UClient_Base::iov[3].iov_base = (caddr_t)U_CRLF;
+   UClient_Base::iov[3].iov_len  = 2;
 
    if (processRequest(recvtype))
       {
@@ -287,31 +255,24 @@ bool UREDISClient_Base::processRequest(char recvtype, const char* p1, uint32_t l
 {
    U_TRACE(0, "UREDISClient_Base::processRequest(%C,%.*S,%u,%.*S,%u,%.*S,%u)", recvtype, len1, p1, len1, len2, p2, len2, len3, p3, len3)
 
-   U_INTERNAL_ASSERT_EQUALS(UClient_Base::iovcnt, 4)
-   U_INTERNAL_ASSERT_EQUALS(UClient_Base::iov[1].iov_len, 1)
-   U_INTERNAL_ASSERT_EQUALS(UClient_Base::iov[3].iov_len, 2)
-
    UClient_Base::iovcnt = 6;
 
    UClient_Base::iov[0].iov_base = (caddr_t)p1;
    UClient_Base::iov[0].iov_len  = len1;
+   UClient_Base::iov[1].iov_base = (caddr_t)" ";
+   UClient_Base::iov[1].iov_len  = 1;
    UClient_Base::iov[2].iov_base = (caddr_t)p2;
    UClient_Base::iov[2].iov_len  = len2;
    UClient_Base::iov[3].iov_base = (caddr_t)" ";
    UClient_Base::iov[3].iov_len  = 1;
    UClient_Base::iov[4].iov_base = (caddr_t)p3;
    UClient_Base::iov[4].iov_len  = len3;
+   UClient_Base::iov[5].iov_base = (caddr_t)U_CRLF;
+   UClient_Base::iov[5].iov_len  = 2;
 
    U_INTERNAL_ASSERT_EQUALS(UClient_Base::iov[5].iov_len, 2)
 
-   bool result = processRequest(recvtype);
-
-   UClient_Base::iovcnt = 4;
-
-   UClient_Base::iov[3].iov_base = (caddr_t)U_CRLF;
-   UClient_Base::iov[3].iov_len  = 2;
-
-   if (result)
+   if (processRequest(recvtype))
       {
       processResponse();
 
@@ -319,6 +280,125 @@ bool UREDISClient_Base::processRequest(char recvtype, const char* p1, uint32_t l
       }
 
    U_RETURN(false);
+}
+
+bool UREDISClient_Base::processMultiRequest(const char* format, uint32_t fmt_size, ...)
+{
+   U_TRACE(0, "UREDISClient_Base::processMultiRequest(%.*S,%u)", fmt_size, format, fmt_size)
+
+   UClient_Base::iovcnt = 1;
+
+   UClient_Base::iov[0].iov_base = (caddr_t)"MULTI\r\n";
+   UClient_Base::iov[0].iov_len  = 7;
+
+   if (processRequest(U_RC_INLINE)) // +OK\r\n
+      {
+      U_INTERNAL_ASSERT_POINTER(format)
+      U_INTERNAL_ASSERT_MAJOR(fmt_size, 0)
+      U_INTERNAL_ASSERT(u_endsWith(format, fmt_size, U_CONSTANT_TO_PARAM(U_CRLF)))
+
+      x = UString::getUBuffer();
+
+      va_list argp;
+      va_start(argp, fmt_size);
+
+      x.vsnprintf(format, fmt_size, argp);
+
+      va_end(argp);
+
+      UString cmd;
+      UTokenizer tok(x, "\r\n");
+
+      while (tok.next(cmd, (bool*)U_NULLPTR))
+         {
+         UClient_Base::iov[0].iov_base = (caddr_t)u_buffer; // cmd.data();
+         UClient_Base::iov[0].iov_len  = cmd.size()+U_CONSTANT_SIZE(U_CRLF);
+
+         if (processRequest(U_RC_INLINE) == false) U_RETURN(false); // +QUEUED\r\n
+         }
+
+      UClient_Base::iov[0].iov_base = (caddr_t)"EXEC\r\n";
+      UClient_Base::iov[0].iov_len  = 6;
+
+      if (processRequest(U_RC_MULTIBULK)) // *2\r\n+OK\r\n-ERR...\r\n
+         {
+         processResponse();
+
+         U_RETURN(true);
+         }
+      }
+
+   U_RETURN(false);
+}
+
+bool UREDISClient_Base::scan(const char* pattern, uint32_t len, vPFcs function) // Returns all keys matching pattern (scan 0 MATCH *11*)
+{
+   U_TRACE(0, "UREDISClient_Base::scan(%.*S,%u,%p)", len, pattern, len, function)
+
+   /**
+    * You start by giving a cursor value of 0; each call returns a new cursor value which you pass into the next SCAN call. A value of 0 indicates iteration is finished.
+    * Supposedly no server or client state is needed (except for the cursor value)
+    */
+
+   char buf[4096];
+   uint32_t buf_len = u__snprintf(buf, U_CONSTANT_SIZE(buf), U_CONSTANT_TO_PARAM("MATCH %.*s COUNT 1000"), len, pattern);
+
+   if (processRequest(U_RC_MULTIBULK, U_CONSTANT_TO_PARAM("SCAN"), U_CONSTANT_TO_PARAM("0"), buf, buf_len))
+      {
+      char ncursor[22];
+      UVector<UString> vec;
+      uint32_t i, n, cursor = getULong();
+
+loop: if (setMultiBulk(vec))
+         {
+         for (i = 0, n = vec.size(); i < n; ++i) function(vec[i]);
+         }
+
+      if (cursor == 0) U_RETURN(true);
+
+      if (processRequest(U_RC_MULTIBULK, U_CONSTANT_TO_PARAM("SCAN"), ncursor, u__snprintf(ncursor, u_num2str32(cursor,ncursor)-ncursor, buf, buf_len)))
+         {
+         cursor = getULong();
+
+         vec.clear();
+
+         goto loop;
+         }
+      }
+
+   U_RETURN(false);
+}
+
+bool UREDISClient_Base::deleteKeys(const char* pattern, uint32_t len) // Delete all keys matching pattern
+{
+   U_TRACE(0, "UREDISClient_Base::deleteKeys(%.*S,%u)", len, pattern, len)
+
+   char buf[4096];
+   uint32_t buf_len = u__snprintf(buf, U_CONSTANT_SIZE(buf), U_CONSTANT_TO_PARAM("MATCH %.*s COUNT 1000"), len, pattern);
+
+   if (processRequest(U_RC_MULTIBULK, U_CONSTANT_TO_PARAM("SCAN"), U_CONSTANT_TO_PARAM("0"), buf, buf_len))
+      {
+      char ncursor[22];
+      uint32_t cursor = getULong();
+
+loop: if (setMultiBulk())
+         {
+         x.unQuote();
+
+         if (del(x) == false) U_RETURN(false);
+         }
+
+      if (cursor == 0) U_RETURN(true);
+
+      if (processRequest(U_RC_MULTIBULK, U_CONSTANT_TO_PARAM("SCAN"), ncursor, u__snprintf(ncursor, u_num2str32(cursor,ncursor)-ncursor, buf, buf_len)))
+         {
+         cursor = getULong();
+
+         goto loop;
+         }
+      }
+
+   U_RETURN(true);
 }
 
 // DEBUG

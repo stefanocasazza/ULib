@@ -70,6 +70,8 @@ public:
 #  ifdef USE_LIBZ
       if (buf_path_compress) delete buf_path_compress;
 #  endif
+
+      if (UFile::isMapped()) UFile::munmap();
       }
 
    void reopen()
@@ -188,7 +190,7 @@ public:
       va_list argp;
       va_start(argp, fmt_size);
 
-      len = u__vsnprintf(buffer, sizeof(buffer), fmt, fmt_size, argp);
+      len = u__vsnprintf(buffer, U_CONSTANT_SIZE(buffer), fmt, fmt_size, argp);
 
       va_end(argp);
 
@@ -259,7 +261,7 @@ private:
    friend class UHttpClient_Base;
    friend class UClientImage_Base;
 
-// friend int main(int, char**, char**);
+   // friend int main(int, char**, char**);
 };
 
 #endif

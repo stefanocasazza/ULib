@@ -348,7 +348,7 @@ time_t UTimeDate::getSecondFromDate(const char* str, bool gmt, struct tm* tm, co
 
          tm->tm_sec = u__strtoul(str, 2);
 
-         U_INTERNAL_ASSERT_EQUALS(str[2], 'Z')
+      // U_INTERNAL_ASSERT_EQUALS(str[2], 'Z')
          }
 
       U_INTERNAL_DUMP("tm_year = %u tm_mon = %u tm_mday = %u tm_hour = %d tm_min = %d tm_sec = %d", tm->tm_year, tm->tm_mon, tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec)

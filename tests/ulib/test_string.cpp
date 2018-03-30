@@ -2287,8 +2287,6 @@ U_EXPORT main(int argc, char* argv[])
 
    z = UStringExt::minifyCssJs(z);
 
-   (void) UFile::writeToTmp(U_STRING_TO_PARAM(z), O_RDWR | O_TRUNC, U_CONSTANT_TO_PARAM("livevalidation_standalone.compressed.js"), 0);
-
    U_ASSERT( z == y )
    */
 

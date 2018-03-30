@@ -1,10 +1,12 @@
-## Makefile.am for examples/IR
+## Makefile.am for examples/WiAuth
 
 .NOTPARALLEL:
 
 DEFAULT_INCLUDES = -I. -I$(top_srcdir)/include
 
 EXTRA_DIST = wi_auth.cpp wi_auth.usp cdbmake.cpp rdbgen.cpp login_adjust.cpp count_traffic.cpp count_traffic1.cpp
+
+SUBDIRS = v2
 
 ulib_la = @ULIBS@ $(top_builddir)/src/ulib/lib@ULIB@.la @ULIB_LIBS@
 

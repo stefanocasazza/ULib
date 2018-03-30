@@ -58,9 +58,9 @@ public:
 
       U_CHECK_MEMORY
 
-      char buffer[U_PATH_MAX];
+      char buffer[U_PATH_MAX+1];
 
-      uint32_t len = u__snprintf(buffer, sizeof(buffer), U_CONSTANT_TO_PARAM(" %u \"%.*s\""), word_freq, U_STRING_TO_TRACE(filename));
+      uint32_t len = u__snprintf(buffer, U_PATH_MAX, U_CONSTANT_TO_PARAM(" %u \"%.*s\""), word_freq, U_STRING_TO_TRACE(filename));
 
       (void) data_buffer.append(buffer, len);
       }

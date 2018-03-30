@@ -153,35 +153,12 @@ public:
 
    void prepareRequest(const UString& req) { request = req; prepareRequest(U_STRING_TO_PARAM(req)); }
 
-   // LOG 
-
    void clearData()
       {
       U_TRACE_NO_PARAM(0, "UClient_Base::clearData()")
 
         buffer.setEmpty();
       response.setEmpty();
-      }
-
-   static void closeLog();
-
-   static void setLogShared()
-      {
-      U_TRACE_NO_PARAM(0, "UClient_Base::setLogShared()")
-
-      U_INTERNAL_ASSERT_POINTER(UServer_Base::log)
-
-#  ifndef U_LOG_DISABLE
-      log                    = UServer_Base::log;
-      log_shared_with_server = true;
-#  endif
-      }
-
-   static bool isLogSharedWithServer()
-      {
-      U_TRACE_NO_PARAM(0, "UClient_Base::isLogSharedWithServer()")
-
-      U_RETURN(log_shared_with_server);
       }
 
    UString getUrl() const { return url.get(); }
@@ -200,6 +177,8 @@ public:
    bool remoteIPAddress(UIPAddress& addr);
    bool readResponse(uint32_t count = U_SINGLE_READ);
    bool setHostPort(const UString& host, unsigned int port);
+
+   static void closeLog();
 
    // NB: return if it has modified host or port...
 

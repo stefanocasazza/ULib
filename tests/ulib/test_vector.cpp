@@ -469,7 +469,7 @@ U_EXPORT main (int argc, char* argv[])
    tmp = y[5];
    U_ASSERT( tmp == U_STRING_FROM_CONSTANT("word with space") )
 
-   tmp = y.join(U_CONSTANT_TO_PARAM("//"));
+   tmp = y.join(0, U_CONSTANT_TO_PARAM("//"));
    U_ASSERT( tmp == U_STRING_FROM_CONSTANT("riga_0//riga_1//word//word with space//word//word with space") )
 
    y.clear();

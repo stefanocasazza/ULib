@@ -22,6 +22,45 @@ uint32_t UFlatBuffer::buffer_max;
 UFlatBufferValue* UFlatBuffer::pkeys;
 UFlatBufferValue* UFlatBuffer::pvalue;
 
+__pure uint8_t UFlatBufferValue::ElemWidth(uint32_t buf_size, uint32_t elem_index) const
+{
+   U_TRACE(0, "UFlatBufferValue::ElemWidth(%u,%u)", buf_size, elem_index)
+
+   if (IsInline(type_)) U_RETURN(min_bit_width_);
+
+   U_INTERNAL_DUMP("l_ = %u min_bit_width_ = %u", l_, min_bit_width_)
+
+   // We have an absolute offset, but want to store a relative offset elem_index elements beyond
+   // the current buffer end. Since whether the relative offset fits in a certain byte_width depends
+   // on the size of the elements before it (and their alignment), we have to test for each size in turn
+
+   uint8_t bit_width;
+   uint32_t offset_loc, offset;
+
+   for (uint8_t byte_width = 1; byte_width <= sizeof(uint32_t); byte_width *= 2)
+      {
+      // Where are we going to write this offset?
+
+      offset_loc = buf_size + PaddingBytes(buf_size, byte_width) + elem_index * byte_width;
+
+      // Compute relative offset
+
+      offset = offset_loc - l_;
+
+      // Does it fit?
+
+      bit_width = WidthL(offset);
+
+      U_INTERNAL_DUMP("bit_width = %u byte_width = %u offset = %u offset_loc = %u", bit_width, byte_width, offset, offset_loc)
+
+      if ((1U << bit_width) == byte_width) U_RETURN(bit_width);
+      }
+
+   U_INTERNAL_ASSERT(false) // Must match one of the sizes above
+
+   U_RETURN(BIT_WIDTH_64);
+}
+
 uint32_t UFlatBuffer::AsMapGetKeys(UVector<UString>& members) const
 {
    U_TRACE(0, "UFlatBuffer::AsMapGetKeys(%p)", &members)
@@ -52,7 +91,7 @@ void UFlatBuffer::WriteAny(uint8_t byte_width)
 {
    U_TRACE(0, "UFlatBuffer::WriteAny(%u)", byte_width)
 
-   U_DUMP("pvalue->type_ = (%u,%S) pvalue->i_ = %llu", pvalue->type_, getTypeDescription(pvalue->type_), pvalue->i_)
+   U_DUMP("pvalue->type_ = (%u,%S) pvalue->u_ = %llu", pvalue->type_, getTypeDescription(pvalue->type_), pvalue->u_)
 
    switch (pvalue->type_)
       {
@@ -143,6 +182,8 @@ void UFlatBuffer::CreateVector(uint32_t start, uint32_t vec_len, uint32_t step, 
    vector_type = pvalue->type_;
 
 loop1:
+   U_INTERNAL_DUMP("pvalue->l_ = %u pvalue->min_bit_width_ = %u", pvalue->l_, pvalue->min_bit_width_)
+
    elem_width = pvalue->ElemWidth(buffer_idx, i + prefix_elems);
 
    U_INTERNAL_DUMP("bit_width = %u elem_width = %u", bit_width, elem_width)
@@ -282,6 +323,25 @@ loop:
    pkeys = U_NULLPTR;
 }
 
+UString UFlatBuffer::toVector(vPFpfbpv func, bool typed, void* param)
+{
+   U_TRACE(0, "UFlatBuffer::toVector(%p,%b,%p)", func, typed, param)
+
+   UFlatBuffer fb;
+
+   fb.StartBuild();
+
+   (void) fb.StartVector();
+
+   func(&fb, param);
+
+   fb.EndVector(0, typed);
+
+   (void) fb.EndBuild();
+
+   return fb.getResult();
+}
+
 // DEBUG
 
 #ifdef DEBUG
@@ -327,7 +387,7 @@ const char* UFlatBuffer::getTypeDescription(uint8_t type)
    U_RETURN(descr);
 }
 
-const char* UFlatBuffer::dump(bool reset) const
+const char* UFlatBuffer::dump(bool _reset) const
 {
 #ifdef U_STDCPP_ENABLE
    *UObjectIO::os << "type_         " << type_                 << '\n'
@@ -335,7 +395,7 @@ const char* UFlatBuffer::dump(bool reset) const
                   << "byte_width_   " << (uint32_t)byte_width_ << '\n'
                   << "parent_width_ " << (uint32_t)parent_width_;
 
-   if (reset)
+   if (_reset)
       {
       UObjectIO::output();
 

@@ -87,7 +87,7 @@ public:
       // PID_FILE     write pid on file indicated
       // RES_TIMEOUT  timeout for response from server
       //
-      // LOG_FILE     locations   for file log
+      // LOG_FILE     locations for file log
       //
       // CERT_FILE    certificate of client
       // KEY_FILE     private key of client

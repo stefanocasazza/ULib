@@ -204,12 +204,12 @@ U_EXPORT char*    u_memoryDump( char* restrict bp, unsigned char* restrict cp, u
 U_EXPORT uint32_t u_memory_dump(char* restrict bp, unsigned char* restrict cp, uint32_t n);
 
 U_EXPORT uint8_t  u_get_loadavg(void); /* Get the load average of the system (over last 1 minute) */
-U_EXPORT uint32_t u_get_uptime( void); /* Get the uptime of the system (seconds) */
-U_EXPORT int      u_getScreenWidth(void) __pure; /* Determine the width of the terminal we're running on */
 U_EXPORT uint32_t u_printSize(char* restrict buffer, uint64_t bytes); /* print size using u_calcRate() */
-U_EXPORT bool     u_isNumber(const char* restrict s, uint32_t n) __pure;
-U_EXPORT double   u_calcRate(uint64_t bytes, uint32_t msecs, int* restrict units); /* Calculate the transfert rate */
-U_EXPORT char*    u_getPathRelativ(const char* restrict path, uint32_t* restrict path_len);
+
+U_EXPORT int    u_getScreenWidth(void) __pure; /* Determine the width of the terminal we're running on */
+U_EXPORT bool   u_isNumber(const char* restrict s, uint32_t n) __pure;
+U_EXPORT double u_calcRate(uint64_t bytes, uint32_t msecs, int* restrict units); /* Calculate the transfert rate */
+U_EXPORT char*  u_getPathRelativ(const char* restrict path, uint32_t* restrict path_len);
 
 U_EXPORT int  u_get_num_cpu(void); /* Get the number of the processors including offline CPUs */
 U_EXPORT void u_switch_to_realtime_priority(void); /* Set the process to maximum priority that can be used with the scheduling algorithm */
@@ -704,6 +704,27 @@ U_EXPORT bool u_isIPv6Addr(const char* restrict s, uint32_t n) __pure;
 
 static inline bool u_isIPAddr(bool IPv6, const char* restrict p, uint32_t n) { return (IPv6 ? u_isIPv6Addr(p, n)
                                                                                             : u_isIPv4Addr(p, n)); }
+
+U_EXPORT uint32_t u_set_uptime(char* buffer); /* Get the uptime of the system (seconds) */
+
+static inline uint32_t u_get_uptime(void) /* Get the uptime of the system (seconds) */
+{
+   /**
+    * /proc/uptime (ex: 1753.44 6478.08)
+    *
+    * This file contains two numbers: how long the system has been running (seconds), and the amount of time spent in idle process (seconds)
+    */
+
+#if defined(U_LINUX) && !defined(U_COVERITY_FALSE_POSITIVE)
+   char buffer[12];
+
+   U_INTERNAL_TRACE("u_get_uptime()")
+
+   if (u_set_uptime(buffer)) return u_atoi(buffer);
+#endif
+
+   return 0;
+}
 
 /**
  * sign

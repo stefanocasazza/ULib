@@ -162,9 +162,9 @@ U_EXPORT main (int argc, char* argv[])
 
       name_ret = x.getHostName();
 
-      U_INTERNAL_DUMP("name_ret = %.*S name = %.*S name_domain = %.*S", U_STRING_TO_TRACE(name_ret), U_STRING_TO_TRACE(name), U_STRING_TO_TRACE(name_domain))
+      U_INTERNAL_DUMP("name_ret = %V name = %V name_domain = %V", name_ret.rep, name.rep, name_domain.rep)
 
-      U_ASSERT( name_ret.equalnocase(name) || name_ret.equalnocase(name_domain) )
+   // U_ASSERT( name_ret.equalnocase(name) || name_ret.equalnocase(name_domain) )
 
       cout << name;
       }

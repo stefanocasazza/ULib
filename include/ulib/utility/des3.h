@@ -15,15 +15,9 @@
 #define ULIB_DES3_H 1
 
 #include <ulib/base/ssl/des3.h>
-
-#include <ulib/string.h>
+#include <ulib/utility/base64.h>
 
 struct U_EXPORT UDES3 {
-
-   static UString getSignedData(const char* ptr, uint32_t len);
-   static UString signData(const char* fmt, uint32_t fmt_size, ...);
-
-   static UString getSignedData(const UString& s) { return getSignedData(U_STRING_TO_PARAM(s)); }
 
    static void setPassword(const char* passwd)
       {
@@ -31,6 +25,28 @@ struct U_EXPORT UDES3 {
 
       u_des3_key(passwd);
       }
+
+   static UString signData(const UString& data)
+      {
+      U_TRACE(0, "UDES3::signData(%V)", data.rep)
+
+      uint32_t sz;
+      UString buffer((sz = data.size())+32U);
+
+      encode((const unsigned char*)data.data(), sz, buffer);
+
+      UString signed_data((sz = buffer.size())*4);
+
+      UBase64::encodeUrl(buffer.data(), sz, signed_data);
+
+      U_RETURN_STRING(signed_data);
+      }
+
+   static UString signData(const char* fmt, uint32_t fmt_size, ...);
+
+   static UString getSignedData(const char* ptr, uint32_t len);
+
+   static UString getSignedData(const UString& s) { return getSignedData(U_STRING_TO_PARAM(s)); }
 
    static void encode(const unsigned char* s, uint32_t n, UString& buffer)
       {

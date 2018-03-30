@@ -172,6 +172,8 @@ public:
             if (result) U_WARNING("%v", result.rep);
             }
          }
+
+      client->closeLog();
       }
 
 private:

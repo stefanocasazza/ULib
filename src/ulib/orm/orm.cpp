@@ -590,7 +590,7 @@ void UOrmStatement::bindParam(struct tm& v)
    buffer[0]     = 0;
    u_strftime_tm = v;
 
-   uint32_t n = u_strftime1(buffer, sizeof(buffer), U_CONSTANT_TO_PARAM("%Y-%m-%d %T"));
+   uint32_t n = u_strftime1(buffer, U_CONSTANT_SIZE(buffer), U_CONSTANT_TO_PARAM("%Y-%m-%d %T"));
 
    pdrv->bindParam(pstmt, buffer, n, false, -1);
 #endif

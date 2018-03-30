@@ -167,7 +167,8 @@ void u_trace_close(void)
 
    U_INTERNAL_TRACE("u_trace_close()")
 
-   if (lfd > STDERR_FILENO)
+   if (lfd != -1 &&
+       lfd > STDERR_FILENO)
       {
       if (file_size)
          {
@@ -175,11 +176,14 @@ void u_trace_close(void)
 
          U_INTERNAL_ASSERT_MINOR(write_size, (ptrdiff_t)file_size)
 
-         (void)  msync(file_mem, write_size, MS_SYNC | MS_INVALIDATE);
+      // (void)  msync(file_mem, write_size, MS_SYNC | MS_INVALIDATE);
          (void) munmap(file_mem,  file_size);
 
-         (void) ftruncate(lfd, write_size);
-         (void) fsync(lfd);
+         if (write_size > 0)
+            {
+            (void) ftruncate(lfd, write_size);
+         // (void) fsync(lfd);
+            }
 
          file_size = 0;
          }
@@ -197,7 +201,14 @@ static RETSIGTYPE handlerSIGUSR2(int signo)
 
    U_INTERNAL_TRACE("handlerSIGUSR2(%d)", signo)
 
+   u_fork_called  = false;
    u_trace_signal = true;
+
+/*
+#ifndef _MSWINDOWS_
+   setHandlerSIGUSR2(); // on-off by signal SIGUSR2
+#endif
+*/
 }
 
 static void setHandlerSIGUSR2(void)
@@ -223,14 +234,7 @@ void u_trace_init(bool bsignal)
       {
       u_trace_folder = getenv("UTRACE_FOLDER");
 
-      if (u_trace_folder == U_NULLPTR)
-         {
-#     if !defined(U_SERVER_CAPTIVE_PORTAL) || defined(ENABLE_THREAD)
-         u_trace_folder = ".";
-#     else
-         u_trace_folder = "/tmp";
-#     endif
-         }
+      if (u_trace_folder == U_NULLPTR) u_trace_folder = ".";
       }
 
    if (bsignal == false     &&
@@ -275,11 +279,11 @@ void u_trace_init(bool bsignal)
       if (u_trace_fd == STDERR_FILENO) file_size = 0;
       else
          {
-         char name[U_PATH_MAX];
+         char name[U_PATH_MAX+1];
 
          U_INTERNAL_ASSERT_POINTER(u_trace_folder)
 
-         (void) u__snprintf(name, sizeof(name), U_CONSTANT_TO_PARAM("%s/trace.%N.%P"), u_trace_folder);
+         (void) u__snprintf(name, U_PATH_MAX, U_CONSTANT_TO_PARAM("%s/trace.%N.%P"), u_trace_folder);
 
          /* NB: O_RDWR is needed for mmap(MAP_SHARED)... */
 
@@ -329,30 +333,30 @@ void u_trace_init(bool bsignal)
       if (u_trace_fd > STDERR_FILENO) u_atexit(&u_trace_close); /* register function of close trace at exit... */
       }
 
-# ifndef _MSWINDOWS_
+#ifndef _MSWINDOWS_
    setHandlerSIGUSR2(); /* on-off by signal SIGUSR2 */
-# endif
+#endif
 }
 
 void u_trace_handlerSignal(void)
 {
    U_INTERNAL_TRACE("u_trace_handlerSignal()")
 
+   u_trace_signal = false;
+
 #ifdef DEBUG
    if (u_trace_fd == -1 ||
        level_active < 0)
       {
       u_trace_init(true);
+
+      u_trace_unlock();
       }
    else
       {
       u_trace_close();
 
       level_active = -1;
-
-#  ifndef _MSWINDOWS_
-      setHandlerSIGUSR2(); /* on-off by signal SIGUSR2 */
-#  endif
       }
 #endif
 }
@@ -387,8 +391,6 @@ int u_trace_check_if_active(int level)
         if (flag_init == 0) u_trace_init(false);
    else if (u_trace_signal)
       {
-      u_trace_signal = false;
-
       u_trace_handlerSignal();
 
       u_print_status_trace();
@@ -439,7 +441,7 @@ void u_trace_dump(const char* restrict format, uint32_t fmt_size, ...)
 
    U_INTERNAL_TRACE("u_trace_dump(%.*s,%u)", fmt_size, format, fmt_size)
 
-   buffer_len = u__vsnprintf(buffer, sizeof(buffer), format, fmt_size, argp);
+   buffer_len = u__vsnprintf(buffer, U_CONSTANT_SIZE(buffer), format, fmt_size, argp);
 
    va_end(argp);
 

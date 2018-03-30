@@ -172,7 +172,7 @@ U_DO_PRAGMA(message ("Sorry I was compiled without thread enabled so I cannot us
 #  endif
 #endif
 
-#define U_BUFFER_SIZE 8192
+#define U_BUFFER_SIZE (8192-1) // NB: -1 because we want space for null-terminator...
 
 /* C++11 keywords and expressions */
 

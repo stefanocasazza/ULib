@@ -2765,7 +2765,7 @@ void u__printf(int fd, const char* format, uint32_t fmt_size, ...)
 
    U_INTERNAL_TRACE("u__printf(%d,%.*s,%u)", fd, fmt_size, format, fmt_size)
 
-   bytes_written = u__vsnprintf(buffer, sizeof(buffer)-1, format, fmt_size, argp);
+   bytes_written = u__vsnprintf(buffer, U_CONSTANT_SIZE(buffer), format, fmt_size, argp);
 
    va_end(argp);
 

@@ -69,28 +69,33 @@ bool Action::sendHttpPostRequest(const UString& url, const UString& body, const 
 {
    U_TRACE(5, "Action::sendHttpPostRequest(%.*S,%.*S,%S,%S)", U_STRING_TO_TRACE(url), U_STRING_TO_TRACE(body), content_type, expected)
 
-   bool ok  = client_http.sendPost(url, body, content_type);
-   response = client_http.getContent();
-
-   // manage error
-
-   if (response.empty() ||
-       U_http_info.nResponseCode != HTTP_OK)
+   if (client_http.sendPOST(url, body, content_type))
       {
-      ok = false;
+      response = client_http.getContent();
 
-      response.setBuffer(100U);
-      response.snprintf(U_CONSTANT_TO_PARAM("HTTP response %d"), U_http_info.nResponseCode);
+      // manage error
+
+      if (response.empty() ||
+          U_http_info.nResponseCode != HTTP_OK)
+         {
+         response.setBuffer(100U);
+         response.snprintf(U_CONSTANT_TO_PARAM("HTTP response %d"), U_http_info.nResponseCode);
+
+         U_RETURN(false);
+         }
+
+      if (strncmp(response.data(), expected, u__strlen(expected, __PRETTY_FUNCTION__)))
+         {
+         response.setBuffer(100U);
+         response.snprintf(U_CONSTANT_TO_PARAM("Non esiste una una cartella corrispondente all'UID %s"), uid);
+
+         U_RETURN(false);
+         }
+
+      U_RETURN(true);
       }
-   else if (ok && strncmp(response.data(), expected, u__strlen(expected, __PRETTY_FUNCTION__)))
-      {
-      ok = false;
 
-      response.setBuffer(100U);
-      response.snprintf(U_CONSTANT_TO_PARAM("Non esiste una una cartella corrispondente all'UID %s"), uid);
-      }
-
-   U_RETURN(ok);
+   U_RETURN(false);
 }
 
 bool Action::sendEmail()
@@ -142,8 +147,8 @@ bool Action::sendEmail()
 
          buffer.snprintf(U_STRING_TO_PARAM(emailBodyForm), event, state, action_name, error_message);
 
-         msg.add(UMimeMultipartMsg::section(buffer, U_NULLPTR, 0, UMimeMultipartMsg::AUTO));
-         msg.add(UMimeMultipartMsg::section(data,   U_NULLPTR, 0, UMimeMultipartMsg::AUTO, "", "",
+         msg.add(UMimeMultipartMsg::section(U_STRING_TO_PARAM(buffer), U_NULLPTR, 0, UMimeMultipartMsg::AUTO));
+         msg.add(UMimeMultipartMsg::section(U_STRING_TO_PARAM(data),   U_NULLPTR, 0, UMimeMultipartMsg::AUTO, "", "",
                                                     U_CONSTANT_TO_PARAM("Content-Disposition: attachment; filename=\"workflow-message.xml\"")));
 
          (void) msg.message(buffer);

@@ -308,7 +308,7 @@ bool USmtpClient::sendMessage(bool secure)
       {
       U_line_terminator_len = 2;
 
-      messageBody = UMimeMultipartMsg::section(messageBody, U_NULLPTR, 0, UMimeMultipartMsg::AUTO, "", "", U_CONSTANT_TO_PARAM("MIME-Version: 1.0"));
+      messageBody = UMimeMultipartMsg::section(U_STRING_TO_PARAM(messageBody), U_NULLPTR, 0, UMimeMultipartMsg::AUTO, "", "", U_CONSTANT_TO_PARAM("MIME-Version: 1.0"));
       }
 
    UString msg(rcptoAddress.size() + messageSubject.size() + messageHeader.size() + messageBody.size() + 32U);

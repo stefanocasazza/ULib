@@ -1581,10 +1581,10 @@ UString UStringExt::brotli(const char* s, uint32_t len, uint32_t quality, uint32
    if (sz == 0) return UString::getStringNull();
 
    UString result;
-   bool bpool = UFile::isAllocableFromPool(sz);
-   char* ptr = (bpool ? (result.setConstant(UFile::pfree, sz), UFile::pfree) : (UString::_reserve(result, sz), result.data()));
 
-   int rc = U_SYSCALL(BrotliEncoderCompress, "%u,%u,%u,%u,%p,%p,%p", quality, lgwin, (BrotliEncoderMode)mode, (size_t)len, (uint8_t*)s, &sz, (uint8_t*)ptr);
+   result.setConstant(sz);
+
+   int rc = U_SYSCALL(BrotliEncoderCompress, "%u,%u,%u,%u,%p,%p,%p", quality, lgwin, (BrotliEncoderMode)mode, (size_t)len, (uint8_t*)s, &sz, (uint8_t*)result.data());
 
    ratio = (sz * 100U) / len;
 
@@ -1596,15 +1596,7 @@ UString UStringExt::brotli(const char* s, uint32_t len, uint32_t quality, uint32
       return UString::getStringNull();
       }
 
-   result.rep->_length = sz;
-
-   if (bpool)
-      {
-      len = UFile::getSizeAligned(sz);
-
-      UFile::pfree += len;
-      UFile::nfree -= len;
-      }
+   result.size_adjust_constant(sz);
 
 // U_INTERNAL_ASSERT(isBrotli(result)) // check magic byte
 
@@ -1691,29 +1683,23 @@ UString UStringExt::deflate(const char* s, uint32_t len, uint32_t quality) // .g
 #endif
 
    UString result;
-   uint32_t sz = len + (len / 10) + 12U; // The zlib documentation states that destination buffer size must be at least 0.1% larger than avail_in plus 12 bytes 
-   bool bpool = UFile::isAllocableFromPool(sz);
-   char* ptr = (bpool ? (result.setConstant(UFile::pfree, sz), UFile::pfree) : (UString::_reserve(result, sz), result.data()));
+   uint32_t sz = (len + (len / 10) + 12U); // The zlib documentation states that destination buffer size must be at least 0.1% larger than avail_in plus 12 bytes 
+
+   result.setConstant(sz);
 
 #ifndef U_LOG_DISABLE
    deflate_agent = "gzip";
 #endif
 
-   ratio = ((sz = u_gz_deflate(s, len, ptr, (quality ? quality : Z_BEST_COMPRESSION))) * 100U) / len;
+   U_INTERNAL_ASSERT(u_gz_deflate_header)
+
+   ratio = ((sz = u_gz_deflate(s, len, result.data(), (quality ? quality : Z_BEST_COMPRESSION))) * 100U) / len;
 
    U_INTERNAL_DUMP("u_gz_deflate(%u) = %u ratio = %u (%u%%)", len, sz, ratio, 100-ratio)
 
    if (ratio > ratio_threshold) return UString::getStringNull();
 
-   result.rep->_length = sz;
-
-   if (bpool)
-      {
-      len = UFile::getSizeAligned(sz);
-
-      UFile::pfree += len;
-      UFile::nfree -= len;
-      }
+   result.size_adjust_constant(sz);
 
 #ifdef DEBUG
    uint32_t* psize_original = (uint32_t*)result.c_pointer(sz - 4);

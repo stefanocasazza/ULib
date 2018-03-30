@@ -484,7 +484,7 @@ public:
 
       char buffer[1024];
 
-      (void) buffer_data->append(buffer, u__snprintf(buffer, sizeof(buffer),
+      (void) buffer_data->append(buffer, u__snprintf(buffer, U_CONSTANT_SIZE(buffer),
                         U_CONSTANT_TO_PARAM(" %c%u %v \"%v\" \"%v\""
                         " %u %u %u %llu"),
                         noconsume ? '-' : '+', _num_users_connected, _label.rep, group_account_mask.rep, mac_mask.rep,
@@ -945,7 +945,7 @@ public:
 
             url.snprintf(U_CONSTANT_TO_PARAM("http://%v/cgi-bin/webif/reboot.sh"), ap_address->rep);
 
-            if (client->sendPost(url, *pbody)) nodog_rec->setStatus(1); // unreachable
+            if (client->sendPOST(url, *pbody)) nodog_rec->setStatus(1); // unreachable
             }
          }
       }
@@ -1073,8 +1073,8 @@ loop: pos = db_anagrafica->find(*ap_address, pos);
 
          if (vlabel.size() == vnetmask.size())
             {
-                lbl =   vlabel.join(' ');
-            netmask = vnetmask.join(' ');
+                lbl =   vlabel.join();
+            netmask = vnetmask.join();
             }
          else
             {
@@ -3391,7 +3391,7 @@ next:
 
       if (vuid->empty() == false)
          {
-         UString    tmp = vuid->join(','),
+         UString    tmp = vuid->join(0, U_CONSTANT_TO_PARAM(",")),
                  result = nodog_rec->sendRequestToNodog(U_CONSTANT_TO_PARAM("checkForUsersF?%v"), tmp.rep);
 
          if (result &&
@@ -3753,7 +3753,7 @@ static void usp_init_wi_auth()
       {
       UVector<UString> vec(content);
 
-      if (vec.empty() == false) *allowed_web_hosts = vec.join(' ') + ' ';
+      if (vec.empty() == false) *allowed_web_hosts = vec.join() + ' ';
       }
 
    U_NEW(UCache,        cache, UCache);
@@ -4923,7 +4923,7 @@ static UString printMonth(int month, int year)
 
       if ((i % 7) == 0) (void) result.append(U_CONSTANT_TO_PARAM("<tr>\n"));
 
-      (void) result.append(buffer, u__snprintf(buffer, sizeof(buffer), U_CONSTANT_TO_PARAM("<td%.*s><a href=\"%vt=%u&i=86400\">%.*s%u%.*s</a></td>\n"),
+      (void) result.append(buffer, u__snprintf(buffer, U_CONSTANT_SIZE(buffer), U_CONSTANT_TO_PARAM("<td%.*s><a href=\"%vt=%u&i=86400\">%.*s%u%.*s</a></td>\n"),
                               (bmonth          ? 0 : U_CONSTANT_SIZE(" class=\"inactive\""))," class=\"inactive\"", buffer_srv->rep, curr.getSecond(),
                               (btoday == false ? 0 : U_CONSTANT_SIZE("<strong>")),"<strong>", curr.getDay(),
                               (btoday == false ? 0 : U_CONSTANT_SIZE("</strong>")),"</strong>"));
@@ -6203,7 +6203,7 @@ static void GET_login_validate()
 
    char buffer[128];
 
-   (void) u__snprintf(buffer, sizeof(buffer), U_CONSTANT_TO_PARAM("%s%v"), (brenew ? "RENEW_" : ""), auth_domain->rep); 
+   (void) u__snprintf(buffer, U_CONSTANT_SIZE(buffer), U_CONSTANT_TO_PARAM("%s%v"), (brenew ? "RENEW_" : ""), auth_domain->rep); 
 
    user_rec->writeToLOG(buffer); // NB: writeToLOG() change time_counter and traffic_counter strings...
 

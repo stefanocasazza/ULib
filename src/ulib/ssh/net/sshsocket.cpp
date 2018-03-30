@@ -156,9 +156,9 @@ bool USSHSocket::SSHConnection(int fd)
 
          if (public_key[1] == '%')
             {
-            static char buf1[U_PATH_MAX];
+            static char buf1[U_PATH_MAX+1];
 
-            (void) u__snprintf(buf1, sizeof(buf1), public_key, strlen(public_key), 0);
+            (void) u__snprintf(buf1, U_PATH_MAX, public_key, strlen(public_key), 0);
 
             public_key = buf1;
             }
@@ -174,9 +174,9 @@ bool USSHSocket::SSHConnection(int fd)
 
          if (private_key[1] == '%')
             {
-            static char buf2[U_PATH_MAX];
+            static char buf2[U_PATH_MAX+1];
 
-            (void) u__snprintf(buf2, sizeof(buf2), private_key, strlen(private_key), 0);
+            (void) u__snprintf(buf2, U_PATH_MAX, private_key, strlen(private_key), 0);
 
             private_key = buf2;
             }

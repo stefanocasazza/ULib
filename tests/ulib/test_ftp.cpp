@@ -67,4 +67,6 @@ int U_EXPORT main(int argc, char* argv[])
    map = file.getMap();
 
    download(&vp);
+
+   file.munmap();
 }

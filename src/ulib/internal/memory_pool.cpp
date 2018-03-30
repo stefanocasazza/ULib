@@ -568,7 +568,7 @@ void UStackMemoryPool::paint(ostream& os) // paint info
 
       if (pstack->space > max_space) max_space = pstack->space;
 
-      (void) snprintf(buffer, sizeof(buffer),
+      (void) snprintf(buffer, U_CONSTANT_SIZE(buffer),
                       "stack[%u]: type = %4u len = %5u space = %5u allocateMemoryBlocks = %2u depth = %5u max_depth = %5u pop_cnt = %9u push_cnt = %9u\n",
                       stack_index,
                       pstack->type, pstack->len, pstack->space, pstack->num_call_allocateMemoryBlocks,
@@ -578,7 +578,7 @@ void UStackMemoryPool::paint(ostream& os) // paint info
       }
 
    /*
-   (void) snprintf(buffer, sizeof(buffer),
+   (void) snprintf(buffer, U_CONSTANT_SIZE(buffer),
 #     ifdef HAVE_ARCH64
           U_CONSTANT_TO_PARAM("\n        8   24   32   56  128  256  512  1024 2048 4096\n"
 #     else
@@ -600,7 +600,7 @@ void UStackMemoryPool::paint(ostream& os) // paint info
 
    for (int32_t i = max_space-1; i >= 0; --i)
       {
-      (void) snprintf(buffer, sizeof(buffer), U_CONSTANT_TO_PARAM("%5u %c%s%c %c%s%c %c%s%c %c%s%c %c%s%c %c%s%c %c%s%c %c%s%c %c%s%c %c%s%c\n"), i+1,
+      (void) snprintf(buffer, U_CONSTANT_SIZE(buffer), U_CONSTANT_TO_PARAM("%5u %c%s%c %c%s%c %c%s%c %c%s%c %c%s%c %c%s%c %c%s%c %c%s%c %c%s%c %c%s%c\n"), i+1,
           (mem_stack[0].space >  (uint32_t)i ?  '|' :  ' '),
           (mem_stack[0].space == (uint32_t)i ? "--" : (mem_stack[0].len > (uint32_t)i ? "xx" : "  ")),
           (mem_stack[0].space >  (uint32_t)i ?  '|' :  ' '),
@@ -635,7 +635,7 @@ void UStackMemoryPool::paint(ostream& os) // paint info
       os << buffer;
       }
 
-   (void) snprintf(buffer, sizeof(buffer),
+   (void) snprintf(buffer, U_CONSTANT_SIZE(buffer),
           U_CONSTANT_TO_PARAM("       --   --   --   --   --   --   --   --   --   --\n"
 #     ifdef HAVE_ARCH64
           "        8   24   32   56  128  256  512  1024 2048 4096"

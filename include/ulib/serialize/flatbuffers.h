@@ -174,7 +174,14 @@ protected:
       {
       U_TRACE(0, "UFlatBufferValue::set(%llu,%u,%u)", u, type, min_bit_width)
 
-                  u_ = u;
+#  if __BYTE_ORDER == __LITTLE_ENDIAN
+                      u_ = u;
+#  else
+      l_ = (uint32_t)(u_ = u);
+#  endif
+
+      U_INTERNAL_ASSERT_EQUALS(l_, (uint32_t)u_)
+
                type_ = type;
       min_bit_width_ = min_bit_width;
       }
@@ -219,42 +226,7 @@ protected:
       U_RETURN(bit_width);
       }
 
-   __pure uint8_t ElemWidth(uint32_t buf_size, uint32_t elem_index) const
-      {
-      U_TRACE(0, "UFlatBufferValue::ElemWidth(%u,%u)", buf_size, elem_index)
-
-      if (IsInline(type_)) U_RETURN(min_bit_width_);
-
-      // We have an absolute offset, but want to store a relative offset elem_index elements beyond
-      // the current buffer end. Since whether the relative offset fits in a certain byte_width depends
-      // on the size of the elements before it (and their alignment), we have to test for each size in turn
-
-      uint8_t bit_width;
-      uint32_t offset_loc, offset;
-
-      for (uint8_t byte_width = 1; byte_width <= sizeof(uint32_t); byte_width *= 2)
-         {
-         // Where are we going to write this offset?
-
-         offset_loc = buf_size + PaddingBytes(buf_size, byte_width) + elem_index * byte_width;
-
-         // Compute relative offset
-
-         offset = offset_loc - l_;
-
-         // Does it fit?
-
-         bit_width = WidthL(offset);
-
-         U_INTERNAL_DUMP("bit_width = %u byte_width = %u offset = %u offset_loc = %u", bit_width, byte_width, offset, offset_loc)
-
-         if ((1U << bit_width) == byte_width) U_RETURN(bit_width);
-         }
-
-      U_INTERNAL_ASSERT(false) // Must match one of the sizes above
-
-      U_RETURN(BIT_WIDTH_64);
-      }
+   uint8_t ElemWidth(uint32_t buf_size, uint32_t elem_index) const __pure;
 
    static uint8_t WidthB(uint32_t byte_width)
       {
@@ -349,6 +321,8 @@ private:
    U_DISALLOW_COPY_AND_ASSIGN(UFlatBufferValue)
 };
 
+typedef void (*vPFpfbpv) (UFlatBuffer*,void*);
+
 class U_EXPORT UFlatBuffer {
 public:
 
@@ -368,6 +342,7 @@ public:
       u_             = 0ULL;
       type_          =
       min_bit_width_ = BIT_WIDTH_8;
+
       reset();
 #  endif
       }
@@ -429,7 +404,7 @@ public:
       {
       U_TRACE(0, "UFlatBuffer::setNumber(%lld)", l)
 
-      if (l < 0) Int(l);
+      if (l < 0)  Int(l);
       else       UInt(l);
       }
 
@@ -438,6 +413,7 @@ public:
    void IndirectFloat(float f)   { PushIndirectFloat(f); }
    void IndirectDouble(double f) { PushIndirect(f, UFlatBufferValue::TYPE_INDIRECT_FLOAT, UFlatBufferValue::WidthF(f)); }
 
+   void String(const UString& str)            { CreateString(U_STRING_TO_PARAM(str)); }
    void String(const char* str, uint32_t len) { CreateString(str, len); }
 
    void Null(  const char* key, uint32_t len)             { Key(key, len); Null(); }
@@ -696,7 +672,7 @@ public:
       {
       U_TRACE_NO_PARAM(0, "UFlatBuffer::StartBuild()")
 
-      U_INTERNAL_ASSERT_POINTER(stack_str)
+      U_INTERNAL_ASSERT_POINTER( stack_str)
       U_INTERNAL_ASSERT_POINTER(buffer_str)
 
       // Reset all state so we can re-use the buffers
@@ -819,7 +795,8 @@ public:
       U_DUMP("type_ = (%u,%S) byte_width_ = %u parent_width_ = %u data_(%u) = %#.*S", type_, getTypeDescription(type_), byte_width_, parent_width_, 2+byte_width_, 2+byte_width_, data_)
       }
 
-   void setRoot() { setRoot(buffer_str, buffer_idx); }
+   void setRoot()                   { setRoot(buffer_str, buffer_idx); }
+   void setRoot(const UString& str) { setRoot((const uint8_t*)U_STRING_TO_PARAM(str)); }
 
    bool     AsBool() const   { return AsBool(data_); }
     int64_t AsInt64() const  { return AsInt64(data_); }
@@ -1165,6 +1142,23 @@ public:
       type_ = UFlatBufferValue::TYPE_MAP;
       }
 
+   static inline void toVector(const UString& data, UVector<UString>& vec);
+   static UString     toVector(vPFpfbpv func, bool typed = false, void* param = U_NULLPTR);
+
+   static UString fromVector(UVector<UString>& vec)
+      {
+      U_TRACE(0, "UFlatBuffer::fromVector(%p)", &vec)
+
+      return toVector(UFlatBuffer::setFromVector, true, &vec);
+      }
+
+   static void setFromVector(UFlatBuffer* pfb, void* param)
+      {
+      UVector<UString>* pvec = (UVector<UString>*)param;
+
+      for (uint32_t i = 0, n = pvec->size(); i < n; ++i) pfb->String((*pvec)[i]);
+      }
+
 #ifdef DEBUG
    const char* dump(bool reset) const;
 
@@ -1236,6 +1230,8 @@ protected:
       setStackPointer(stack_idx++);
 
       pvalue->set(u, type, min_bit_width);
+
+      U_INTERNAL_DUMP("pvalue->l_ = %u pvalue->type_ = %u pvalue->min_bit_width_ = %u", pvalue->l_, pvalue->type_, pvalue->min_bit_width_)
       }
 
    static void pushOnStack(float f)
@@ -2034,6 +2030,36 @@ private:
    template <class T> friend class UFlatBufferTypeHandler;
 };
 
+class U_EXPORT UFlatBufferSpace {
+public:
+
+   UFlatBufferSpace()
+      {
+      prev_stack       = UFlatBuffer::getStack();
+      prev_buffer      = UFlatBuffer::getBuffer();
+      prev_stack_size  = UFlatBuffer::getStackMax();
+      prev_buffer_size = UFlatBuffer::getBufferMax();
+
+      UFlatBuffer::setStack(  stack, sizeof(stack));
+      UFlatBuffer::setBuffer(buffer, sizeof(buffer));
+      }
+
+   ~UFlatBufferSpace()
+      {
+      UFlatBuffer::setStack( prev_stack,  prev_stack_size);
+      UFlatBuffer::setBuffer(prev_buffer, prev_buffer_size);
+      }
+
+protected:
+   uint8_t* prev_stack;
+   uint8_t* prev_buffer;
+   uint32_t prev_stack_size,
+            prev_buffer_size;
+
+   uint8_t stack[ 8 * 1024],
+          buffer[64 * 1024];
+};
+
 // Template specialization
 
 template<> inline bool     UFlatBuffer::As<bool>(    const uint8_t* ptr) { return AsBool(ptr); }
@@ -2094,10 +2120,12 @@ template<> inline uint64_t UFlatBuffer::AsTypedOrFixedVectorGet<uint64_t>(uint32
    return Get<uint64_t>(AsTypedOrFixedVectorSetIndex(i));
 }
 
+#ifndef HAVE_OLD_IOSTREAM
 template<> inline int8_t  UFlatBuffer::AsVectorGet<int8_t>( uint32_t i) { return -(int8_t) AsVectorGet<uint64_t>(i); }
 template<> inline int16_t UFlatBuffer::AsVectorGet<int16_t>(uint32_t i) { return -(int16_t)AsVectorGet<uint64_t>(i); }
 template<> inline int32_t UFlatBuffer::AsVectorGet<int32_t>(uint32_t i) { return -(int32_t)AsVectorGet<uint64_t>(i); }
 template<> inline int64_t UFlatBuffer::AsVectorGet<int64_t>(uint32_t i) { return -(int64_t)AsVectorGet<uint64_t>(i); }
+#endif
 
 template<> inline uint64_t UFlatBuffer::AsVectorGetIndirect<uint64_t>(uint32_t i)
 {
@@ -2122,10 +2150,12 @@ template<> inline int16_t UFlatBuffer::AsVectorGetIndirect<int16_t>(uint32_t i) 
 template<> inline int32_t UFlatBuffer::AsVectorGetIndirect<int32_t>(uint32_t i) { return -(int32_t)AsVectorGetIndirect<uint64_t>(i); }
 template<> inline int64_t UFlatBuffer::AsVectorGetIndirect<int64_t>(uint32_t i) { return -(int64_t)AsVectorGetIndirect<uint64_t>(i); }
 
+#ifndef HAVE_OLD_IOSTREAM
 template<> inline int8_t  UFlatBuffer::AsTypedOrFixedVectorGet<int8_t>( uint32_t i) { return -(int8_t) AsTypedOrFixedVectorGet<uint64_t>(i); }
 template<> inline int16_t UFlatBuffer::AsTypedOrFixedVectorGet<int16_t>(uint32_t i) { return -(int16_t)AsTypedOrFixedVectorGet<uint64_t>(i); }
 template<> inline int32_t UFlatBuffer::AsTypedOrFixedVectorGet<int32_t>(uint32_t i) { return -(int32_t)AsTypedOrFixedVectorGet<uint64_t>(i); }
 template<> inline int64_t UFlatBuffer::AsTypedOrFixedVectorGet<int64_t>(uint32_t i) { return -(int64_t)AsTypedOrFixedVectorGet<uint64_t>(i); }
+#endif
 
 template<> inline int8_t  UFlatBuffer::AsTypedOrFixedVectorGetIndirect<int8_t>( uint32_t i) { return -(int8_t) AsTypedOrFixedVectorGetIndirect<uint64_t>(i); }
 template<> inline int16_t UFlatBuffer::AsTypedOrFixedVectorGetIndirect<int16_t>(uint32_t i) { return -(int16_t)AsTypedOrFixedVectorGetIndirect<uint64_t>(i); }
@@ -2362,6 +2392,20 @@ template<> inline UString UFlatBuffer::AsMapGet<UString>(const char* key, uint32
    type_ = UFlatBufferValue::TYPE_MAP;
 
    U_RETURN_STRING(value);
+}
+
+inline void UFlatBuffer::toVector(const UString& data, UVector<UString>& vec)
+{
+   U_TRACE(0, "UFlatBuffer::toVector(%V,%p)", data.rep, &vec)
+
+   UFlatBuffer fb, vec1;
+
+   fb.setRoot(data);
+   fb.AsTypedVector(vec1);
+
+#ifndef HAVE_OLD_IOSTREAM
+   for (uint32_t i = 0, n = vec1.GetSize(); i < n; ++i) vec.push_back(vec1.AsTypedOrFixedVectorGet<UString>(i));
+#endif
 }
 
 // manage object <=> FlatBuffer representation
@@ -2856,16 +2900,16 @@ public:
 
       for (uint32_t i = 0, n = vec.GetSize(); i < n; ++i)
          {
-         T* pitem;
+         T* _pitem;
 
-         U_NEW(T, pitem, T);
+         U_NEW(T, _pitem, T);
 
          if (typed == false) vec.AsVectorGet(i, fbb);
          else                vec.AsTypedOrFixedVectorGet(i, fbb);
 
-         UFlatBufferTypeHandler<T>(*pitem).fromFlatBuffer(fbb);
+         UFlatBufferTypeHandler<T>(*_pitem).fromFlatBuffer(fbb);
 
-         ((UVector<void*>*)pval)->push_back(pitem);
+         ((UVector<void*>*)pval)->push_back(_pitem);
          }
       }
 };
@@ -2956,16 +3000,16 @@ public:
 
       for (uint32_t i = 0, n = map.GetSize(); i < n; ++i)
          {
-         T* pitem;
+         T* _pitem;
 
-         U_NEW(T, pitem, T);
+         U_NEW(T, _pitem, T);
 
          values.AsVectorGet(i, fbb);
 
-         UFlatBufferTypeHandler<T>(*pitem).fromFlatBuffer(fbb);
+         UFlatBufferTypeHandler<T>(*_pitem).fromFlatBuffer(fbb);
 
 #     ifndef HAVE_OLD_IOSTREAM
-         ((uhashmap*)pval)->insert(keys.AsTypedOrFixedVectorGet<UString>(i), pitem);
+         ((uhashmap*)pval)->insert(keys.AsTypedOrFixedVectorGet<UString>(i), _pitem);
 #     endif
          }
       }
@@ -3118,15 +3162,15 @@ public:
 
       for (uint32_t i = 0, n = map.GetSize(); i < n; ++i)
          {
-         T* pitem;
+         T* _pitem;
 
-         U_NEW(T, pitem, T);
+         U_NEW(T, _pitem, T);
 
          values.AsVectorGet(i, fbb);
 
-         UFlatBufferTypeHandler<T>(*pitem).fromFlatBuffer(fbb);
+         UFlatBufferTypeHandler<T>(*_pitem).fromFlatBuffer(fbb);
 
-         ((stringtobitmaskmap*)pval)->insert_or_assign(keys.AsTypedOrFixedVectorGet<UString>(i), pitem); // insert_or_assign is C++17 
+         ((stringtobitmaskmap*)pval)->insert_or_assign(keys.AsTypedOrFixedVectorGet<UString>(i), _pitem); // insert_or_assign is C++17 
          }
       }
 };

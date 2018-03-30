@@ -31,6 +31,8 @@ URDBServer::~URDBServer()
 {
    U_TRACE_UNREGISTER_OBJECT(0, URDBServer)
 
+   rdb->close();
+
    delete rdb;
    delete URPC::rpc_info;
 }

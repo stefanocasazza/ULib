@@ -25,9 +25,6 @@ static void check(const UString& dati, const UString& file)
       U_INTERNAL_DUMP("dati    = %#.*S", U_STRING_TO_TRACE(dati))
       U_INTERNAL_DUMP("buffer2 = %#.*S", U_STRING_TO_TRACE(buffer2))
 
-   // (void) UFile::writeToTmp(U_STRING_TO_PARAM(buffer1), O_RDWR | O_TRUNC, U_CONSTANT_TO_PARAM("url.encode"), 0);
-   // (void) UFile::writeToTmp(U_STRING_TO_PARAM(buffer2), O_RDWR | O_TRUNC, U_CONSTANT_TO_PARAM("url.decode"), 0);
-
       U_ASSERT( dati == buffer2 )
       }
 }

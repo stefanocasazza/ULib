@@ -32,9 +32,9 @@ bool          UClientImage_Base::bsendGzipBomb;
 char          UClientImage_Base::cbuffer[128];
 long          UClientImage_Base::time_run;
 long          UClientImage_Base::time_between_request = 10;
+off_t         UClientImage_Base::ncount;
 uint32_t      UClientImage_Base::resto;
 uint32_t      UClientImage_Base::rstart;
-uint32_t      UClientImage_Base::ncount;
 uint32_t      UClientImage_Base::nrequest;
 uint32_t      UClientImage_Base::size_request;
 UString*      UClientImage_Base::body;
@@ -240,8 +240,9 @@ void UClientImage_Base::saveRequestResponse()
    else
 #endif
    {
-   if (*rbuffer)                  (void) UFile::writeToTmp(U_STRING_TO_PARAM(*rbuffer), O_RDWR | O_TRUNC, U_CONSTANT_TO_PARAM("request.%P"),  0);
-   if (U_http_info.nResponseCode) (void) UFile::writeToTmp(iov_sav, 4,                  O_RDWR | O_TRUNC, U_CONSTANT_TO_PARAM("response.%P"), 0);
+   if (*rbuffer) U_FILE_WRITE_TO_TMP(*rbuffer, "request.%P");
+
+   if (U_http_info.nResponseCode) (void) UFile::writeToTmp(iov_sav, 4, O_RDWR | O_TRUNC, U_CONSTANT_TO_PARAM("response.%P"), 0);
    }
 }
 #endif
@@ -389,9 +390,9 @@ bool UClientImage_Base::askForClientCertificate()
    U_RETURN(false);
 }
 
-void UClientImage_Base::setSendfile(int fd, uint32_t lstart, uint32_t lcount)
+void UClientImage_Base::setSendfile(int fd, off_t lstart, off_t lcount)
 {
-   U_TRACE(0, "UClientImage_Base::setSendfile(%d,%u,%u)", fd, lstart, lcount)
+   U_TRACE(0, "UClientImage_Base::setSendfile(%d,%I,%I)", fd, lstart, lcount)
 
    U_INTERNAL_DUMP("U_http_version = %C", U_http_version)
 
@@ -402,9 +403,9 @@ void UClientImage_Base::setSendfile(int fd, uint32_t lstart, uint32_t lcount)
 
    setRequestNoCache();
 
-   UServer_Base::pClientImage->start = lstart;
-   UServer_Base::pClientImage->count = lcount;
-   UServer_Base::pClientImage->sfd   = fd;
+   UServer_Base::pClientImage->offset = lstart;
+   UServer_Base::pClientImage->count  = lcount;
+   UServer_Base::pClientImage->sfd    = fd;
 }
 
 // NB: we have default as true to manage pipeline for protocol as RPC...
@@ -508,7 +509,7 @@ void UClientImage_Base::handlerDelete()
       }
 #endif
 
-#ifndef U_LOG_DISABLE
+#if !defined(U_LOG_DISABLE) && defined(U_LINUX) && defined(ENABLE_THREAD)
    ULock::atomicDecrement(U_SRV_TOT_CONNECTION);
 
    U_INTERNAL_DUMP("U_SRV_TOT_CONNECTION = %u", U_SRV_TOT_CONNECTION)
@@ -544,7 +545,7 @@ void UClientImage_Base::handlerDelete()
       }
    else if (isPendingSendfile())
       {
-      U_INTERNAL_DUMP("sfd = %d count = %u UEventFd::op_mask = %B U_ClientImage_pclose(this) = %d %B",
+      U_INTERNAL_DUMP("sfd = %d count = %I UEventFd::op_mask = %B U_ClientImage_pclose(this) = %d %B",
                        sfd,     count,     UEventFd::op_mask,     U_ClientImage_pclose(this), U_ClientImage_pclose(this))
 
       if ((U_ClientImage_pclose(this) & U_CLOSE) != 0)
@@ -1464,7 +1465,7 @@ check:            U_INTERNAL_DUMP("nrequest = %u resto = %u", nrequest, resto)
 
    if (LIKELY(*wbuffer))
       {
-      U_INTERNAL_DUMP("U_http_info.nResponseCode = %u count = %u UEventFd::op_mask = %d %B",
+      U_INTERNAL_DUMP("U_http_info.nResponseCode = %u count = %I UEventFd::op_mask = %d %B",
                        U_http_info.nResponseCode,     count,     UEventFd::op_mask, UEventFd::op_mask)
 
       U_INTERNAL_ASSERT_DIFFERS(U_ClientImage_parallelization, U_PARALLELIZATION_PARENT)
@@ -1518,7 +1519,7 @@ write:
          if (writeResponse() == false ||
              UClientImage_Base::handlerWrite() == U_NOTIFIER_DELETE)
             {
-            U_INTERNAL_DUMP("count = %u", count)
+            U_INTERNAL_DUMP("count = %I", count)
 
             goto error;
             }
@@ -1895,7 +1896,7 @@ void UClientImage_Base::prepareForSendfile()
 
    if (UNotifier::isHandler(UEventFd::fd)) (void) UNotifier::modify(this);
 
-   U_INTERNAL_DUMP("start = %u count = %u", start, count)
+   U_INTERNAL_DUMP("offset = %I count = %I", offset, count)
 }
 
 int UClientImage_Base::handlerResponse()
@@ -1985,11 +1986,9 @@ int UClientImage_Base::handlerWrite()
    if (UServer_Base::checkThrottlingBeforeSend(bwrite) == false) U_RETURN(U_NOTIFIER_OK);
 #endif
 
-   off_t offset;
    int iBytesWrite;
 
 write:
-   offset      = start;
    iBytesWrite = USocketExt::sendfile(socket, sfd, &offset, count, 0);
 
 #ifdef U_THROTTLING_SUPPORT
@@ -2001,7 +2000,7 @@ write:
 
    if (iBytesWrite == (int)count)
       {
-      U_SRV_LOG_WITH_ADDR("sending sendfile response completed (%u bytes of %u) to", iBytesWrite, count);
+      U_SRV_LOG_WITH_ADDR("sending sendfile response completed (%u bytes of %I) to", iBytesWrite, count);
 
       if (bwrite)
          {
@@ -2017,9 +2016,9 @@ write:
          }
 #  endif
 
-      start =
-      count =  0;
-      sfd   = -1;
+      offset =
+      count  =  0;
+      sfd    = -1;
 
       if ((U_ClientImage_pclose(this) & U_CLOSE) != 0) UFile::close(sfd);
 
@@ -2030,9 +2029,8 @@ write:
 
    if (iBytesWrite > 0)
       {
-      U_SRV_LOG_WITH_ADDR("sent sendfile partial response (%u bytes of %u) to", iBytesWrite, count);
+      U_SRV_LOG_WITH_ADDR("sent sendfile partial response (%u bytes of %I) to", iBytesWrite, count);
 
-      start += iBytesWrite;
       count -= iBytesWrite;
 
       U_INTERNAL_ASSERT_MAJOR(count, 0)
@@ -2060,15 +2058,15 @@ wait:    if (socket->isOpen() &&
       }
 
 end:
-   U_SRV_LOG("sendfile failed - sock_fd %d sfd %d count %u U_ClientImage_pclose(this) %d %B", socket->iSockDesc, sfd, count, U_ClientImage_pclose(this), U_ClientImage_pclose(this));
+   U_SRV_LOG("sendfile failed - sock_fd: %d sfd: %d count: %I U_ClientImage_pclose(this): %d %B", socket->iSockDesc, sfd, count, U_ClientImage_pclose(this), U_ClientImage_pclose(this));
 
    if (U_ClientImage_parallelization != U_PARALLELIZATION_CHILD)
       {
       if ((U_ClientImage_pclose(this) & U_CLOSE) != 0) UFile::close(sfd);
 
-      start =
-      count =  0;
-      sfd   = -1;
+      offset =
+      count  =  0;
+      sfd    = -1;
 
       U_ClientImage_pclose(this) = 0;
       }
@@ -2082,9 +2080,9 @@ end:
 const char* UClientImage_Base::dump(bool _reset) const
 {
    *UObjectIO::os << "sfd                                " << sfd                 << '\n'
-                  << "start                              " << start               << '\n'
-                  << "count                              " << count               << '\n'
                   << "bIPv6                              " << bIPv6               << '\n'
+                  << "count                              " << count               << '\n'
+                  << "offset                             " << offset              << '\n'
                   << "last_event                         " << last_event          << '\n'
                   << "socket          (USocket           " << (void*)socket       << ")\n"
                   << "body            (UString           " << (void*)body         << ")\n"

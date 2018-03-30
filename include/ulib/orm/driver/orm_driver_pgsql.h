@@ -30,8 +30,10 @@ extern "C" {
 }
 
 #undef  PACKAGE_NAME
-#define PACKAGE_NAME    "ULib"
+#undef  PACKAGE_STRING
 #undef  PACKAGE_VERSION
+#define PACKAGE_NAME   "ULib"
+#define PACKAGE_STRING "ULib 1.4.2"
 #define PACKAGE_VERSION ULIB_VERSION
 
 /**

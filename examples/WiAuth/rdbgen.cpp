@@ -107,7 +107,7 @@ public:
                {
                UString key(argv[optind]), value = x[key]; 
 
-               (void) UFile::writeToTmp(U_STRING_TO_PARAM(value), O_RDWR | O_TRUNC, U_CONSTANT_TO_PARAM(U_FILE_OUTPUT), 0);
+               U_FILE_WRITE_TO_TMP(value, U_FILE_OUTPUT);
                }
             break;
 
@@ -174,7 +174,7 @@ public:
                y = x.print();
 
                if (y.empty()) (void) UFile::_unlink(U_DIR_OUTPUT U_FILE_OUTPUT);
-               else           (void) UFile::writeToTmp(U_STRING_TO_PARAM(y), O_RDWR | O_TRUNC, U_CONSTANT_TO_PARAM(U_FILE_OUTPUT), 0);
+               else                       U_FILE_WRITE_TO_TMP(y, U_FILE_OUTPUT);
                }
             break;
 

@@ -303,7 +303,7 @@ public:
             const char* data = token.c_pointer(1);
             uint32_t sz = (*data == 'G' ? 3 : 4); // 3 => GET | 4 => POST
 
-            (void) output0.append(buffer, u__snprintf(buffer, sizeof(buffer), U_CONSTANT_TO_PARAM("\t\n\tif (UHTTP::is%.*s()) (void) UHTTP::processForm();\n"), sz, data));
+            (void) output0.append(buffer, u__snprintf(buffer, U_CONSTANT_SIZE(buffer), U_CONSTANT_TO_PARAM("\t\n\tif (UHTTP::is%.*s()) (void) UHTTP::processForm();\n"), sz, data));
 
             (void) token.erase(0, 1+sz+1);
             }

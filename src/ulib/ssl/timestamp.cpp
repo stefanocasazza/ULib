@@ -37,7 +37,7 @@ UTimeStamp::UTimeStamp(UString& request, const UString& TSA) : UPKCS7(U_NULLPTR,
 
    UHttpClient<USSLSocket> client(U_NULLPTR);
 
-   response = (client.sendPost(TSA, request, U_CONSTANT_TO_PARAM("application/timestamp-query"))
+   response = (client.sendPOST(TSA, request, U_CONSTANT_TO_PARAM("application/timestamp-query"))
                      ? readTimeStampResponse(client.getContent())
                      : U_NULLPTR);
 

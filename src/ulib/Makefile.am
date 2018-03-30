@@ -239,6 +239,9 @@ endif
 if STATIC_HANDLER_NOCAT
 SRC_CPP += net/server/plugin/mod_nocat.cpp
 endif
+if STATIC_HANDLER_NODOG
+SRC_CPP += net/server/plugin/mod_nodog.cpp
+endif
 
 if STATIC_HANDLER_SOCKET
 SRC_CPP += net/server/plugin/mod_socket.cpp

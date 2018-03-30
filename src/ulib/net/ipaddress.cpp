@@ -231,17 +231,20 @@ bool UIPAddress::setHostName(const UString& pcNewHostName, bool bIPv6)
 
    if (u_isIPAddr(bIPv6, name, pcNewHostName.size()))
       {
-      struct in_addr ia;
+      union uupcAddress ia;
 
-      if (inet_aton(name, &ia) == 0) U_RETURN(false);
+      if (U_SYSCALL(inet_pton, "%d,%p,%p", (bIPv6 ? AF_INET6 : AF_INET), name, &ia) == 1)
+         {
+         strHostName.clear();
 
-      strHostName.clear();
+         setAddress(&ia, false);
 
-      setAddress(&ia, false);
+         U_ipaddress_StrAddressUnresolved(this) = false;
 
-      U_ipaddress_StrAddressUnresolved(this) = false;
+         U_RETURN(true);
+         }
 
-      U_RETURN(true);
+      U_RETURN(false);
       }
 
    uint32_t len;
@@ -950,7 +953,7 @@ const char* UIPAddress::dump(bool reset) const
 
    char buffer[128];
 
-   UObjectIO::os->write(buffer, u__snprintf(buffer, sizeof(buffer), U_CONSTANT_TO_PARAM("%S"), pcStrAddress));
+   UObjectIO::os->write(buffer, u__snprintf(buffer, U_CONSTANT_SIZE(buffer), U_CONSTANT_TO_PARAM("%S"), pcStrAddress));
 
    *UObjectIO::os << '\n'
                   << "iAddressType         " << iAddressType

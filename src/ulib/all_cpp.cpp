@@ -180,6 +180,9 @@
 #  ifdef U_STATIC_HANDLER_NOCAT
 #     include "net/server/plugin/mod_nocat.cpp"
 #  endif
+#  ifdef U_STATIC_HANDLER_NODOG
+#     include "net/server/plugin/mod_nodog.cpp"
+#  endif
 #  ifdef U_STATIC_HANDLER_SOCKET
 #     include "net/server/plugin/mod_socket.cpp"
 #  endif

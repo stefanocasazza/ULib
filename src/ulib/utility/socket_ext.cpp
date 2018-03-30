@@ -351,9 +351,9 @@ error:   U_INTERNAL_DUMP("errno = %d", errno)
 // the last byte that was read. COUNT is the number of bytes to copy between file descriptors. Because this copying is done within
 // the kernel, sendfile() does not need to spend time transferring data to and from user space
 
-int USocketExt::sendfile(USocket* sk, int in_fd, off_t* poffset, uint32_t count, int timeoutMS)
+int USocketExt::sendfile(USocket* sk, int in_fd, off_t* poffset, off_t count, int timeoutMS)
 {
-   U_TRACE(1, "USocketExt::sendfile(%p,%d,%p,%u,%d)", sk, in_fd, poffset, count, timeoutMS)
+   U_TRACE(1, "USocketExt::sendfile(%p,%d,%p,%I,%d)", sk, in_fd, poffset, count, timeoutMS)
 
    U_INTERNAL_ASSERT_POINTER(sk)
    U_INTERNAL_ASSERT_MAJOR(count, 0)
@@ -392,13 +392,13 @@ loop:
     */
 
    len   = count;
-   value = U_SYSCALL(sendfile, "%d,%d,%p,%u", sk->getFd(), in_fd, *poffset, &len, 0, 0);
+   value = U_SYSCALL(sendfile, "%d,%d,%I,%p,%p,%d", sk->getFd(), in_fd, *poffset, &len, U_NULLPTR, 0);
 
    if (value == -1) goto error;
 
    poffset += (value = len);
 #else
-   value = U_SYSCALL(sendfile, "%d,%d,%p,%u", sk->getFd(), in_fd, poffset, count);
+   value = U_SYSCALL(sendfile, "%d,%d,%p,%I", sk->getFd(), in_fd, poffset, count);
 #endif
 
    if (value <= 0)

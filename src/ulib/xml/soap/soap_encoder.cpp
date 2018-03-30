@@ -34,7 +34,7 @@ UString USOAPEncoder::encodeMethod(URPCMethod& method, const UString& nsName) //
 
    uint32_t num_arg = arg.size();
 
-   if      (num_arg  > 1) encodedValue = arg.join((const char*)U_NULLPTR, 0U);
+   if      (num_arg  > 1) encodedValue = arg.join(0, (const char*)U_NULLPTR, 0U);
    else if (num_arg == 1) encodedValue = arg[0];
    else                   encodedValue.setEmpty();
 

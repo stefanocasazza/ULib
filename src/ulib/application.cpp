@@ -61,7 +61,7 @@ void UApplication::printMemUsage()
 
       u_get_memusage(&vsz, &rss);
 
-      len = u__snprintf(buffer, sizeof(buffer),
+      len = u__snprintf(buffer, U_CONSTANT_SIZE(buffer),
                         U_CONSTANT_TO_PARAM("address space usage: %.2f MBytes - "
                         "rss usage: %.2f MBytes\n"
                         "%v\nmax_nfd_ready = %u max_depth = %u again:read = (%u/%u - %u%%) wakeup_for_nothing = %u bepollet_threshold = (%u/10)\n"),

@@ -51,8 +51,11 @@
 #define U_FILE_TO_STRING(file) (file).getPath().substr((file).getPath().distance((file).getPathRelativ()),(file).getPathRelativLen())
 #define U_FILE_STREQ(file,str) U_STREQ((file).getPathRelativ(),(file).getPathRelativLen(),str)
 
+#define U_FILE_WRITE_TO_TMP(content,tmpfile,args...) (void) UFile::writeToTmp((content), O_RDWR | O_TRUNC, U_CONSTANT_TO_PARAM(tmpfile), ##args, 0);
+
 class URDB;
 class UHTTP;
+class UCache;
 class UDirWalk;
 class UStringExt;
 class UClientImage_Base;
@@ -136,6 +139,8 @@ public:
       U_TRACE_UNREGISTER_OBJECT(0, UFile)
 
       dec_num_file_object(fd);
+
+      U_ASSERT_EQUALS(isMapped(), false)
       }
 
    // PATH
@@ -409,6 +414,25 @@ public:
       }
 #endif
 
+   bool isSymbolicLink() const
+      {
+      U_TRACE_NO_PARAM(0, "UFile::isSymbolicLink()")
+
+      U_CHECK_MEMORY
+
+#  ifndef _MSWINDOWS_
+      struct stat tmp;
+
+      if (U_SYSCALL(lstat, "%S,%p", U_PATH_CONV(path_relativ), &tmp) == 0 &&
+          S_ISLNK(tmp.st_mode))
+         {
+         U_RETURN(true);
+         }
+#  endif
+
+      U_RETURN(false);
+      }
+
    void fstat()
       {
       U_TRACE_NO_PARAM(1, "UFile::fstat()")
@@ -464,7 +488,7 @@ public:
       U_INTERNAL_ASSERT(st_size >= U_SEEK_BEGIN)
       }
 
-   bool ftruncate(uint32_t n);
+   bool ftruncate(off_t n);
 
    off_t size(bool bstat = false);
 
@@ -477,13 +501,13 @@ public:
       U_RETURN(st_size);
       }
 
-   static off_t getSize(int _fd)
+   static off_t getSize(int lfd)
       {
-      U_TRACE(1, "UFile::getSize(%d)", _fd)
+      U_TRACE(1, "UFile::getSize(%d)", lfd)
 
-      U_INTERNAL_ASSERT_DIFFERS(_fd, -1)
+      U_INTERNAL_ASSERT_DIFFERS(lfd, -1)
 
-      off_t result = U_SYSCALL(lseek, "%d,%u,%d", _fd, U_SEEK_BEGIN, SEEK_END);
+      off_t result = U_SYSCALL(lseek, "%d,%u,%d", lfd, U_SEEK_BEGIN, SEEK_END);
 
       U_RETURN(result);
       }
@@ -774,16 +798,34 @@ public:
       U_RETURN(map != MAP_FAILED);
       }
 
+   void munmap()
+      {
+      U_TRACE_NO_PARAM(0, "UFile::munmap()")
+
+      U_CHECK_MEMORY
+
+      U_INTERNAL_DUMP("path_relativ(%u) = %.*S", path_relativ_len, path_relativ_len, path_relativ)
+
+      U_INTERNAL_ASSERT_POINTER(path_relativ)
+
+      U_INTERNAL_ASSERT_MAJOR(map_size, 0)
+      U_INTERNAL_ASSERT_DIFFERS(map,(char*)MAP_FAILED)
+
+      UFile::munmap(map, map_size);
+
+      map      = (char*)MAP_FAILED;
+      map_size = 0;
+      }
+
    char* getMap() const { return map; }
 
-          void munmap();
-   static void munmap(void* _map, uint32_t length)
+   static void munmap(void* _map, off_t length)
       {
-      U_TRACE(1, "UFile::munmap(%p,%u)", _map, length)
+      U_TRACE(1, "UFile::munmap(%p,%I)", _map, length)
 
       U_INTERNAL_ASSERT_DIFFERS(_map, MAP_FAILED)
 
-      (void) U_SYSCALL(munmap, "%p,%u", _map, length);
+      (void) U_SYSCALL(munmap, "%p,%I", _map, length);
       }
 
    static void msync(char* ptr, char* page, int flags = MS_ASYNC | MS_INVALIDATE); // flushes changes made to memory mapped file back to disk
@@ -791,21 +833,21 @@ public:
    // mremap() expands (or shrinks) an existing memory mapping, potentially moving it at the same time
    // (controlled by the flags argument and the available virtual address space)
 
-   static char* mremap(void* old_address, uint32_t old_size, uint32_t new_size, int flags = 0) // MREMAP_MAYMOVE == 1
+   static char* mremap(void* old_address, off_t old_size, off_t new_size, int flags = 0) // MREMAP_MAYMOVE == 1
       {
-      U_TRACE(1, "UFile::mremap(%p,%u,%u,%d)", old_address, old_size, new_size, flags)
+      U_TRACE(1, "UFile::mremap(%p,%I,%I,%d)", old_address, old_size, new_size, flags)
 
       void* result =
 #  if defined(__NetBSD__) || defined(__UNIKERNEL__)
-      U_SYSCALL(mremap, "%p,%u,%p,%u,%d", old_address, old_size, 0, new_size, 0);
+      U_SYSCALL(mremap, "%p,%I,%p,%I,%d", old_address, old_size, 0, new_size, 0);
 #  else
-      U_SYSCALL(mremap, "%p,%u,%u,%d",    old_address, old_size,    new_size, flags);
+      U_SYSCALL(mremap, "%p,%I,%u,%I",    old_address, old_size,    new_size, flags);
 #  endif
 
       U_RETURN((char*)result);
       }
 
-   bool memmap(int prot = PROT_READ, UString* str = U_NULLPTR, uint32_t offset = 0, uint32_t length = 0);
+   bool memmap(int prot = PROT_READ, UString* str = U_NULLPTR, off_t start = 0, off_t count = 0);
 
    UString  getContent(                   bool brdonly = true,  bool bstat = false, bool bmap = false);
    UString _getContent(bool bsize = true, bool brdonly = false,                     bool bmap = false);
@@ -938,6 +980,7 @@ public:
    static long    getSysParam(  const char* name);
    static UString getSysContent(const char* name);
 
+   static bool writeToTmp(const UString& data,            int flags, const char* fmt, uint32_t fmt_size, ...);
    static bool writeToTmp(const char* data,  uint32_t sz, int flags, const char* fmt, uint32_t fmt_size, ...);
    static bool writeToTmp(const struct iovec* iov, int n, int flags, const char* fmt, uint32_t fmt_size, ...);
 
@@ -1140,11 +1183,12 @@ public:
 #endif
 
 protected:
-   uint32_t path_relativ_len, map_size; // size to mmap(), may be larger than the size of the file...
    UString pathname;
    char* map;
    const char* path_relativ; // the string can be not writeable...
+   off_t map_size; // size to mmap(), may be larger than the size of the file...
    int fd;
+   uint32_t path_relativ_len; // size to mmap(), may be larger than the size of the file...
 
    static char*    cwd_save;
    static uint32_t cwd_save_len;
@@ -1156,6 +1200,56 @@ protected:
    void substitute(UFile& file);
    bool creatForWrite(int flags, bool bmkdirs);
    void setPathRelativ(const UString* environment);
+
+   char* resetMap()
+      {
+      U_TRACE_NO_PARAM(0, "UFile::resetMap()")
+
+      U_CHECK_MEMORY
+
+      char* _map = map;
+                   map = (char*)MAP_FAILED; // transfer the ownership
+
+      return _map;
+      }
+
+   void setMemoryMap(UString& str) 
+      {
+      U_TRACE(0, "UFile::setMemoryMap(%p)", &str)
+
+      U_CHECK_MEMORY
+
+      U_ASSERT(isMapped())
+
+#  ifdef HAVE_ARCH64
+      U_INTERNAL_ASSERT_MINOR_MSG(map_size, (off_t)U_STRING_MAX_SIZE, "Sorry, I can't manage string size bigger than 4G...") // limit of UString
+#  endif
+
+      str.mmap(map, map_size);
+
+      map = (char*)MAP_FAILED; // transfer the ownership to string
+      }
+
+   UString getMemoryMap(off_t start, off_t count) 
+      {
+      U_TRACE(0, "UFile::getMemoryMap(%I,%I)", start, count)
+
+      U_CHECK_MEMORY
+
+      U_INTERNAL_ASSERT_MAJOR(count, 0)
+      U_INTERNAL_ASSERT_DIFFERS(map, MAP_FAILED)
+
+      if (count > (off_t)U_STRING_MAX_SIZE)
+         {
+         U_WARNING("Sorry, I  can't manage string size bigger than 4G...") // limit of UString
+
+         return UString::getStringNull();
+         }
+
+      UString str(map+start, count);
+
+      U_RETURN_STRING(str);
+      }
 
    void setPathRelativ()
       {
@@ -1228,6 +1322,7 @@ private:
    friend class ULib;
    friend class URDB;
    friend class UHTTP;
+   friend class UCache;
    friend class UString;
    friend class UDirWalk;
    friend class UStringRep;

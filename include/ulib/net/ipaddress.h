@@ -108,18 +108,7 @@ public:
 
    // Check whether a ip address client ought to be allowed (belong to the same network)...
 
-   bool isAllowed(const char* ip_client)
-      {
-      U_TRACE(0, "UIPAllow::isAllowed(%S)", ip_client)
-
-      U_INTERNAL_ASSERT(u_isIPv4Addr(ip_client, u__strlen(ip_client, __PRETTY_FUNCTION__)))
-
-      struct in_addr ia;
-
-      if (inet_aton(ip_client, &ia) && isAllowed(ia.s_addr)) U_RETURN(true);
-
-      U_RETURN(false);
-      }
+   inline bool isAllowed(const char* ip_client);
 
    bool isAllowed(UString& ip_client) { return isAllowed(ip_client.c_str()); }
 
@@ -286,6 +275,24 @@ public:
    static UString toString(uint8_t* paddr);
    static UString toString(in_addr_t addr) { return toString((uint8_t*)&addr); } 
 
+   // converts the internet address from the IPv4 numbers-and-dots notation into binary form
+   // (in network byte order) and stores it in the structure that points to
+
+   static bool getBinaryForm(const char* addr_str, uint32_t& addr, bool bconvert = false)
+      {
+      U_TRACE(0, "UIPAddress::getBinaryForm(%S,%p,%b)", addr_str, &addr, bconvert)
+
+      U_INTERNAL_ASSERT(u_isIPv4Addr(addr_str, u__strlen(addr_str, __PRETTY_FUNCTION__)))
+
+      struct in_addr ia;
+
+      if (U_SYSCALL(inet_aton, "%p,%p", addr_str, &ia) == 0) U_RETURN(false);
+
+      addr = (bconvert ? ntohl(ia.s_addr) : ia.s_addr);
+
+      U_RETURN(true);
+      }
+
 #ifdef ENABLE_IPV6
    /********************************************************************************/
    /* This method converts the IPAddress instance to the specified type - either   */
@@ -438,5 +445,20 @@ private:
    friend class URDBClientImage;
    friend class UClientImage_Base;
 };
+
+inline bool UIPAllow::isAllowed(const char* ip_client)
+{
+   U_TRACE(0, "UIPAllow::isAllowed(%S)", ip_client)
+
+   struct in_addr ia;
+
+   if (UIPAddress::getBinaryForm(ip_client, ia.s_addr) &&
+       isAllowed(ia.s_addr))
+      {
+      U_RETURN(true);
+      }
+
+   U_RETURN(false);
+}
 
 #endif

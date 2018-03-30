@@ -63,9 +63,9 @@ HINSTANCE UDynamic::dload(const char* name, uint32_t name_len)
 
    U_INTERNAL_ASSERT(plugin_dir->isNullTerminated())
 
-   char buffer[U_PATH_MAX];
+   char buffer[U_PATH_MAX+1];
 
-   (void) u__snprintf(buffer, sizeof(buffer), U_CONSTANT_TO_PARAM(U_FMT_LIBPATH), U_PATH_CONV(plugin_dir->data()), name_len, name);
+   (void) u__snprintf(buffer, U_PATH_MAX, U_CONSTANT_TO_PARAM(U_FMT_LIBPATH), U_PATH_CONV(plugin_dir->data()), name_len, name);
 
    return dload(buffer);
 }

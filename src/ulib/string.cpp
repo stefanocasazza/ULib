@@ -18,6 +18,7 @@
 
 vpFpcu      UString::printValueToBuffer;
 UString*    UString::string_null        = ULib::uustringnull.p2;
+UString*    UString::string_u_buffer    = ULib::uustringubuffer.p2;
 UStringRep* UStringRep::string_rep_null = ULib::uustringrepnull.p2;
 UStringRep* UString::pkey;
 
@@ -588,6 +589,18 @@ void UString::str_allocate(int which)
 #endif
 }
 
+UStringRep::~UStringRep()
+{
+   U_TRACE_NO_PARAM(0, "UStringRep::~UStringRep()")
+
+   if (str != UFile::pfree)
+      {
+      // NB: we don't use delete (dtor) because it add a deallocation to the destroy process...
+
+      U_ERROR("I can't use UStringRep on stack");
+      }
+}
+
 UStringRep* UStringRep::create(uint32_t length, uint32_t need, const char* ptr)
 {
    U_TRACE(1, "UStringRep::create(%u,%u,%p)", length, need, ptr)
@@ -828,7 +841,7 @@ void UStringRep::_release()
       {
       char buffer[4096];
 
-      uint32_t len = u__snprintf(buffer, sizeof(buffer), U_CONSTANT_TO_PARAM("DEAD OF SOURCE STRING WITH CHILD ALIVE: child(%u) source(%u) = %V"), child, _length, this);
+      uint32_t len = u__snprintf(buffer, U_CONSTANT_SIZE(buffer), U_CONSTANT_TO_PARAM("DEAD OF SOURCE STRING WITH CHILD ALIVE: child(%u) source(%u) = %V"), child, _length, this);
 
       if (check_dead_of_source_string_with_child_alive)
          {
@@ -889,7 +902,7 @@ void UStringRep::_release()
          }
       else
          {
-         ptrdiff_t resto = (ptrdiff_t)str % PAGESIZE;
+         ptrdiff_t resto = (ptrdiff_t)str & U_PAGEMASK;
 
          U_INTERNAL_DUMP("resto = %u _length = %u", resto, _length)
 
@@ -898,9 +911,10 @@ void UStringRep::_release()
                 str -= resto;
             _length += resto;
             }
-      // else _length += PAGESIZE;
 
-         (void) U_SYSCALL(munmap, "%p,%lu", (void*)str, _length);
+         U_INTERNAL_ASSERT_EQUALS((ptrdiff_t)str % PAGESIZE, 0) // offset should be a multiple of the page size as returned by getpagesize(2)
+
+         (void) U_SYSCALL(munmap, "%p,%u", (void*)str, _length);
          }
 
       U_FREE_TYPE(this, UStringRep); // NB: in debug mode the memory area is zeroed...
@@ -1114,7 +1128,7 @@ __pure bool UStringRep::isEndHeader(uint32_t pos) const
    U_RETURN(false);
 }
 
-UString::UString(uint32_t len, uint32_t sz, char* ptr) // NB: for UStringExt::deflate()...
+UString::UString(uint32_t len, uint32_t sz, char* ptr)
 {
    U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(0, UString, "%u,%u,%p", len, sz, ptr)
 
@@ -1130,6 +1144,63 @@ UString::UString(uint32_t len, uint32_t sz, char* ptr) // NB: for UStringExt::de
 #endif
 
    rep->set(len, sz, ptr);
+
+   U_INTERNAL_ASSERT(invariant())
+}
+
+// NB: for UStringExt::deflate()...
+
+void UString::setConstant(uint32_t sz)
+{
+   U_TRACE(0, "UString::setConstant(%u)", sz)
+
+   if (UFile::isAllocableFromPool(sz) == false) _reserve(*this, sz);
+   else
+      {
+      UStringRep* r;
+
+      U_NEW(UStringRep, r, UStringRep(UFile::pfree, sz));
+
+      /**
+       * NB: the allocation of a UStringRep() can invoke UStackMemoryPool::growPointerBlock() that will change UFile::pfree...
+       */
+
+#  ifdef ENABLE_MEMPOOL
+      if (r->str != UFile::pfree)
+         {
+         r->str = UFile::pfree;
+
+         if (UFile::isAllocableFromPool(sz) == false)
+            {
+            delete r;
+
+            _reserve(*this, sz);
+
+            return;
+            }
+         }
+#  endif
+
+      _set(r);
+
+      U_INTERNAL_ASSERT(invariant())
+      U_INTERNAL_ASSERT_EQUALS(rep->str, UFile::pfree)
+      }
+}
+
+void UString::size_adjust_constant(uint32_t sz)
+{
+   U_TRACE(0, "UString::size_adjust_constant(%u)", sz)
+
+   rep->_length = sz;
+
+   if (rep->str == UFile::pfree)
+      {
+      sz = UFile::getSizeAligned(sz);
+
+      UFile::pfree += sz;
+      UFile::nfree -= sz;
+      }
 
    U_INTERNAL_ASSERT(invariant())
 }
@@ -1205,6 +1276,7 @@ void UString::mmap(const char* map, uint32_t len)
 {
    U_TRACE(0, "UString::mmap(%.*S,%u)", len, map, len)
 
+   U_INTERNAL_ASSERT_MAJOR(len, 0)
    U_INTERNAL_ASSERT_DIFFERS(map, MAP_FAILED)
 
    if (isMmap())
@@ -1626,11 +1698,22 @@ __pure bool UStringRep::strtob() const
 {
    U_TRACE_NO_PARAM(0, "UStringRep::strtob()")
 
+   if (_length == 1 &&
+       str[0] == '1')
+      {
+      U_RETURN(true);
+      }
+
+   if (_length == 3 &&
+       u__strncasecmp(str, U_CONSTANT_TO_PARAM("yes")) == 0)
+      {
+      U_RETURN(true);
+      }
+
    if (_length)
       {
       switch (u_get_unalignedp16(str))
          {
-         case U_MULTICHAR_CONSTANT16('1',0):
          case U_MULTICHAR_CONSTANT16('o','n'):
          case U_MULTICHAR_CONSTANT16('O','n'):
          case U_MULTICHAR_CONSTANT16('O','N'): U_RETURN(true);
@@ -1638,9 +1721,6 @@ __pure bool UStringRep::strtob() const
 
       switch (u_get_unalignedp32(str))
          {
-         case U_MULTICHAR_CONSTANT32('y','e','s',0):
-         case U_MULTICHAR_CONSTANT32('Y','e','s',0):
-         case U_MULTICHAR_CONSTANT32('Y','E','S',0):
          case U_MULTICHAR_CONSTANT32('t','r','u','e'):
          case U_MULTICHAR_CONSTANT32('T','r','u','e'):
          case U_MULTICHAR_CONSTANT32('T','R','U','E'): U_RETURN(true); 
@@ -1797,7 +1877,7 @@ float UStringRep::strtof() const
          }
 
 #  ifndef DEBUG
-      float result = ::strtof(str, 0);
+      float result = ::strtof(str, U_NULLPTR);
 #  else
       char* endptr;
       float result = ::strtof(str, &endptr);
@@ -2529,7 +2609,7 @@ const char* UStringRep::dump(bool reset) const
 
    char buffer[1024];
 
-   UObjectIO::os->write(buffer, u__snprintf(buffer, sizeof(buffer), U_CONSTANT_TO_PARAM("%V"), this));
+   UObjectIO::os->write(buffer, u__snprintf(buffer, U_CONSTANT_SIZE(buffer), U_CONSTANT_TO_PARAM("%V"), this));
 
    if (reset)
       {
@@ -2591,31 +2671,30 @@ bool UString::invariant() const
    return rep->invariant();
 }
 
-void UString::vsnprintf_check(const char* format) const
+void UString::vsnprintf_check(const char* format, uint32_t fmt_size) const
 {
    bool ok_writeable  = writeable(),
         ok_isNull     = (isNull() == false),
         ok_references = (rep->references == 0),
-        ok_format     = (rep->_capacity > u__strlen(format, __PRETTY_FUNCTION__));
+        ok_format     = (rep->_capacity > fmt_size);
 
-   if (ok_writeable == false ||
-       ok_isNull    == false ||
-       ok_format    == false)
+   if (ok_isNull == false)
       {
       // -----------------------------------------------------------------------------------------------------------------------------------------
       // Ex: userver_tcp: ERROR: UString::vsnprintf_check() this = 0xa79bbd18 parent = (nil) references = 2126 child = 0 _capacity = 0 str(0) = ""
       //                  format = "%v:" - ok_writeable = false ok_isNull = false ok_references = false ok_format = false
       // -----------------------------------------------------------------------------------------------------------------------------------------
 
-      U_ERROR("UString::vsnprintf_check() this = %p parent = %p rep = %p references = %u child = %d _capacity = %u str(%u) = %V format = %S - "
+      U_ERROR("UString::vsnprintf_check() this = %p parent = %p rep = %p references = %u child = %d _capacity = %u str(%u) = %V format = %.*S - "
               "ok_writeable = %b ok_isNull = %b ok_references = %b ok_format = %b",
-               this, rep->parent, rep, rep->references, rep->child, rep->_capacity, rep->_length, rep, format, ok_writeable, ok_isNull, ok_references, ok_format);
+               this, rep->parent, rep, rep->references, rep->child, rep->_capacity, rep->_length, rep, fmt_size, format, ok_writeable, ok_isNull, ok_references, ok_format);
       }
-   else if (ok_references == false)
+   else if (ok_format     == false ||
+            ok_references == false)
       {
-      U_WARNING("UString::vsnprintf_check() this = %p parent = %p rep = %p references = %u child = %d _capacity = %u str(%u) = %V format = %S - "
+      U_WARNING("UString::vsnprintf_check() this = %p parent = %p rep = %p references = %u child = %d _capacity = %u str(%u) = %V format = %.*S - "
                 "ok_writeable = %b ok_isNull = %b ok_references = %b ok_format = %b",
-                this, rep->parent, rep, rep->references, rep->child, rep->_capacity, rep->_length, rep, format, ok_writeable, ok_isNull, ok_references, ok_format);
+                this, rep->parent, rep, rep->references, rep->child, rep->_capacity, rep->_length, rep, fmt_size, format, ok_writeable, ok_isNull, ok_references, ok_format);
       }
 }
 #endif

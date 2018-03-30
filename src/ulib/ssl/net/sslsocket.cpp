@@ -1384,17 +1384,13 @@ next:
 
          U_NEW(UHttpClient<UTCPSocket>, staple.client, UHttpClient<UTCPSocket>(U_NULLPTR));
 
-#     ifndef U_LOG_DISABLE
-         if (UServer_Base::isLog()) staple.client->setLogShared();
-#     endif
-
          unsigned char* p = (unsigned char*) staple.request->data();
 
          staple.request->size_adjust(i2d_OCSP_REQUEST(staple.req, &p));
 
          /*
 #     ifdef DEBUG
-         (void) UFile::writeToTmp(U_STRING_TO_PARAM(*(staple.request)), O_RDWR | O_TRUNC, U_CONSTANT_TO_PARAM("ocsp.request.%P"), 0);
+         U_FILE_WRITE_TO_TMP(*(staple.request), "ocsp.request.%P");
 #     endif
 
          UString buffer(U_CAPACITY);
@@ -1432,7 +1428,7 @@ uint32_t USSLSocket::doStapling()
 
    // send the request and get a response
 
-   if (staple.client->sendPost(*(staple.url), *(staple.request), U_CONSTANT_TO_PARAM("application/ocsp-request")))
+   if (staple.client->sendPOST(*(staple.url), *(staple.request), U_CONSTANT_TO_PARAM("application/ocsp-request")))
       {
       /*
       BIO* conn = (BIO*) U_SYSCALL(BIO_new_fd, "%d,%d", staple.client->getFd(), BIO_NOCLOSE);
@@ -1551,10 +1547,6 @@ uint32_t USSLSocket::doStapling()
          if (result == false)
             {
             U_DEBUG("ocsp: no status found");
-
-#        ifdef DEBUG
-         // (void) UFile::writeToTmp(U_STRING_TO_PARAM(response), O_RDWR | O_TRUNC, U_CONSTANT_TO_PARAM("ocsp.response.%P"), 0);
-#        endif
 
             goto end;
             }

@@ -1167,13 +1167,9 @@ public:
 
 		fb.fromObject(*this);
 
-	//	(void) UFile::writeToTmp(U_STRING_TO_PARAM(fb.getResult()), O_RDWR | O_TRUNC, U_CONSTANT_TO_PARAM("testFlatBuffer1.%P"), 0);
-
 		json_obj.fromFlatBuffer(fb);
 
 		UString output = json_obj.output();
-
-	//	(void) UFile::writeToTmp(U_STRING_TO_PARAM(output), O_RDWR | O_TRUNC, U_CONSTANT_TO_PARAM("testFlatBuffer2.%P"), 0);
 
 		U_ASSERT_EQUALS( output, RESPONSELOGIN_FLATBUFFER )
 
@@ -1319,8 +1315,6 @@ public:
 		json_obj.fromFlatBuffer(fb);
 
 		UString output = json_obj.output();
-
-	//	(void) UFile::writeToTmp(U_STRING_TO_PARAM(output), O_RDWR | O_TRUNC, U_CONSTANT_TO_PARAM("testFlatBuffer.%P"), 0);
 
 		U_ASSERT_EQUALS( output, RESPONSESEARCH_FLATBUFFER )
 
@@ -1534,8 +1528,6 @@ public:
 		json_obj.fromFlatBuffer(fb);
 
 		UString output = json_obj.output();
-
-	//	(void) UFile::writeToTmp(U_STRING_TO_PARAM(output), O_RDWR | O_TRUNC, U_CONSTANT_TO_PARAM("testFlatBuffer.%P"), 0);
 
 		U_ASSERT_EQUALS( output, MULTIPLE_FLATBUFFER )
 

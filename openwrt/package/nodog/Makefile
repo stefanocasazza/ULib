@@ -44,8 +44,8 @@ endef
 
 NODOG_OPTIONS:= --without-expat --without-magic --without-pcre \
 					 --disable-stdcpp --disable-thread --disable-HCRS --disable-HPRS \
-					 --disable-examples --disable-static --disable-new-ldflags --disable-zip --disable-LFS \
-					 --with-ssl --with-libz --enable-log --enable-captive-portal --enable-static-server-plugin="nocat http" \
+					 --disable-examples --disable-static --disable-new-ldflags --disable-zip --disable-LFS --disable-HIS \
+					 --with-ssl --with-libz --enable-log --enable-captive-portal --enable-static-server-plugin="nodog http" \
 					 $(if $(CONFIG_NODOG_DEBUG),--enable-debug) \
 					 $(if $(CONFIG_NODOG_UUID),--with-libuuid,--without-libuuid) \
 					 $(if $(CONFIG_NODOG_MEMPOOL),--enable-memory-pool,--disable-memory-pool) \
@@ -77,12 +77,14 @@ endef
 
 define Package/nodog/install
 	mkdir -p $(PKG_INSTALL_DIR)
-	$(MAKE) -C $(PKG_BUILD_DIR) 						DESTDIR="$(PKG_INSTALL_DIR)" install
-	$(MAKE) -C $(PKG_BUILD_DIR)/examples/userver DESTDIR="$(PKG_INSTALL_DIR)" install
-	$(MAKE) -C $(PKG_BUILD_DIR)/examples/uclient DESTDIR="$(PKG_INSTALL_DIR)" install
+	$(MAKE) -C $(PKG_BUILD_DIR) 						  DESTDIR="$(PKG_INSTALL_DIR)" install
+	$(MAKE) -C $(PKG_BUILD_DIR)/examples/userver   DESTDIR="$(PKG_INSTALL_DIR)" install
+	$(MAKE) -C $(PKG_BUILD_DIR)/examples/uclient   DESTDIR="$(PKG_INSTALL_DIR)" install
+	$(MAKE) -C $(PKG_BUILD_DIR)/examples/serialize DESTDIR="$(PKG_INSTALL_DIR)" install
 	$(INSTALL_DIR) $(1)/etc $(1)/usr/sbin $(1)/usr/lib $(1)/usr/lib/nodog
 	$(CP) -a  $(PKG_INSTALL_DIR)/$(PKG_INSTALL_DIR)/usr/lib/libulib* $(1)/usr/lib/
 ##	$(CP) -a  $(PKG_INSTALL_DIR)/usr/lib/server_plugin_proxy* $(1)/usr/lib
+##	$(CP) -r  $(PKG_BUILD_DIR)/examples/serialize/.libs/serialize $(1)/usr/sbin
 	$(CP)     $(PKG_INSTALL_DIR)/usr/bin/uclient $(PKG_INSTALL_DIR)/usr/bin/userver_tcp $(1)/usr/sbin/
 	$(CP) -r  $(PKG_BUILD_DIR)/tests/examples/nocat/*    $(1)/usr/lib/nodog
 ##	$(CP) -r	 $(PKG_BUILD_DIR)/tests/examples/nocat/.ht* $(1)/usr/lib/nodog

@@ -1000,7 +1000,7 @@ void UValue::toFlatBuffer(UFlatBuffer& fb, UString& result) const
    uint8_t* prev_buffer;
    uint8_t stack[64 * 1024];
    uint32_t end, prev_stack_size, prev_buffer_size;
-   bool breset1 = (size_output            > UFlatBuffer::getBufferMax()),
+   bool breset1 = (size_output   > UFlatBuffer::getBufferMax()),
         breset2 = (sizeof(stack) > UFlatBuffer::getStackMax());
 
    // buffer to serialize json

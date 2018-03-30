@@ -70,7 +70,7 @@ public:
       {
       U_TRACE_NO_PARAM(0, "UClientImage_Base::isPendingSendfile()")
 
-      U_INTERNAL_DUMP("sfd = %d count = %u", sfd, count)
+      U_INTERNAL_DUMP("sfd = %d count = %I", sfd, count)
 
       if (count > 0) U_RETURN(true);
 
@@ -355,7 +355,7 @@ protected:
    uint32_t min_limit, max_limit, started_at;
 #endif
    UString* data_pending;
-   uint32_t start, count;
+   off_t offset, count;
    int sfd;
    uucflag flag;
    long last_event;
@@ -373,9 +373,9 @@ protected:
 
       UEventFd::op_mask = EPOLLIN | EPOLLRDHUP | EPOLLET;
 
-      start =
-      count = 0;
-      sfd   = -1;
+      offset =
+      count  = 0;
+      sfd    = -1;
       }
 
    int manageRead()
@@ -442,10 +442,11 @@ protected:
    bool logCertificate(); // append on log the peer certicate of client ("issuer","serial")
    bool askForClientCertificate();
 
+   static off_t ncount;
    static int idx, iovcnt;
    static struct iovec* piov;
    static UTimeVal* chronometer;
-   static uint32_t ncount, nrequest, resto;
+   static uint32_t nrequest, resto;
    static long time_between_request, time_run;
 
    static void   endRequest();
@@ -455,7 +456,7 @@ protected:
    static void resetWriteBuffer();
    static void saveRequestResponse();
    static void manageReadBufferResize(uint32_t n);
-   static void setSendfile(int fd, uint32_t start, uint32_t count);
+   static void setSendfile(int fd, off_t start, off_t count);
 
    bool isRequestFromUServer()
       {

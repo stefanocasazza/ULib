@@ -531,7 +531,7 @@ next:
 #  endif
          }
 
-      U_INTERNAL_DUMP("ldap_url_parse() failed - %.*s", u__snprintf(buffer, sizeof(buffer), U_CONSTANT_TO_PARAM("(%d, %s) - %s"), result, descr, errstr), buffer)
+      U_INTERNAL_DUMP("ldap_url_parse() failed - %.*s", u__snprintf(buffer, U_CONSTANT_SIZE(buffer), U_CONSTANT_TO_PARAM("(%d, %s) - %s"), result, descr, errstr), buffer)
 #  endif
 
       U_RETURN(false);

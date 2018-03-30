@@ -40,6 +40,12 @@ server_plugin_nocat_la_SOURCES = mod_nocat.cpp
 server_plugin_nocat_la_LIBADD  = $(ulib_la) @ULIB_LIBS@
 server_plugin_nocat_la_LDFLAGS = -module @MODULE_LIBTOOL_OPTIONS@
 endif
+if !STATIC_HANDLER_NODOG
+module_LTLIBRARIES += server_plugin_nodog.la
+server_plugin_nodog_la_SOURCES = mod_nodog.cpp
+server_plugin_nodog_la_LIBADD  = $(ulib_la) @ULIB_LIBS@
+server_plugin_nodog_la_LDFLAGS = -module @MODULE_LIBTOOL_OPTIONS@
+endif
 if !STATIC_HANDLER_SOCKET
 module_LTLIBRARIES += server_plugin_socket.la
 server_plugin_socket_la_SOURCES = mod_socket.cpp

@@ -104,7 +104,7 @@ uint32_t UMimeMultipartMsg::message(UString& body, bool bterminator)
    uint32_t content_length = vec_part[0].size(),
             len = u__snprintf(_buf, sizeof(_buf), U_CONSTANT_TO_PARAM("%.*s%.*s"), boundary_len, boundary, U_line_terminator_len, line_terminator);
 
-   body = vec_part.join(_buf, len);
+   body = vec_part.join(0, _buf, len);
 
                     (void) body.append(_buf, u__snprintf(_buf, sizeof(_buf), U_CONSTANT_TO_PARAM("%.*s--"), boundary_len, boundary));
    if (bterminator) (void) body.append(line_terminator, U_line_terminator_len);
@@ -122,17 +122,17 @@ uint32_t UMimeMultipartMsg::message(UString& body, bool bterminator)
 // Use base64 if a null byte is found
 // -------------------------------------------------------------
 
-__pure inline int UMimeMultipartMsg::encodeAutodetect(const UString& content, const char* charset)
+__pure inline int UMimeMultipartMsg::encodeAutodetect(const char* content, uint32_t content_len, const char* charset)
 {
-   U_TRACE(0, "UMimeMultipartMsg::encodeAutodetect(%V,%S)", content.rep, charset)
+   U_TRACE(0, "UMimeMultipartMsg::encodeAutodetect(%.*S,%S)", content_len,content,content_len, charset)
 
    U_INTERNAL_ASSERT_POINTER(charset)
 
    int l = 0;
    bool longline = false;
    Encoding encoding = BIT7;
-   unsigned char* ptr  = (unsigned char*) content.data();
-   unsigned char* _end = (unsigned char*) content.pend();
+   unsigned char* ptr  = (unsigned char*) content;
+   unsigned char* _end = (unsigned char*) content+content_len;
 
    while (ptr < _end)
       {
@@ -164,6 +164,7 @@ __pure inline int UMimeMultipartMsg::encodeAutodetect(const UString& content, co
    U_RETURN(encoding);
 }
 
+// -----------------------------------------------------------------------------------------------------
 // Creating a single MIME section
 // -----------------------------------------------------------------------------------------------------
 // The type option encodes content appropriately, adds the "Content-Type: type" and
@@ -175,17 +176,18 @@ __pure inline int UMimeMultipartMsg::encodeAutodetect(const UString& content, co
 // the headers into the generated MIME section
 // -----------------------------------------------------------------------------------------------------
 
-UString UMimeMultipartMsg::section(const UString& content,
+UString UMimeMultipartMsg::section(const char* content, uint32_t content_len,
                                    const char* type, uint32_t type_len,
                                    Encoding encoding, const char* charset, const char* name,
                                    const char* header, uint32_t header_len)
 {
-   U_TRACE(0, "UMimeMultipartMsg::section(%V,%.*S,%u,%d,%S,%S,%.*S,%u)", content.rep, type_len, type, type_len, encoding, charset, name, header_len, header, header_len)
+   U_TRACE(0, "UMimeMultipartMsg::section(%.*S,%u,%.*S,%u,%d,%S,%S,%.*S,%u)",content_len,content,content_len,type_len,type,type_len,encoding,charset,name,header_len,header,header_len)
 
    U_INTERNAL_ASSERT_POINTER(name)
    U_INTERNAL_ASSERT_POINTER(charset)
+   U_INTERNAL_ASSERT_MAJOR(content_len, 0)
 
-   if (encoding == AUTO) encoding = (Encoding) encodeAutodetect(content, charset);
+   if (encoding == AUTO) encoding = (Encoding) encodeAutodetect(content, content_len, charset);
 
    if (type_len == 0)
       {
@@ -194,7 +196,7 @@ UString UMimeMultipartMsg::section(const UString& content,
 
       if (UMagic::magic == U_NULLPTR) (void) UMagic::init();
 
-      UString value = UMagic::getType(content);
+      UString value = UMagic::getType(content, content_len);
 
       type     = value.data();
       type_len = value.size();
@@ -205,10 +207,6 @@ UString UMimeMultipartMsg::section(const UString& content,
       }
 
    U_INTERNAL_ASSERT_EQUALS(strstr(type,"multipart"), U_NULLPTR)
-
-   uint32_t length = content.size();
-
-   U_INTERNAL_ASSERT_MAJOR(length, 0)
 
    UString buffer(U_CAPACITY);
    const char* line_terminator = (U_line_terminator_len == 1 ? U_LF : U_CRLF);
@@ -237,20 +235,18 @@ UString UMimeMultipartMsg::section(const UString& content,
    if (encoding != BASE64 &&
        encoding != QUOTED_PRINTABLE)
       {
-      buffer += content;
+      (void) buffer.append(content, content_len);
       }
    else
       {
-      UString tmp(length * 4);
+      UString tmp(content_len * 4);
 
-      const char* ptr = content.data();
-
-      if (encoding == QUOTED_PRINTABLE) UQuotedPrintable::encode(ptr, length, tmp);
+      if (encoding == QUOTED_PRINTABLE) UQuotedPrintable::encode(content, content_len, tmp);
       else
          {
          u_base64_max_columns = U_OPENSSL_BASE64_MAX_COLUMN;
 
-         UBase64::encode(ptr, length, tmp);
+         UBase64::encode(content, content_len, tmp);
 
          u_base64_max_columns = 0;
          }

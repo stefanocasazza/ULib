@@ -1284,7 +1284,7 @@ case_2_3: // GET - POST
 
          index_ptr = ptr;
 
-         cout.write(buffer, u__snprintf(buffer, sizeof(buffer), U_CONSTANT_TO_PARAM("\n%v: %v"), UString::str_method->rep, value.rep));
+         cout.write(buffer, u__snprintf(buffer, U_CONSTANT_SIZE(buffer), U_CONSTANT_TO_PARAM("\n%v: %v"), UString::str_method->rep, value.rep));
          }
 #  endif
 
@@ -1382,7 +1382,7 @@ case_7: // https
 
          index_ptr = ptr;
 
-         cout.write(buffer, u__snprintf(buffer, sizeof(buffer), U_CONSTANT_TO_PARAM("\n%v: %v"), hpack_static_table[index-1].name, hpack_static_table[index-1].value));
+         cout.write(buffer, u__snprintf(buffer, U_CONSTANT_SIZE(buffer), U_CONSTANT_TO_PARAM("\n%v: %v"), hpack_static_table[index-1].name, hpack_static_table[index-1].value));
          }
 #  endif
 
@@ -1756,7 +1756,7 @@ insert_table:
 
          index_ptr = ptr;
 
-         cout.write(buffer, u__snprintf(buffer, sizeof(buffer), U_CONSTANT_TO_PARAM("\n%v: %v"), name.rep, value.rep));
+         cout.write(buffer, u__snprintf(buffer, U_CONSTANT_SIZE(buffer), U_CONSTANT_TO_PARAM("\n%v: %v"), name.rep, value.rep));
          }
 #  endif
       }

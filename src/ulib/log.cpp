@@ -151,7 +151,6 @@ void ULog::initDate()
    iov_vec[4].iov_len  = 1;
    iov_vec[0].iov_base = (caddr_t)date.date1;
    iov_vec[1].iov_base = (caddr_t)" ";
-   iov_vec[2].iov_base = (caddr_t)u_buffer;
    iov_vec[4].iov_base = (caddr_t)U_LF;
 
    u_gettimenow();
@@ -544,12 +543,10 @@ void ULog::write(const char* msg, uint32_t len)
 
    if (prefix_len)
       {
-      U_INTERNAL_DUMP("u_buffer_len = %u", u_buffer_len)
+      static char buffer[32];
 
-      U_INTERNAL_ASSERT_MINOR(u_buffer_len, U_BUFFER_SIZE - 100)
-
-      iov_vec[2].iov_base = (caddr_t) u_buffer + u_buffer_len;
-      iov_vec[2].iov_len  = u__snprintf((char*)iov_vec[2].iov_base, U_BUFFER_SIZE - u_buffer_len, prefix, prefix_len, 0);
+      iov_vec[2].iov_base = (caddr_t)buffer;
+      iov_vec[2].iov_len  = u__snprintf(buffer, U_CONSTANT_SIZE(buffer), prefix, prefix_len, 0);
       }
 
    iov_vec[3].iov_len  = len;
@@ -559,7 +556,7 @@ void ULog::write(const char* msg, uint32_t len)
 
    write(iov_vec, 5);
 
-   if (prefix_len) iov_vec[2].iov_len = 0;
+   iov_vec[2].iov_len = 0;
 }
 
 void ULog::log(int lfd, const char* fmt, uint32_t fmt_size, ...)
@@ -574,11 +571,12 @@ void ULog::log(int lfd, const char* fmt, uint32_t fmt_size, ...)
    va_list argp;
    va_start(argp, fmt_size);
 
-   len = u__vsnprintf(buffer, sizeof(buffer), fmt, fmt_size, argp);
+   len = u__vsnprintf(buffer, U_CONSTANT_SIZE(buffer), fmt, fmt_size, argp);
 
    va_end(argp);
 
-   if (lfd != -1)
+   if (lfd == UServer_Base::log->getFd()) UServer_Base::log->write(buffer, len);
+   else
       {
       U_INTERNAL_ASSERT_EQUALS(iov_vec[0].iov_len, 17)
       U_INTERNAL_ASSERT_EQUALS(iov_vec[1].iov_len,  1)
@@ -590,11 +588,7 @@ void ULog::log(int lfd, const char* fmt, uint32_t fmt_size, ...)
       updateDate1();
 
       (void) U_SYSCALL(writev, "%d,%p,%d", lfd, iov_vec, 5);
-
-      return;
       }
-
-   if (UServer_Base::isLog()) UServer_Base::log->write(buffer, len);
 }
 
 void ULog::log(const struct iovec* iov, const char* type, int ncount, const char* msg, uint32_t msg_len, const char* format, uint32_t fmt_size, ...)
@@ -676,13 +670,13 @@ void ULog::log(const struct iovec* iov, const char* type, int ncount, const char
       ptr = buffer1;
       }
 
-   len  = (UServer_Base::mod_name[0][0] ? u__snprintf(buffer2, sizeof(buffer2), U_CONSTANT_TO_PARAM("%s"), UServer_Base::mod_name) : 0);
-   len += u__snprintf(buffer2+len, sizeof(buffer2)-len, U_CONSTANT_TO_PARAM("send %s (%u bytes) %.*s%#.*S"), type, ncount, msg_len, msg, sz, ptr);
+   len  = (UServer_Base::mod_name[0][0] ? u__snprintf(buffer2, U_CONSTANT_SIZE(buffer2), U_CONSTANT_TO_PARAM("%s"), UServer_Base::mod_name) : 0);
+   len += u__snprintf(buffer2+len, U_CONSTANT_SIZE(buffer2)-len, U_CONSTANT_TO_PARAM("send %s (%u bytes) %.*s%#.*S"), type, ncount, msg_len, msg, (sz <= (uint32_t)ncount ? sz : ncount), ptr);
 
    va_list argp;
    va_start(argp, fmt_size);
 
-   len += u__vsnprintf(buffer2+len, sizeof(buffer2)-len, format, fmt_size, argp);
+   len += u__vsnprintf(buffer2+len, U_CONSTANT_SIZE(buffer2)-len, format, fmt_size, argp);
 
    va_end(argp);
 
@@ -714,7 +708,7 @@ void ULog::logResponse(const UString& data, const char* format, uint32_t fmt_siz
 
    U_INTERNAL_DUMP("u_printf_string_max_length = %d UServer_Base::mod_name = %S", u_printf_string_max_length, UServer_Base::mod_name)
 
-   len = u__snprintf(buffer, sizeof(buffer), U_CONSTANT_TO_PARAM("%sreceived response (%u bytes) %#.*S"),
+   len = u__snprintf(buffer, U_CONSTANT_SIZE(buffer), U_CONSTANT_TO_PARAM("%sreceived response (%u bytes) %#.*S"),
                      UServer_Base::mod_name[0][0] ? (const char*)UServer_Base::mod_name : "", sz, sz, ptr);
 
    U_INTERNAL_DUMP("len = %u", len)
@@ -724,7 +718,7 @@ void ULog::logResponse(const UString& data, const char* format, uint32_t fmt_siz
       va_list argp;
       va_start(argp, fmt_size);
 
-      len += u__vsnprintf(buffer+len, sizeof(buffer)-len, format, fmt_size, argp);
+      len += u__vsnprintf(buffer+len, U_CONSTANT_SIZE(buffer)-len, format, fmt_size, argp);
 
       va_end(argp);
       }
@@ -754,7 +748,7 @@ void ULog::logger(const char* ident, int priority, const char* format, uint32_t 
    va_list argp;
    va_start(argp, fmt_size);
 
-   len = u__vsnprintf(buffer, sizeof(buffer), format, fmt_size, argp);
+   len = u__vsnprintf(buffer, U_CONSTANT_SIZE(buffer), format, fmt_size, argp);
 
    va_end(argp);
 
@@ -1003,7 +997,7 @@ void ULog::close()
 
          U_INTERNAL_DUMP("item = %p next = %p", item, next)
 
-         item->closeLogInternal();
+         if (item->fd != -1) item->closeLogInternal();
          }
       while (next);
       }

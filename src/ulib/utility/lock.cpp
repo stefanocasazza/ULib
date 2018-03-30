@@ -58,11 +58,11 @@ bool ULock::lock(time_t timeout)
 }
 
 #if defined(U_STDCPP_ENABLE) && defined(DEBUG)
-const char* ULock::dump(bool reset) const
+const char* ULock::dump(bool _reset) const
 {
    *UObjectIO::os << "sem " << sem;
 
-   if (reset)
+   if (_reset)
       {
       UObjectIO::output();
 

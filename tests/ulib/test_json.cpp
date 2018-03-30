@@ -406,8 +406,6 @@ U_EXPORT main (int argc, char* argv[], char* env[])
 
    JSON_OBJ_stringify(result1, v);
 
-// (void) UFile::writeToTmp(U_STRING_TO_PARAM(result1), O_RDWR | O_TRUNC, U_CONSTANT_TO_PARAM("test_json.%P"), 0);
-
    U_ASSERT_EQUALS( result1, vecJson )
 
    v.clear();

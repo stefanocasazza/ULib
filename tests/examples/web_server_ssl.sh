@@ -25,11 +25,11 @@ userver {
  LOG_FILE_SZ 1M
 #LOG_FILE_SZ 20k
  LOG_MSG_SIZE -1
- PID_FILE /var/run/userver_tcp.pid
- BANDWIDTH_THROTTLING_MASK @FILE:throttling.txt
- PREFORK_CHILD 2
+ PID_FILE /var/run/userver_ssl.pid
+#BANDWIDTH_THROTTLING_MASK @FILE:throttling.txt
+ PREFORK_CHILD 0
 #REQ_TIMEOUT 300
-#PLUGIN "ssi http"
+ PLUGIN "ssi http"
 #ORM_DRIVER "sqlite mysql"
  DOCUMENT_ROOT  docroot
  PLUGIN_DIR     ../../../src/ulib/net/server/plugin/.libs
@@ -52,6 +52,10 @@ http {
 #CACHE_FILE_STORE nocat/webif.gz
 #CACHE_FILE_MASK inp/http/data/file1|*.flv|*.svgz
 }
+ssi {
+#ENVIRONMENT ~/wi-auth/etc/environment.conf
+ SSI_AUTOMATIC_ALIASING /SSI/index.shtml
+}
 EOF
 
 DIR_CMD="../../examples/userver"
@@ -62,7 +66,7 @@ start_prg_background userver_ssl -c inp/webserver.cfg
 wait_server_ready localhost 443
 
 sync
-echo "PID = `cat /var/run/userver_tcp.pid`"
+echo "PID = `cat /var/run/userver_ssl.pid`"
 
 mv err/userver_ssl.err err/web_server_ssl.err
 

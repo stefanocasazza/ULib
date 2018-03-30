@@ -42,7 +42,7 @@ endef
 
 USERVER_OPTIONS:= --with-ssl --with-libz --with-libuuid --with-pcre \
 					   --without-expat --without-magic \
-					   --disable-static --disable-new-ldflags --disable-zip --disable-LFS --disable-gcc-optimized --disable-HCRS --disable-HPRS \
+					   --disable-static --disable-new-ldflags --disable-zip --disable-LFS --disable-gcc-optimized --disable-HCRS --disable-HPRS --disable-HIS \
 				      --enable-log --enable-static-server-plugin="proxy ssi http" \
 					   $(if $(CONFIG_USERVER_DEBUG),--enable-debug)
 

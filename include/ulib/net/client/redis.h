@@ -18,6 +18,12 @@
 
 /**
  * @see http://redis.io/topics/protocol
+ *
+ * For Simple Strings the first byte of the reply is "+"
+ * For Errors the first byte of the reply is "-"
+ * For Integers the first byte of the reply is ":"
+ * For Bulk Strings the first byte of the reply is "$"
+ * For Arrays the first byte of the reply is "*"
  */
 
 #define U_RC_ANY       '?'
@@ -44,12 +50,14 @@
 #define U_RC_ERR_BUFFER_OVERFLOW      -105
 #define U_RC_ERR_DATA_FORMAT          -106
 #define U_RC_ERR_DATA_BUFFER_OVERFLOW -107
- 
+
 /**
  * @class UREDISClient
  *
  * @brief UREDISClient is a wrapper to REDIS API
  */
+
+typedef void (*vPFcs)(const UString&);
 
 class U_EXPORT UREDISClient_Base : public UClient_Base {
 public:
@@ -59,11 +67,115 @@ public:
       U_TRACE_UNREGISTER_OBJECT(0, UREDISClient_Base)
       }
 
+   // RESPONSE
+
+   UString x;
    UVector<UString> vitem;
 
-   bool processRequest(char recvtype, const char* p1, uint32_t len1);
-   bool processRequest(char recvtype, const char* p1, uint32_t len1, const char* p2, uint32_t len2);
-   bool processRequest(char recvtype, const char* p1, uint32_t len1, const char* p2, uint32_t len2, const char* p3, uint32_t len3);
+   bool getResult(uint32_t i = 0)
+      {
+      U_TRACE(0, "UREDISClient_Base::getResult(%u)", i)
+
+      if (i < vitem.size() &&
+          (x = vitem[i]))
+         {
+         U_RETURN(true);
+         }
+
+      U_RETURN(false);
+      }
+
+   UString getString(uint32_t i = 0)
+      {
+      U_TRACE(0, "UREDISClient_Base::getString(%u)", i)
+
+      if (getResult(i)) return x.copy();
+
+      return UString::getStringNull();
+      }
+
+   bool getBool(uint32_t i = 0)
+      {
+      U_TRACE(0, "UREDISClient_Base::getBool(%u)", i)
+
+      if (getResult(i)) return x.strtob();
+
+      U_RETURN(false);
+      }
+
+   uint8_t getUInt8(uint32_t i = 0)
+      {
+      U_TRACE(0, "UREDISClient_Base::getUInt8(%u)", i)
+
+      if (getResult(i)) return x.first_char()-'0';
+
+      U_RETURN(0);
+      }
+
+   void setUInt8(uint8_t& value, uint32_t i = 0, uint8_t _default = 0)
+      {
+      U_TRACE(0, "UREDISClient_Base::setUInt8(%p,%u,%u)",  &value, i, _default)
+
+      value = (getResult(i) ? x.first_char()-'0' : _default);
+      }
+
+   long getLong(uint32_t i = 0)
+      {
+      U_TRACE(0, "UREDISClient_Base::getLong(%u)", i)
+
+      if (getResult(i)) return x.strtol();
+
+      U_RETURN(0L);
+      }
+
+   unsigned long getULong(uint32_t i = 0)
+      {
+      U_TRACE(0, "UREDISClient_Base::getULong(%u)", i)
+
+      if (getResult(i)) return x.strtoul();
+
+      U_RETURN(0UL);
+      }
+
+   uint64_t getUInt64(uint32_t i = 0)
+      {
+      U_TRACE(0, "UREDISClient_Base::getUInt64(%u)", i)
+
+      if (getResult(i)) return x.strtoull();
+
+      U_RETURN(0ULL);
+      }
+
+   bool setMultiBulk(uint32_t i = 1)
+      {
+      U_TRACE(0, "UREDISClient_Base::setMultiBulk(%u)", i)
+
+      if (getResult(i) &&
+          x.equal(U_CONSTANT_TO_PARAM("( )")) == false)
+         {
+         U_RETURN(true);
+         }
+
+      U_RETURN(false);
+      }
+
+   bool setMultiBulk(UVector<UString>& vec, uint32_t i = 1)
+      {
+      U_TRACE(0, "UREDISClient_Base::setMultiBulk(%p,%u)", &vec, i)
+
+      if (setMultiBulk(i))
+         {
+         U_ASSERT(vec.empty())
+
+         UString2Object(U_STRING_TO_PARAM(x), vec);
+
+         U_ASSERT_DIFFERS(vec.empty(), true)
+
+         U_RETURN(true);
+         }
+
+      U_RETURN(false);
+      }
 
    // Connect to REDIS server
 
@@ -78,13 +190,27 @@ public:
       return processRequest(U_RC_BULK, U_CONSTANT_TO_PARAM("GET"), key, keylen);
       }
 
-   bool operator[](const UString& key) { return get(U_STRING_TO_PARAM(key)); }
-
    bool mget(const char* param, uint32_t len) // Returns the values of all specified keys
       {
       U_TRACE(0, "UREDISClient_Base::mget(%.*S,%u)", len, param, len)
 
       return processRequest(U_RC_MULTIBULK, U_CONSTANT_TO_PARAM("MGET"), param, len);
+      }
+
+   bool hmget(const char* format, uint32_t fmt_size, ...) // HMGET myhash field1 field2 nofield
+      {
+      U_TRACE(0, "UREDISClient_Base::hmget(%.*S,%u)", fmt_size, format, fmt_size)
+
+      bool ok;
+
+      va_list argp;
+      va_start(argp, fmt_size);
+
+      ok = processMethod(U_RC_MULTIBULK, U_CONSTANT_TO_PARAM("HMGET"), format, fmt_size, argp);
+
+      va_end(argp);
+
+      U_RETURN(ok);
       }
 
    bool set(const char* key, uint32_t keylen, const char* value, uint32_t valuelen) // Set the string value of a key
@@ -101,11 +227,29 @@ public:
       return processRequest(U_RC_INLINE, U_CONSTANT_TO_PARAM("MSET"), param, len);
       }
 
+   bool hmset(const char* format, uint32_t fmt_size, ...) // HMSET myhash field1 "Hello" field2 "World"
+      {
+      U_TRACE(0, "UREDISClient_Base::hmset(%.*S,%u)", fmt_size, format, fmt_size)
+
+      bool ok;
+
+      va_list argp;
+      va_start(argp, fmt_size);
+
+      ok = processMethod(U_RC_INLINE, U_CONSTANT_TO_PARAM("HMSET"), format, fmt_size, argp);
+
+      va_end(argp);
+
+      U_RETURN(ok);
+      }
+
+   bool operator[](const UString& key) { return get(U_STRING_TO_PARAM(key)); }
+
    int operator+=(const char* key) // Increment the integer value of a key by one
       {
       U_TRACE(0, "UREDISClient_Base::operator+=(%S)", key)
 
-      if (processRequest(U_RC_INT, U_CONSTANT_TO_PARAM("INCR"), key, u__strlen(key, __PRETTY_FUNCTION__))) return vitem[0].strtol();
+      if (processRequest(U_RC_INT, U_CONSTANT_TO_PARAM("INCR"), key, u__strlen(key, __PRETTY_FUNCTION__))) return getLong();
 
       U_RETURN(-1);
       }
@@ -114,7 +258,7 @@ public:
       {
       U_TRACE(0, "UREDISClient_Base::operator-=(%S)", key)
 
-      if (processRequest(U_RC_INT, U_CONSTANT_TO_PARAM("DECR"), key, u__strlen(key, __PRETTY_FUNCTION__))) return vitem[0].strtol();
+      if (processRequest(U_RC_INT, U_CONSTANT_TO_PARAM("DECR"), key, u__strlen(key, __PRETTY_FUNCTION__))) return getLong();
 
       U_RETURN(-1);
       }
@@ -184,14 +328,78 @@ public:
       {
       U_TRACE(0, "UREDISClient_Base::sadd(%.*S,%u,%.*S,%u)", keylen, key, keylen, len, param, len)
 
-      return processRequest(U_RC_INT, U_CONSTANT_TO_PARAM("SADD"), key, keylen, param, len);
+      if (processRequest(U_RC_INT, U_CONSTANT_TO_PARAM("SADD"), key, keylen, param, len)) return getBool();
+
+      U_RETURN(false);
+      }
+
+   bool zadd(const char* format, uint32_t fmt_size, ...) // ZADD myzset 2 "two" 3 "three"
+      {
+      U_TRACE(0, "UREDISClient_Base::zadd(%.*S,%u)", fmt_size, format, fmt_size)
+
+      bool ok;
+
+      va_list argp;
+      va_start(argp, fmt_size);
+
+      ok = processMethod(U_RC_INT, U_CONSTANT_TO_PARAM("ZADD"), format, fmt_size, argp);
+
+      va_end(argp);
+
+      U_RETURN(ok);
+      }
+
+   bool zrem(const char* format, uint32_t fmt_size, ...) // ZREM myzset "two"
+      {
+      U_TRACE(0, "UREDISClient_Base::zrem(%.*S,%u)", fmt_size, format, fmt_size)
+
+      bool ok;
+
+      va_list argp;
+      va_start(argp, fmt_size);
+
+      ok = processMethod(U_RC_INT, U_CONSTANT_TO_PARAM("ZREM"), format, fmt_size, argp);
+
+      va_end(argp);
+
+      U_RETURN(ok);
+      }
+
+   // Returns the elements in the sorted set at key with a score between min and max (including elements with score equal to min or max)
+
+   bool zrangebyscore(const char* format, uint32_t fmt_size, ...)
+      {
+      U_TRACE(0, "UREDISClient_Base::zrangebyscore(%.*S,%u)", fmt_size, format, fmt_size)
+
+      bool ok;
+
+      va_list argp;
+      va_start(argp, fmt_size);
+
+      ok = processMethod(U_RC_ANY, U_CONSTANT_TO_PARAM("ZRANGEBYSCORE"), format, fmt_size, argp);
+
+      va_end(argp);
+
+      U_RETURN(ok);
+      }
+
+   bool zrangebyscore(const char* key, uint32_t keylen, uint32_t _min, uint32_t _max)
+      {
+      U_TRACE(0, "UREDISClient_Base::zrangebyscore(%.*S,%u,%u,%u)", keylen, key, keylen, _min, _max)
+
+      char buf[128];
+      uint32_t buf_len = u__snprintf(buf, U_CONSTANT_SIZE(buf), U_CONSTANT_TO_PARAM("%u %u"), _min, _max);
+
+      return processRequest(U_RC_MULTIBULK, U_CONSTANT_TO_PARAM("ZRANGEBYSCORE"), key, keylen, buf, buf_len);
       }
 
    bool srem(const char* key, uint32_t keylen, const char* param, uint32_t len) // Remove one or more members from a set
       {
       U_TRACE(0, "UREDISClient_Base::srem(%.*S,%u,%.*S,%u)", keylen, key, keylen, len, param, len)
 
-      return processRequest(U_RC_INT, U_CONSTANT_TO_PARAM("SREM"), key, keylen, param, len);
+      if (processRequest(U_RC_INT, U_CONSTANT_TO_PARAM("SREM"), key, keylen, param, len)) return getBool();
+
+      U_RETURN(false);
       }
 
    bool srem(const char* key, uint32_t keylen, const UString& param) { return srem(key, keylen, U_STRING_TO_PARAM(param)); }
@@ -207,7 +415,7 @@ public:
       {
       U_TRACE(0, "UREDISClient_Base::deleteKeys(%.*S,%u)", keylen, key, keylen)
 
-      if (smembers(key, keylen)) return srem(key, keylen, vitem.join(' '));
+      if (smembers(key, keylen)) return srem(key, keylen, vitem.join());
 
       U_RETURN(false);
       }
@@ -221,29 +429,31 @@ public:
       return processRequest(U_RC_BULK, U_CONSTANT_TO_PARAM("RANDOMKEY"));
       }
 
-   bool keys(const char* pattern, uint32_t len) // Returns all keys matching pattern
-      {
-      U_TRACE(0, "UREDISClient_Base::keys(%.*S,%u)", len, pattern, len)
+   bool scan(const char* pattern, uint32_t len, vPFcs function); // Returns all keys matching pattern (scan 0 MATCH *11*)
 
-      return processRequest(U_RC_MULTIBULK, U_CONSTANT_TO_PARAM("KEYS"), pattern, len);
+   bool del(const UString& keys) // Delete one or more key
+      {
+      U_TRACE(0, "UREDISClient_Base::del(%V)", keys.rep)
+
+      return processRequest(U_RC_INT, U_CONSTANT_TO_PARAM("DEL"), U_STRING_TO_PARAM(keys));
       }
 
-   bool del(const char* key, uint32_t keylen) // Delete one or more key
+   bool deleteKeys(const char* pattern, uint32_t len); // Delete all keys matching pattern
+
+   bool del(const char* format, uint32_t fmt_size, ...) // Delete one or more key
       {
-      U_TRACE(0, "UREDISClient_Base::del(%.*S,%u)", keylen, key, keylen)
+      U_TRACE(0, "UREDISClient_Base::del(%.*S,%u)", fmt_size, format, fmt_size)
 
-      return processRequest(U_RC_INT, U_CONSTANT_TO_PARAM("DEL"), key, keylen);
-      }
+      bool ok;
 
-   bool del(const UString& key) { return del(U_STRING_TO_PARAM(key)); }
+      va_list argp;
+      va_start(argp, fmt_size);
 
-   bool deleteKeys(const char* pattern, uint32_t len) // Delete all keys matching pattern
-      {
-      U_TRACE(0, "UREDISClient_Base::deleteKeys(%.*S,%u)", len, pattern, len)
+      ok = processMethod(U_RC_INT, U_CONSTANT_TO_PARAM("DEL"), format, fmt_size, argp);
 
-      if (keys(pattern, len)) return del(vitem.join(' '));
+      va_end(argp);
 
-      U_RETURN(false);
+      U_RETURN(ok);
       }
 
    bool dump(const char* key, uint32_t keylen) // Return a serialized version of the value stored at the specified key
@@ -253,11 +463,36 @@ public:
       return processRequest(U_RC_BULK, U_CONSTANT_TO_PARAM("DUMP"), key, keylen);
       }
 
-   bool exists(const char* key, uint32_t keylen) // Determine if a key exists
+   bool exists(const char* format, uint32_t fmt_size, ...) // EXISTS key1 
       {
-      U_TRACE(0, "UREDISClient_Base::exists(%.*S,%u)", keylen, key, keylen)
+      U_TRACE(0, "UREDISClient_Base::exists(%.*S,%u)", fmt_size, format, fmt_size)
 
-      return processRequest(U_RC_INT, U_CONSTANT_TO_PARAM("EXISTS"), key, keylen);
+      bool ok;
+
+      va_list argp;
+      va_start(argp, fmt_size);
+
+      ok = processMethod(U_RC_INT, U_CONSTANT_TO_PARAM("EXISTS"), format, fmt_size, argp);
+
+      va_end(argp);
+
+      U_RETURN(ok);
+      }
+
+   bool hexists(const char* format, uint32_t fmt_size, ...) // HEXISTS myhash field1
+      {
+      U_TRACE(0, "UREDISClient_Base::hexists(%.*S,%u)", fmt_size, format, fmt_size)
+
+      bool ok;
+
+      va_list argp;
+      va_start(argp, fmt_size);
+
+      ok = processMethod(U_RC_INT, U_CONSTANT_TO_PARAM("HEXISTS"), format, fmt_size, argp);
+
+      va_end(argp);
+
+      U_RETURN(ok);
       }
 
    bool type(const char* key, uint32_t keylen) // Determine the type stored at key
@@ -271,7 +506,7 @@ public:
       {
       U_TRACE(0, "UREDISClient_Base::ttl(%.*S,%u)", keylen, key, keylen)
 
-      if (processRequest(U_RC_INT, U_CONSTANT_TO_PARAM("TTL"), key, keylen)) return vitem[0].strtoul();
+      if (processRequest(U_RC_INT, U_CONSTANT_TO_PARAM("TTL"), key, keylen)) return getLong();
 
       U_RETURN(-1);
       }
@@ -280,7 +515,7 @@ public:
       {
       U_TRACE(0, "UREDISClient_Base::pttl(%.*S,%u)", keylen, key, keylen)
 
-      if (processRequest(U_RC_INT, U_CONSTANT_TO_PARAM("PTTL"), key, keylen)) return vitem[0].strtoul();
+      if (processRequest(U_RC_INT, U_CONSTANT_TO_PARAM("PTTL"), key, keylen)) return getLong();
 
       U_RETURN(-1);
       }
@@ -289,7 +524,9 @@ public:
       {
       U_TRACE(0, "UREDISClient_Base::persist(%.*S,%u)", keylen, key, keylen)
 
-      return processRequest(U_RC_INT, U_CONSTANT_TO_PARAM("PERSIST"), key, keylen);
+      if (processRequest(U_RC_INT, U_CONSTANT_TO_PARAM("PERSIST"), key, keylen)) return getBool();
+
+      U_RETURN(false);
       }
 
    bool move(const char* key, uint32_t keylen, uint32_t destination_db) // Move a key to another database
@@ -298,7 +535,9 @@ public:
 
       U_INTERNAL_ASSERT_EQUALS(u_buffer_len, 0)
 
-      return processRequest(U_RC_INT, U_CONSTANT_TO_PARAM("MOVE"), key, keylen, u_buffer, u_num2str32(destination_db, u_buffer) - u_buffer);
+      if (processRequest(U_RC_INT, U_CONSTANT_TO_PARAM("MOVE"), key, keylen, u_buffer, u_num2str32(destination_db, u_buffer) - u_buffer)) return getBool();
+
+      U_RETURN(false);
       }
 
    bool expire(const char* key, uint32_t keylen, uint32_t sec) // Set a key's time to live in seconds
@@ -307,7 +546,9 @@ public:
 
       U_INTERNAL_ASSERT_EQUALS(u_buffer_len, 0)
 
-      return processRequest(U_RC_INT, U_CONSTANT_TO_PARAM("EXPIRE"), key, keylen, u_buffer, u_num2str32(sec, u_buffer) - u_buffer);
+      if (processRequest(U_RC_INT, U_CONSTANT_TO_PARAM("EXPIRE"), key, keylen, u_buffer, u_num2str32(sec, u_buffer) - u_buffer)) return getBool();
+
+      U_RETURN(false);
       }
 
    bool pexpire(const char* key, uint32_t keylen, uint32_t millisec) // Set a key's time to live in milliseconds
@@ -316,7 +557,9 @@ public:
 
       U_INTERNAL_ASSERT_EQUALS(u_buffer_len, 0)
 
-      return processRequest(U_RC_INT, U_CONSTANT_TO_PARAM("PEXPIRE"), key, keylen, u_buffer, u_num2str32(millisec, u_buffer) - u_buffer);
+      if (processRequest(U_RC_INT, U_CONSTANT_TO_PARAM("PEXPIRE"), key, keylen, u_buffer, u_num2str32(millisec, u_buffer) - u_buffer)) return getBool();
+
+      U_RETURN(false);
       }
 
    bool expireat(const char* key, uint32_t keylen, time_t timestamp) // Set the expiration for a key as a UNIX timestamp (seconds since January 1, 1970)
@@ -326,10 +569,12 @@ public:
       U_INTERNAL_ASSERT_EQUALS(u_buffer_len, 0)
 
 #  if SIZEOF_TIME_T == 8
-      return processRequest(U_RC_INT, U_CONSTANT_TO_PARAM("EXPIREAT"), key, keylen, u_buffer, u_num2str64(timestamp, u_buffer) - u_buffer);
+      if (processRequest(U_RC_INT, U_CONSTANT_TO_PARAM("EXPIREAT"), key, keylen, u_buffer, u_num2str64(timestamp, u_buffer) - u_buffer)) return getBool();
 #  else
-      return processRequest(U_RC_INT, U_CONSTANT_TO_PARAM("EXPIREAT"), key, keylen, u_buffer, u_num2str32(timestamp, u_buffer) - u_buffer);
+      if (processRequest(U_RC_INT, U_CONSTANT_TO_PARAM("EXPIREAT"), key, keylen, u_buffer, u_num2str32(timestamp, u_buffer) - u_buffer)) return getBool();
 #  endif
+
+      U_RETURN(false);
       }
 
    bool pexpireat(const char* key, uint32_t keylen, uint64_t timestamp) // Set the expiration for a key as a UNIX timestamp (milliseconds since January 1, 1970)
@@ -338,7 +583,9 @@ public:
 
       U_INTERNAL_ASSERT_EQUALS(u_buffer_len, 0)
 
-      return processRequest(U_RC_INT, U_CONSTANT_TO_PARAM("PEXPIREAT"), key, keylen, u_buffer, u_num2str64(timestamp, u_buffer) - u_buffer);
+      if (processRequest(U_RC_INT, U_CONSTANT_TO_PARAM("PEXPIREAT"), key, keylen, u_buffer, u_num2str64(timestamp, u_buffer) - u_buffer)) return getBool();
+
+      U_RETURN(false);
       }
 
    // Atomically transfer a key from a Redis instance to another one
@@ -360,7 +607,9 @@ public:
       {
       U_TRACE(0, "UREDISClient_Base::publish(%.*S,%u,%.*S,%u)", channel_len, channel, channel_len, msg_len, msg, msg_len)
 
-      return processRequest(U_RC_INT, U_CONSTANT_TO_PARAM("PUBLISH"), channel, channel_len, msg, msg_len);
+      if (processRequest(U_RC_INT, U_CONSTANT_TO_PARAM("PUBLISH"), channel, channel_len, msg, msg_len)) return getBool();
+
+      U_RETURN(false);
       }
 
    bool subscribe(const char* param, uint32_t len) // Listen for messages published to the given channels
@@ -386,6 +635,10 @@ public:
       return processRequest(U_RC_MULTIBULK, U_CONSTANT_TO_PARAM("LRANGE"), param, len);
       }
 
+   // MULTI-EXEC (@see https://redis.io/commands/exec)
+
+   bool processMultiRequest(const char* format, uint32_t fmt_size, ...);
+
 #if defined(U_STDCPP_ENABLE) && defined(DEBUG)
    const char* dump(bool reset) const;
 #endif
@@ -400,11 +653,66 @@ protected:
       err = 0;
       }
 
-private:
-   void processResponse() U_NO_EXPORT;
-   bool processRequest(char recvtype) U_NO_EXPORT;
+   void processResponse();
+   bool processRequest(char recvtype);
 
-   static char* getResponseItem(const UString& response, char* ptr, UVector<UString>& vec, uint32_t depth) U_NO_EXPORT;
+   bool processRequest(char recvtype, const char* p1, uint32_t len1)
+      {
+      U_TRACE(0, "UREDISClient_Base::processRequest(%C,%.*S,%u)", recvtype, len1, p1, len1)
+
+      UClient_Base::iov[0].iov_base = (caddr_t)p1;
+      UClient_Base::iov[0].iov_len  = len1;
+      UClient_Base::iov[1].iov_base = (caddr_t)U_CRLF;
+      UClient_Base::iov[1].iov_len  =
+               UClient_Base::iovcnt = 2;
+
+      if (processRequest(recvtype))
+         {
+         processResponse();
+
+         U_RETURN(true);
+         }
+
+      U_RETURN(false);
+      }
+
+   bool processMethod(char recvtype, const char* method, uint32_t method_len, const char* format, uint32_t fmt_size, va_list argp)
+      {
+      U_TRACE(0, "UREDISClient_Base::processMethod(%C,%.*S,%u,%.*S,%u)", recvtype, method_len, method, method_len, fmt_size, format, fmt_size)
+
+      U_INTERNAL_ASSERT_POINTER(format)
+      U_INTERNAL_ASSERT_POINTER(method)
+      U_INTERNAL_ASSERT_MAJOR(fmt_size, 0)
+      U_INTERNAL_ASSERT_MAJOR(method_len, 0)
+      U_INTERNAL_ASSERT_EQUALS(u_buffer_len, 0)
+
+      UClient_Base::iovcnt = 4;
+
+      UClient_Base::iov[0].iov_base = (caddr_t)method;
+      UClient_Base::iov[0].iov_len  = method_len;
+      UClient_Base::iov[1].iov_base = (caddr_t)" ";
+      UClient_Base::iov[1].iov_len  = 1;
+
+      UClient_Base::iov[3].iov_base = (caddr_t)U_CRLF;
+      UClient_Base::iov[3].iov_len  = 2;
+
+      UClient_Base::iov[2].iov_len = u__vsnprintf((char*)(UClient_Base::iov[2].iov_base = (caddr_t)u_buffer), U_BUFFER_SIZE, format, fmt_size, argp);
+
+      if (processRequest(recvtype))
+         {
+         processResponse();
+
+         U_RETURN(true);
+         }
+
+      U_RETURN(false);
+      }
+
+   bool processRequest(char recvtype, const char* p1, uint32_t len1, const char* p2, uint32_t len2);
+   bool processRequest(char recvtype, const char* p1, uint32_t len1, const char* p2, uint32_t len2, const char* p3, uint32_t len3);
+
+private:
+   char* getResponseItem(char* ptr, UVector<UString>& vec, uint32_t depth) U_NO_EXPORT;
 
    U_DISALLOW_COPY_AND_ASSIGN(UREDISClient_Base)
 };

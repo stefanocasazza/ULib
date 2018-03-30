@@ -148,17 +148,17 @@ public:
 
    // ASYNC MODE (it creates a copy of itself, return pid child if parent)
 
-   int sendGETRequestAsync(const UString& _url, bool bqueue, const char* log_msg, int log_fd = -1)
+   int sendGETRequestAsync(const UString& _url, bool bqueue, const char* log_msg, int log_fd)
       { method_num = 0; return sendRequestAsync(_url, bqueue, log_msg, log_fd); }
 
-   int sendPOSTRequestAsync(const UString& _body, const UString& _url, bool bqueue, const char* log_msg, int log_fd = -1)
+   int sendPOSTRequestAsync(const UString& _body, const UString& _url, bool bqueue = false, const char* log_msg = U_NULLPTR, int log_fd = 0)
       { body = _body; method_num = 2; return sendRequestAsync(_url, bqueue, log_msg, log_fd); }
 
    // QUEUE MODE
 
    bool putRequestOnQueue();
 
-   bool sendPost(const UString& url, const UString& pbody,
+   bool sendPOST(const UString& url, const UString& body,
                  const char* content_type     =                 "application/x-www-form-urlencoded",
                  uint32_t    content_type_len = U_CONSTANT_SIZE("application/x-www-form-urlencoded"));
 
@@ -197,8 +197,9 @@ protected:
    // In response to a HTTP_UNAUTHORISED response from the HTTP server, this function will attempt to generate an Authentication header to satisfy the server
 
    UString getBasicAuthorizationHeader();
-   int     checkResponse(int& redirectCount);
-   bool    createAuthorizationHeader(bool bProxy);
+
+   int  checkResponse(int& redirectCount, const UString& _uri);
+   bool createAuthorizationHeader(bool bProxy, const UString& _uri);
 
    void setAuthorizationHeader(bool bProxy, const UString& headerValue)
       {

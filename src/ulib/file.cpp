@@ -389,7 +389,6 @@ char* UFile::mmap_anon_huge(uint32_t* plength, int flags)
    U_TRACE(1, "UFile::mmap_anon_huge(%p,%d,%u)", plength, flags)
 
    char* ptr;
-   uint32_t length;
 
 #ifdef U_LINUX
    if (nr_hugepages)
@@ -401,7 +400,7 @@ char* UFile::mmap_anon_huge(uint32_t* plength, int flags)
 #  ifdef MAP_HUGE_1GB /* (since Linux 3.8) */
       if (*plength >= U_1G)
          {
-         length = (*plength + U_1G_MASK) & ~U_1G_MASK; // NB: munmap() length of MAP_HUGETLB memory must be hugepage aligned...
+         uint32_t length = (*plength + U_1G_MASK) & ~U_1G_MASK; // NB: munmap() length of MAP_HUGETLB memory must be hugepage aligned...
 
          U_INTERNAL_ASSERT_EQUALS(length & U_1G_MASK, 0)
 
@@ -426,7 +425,7 @@ char* UFile::mmap_anon_huge(uint32_t* plength, int flags)
          }
 #  endif
 #  ifdef MAP_HUGE_2MB /* (since Linux 3.8) */
-      length = (*plength + U_2M_MASK) & ~U_2M_MASK; // NB: munmap() length of MAP_HUGETLB memory must be hugepage aligned...
+      uint32_t length = (*plength + U_2M_MASK) & ~U_2M_MASK; // NB: munmap() length of MAP_HUGETLB memory must be hugepage aligned...
 
       U_INTERNAL_ASSERT_EQUALS(length & U_2M_MASK, 0)
 
@@ -649,9 +648,9 @@ try_from_file_system:
 // A file is mapped in multiples of the page size. For a file that is not a multiple of the page size,
 // the remaining memory is zeroed when mapped, and writes to that region are not written out to the file
 
-bool UFile::memmap(int prot, UString* str, uint32_t offset, uint32_t length)
+bool UFile::memmap(int prot, UString* str, off_t start, off_t count)
 {
-   U_TRACE(0, "UFile::memmap(%d,%p,%u,%u)", prot, str, offset, length)
+   U_TRACE(0, "UFile::memmap(%d,%p,%I,%I)", prot, str, start, count)
 
    U_CHECK_MEMORY
 
@@ -663,34 +662,26 @@ bool UFile::memmap(int prot, UString* str, uint32_t offset, uint32_t length)
    U_INTERNAL_ASSERT_MAJOR(st_size, 0)
 
 #ifdef _MSWINDOWS_
-   U_INTERNAL_ASSERT((off_t)length <= st_size) // NB: don't allow mappings beyond EOF since Windows can't handle that POSIX like...
+   U_INTERNAL_ASSERT(count <= st_size) // NB: don't allow mappings beyond EOF since Windows can't handle that POSIX like...
 #endif
-
-   if (length == 0) length = st_size;
 
    uint32_t resto = 0;
 
-   if (offset)
-      {
-      resto = offset % PAGESIZE;
+   if (count == 0) count = st_size;
 
-      offset -= resto;
-      length += resto;
+   if (start)
+      {
+      resto = start & U_PAGEMASK;
+
+      U_INTERNAL_DUMP("resto = %u", resto)
+
+      U_INTERNAL_ASSERT_EQUALS(resto, start % PAGESIZE)
+
+      start -= resto;
+      count += resto;
       }
 
-   U_INTERNAL_DUMP("resto = %u", resto)
-
-#ifdef HAVE_ARCH64
-   U_INTERNAL_ASSERT_MINOR_MSG(length, U_STRING_MAX_SIZE, "we can't manage file size bigger than 4G...") // limit of UString
-#endif
-
-   U_INTERNAL_ASSERT_EQUALS(offset % PAGESIZE, 0) // offset should be a multiple of the page size as returned by getpagesize(2)
-
-   if (map != (char*)MAP_FAILED)
-      {
-      munmap(map, map_size);
-                  map_size = 0;
-      }
+   U_INTERNAL_ASSERT_EQUALS(start % PAGESIZE, 0) // offset should be a multiple of the page size as returned by getpagesize(2)
 
    int flags = MAP_SHARED;
 
@@ -698,50 +689,48 @@ bool UFile::memmap(int prot, UString* str, uint32_t offset, uint32_t length)
    if (prot == PROT_READ) flags |= MAP_POPULATE;
 #endif
 
-   map = (char*) U_SYSCALL(mmap, "%p,%u,%d,%d,%d,%I", U_NULLPTR, length, prot, flags, fd, offset); // (str ? getMmapSize(length) : length)
+   if (map != (char*)MAP_FAILED)
+      {
+      munmap(map, map_size);
+                  map_size = 0;
+      }
+
+   map = (char*) U_SYSCALL(mmap, "%p,%u,%d,%d,%d,%I", U_NULLPTR, count, prot, flags, fd, start);
 
    if (map != (char*)MAP_FAILED)
       {
-      map_size = length;
+      map_size = count;
 
       if (str)
          {
-         str->mmap(map + resto, length - resto);
+         count -= resto;
 
-         /*
-#     if defined(U_LINUX) && defined(MADV_SEQUENTIAL)
-         if (prot == PROT_READ &&
-             length > (32 * PAGESIZE))
+         if (count > (off_t)U_STRING_MAX_SIZE)
             {
-            (void) U_SYSCALL(madvise, "%p,%u,%d", (void*)map, length, MADV_SEQUENTIAL);
+            U_WARNING("Sorry, I  can't manage string size bigger than 4G...") // limit of UString
+
+            U_RETURN(false);
             }
-#     endif
-         */
+
+         str->mmap(map+resto, count);
+
+         map = (char*)MAP_FAILED; // transfer the ownership to string
          }
+
+      /*
+#  if defined(U_LINUX) && defined(MADV_SEQUENTIAL)
+      if (prot == PROT_READ &&
+          length > (32 * PAGESIZE))
+         {
+         (void) U_SYSCALL(madvise, "%p,%I,%d", (void*)map, map_size, MADV_SEQUENTIAL);
+         }
+#  endif
+      */
 
       U_RETURN(true);
       }
 
    U_RETURN(false);
-}
-
-void UFile::munmap()
-{
-   U_TRACE_NO_PARAM(0, "UFile::munmap()")
-
-   U_CHECK_MEMORY
-
-   U_INTERNAL_DUMP("path_relativ(%u) = %.*S", path_relativ_len, path_relativ_len, path_relativ)
-
-   U_INTERNAL_ASSERT_POINTER(path_relativ)
-
-   U_INTERNAL_ASSERT_MAJOR(map_size, 0)
-   U_INTERNAL_ASSERT_DIFFERS(map,(char*)MAP_FAILED)
-
-   UFile::munmap(map, map_size);
-
-   map      = (char*)MAP_FAILED;
-   map_size = 0;
 }
 
 void UFile::msync(char* ptr, char* page, int flags)
@@ -753,6 +742,8 @@ void UFile::msync(char* ptr, char* page, int flags)
    uint32_t resto = (long)page & U_PAGEMASK;
 
    U_INTERNAL_DUMP("resto = %u", resto)
+
+   U_INTERNAL_ASSERT_EQUALS(resto, (long)page % PAGESIZE)
 
    char* addr      = page - resto;
    uint32_t length =  ptr - addr;
@@ -766,7 +757,7 @@ UString UFile::_getContent(bool bsize, bool brdonly, bool bmap)
 {
    U_TRACE(0, "UFile::_getContent(%b,%b,%b)", bsize, brdonly, bmap)
 
-   U_INTERNAL_DUMP("fd = %d map = %p map_size = %u st_size = %I", fd, map, map_size, st_size)
+   U_INTERNAL_DUMP("fd = %d map = %p map_size = %I st_size = %I", fd, map, map_size, st_size)
 
    U_INTERNAL_ASSERT_DIFFERS(fd, -1)
 
@@ -872,7 +863,7 @@ void UFile::printf(const char* format, uint32_t fmt_size, ...)
    va_list argp;
    va_start(argp, fmt_size);
 
-   bytes_to_write = u__vsnprintf(buffer, sizeof(buffer)-1, format, fmt_size, argp);
+   bytes_to_write = u__vsnprintf(buffer, U_CONSTANT_SIZE(buffer), format, fmt_size, argp);
 
    va_end(argp);
 
@@ -1004,6 +995,24 @@ bool UFile::writeTo(const UString& path, const struct iovec* iov, int n, int fla
    U_RETURN(result);
 }
 
+bool UFile::writeToTmp(const UString& data, int flags, const char* format, uint32_t fmt_size, ...)
+{
+   U_TRACE(0+256, "UFile::writeToTmp(%V,%d,%.*S,%u)", data.rep, flags, fmt_size, format, fmt_size)
+
+   U_INTERNAL_ASSERT(data)
+
+   UString path((unsigned char*)U_CONSTANT_TO_PARAM("/tmp/"), 200U);
+
+   va_list argp;
+   va_start(argp, fmt_size);
+
+   path.vsnprintf_add(format, fmt_size, argp);
+
+   va_end(argp);
+
+   return writeTo(path, data, flags, false);
+}
+
 bool UFile::writeToTmp(const char* data, uint32_t sz, int flags, const char* format, uint32_t fmt_size, ...)
 {
    U_TRACE(0+256, "UFile::writeToTmp(%.*S,%u,%d,%.*S,%u)", sz, data, sz, flags, fmt_size, format, fmt_size)
@@ -1112,9 +1121,9 @@ bool UFile::lock(int fd, short l_type, uint32_t start, uint32_t len)
    U_RETURN(false);
 }
 
-bool UFile::ftruncate(uint32_t n)
+bool UFile::ftruncate(off_t n)
 {
-   U_TRACE(1, "UFile::ftruncate(%u)", n)
+   U_TRACE(1, "UFile::ftruncate(%I)", n)
 
    U_CHECK_MEMORY
 
@@ -1132,10 +1141,10 @@ bool UFile::ftruncate(uint32_t n)
 #endif
 
    if (map != (char*)MAP_FAILED &&
-       map_size < (uint32_t)n)
+       map_size < n)
       {
-      uint32_t _map_size = n * 2;
-         char* _map      = UFile::mremap(map, map_size, _map_size, MREMAP_MAYMOVE);
+      off_t _map_size = n * 2;
+      char* _map      = UFile::mremap(map, map_size, _map_size, MREMAP_MAYMOVE);
 
       if (_map == (char*)MAP_FAILED) U_RETURN(false);
 
@@ -1143,7 +1152,7 @@ bool UFile::ftruncate(uint32_t n)
       map_size = _map_size;
       }
 
-   if (U_SYSCALL(ftruncate, "%d,%u", fd, n) == 0)
+   if (U_SYSCALL(ftruncate, "%d,%I", fd, n) == 0)
       {
       st_size = n;
 
@@ -1207,7 +1216,7 @@ long UFile::getSysParam(const char* name)
       {
       char buffer[32];
 
-      ssize_t bytes_read = U_SYSCALL(read, "%d,%p,%u", fd, buffer, sizeof(buffer)-1);
+      ssize_t bytes_read = U_SYSCALL(read, "%d,%p,%u", fd, buffer, U_CONSTANT_SIZE(buffer));
 
       if (bytes_read > 0)
          {
@@ -1235,7 +1244,7 @@ long UFile::setSysParam(const char* name, long value, bool force)
       {
       char buffer[32];
 
-      ssize_t bytes_read = U_SYSCALL(read, "%d,%p,%u", fd, buffer, sizeof(buffer)-1);
+      ssize_t bytes_read = U_SYSCALL(read, "%d,%p,%u", fd, buffer, U_CONSTANT_SIZE(buffer));
 
       if (bytes_read > 0)
          {
@@ -1405,11 +1414,11 @@ int UFile::mkTemp()
 #if defined(U_LINUX) && defined(O_TMPFILE)
    int fd = U_SYSCALL(open, "%S,%d,%d", u_tmpdir, O_TMPFILE | O_RDWR, PERM_FILE);
 #else
-   char _pathname[U_PATH_MAX];
+   char _pathname[U_PATH_MAX+1];
 
    // The last six characters of template must be XXXXXX and these are replaced with a string that makes the filename unique
 
-   (void) u__snprintf(_pathname, sizeof(_pathname), U_CONSTANT_TO_PARAM("%s/tmpXXXXXX"), u_tmpdir);
+   (void) u__snprintf(_pathname, U_PATH_MAX, U_CONSTANT_TO_PARAM("%s/tmpXXXXXX"), u_tmpdir);
 
    mode_t old_mode = U_SYSCALL(umask, "%d", 077);  // Create file with restrictive permissions
 
@@ -1617,7 +1626,7 @@ void UFile::substitute(UFile& file)
 
    file.reset();
 
-   U_INTERNAL_DUMP("fd = %d map = %p map_size = %u st_size = %I", fd, map, map_size, st_size)
+   U_INTERNAL_DUMP("fd = %d map = %p map_size = %I st_size = %I", fd, map, map_size, st_size)
 
    if (fd != -1) UFile::fsync();
 }

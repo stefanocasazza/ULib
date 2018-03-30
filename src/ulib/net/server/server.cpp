@@ -52,6 +52,9 @@
 #ifdef U_STATIC_HANDLER_NOCAT
 #  include <ulib/net/server/plugin/mod_nocat.h>
 #endif
+#ifdef U_STATIC_HANDLER_NODOG
+#  include <ulib/net/server/plugin/mod_nodog.h>
+#endif
 #ifdef U_STATIC_HANDLER_SOCKET
 #  include <ulib/net/server/plugin/mod_socket.h>
 #endif
@@ -102,7 +105,7 @@ bool          UServer_Base::update_date2;
 bool          UServer_Base::update_date3;
 bool          UServer_Base::called_from_handlerTime;
 long          UServer_Base::last_time_email_crash;
-char          UServer_Base::mod_name[2][16];
+char          UServer_Base::mod_name[2][32];
 ULog*         UServer_Base::log;
 ULog*         UServer_Base::apache_like_log;
 char*         UServer_Base::client_address;
@@ -122,6 +125,7 @@ UString*      UServer_Base::server;
 UString*      UServer_Base::as_user;
 UString*      UServer_Base::dh_file;
 UString*      UServer_Base::ca_file;
+UString*      UServer_Base::auth_ip;
 UString*      UServer_Base::ca_path;
 UString*      UServer_Base::key_file;
 UString*      UServer_Base::password;
@@ -189,7 +193,7 @@ UVector<UIPAllow*>* UServer_Base::vallow_IP_prv;
 #     define U_WHICH "select" 
 #  endif
 #  ifndef U_LOG_DISABLE
-long     UServer_Base::last_event;
+long UServer_Base::last_event;
 #  endif
 uint32_t UServer_Base::nread;
 uint32_t UServer_Base::max_depth;
@@ -300,7 +304,7 @@ public:
 
       if (UNotifier::num_connection > UNotifier::min_connection) UNotifier::callForAllEntryDynamic(UServer_Base::handlerTimeoutConnection);
 
-#  ifndef U_LOG_DISABLE
+#  if !defined(U_LOG_DISABLE) && defined(U_LINUX) && defined(ENABLE_THREAD)
       if (U_SRV_CNT_PARALLELIZATION)
 #  endif
       UServer_Base::removeZombies();
@@ -1579,11 +1583,11 @@ public:
                         (void) output.append(row1);
                         }
 
-                     (void) UFile::writeToTmp(U_STRING_TO_PARAM(output), O_RDWR | O_TRUNC, U_CONSTANT_TO_PARAM("SSE_client.txt"), 0);
+                     U_FILE_WRITE_TO_TMP(output, "SSE_client.txt");
 
-                     output = vmessage.join('\n');
+                     output = vmessage.join(0, U_CONSTANT_TO_PARAM("\n"));
 
-                     (void) UFile::writeToTmp(U_STRING_TO_PARAM(output), O_RDWR | O_TRUNC, U_CONSTANT_TO_PARAM("SSE_message.txt"), 0);
+                     U_FILE_WRITE_TO_TMP(output, "SSE_message.txt");
 
                      output.setEmpty();
 
@@ -1705,6 +1709,7 @@ UServer_Base::UServer_Base(UFileConfig* pcfg)
    U_NEW(UString, password,      UString);
    U_NEW(UString, ca_file,       UString);
    U_NEW(UString, ca_path,       UString);
+   U_NEW(UString, auth_ip,       UString);
    U_NEW(UString, name_sock,     UString);
    U_NEW(UString, IP_address,    UString);
    U_NEW(UString, cenvironment,  UString(U_CAPACITY));
@@ -1799,8 +1804,6 @@ UServer_Base::~UServer_Base()
 # endif
 #endif
 
-   UTimer::clear();
-
    UClientImage_Base::clear();
 
    delete socket;
@@ -1816,6 +1819,7 @@ UServer_Base::~UServer_Base()
    U_INTERNAL_ASSERT_POINTER(cenvironment)
    U_INTERNAL_ASSERT_POINTER(senvironment)
 
+   delete auth_ip;
    delete cenvironment;
    delete senvironment;
 
@@ -1904,6 +1908,17 @@ UServer_Base::~UServer_Base()
    UNotifier::num_connection = 0;
 
    UNotifier::clear();
+
+   UTimer::clear();
+
+#ifndef U_LOG_DISABLE
+   if (log)
+      {
+      log->ULog::close();
+
+      delete log;
+      }
+#endif
 }
 
 void UServer_Base::closeLog()
@@ -1915,12 +1930,6 @@ void UServer_Base::closeLog()
        log->isOpen())
       {
       log->closeLog();
-
-#  ifdef DEBUG
-      delete log;
-#  endif
-
-      log = U_NULLPTR;
       }
 
    if (apache_like_log &&
@@ -1934,6 +1943,8 @@ void UServer_Base::closeLog()
 
       apache_like_log = U_NULLPTR;
       }
+
+   UClient_Base::closeLog();
 #endif
 
    if (vlog)
@@ -1949,7 +1960,7 @@ void UServer_Base::closeLog()
 
       vlog->clear();
 
-#  ifdef DEBUG 
+#  ifdef DEBUG
       delete vlog;
 #  endif
 
@@ -2203,10 +2214,6 @@ void UServer_Base::loadConfigParam()
       {
       preforked_num_kids = x.strtol();
 
-#  if defined(U_SERVER_CAPTIVE_PORTAL) && !defined(ENABLE_THREAD)
-      if (x.c_char(0) == '0') monitoring_process = true;
-#  endif
-
 #  if !defined(ENABLE_THREAD) || defined(USE_LIBEVENT) || !defined(U_SERVER_THREAD_APPROACH_SUPPORT)
       if (preforked_num_kids == -1)
          {
@@ -2244,8 +2251,6 @@ void UServer_Base::loadConfigParam()
       preforked_num_kids = 0;
       }
 #endif
-
-   if (preforked_num_kids > 1) monitoring_process = true;
 
 #ifdef USE_LIBSSL
    if (bssl)
@@ -2630,6 +2635,9 @@ U_NO_EXPORT void UServer_Base::loadStaticLinkedModules(const char* name)
 #  ifdef U_STATIC_HANDLER_NOCAT
       if (x.equal(U_CONSTANT_TO_PARAM("nocat")))  { U_NEW(UNoCatPlugIn, _plugin, UNoCatPlugIn); goto next; }
 #  endif
+#  ifdef U_STATIC_HANDLER_NODOG
+      if (x.equal(U_CONSTANT_TO_PARAM("nodog")))  { U_NEW(UNoDogPlugIn, _plugin, UNoDogPlugIn); goto next; }
+#  endif
 #  ifdef U_STATIC_HANDLER_HTTP
       if (x.equal(U_CONSTANT_TO_PARAM("http")))   { U_NEW(UHttpPlugIn, _plugin, UHttpPlugIn); goto next; }
 #  endif
@@ -2971,6 +2979,23 @@ U_PLUGIN_HANDLER_REVERSE(SigHUP) // NB: we call handlerSigHUP() in reverse order
 #undef U_PLUGIN_HANDLER
 #undef U_PLUGIN_HANDLER_REVERSE
 
+void UServer_Base::suspendThread()
+{
+   U_TRACE_NO_PARAM(0, "UServer_Base::suspendThread()")
+
+#if defined(U_LINUX) && defined(ENABLE_THREAD)
+   if (u_pthread_time) ((UTimeThread*)u_pthread_time)->suspend();
+
+# if defined(USE_LIBSSL) && !defined(OPENSSL_NO_OCSP) && defined(SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB)
+   if (pthread_ocsp) pthread_ocsp->suspend();
+# endif
+
+# ifdef U_SSE_ENABLE // SERVER SENT EVENTS (SSE)
+   if (pthread_sse) pthread_sse->suspend();
+#  endif
+#endif
+}
+
 void UServer_Base::init()
 {
    U_TRACE_NO_PARAM(1, "UServer_Base::init()")
@@ -3110,7 +3135,7 @@ next:
       {
       struct in_addr ia;
 
-      if (inet_aton(IP_address->c_str(), &ia) == 0) U_ERROR("IP_ADDRESS conversion fail: %V", IP_address->rep);
+      if (UIPAddress::getBinaryForm(IP_address->c_str(), ia.s_addr) == false) U_ERROR("IP_ADDRESS conversion fail: %V", IP_address->rep);
 
       socket->setAddress(&ia);
 
@@ -3239,6 +3264,7 @@ next:
    ptr_shared_data = (shared_data*) UFile::mmap(&map_size);
 
    U_INTERNAL_ASSERT_POINTER(ptr_shared_data)
+   U_INTERNAL_ASSERT_EQUALS(U_SRV_TOT_CONNECTION, 0)
    U_INTERNAL_ASSERT_DIFFERS(ptr_shared_data, MAP_FAILED)
    U_INTERNAL_ASSERT_EQUALS(ULog::ptr_shared_date, U_NULLPTR)
 
@@ -3309,8 +3335,6 @@ next:
       U_SRV_LOG("Mapped %u bytes (%u KB) of shared memory for apache like log", apache_like_log->getSizeLogRotateData(), apache_like_log->getSizeLogRotateData() / 1024);
       }
 #endif
-
-   U_INTERNAL_ASSERT_EQUALS(U_SRV_TOT_CONNECTION, 0)
 
 #ifdef DEBUG
    UEventTime* pstat;
@@ -3426,6 +3450,16 @@ next:
    if (budp == false)
 #endif
    {
+   /*
+#ifdef DEBUG
+   if (u_trace_fd != -1 &&
+       UFile::getSysParam("/tmp/userver.thread.disable") != -1)
+      {
+      suspendThread();
+      }
+#endif
+   */
+
    if (pluginsHandlerRun() != U_PLUGIN_HANDLER_FINISHED) U_ERROR("Plugins stage run failed");
    }
 
@@ -3502,19 +3536,19 @@ next:
 #endif
 }
 
-bool UServer_Base::addLog(UFile* _log, int flags)
+bool UServer_Base::addLog(UFile* plog, int flags)
 {
-   U_TRACE(0, "UServer_Base::addLog(%p,%d)", _log, flags)
+   U_TRACE(0, "UServer_Base::addLog(%p,%d)", plog, flags)
 
    U_INTERNAL_ASSERT_POINTER(vlog)
 
-   if (_log->creat(flags, PERM_FILE))
+   if (plog->creat(flags, PERM_FILE))
       {
       file_LOG* item;
 
       U_NEW(file_LOG, item, file_LOG);
 
-      item->LOG   = _log;
+      item->LOG   = plog;
       item->flags = flags;
 
       vlog->push_back(item);
@@ -3533,17 +3567,7 @@ void UServer_Base::sendSignalToAllChildren(int signo, sighandler_t handler)
    U_INTERNAL_ASSERT_POINTER(pthis)
    U_INTERNAL_ASSERT(proc->parent())
 
-#if defined(U_LINUX) && defined(ENABLE_THREAD)
-   if (u_pthread_time) ((UTimeThread*)u_pthread_time)->suspend();
-
-# if defined(USE_LIBSSL) && !defined(OPENSSL_NO_OCSP) && defined(SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB)
-   if (pthread_ocsp) pthread_ocsp->suspend();
-# endif
-
-# ifdef U_SSE_ENABLE // SERVER SENT EVENTS (SSE)
-   if (pthread_sse) pthread_sse->suspend();
-# endif
-#endif
+   suspendThread();
 
    // NB: we can't use UInterrupt::erase() because it restore the old action (UInterrupt::init)...
 
@@ -3644,16 +3668,16 @@ RETSIGTYPE UServer_Base::handlerForSigTERM(int signo)
 
    flag_loop = false;
 
-   U_SRV_FLAG_SIGTERM      =
+#if defined(U_LINUX) && defined(ENABLE_THREAD)
+   U_SRV_FLAG_SIGTERM =
+#endif
    UNotifier::flag_sigterm = true;
 
    U_INTERNAL_ASSERT_POINTER(proc)
 
    if (proc->parent())
       {
-#  if defined(U_LINUX) && defined(ENABLE_THREAD)
-      if (u_pthread_time) ((UTimeThread*)u_pthread_time)->suspend();
-#  endif
+      suspendThread();
 
       // NB: we can't use UInterrupt::erase() because it restore the old action (UInterrupt::init)...
 
@@ -4009,7 +4033,7 @@ try_accept:
       }
 #endif
 
-#ifndef U_LOG_DISABLE
+#if !defined(U_LOG_DISABLE) && defined(U_LINUX) && defined(ENABLE_THREAD)
    ULock::atomicIncrement(U_SRV_TOT_CONNECTION);
 
    U_INTERNAL_DUMP("U_SRV_TOT_CONNECTION = %u", U_SRV_TOT_CONNECTION)
@@ -4193,7 +4217,7 @@ end:
 #undef CLIENT_ADDRESS_LEN
 #undef CLIENT_IMAGE_HANDLER_READ
 
-#ifndef U_LOG_DISABLE
+#if !defined(U_LOG_DISABLE)
 uint32_t UServer_Base::setNumConnection(char* ptr)
 {
    U_TRACE(0, "UServer_Base::setNumConnection(%p)", ptr)
@@ -4214,6 +4238,7 @@ uint32_t UServer_Base::setNumConnection(char* ptr)
        ptr = u_num2str32(sz, ptr+1);
       *ptr = '/';
 
+#  if defined(U_LINUX) && defined(ENABLE_THREAD)
       len = U_SRV_TOT_CONNECTION;
 
       U_INTERNAL_DUMP("len = %d", len)
@@ -4224,6 +4249,9 @@ uint32_t UServer_Base::setNumConnection(char* ptr)
          {
          --len;
          }
+#  else
+      len = 0;
+#  endif
 
        ptr = u_num2str32(len, ptr+1);
       *ptr = ')';
@@ -4425,9 +4453,9 @@ void UServer_Base::runLoop(const char* user)
    if (budp)
       {
       struct stat st;
-      char buffer[U_PATH_MAX];
+      char buffer[U_PATH_MAX+1];
       HINSTANCE handle = U_NULLPTR;
-      uint32_t len = u__snprintf(buffer, sizeof(buffer), U_CONSTANT_TO_PARAM(U_LIBEXECDIR "/usp/udp.%s"), U_LIB_SUFFIX);
+      uint32_t len = u__snprintf(buffer, U_PATH_MAX, U_CONSTANT_TO_PARAM(U_LIBEXECDIR "/usp/udp.%s"), U_LIB_SUFFIX);
 
       if (U_SYSCALL(stat, "%S,%p", buffer, &st))
          {
@@ -4557,19 +4585,24 @@ void UServer_Base::run()
     * >1 - pool of process serialize plus monitoring process
     */
 
-   U_INTERNAL_DUMP("monitoring_process = %b", monitoring_process)
-
-   if (monitoring_process == false)
+#if defined(U_SERVER_CAPTIVE_PORTAL) && !defined(ENABLE_THREAD)
+   monitoring_process = true;
+#else
+        if (preforked_num_kids > 1) monitoring_process = true;
+   else if (monitoring_process == false)
       {
       runLoop(user);
 
       goto stop;
       }
+#endif
 
    /**
     * Main loop for the parent process with the new preforked implementation.
     * The parent is just responsible for keeping a pool of children and they accept connections themselves...
     */
+
+   U_INTERNAL_DUMP("preforked_num_kids = %d monitoring_process = %b", preforked_num_kids, monitoring_process)
 
    int nkids;
    cpu_set_t cpuset;
@@ -4639,7 +4672,7 @@ void UServer_Base::run()
                   if (USocket::incoming_cpu != cpu &&
                       USocket::incoming_cpu != -1)
                      {
-                     sz = u__snprintf(buffer, sizeof(buffer), U_CONSTANT_TO_PARAM(" (EXPECTED CPU %d)"), USocket::incoming_cpu);
+                     sz = u__snprintf(buffer, U_CONSTANT_SIZE(buffer), U_CONSTANT_TO_PARAM(" (EXPECTED CPU %d)"), USocket::incoming_cpu);
                      }
                   else
 #              endif
@@ -4684,6 +4717,9 @@ void UServer_Base::run()
 
 #        ifdef U_LINUX
             (void) U_SYSCALL(prctl, "%d,%lu", PR_SET_PDEATHSIG, SIGTERM);
+#         ifdef DEBUG
+            u_trace_unlock();
+#         endif
 #        endif
 
             runLoop(user);
@@ -4698,6 +4734,8 @@ void UServer_Base::run()
 #     if defined(U_SERVER_CAPTIVE_PORTAL) && !defined(ENABLE_THREAD)
          if (proc->_pid == -1) // If the child don't start (not enough memory) we disable the monitoring process...
             {
+            U_INTERNAL_ASSERT(monitoring_process)
+
             monitoring_process = false;
 
             runLoop(user);
@@ -4835,7 +4873,7 @@ pid_t UServer_Base::startNewChild()
       {
       pid_t pid = p.pid();
 
-#  ifdef U_LOG_DISABLE
+#  if defined(U_LOG_DISABLE) || !defined(U_LINUX) || !defined(ENABLE_THREAD)
             (void) UProcess::removeZombies();
 #  else
       uint32_t n = UProcess::removeZombies();
@@ -4851,18 +4889,20 @@ pid_t UServer_Base::startNewChild()
    if (p.child()) U_RETURN(0);
 
    U_RETURN(-1);
-}
+   }
 
 __noreturn void UServer_Base::endNewChild()
 {
    U_TRACE_NO_PARAM(0, "UServer_Base::endNewChild()")
 
-#ifndef U_LOG_DISABLE
+#if !defined(U_LOG_DISABLE) && defined(U_LINUX) && defined(ENABLE_THREAD)
    ULock::atomicDecrement(U_SRV_TOT_CONNECTION);
 
    U_INTERNAL_DUMP("cnt_parallelization = %u U_SRV_FLAG_SIGTERM = %b", U_SRV_TOT_CONNECTION, U_SRV_FLAG_SIGTERM)
 
    if (U_SRV_FLAG_SIGTERM == false) U_SRV_LOG("child for parallelization ended (%u)", U_SRV_TOT_CONNECTION);
+#else
+   U_SRV_LOG("child for parallelization ended");
 #endif
 
    U_EXIT(0);

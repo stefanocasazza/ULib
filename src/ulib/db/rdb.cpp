@@ -741,13 +741,13 @@ void URDB::close(bool breference)
 
    U_CHECK_MEMORY
 
+   lock();
+
    if (UFile::map_size) UFile::munmap(); // Constant DB
 
    if (breference == false) journal.munmap();
    else
       {
-      lock();
-
       RDB_reference(this)--;
 
       uint32_t reference = RDB_reference(this);
@@ -759,13 +759,13 @@ void URDB::close(bool breference)
       journal.munmap();
 
       if (reference == 0) (void) journal.ftruncate(sz);
-
-      unlock();
       }
 
    if (journal.isOpen()) journal.close();
 
    journal.reset();
+
+   unlock();
 }
 
 void URDB::reset()
@@ -2191,18 +2191,7 @@ void URDBObjectHandler<UDataStorage*>::close()
       if (UServer_Base::bssl) (void) URDB::close(false);
       else
          {
-         /*
-         UString x = URDB::print();
-         (void) UFile::writeToTmp(U_STRING_TO_PARAM(x), O_RDWR | O_TRUNC, U_CONSTANT_TO_PARAM("%.*s.end"), U_FILE_TO_TRACE(*this));
-         */
-
          (void) URDB::closeReorganize();
-
-         /*
-         char buffer[1024];
-         (void) u__snprintf(U_CONSTANT_TO_PARAM("/tmp/%.*s.init"), U_FILE_TO_TRACE(*this))
-         (void) UFile::_unlink(buffer);
-         */
          }
       }
 }

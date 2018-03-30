@@ -210,7 +210,7 @@ private:
     * the kernel, sendfile() does not need to spend time transferring data to and from user space
     */
 
-   static int sendfile(USocket* sk, int in_fd, off_t* poffset, uint32_t count, int timeoutMS);
+   static int sendfile(USocket* sk, int in_fd, off_t* poffset, off_t count, int timeoutMS);
 
    friend class URPC;
    friend class UHTTP;

@@ -765,15 +765,11 @@ void USocket::_close_socket()
 
    U_INTERNAL_ASSERT(isOpen())
 
-#if defined(U_LINUX) && (defined(U_SERVER_CAPTIVE_PORTAL) && !defined(ENABLE_THREAD))
-   (void) U_SYSCALL(shutdown, "%d,%d", iSockDesc, SHUT_WR);
-#endif
-
 #ifdef _MSWINDOWS_
    (void) U_SYSCALL(closesocket, "%d", fh);
                                        fh = -1;
 #elif defined(DEBUG)
-   if (U_SYSCALL(   close, "%d", iSockDesc)) U_ERROR_SYSCALL("closesocket");
+   if (U_SYSCALL(   close, "%d", iSockDesc)) U_ERROR_SYSCALL("close");
 #else
    (void) U_SYSCALL(close, "%d", iSockDesc);
 #endif

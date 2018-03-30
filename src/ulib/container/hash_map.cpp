@@ -32,7 +32,7 @@ void UHashMap<void*>::_allocate(uint32_t n)
 
    U_INTERNAL_ASSERT_EQUALS(n & (n-1), 0)
 
-   info  = (uint8_t*) UMemoryPool::_malloc(n, 1+UHashMapNode::size(), false);
+   info  = (uint8_t*) U_SYSCALL(malloc, "%u", n*(1+UHashMapNode::size())); // UMemoryPool::_malloc(n, 1+UHashMapNode::size(), false);
    table = (char*) (info + n);
 
    (void) U_SYSCALL(memset, "%p,%d,%u", info, 0, n);
@@ -64,9 +64,9 @@ bool UHashMap<void*>::lookup()
    /**
     * Robin Hood Hashing uses the hash value to calculate the position to place it, than does linear probing until it finds an empty spot to place it.
     * While doing so it swaps out entries that have a lesser distance to its original bucket. This minimizes the maximum time a lookup takes. For a lookup,
-    * it is only necessary to lineary probe until the distance to the original bucket is larger than the current element’s distance.
+    * it is only necessary to lineary probe until the distance to the original bucket is larger than the current element's distance.
     *
-    * In this “Infobyte” implementation variant, instead of storing the full 64 bit hash value I directly store the distance to the original bucket in a byte.
+    * In this implementation variant, instead of storing the full 64 bit hash value I directly store the distance to the original bucket in a byte.
     * One bit of this byte is used to mark the bucket as taken or empty. The bit layout is defined like this:
     *
     * bits: | 7 | 6   5   4   3   2   1   0|
@@ -238,7 +238,7 @@ void UHashMap<void*>::increase_size()
          }
       }
 
-   UMemoryPool::_free(old_info, old_capacity, 1+UHashMapNode::size());
+   U_SYSCALL_VOID(free, "%p", old_info); // UMemoryPool::_free(old_info, old_capacity, 1+UHashMapNode::size());
 }
 
 void UHashMap<void*>::swapNode()

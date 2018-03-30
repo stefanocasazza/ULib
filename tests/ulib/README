@@ -7,8 +7,8 @@ Debian 7.11 was released Saturday, 4th June 2016.
 Debian 8.10, or jessie.  Access this release through dists/oldstable
 Debian 8.10 was released Saturday, 9th December 2017.
 
-Debian 9.3, or stretch.  Access this release through dists/stable
-Debian 9.3 was released Saturday, 9th December 2017.
+Debian 9.4, or stretch.  Access this release through dists/stable
+Debian 9.4 was released Saturday, 10th March 2018.
 
 Testing, or buster.  Access this release through dists/testing.  The
 current tested development snapshot is named buster.  Packages which

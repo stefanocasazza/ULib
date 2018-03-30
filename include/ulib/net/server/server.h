@@ -115,12 +115,14 @@ class UFCGIPlugIn;
 class USCGIPlugIn;
 class USmtpClient;
 class UNoCatPlugIn;
+class UNoDogPlugIn;
 class UGeoIPPlugIn;
 class UClient_Base;
 class UProxyPlugIn;
 class UDataStorage;
 class UStreamPlugIn;
 class UModNoCatPeer;
+class UModNoDogPeer;
 class UClientThread;
 class UHttpClient_Base;
 class UWebSocketPlugIn;
@@ -248,7 +250,7 @@ public:
    // MANAGE PLUGIN MODULES
    // -------------------------------------------------------------------
 
-   static char mod_name[2][16];
+   static char mod_name[2][32];
    static UEventFd* handler_other;
    static UEventFd* handler_inotify;
 
@@ -531,12 +533,12 @@ public:
       {
       U_TRACE_NO_PARAM(0, "UServer_Base::removeZombies()")
 
-      U_INTERNAL_ASSERT_POINTER(ptr_shared_data)
-
-#  ifdef U_LOG_DISABLE
+#  if defined(U_LOG_DISABLE) || !defined(U_LINUX) || !defined(ENABLE_THREAD)
             (void) UProcess::removeZombies();
 #  else
       uint32_t n = UProcess::removeZombies();
+
+      U_INTERNAL_ASSERT_POINTER(ptr_shared_data)
 
       if (n) U_SRV_LOG("removed %u zombies - current parallelization (%d)", n, U_SRV_CNT_PARALLELIZATION);
 #  endif
@@ -742,7 +744,7 @@ public:
       va_list argp;
       va_start(argp, fmt_size);
 
-      len = u__vsnprintf(buffer, sizeof(buffer), format, fmt_size, argp);
+      len = u__vsnprintf(buffer, U_CONSTANT_SIZE(buffer), format, fmt_size, argp);
 
       va_end(argp);
 
@@ -815,6 +817,7 @@ protected:
    static UString* host;
    static sigset_t mask;
    static UProcess* proc;
+   static UString* auth_ip;
    static UEventTime* ptime;
    static UServer_Base* pthis;
    static uint32_t crash_count;
@@ -1050,6 +1053,8 @@ protected:
 
    // SERVICES
 
+   static void suspendThread();
+
    static void _preallocate()
       {
       U_TRACE_NO_PARAM(0, "UServer_Base::_preallocate()")
@@ -1103,7 +1108,7 @@ private:
 
       manageWaitAll();
 
-#  ifndef U_LOG_DISABLE
+#  if !defined(U_LOG_DISABLE) && defined(U_LINUX) && defined(ENABLE_THREAD)
       U_SRV_TOT_CONNECTION = 0;
 #  endif
 
@@ -1165,11 +1170,13 @@ private:
    friend class UApplication;
    friend class UProxyPlugIn;
    friend class UNoCatPlugIn;
+   friend class UNoDogPlugIn;
    friend class UGeoIPPlugIn;
    friend class UClient_Base;
    friend class UStreamPlugIn;
    friend class UClientThread;
    friend class UModNoCatPeer;
+   friend class UModNoDogPeer;
    friend class UHttpClient_Base;
    friend class UWebSocketPlugIn;
    friend class UModProxyService;
