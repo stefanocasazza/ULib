@@ -36,6 +36,10 @@ aclocal_DATA = ULib.m4
 ##README.html: README.md
 ##@Markdown.pl README.md > README.html
 
+configure: configure.ac
+	@echo "$< changed: you must re-run './autogen.sh'"
+	@false
+
 test:
 	@cd $(top_builddir)/tests; $(MAKE) $(AM_MAKEFLAGS) test 
 

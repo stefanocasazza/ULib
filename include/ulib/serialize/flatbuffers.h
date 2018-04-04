@@ -2030,6 +2030,13 @@ private:
    template <class T> friend class UFlatBufferTypeHandler;
 };
 
+#ifndef U_FLAT_BUFFERS_SPACE_STACK 
+#define U_FLAT_BUFFERS_SPACE_STACK (8U * 1024U)
+#endif
+#ifndef U_FLAT_BUFFERS_SPACE_BUFFER 
+#define U_FLAT_BUFFERS_SPACE_BUFFER (64U * 1024U)
+#endif
+
 class U_EXPORT UFlatBufferSpace {
 public:
 
@@ -2056,8 +2063,8 @@ protected:
    uint32_t prev_stack_size,
             prev_buffer_size;
 
-   uint8_t stack[ 8 * 1024],
-          buffer[64 * 1024];
+   uint8_t stack[U_FLAT_BUFFERS_SPACE_STACK],
+          buffer[U_FLAT_BUFFERS_SPACE_BUFFER];
 };
 
 // Template specialization

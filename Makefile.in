@@ -982,6 +982,10 @@ uninstall-am: uninstall-aclocalDATA
 
 .phony: doxy todo
 
+configure: configure.ac
+	@echo "$< changed: you must re-run './autogen.sh'"
+	@false
+
 test:
 	@cd $(top_builddir)/tests; $(MAKE) $(AM_MAKEFLAGS) test 
 

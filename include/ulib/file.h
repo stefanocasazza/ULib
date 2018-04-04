@@ -1222,7 +1222,7 @@ protected:
       U_ASSERT(isMapped())
 
 #  ifdef HAVE_ARCH64
-      U_INTERNAL_ASSERT_MINOR_MSG(map_size, (off_t)U_STRING_MAX_SIZE, "Sorry, I can't manage string size bigger than 4G...") // limit of UString
+      U_INTERNAL_ASSERT_MINOR_MSG((uint32_t)map_size, U_STRING_MAX_SIZE, "Sorry, I can't manage string size bigger than 4G...") // limit of UString
 #  endif
 
       str.mmap(map, map_size);
@@ -1239,7 +1239,7 @@ protected:
       U_INTERNAL_ASSERT_MAJOR(count, 0)
       U_INTERNAL_ASSERT_DIFFERS(map, MAP_FAILED)
 
-      if (count > (off_t)U_STRING_MAX_SIZE)
+      if ((uint64_t)count > U_STRING_MAX_SIZE)
          {
          U_WARNING("Sorry, I  can't manage string size bigger than 4G...") // limit of UString
 

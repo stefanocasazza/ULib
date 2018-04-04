@@ -695,39 +695,28 @@ bool UFile::memmap(int prot, UString* str, off_t start, off_t count)
                   map_size = 0;
       }
 
-   map = (char*) U_SYSCALL(mmap, "%p,%u,%d,%d,%d,%I", U_NULLPTR, count, prot, flags, fd, start);
+   map = (char*) U_SYSCALL(mmap, "%p,%I,%d,%d,%d,%I", U_NULLPTR, count, prot, flags, fd, start);
 
    if (map != (char*)MAP_FAILED)
       {
       map_size = count;
 
-      if (str)
+      if (str == U_NULLPTR) U_RETURN(true);
+
+      count -= resto;
+
+      U_INTERNAL_DUMP("count = %I U_STRING_MAX_SIZE = %u", count, U_STRING_MAX_SIZE)
+
+      if ((uint64_t)count < U_STRING_MAX_SIZE)
          {
-         count -= resto;
-
-         if (count > (off_t)U_STRING_MAX_SIZE)
-            {
-            U_WARNING("Sorry, I  can't manage string size bigger than 4G...") // limit of UString
-
-            U_RETURN(false);
-            }
-
          str->mmap(map+resto, count);
 
          map = (char*)MAP_FAILED; // transfer the ownership to string
+
+         U_RETURN(true);
          }
 
-      /*
-#  if defined(U_LINUX) && defined(MADV_SEQUENTIAL)
-      if (prot == PROT_READ &&
-          length > (32 * PAGESIZE))
-         {
-         (void) U_SYSCALL(madvise, "%p,%I,%d", (void*)map, map_size, MADV_SEQUENTIAL);
-         }
-#  endif
-      */
-
-      U_RETURN(true);
+      U_WARNING("Sorry, I  can't manage string size bigger than 4G...") // limit of UString
       }
 
    U_RETURN(false);

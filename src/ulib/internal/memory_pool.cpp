@@ -303,9 +303,12 @@ void UMemoryPool::allocateMemoryBlocks(const char* ptr)
    if (UFile::rlimit_memfree == U_2M)
       {
 #  ifdef DEBUG
-      char buffer[256];
+      if (u_err_buffer == U_NULLPTR)
+         {
+         static char buffer[256];
 
-      if (u_err_buffer == U_NULLPTR) u_err_buffer = buffer;
+         u_err_buffer = buffer;
+         }
 #  endif
 
       // cat /proc/meminfo | grep Huge

@@ -314,11 +314,18 @@ void u__memcpy(void* restrict dst, const void* restrict src, size_t n, const cha
    U_INTERNAL_ASSERT_POINTER(dst)
    U_INTERNAL_ASSERT_POINTER(called_by_function)
 
-   if (n == 0) U_WARNING("*** Zero copy in memcpy *** - %s", called_by_function);
+   if (n == 0) U_WARNING("*** Zero copy in memcpy(%p,%p,%u) *** - calleb by %s() dst = %#.*S src = %#.*S", dst, src, n, called_by_function, n, dst, n, src);
+
+   if (dst == src)
+      {
+      U_WARNING("*** Source and Destination are EQUALS in memcpy(%p,%p,%u) *** - calleb by %s() src = %#.*S", dst, src, n, called_by_function, n, src);
+
+      return;
+      }
 
    if (u_is_overlap((const char* restrict)dst, (const char* restrict)src, n))
       {
-      U_WARNING("*** Source and Destination OVERLAP in memcpy *** - %s", called_by_function);
+      U_WARNING("*** Source and Destination OVERLAP in memcpy(%p,%p,%u) *** - calleb by %s() dst = %#.*S src = %#.*S", dst, src, n, called_by_function, n, dst, n, src);
 
       (void) apex_memmove(dst, src, n);
       }
@@ -1643,17 +1650,17 @@ uint32_t u__vsnprintf(char* restrict buffer, uint32_t buffer_size, const char* r
          {
          U_INTERNAL_ASSERT_MAJOR(fmt_size, 0)
 
-         u__memcpy(bp, fmark, fmt_size, __PRETTY_FUNCTION__);
-                   bp +=      fmt_size;
+         (void) memcpy(bp, fmark, fmt_size);
+                       bp +=      fmt_size;
 
          break;
          }
 
       if ((n = (fp - fmark)))
          {
-         u__memcpy(bp, fmark, n, __PRETTY_FUNCTION__);
-                   bp +=      n;
-             fmt_size -=      n;
+         (void) memcpy(bp, fmark, n);
+                       bp +=      n;
+                 fmt_size -=      n;
          }
 
       /* init var */
@@ -2191,7 +2198,7 @@ case_D: /* extension: print date and time in various format */
 case_H: /* extension: print host name */
       U_INTERNAL_ERROR(u_hostname_len, "HOSTNAME NULL at u__vsnprintf() - CHECK THE PARAMETERS - format = \"%.*s\"", format_size_save, format);
 
-      u__memcpy(bp, u_hostname, u_hostname_len, __PRETTY_FUNCTION__);
+      (void) memcpy(bp, u_hostname, u_hostname_len);
 
       bp += u_hostname_len;
 
@@ -2230,14 +2237,14 @@ case_M: /* extension: print memory dump */
       continue;
 
 case_N: /* extension: print program name */
-      u__memcpy(bp, u_progname, u_progname_len, __PRETTY_FUNCTION__);
+      (void) memcpy(bp, u_progname, u_progname_len);
 
       bp += u_progname_len;
 
       continue;
 
 case_P: /* extension: print process pid */
-      u__memcpy(bp, u_pid_str, u_pid_str_len, __PRETTY_FUNCTION__);
+      (void) memcpy(bp, u_pid_str, u_pid_str_len);
 
       bp += u_pid_str_len;
 
@@ -2257,7 +2264,7 @@ case_R: /* extension: print msg - u_getSysError() */
          {
          len = u__strlen((const char* restrict)cp, __PRETTY_FUNCTION__);
 
-         u__memcpy(bp, cp, len, __PRETTY_FUNCTION__);
+         (void) memcpy(bp, cp, len);
 
          bp += len;
          }
@@ -2279,7 +2286,7 @@ case_R: /* extension: print msg - u_getSysError() */
 
          cp = getSysError_w32((uint32_t*)&len);
 
-         u__memcpy(bp, cp, len, __PRETTY_FUNCTION__);
+         (void) memcpy(bp, cp, len);
 
          bp += len;
 
@@ -2294,7 +2301,7 @@ case_R: /* extension: print msg - u_getSysError() */
 
       u_getSysError((uint32_t*)&len);
 
-      u__memcpy(bp, u_err_buffer, len, __PRETTY_FUNCTION__);
+      (void) memcpy(bp, u_err_buffer, len);
 
       bp += len;
 
@@ -2310,7 +2317,7 @@ case_T: /* extension: print time_t */
 case_U: /* extension: print user name */
       U_INTERNAL_ERROR(u_user_name_len, "USER NAME NULL at u__vsnprintf() - CHECK THE PARAMETERS - format = \"%.*s\"", format_size_save, format);
 
-      u__memcpy(bp, u_user_name, u_user_name_len, __PRETTY_FUNCTION__);
+      (void) memcpy(bp, u_user_name, u_user_name_len);
 
       bp += u_user_name_len;
 
@@ -2336,7 +2343,7 @@ case_W: /* extension: print COLOR (ANSI ESCAPE STR) */
 
          len = sizeof(U_RESET_STR) - (n == RESET);
 
-         u__memcpy(bp, tab_color[n], len, __PRETTY_FUNCTION__);
+         (void) memcpy(bp, tab_color[n], len);
 
          bp += len;
          }
@@ -2444,7 +2451,7 @@ number: /* uint32_t conversions */
 case_Y: /* extension: print u_getSysSignal(signo) */
       u_getSysSignal(VA_ARG(int), (uint32_t*)&len);
 
-      u__memcpy(bp, u_err_buffer, len, __PRETTY_FUNCTION__);
+      (void) memcpy(bp, u_err_buffer, len);
 
       bp += len;
 
@@ -2581,7 +2588,7 @@ case_q: /* field length modifier: quad. This is a synonym for ll */
 case_r: /* extension: print u_getExitStatus(exit_value) */
       u_getExitStatus(VA_ARG(int), (uint32_t*)&len);
 
-      u__memcpy(bp, u_err_buffer, len, __PRETTY_FUNCTION__);
+      (void) memcpy(bp, u_err_buffer, len);
 
       bp += len;
 
@@ -2606,7 +2613,7 @@ case_v: /* extension: print ustring */
 case_w: /* extension: print current working directory */
       U_INTERNAL_ERROR(u_cwd_len, "CURRENT WORKING DIRECTORY NULL at u__vsnprintf() - CHECK THE PARAMETERS - format = \"%.*s\"", format_size_save, format);
 
-      u__memcpy(bp, u_cwd, u_cwd_len, __PRETTY_FUNCTION__);
+      (void) memcpy(bp, u_cwd, u_cwd_len);
 
       bp += u_cwd_len;
 
@@ -2710,7 +2717,7 @@ next:
          U_INTERNAL_ERROR(ret <= buffer_size,
                           "BUFFER OVERFLOW at u__vsnprintf() ret = %u buffer_size = %u format = \"%.*s\"", ret, buffer_size, format_size_save, format);
 
-         u__memcpy(bp, cp, size, __PRETTY_FUNCTION__);
+         (void) memcpy(bp, cp, size);
 
          bp += size;
          }

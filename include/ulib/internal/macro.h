@@ -18,7 +18,7 @@
 #define U_TIMEOUT_MS     (30L * 1000L) // 30 second connection/read timeout
 #define U_SSL_TIMEOUT_MS (10L * 1000L) // 10 second handshake       timeout
 
-#define U_STRING_MAX_SIZE (((U_NOT_FOUND-sizeof(ustringrep))/sizeof(char))-4096)
+#define U_STRING_MAX_SIZE (U_NOT_FOUND-sizeof(ustringrep)-4096U)
 
 #ifndef ENABLE_MEMPOOL
 #  define U_CAPACITY 1024

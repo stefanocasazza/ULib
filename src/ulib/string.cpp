@@ -705,6 +705,8 @@ UStringRep* UStringRep::create(uint32_t length, uint32_t need, const char* ptr)
    if (length &&
        ptr)
       {
+      U_INTERNAL_ASSERT_DIFFERS(_ptr, ptr)
+
       U_MEMCPY((void*)_ptr, ptr, length);
 
       _ptr[length] = '\0';

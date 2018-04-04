@@ -74,7 +74,7 @@ EOF
 DIR_CMD="../../examples/userver"
 
 #STRACE=$TRUSS
-VALGRIND='valgrind --leak-check=yes --track-origins=yes'
+#VALGRIND='valgrind --leak-check=yes --track-origins=yes'
 start_prg_background userver_tcp -c inp/webserver.cfg
 
 wait_server_ready localhost 5280

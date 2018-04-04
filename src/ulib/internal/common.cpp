@@ -198,7 +198,7 @@ void ULib::init(char** argv, const char* mempool)
 
    if (ptr < u_buffer) u_buffer = (char*)ptr;
 
-   u_err_buffer = (char*) UMemoryPool::pop(U_SIZE_TO_STACK_INDEX(256));
+   if (u_err_buffer == U_NULLPTR) u_err_buffer = (char*) UMemoryPool::pop(U_SIZE_TO_STACK_INDEX(256));
 
    U_INTERNAL_DUMP("ptr = %p u_buffer = %p diff = %ld", ptr, u_buffer, ptr - u_buffer)
 
@@ -206,8 +206,9 @@ void ULib::init(char** argv, const char* mempool)
    UMemoryError::pbuffer = (char*) UMemoryPool::pop(U_SIZE_TO_STACK_INDEX(U_MAX_SIZE_PREALLOCATE));
 # endif
 #else
-   u_buffer     = (char*) U_SYSCALL(malloc, "%u", U_BUFFER_SIZE);
-   u_err_buffer = (char*) U_SYSCALL(malloc, "%u", 256);
+   u_buffer = (char*) U_SYSCALL(malloc, "%u", U_BUFFER_SIZE);
+
+   if (u_err_buffer == U_NULLPTR) u_err_buffer = (char*) U_SYSCALL(malloc, "%u", 256);
 
 # ifdef DEBUG
    UMemoryError::pbuffer = (char*) U_SYSCALL(malloc, "%u", U_MAX_SIZE_PREALLOCATE);

@@ -112,11 +112,11 @@ public:
       U_RETURN(0);
       }
 
-   void setUInt8(uint8_t& value, uint32_t i = 0, uint8_t _default = 0)
+   void setUInt8(uint8_t& value, uint32_t i = 0, uint8_t ldefault = 0)
       {
-      U_TRACE(0, "UREDISClient_Base::setUInt8(%p,%u,%u)",  &value, i, _default)
+      U_TRACE(0, "UREDISClient_Base::setUInt8(%p,%u,%u)",  &value, i, ldefault)
 
-      value = (getResult(i) ? x.first_char()-'0' : _default);
+      value = (getResult(i) ? x.first_char()-'0' : ldefault);
       }
 
    long getLong(uint32_t i = 0)
@@ -197,7 +197,16 @@ public:
       return processRequest(U_RC_MULTIBULK, U_CONSTANT_TO_PARAM("MGET"), param, len);
       }
 
-   bool hmget(const char* format, uint32_t fmt_size, ...) // HMGET myhash field1 field2 nofield
+   // HMGET myhash field1 field2 nofield
+
+   bool hmget(const UString& str)
+      {
+      U_TRACE(0, "UREDISClient_Base::hmget(%V)", str.rep)
+
+      return processRequest(U_RC_MULTIBULK, U_CONSTANT_TO_PARAM("HMGET"), U_STRING_TO_PARAM(str));
+      }
+
+   bool hmget(const char* format, uint32_t fmt_size, ...)
       {
       U_TRACE(0, "UREDISClient_Base::hmget(%.*S,%u)", fmt_size, format, fmt_size)
 
@@ -207,6 +216,31 @@ public:
       va_start(argp, fmt_size);
 
       ok = processMethod(U_RC_MULTIBULK, U_CONSTANT_TO_PARAM("HMGET"), format, fmt_size, argp);
+
+      va_end(argp);
+
+      U_RETURN(ok);
+      }
+
+   // HMSET myhash field1 "Hello" field2 "World"
+
+   bool hmset(const UString& str)
+      {
+      U_TRACE(0, "UREDISClient_Base::hmset(%V)", str.rep)
+
+      return processRequest(U_RC_INLINE, U_CONSTANT_TO_PARAM("HMSET"), U_STRING_TO_PARAM(str));
+      }
+
+   bool hmset(const char* format, uint32_t fmt_size, ...)
+      {
+      U_TRACE(0, "UREDISClient_Base::hmset(%.*S,%u)", fmt_size, format, fmt_size)
+
+      bool ok;
+
+      va_list argp;
+      va_start(argp, fmt_size);
+
+      ok = processMethod(U_RC_INLINE, U_CONSTANT_TO_PARAM("HMSET"), format, fmt_size, argp);
 
       va_end(argp);
 
@@ -225,22 +259,6 @@ public:
       U_TRACE(0, "UREDISClient_Base::mset(%.*S,%u)", len, param, len)
 
       return processRequest(U_RC_INLINE, U_CONSTANT_TO_PARAM("MSET"), param, len);
-      }
-
-   bool hmset(const char* format, uint32_t fmt_size, ...) // HMSET myhash field1 "Hello" field2 "World"
-      {
-      U_TRACE(0, "UREDISClient_Base::hmset(%.*S,%u)", fmt_size, format, fmt_size)
-
-      bool ok;
-
-      va_list argp;
-      va_start(argp, fmt_size);
-
-      ok = processMethod(U_RC_INLINE, U_CONSTANT_TO_PARAM("HMSET"), format, fmt_size, argp);
-
-      va_end(argp);
-
-      U_RETURN(ok);
       }
 
    bool operator[](const UString& key) { return get(U_STRING_TO_PARAM(key)); }
@@ -429,16 +447,12 @@ public:
       return processRequest(U_RC_BULK, U_CONSTANT_TO_PARAM("RANDOMKEY"));
       }
 
-   bool scan(const char* pattern, uint32_t len, vPFcs function); // Returns all keys matching pattern (scan 0 MATCH *11*)
-
    bool del(const UString& keys) // Delete one or more key
       {
       U_TRACE(0, "UREDISClient_Base::del(%V)", keys.rep)
 
       return processRequest(U_RC_INT, U_CONSTANT_TO_PARAM("DEL"), U_STRING_TO_PARAM(keys));
       }
-
-   bool deleteKeys(const char* pattern, uint32_t len); // Delete all keys matching pattern
 
    bool del(const char* format, uint32_t fmt_size, ...) // Delete one or more key
       {
@@ -456,6 +470,10 @@ public:
       U_RETURN(ok);
       }
 
+   bool deleteKeys(const char* pattern, uint32_t len); // Delete all keys matching pattern
+
+   bool scan(const char* pattern, uint32_t len, vPFcs function); // Returns all keys matching pattern (scan 0 MATCH *11*)
+
    bool dump(const char* key, uint32_t keylen) // Return a serialized version of the value stored at the specified key
       {
       U_TRACE(0, "UREDISClient_Base::dump(%.*S,%u)", keylen, key, keylen)
@@ -463,36 +481,57 @@ public:
       return processRequest(U_RC_BULK, U_CONSTANT_TO_PARAM("DUMP"), key, keylen);
       }
 
-   bool exists(const char* format, uint32_t fmt_size, ...) // EXISTS key1 
+   bool exists(const char* key, uint32_t keylen) // EXISTS key1 
       {
-      U_TRACE(0, "UREDISClient_Base::exists(%.*S,%u)", fmt_size, format, fmt_size)
+      U_TRACE(0, "UREDISClient_Base::exists(%.*S,%u)", keylen, key, keylen)
 
-      bool ok;
+      if (processRequest(U_RC_INT, U_CONSTANT_TO_PARAM("EXISTS"), key, keylen) &&
+          getUInt8())
+         {
+         U_RETURN(true);
+         }
 
-      va_list argp;
-      va_start(argp, fmt_size);
-
-      ok = processMethod(U_RC_INT, U_CONSTANT_TO_PARAM("EXISTS"), format, fmt_size, argp);
-
-      va_end(argp);
-
-      U_RETURN(ok);
+      U_RETURN(false);
       }
 
-   bool hexists(const char* format, uint32_t fmt_size, ...) // HEXISTS myhash field1
+   bool hexists(const char* key, uint32_t keylen, const char* field, uint32_t fieldlen) // HEXISTS myhash field1
       {
-      U_TRACE(0, "UREDISClient_Base::hexists(%.*S,%u)", fmt_size, format, fmt_size)
+      U_TRACE(0, "UREDISClient_Base::hexists(%.*S,%u,%.*S,%u)", keylen, key, keylen, fieldlen, field, fieldlen)
+
+      if (processRequest(U_RC_INT, U_CONSTANT_TO_PARAM("HEXISTS"), key, keylen, field, fieldlen) &&
+          getUInt8())
+         {
+         U_RETURN(true);
+         }
+
+      U_RETURN(false);
+      }
+
+   uint64_t hincrby(const char* key, uint32_t keylen, const char* field, uint32_t fieldlen) // HINCRBY myhash field1
+      {
+      U_TRACE(0, "UREDISClient_Base::hincrby(%.*S,%u,%.*S,%u)", keylen, key, keylen, fieldlen, field, fieldlen)
+
+      if (processRequest(U_RC_INT, U_CONSTANT_TO_PARAM("HINCRBY"), key, keylen, field, fieldlen)) return getUInt64();
+
+      U_RETURN(0ULL);
+      }
+
+   uint64_t hincrby(const char* format, uint32_t fmt_size, ...)
+      {
+      U_TRACE(0, "UREDISClient_Base::hincrby(%.*S,%u)", fmt_size, format, fmt_size)
 
       bool ok;
 
       va_list argp;
       va_start(argp, fmt_size);
 
-      ok = processMethod(U_RC_INT, U_CONSTANT_TO_PARAM("HEXISTS"), format, fmt_size, argp);
+      ok = processMethod(U_RC_INT, U_CONSTANT_TO_PARAM("HINCRBY"), format, fmt_size, argp);
 
       va_end(argp);
 
-      U_RETURN(ok);
+      if (ok) return getUInt64();
+
+      U_RETURN(0ULL);
       }
 
    bool type(const char* key, uint32_t keylen) // Determine the type stored at key

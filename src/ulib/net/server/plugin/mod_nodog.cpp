@@ -11,6 +11,13 @@
 //
 // ============================================================================
 
+#include <ulib/base/hash.h>
+
+#ifndef HAVE_ARCH64
+#  define U_FLAT_BUFFERS_SPACE_STACK 1024U
+#  define U_FLAT_BUFFERS_SPACE_BUFFER 1024U
+#endif
+
 #include <ulib/date.h>
 #include <ulib/file_config.h>
 #include <ulib/utility/des3.h>
@@ -198,7 +205,7 @@ U_NO_EXPORT void UNoDogPlugIn::getTraffic()
             ip.snprintf(U_CONSTANT_TO_PARAM("%u.%u.%u.%u"), bytep[0], bytep[1], bytep[2], bytep[3]);
 #        endif
 
-            U_DEBUG("IP: %v SRC packets: %u bytes: %u DST packets: %u bytes: %u", ip.rep, entry->src_packets, entry->src_bytes, entry->dst_packets, entry->dst_bytes)
+            U_SRV_LOG("IP: %v SRC packets: %u bytes: %u DST packets: %u bytes: %u", ip.rep, entry->src_packets, entry->src_bytes, entry->dst_packets, entry->dst_bytes);
 
             peer = (*peers)[ip];
 
@@ -249,7 +256,7 @@ bool UNoDogPlugIn::getPeerInfo(UStringRep* key, void* value)
          {
          if (U_peer_permit == false)
             {
-            U_WARNING("Peer IP %v MAC %v has made traffic(%u bytes) but it has status DENY", peer->ip.rep, peer->mac.rep, peer->ctraffic);
+            U_SRV_LOG("WARNING: Peer IP %v MAC %v has made traffic(%u bytes) but it has status DENY", peer->ip.rep, peer->mac.rep, peer->ctraffic);
             }
 
          pfb->UInt(_ctime);
@@ -292,8 +299,8 @@ U_NO_EXPORT void UNoDogPlugIn::makeNotifyData(UFlatBuffer* _pfb, void* param)
 
    U_INTERNAL_DUMP("peer->mac = %V peer->ip = %V peer->label = %V", peer->mac.rep, peer->ip.rep, peer->label.rep)
 
-   U_INTERNAL_ASSERT(u_isIPv4Addr(U_STRING_TO_PARAM(peer->ip)))
    U_INTERNAL_ASSERT(u_isMacAddr(U_STRING_TO_PARAM(peer->mac)))
+   U_INTERNAL_ASSERT(u_isIPv4Addr(U_STRING_TO_PARAM(peer->ip)))
 
    _pfb->String(getApInfo(peer->label));
    _pfb->String(peer->getMAC());
@@ -362,6 +369,7 @@ U_NO_EXPORT void UNoDogPlugIn::setMAC()
       U_INTERNAL_DUMP("peer->mac = %V", peer->mac.rep)
 
       U_INTERNAL_ASSERT(peer->mac)
+      U_INTERNAL_ASSERT(u_isMacAddr(U_STRING_TO_PARAM(peer->mac)))
       U_ASSERT_EQUALS(peer->mac, USocketExt::getMacAddress(peer->ip))
       }
 }
@@ -497,6 +505,35 @@ void UNoDogPlugIn::setNewPeer()
    peers->insert(peer->ip, peer);
 }
 
+U_NO_EXPORT void UNoDogPlugIn::printPeers(const char* msg, uint32_t len)
+{
+   U_TRACE(0, "UNoDogPlugIn::printPeers(%.*S,%u)", len, msg, len)
+
+#if defined(DEBUG)  && !defined(U_LOG_DISABLE)
+   if (UServer_Base::isLog())
+      {
+      typedef UHashMap<UModNoDogPeer*> uhashpeer;
+
+      UServer_Base::log->log(U_CONSTANT_TO_PARAM("[nodog] %.*S peers = %.*S"), len, msg, UObjectIO::buffer_output_len, UObject2String<uhashpeer>(*peers));
+      }
+#endif
+}
+
+U_NO_EXPORT void UNoDogPlugIn::erasePeer()
+{
+   U_TRACE_NO_PARAM(0, "UNoDogPlugIn::erasePeer()")
+
+   U_INTERNAL_ASSERT_POINTER(peer)
+
+   printPeers(U_CONSTANT_TO_PARAM("before erase"));
+
+   delete peers->erase(peer->ip);
+
+   printPeers(U_CONSTANT_TO_PARAM("after erase"));
+
+   U_ASSERT_EQUALS(peers->at(peer->ip), U_NULLPTR)
+}
+
 U_NO_EXPORT void UNoDogPlugIn::eraseTimer()
 {
    U_TRACE_NO_PARAM(0, "UNoDogPlugIn::eraseTimer()")
@@ -509,6 +546,15 @@ U_NO_EXPORT void UNoDogPlugIn::eraseTimer()
       }
 }
 
+U_NO_EXPORT void UNoDogPlugIn::sendLogin()
+{
+   U_TRACE_NO_PARAM(0, "UNoDogPlugIn::sendLogin()")
+
+   UFlatBufferSpace space;
+
+   (void) client->sendPOSTRequestAsync(UFlatBuffer::toVector(makeLoginData), *auth_login, true);
+}
+
 U_NO_EXPORT void UNoDogPlugIn::sendNotify()
 {
    U_TRACE_NO_PARAM(0, "UNoDogPlugIn::sendNotify()")
@@ -516,6 +562,8 @@ U_NO_EXPORT void UNoDogPlugIn::sendNotify()
    if (U_peer_notify_disable == false)
       {
       U_peer_flag |= U_PEER_NOTIFY_DISABLE;
+
+      UFlatBufferSpace space;
 
       (void) client->sendPOSTRequestAsync(UFlatBuffer::toVector(makeNotifyData), *auth_notify, true);
       }
@@ -528,6 +576,8 @@ U_NO_EXPORT void UNoDogPlugIn::sendStrictNotify()
    if (U_peer_strict_notify_disable == false)
       {
       U_peer_flag |= U_PEER_STRICT_NOTIFY_DISABLE;
+
+      UFlatBufferSpace space;
 
       (void) client->sendPOSTRequestAsync(UFlatBuffer::toVector(makeNotifyData), *auth_strict_notify, true);
       }
@@ -979,6 +1029,7 @@ int UNoDogPlugIn::handlerRequest()
 
                U_INTERNAL_ASSERT(peer->mac)
                U_INTERNAL_ASSERT(peer->welcome)
+               U_INTERNAL_ASSERT(u_isMacAddr(U_STRING_TO_PARAM(peer->mac)))
 
                U_SRV_LOG("request to validate login for peer IP %v MAC %v: bdeny = %b policy = %C", peer->ip.rep, peer->mac.rep, bdeny, policy);
 
@@ -988,7 +1039,7 @@ int UNoDogPlugIn::handlerRequest()
 
                   if (U_peer_permit) deny();
 
-                  delete peers->erase(peer->ip);
+                  erasePeer();
 
                   U_peer_flag |= U_PEER_ALLOW_DISABLE;
 
@@ -1029,7 +1080,7 @@ int UNoDogPlugIn::handlerRequest()
 
             if (data.empty())
                {
-               U_WARNING("AUTH request to logout users tampered");
+               U_SRV_LOG("WARNING: AUTH request to logout users tampered");
 
                goto bad;
                }
@@ -1073,7 +1124,7 @@ next:          if (U_peer_permit) deny();
                   U_SRV_LOG("AUTH request to logout user with status DENY: IP %v MAC %v", peer->ip.rep, peer->mac.rep);
                   }
 
-               delete peers->erase(peer->ip);
+               erasePeer();
                }
             }
          else if (U_HTTP_URI_STREQ("/ping"))
@@ -1087,7 +1138,10 @@ bad:        UHTTP::setBadRequest();
          goto end;
          }
 
-      if ((peer = peers->at(U_CLIENT_ADDRESS_TO_PARAM)))
+      printPeers(U_CONSTANT_TO_PARAM("user request"));
+
+      if (peers->empty() == false &&
+          (peer = peers->at(U_CLIENT_ADDRESS_TO_PARAM)))
          {
          // -----------------
          // request from user
@@ -1096,12 +1150,12 @@ bad:        UHTTP::setBadRequest();
          U_INTERNAL_ASSERT(peer->mac)
          U_INTERNAL_ASSERT(peer->welcome)
          U_ASSERT(peer->ip.equal(U_CLIENT_ADDRESS_TO_PARAM))
+         U_INTERNAL_ASSERT(u_isMacAddr(U_STRING_TO_PARAM(peer->mac)))
 
          if (U_peer_allow_disable == false &&
              U_HTTP_URI_MEMEQ("/nodog_peer_allow.sh"))
             {
-            if (U_HTTP_QUERY_MEMEQ("url=") &&
-                UHTTP::processForm() == 2*2)
+            if (U_HTTP_QUERY_MEMEQ("url="))
                {
                /**
                 * open firewall, respond with redirect to original request
@@ -1110,10 +1164,19 @@ bad:        UHTTP::setBadRequest();
                 * $2 -> forced ('0'|'1')
                 */
 
-               UHTTP::getFormValue(redirect, U_CONSTANT_TO_PARAM("url"),    0, 1, 4);
-               UHTTP::getFormValue(x,        U_CONSTANT_TO_PARAM("forced"), 0, 3, 4);
+               bool forced = false;
+               uint32_t n = UHTTP::processForm();
 
-               if (x.first_char() == '1') // forced
+               UHTTP::getFormValue(redirect, U_CONSTANT_TO_PARAM("url"), 0, 1, n);
+
+               if (n == 2*2)
+                  {
+                  UHTTP::getFormValue(x, U_CONSTANT_TO_PARAM("forced"), 0, 3, 4);
+
+                  if (x.first_char() == '1') forced = true;
+                  }
+
+               if (forced)
                   {
                   sendStrictNotify();
 
@@ -1125,11 +1188,11 @@ bad:        UHTTP::setBadRequest();
                if (T2 < 3600 &&
                    U_peer_policy != '2') // (strict notify)
                   {
+                  sendNotify();
+
 next1:            eraseTimer();
 
                   if (U_peer_permit == false) permit();
-
-                  sendNotify();
 
                   UHTTP::setRedirectResponse(UHTTP::NO_BODY, U_STRING_TO_PARAM(redirect));
                   }
@@ -1190,7 +1253,7 @@ next1:            eraseTimer();
 
       setNewPeer();
 
-      (void) client->sendPOSTRequestAsync(UFlatBuffer::toVector(makeLoginData), *auth_login, true);
+      sendLogin();
 
       (void) redirect.reserve(8 + U_http_host_len + U_HTTP_URI_QUERY_LEN);
 

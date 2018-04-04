@@ -213,7 +213,6 @@ protected:
    static UVector<UString>* vLocalNetworkLabel;
    static UVector<UIPAllow*>* vLocalNetworkMask;
 
-   static void sendLogin();
    static void setNewPeer();
    static void checkSystem();
    static bool preallocatePeersFault();
@@ -297,11 +296,15 @@ private:
    U_DISALLOW_COPY_AND_ASSIGN(UNoDogPlugIn)
 
    static void setMAC() U_NO_EXPORT;
+   static void erasePeer() U_NO_EXPORT;
+   static void sendLogin() U_NO_EXPORT;
    static void getTraffic() U_NO_EXPORT;
    static void sendNotify() U_NO_EXPORT;
    static void eraseTimer() U_NO_EXPORT;
    static void setLabelAndMAC() U_NO_EXPORT;
    static void sendStrictNotify() U_NO_EXPORT;
+
+   static void printPeers(const char* fmt, uint32_t len) U_NO_EXPORT;
    static void makeInfoData(UFlatBuffer* pfb, void* param) U_NO_EXPORT;
    static void makeLoginData(UFlatBuffer* pfb, void* param) U_NO_EXPORT;
    static void makeNotifyData(UFlatBuffer* pfb, void* param) U_NO_EXPORT;
