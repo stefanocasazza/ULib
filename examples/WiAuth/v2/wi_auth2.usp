@@ -6,6 +6,7 @@ static void usp_init_wi_auth2();
 -->
 <!--#code
 static UHTTP::service_info GET_table[] = { // NB: the table must be ordered alphabetically for binary search...
+   GET_ENTRY(clean),
    GET_ENTRY(get_config),
    GET_ENTRY(start_ap),
    GET_ENTRY(welcome)

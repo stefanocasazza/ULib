@@ -136,7 +136,7 @@ const char* restrict u_name_function;
 /* Internal buffer */
 
 char*    u_buffer;
-char*    u_err_buffer;
+char     u_err_buffer[256];
 uint32_t u_buffer_len; /* signal that is busy if != 0 */
 
 /* Time services */
@@ -2301,6 +2301,8 @@ case_R: /* extension: print msg - u_getSysError() */
 
       u_getSysError((uint32_t*)&len);
 
+      U_INTERNAL_ASSERT_MINOR(len, sizeof(u_err_buffer))
+
       (void) memcpy(bp, u_err_buffer, len);
 
       bp += len;
@@ -2451,6 +2453,8 @@ number: /* uint32_t conversions */
 case_Y: /* extension: print u_getSysSignal(signo) */
       u_getSysSignal(VA_ARG(int), (uint32_t*)&len);
 
+      U_INTERNAL_ASSERT_MINOR(len, sizeof(u_err_buffer))
+
       (void) memcpy(bp, u_err_buffer, len);
 
       bp += len;
@@ -2587,6 +2591,8 @@ case_q: /* field length modifier: quad. This is a synonym for ll */
 
 case_r: /* extension: print u_getExitStatus(exit_value) */
       u_getExitStatus(VA_ARG(int), (uint32_t*)&len);
+
+      U_INTERNAL_ASSERT_MINOR(len, sizeof(u_err_buffer))
 
       (void) memcpy(bp, u_err_buffer, len);
 

@@ -302,15 +302,6 @@ void UMemoryPool::allocateMemoryBlocks(const char* ptr)
 #if defined(U_LINUX) && defined(MAP_HUGE_2MB)
    if (UFile::rlimit_memfree == U_2M)
       {
-#  ifdef DEBUG
-      if (u_err_buffer == U_NULLPTR)
-         {
-         static char buffer[256];
-
-         u_err_buffer = buffer;
-         }
-#  endif
-
       // cat /proc/meminfo | grep Huge
 
       UFile::nr_hugepages = UFile::setSysParam("/proc/sys/vm/nr_hugepages", 64);

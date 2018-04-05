@@ -575,7 +575,11 @@ void ULog::log(int lfd, const char* fmt, uint32_t fmt_size, ...)
 
    va_end(argp);
 
-   if (lfd == UServer_Base::log->getFd()) UServer_Base::log->write(buffer, len);
+   if (UServer_Base::isLog() &&
+       lfd == UServer_Base::log->getFd())
+      {
+      UServer_Base::log->write(buffer, len);
+      }
    else
       {
       U_INTERNAL_ASSERT_EQUALS(iov_vec[0].iov_len, 17)
@@ -671,7 +675,7 @@ void ULog::log(const struct iovec* iov, const char* type, int ncount, const char
       }
 
    len  = (UServer_Base::mod_name[0][0] ? u__snprintf(buffer2, U_CONSTANT_SIZE(buffer2), U_CONSTANT_TO_PARAM("%s"), UServer_Base::mod_name) : 0);
-   len += u__snprintf(buffer2+len, U_CONSTANT_SIZE(buffer2)-len, U_CONSTANT_TO_PARAM("send %s (%u bytes) %.*s%#.*S"), type, ncount, msg_len, msg, (sz <= (uint32_t)ncount ? sz : ncount), ptr);
+   len += u__snprintf(buffer2+len, U_CONSTANT_SIZE(buffer2)-len, U_CONSTANT_TO_PARAM("send %s (%u bytes) %.*s%#.*S"),type,ncount,msg_len,msg,(sz <= (uint32_t)ncount ? sz : ncount),ptr);
 
    va_list argp;
    va_start(argp, fmt_size);

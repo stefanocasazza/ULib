@@ -632,6 +632,8 @@ public:
 #define U_CLIENT_ADDRESS_TO_PARAM UServer_Base::client_address, UServer_Base::client_address_len
 #define U_CLIENT_ADDRESS_TO_TRACE UServer_Base::client_address_len, UServer_Base::client_address
 
+   static bool isLocalHost() { return csocket->cRemoteAddress.isLocalHost(); }
+
    static void setClientAddress() { setClientAddress(csocket, client_address, client_address_len); }
 
    static UString getIPAddress()                         { return *IP_address; }

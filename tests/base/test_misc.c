@@ -35,13 +35,10 @@ int main(int argc, char* argv[])
 {
    int n_cmp;
    unsigned len;
-   char l_err_buffer[256];
 
    u_init_ulib(argv);
    u_init_ulib_hostname();
    u_init_ulib_username();
-
-   u_err_buffer = l_err_buffer;
 
 #ifdef __MINGW32__
    n_cmp = 8;

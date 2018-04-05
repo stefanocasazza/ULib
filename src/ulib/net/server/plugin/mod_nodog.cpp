@@ -14,8 +14,8 @@
 #include <ulib/base/hash.h>
 
 #ifndef HAVE_ARCH64
-#  define U_FLAT_BUFFERS_SPACE_STACK 1024U
-#  define U_FLAT_BUFFERS_SPACE_BUFFER 1024U
+#  define U_FLAT_BUFFERS_SPACE_STACK 512U
+#  define U_FLAT_BUFFERS_SPACE_BUFFER (8U * 1024U)
 #endif
 
 #include <ulib/date.h>
@@ -525,11 +525,11 @@ U_NO_EXPORT void UNoDogPlugIn::erasePeer()
 
    U_INTERNAL_ASSERT_POINTER(peer)
 
-   printPeers(U_CONSTANT_TO_PARAM("before erase"));
+// printPeers(U_CONSTANT_TO_PARAM("before erase"));
 
    delete peers->erase(peer->ip);
 
-   printPeers(U_CONSTANT_TO_PARAM("after erase"));
+// printPeers(U_CONSTANT_TO_PARAM("after erase"));
 
    U_ASSERT_EQUALS(peers->at(peer->ip), U_NULLPTR)
 }
@@ -993,9 +993,11 @@ int UNoDogPlugIn::handlerRequest()
 
       U_http_info.nResponseCode = HTTP_NO_CONTENT;
 
-      (void) UServer_Base::csocket->shutdown(SHUT_RD);
-
       U_INTERNAL_DUMP("UServer_Base::client_address = %.*S", U_CLIENT_ADDRESS_TO_TRACE)
+
+      U_SRV_LOG("Start REQUEST phase of plugin nodog: %.*S client_address = %.*S", U_HTTP_URI_TO_TRACE, U_CLIENT_ADDRESS_TO_TRACE);
+
+      (void) UServer_Base::csocket->shutdown(SHUT_RD);
 
       if (UServer_Base::auth_ip->equal(U_CLIENT_ADDRESS_TO_PARAM))
          {
@@ -1137,6 +1139,8 @@ bad:        UHTTP::setBadRequest();
 
          goto end;
          }
+
+      U_SRV_LOG("Start REQUEST_FROM_USER phase of plugin nodog: %.*S", U_HTTP_URI_TO_TRACE);
 
       printPeers(U_CONSTANT_TO_PARAM("user request"));
 

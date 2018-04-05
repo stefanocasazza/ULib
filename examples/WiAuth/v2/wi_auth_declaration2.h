@@ -27,14 +27,13 @@ static UHTTP::UFileCacheData* welcome_html;
 static void* peer;
 static UPing* sockp;
 static bool ap_consume;
-static UEventTime* wclean;
 static UString* policySessionId;
 static uint8_t policySessionNotify;
 static uint64_t counter, device_counter;
 static uint32_t addr, created, lastUpdate, lastReset;
 
 #define U_TEST
-#define U_CLEAN_INTERVAL (60 * 60) // 1h 
+#define U_CLEAN_INTERVAL (60U * 60U) // 1h 
 #define U_MAX_TIME_NO_TRAFFIC (15 * 60) // 15m
 
 #ifdef U_TEST
@@ -53,81 +52,6 @@ enum UPolicy {
    U_HINERIT       = 0x03
 };
 */
-
-class WiAuthClean : public UEventTime {
-public:
-
-   WiAuthClean() : UEventTime(U_CLEAN_INTERVAL, 0L)
-      {
-      U_TRACE_REGISTER_OBJECT(0, WiAuthClean, "", U_NULLPTR)
-      }
-
-   virtual ~WiAuthClean() U_DECL_FINAL
-      {
-      U_TRACE_UNREGISTER_OBJECT(0, WiAuthClean)
-      }
-
-   // define method VIRTUAL of class UEventTime
-
-   virtual int handlerTime() U_DECL_FINAL
-      {
-      U_TRACE_NO_PARAM(0, "WiAuthClean::handlerTime()")
-
-      pid_t pid = UServer_Base::startNewChild();
-
-      if (pid > 0) U_RETURN(0); // parent
-
-      // child
-
-      uint8_t status;
-      UString url(100U);
-
-      /*
-      for (uint32_t i = 0, n = vcaptive->size(); i < n; ++i)
-         {
-         url.snprintf(U_CONSTANT_TO_PARAM("http://%v:5280/ping"), vcaptive->at(i).rep);
-
-         // NB: we need PREFORK_CHILD > 2
-
-         if (client->connectServer(url) &&
-             client->sendRequest())
-            {
-            status = 1;
-
-            client->UClient_Base::close();
-            }
-         else
-            {
-            status = 0; // NB: nodog not respond
-
-            if (sockp)
-               {
-               UIPAddress laddr;
-
-               if (client->remoteIPAddress(laddr) &&
-                   sockp->ping(laddr))
-                  {
-                  status = 2; // NB: nodog not respond but pingable => unreachable...
-                  }
-               }
-            }
-
-         client->reset();
-         }
-      */
-
-      if (pid == 0) UServer_Base::endNewChild();
-
-      U_RETURN(0);
-      }
-
-#if defined(DEBUG) && defined(U_STDCPP_ENABLE)
-   const char* dump(bool _reset) const { return UEventTime::dump(_reset); }
-#endif
-
-private:
-   U_DISALLOW_COPY_AND_ASSIGN(WiAuthClean)
-};
 
 static void usp_init_wi_auth2()
 {
@@ -313,10 +237,6 @@ loop:
       delete sockp;
              sockp = U_NULLPTR;
       }
-
-   U_NEW(WiAuthClean, wclean, WiAuthClean);
-
-   UTimer::insert(wclean);
 }
 
 static void usp_end_wi_auth2()
@@ -340,7 +260,6 @@ static void usp_end_wi_auth2()
 
    delete rc;
    delete client;
-   delete wclean;
 #endif
 }
 
@@ -500,6 +419,7 @@ static void setSessionPolicy()
       policySessionNotify = 0; // notify
 
       (void) rc->hmset(U_CONSTANT_TO_PARAM("DEVICE:id:%v id %v pId DAILY pNotify 0 pCounter 0 lastAccess %u pLastReset %u"), mac->rep, mac->rep, u_now->tv_sec, u_now->tv_sec);
+      (void) rc->zadd(U_CONSTANT_TO_PARAM("DEVICE:bylastAccess %u id:%v"), u_now->tv_sec, mac->rep);
       }
 
    U_INTERNAL_DUMP("policySessionId = %V policySessionNotify = %u", policySessionId->rep, policySessionNotify)
@@ -704,6 +624,126 @@ static bool getDataFromPOST(bool bpeer)
    U_RETURN(false);
 }
 
+static void lostSession(bool bclean)
+{
+   U_TRACE(5, "::lostSession(%b)", bclean)
+
+   if (getSession())
+      {
+      if (bclean)
+         {
+         *ap_label = rc->getString(7);
+
+         (void) rc->hmget(U_CONSTANT_TO_PARAM("CAPTIVE:id:%u ip name"), rc->getULong(6));
+
+         *ap_address  = rc->getString(0);
+         *ap_hostname = rc->getString(1);
+         }
+
+      *mac = rc->getString(8);
+      *ip  = rc->getString(9);
+
+      U_INTERNAL_ASSERT(u_isIPv4Addr(U_STRING_TO_PARAM(*ip)))
+
+      writeSessionToLOG(U_CONSTANT_TO_PARAM("DENY_LOST"));
+
+      deleteSession();
+      }
+}
+
+static void GET_clean()
+{
+   U_TRACE_NO_PARAM(5, "::GET_clean()")
+
+   if (UServer_Base::isLocalHost() == false) UHTTP::setBadRequest();
+   else
+      {
+      uint32_t i, n, last_update = u_now->tv_sec - U_CLEAN_INTERVAL;
+
+      (void) rc->zrangebyscore(U_CONSTANT_TO_PARAM("SESSION:byLastUpdate 0 %u"), last_update);
+
+      if ((n = rc->vitem.size()))
+         {
+         UVector<UString> vec(n);
+
+         vec.copy(rc->vitem);
+
+         for (i = 0; i < n; ++i)
+            {
+            *key_session = vec[i];
+
+            lostSession(true);
+            }
+         }
+
+      (void) rc->zrangebyscore(U_CONSTANT_TO_PARAM("CAPTIVE:byLastUpdate 0 %u"), last_update);
+
+      if ((n = rc->vitem.size()))
+         {
+         uint8_t status;
+         UString url(100U);
+
+         for (i = 0; i < n; ++i)
+            {
+            *ap_address = rc->vitem[i];
+
+            (void) UIPAddress::getBinaryForm(ap_address->c_str(), addr, true);
+
+            url.snprintf(U_CONSTANT_TO_PARAM("http://%v:5280/ping"), ap_address->rep);
+
+            // NB: we need PREFORK_CHILD > 2
+
+            if (client->connectServer(url) &&
+                client->sendRequest())
+               {
+               status = '3';
+
+               client->UClient_Base::close();
+               }
+            else
+               {
+               status = '0'; // NB: nodog not respond
+
+               if (sockp)
+                  {
+                  UIPAddress laddr;
+
+                  if (client->remoteIPAddress(laddr) &&
+                      sockp->ping(laddr))
+                     {
+                     status = '2'; // NB: nodog not respond but pingable => unreachable...
+                     }
+                  }
+               }
+
+            client->reset();
+
+            (void) rc->hmset(U_CONSTANT_TO_PARAM("CAPTIVE:id:%u status %c"), addr, status);
+            }
+         }
+
+      /*
+      (void) rc->zrangebyscore(U_CONSTANT_TO_PARAM("DEVICE:bylastAccess 0 %u"), u_now->tv_sec - U_CLEAN_INTERVAL);
+
+      if ((n = rc->vitem.size()))
+         {
+         UString x;
+         UVector<UString> vec(n);
+
+         vec.copy(rc->vitem);
+
+         for (i = 0; i < n; ++i)
+            {
+            x = vec[i];
+
+            (void) rc->del(U_CONSTANT_TO_PARAM("DEVICE:%v"), x.rep);
+            (void) rc->zrem(U_CONSTANT_TO_PARAM("DEVICE:bylastAccess %v"), x.rep);
+            }
+         }
+      */
+      }
+}
+
 static void GET_get_config()
 {
    U_TRACE_NO_PARAM(5, "::GET_get_config()")
@@ -879,6 +919,7 @@ static void GET_start_ap()
          U_LOGGER("%v %s", getApInfo().rep, pid.strtol() == -1 ? "started" : "*** NODOG CRASHED ***");
 
          (void) rc->hmset(U_CONSTANT_TO_PARAM("CAPTIVE:id:%u name %v status 1 uptime %v since %u lastUpdate %u"), addr, ap_hostname->rep, uptime.rep, u_now->tv_sec, u_now->tv_sec);
+         (void) rc->zadd(U_CONSTANT_TO_PARAM("CAPTIVE:byLastUpdate %u %v"), u_now->tv_sec, ap_address->rep);
 
          x.snprintf(U_CONSTANT_TO_PARAM("%u"), addr);
 
@@ -909,20 +950,7 @@ static void GET_start_ap()
 
                key_session->snprintf(U_CONSTANT_TO_PARAM("%v%v;%v"), x.rep, ap_label->rep, vec[i].rep);
 
-               if (getSession())
-                  {
-                  U_ASSERT_EQUALS(addr,      rc->getULong(6))
-                  U_ASSERT_EQUALS(*ap_label, rc->getString(7))
-
-                  *mac = rc->getString(8);
-                  *ip  = rc->getString(9);
-
-                  U_INTERNAL_ASSERT(u_isIPv4Addr(U_STRING_TO_PARAM(*ip)))
-
-                  writeSessionToLOG(U_CONSTANT_TO_PARAM("DENY_LOST"));
-
-                  deleteSession();
-                  }
+               lostSession(false);
                }
             }
          }
@@ -1114,6 +1142,7 @@ static void POST_info()
       uint32_t _ctime, ctraffic, time_no_traffic, ctime_no_traffic, op_len, midnigth = u_getLocalTime() / U_ONE_DAY_IN_SECOND;
 
       (void) rc->hmset(U_CONSTANT_TO_PARAM("CAPTIVE:id:%u status 1 lastUpdate %u"), addr, u_now->tv_sec);
+      (void) rc->zadd(U_CONSTANT_TO_PARAM("CAPTIVE:byLastUpdate %u %v"), u_now->tv_sec, ap_address->rep);
 
       for (int32_t i = 1, n = (int32_t) vec.GetSize(); i < n; i += 6)
          {
@@ -1190,17 +1219,20 @@ del_login:     vec_logout.push_back(*ip);
 
          if (ctraffic)
             {
-            (void) rc->hmset(U_CONSTANT_TO_PARAM("SESSION:%v counter %llu lastUpdate %u"), key_session->rep, counter+ctraffic, u_now->tv_sec);
+            counter += ctraffic;
 
             if (ap_consume                                           &&
                 policySessionId->equal(U_CONSTANT_TO_PARAM("DAILY")) &&
-                rc->hincrby(U_CONSTANT_TO_PARAM("DEVICE:id:%v pCounter %llu"), mac->rep, ctraffic) >= U_MAX_TRAFFIC_DAILY)
+                rc->hincrby(U_CONSTANT_TO_PARAM("DEVICE:id:%v pCounter %u"), mac->rep, ctraffic) >= U_MAX_TRAFFIC_DAILY)
                {
                op     =                 "DENY_POLICY";
                op_len = U_CONSTANT_SIZE("DENY_POLICY");
 
                goto del_sess;
                }
+
+            (void) rc->hmset(U_CONSTANT_TO_PARAM("SESSION:%v counter %llu lastUpdate %u"), key_session->rep, counter, u_now->tv_sec);
+            (void) rc->zadd(U_CONSTANT_TO_PARAM("SESSION:byLastUpdate %u %v"), u_now->tv_sec, key_session->rep);
             }
          }
 

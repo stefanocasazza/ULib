@@ -269,8 +269,18 @@ public:
       U_RETURN(false);
       }
 
+   static bool isLocalHost(uint32_t i)
+      {
+      U_TRACE(0, "UIPAddress::isLocalHost(%#X)", i)
+
+      if ((i & htonl(0xFF000000)) == htonl(0x7F000000)) U_RETURN(true); /* If it is 0.0.0.0 or starts with 127.0.0.1 then it is probably localhost */
+
+      U_RETURN(false);
+      }
+
    bool isPrivate() __pure;
    bool isWildCard() __pure;
+   bool isLocalHost() __pure;
 
    static UString toString(uint8_t* paddr);
    static UString toString(in_addr_t addr) { return toString((uint8_t*)&addr); } 

@@ -502,9 +502,7 @@ void u_getSysError(uint32_t* restrict len)
          }
       }
 
-   U_INTERNAL_ASSERT_POINTER(u_err_buffer)
-
-   *len = snprintf(u_err_buffer, 256, "%s (%d, %s)", name, errno, msg);
+   *len = snprintf(u_err_buffer, U_CONSTANT_SIZE(u_err_buffer), "%s (%d, %s)", name, errno, msg);
 }
 
 /**
@@ -719,9 +717,7 @@ void u_getSysSignal(int signo, uint32_t* restrict len)
          }
       }
 
-   U_INTERNAL_ASSERT_POINTER(u_err_buffer)
-
-   *len = snprintf(u_err_buffer, 256, "%s (%d, %s)", name, signo, msg);
+   *len = snprintf(u_err_buffer, U_CONSTANT_SIZE(u_err_buffer), "%s (%d, %s)", name, signo, msg);
 }
 
 #undef U_SIG_ENTRY
@@ -831,7 +827,5 @@ void u_getExitStatus(int exitno, uint32_t* restrict len)
          }
       }
 
-   U_INTERNAL_ASSERT_POINTER(u_err_buffer)
-
-   *len = snprintf(u_err_buffer, 256, "%s (%d, %s)", name, exitno, msg);
+   *len = snprintf(u_err_buffer, U_CONSTANT_SIZE(u_err_buffer), "%s (%d, %s)", name, exitno, msg);
 }

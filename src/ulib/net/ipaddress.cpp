@@ -571,14 +571,12 @@ __pure bool UIPAddress::isPrivate()
 
       U_RETURN(false);
       }
-   else
 #endif
-      {
-      U_INTERNAL_ASSERT_EQUALS(iAddressType, AF_INET)
-      U_INTERNAL_ASSERT_EQUALS(iAddressLength, sizeof(in_addr))
 
-      if (isPrivate(htonl(pcAddress.i))) U_RETURN(true);
-      }
+   U_INTERNAL_ASSERT_EQUALS(iAddressType, AF_INET)
+   U_INTERNAL_ASSERT_EQUALS(iAddressLength, sizeof(in_addr))
+
+   if (isPrivate(htonl(pcAddress.i))) U_RETURN(true);
 
    U_RETURN(false);
 }
@@ -598,18 +596,37 @@ __pure bool UIPAddress::isWildCard()
 
       U_RETURN(false);
       }
-   else
 #endif
+
+   U_INTERNAL_ASSERT_EQUALS(iAddressType, AF_INET)
+   U_INTERNAL_ASSERT_EQUALS(iAddressLength, sizeof(in_addr))
+
+   U_DUMP("htonl(pcAddress.i) = %#X %V", htonl(pcAddress.i), UIPAddress::toString(getInAddr()).rep)
+
+   if (pcAddress.i == 0x00000000) U_RETURN(true);
+
+   U_RETURN(false);
+}
+
+__pure bool UIPAddress::isLocalHost()
+{
+   U_TRACE_NO_PARAM(0, "UIPAddress::isLocalHost()")
+
+   U_CHECK_MEMORY
+
+#ifdef ENABLE_IPV6
+   if (iAddressType == AF_INET6)
       {
-      U_INTERNAL_ASSERT_EQUALS(iAddressType, AF_INET)
-      U_INTERNAL_ASSERT_EQUALS(iAddressLength, sizeof(in_addr))
-
-      U_DUMP("htonl(pcAddress.i) = %#X %V", htonl(pcAddress.i), UIPAddress::toString(getInAddr()).rep)
-
-      if (htonl(pcAddress.i) == 0x00000000) U_RETURN(true);
+      // TODO
 
       U_RETURN(false);
       }
+#endif
+
+   U_INTERNAL_ASSERT_EQUALS(iAddressType, AF_INET)
+   U_INTERNAL_ASSERT_EQUALS(iAddressLength, sizeof(in_addr))
+
+   if (isLocalHost(pcAddress.i)) U_RETURN(true);
 
    U_RETURN(false);
 }

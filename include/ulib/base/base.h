@@ -251,7 +251,7 @@ typedef struct ustring { struct ustringrep* rep; } ustring;
 /* Internal buffer */
 
 extern U_EXPORT char* u_buffer;
-extern U_EXPORT char* u_err_buffer;
+extern U_EXPORT char u_err_buffer[256];
 extern U_EXPORT uint32_t u_buffer_len; /* assert that u_buffer is busy if u_buffer_len != 0 */
 
 /* Startup */

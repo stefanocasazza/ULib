@@ -388,10 +388,6 @@ void UInterrupt::getSignalInfo(int signo, siginfo_t* info)
            CYAN, (double)rss / (1024.0 * 1024.0), YELLOW);
       }
 #  endif
-
-#if defined(DEBUG) && defined(U_SERVER_CAPTIVE_PORTAL) && !defined(ENABLE_THREAD)
-   UError::stackDump();
-#endif
 }
 
 __noreturn RETSIGTYPE UInterrupt::handlerInterruptWithInfo(int signo, siginfo_t* info, void* context)
