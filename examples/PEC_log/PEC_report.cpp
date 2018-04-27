@@ -71,49 +71,49 @@ PEC_report::~PEC_report()
 
    if (id)
       {
-      delete t;
-      delete file;
-      delete date;
-      delete date1;
-      delete title;
-      delete directory;
-      delete last_dominio;
-      delete last_value_field;
+      U_DELETE(t)
+      U_DELETE(file)
+      U_DELETE(date)
+      U_DELETE(date1)
+      U_DELETE(title)
+      U_DELETE(directory)
+      U_DELETE(last_dominio)
+      U_DELETE(last_value_field)
 
-      delete id;
-      delete mittente;
-      delete identifier;
+      U_DELETE(id)
+      U_DELETE(mittente)
+      U_DELETE(identifier)
 
-      delete line;
-      delete content;
+      U_DELETE(line)
+      U_DELETE(content)
 
       if (rejected)
          {
-         delete scan_form;
+         U_DELETE(scan_form)
          }
       else
          {
-         delete fix;
-         delete vtipo;
-         delete vtipos;
+         U_DELETE(fix)
+         U_DELETE(vtipo)
+         U_DELETE(vtipos)
 
          if (domain)
             {
-            delete vdomain;
-            delete domain;
+            U_DELETE(vdomain)
+            U_DELETE(domain)
             }
          }
 
-      delete vfield;
-      delete vfields;
+      U_DELETE(vfield)
+      U_DELETE(vfields)
       }
 
-   if (to)         delete to;
-   if (vid)        delete vid;
-   if (from)       delete from;
-   if (filter)     delete filter;
-   if (filter_ext) delete filter_ext;
-   if (tfile)      delete tfile;
+   if (to)         U_DELETE(to)
+   if (vid)        U_DELETE(vid)
+   if (from)       U_DELETE(from)
+   if (filter)     U_DELETE(filter)
+   if (filter_ext) U_DELETE(filter_ext)
+   if (tfile)      U_DELETE(tfile)
 }
 
 uint32_t PEC_report::findField(int i)
@@ -1300,8 +1300,14 @@ void PEC_report::manageOptions()
 
       if (cfg_domain.empty())
          {
-         if (rejected) scan_form = new U_STRING_FROM_CONSTANT("%*[^-]-%4c");
-         else          U_ERROR("parameter domain is mandatory");
+         if (rejected)
+            {
+            U_NEW_STRING(scan_form, UString(U_CONSTANT_TO_PARAM("%*[^-]-%4c")))
+            }
+         else
+            {
+            U_ERROR("parameter domain is mandatory");
+            }
          }
 
       if (rejected == false)

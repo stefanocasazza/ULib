@@ -18,14 +18,14 @@ public:
 
    IRDataSession()
       {
-      U_TRACE_REGISTER_OBJECT(5, IRDataSession, "")
+      U_TRACE_CTOR(5, IRDataSession, "")
 
       sz = for_page = 0;
       }
 
    ~IRDataSession()
       {
-      U_TRACE_UNREGISTER_OBJECT(5, IRDataSession)
+      U_TRACE_DTOR(5, IRDataSession)
       }
 
    // SERVICES

@@ -32,12 +32,12 @@ static uint8_t policySessionNotify;
 static uint64_t counter, device_counter;
 static uint32_t addr, created, lastUpdate, lastReset;
 
-#define U_TEST
+//#define U_TEST
 #define U_CLEAN_INTERVAL (60U * 60U) // 1h 
 #define U_MAX_TIME_NO_TRAFFIC (15 * 60) // 15m
 
 #ifdef U_TEST
-#  define U_MAX_TRAFFIC_DAILY (50ULL * 1024ULL * 1024ULL) // 50M
+#  define U_MAX_TRAFFIC_DAILY ( 50ULL * 1024ULL * 1024ULL) // 50M
 #else
 #  define U_MAX_TRAFFIC_DAILY (500ULL * 1024ULL * 1024ULL) // 500M
 #endif
@@ -53,22 +53,127 @@ enum UPolicy {
 };
 */
 
+static void loadAnagrafica()
+{
+   U_TRACE_NO_PARAM(5, "::loadAnagrafica()")
+
+   U_INTERNAL_ASSERT_POINTER(db_anagrafica)
+
+   if (*db_anagrafica) db_anagrafica->clear();
+
+   *db_anagrafica = UFile::contentOf(U_STRING_FROM_CONSTANT("../anagrafica.txt"));
+
+   if (db_anagrafica->empty())
+      {
+      U_ERROR("../anagrafica.txt empty");
+      }
+
+   UVector<UString> vnetmask;
+   UTokenizer tok(*db_anagrafica, ",\n");
+   UString buffer(U_CAPACITY), lip, lnetmask, lbl, lnetmask1, lbl1, name;
+
+   /**
+    * 10.8.0.13,172.17.13.0/24,368
+    * 10.8.0.13,172.16.13.0/24,368
+    * 10.8.0.255,172.16.255.0/24,51
+    * 151.11.47.3,172.23.0.0/20,47,pippo
+    * 151.11.47.3,172.23.0.0/20,213,pluto
+    * 192.168.44.55,172.16.55.0/24,55
+    * 192.168.44.55,172.16.65.0/24,65
+    */
+
+   (void) tok.next(lip, (bool*)U_NULLPTR);
+
+   U_INTERNAL_ASSERT(lip)
+
+loop:
+   (void) tok.next(lnetmask, (bool*)U_NULLPTR);
+   (void) tok.next(lbl,      (bool*)U_NULLPTR);
+
+   U_INTERNAL_ASSERT(lbl)
+   U_INTERNAL_ASSERT(lnetmask)
+   U_ASSERT(vnetmask.empty())
+
+   U_INTERNAL_DUMP("tok.current() = %C", tok.current())
+
+   if (u__isdigit(tok.current())) name.clear();
+   else           (void) tok.next(name, (bool*)U_NULLPTR);
+
+   vnetmask.push_back(lnetmask);
+
+   U_INTERNAL_DUMP("lip = %V lbl = %V lnetmask = %V name = %V", lip.rep, lbl.rep, lnetmask.rep, name.rep)
+
+   *ip = lip;
+
+   (void) UIPAddress::getBinaryForm(ip->c_str(), addr, true);
+
+   (void) rc->hmset(U_CONSTANT_TO_PARAM("CAPTIVE:id:%u ip %v"), addr, ip->rep);
+   (void) rc->zadd(U_CONSTANT_TO_PARAM("CAPTIVE:byId 0 id:%u"), addr);
+
+   buffer.snprintf(U_CONSTANT_TO_PARAM("AP:id:%v captiveId %u network %v"), lbl.rep, addr, lnetmask.rep);
+
+   if (name) buffer.snprintf_add(U_CONSTANT_TO_PARAM(" name %V"), name.rep);
+
+   (void) rc->hmset(buffer);
+   (void) rc->zadd(U_CONSTANT_TO_PARAM("AP:byCaptiveId %u id:%v;network:%v"), addr, lbl.rep, lnetmask.rep);
+
+   while (tok.next(lip, (bool*)U_NULLPTR))
+      {
+      if (ip->equal(lip) == false)
+         {
+         if (vnetmask.size() > 1)
+            {
+            (void) rc->hmset(U_CONSTANT_TO_PARAM("AP:id:%v network %v"), lbl.rep, vnetmask.join(0, U_CONSTANT_TO_PARAM(",")).rep);
+            }
+
+         vnetmask.clear();
+
+         goto loop;
+         }
+
+      (void) tok.next(lnetmask1, (bool*)U_NULLPTR);
+      (void) tok.next(lbl1,      (bool*)U_NULLPTR);
+
+      U_INTERNAL_ASSERT(lbl1)
+      U_INTERNAL_ASSERT(lnetmask1)
+
+      U_INTERNAL_DUMP("tok.current() = %C", tok.current())
+
+      if (u__isdigit(tok.current())) name.clear();
+      else           (void) tok.next(name, (bool*)U_NULLPTR);
+
+      if (lbl1 == lbl)
+         {
+         U_ASSERT_DIFFERS(lnetmask1, lnetmask)
+
+         vnetmask.push_back(lnetmask1);
+
+         if (name) rc->hmset(U_CONSTANT_TO_PARAM("AP:id:%v name %V"), lbl1.rep, name.rep);
+
+         continue;
+         }
+
+      buffer.snprintf(U_CONSTANT_TO_PARAM("AP:id:%v captiveId %u network %v"), lbl1.rep, addr, lnetmask1.rep);
+
+      if (name) buffer.snprintf_add(U_CONSTANT_TO_PARAM(" name %V"), name.rep);
+
+      (void) rc->hmset(buffer);
+      (void) rc->zadd(U_CONSTANT_TO_PARAM("AP:byCaptiveId %u id:%v;network:%v"), addr, lbl1.rep, lnetmask1.rep);
+
+      vnetmask.clear();
+
+      lbl      = lbl1;
+      lnetmask = lnetmask1;
+      }
+}
+
 static void usp_init_wi_auth2()
 {
    U_TRACE_NO_PARAM(5, "::usp_init_wi_auth2()")
 
-   // ANAGRAFICA
-
-   U_NEW(UString, db_anagrafica, UString(UFile::contentOf(U_STRING_FROM_CONSTANT("../anagrafica.txt"))));
-
-   if (db_anagrafica->empty())
-      {
-      U_ERROR("usp_init_wi_auth2(): ../anagrafica.txt empty");
-      }
-
    // NODOG config template
 
-   U_NEW(UString, nodog_conf, UString(UFile::contentOf(U_STRING_FROM_CONSTANT("../ap/nodog.conf.template"))));
+   U_NEW_STRING(nodog_conf, UString(UFile::contentOf(U_STRING_FROM_CONSTANT("../ap/nodog.conf.template"))));
 
    if (nodog_conf->empty())
       {
@@ -98,16 +203,8 @@ static void usp_init_wi_auth2()
       U_ERROR("usp_init_wi_auth2(): missing deny.html from cache");
       }
 
-   // REDIS client
-
-   U_NEW(UREDISClient<UTCPSocket>, rc, UREDISClient<UTCPSocket>);
-
-   if (rc->connect() == false)
-      {
-      U_ERROR("usp_init_wi_auth2(): %V", rc->UClient_Base::getResponse().rep);
-      }
-
-   U_NEW(UString, allowed_web_hosts, UString);
+   U_NEW_STRING(db_anagrafica, UString);
+   U_NEW_STRING(allowed_web_hosts, UString);
 
    content = UFile::contentOf(U_STRING_FROM_CONSTANT("../etc/AllowedWebHosts.txt"));
 
@@ -118,15 +215,15 @@ static void usp_init_wi_auth2()
       if (vec.empty() == false) *allowed_web_hosts = vec.join() + ' ';
       }
 
-   U_NEW(UString, ip, UString);
-   U_NEW(UString, mac, UString);
+   U_NEW_STRING(ip, UString);
+   U_NEW_STRING(mac, UString);
 
-   U_NEW(UString, ap, UString);
-   U_NEW(UString, ap_label, UString);
-   U_NEW(UString, ap_address, UString);
-   U_NEW(UString, ap_hostname, UString);
-   U_NEW(UString, key_session, UString);
-   U_NEW(UString, policySessionId, UString);
+   U_NEW_STRING(ap, UString);
+   U_NEW_STRING(ap_label, UString);
+   U_NEW_STRING(ap_address, UString);
+   U_NEW_STRING(ap_hostname, UString);
+   U_NEW_STRING(key_session, UString);
+   U_NEW_STRING(policySessionId, UString);
 
    U_NEW(UFile, file_LOG,     UFile(U_STRING_FROM_CONSTANT("../log/wifi-log")));
    U_NEW(UFile, file_WARNING, UFile(U_STRING_FROM_CONSTANT("../log/wifi-warning")));
@@ -146,97 +243,40 @@ static void usp_init_wi_auth2()
 
    U_ASSERT_EQUALS(client->isPasswordAuthentication(), false)
 
-   UVector<UString> vnetmask;
-   UTokenizer tok(*db_anagrafica, ",\n");
-   UString lip, lnetmask, lbl, lnetmask1, lbl1;
-
-   /**
-    * 10.8.0.13,172.17.13.0/24,368
-    * 10.8.0.13,172.16.13.0/24,368
-    * 10.8.0.255,172.16.255.0/24,51
-    * 151.11.47.3,172.23.0.0/20,47
-    * 151.11.47.3,172.23.0.0/20,213
-    * 192.168.44.55,172.16.55.0/24,55
-    * 192.168.44.55,172.16.65.0/24,65
-    */
-
-   (void) tok.next(lip, (bool*)U_NULLPTR);
-
-   U_INTERNAL_ASSERT(lip)
-
-loop:
-   (void) tok.next(lnetmask, (bool*)U_NULLPTR);
-   (void) tok.next(lbl,      (bool*)U_NULLPTR);
-
-   U_INTERNAL_ASSERT(lbl)
-   U_INTERNAL_ASSERT(lnetmask)
-
-   U_ASSERT(vnetmask.empty())
-
-   vnetmask.push_back(lnetmask);
-
-   U_INTERNAL_DUMP("lip = %V lbl = %V lnetmask = %V", lip.rep, lbl.rep, lnetmask.rep)
-
-   *ip = lip;
-
-   (void) UIPAddress::getBinaryForm(ip->c_str(), addr, true);
-
-   (void) rc->hmset(U_CONSTANT_TO_PARAM("CAPTIVE:id:%u ip %v"), addr, ip->rep);
-
-   (void) rc->zadd(U_CONSTANT_TO_PARAM("CAPTIVE:byId 0 id:%u"), addr);
-
-   (void) rc->hmset(U_CONSTANT_TO_PARAM("AP:id:%v captiveId %u network %v"), lbl.rep, addr, lnetmask.rep);
-
-   (void) rc->zadd(U_CONSTANT_TO_PARAM("AP:byCaptiveId %u id:%v;network:%v"), addr, lbl.rep, lnetmask.rep);
-
-   while (tok.next(lip, (bool*)U_NULLPTR))
-      {
-      if (ip->equal(lip) == false)
-         {
-         if (vnetmask.size() > 1)
-            {
-            (void) rc->hmset(U_CONSTANT_TO_PARAM("AP:id:%v network %v"), lbl.rep, vnetmask.join(0, U_CONSTANT_TO_PARAM(",")).rep);
-            }
-
-         vnetmask.clear();
-
-         goto loop;
-         }
-
-      (void) tok.next(lnetmask1, (bool*)U_NULLPTR);
-      (void) tok.next(lbl1,      (bool*)U_NULLPTR);
-
-      U_INTERNAL_ASSERT(lbl1)
-      U_INTERNAL_ASSERT(lnetmask1)
-
-      if (lbl1 == lbl)
-         {
-         U_ASSERT_DIFFERS(lnetmask1, lnetmask)
-
-         vnetmask.push_back(lnetmask1);
-
-         continue;
-         }
-
-      (void) rc->hmset(U_CONSTANT_TO_PARAM("AP:id:%v captiveId %u network %v"), lbl1.rep, addr, lnetmask1.rep);
-
-      (void) rc->zadd(U_CONSTANT_TO_PARAM("AP:byCaptiveId %u id:%v;network:%v"), addr, lbl1.rep, lnetmask1.rep);
-
-      vnetmask.clear();
-
-      lbl      = lbl1;
-      lnetmask = lnetmask1;
-      }
-
    // CLEAN MONITORING
 
    U_NEW(UPing, sockp, UPing(5000, UClientImage_Base::bIPv6));
 
    if (sockp->initPing() == false)
       {
-      delete sockp;
-             sockp = U_NULLPTR;
+      U_DELETE(sockp)
+
+      sockp = U_NULLPTR;
       }
+
+   // REDIS client
+
+   U_NEW(UREDISClient<UTCPSocket>, rc, UREDISClient<UTCPSocket>);
+
+   if (rc->connect() == false)
+      {
+      U_ERROR("usp_fork_wi_auth2(): %V", rc->UClient_Base::getResponse().rep);
+      }
+
+   // ANAGRAFICA
+
+   loadAnagrafica();
+}
+
+static void usp_fork_wi_auth2()
+{
+   U_TRACE_NO_PARAM(5, "::usp_fork_wi_auth2()")
+
+   // REDIS client
+
+   U_INTERNAL_ASSERT_POINTER(rc)
+
+   rc->UClient_Base::reOpen();
 }
 
 static void usp_end_wi_auth2()
@@ -244,22 +284,24 @@ static void usp_end_wi_auth2()
    U_TRACE_NO_PARAM(5, "::usp_end_wi_auth2()")
 
 #ifdef DEBUG
-   delete ip;
-   delete mac;
+   U_DELETE(ip)
+   U_DELETE(mac)
 
-   delete ap;
-   delete ap_label;
-   delete ap_address;
-   delete ap_hostname;
-   delete nodog_conf;
-   delete key_session;
-   delete policySessionId;
-   delete allowed_web_hosts;
+   U_DELETE(ap)
+   U_DELETE(ap_label)
+   U_DELETE(ap_address)
+   U_DELETE(ap_hostname)
+   U_DELETE(nodog_conf)
+   U_DELETE(key_session)
+   U_DELETE(policySessionId)
+   U_DELETE(allowed_web_hosts)
 
-   delete db_anagrafica;
+   U_DELETE(db_anagrafica)
 
-   delete rc;
-   delete client;
+   U_DELETE(rc)
+   U_DELETE(client)
+
+   if (sockp) U_DELETE(sockp)
 #endif
 }
 
@@ -309,6 +351,8 @@ loop:
 
       U_INTERNAL_DUMP("tok.current() = %C", tok.current())
 
+      if (u__isdigit(tok.current()) == false) (void) tok.skipToken();
+
       /**
        * 151.11.47.3,172.23.0.0/20,47
        * 151.11.47.3,172.23.0.0/20,215
@@ -323,6 +367,10 @@ loop:
 
          U_INTERNAL_ASSERT(lbl1)
          U_INTERNAL_ASSERT(lnetmask1)
+
+         U_INTERNAL_DUMP("tok.current() = %C", tok.current())
+
+         if (u__isdigit(tok.current()) == false) (void) tok.skipToken();
 
                                       vlabel.push_back(lbl1);
          if (lnetmask != lnetmask1) vnetmask.push_back(lnetmask1);
@@ -354,15 +402,27 @@ loop:
    U_RETURN(false);
 }
 
-static bool setAccessPoint()
+static void resetAccessPoint()
 {
-   U_TRACE_NO_PARAM(5, "::setAccessPoint()")
-
-   U_INTERNAL_ASSERT(ap)
+   U_TRACE_NO_PARAM(5, "::resetAccessPoint()")
 
       ap_label->clear();
     ap_address->clear();
    ap_hostname->clear();
+}
+
+static bool setAccessPoint()
+{
+   U_TRACE_NO_PARAM(5, "::setAccessPoint()")
+
+   resetAccessPoint();
+
+   if (ap->empty())
+      {
+      U_LOGGER("*** AP STRING EMPTY ***", 0);
+
+      U_RETURN(false);
+      }
 
    uint32_t pos1 = ap->find('@');
 
@@ -483,23 +543,28 @@ static bool getSession()
       U_INTERNAL_DUMP("policySessionId = %V ap_consume = %b counter = %llu created = %#2D lastUpdate = %#2D (%u <=> midnigth %u)",
                        policySessionId->rep, ap_consume, counter, created, lastUpdate, u_get_localtime(lastUpdate) / U_ONE_DAY_IN_SECOND, u_getLocalTime() / U_ONE_DAY_IN_SECOND)
 
-      U_INTERNAL_ASSERT(*policySessionId)
+      if (policySessionId->empty())
+         {
+         U_LOGGER("*** SESSION(%V) WITH pId EMPTY ***", key_session->rep);
+
+         *policySessionId = U_STRING_FROM_CONSTANT("DAILY");
+
+         (void) rc->hmset(U_CONSTANT_TO_PARAM("SESSION:%v pId DAILY"), key_session->rep);
+         }
 
       U_RETURN(true);
       }
 
+   U_LOGGER("*** SESSION(%V) NOT FOUND ***", key_session->rep);
+
    U_RETURN(false);
 }
 
-static UString getApInfo()
+static uint32_t getApInfo(char* buffer)
 {
-   U_TRACE_NO_PARAM(5, "::getApInfo()")
+   U_TRACE(5, "::getApInfo(%p)", buffer)
 
-   UString x(1024U);
-
-   x.snprintf(U_CONSTANT_TO_PARAM("%v@%v/%v"), ap_label->rep, ap_address->rep, ap_hostname->rep);
-
-   U_RETURN_STRING(x);
+   return u__snprintf(buffer, 1024, U_CONSTANT_TO_PARAM("%v@%v/%v"), ap_label->rep, ap_address->rep, ap_hostname->rep);
 }
 
 static void writeToLOG(const char* op, uint32_t op_len, const UString& opt)
@@ -509,14 +574,16 @@ static void writeToLOG(const char* op, uint32_t op_len, const UString& opt)
    U_INTERNAL_ASSERT_POINTER(op)
    U_INTERNAL_ASSERT_MAJOR(op_len, 0)
 
+   char buffer[1024];
+
    // 11/02/18 04:14:21 op: PERMIT, mac: 20:ee:28:d0:38:93, ip: 172.22.155.28, ap: 61@151.11.47.8/CareggiConc-x86_64, policy: FLAT|no_consume|notify
    // 11/02/18 04:14:21 op: NOTIFIED, mac: 20:ee:28:d0:38:93, ip: 172.22.155.28, ap: 61@151.11.47.8/CareggiConc-x86_64, policy: FLAT|no_consume|notify
    // 11/02/18 04:14:21 op: RST_POLICY, mac: 20:ee:28:d0:38:93, ip: 172.22.155.28, ap: 61@151.11.47.8/CareggiConc-x86_64, policy: DAILY|consume|notify, traffic: 100
    // 11/02/18 04:14:21 op: DENY_NO_TRAFFIC, mac: 20:ee:28:d0:38:93, ip: 172.22.155.28, ap: 61@151.11.47.8/CareggiConc-x86_64, policy: FLAT|consume|notify, traffic: 100, elapsed: 10
 
    ULog::log(file_LOG->getFd(),
-             U_CONSTANT_TO_PARAM("op: %.*s, mac: %v, ip: %v, ap: %v, policy: %v|%.*sconsume|%snotify%v"),
-             op_len, op, mac->rep, ip->rep, getApInfo().rep, policySessionId->rep, (ap_consume ? 0 : 3), "no_", (policySessionNotify == 0 ? ""    :
+             U_CONSTANT_TO_PARAM("op: %.*s, mac: %v, ip: %v, ap: %.*s, policy: %v|%.*sconsume|%snotify%v"),
+             op_len, op, mac->rep, ip->rep, getApInfo(buffer), buffer, policySessionId->rep, (ap_consume ? 0 : 3), "no_", (policySessionNotify == 0 ? ""   :
                                                                                                                  policySessionNotify == 1 ? "no_" : "strict_"), opt.rep);
 }
 
@@ -601,8 +668,9 @@ static bool getDataFromPOST(bool bpeer)
 
    *ap = vec.AsVectorGet<UString>(0);
 
-   if (*ap &&
-       setAccessPoint())
+   bool ok = setAccessPoint();
+
+   if (ok)
       {
       *mac = vec.AsVectorGet<UString>(1);
       *ip  = vec.AsVectorGet<UString>(2);
@@ -615,13 +683,11 @@ static bool getDataFromPOST(bool bpeer)
          {
          peer = (void*) vec.AsVectorGet<uint64_t>(3);
 
-         if (checkDevice() == false) U_RETURN(false);
+         ok = checkDevice();
          }
-
-      U_RETURN(true);
       }
 
-   U_RETURN(false);
+   U_RETURN(ok);
 }
 
 static void lostSession(bool bclean)
@@ -648,6 +714,17 @@ static void lostSession(bool bclean)
       writeSessionToLOG(U_CONSTANT_TO_PARAM("DENY_LOST"));
 
       deleteSession();
+      }
+}
+
+static void GET_anagrafica()
+{
+   U_TRACE_NO_PARAM(5, "::GET_anagrafica()")
+
+   if (UServer_Base::isLocalHost() == false) UHTTP::setBadRequest();
+   else
+      {
+      loadAnagrafica();
       }
 }
 
@@ -854,8 +931,9 @@ static void GET_start_ap()
 
       UHTTP::getFormValue(*ap, U_CONSTANT_TO_PARAM("ap"), 0, 1, 8);
 
-      if (*ap &&
-          setAccessPoint())
+      bool ok = setAccessPoint();
+
+      if (ok)
          {
          uint32_t pos;
          UString address;
@@ -911,47 +989,55 @@ static void GET_start_ap()
             return;
             }
 
+         uint32_t n;
+         char buffer[1024];
          UString pid, uptime;
 
          UHTTP::getFormValue(pid,    U_CONSTANT_TO_PARAM("pid"),    0, 5, 8);
          UHTTP::getFormValue(uptime, U_CONSTANT_TO_PARAM("uptime"), 0, 7, 8);
 
-         U_LOGGER("%v %s", getApInfo().rep, pid.strtol() == -1 ? "started" : "*** NODOG CRASHED ***");
+         U_LOGGER("%.*s %s", getApInfo(buffer), buffer, pid.strtol() == -1 ? "started" : "*** NODOG CRASHED ***");
 
          (void) rc->hmset(U_CONSTANT_TO_PARAM("CAPTIVE:id:%u name %v status 1 uptime %v since %u lastUpdate %u"), addr, ap_hostname->rep, uptime.rep, u_now->tv_sec, u_now->tv_sec);
          (void) rc->zadd(U_CONSTANT_TO_PARAM("CAPTIVE:byLastUpdate %u %v"), u_now->tv_sec, ap_address->rep);
 
          x.snprintf(U_CONSTANT_TO_PARAM("%u"), addr);
 
-         (void) rc->zrangebyscore(U_CONSTANT_TO_PARAM("SESSION:byCaptiveIdAndApId %v000000 %v999999 WITHSCORES"), x.rep, x.rep);
+loop:    (void) rc->zrangebyscore(U_CONSTANT_TO_PARAM("SESSION:byCaptiveIdAndApId %v000000 %v999999 WITHSCORES LIMIT 0 500"), x.rep, x.rep);
 
-         uint32_t n = rc->vitem.size();
+         n = rc->vitem.size();
 
-         if (n)
+         if (n >= 2)
             {
-            const char* ptr1;
-            const char* ptr2;
+            uint32_t j;
+            const char* ptr;
+            UString tmp(200U);
             UVector<UString> vec(n);
 
             vec.copy(rc->vitem);
 
             key_session->setBuffer(200U);
 
-            x.snprintf(U_CONSTANT_TO_PARAM("captiveId:%u;apId:"), addr);
+            tmp.snprintf(U_CONSTANT_TO_PARAM("captiveId:%u;apId:"), addr);
 
-            for (uint32_t i = 0; i < n; i += 2)
+            for (int32_t i = 0; i < (int32_t)n; i += 2)
                {
-               ptr1 =
-               ptr2 = vec[i+1].pend()-6; // score (ex: 3232246838000064)
+               ptr = vec[i+1].pend()-6; // score (ex: 3232246838000064)
 
-               while (*ptr2 == '0') { ++ptr2; }
+               for (j = 0; j < 6 && (ptr[j] == '0'); ++j) {}
 
-               (void) ap_label->assign(ptr2, 6-(ptr2-ptr1));
+               if (j == 6) key_session->snprintf(U_CONSTANT_TO_PARAM("%v0;%v"), tmp.rep, vec[i].rep);
+               else
+                  {
+                  (void) ap_label->assign(ptr+j, 6-j);
 
-               key_session->snprintf(U_CONSTANT_TO_PARAM("%v%v;%v"), x.rep, ap_label->rep, vec[i].rep);
+                  key_session->snprintf(U_CONSTANT_TO_PARAM("%v%v;%v"), tmp.rep, ap_label->rep, vec[i].rep);
+                  }
 
                lostSession(false);
                }
+
+            goto loop;
             }
          }
       }
@@ -1020,27 +1106,36 @@ static void POST_login()
          (void) rc->zadd(U_CONSTANT_TO_PARAM("SESSION:byLastUpdate %u %v"), u_now->tv_sec, key_session->rep);
          }
 
-      // $1 -> peer
-      // $2 -> deny|permit: ('0'|'1') policy: notify|no_notify|strict_notify ('0'|'1'|'2')
+      U_INTERNAL_DUMP("peer = %p", peer)
 
-#  ifdef HAVE_CXX11
-      (void) fb.encodeVector([&]() {
+      if (peer)
+         {
+         // $1 -> peer
+         // $2 -> deny|permit: ('0'|'1') policy: notify|no_notify|strict_notify ('0'|'1'|'2')
+
+#     ifdef HAVE_CXX11
+         (void) fb.encodeVector([&]() {
+            fb.UInt(U_PTR2INT(peer));
+            fb.String(buffer, sizeof(buffer));
+         });
+#     else
+         fb.StartBuild();
+         (void) fb.StartVector();
+
          fb.UInt(U_PTR2INT(peer));
          fb.String(buffer, sizeof(buffer));
-      });
-#  else
-      fb.StartBuild();
-      (void) fb.StartVector();
 
-      fb.UInt(U_PTR2INT(peer));
-      fb.String(buffer, sizeof(buffer));
+         fb.EndVector(0, false);
+         (void) fb.EndBuild();
+#     endif
 
-      fb.EndVector(0, false);
-      (void) fb.EndBuild();
-#  endif
-
-      (void) sendRequestToNodog(U_CONSTANT_TO_PARAM("login_validate"), fb.getResult());
+         (void) sendRequestToNodog(U_CONSTANT_TO_PARAM("login_validate"), fb.getResult());
+         }
       }
+
+   ap->clear();
+
+   resetAccessPoint();
 }
 
 static void POST_notify()
@@ -1051,10 +1146,11 @@ static void POST_notify()
    // $2 -> mac
    // $3 -> ip
 
-   if (getDataFromPOST(false))
-      {
-      writeToLOG(U_CONSTANT_TO_PARAM("NOTIFIED"), UString::getStringNull());
-      }
+   if (getDataFromPOST(false)) writeToLOG(U_CONSTANT_TO_PARAM("NOTIFIED"), UString::getStringNull());
+
+   ap->clear();
+
+   resetAccessPoint();
 }
 
 static void POST_strict_notify()
@@ -1082,6 +1178,10 @@ static void POST_strict_notify()
 
       writeToLOG(U_CONSTANT_TO_PARAM("STRICT_NOTIFIED"), UString::getStringNull());
       }
+
+   ap->clear();
+
+   resetAccessPoint();
 }
 
 /*
@@ -1126,6 +1226,8 @@ static void POST_info()
 {
    U_TRACE_NO_PARAM(5, "::POST_info()")
 
+   U_INTERNAL_DUMP("UClientImage_Base::body(%u) = %#V", UClientImage_Base::body->size(), UClientImage_Base::body->rep)
+
    UFlatBuffer fb, vec;
 
    fb.setRoot(*UClientImage_Base::body);
@@ -1133,38 +1235,47 @@ static void POST_info()
 
    *ap = vec.AsVectorGet<UString>(0);
 
-   if (*ap &&
-       setAccessPoint())
+   if (setAccessPoint())
       {
       const char* op;
       UString x(200U);
-      UVector<UString> vec_logout;
-      uint32_t _ctime, ctraffic, time_no_traffic, ctime_no_traffic, op_len, midnigth = u_getLocalTime() / U_ONE_DAY_IN_SECOND;
+      uint32_t ip_peer, ctraffic, ctime_no_traffic, op_len, midnigth = u_getLocalTime() / U_ONE_DAY_IN_SECOND, idx = 0, vec_logout[8192]; // _ctime, time_no_traffic
 
       (void) rc->hmset(U_CONSTANT_TO_PARAM("CAPTIVE:id:%u status 1 lastUpdate %u"), addr, u_now->tv_sec);
       (void) rc->zadd(U_CONSTANT_TO_PARAM("CAPTIVE:byLastUpdate %u %v"), u_now->tv_sec, ap_address->rep);
 
-      for (int32_t i = 1, n = (int32_t) vec.GetSize(); i < n; i += 6)
+      for (int32_t i = 1, n = (int32_t) vec.GetSize(); i < n; i += 4)
          {
          // -----------------------------------------------------------------------------------------------------------------------------------------
          // $1 -> mac
          // $2 -> ip
          // $3 -> apId
-         // $4 -> time
-         // $5 -> traffic
+         // $4 -> traffic
+         // ---------------------
+         // $5 -> time
          // $6 -> time_no_traffic
          // -----------------------------------------------------------------------------------------------------------------------------------------
 
-         *mac            = vec.AsVectorGet<UString>(i);
-         *ip             = vec.AsVectorGet<UString>(i+1);
-         *ap_label       = vec.AsVectorGet<UString>(i+2);
-         _ctime          = vec.AsVectorGet<uint32_t>(i+3);
-         ctraffic        = vec.AsVectorGet<uint32_t>(i+4);
+         *mac      = vec.AsVectorGet<UString>(i);
+         ip_peer   = vec.AsVectorGet<uint32_t>(i+1);
+         *ap_label = vec.AsVectorGet<UString>(i+2);
+         ctraffic  = vec.AsVectorGet<uint32_t>(i+3);
+
+         /*
+         _ctime          = vec.AsVectorGet<uint32_t>(i+4);
          time_no_traffic = vec.AsVectorGet<uint32_t>(i+5);
+         */
 
-         U_INTERNAL_DUMP("ap_label = %V mac = %V ip = %V _ctime = %u ctraffic = %u time_no_traffic = %u", ap_label->rep, mac->rep, ip->rep, _ctime, ctraffic, time_no_traffic)
+         *ip = UIPAddress::toString(ip_peer);
 
-         U_INTERNAL_ASSERT(u_isIPv4Addr(U_STRING_TO_PARAM(*ip)))
+         U_INTERNAL_DUMP("ap_label = %V mac = %V ip = %V ctraffic = %u", ap_label->rep, mac->rep, ip->rep, ctraffic)
+
+         if (u_isIPv4Addr(U_STRING_TO_PARAM(*ip)) == false)
+            {
+            U_LOGGER("*** INFO (ap_label = %V mac = %V ip = %V ctraffic = %u) NOT VALID ***", ap_label->rep, mac->rep, ip->rep, ctraffic);
+
+            continue;
+            }
 
          setSessionkey();
 
@@ -1172,10 +1283,14 @@ static void POST_info()
 
          U_INTERNAL_DUMP("ap_label = %V mac = %V ip = %V", rc->getString(7).rep, rc->getString(8).rep, rc->getString(9).rep)
 
-         U_INTERNAL_ASSERT_EQUALS(addr, rc->getULong(6))
-         U_ASSERT_EQUALS(*ap_label,     rc->getString(7))
-         U_ASSERT_EQUALS(*mac,          rc->getString(8))
-         U_ASSERT_EQUALS(*ip,           rc->getString(9))
+         U_ASSERT_EQUALS(*ap_label, rc->getString(7))
+         U_ASSERT_EQUALS(*mac,      rc->getString(8))
+         U_ASSERT_EQUALS(*ip,       rc->getString(9))
+
+         if (addr != rc->getULong(6))
+            {
+            U_LOGGER("*** SESSION(%V) DIFFER FOR ADDR (%u => %u) ***", key_session->rep, addr, rc->getULong(6));
+            }
 
          if (ctraffic == 0)
             {
@@ -1194,8 +1309,7 @@ del_sess:      writeSessionToLOG(op, op_len);
 
                deleteSession();
 
-del_login:     vec_logout.push_back(*ip);
-               vec_logout.push_back(*mac);
+del_login:     vec_logout[idx++] = ip_peer;
 
                continue;
                }
@@ -1236,12 +1350,24 @@ del_login:     vec_logout.push_back(*ip);
             }
          }
 
-      if (vec_logout.empty() == false)
+      if (idx)
          {
-         UFlatBufferSpace space;
+         U_INTERNAL_DUMP("idx = %u", idx)
 
-         (void) sendRequestToNodog(U_CONSTANT_TO_PARAM("logout"), UDES3::signData(UFlatBuffer::fromVector(vec_logout)));
+         U_INTERNAL_ASSERT_MINOR(idx, 8192)
+
+         vec_logout[idx] = 0; // sentinel
+
+         UFlatBufferSpaceMedium space;
+
+         U_SRV_LOG("send request to nodog to logout %u users", idx);
+
+         (void) sendRequestToNodog(U_CONSTANT_TO_PARAM("logout"), UFlatBuffer::fromVectorInt(vec_logout));
          }
       }
+
+   ap->clear();
+
+   resetAccessPoint();
 }
 #endif

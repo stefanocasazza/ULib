@@ -9,12 +9,12 @@ public:
 
    UUnixClientImage() : UClientImage<UUnixSocket>()
       {
-      U_TRACE_REGISTER_OBJECT(5, UUnixClientImage, "", 0)
+      U_TRACE_CTOR(5, UUnixClientImage, "", 0)
       }
 
    ~UUnixClientImage()
       {
-      U_TRACE_UNREGISTER_OBJECT(5, UUnixClientImage)
+      U_TRACE_DTOR(5, UUnixClientImage)
       }
 
    // DEBUG

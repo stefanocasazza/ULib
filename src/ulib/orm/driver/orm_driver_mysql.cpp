@@ -22,7 +22,7 @@ U_CREAT_FUNC(orm_driver_mysql, UOrmDriverMySql)
 
 UOrmDriverMySql::~UOrmDriverMySql()
 {
-   U_TRACE_UNREGISTER_OBJECT(0, UOrmDriverMySql)
+   U_TRACE_DTOR(0, UOrmDriverMySql)
 }
 
 void UOrmDriverMySql::handlerError()
@@ -148,7 +148,7 @@ UOrmDriver* UOrmDriverMySql::handlerConnect(const UString& option)
 
    if (pdrv->setOption(option) == false)
       {
-      if (UOrmDriver::connection) delete pdrv;
+      if (UOrmDriver::connection) U_DELETE(pdrv)
 
       U_RETURN_POINTER(U_NULLPTR, UOrmDriver);
       }
@@ -161,7 +161,7 @@ UOrmDriver* UOrmDriverMySql::handlerConnect(const UString& option)
 
       pdrv->printError(__PRETTY_FUNCTION__);
 
-      if (UOrmDriver::connection) delete pdrv;
+      if (UOrmDriver::connection) U_DELETE(pdrv)
 
       U_RETURN_POINTER(U_NULLPTR, UOrmDriver);
       }
@@ -208,7 +208,7 @@ UOrmDriver* UOrmDriverMySql::handlerConnect(const UString& option)
       {
       pdrv->printError(__PRETTY_FUNCTION__);
 
-      if (UOrmDriver::connection) delete pdrv;
+      if (UOrmDriver::connection) U_DELETE(pdrv)
 
       U_RETURN_POINTER(U_NULLPTR, UOrmDriver);
       }
@@ -348,7 +348,7 @@ void UOrmDriverMySql::handlerStatementRemove(USqlStatement* pstmt)
 
    if (UOrmDriver::errcode) UOrmDriver::printError(__PRETTY_FUNCTION__);
 
-   delete (UMySqlStatement*)pstmt;
+   U_DELETE((UMySqlStatement*)pstmt)
 }
 
 bool UMySqlStatement::setBindParam(UOrmDriver* pdrv)

@@ -38,14 +38,14 @@ public:
 
    URPCEncoder() : buffer(U_CAPACITY), encodedValue(U_CAPACITY)
       {
-      U_TRACE_REGISTER_OBJECT(0, URPCEncoder, "", 0)
+      U_TRACE_CTOR(0, URPCEncoder, "", 0)
 
       bIsResponse = false;
       }
 
    virtual ~URPCEncoder()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, URPCEncoder)
+      U_TRACE_DTOR(0, URPCEncoder)
       }
 
    void clearData()

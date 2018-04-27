@@ -17,12 +17,12 @@ public:
    public:
       AddMethod() : buffer(U_CAPACITY)
          {
-         U_TRACE_REGISTER_OBJECT(5, AddMethod, "", 0)
+         U_TRACE_CTOR(5, AddMethod, "", 0)
          }
 
       virtual ~AddMethod()
          {
-         U_TRACE_UNREGISTER_OBJECT(5, AddMethod)
+         U_TRACE_DTOR(5, AddMethod)
          }
 
       virtual UString getMethodName() const { return U_STRING_FROM_CONSTANT("add"); }
@@ -83,12 +83,12 @@ public:
    public:
       ReverseMethod() : returnValue(U_CAPACITY)
          {
-         U_TRACE_REGISTER_OBJECT(5, ReverseMethod, "", 0)
+         U_TRACE_CTOR(5, ReverseMethod, "", 0)
          }
 
       virtual ~ReverseMethod()
          {
-         U_TRACE_UNREGISTER_OBJECT(5, ReverseMethod)
+         U_TRACE_DTOR(5, ReverseMethod)
          }
 
       virtual UString getMethodName() const { return U_STRING_FROM_CONSTANT("reverse"); }
@@ -144,7 +144,7 @@ public:
 
    USOAPExample(UFileConfig& file_method)
       {
-      U_TRACE_REGISTER_OBJECT(5, USOAPExample, "%p", &file_method)
+      U_TRACE_CTOR(5, USOAPExample, "%p", &file_method)
 
       U_NEW(USOAPObject, dispatcher, USOAPObject);
       U_NEW(USOAPEncoder, URPCMethod::encoder, USOAPEncoder);
@@ -166,7 +166,7 @@ public:
 
    virtual ~USOAPExample()
       {
-      U_TRACE_UNREGISTER_OBJECT(5, USOAPExample)
+      U_TRACE_DTOR(5, USOAPExample)
 
       delete dispatcher;
       delete URPCMethod::encoder;

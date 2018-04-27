@@ -21,7 +21,7 @@
 #define U_STRING_MAX_SIZE (U_NOT_FOUND-sizeof(ustringrep)-4096U)
 
 #ifndef ENABLE_MEMPOOL
-#  define U_CAPACITY 1024
+#  define U_CAPACITY 2048
 #else
 #  define U_CAPACITY (U_MAX_SIZE_PREALLOCATE - (1 + sizeof(ustringrep))) // NB: the value must be a stack type boundary, see UStringRep::checkIfMReserve()...
 #endif

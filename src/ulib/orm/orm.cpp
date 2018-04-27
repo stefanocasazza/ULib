@@ -71,7 +71,7 @@ err:  loadDriverFail(backend, len);
 
 UOrmSession::UOrmSession(const char* dbname, uint32_t len)
 {
-   U_TRACE_REGISTER_OBJECT(0, UOrmSession, "%.*S,%u", len, dbname, len)
+   U_TRACE_CTOR(0, UOrmSession, "%.*S,%u", len, dbname, len)
 
    pdrv = U_NULLPTR;
 
@@ -99,7 +99,7 @@ UOrmSession::UOrmSession(const char* dbname, uint32_t len)
 
 UOrmSession::~UOrmSession()
 {
-   U_TRACE_UNREGISTER_OBJECT(0, UOrmSession)
+   U_TRACE_DTOR(0, UOrmSession)
 
 #if defined(USE_SQLITE) || defined(USE_MYSQL) || defined(USE_PGSQL)
    U_INTERNAL_DUMP("pdrv = %p", pdrv)
@@ -111,8 +111,9 @@ UOrmSession::~UOrmSession()
       if (UOrmDriver::vdriver->find(pdrv) != U_NOT_FOUND) pdrv->vopt.clear();
       else
          {
-         delete pdrv;
-                pdrv = U_NULLPTR;
+         U_DELETE(pdrv)
+
+         pdrv = U_NULLPTR;
          }
       }
 #endif
@@ -197,7 +198,7 @@ unsigned long long UOrmSession::last_insert_rowid(const char* sequence)
 
 UOrmStatement::UOrmStatement(UOrmSession& session, const char* stmt, uint32_t len)
 {
-   U_TRACE_REGISTER_OBJECT(0, UOrmStatement, "%p,%.*S,%u", &session, len, stmt, len)
+   U_TRACE_CTOR(0, UOrmStatement, "%p,%.*S,%u", &session, len, stmt, len)
 
    pdrv     = U_NULLPTR;
    pstmt    = U_NULLPTR;
@@ -220,7 +221,7 @@ UOrmStatement::UOrmStatement(UOrmSession& session, const char* stmt, uint32_t le
 
 UOrmStatement::~UOrmStatement()
 {
-   U_TRACE_UNREGISTER_OBJECT(0, UOrmStatement)
+   U_TRACE_DTOR(0, UOrmStatement)
 
 #if defined(USE_SQLITE) || defined(USE_MYSQL) || defined(USE_PGSQL)
    U_INTERNAL_DUMP("pstmt = %p", pstmt)
@@ -231,7 +232,7 @@ UOrmStatement::~UOrmStatement()
 
       U_INTERNAL_ASSERT_POINTER(psession)
 
-      if (psession->pdrv == U_NULLPTR) delete pstmt;
+      if (psession->pdrv == U_NULLPTR) U_DELETE(pstmt)
       else
          {
          U_INTERNAL_ASSERT_EQUALS(pdrv, psession->pdrv)

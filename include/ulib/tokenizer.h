@@ -33,7 +33,7 @@ public:
 
    UTokenizer(const char* d = U_NULLPTR)
       {
-      U_TRACE_REGISTER_OBJECT(0, UTokenizer, "%S", d)
+      U_TRACE_CTOR(0, UTokenizer, "%S", d)
 
           s =
         end = U_NULLPTR;
@@ -42,7 +42,7 @@ public:
 
    UTokenizer(const UString& data, const char* d = U_NULLPTR) : str(data)
       {
-      U_TRACE_REGISTER_OBJECT(0, UTokenizer, "%V,%S", data.rep, d)
+      U_TRACE_CTOR(0, UTokenizer, "%V,%S", data.rep, d)
 
       s     = data.data();
       end   = data.pend();
@@ -51,7 +51,7 @@ public:
 
    ~UTokenizer()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, UTokenizer)
+      U_TRACE_DTOR(0, UTokenizer)
       }
 
    bool atEnd()

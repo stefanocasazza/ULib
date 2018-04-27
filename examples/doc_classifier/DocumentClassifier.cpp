@@ -103,11 +103,11 @@ int DocumentClassifier::verifyCallback(int ok, X509_STORE_CTX* ctx) // callback
       {
       verify_result = false;
 
-      if (label_ko == U_NULLPTR) U_NEW(UString, label_ko, UString(4000U));
+      if (label_ko == U_NULLPTR) U_NEW_STRING(label_ko, UString(4000U));
 
       // TO DO
 
-      delete cert;
+      U_DELETE(cert)
       }
 
    // end time verification
@@ -291,7 +291,7 @@ DocumentClassifier::DocumentClassifier(const char* pathfile) : description(4000U
 
 Element::~Element()
 {
-   U_TRACE_UNREGISTER_OBJECT(5, Element)
+   U_TRACE_DTOR(5, Element)
 
    if (node_to_delete)
       {
@@ -306,18 +306,18 @@ Element::~Element()
          UTree<Element*>* zip = node->pop();
          UTree<Element*>* xml = node->pop();
 
-         delete xml;
+         U_DELETE(xml)
 
-         delete ts->pop();
-         delete ts;
+         U_DELETE(ts->pop())
+         U_DELETE(ts)
 
          (void) zip->pop();
-         delete zip;
+         U_DELETE(zip)
 
-         delete node;
+         U_DELETE(node)
          }
 
-      delete node_to_delete;
+      U_DELETE(node_to_delete)
       }
 }
 

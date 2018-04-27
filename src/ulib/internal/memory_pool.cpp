@@ -380,8 +380,8 @@ void* UMemoryPool::pop(int stack_index)
    if (pstack->index &&
        pstack->len == 0)
       {
-      U_WARNING("We are going to call allocateMemoryBlocks() (pid %P) - object = %S func = %S"
-                " index = %u type = %u len = %u space = %u depth = %u max_depth = %u num_call_allocateMemoryBlocks = %u pop_cnt = %u push_cnt = %u",
+      U_WARNING("We are going to call allocateMemoryBlocks() - object = %S func = %S"
+                " INDEX = %u type = %u len = %u space = %u depth = %u MAX_DEPTH = %u num_call_allocateMemoryBlocks = %u pop_cnt = %u push_cnt = %u",
                   obj_class, func_call, pstack->index, pstack->type, pstack->len, pstack->space, pstack->depth,
                   pstack->max_depth, pstack->num_call_allocateMemoryBlocks, pstack->pop_cnt, pstack->push_cnt);
       }
@@ -444,6 +444,8 @@ void* UMemoryPool::_malloc(uint32_t num, uint32_t type_size, bool bzero)
    U_INTERNAL_ASSERT_RANGE(4, length, 1U * 1024U * 1024U * 1024U) // NB: over 1G is very suspect on 32bit...
 # endif
    ptr = U_SYSCALL(malloc, "%u", length);
+
+   U_INTERNAL_ASSERT_POINTER_MSG(ptr, "cannot allocate memory, exiting...")
 #else
    if (length <= U_MAX_SIZE_PREALLOCATE)
       {
@@ -484,6 +486,8 @@ void* UMemoryPool::_malloc(uint32_t* pnum, uint32_t type_size, bool bzero)
    if (length == 0) length = type_size;
 
    ptr = U_SYSCALL(malloc, "%u", length);
+
+   U_INTERNAL_ASSERT_POINTER_MSG(ptr, "cannot allocate memory, exiting...")
 #else
    if (length > U_MAX_SIZE_PREALLOCATE) ptr = UFile::mmap(&length, -1, PROT_READ | PROT_WRITE, MAP_PRIVATE | U_MAP_ANON, 0);
    else

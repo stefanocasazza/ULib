@@ -6,7 +6,7 @@
 
 start_msg lcspclient_rpc
 
-#UTRACE="0 50M 0"
+#UTRACE="0 50M -1"
 #UOBJDUMP="0 100k 10"
 #USIMERR="error.sim"
 #VALGRIND=valgrind
@@ -17,7 +17,7 @@ rm -rf CSP/lcspserver_rpc.log RSIGN/rsignserver.log CSP/CSP/DB_CA/log CSP/CSP/DB
 		 CSP/trace.*userver_ipc*.[0-9]* CSP/object.*userver_ipc*.[0-9]* CSP/stack.*userver_ipc*.[0-9]* CSP/mempool.*userver_ipc*.[0-9]* \
 		 RSIGN/RSIGN/log out/rsignserver.out err/rsignserver.err \
 		 out/userver_ssl.out err/userver_ssl.err \
-       RSIGN/trace.*userver_ssl*.[0-9]* RSIGN/object.*userver_ssl*.[0-9]* RSIGN/stack.*userver_ssl*.[0-9]* RSIGN/mempool.*userver_ssl*.[0-9]* \
+		 RSIGN/trace.*userver_ssl*.[0-9]* RSIGN/object.*userver_ssl*.[0-9]* RSIGN/stack.*userver_ssl*.[0-9]* RSIGN/mempool.*userver_ssl*.[0-9]* \
 		 RSIGN/trace.*rsign*.[0-9]* RSIGN/object.*rsign*.[0-9]* RSIGN/stack.*rsign*.[0-9]* RSIGN/mempool.*rsign*.[0-9]*
 
 # ----------------------------------------------------------------

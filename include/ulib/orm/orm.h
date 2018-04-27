@@ -39,7 +39,7 @@ public:
    UOrmSession(const char* dbname,  uint32_t len);
    UOrmSession(const char* backend, uint32_t len, const UString& option)
       {
-      U_TRACE_REGISTER_OBJECT(0, UOrmSession, "%.*S,%u,%V", len, backend, len, option.rep)
+      U_TRACE_CTOR(0, UOrmSession, "%.*S,%u,%V", len, backend, len, option.rep)
 
       loadDriver(backend, len, option);
       }
@@ -102,14 +102,14 @@ public:
 
    UOrmTypeHandler_Base(const void* ptr) : pval((void*)ptr)
       {
-      U_TRACE_REGISTER_OBJECT(0, UOrmTypeHandler_Base, "%p", ptr)
+      U_TRACE_CTOR(0, UOrmTypeHandler_Base, "%p", ptr)
 
       U_INTERNAL_ASSERT_POINTER(pval)
       }
 
    ~UOrmTypeHandler_Base()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, UOrmTypeHandler_Base)
+      U_TRACE_DTOR(0, UOrmTypeHandler_Base)
 
       U_INTERNAL_ASSERT_POINTER(pval)
       }

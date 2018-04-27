@@ -62,12 +62,12 @@ public:
 
    UXML2Node(xmlNodePtr node) : impl_(node)
       {
-      U_TRACE_REGISTER_OBJECT(0, UXML2Node, "%p", node)
+      U_TRACE_CTOR(0, UXML2Node, "%p", node)
       }
 
    ~UXML2Node()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, UXML2Node)
+      U_TRACE_DTOR(0, UXML2Node)
       }
 
    /**

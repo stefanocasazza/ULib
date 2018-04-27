@@ -21,7 +21,7 @@
 
 UMimeEntity::UMimeEntity() : content(U_CAPACITY)
 {
-   U_TRACE_REGISTER_OBJECT(0, UMimeEntity, "")
+   U_TRACE_CTOR(0, UMimeEntity, "")
 
    header       = U_NULLPTR;
    startHeader  = endHeader = 0;
@@ -30,7 +30,7 @@ UMimeEntity::UMimeEntity() : content(U_CAPACITY)
 
 UMimeEntity::UMimeEntity(const UString& _data) : data(_data)
 {
-   U_TRACE_REGISTER_OBJECT(0, UMimeEntity, "%V", _data.rep)
+   U_TRACE_CTOR(0, UMimeEntity, "%V", _data.rep)
 
    startHeader  = 0;
    parse_result = false;
@@ -42,7 +42,7 @@ UMimeEntity::UMimeEntity(const UString& _data) : data(_data)
 
 UMimeEntity::UMimeEntity(const char* ptr, uint32_t len) : data(ptr, len)
 {
-   U_TRACE_REGISTER_OBJECT(0, UMimeEntity, "%.*S,%u", len, ptr, len)
+   U_TRACE_CTOR(0, UMimeEntity, "%.*S,%u", len, ptr, len)
 
    startHeader  = 0;
    parse_result = false;

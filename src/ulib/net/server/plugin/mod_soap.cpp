@@ -24,13 +24,13 @@ USOAPParser* USoapPlugIn::soap_parser;
 
 USoapPlugIn::~USoapPlugIn()
 {
-   U_TRACE_UNREGISTER_OBJECT(0, USoapPlugIn)
+   U_TRACE_DTOR(0, USoapPlugIn)
 
    if (soap_parser)
       {
-      delete soap_parser;
-      delete URPCMethod::encoder;
-      delete URPCObject::dispatcher;
+      U_DELETE(soap_parser)
+      U_DELETE(URPCMethod::encoder)
+      U_DELETE(URPCObject::dispatcher)
       }
 }
 
@@ -60,7 +60,7 @@ int USoapPlugIn::handlerInit()
 #  ifndef U_ALIAS
       U_SRV_LOG("WARNING: Sorry, I can't run soap plugin because alias URI support is missing, please recompile ULib...");
 #  else
-      if (UHTTP::valias == U_NULLPTR) U_NEW(UVector<UString>, UHTTP::valias, UVector<UString>(2U));
+      if (UHTTP::valias == U_NULLPTR) U_NEW(UVector<UString>, UHTTP::valias, UVector<UString>(2U))
 
       UHTTP::valias->push_back(*UString::str_soap);
       UHTTP::valias->push_back(*UString::str_nostat);

@@ -209,7 +209,7 @@ bool UHttpClient_Base::server_context_flag;
 
 UHttpClient_Base::UHttpClient_Base(UFileConfig* _cfg) : UClient_Base(_cfg)
 {
-   U_TRACE_REGISTER_OBJECT(0, UHttpClient_Base, "%p", _cfg)
+   U_TRACE_CTOR(0, UHttpClient_Base, "%p", _cfg)
 
    method_num       = 0;
    bFollowRedirects = true;
@@ -856,12 +856,9 @@ bool UHttpClient_Base::sendRequestEngine()
    UString headers, _uri;
    int result = -1, redirectCount = 0, sendCount = 0;
 
-   if (isPasswordAuthentication())
-      {
-      _uri = UClient_Base::url.getPath().copy();
+   if (isPasswordAuthentication()) _uri = UClient_Base::url.getPath();
 
-      U_INTERNAL_DUMP("_uri = %V", _uri.rep)
-      }
+   U_INTERNAL_DUMP("_uri = %V", _uri.rep)
 
    while (true)
       {

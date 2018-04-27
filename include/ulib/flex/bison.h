@@ -30,17 +30,17 @@ public:
 
    UBison()
       {
-      U_TRACE_REGISTER_OBJECT(0, UBison, "", 0)
+      U_TRACE_CTOR(0, UBison, "", 0)
       }
 
    UBison(const UString& data_) : UFlexer(data_)
       {
-      U_TRACE_REGISTER_OBJECT(0, UBison, "%V", data_.rep)
+      U_TRACE_CTOR(0, UBison, "%V", data_.rep)
       }
 
    ~UBison()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, UBison)
+      U_TRACE_DTOR(0, UBison)
       }
 
    bool parse(void* obj = U_NULLPTR)

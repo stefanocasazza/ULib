@@ -21,14 +21,14 @@ public:
 
    UUDPSocket(bool bSocketIsIPv6 = false) : USocket(bSocketIsIPv6)
       {
-      U_TRACE_REGISTER_OBJECT(0, UUDPSocket, "%b", bSocketIsIPv6)
+      U_TRACE_CTOR(0, UUDPSocket, "%b", bSocketIsIPv6)
 
       U_socket_Type(this) = USocket::SK_DGRAM;
       }
 
    ~UUDPSocket()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, UUDPSocket)
+      U_TRACE_DTOR(0, UUDPSocket)
       }
 
    // DEBUG

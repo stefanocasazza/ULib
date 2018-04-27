@@ -87,7 +87,7 @@ public:
 
    ~UMimeMultipartMsg()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, UMimeMultipartMsg)
+      U_TRACE_DTOR(0, UMimeMultipartMsg)
       }
 
    uint32_t message(UString& body, bool bterminator = true);

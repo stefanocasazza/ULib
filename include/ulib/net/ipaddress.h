@@ -74,7 +74,7 @@ public:
 
    UIPAllow()
       {
-      U_TRACE_REGISTER_OBJECT(0, UIPAllow, "", 0)
+      U_TRACE_CTOR(0, UIPAllow, "", 0)
 
       mask = addr = network = 0;
       bnot = false;
@@ -82,7 +82,7 @@ public:
 
    ~UIPAllow()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, UIPAllow)
+      U_TRACE_DTOR(0, UIPAllow)
       }
 
    UIPAllow& operator=(const UIPAllow& a)
@@ -225,7 +225,7 @@ public:
 
    UIPAddress()
       {
-      U_TRACE_REGISTER_OBJECT(0, UIPAddress, "", 0)
+      U_TRACE_CTOR(0, UIPAddress, "", 0)
 
       pcStrAddress[0] = '\0';
       iAddressLength  =
@@ -234,7 +234,7 @@ public:
 
    ~UIPAddress()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, UIPAddress)
+      U_TRACE_DTOR(0, UIPAddress)
       }
 
    // Sets an UIPAddress by providing a host name and a boolean
@@ -257,7 +257,7 @@ public:
 
    static bool isPrivate(uint32_t i)
       {
-      U_TRACE(0, "UIPAddress::isPrivate(%#X)", i)
+      U_TRACE(0, "UIPAddress::isPrivate(%#x)", i)
 
       if (((i >= 0x0A000000) && (i <= 0x0AFFFFFF)) ||
           ((i >= 0xAC100000) && (i <= 0xAC1FFFFF)) ||
@@ -271,7 +271,7 @@ public:
 
    static bool isLocalHost(uint32_t i)
       {
-      U_TRACE(0, "UIPAddress::isLocalHost(%#X)", i)
+      U_TRACE(0, "UIPAddress::isLocalHost(%#x)", i)
 
       if ((i & htonl(0xFF000000)) == htonl(0x7F000000)) U_RETURN(true); /* If it is 0.0.0.0 or starts with 127.0.0.1 then it is probably localhost */
 
@@ -329,7 +329,7 @@ public:
    // Returns a (void*) to the address represented by UIPAddress.
    // This must be cast to (in_addr*) or to (in6_addr*) for use
 
-   void* get_in_addr() const { return (void*)(pcAddress.p + (iAddressType == AF_INET6 ? 12 : 0)); }
+   void* get_in_addr() const { return (void*)((long)pcAddress.p + (iAddressType == AF_INET6 ? 12L : 0L)); }
 
    // Returns the address represented by UIPAddress
 
@@ -390,7 +390,7 @@ public:
 
    UIPAddress(const UIPAddress& cOtherAddr)
       {
-      U_TRACE_REGISTER_OBJECT(0, UIPAddress, "%p", &cOtherAddr)
+      U_TRACE_CTOR(0, UIPAddress, "%p", &cOtherAddr)
 
       U_MEMORY_TEST_COPY(cOtherAddr)
 
@@ -460,10 +460,10 @@ inline bool UIPAllow::isAllowed(const char* ip_client)
 {
    U_TRACE(0, "UIPAllow::isAllowed(%S)", ip_client)
 
-   struct in_addr ia;
+   in_addr_t client;
 
-   if (UIPAddress::getBinaryForm(ip_client, ia.s_addr) &&
-       isAllowed(ia.s_addr))
+   if (UIPAddress::getBinaryForm(ip_client, client) &&
+       isAllowed(client))
       {
       U_RETURN(true);
       }

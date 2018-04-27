@@ -164,7 +164,35 @@ plugin/product2.lo: plugin/product2.cpp /usr/include/stdc-predef.h \
  /usr/lib/gcc/x86_64-pc-linux-gnu/7.3.0/include/stdbool.h \
  ../../include/ulib/debug/common.h ../../include/ulib/internal/error.h \
  ../../include/ulib/debug/error_memory.h \
- ../../include/ulib/debug/objectDB.h ../../include/ulib/internal/macro.h \
+ ../../include/ulib/debug/objectDB.h \
+ /usr/include/libxml2/libxml/xpathInternals.h \
+ /usr/include/libxml2/libxml/xmlversion.h \
+ /usr/include/libxml2/libxml/xmlexports.h \
+ /usr/include/libxml2/libxml/xpath.h \
+ /usr/include/libxml2/libxml/xmlerror.h \
+ /usr/include/libxml2/libxml/parser.h /usr/include/libxml2/libxml/tree.h \
+ /usr/include/libxml2/libxml/xmlstring.h \
+ /usr/include/libxml2/libxml/xmlregexp.h \
+ /usr/include/libxml2/libxml/dict.h /usr/include/libxml2/libxml/hash.h \
+ /usr/include/libxml2/libxml/valid.h /usr/include/libxml2/libxml/list.h \
+ /usr/include/libxml2/libxml/xmlautomata.h \
+ /usr/include/libxml2/libxml/entities.h \
+ /usr/include/libxml2/libxml/encoding.h /usr/include/iconv.h \
+ /usr/include/unicode/ucnv.h /usr/include/unicode/ucnv_err.h \
+ /usr/include/unicode/utypes.h /usr/include/unicode/umachine.h \
+ /usr/include/unicode/ptypes.h /usr/include/unicode/platform.h \
+ /usr/include/unicode/uconfig.h /usr/include/unicode/uvernum.h \
+ /usr/include/unicode/urename.h /usr/include/unicode/uversion.h \
+ /usr/lib/gcc/x86_64-pc-linux-gnu/7.3.0/include/float.h \
+ /usr/include/unicode/utf.h /usr/include/unicode/utf8.h \
+ /usr/include/unicode/utf16.h /usr/include/unicode/utf_old.h \
+ /usr/include/unicode/uenum.h /usr/include/unicode/localpointer.h \
+ /usr/include/libxml2/libxml/xmlIO.h \
+ /usr/include/libxml2/libxml/globals.h /usr/include/libxml2/libxml/SAX.h \
+ /usr/include/libxml2/libxml/xlink.h /usr/include/libxml2/libxml/SAX2.h \
+ /usr/include/libxml2/libxml/xmlmemory.h \
+ /usr/include/libxml2/libxml/threads.h \
+ ../../include/ulib/internal/macro.h \
  ../../include/ulib/internal/objectIO.h \
  ../../include/ulib/internal/memory_pool.h /usr/include/dlfcn.h \
  /usr/include/bits/dlfcn.h
@@ -630,6 +658,88 @@ plugin/product.h:
 ../../include/ulib/debug/error_memory.h:
 
 ../../include/ulib/debug/objectDB.h:
+
+/usr/include/libxml2/libxml/xpathInternals.h:
+
+/usr/include/libxml2/libxml/xmlversion.h:
+
+/usr/include/libxml2/libxml/xmlexports.h:
+
+/usr/include/libxml2/libxml/xpath.h:
+
+/usr/include/libxml2/libxml/xmlerror.h:
+
+/usr/include/libxml2/libxml/parser.h:
+
+/usr/include/libxml2/libxml/tree.h:
+
+/usr/include/libxml2/libxml/xmlstring.h:
+
+/usr/include/libxml2/libxml/xmlregexp.h:
+
+/usr/include/libxml2/libxml/dict.h:
+
+/usr/include/libxml2/libxml/hash.h:
+
+/usr/include/libxml2/libxml/valid.h:
+
+/usr/include/libxml2/libxml/list.h:
+
+/usr/include/libxml2/libxml/xmlautomata.h:
+
+/usr/include/libxml2/libxml/entities.h:
+
+/usr/include/libxml2/libxml/encoding.h:
+
+/usr/include/iconv.h:
+
+/usr/include/unicode/ucnv.h:
+
+/usr/include/unicode/ucnv_err.h:
+
+/usr/include/unicode/utypes.h:
+
+/usr/include/unicode/umachine.h:
+
+/usr/include/unicode/ptypes.h:
+
+/usr/include/unicode/platform.h:
+
+/usr/include/unicode/uconfig.h:
+
+/usr/include/unicode/uvernum.h:
+
+/usr/include/unicode/urename.h:
+
+/usr/include/unicode/uversion.h:
+
+/usr/lib/gcc/x86_64-pc-linux-gnu/7.3.0/include/float.h:
+
+/usr/include/unicode/utf.h:
+
+/usr/include/unicode/utf8.h:
+
+/usr/include/unicode/utf16.h:
+
+/usr/include/unicode/utf_old.h:
+
+/usr/include/unicode/uenum.h:
+
+/usr/include/unicode/localpointer.h:
+
+/usr/include/libxml2/libxml/xmlIO.h:
+
+/usr/include/libxml2/libxml/globals.h:
+
+/usr/include/libxml2/libxml/SAX.h:
+
+/usr/include/libxml2/libxml/xlink.h:
+
+/usr/include/libxml2/libxml/SAX2.h:
+
+/usr/include/libxml2/libxml/xmlmemory.h:
+
+/usr/include/libxml2/libxml/threads.h:
 
 ../../include/ulib/internal/macro.h:
 

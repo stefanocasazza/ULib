@@ -61,7 +61,7 @@
 
 UIptAccount::UIptAccount(bool bSocketIsIPv6) : USocket(bSocketIsIPv6)
 {
-   U_TRACE_REGISTER_OBJECT(0, UIptAccount, "%b", bSocketIsIPv6)
+   U_TRACE_CTOR(0, UIptAccount, "%b", bSocketIsIPv6)
 
    pos       = 0;
    error_str = U_NULLPTR;
@@ -94,7 +94,7 @@ UIptAccount::UIptAccount(bool bSocketIsIPv6) : USocket(bSocketIsIPv6)
 
 UIptAccount::~UIptAccount()
 {
-   U_TRACE_UNREGISTER_OBJECT(0, UIptAccount)
+   U_TRACE_DTOR(0, UIptAccount)
 
 #ifdef HAVE_LINUX_NETFILTER_IPV4_IPT_ACCOUNT_H
    UMemoryPool::_free(data, data_size);

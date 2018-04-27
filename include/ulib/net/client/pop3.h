@@ -119,7 +119,7 @@ public:
 
    UPop3Client(bool bSocketIsIPv6 = false) : Socket(bSocketIsIPv6), buffer(4000)
       {
-      U_TRACE_REGISTER_OBJECT(0, UPop3Client, "%b", bSocketIsIPv6)
+      U_TRACE_CTOR(0, UPop3Client, "%b", bSocketIsIPv6)
 
       state   = INIT;
       num_msg = -1;
@@ -127,7 +127,7 @@ public:
 
    virtual ~UPop3Client()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, UPop3Client)
+      U_TRACE_DTOR(0, UPop3Client)
       }
 
    /**

@@ -37,7 +37,7 @@ U_NO_EXPORT void UFileConfig::init()
 
 UFileConfig::UFileConfig()
 {
-   U_TRACE_REGISTER_OBJECT(0, UFileConfig, "")
+   U_TRACE_CTOR(0, UFileConfig, "")
 
    init();
 
@@ -46,7 +46,7 @@ UFileConfig::UFileConfig()
 
 UFileConfig::UFileConfig(const UString& _data, bool _preprocessing) : data(_data)
 {
-   U_TRACE_REGISTER_OBJECT(0, UFileConfig, "%V,%b", _data.rep, _preprocessing)
+   U_TRACE_CTOR(0, UFileConfig, "%V,%b", _data.rep, _preprocessing)
 
    init();
 

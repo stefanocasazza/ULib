@@ -27,12 +27,12 @@ public:
 
    USkeletonClientImage(USocket* p) : UClientImage<Socket>(p)
       {
-      U_TRACE_REGISTER_OBJECT(0, USkeletonClientImage, "%p", p)
+      U_TRACE_CTOR(0, USkeletonClientImage, "%p", p)
       }
 
    virtual ~USkeletonClientImage()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, USkeletonClientImage)
+      U_TRACE_DTOR(0, USkeletonClientImage)
       }
 
    // DEBUG
@@ -64,12 +64,12 @@ public:
 
    USkeletonClientImage(USocket* p) : UClientImage<USSLSocket>(p)
       {
-      U_TRACE_REGISTER_OBJECT(0, USkeletonClientImage<USSLSocket>, "%p", p)
+      U_TRACE_CTOR(0, USkeletonClientImage<USSLSocket>, "%p", p)
       }
 
    virtual ~USkeletonClientImage()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, USkeletonClientImage<USSLSocket>)
+      U_TRACE_DTOR(0, USkeletonClientImage<USSLSocket>)
       }
 
    // DEBUG

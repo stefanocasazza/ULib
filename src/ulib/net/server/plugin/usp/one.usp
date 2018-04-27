@@ -14,8 +14,9 @@ static void usp_fork_one()
       {
       U_WARNING("usp_fork_one(): we cound't connect to db");
 
-      delete psql_db;
-             psql_db = U_NULLPTR;
+      U_DELETE(psql_db)
+
+      psql_db = U_NULLPTR;
 
       return;
       }
@@ -26,7 +27,7 @@ static void usp_end_one()
 {
    U_TRACE(5, "::usp_end_one()")
 
-   if (psql_db) delete psql_db;
+   if (psql_db) U_DELETE(psql_db)
 }
 #endif
 -->

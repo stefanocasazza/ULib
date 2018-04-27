@@ -4,7 +4,7 @@
 
 HttpRequestHeader::HttpRequestHeader(const char* m, unsigned m_len, const char* u, unsigned u_len, const char* h, unsigned h_len)
 {
-   U_TRACE_REGISTER_OBJECT(5, HttpRequestHeader, "%.*S,%u,%.*S,%u,%.*S,%u", m_len, m, m_len, u_len, u, u_len, h_len, h, h_len)
+   U_TRACE_CTOR(5, HttpRequestHeader, "%.*S,%u,%.*S,%u,%.*S,%u", m_len, m, m_len, u_len, u, u_len, h_len, h, h_len)
 
    url.assign(u, u_len);
    method.assign(m, m_len);

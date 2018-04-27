@@ -129,7 +129,7 @@ protected:
 
    UXML2Schema(xmlSchemaPtr schema) : impl_(schema)
       {
-      U_TRACE_REGISTER_OBJECT(0, UXML2Schema, "%p", schema)
+      U_TRACE_CTOR(0, UXML2Schema, "%p", schema)
       }
 
 private:

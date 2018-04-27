@@ -30,6 +30,7 @@
  */
 
 class UHTTP;
+class USocketExt;
 class USSLSocket;
 class UHttpPlugIn;
 class UFileConfig;
@@ -39,6 +40,7 @@ class UProxyPlugIn;
 class UNoCatPlugIn;
 class UServer_Base;
 class UHttpClient_Base;
+class UREDISClient_Base;
 class UElasticSearchClient;
 
 class U_EXPORT UClient_Base {
@@ -98,6 +100,15 @@ public:
       U_INTERNAL_ASSERT_POINTER(socket)
 
       if (isOpen()) socket->_close_socket();
+      }
+
+   void reOpen()
+      {
+      U_TRACE_NO_PARAM(0, "UClient_Base::reOpen()")
+
+      U_INTERNAL_ASSERT_POINTER(socket)
+
+      socket->reOpen();
       }
 
    bool shutdown(int how = SHUT_WR)
@@ -270,7 +281,13 @@ protected:
 private:
    U_DISALLOW_COPY_AND_ASSIGN(UClient_Base)
 
+   static USocket* csocket;
+   static vPFu resize_response_buffer;
+
+   void setForResizeResponseBuffer(vPFu func) { csocket = socket; resize_response_buffer = func; }
+
    friend class UHTTP;
+   friend class USocketExt;
    friend class USSLSocket;
    friend class UFCGIPlugIn;
    friend class USCGIPlugIn;
@@ -280,6 +297,7 @@ private:
    friend class UNoCatPlugIn;
    friend class UServer_Base;
    friend class UHttpClient_Base;
+   friend class UREDISClient_Base;
    friend class UElasticSearchClient;
 };
 
@@ -288,14 +306,14 @@ public:
 
    UClient(UFileConfig* pcfg) : UClient_Base(pcfg)
       {
-      U_TRACE_REGISTER_OBJECT(0, UClient, "%p", pcfg)
+      U_TRACE_CTOR(0, UClient, "%p", pcfg)
 
       U_NEW(Socket, socket, Socket(UClient_Base::bIPv6));
       }
 
    ~UClient()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, UClient)
+      U_TRACE_DTOR(0, UClient)
       }
 
    // DEBUG
@@ -314,14 +332,14 @@ public:
 
    UClient(UFileConfig* pcfg) : UClient_Base(pcfg)
       {
-      U_TRACE_REGISTER_OBJECT(0, UClient<USSLSocket>, "%p", pcfg)
+      U_TRACE_CTOR(0, UClient<USSLSocket>, "%p", pcfg)
 
       UClient_Base::setSSLContext();
       }
 
    ~UClient()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, UClient<USSLSocket>)
+      U_TRACE_DTOR(0, UClient<USSLSocket>)
       }
 
    // DEBUG

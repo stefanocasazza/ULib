@@ -78,7 +78,7 @@ public:
 
       XAdES_BES()
          {
-         U_TRACE_REGISTER_OBJECT(5, XAdES_BES, "")
+         U_TRACE_CTOR(5, XAdES_BES, "")
 
          SIGNING_TIME            = 0;
          URPCMethod::method_name = U_STRING_FROM_CONSTANT("XAdES-BES");
@@ -86,7 +86,7 @@ public:
 
       virtual ~XAdES_BES()
          {
-         U_TRACE_UNREGISTER_OBJECT(5, XAdES_BES)
+         U_TRACE_DTOR(5, XAdES_BES)
          }
 
       // Transforms the method into something that SOAP servers and client can send.
@@ -140,7 +140,7 @@ public:
 
       XAdES_C()
          {
-         U_TRACE_REGISTER_OBJECT(5, XAdES_C, "")
+         U_TRACE_CTOR(5, XAdES_C, "")
 
          SIGNING_TIME            = 0;
          URPCMethod::method_name = U_STRING_FROM_CONSTANT("XAdES-C");
@@ -148,7 +148,7 @@ public:
 
       virtual ~XAdES_C()
          {
-         U_TRACE_UNREGISTER_OBJECT(5, XAdES_C)
+         U_TRACE_DTOR(5, XAdES_C)
          }
 
       // Transforms the method into something that SOAP servers and client can send.
@@ -191,14 +191,14 @@ public:
 
       XAdES_L()
          {
-         U_TRACE_REGISTER_OBJECT(5, XAdES_L, "")
+         U_TRACE_CTOR(5, XAdES_L, "")
 
          URPCMethod::method_name = U_STRING_FROM_CONSTANT("XAdES-L");
          }
 
       virtual ~XAdES_L()
          {
-         U_TRACE_UNREGISTER_OBJECT(5, XAdES_L)
+         U_TRACE_DTOR(5, XAdES_L)
          }
 
       // Transforms the method into something that SOAP servers and client can send.
@@ -328,7 +328,7 @@ public:
       {
       U_TRACE(5, "Application::~Application()")
 
-      delete client;
+      U_DELETE(client)
       }
 
    void run(int argc, char* argv[], char* env[])

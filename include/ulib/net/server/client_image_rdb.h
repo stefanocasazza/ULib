@@ -30,12 +30,12 @@ public:
 
    URDBClientImage() : UClientImage<UTCPSocket>()
       {
-      U_TRACE_REGISTER_OBJECT(0, URDBClientImage, "", 0)
+      U_TRACE_CTOR(0, URDBClientImage, "", 0)
       }
 
    virtual ~URDBClientImage()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, URDBClientImage)
+      U_TRACE_DTOR(0, URDBClientImage)
       }
 
    // DEBUG

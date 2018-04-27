@@ -42,28 +42,28 @@ RETSIGTYPE UStreamPlugIn::handlerForSigTERM(int signo)
 
 UStreamPlugIn::UStreamPlugIn()
 {
-   U_TRACE_REGISTER_OBJECT(0, UStreamPlugIn, "")
+   U_TRACE_CTOR(0, UStreamPlugIn, "")
 
-   U_NEW(UString, uri_path,     UString);
-   U_NEW(UString, content_type, UString);
+   U_NEW_STRING(uri_path,     UString);
+   U_NEW_STRING(content_type, UString);
 }
 
 UStreamPlugIn::~UStreamPlugIn()
 {
-   U_TRACE_UNREGISTER_OBJECT(0, UStreamPlugIn)
+   U_TRACE_DTOR(0, UStreamPlugIn)
 
-   delete uri_path;
-   delete content_type;
+   U_DELETE(uri_path)
+   U_DELETE(content_type)
 
    if (command)
       {
-                delete command;
-      if (rbuf) delete rbuf;
+                U_DELETE(command)
+      if (rbuf) U_DELETE(rbuf)
 
       if (pid != -1) UProcess::kill(pid, SIGTERM);
       }
 
-   if (metadata) delete metadata;
+   if (metadata) U_DELETE(metadata)
 }
 
 // Server-wide hooks
@@ -86,7 +86,7 @@ int UStreamPlugIn::handlerConfig(UFileConfig& cfg)
       {
       UString x = cfg.at(U_CONSTANT_TO_PARAM("METADATA"));
 
-      if (x) U_NEW(UString, metadata, UString(x));
+      if (x) U_NEW_STRING(metadata, UString(x))
 
       *uri_path     = cfg.at(U_CONSTANT_TO_PARAM("URI_PATH"));
       *content_type = cfg.at(U_CONSTANT_TO_PARAM("CONTENT_TYPE"));
@@ -117,8 +117,9 @@ int UStreamPlugIn::handlerInit()
 
    if (result == false)
       {
-      delete command;
-             command = U_NULLPTR;
+      U_DELETE(command)
+
+      command = U_NULLPTR;
 
       U_RETURN(U_PLUGIN_HANDLER_ERROR);
       }

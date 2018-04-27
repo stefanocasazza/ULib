@@ -21,7 +21,7 @@
 
 UPKCS7::~UPKCS7()
 {
-   U_TRACE_UNREGISTER_OBJECT(0, UPKCS7)
+   U_TRACE_DTOR(0, UPKCS7)
 
    if (pkcs7) clear();
 

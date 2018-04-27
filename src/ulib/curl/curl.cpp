@@ -143,7 +143,7 @@ U_NO_EXPORT size_t UCURL::writeFunction(void* ptr, size_t size, size_t nmemb, vo
 
 UCURL::UCURL() : response(U_CAPACITY)
 {
-   U_TRACE_REGISTER_OBJECT(0, UCURL, "")
+   U_TRACE_CTOR(0, UCURL, "")
 
    headerlist = U_NULLPTR;
    formPost   = U_NULLPTR;
@@ -173,7 +173,7 @@ UCURL::UCURL() : response(U_CAPACITY)
 
 UCURL::~UCURL()
 {
-   U_TRACE_UNREGISTER_OBJECT(0, UCURL)
+   U_TRACE_DTOR(0, UCURL)
 
    U_INTERNAL_ASSERT_POINTER(easyHandle)
 

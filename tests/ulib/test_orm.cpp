@@ -25,19 +25,19 @@ public:
 
    Person()
       {
-      U_TRACE_REGISTER_OBJECT(5, Person, "")
+      U_TRACE_CTOR(5, Person, "")
 
       _age = 0;
       }
 
    Person(const UString& ln, const UString& fn, const UString& adr, int a) : _lastName(ln), _firstName(fn), _address(adr), _age(a)
       {
-      U_TRACE_REGISTER_OBJECT(5, Person, "%.*S,%.*S,%.*S,%u", U_STRING_TO_TRACE(ln), U_STRING_TO_TRACE(fn), U_STRING_TO_TRACE(adr), a)
+      U_TRACE_CTOR(5, Person, "%.*S,%.*S,%.*S,%u", U_STRING_TO_TRACE(ln), U_STRING_TO_TRACE(fn), U_STRING_TO_TRACE(adr), a)
       }
 
    ~Person()
       {
-      U_TRACE_UNREGISTER_OBJECT(5, Person)
+      U_TRACE_DTOR(5, Person)
       }
 
    bool operator==(const Person& other) const
@@ -123,12 +123,12 @@ public:
 
    Test1()
       {
-      U_TRACE_REGISTER_OBJECT(5, Test1, "")
+      U_TRACE_CTOR(5, Test1, "")
       }
 
    Test1(const Test1& t)
       {
-      U_TRACE_REGISTER_OBJECT(5, Test1, "%p", &t)
+      U_TRACE_CTOR(5, Test1, "%p", &t)
 
       U_MEMORY_TEST_COPY(t)
 
@@ -138,7 +138,7 @@ public:
 
    ~Test1()
       {
-      U_TRACE_UNREGISTER_OBJECT(5, Test1)
+      U_TRACE_DTOR(5, Test1)
       }
 
    void bindParam(UOrmStatement* stmt)

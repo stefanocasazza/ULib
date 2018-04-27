@@ -212,10 +212,10 @@ protected:
     UHttpClient_Base(UFileConfig* _cfg = U_NULLPTR);
    ~UHttpClient_Base()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, UHttpClient_Base)
+      U_TRACE_DTOR(0, UHttpClient_Base)
 
-      delete requestHeader;
-      delete responseHeader;
+      U_DELETE(requestHeader)
+      U_DELETE(responseHeader)
       }
 
 private:
@@ -238,14 +238,14 @@ public:
 
    UHttpClient(UFileConfig* _cfg) : UHttpClient_Base(_cfg)
       {
-      U_TRACE_REGISTER_OBJECT(0, UHttpClient, "%p", _cfg)
+      U_TRACE_CTOR(0, UHttpClient, "%p", _cfg)
 
       U_NEW(Socket, UClient_Base::socket, Socket(UClient_Base::bIPv6));
       }
 
    ~UHttpClient()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, UHttpClient)
+      U_TRACE_DTOR(0, UHttpClient)
       }
 
    // DEBUG
@@ -264,14 +264,14 @@ public:
 
    UHttpClient(UFileConfig* _cfg) : UHttpClient_Base(_cfg)
       {
-      U_TRACE_REGISTER_OBJECT(0, UHttpClient<USSLSocket>, "%p", _cfg)
+      U_TRACE_CTOR(0, UHttpClient<USSLSocket>, "%p", _cfg)
 
       UClient_Base::setSSLContext();
       }
 
    ~UHttpClient()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, UHttpClient<USSLSocket>)
+      U_TRACE_DTOR(0, UHttpClient<USSLSocket>)
       }
 
    // DEBUG

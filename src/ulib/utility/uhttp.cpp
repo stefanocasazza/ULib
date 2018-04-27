@@ -309,7 +309,7 @@ UString UHTTP::getLinkPagination()
 
 UHTTP::UFileCacheData::UFileCacheData()
 {
-   U_TRACE_REGISTER_OBJECT(0, UFileCacheData, "")
+   U_TRACE_CTOR(0, UFileCacheData, "")
 
    ptr   =
    array = U_NULLPTR;
@@ -327,7 +327,7 @@ UHTTP::UFileCacheData::UFileCacheData()
 
 UHTTP::UFileCacheData::UFileCacheData(const UHTTP::UFileCacheData& elem)
 {
-   U_TRACE_REGISTER_OBJECT(0, UFileCacheData, "%p", &elem)
+   U_TRACE_CTOR(0, UFileCacheData, "%p", &elem)
 
    fd         = wd = -1;
    mode       = 0;
@@ -346,7 +346,7 @@ UHTTP::UFileCacheData::UFileCacheData(const UHTTP::UFileCacheData& elem)
 
 UHTTP::UFileCacheData::~UFileCacheData()
 {
-   U_TRACE_UNREGISTER_OBJECT(0, UFileCacheData)
+   U_TRACE_DTOR(0, UFileCacheData)
 
    if (ptr           &&
        link == false &&
@@ -359,19 +359,19 @@ UHTTP::UFileCacheData::~UFileCacheData()
 #  ifdef HAVE_LIBTCC
       else if (mime_index == U_csp)
          {
-         delete (UCServletPage*)ptr;
+         U_DELETE((UCServletPage*)ptr)
          }
 #  endif
       else
          {
-         delete (UString*)ptr;
+         U_DELETE((UString*)ptr)
          }
       }
 
-   if (array) delete array;
+   if (array) U_DELETE(array)
 
 #ifndef U_HTTP2_DISABLE
-   if (http2) delete http2;
+   if (http2) U_DELETE(http2)
 #endif
 
 #if defined(HAVE_SYS_INOTIFY_H) && defined(U_HTTP_INOTIFY_SUPPORT)
@@ -399,16 +399,12 @@ U_NO_EXPORT void UHTTP::setInotifyPathname()
 {
    U_TRACE_NO_PARAM(0, "UHTTP::setInotifyPathname()")
 
-   inotify_pathname->setBuffer(inotify_dir->size() + 1 + inotify_len);
+   inotify_pathname->setBufferForce(inotify_dir->size() + 1 + inotify_len);
 
    inotify_pathname->snprintf(U_CONSTANT_TO_PARAM("%v/%.*s"), inotify_dir, inotify_len, inotify_name);
 
-   pathname->setBuffer(inotify_pathname->size());
-
-   pathname->snprintf(U_CONSTANT_TO_PARAM("%v"), inotify_pathname->rep);
-
            file_data =
-   inotify_file_data = getFileCachePointer(*pathname);
+   inotify_file_data = getFileCachePointer(*inotify_pathname);
 }
 
 U_NO_EXPORT bool UHTTP::getInotifyPathDirectory(UStringRep* key, void* value)
@@ -440,6 +436,7 @@ U_NO_EXPORT bool UHTTP::checkForInotifyDirectory(UStringRep* key, void* value)
    if (S_ISDIR(cptr->mode) &&
        cptr->link == false)
       {
+      U_ASSERT_MAJOR(key->size(), 0)
       U_INTERNAL_ASSERT(key->isNullTerminated())
       U_INTERNAL_ASSERT_EQUALS(cptr->ptr, U_NULLPTR)
       U_INTERNAL_ASSERT_EQUALS(cptr->array, U_NULLPTR)
@@ -485,7 +482,7 @@ next:
 
       U_SRV_LOG("Inode based directory notification enabled");
 
-      U_NEW(UString, inotify_pathname, UString(U_CAPACITY));
+      U_NEW_STRING(inotify_pathname, UString(U_CAPACITY));
 
       cache_file->callForAllEntry(checkForInotifyDirectory);
       }
@@ -594,12 +591,7 @@ void UHTTP::in_READ()
 
                if ((mask & IN_CREATE) != 0)
                   {
-                  if (inotify_file_data == U_NULLPTR)
-                     {
-                     (void) pathname->replace(*inotify_pathname);
-
-                     checkFileForCache();
-                     }
+                  if (inotify_file_data == U_NULLPTR) checkFileForCache(*inotify_pathname);
                   }
                else
                   {
@@ -820,17 +812,17 @@ U_NO_EXPORT void UHTTP::loadStaticLinkedServlet(const char* name, uint32_t len, 
 
    vusp->push_back(file_data->ptr);
 
-   (void) pathname->replace(name, len);
+   UString path(name, len);
 
-# if defined(U_STATIC_SERVLET_WI_AUTH)
-   if (pathname->equal(U_CONSTANT_TO_PARAM("wi_auth"))) (void) pathname->insert(0, U_CONSTANT_TO_PARAM(WI_AUTH_DOMAIN "/servlet/"));
-# endif
+#if defined(U_STATIC_SERVLET_WI_AUTH)
+   if (path.equal(U_CONSTANT_TO_PARAM("wi_auth"))) (void) path.insert(0, U_CONSTANT_TO_PARAM(WI_AUTH_DOMAIN "/servlet/"));
+#endif
 
-   U_ASSERT_EQUALS(cache_file->find(*pathname), false)
+   U_ASSERT_EQUALS(cache_file->find(path), false)
 
-   cache_file->insert(*pathname, file_data); // NB: we don't need to call u_construct<UHTTP::UFileCacheData>()...
+   cache_file->insert(path, file_data); // NB: we don't need to call u_construct<UHTTP::UFileCacheData>()...
 
-   U_SRV_LOG("linked static servlet: %.*S, USP service registered (URI): %V", len, name, pathname->rep);
+   U_SRV_LOG("linked static servlet: %.*S, USP service registered (URI): %V", len, name, path.rep);
 }
 #endif
 
@@ -862,25 +854,25 @@ void UHTTP::init()
    U_NEW(UMimeMultipart, formMulti, UMimeMultipart);
    U_NEW(UVector<UString>, form_name_value, UVector<UString>);
 
-   U_NEW(UString, ext, UString);
-   U_NEW(UString, etag, UString);
-   U_NEW(UString, geoip, UString(U_CAPACITY));
-   U_NEW(UString, tmpdir, UString(U_PATH_MAX));
-   U_NEW(UString, qcontent, UString);
-   U_NEW(UString, pathname, UString(U_CAPACITY));
-   U_NEW(UString, rpathname, UString);
-   U_NEW(UString, upload_dir, UString);
-   U_NEW(UString, set_cookie, UString);
-   U_NEW(UString, set_cookie_option, UString(200U));
-   U_NEW(UString, user_authentication, UString);
-   U_NEW(UString, string_HTTP_Variables, UString(U_CAPACITY));
+   U_NEW_STRING(ext, UString);
+   U_NEW_STRING(etag, UString);
+   U_NEW_STRING(geoip, UString(U_CAPACITY));
+   U_NEW_STRING(tmpdir, UString(U_PATH_MAX));
+   U_NEW_STRING(qcontent, UString);
+   U_NEW_STRING(pathname, UString(U_CAPACITY));
+   U_NEW_STRING(rpathname, UString);
+   U_NEW_STRING(upload_dir, UString);
+   U_NEW_STRING(set_cookie, UString);
+   U_NEW_STRING(set_cookie_option, UString(200U));
+   U_NEW_STRING(user_authentication, UString);
+   U_NEW_STRING(string_HTTP_Variables, UString(U_CAPACITY));
 
-   if (cgi_cookie_option == U_NULLPTR) U_NEW(UString, cgi_cookie_option, U_STRING_FROM_CONSTANT("[\"\" 0]"));
+   if (cgi_cookie_option == U_NULLPTR) U_NEW_STRING(cgi_cookie_option, UString(U_CONSTANT_TO_PARAM("[\"\" 0]")));
 
 #ifdef U_ALIAS
    U_INTERNAL_ASSERT_EQUALS(alias, U_NULLPTR)
 
-   U_NEW(UString, alias, UString);
+   U_NEW_STRING(alias, UString);
 
    if (virtual_host) U_SRV_LOG("Virtual host service enabled");
 #endif
@@ -906,8 +898,9 @@ void UHTTP::init()
 
    if (bok == false)
       {
-      delete page_speed;
-             page_speed = U_NULLPTR;
+      U_DELETE(page_speed)
+
+      page_speed = U_NULLPTR;
 
       U_SRV_LOG("%.*s", U_CONSTANT_TO_TRACE("WARNING: load of plugin pagespeed failed"));
       }
@@ -936,8 +929,9 @@ void UHTTP::init()
 
    if (bok == false)
       {
-      delete v8_javascript;
-             v8_javascript = U_NULLPTR;
+      U_DELETE(v8_javascript)
+
+      v8_javascript = U_NULLPTR;
 
       U_SRV_LOG("%.*s", U_CONSTANT_TO_TRACE("WARNING: load of plugin v8 failed"));
       }
@@ -960,8 +954,9 @@ void UHTTP::init()
 
    if (bok == false)
       {
-      delete ruby_embed;
-             ruby_embed = U_NULLPTR;
+      U_DELETE(ruby_embed)
+
+      ruby_embed = U_NULLPTR;
 
       U_SRV_LOG("%.*s", U_CONSTANT_TO_TRACE("WARNING: load of plugin ruby failed"));
       }
@@ -1008,8 +1003,9 @@ void UHTTP::init()
 
    if (bok == false)
       {
-      delete python_embed;
-             python_embed = U_NULLPTR;
+      U_DELETE(python_embed)
+
+      python_embed = U_NULLPTR;
 
       U_SRV_LOG("%.*s", U_CONSTANT_TO_TRACE("WARNING: load of plugin python failed"));
       }
@@ -1120,7 +1116,7 @@ void UHTTP::init()
    if (cache_file_mask &&
        cache_file_mask->equal(U_CONSTANT_TO_PARAM("_off_")))
       {
-      if (nocache_file_mask == U_NULLPTR) U_NEW(UString, nocache_file_mask, U_STRING_FROM_CONSTANT("*"));
+      if (nocache_file_mask == U_NULLPTR) U_NEW_STRING(nocache_file_mask, UString(U_CONSTANT_TO_PARAM("*")));
       }
    else
       {
@@ -1162,8 +1158,6 @@ void UHTTP::init()
       }
 #endif
 
-   U_INTERNAL_ASSERT_POINTER(pathname)
-
    for (uint32_t i = 0, j = vec.size(); i < j; ++i)
       {
       item = vec[i];
@@ -1176,9 +1170,7 @@ void UHTTP::init()
          }
       else
          {
-         (void) pathname->replace(item);
-
-         checkFileForCache();
+         checkFileForCache(item);
          }
       }
 
@@ -1205,8 +1197,9 @@ void UHTTP::init()
 
    if (bok == false)
       {
-      delete php_embed;
-             php_embed = U_NULLPTR;
+      U_DELETE(php_embed)
+
+      php_embed = U_NULLPTR;
 
       U_SRV_LOG("%.*s", U_CONSTANT_TO_TRACE("WARNING: load of plugin php failed"));
       }
@@ -1364,12 +1357,12 @@ void UHTTP::setGlobalAlias(const UString& _alias) // NB: automatic alias for all
       {
       U_WARNING("UHTTP::setGlobalAlias(): global alias not empty: %V", global_alias->rep);
 
-      delete global_alias;
+      U_DELETE(global_alias)
       }
 
    U_INTERNAL_ASSERT_EQUALS(global_alias, U_NULLPTR)
 
-   U_NEW(UString, global_alias, UString(_alias));
+   U_NEW_STRING(global_alias, UString(_alias));
 
    if (global_alias->first_char() != '/') (void) global_alias->insert(0, '/');
 }
@@ -1385,76 +1378,76 @@ void UHTTP::dtor()
       {
       (void) U_SYSCALL(close, "%d", UServer_Base::handler_inotify->fd);
 
-      delete inotify_pathname;
+      U_DELETE(inotify_pathname)
 
       UServer_Base::handler_inotify = U_NULLPTR;
       }
 #endif
 
-   if (vservice)              delete vservice;
-   if (vmsg_error)            delete vmsg_error;
-   if (fcgi_uri_mask)         delete fcgi_uri_mask;
-   if (scgi_uri_mask)         delete scgi_uri_mask;
-   if (cache_file_store)      delete cache_file_store;
-   if (string_HTTP_Variables) delete string_HTTP_Variables;
+   if (vservice)              U_DELETE(vservice)
+   if (vmsg_error)            U_DELETE(vmsg_error)
+   if (fcgi_uri_mask)         U_DELETE(fcgi_uri_mask)
+   if (scgi_uri_mask)         U_DELETE(scgi_uri_mask)
+   if (cache_file_store)      U_DELETE(cache_file_store)
 
    if (file)
       {
-      delete ext;
-      delete etag;
-      delete file;
-      delete pcmd;
-      delete geoip;
-      delete tmpdir;
-      delete qcontent;
-      delete pathname;
-      delete rpathname;
-      delete formMulti;
-      delete upload_dir;
-      delete set_cookie;
-      delete form_name_value;
-      delete cache_avoid_mask;
-      delete cgi_cookie_option;
-      delete set_cookie_option;
-      delete user_authentication;
+      U_DELETE(ext)
+      U_DELETE(etag)
+      U_DELETE(file)
+      U_DELETE(pcmd)
+      U_DELETE(geoip)
+      U_DELETE(tmpdir)
+      U_DELETE(qcontent)
+      U_DELETE(pathname)
+      U_DELETE(rpathname)
+      U_DELETE(formMulti)
+      U_DELETE(upload_dir)
+      U_DELETE(set_cookie)
+      U_DELETE(form_name_value)
+      U_DELETE(cache_avoid_mask)
+      U_DELETE(cgi_cookie_option)
+      U_DELETE(set_cookie_option)
+      U_DELETE(user_authentication)
+      U_DELETE(string_HTTP_Variables)
 
-      if (htpasswd)          delete htpasswd;
-      if (htdigest)          delete htdigest;
-      if (  cache_file_mask) delete   cache_file_mask;
-      if (nocache_file_mask) delete nocache_file_mask;
+      if (htpasswd)          U_DELETE(htpasswd)
+      if (htdigest)          U_DELETE(htdigest)
+      if (  cache_file_mask) U_DELETE(  cache_file_mask)
+      if (nocache_file_mask) U_DELETE(nocache_file_mask)
 
 #  ifdef U_ALIAS
-                                 delete  alias;
-      if (valias)                delete valias;
-      if (global_alias)          delete global_alias;
-      if (maintenance_mode_page) delete maintenance_mode_page;
+                                 U_DELETE( alias)
+      if (valias)                U_DELETE(valias)
+      if (global_alias)          U_DELETE(global_alias)
+      if (maintenance_mode_page) U_DELETE(maintenance_mode_page)
 #    ifdef USE_LIBPCRE
-      if (vRewriteRule) delete vRewriteRule;
+      if (vRewriteRule) U_DELETE(vRewriteRule)
 #    endif
 #  endif
 
 #  ifdef USE_PHP
-      if (php_embed) delete php_embed;
+      if (php_embed) U_DELETE(php_embed)
 #  endif
-      if (php_mount_point) delete php_mount_point;
+      if (php_mount_point) U_DELETE(php_mount_point)
 #  ifdef USE_RUBY
-      if (ruby_embed)  delete ruby_embed;
-      if (ruby_libdir) delete ruby_libdir;
+      if (ruby_embed)  U_DELETE(ruby_embed)
+      if (ruby_libdir) U_DELETE(ruby_libdir)
 #  endif
 #  ifdef USE_PYTHON
-      if (python_embed)       delete python_embed;
-      if (py_project_app)     delete py_project_app;
-      if (py_project_root)    delete py_project_root;
-      if (py_virtualenv_path) delete py_virtualenv_path;
+      if (python_embed)       U_DELETE(python_embed)
+      if (py_project_app)     U_DELETE(py_project_app)
+      if (py_project_root)    U_DELETE(py_project_root)
+      if (py_virtualenv_path) U_DELETE(py_virtualenv_path)
 #  endif
 #  ifdef USE_PAGE_SPEED
-      if (page_speed) delete page_speed;
+      if (page_speed) U_DELETE(page_speed)
 #  endif
 #  ifdef USE_LIBV8
-      if (v8_javascript) delete v8_javascript;
+      if (v8_javascript) U_DELETE(v8_javascript)
 #  endif
 #  ifdef USE_LOAD_BALANCE
-      if (client_http) delete client_http;
+      if (client_http) U_DELETE(client_http)
 #  endif
 
       // CACHE DOCUMENT ROOT FILE SYSTEM
@@ -1464,13 +1457,13 @@ void UHTTP::dtor()
          file_not_in_cache_data->ptr   =
          file_not_in_cache_data->array = U_NULLPTR;
 
-         delete file_not_in_cache_data;
+         U_DELETE(file_not_in_cache_data)
          }
 
       file_data = U_NULLPTR;
 
-      delete vusp;
-      delete cache_file;
+      U_DELETE(vusp)
+      U_DELETE(cache_file)
 
       if (db_session) clearSession();
 
@@ -1478,22 +1471,22 @@ void UHTTP::dtor()
          {
          db_not_found->close();
 
-         delete db_not_found;
+         U_DELETE(db_not_found)
          }
          
 #  ifdef USE_LIBSSL
       if (db_session_ssl) clearSessionSSL();
 
-      if (vallow_IP)             delete vallow_IP;
-      if (uri_protected_mask)    delete uri_protected_mask;
-      if (uri_request_cert_mask) delete uri_request_cert_mask;
+      if (vallow_IP)             U_DELETE(vallow_IP)
+      if (uri_protected_mask)    U_DELETE(uri_protected_mask)
+      if (uri_request_cert_mask) U_DELETE(uri_request_cert_mask)
 #  endif
 
 #  ifdef U_HTTP_STRICT_TRANSPORT_SECURITY
       if (uri_strict_transport_security_mask &&
           uri_strict_transport_security_mask != (void*)1L)
          {
-         delete uri_strict_transport_security_mask;
+         U_DELETE(uri_strict_transport_security_mask)
          }
 #  endif
       }
@@ -1844,7 +1837,7 @@ next:
                   {
                   // NB: URI have query params but path empty...
 
-                  U_http_info.uri     = "/";
+                  U_http_info.uri     = UString::str_path_root->data();
                   U_http_info.uri_len = 1;
                   }
 
@@ -3603,28 +3596,31 @@ U_NO_EXPORT bool UHTTP::callService()
 {
    U_TRACE_NO_PARAM(0, "UHTTP::callService()")
 
-   pathname->setBuffer(U_CAPACITY);
-
+   UString path(U_CAPACITY);
    const char* suffix = u_getsuffix(U_FILE_TO_PARAM(*file));
 
-   if (suffix) pathname->snprintf(U_CONSTANT_TO_PARAM("%.*s"),    U_FILE_TO_TRACE(*file));
-   else        pathname->snprintf(U_CONSTANT_TO_PARAM("%.*s.%s"), U_FILE_TO_TRACE(*file), U_LIB_SUFFIX);
-
-   file->setPath(*pathname);
-
-   while (file->stat() == false)
+   if (suffix == U_NULLPTR)
       {
-      if (suffix) U_RETURN(false);
+      path.snprintf(U_CONSTANT_TO_PARAM("%.*s.%s"), U_FILE_TO_TRACE(*file), U_LIB_SUFFIX);
 
-      pathname->setBuffer(U_CAPACITY);
-
-      pathname->snprintf(U_CONSTANT_TO_PARAM("%.*s.usp"), U_FILE_TO_TRACE(*file));
-
-      file->setPath(*pathname);
-
-      suffix = ".usp";
+      file->setPath(path);
       }
 
+   if (file->stat() == false)
+      {
+      if (suffix == U_NULLPTR)
+         {
+         path.snprintf(U_CONSTANT_TO_PARAM("%.*s.usp"), U_FILE_TO_TRACE(*file));
+
+         file->setPath(path);
+
+         if (file->stat()) goto next;
+         }
+
+      U_RETURN(false);
+      }
+
+next:
    U_INTERNAL_DUMP("U_http_is_nocache_file = %b", U_http_is_nocache_file)
 
    if (U_http_is_nocache_file == false)
@@ -4119,6 +4115,7 @@ int UHTTP::manageRequest()
    U_ASSERT(ext->empty())
    U_ASSERT(UClientImage_Base::isRequestNotFound())
 
+   uint32_t len;
    const char* p1;
 
    // manage alias uri
@@ -4150,7 +4147,6 @@ int UHTTP::manageRequest()
       {
       int i, n;
       UString str;
-      uint32_t len;
 
       // Ex: /admin /admin.html
 
@@ -4266,18 +4262,30 @@ set_uri: U_http_info.uri     = alias->data();
    is_response_compressed = 0;
 #endif
 
-   // set the path name
+   // set the path name (NB: pathname can be referenced by file obj...)
 
-   pathname->setBuffer(u_cwd_len + U_http_info.uri_len);
+   U_INTERNAL_DUMP("pathname->rep = %p file->pathname.rep = %p pathname(%u) = %V", pathname->rep, file->pathname.rep, pathname->size(), pathname->rep)
+
+   U_ASSERT_EQUALS(file->isMapped(), false)
 
    p1 = pathname->data();
 
-   U_MEMCPY(p1,                     u_cwd,           u_cwd_len);
+   U_INTERNAL_ASSERT_EQUALS(memcmp(p1, u_cwd, u_cwd_len), 0)
+
+   len = u_cwd_len + U_http_info.uri_len;
+
+   if (len > pathname->capacity())
+      {
+      pathname->resize(len);
+
+      p1 = pathname->data();
+
+      U_MEMCPY(p1, u_cwd, u_cwd_len);
+      }
+
    U_MEMCPY(p1+u_cwd_len, U_http_info.uri, U_http_info.uri_len);
 
-   pathname->size_adjust_force(u_cwd_len + U_http_info.uri_len); // NB: pathname can be referenced by file obj...
-
-   U_ASSERT_EQUALS(file->isMapped(), false)
+   pathname->size_adjust_force(len);
 
    U_http_info.nResponseCode = HTTP_OK;
 
@@ -4293,7 +4301,7 @@ set_uri: U_http_info.uri     = alias->data();
          // NB: we have the special case: '/' aka '.'
 
          file->st_mode          = S_IFDIR|0755;
-         file->path_relativ     = "/";
+         file->path_relativ     = UString::str_path_root->data();
          file->path_relativ_len = 1;
          }
 
@@ -4404,9 +4412,7 @@ manage:
          {
          U_DEBUG("Request usp service not in cache: %V - we try to compile it", pathname->rep)
 
-         (void) pathname->replace(buffer, sz);
-
-         file->setPath(*pathname);
+         file->setPath(buffer, sz);
 
          manageDataForCache(UStringExt::basename(file->getPath()), U_STRING_FROM_CONSTANT("usp"));
 
@@ -4775,19 +4781,19 @@ bool UHTTP::getFileInCache(const char* name, uint32_t len)
 
    U_INTERNAL_ASSERT_MAJOR(sz, 0)
 
-   pathname->setBuffer(sz + 1 + len);
+   UString path(sz + 1 + len);
 
    if (sz == 1 &&
        ptr[0] == '/')
       {
-      pathname->snprintf(U_CONSTANT_TO_PARAM("%.*s"), len, name);
+      path.snprintf(U_CONSTANT_TO_PARAM("%.*s"), len, name);
       }
    else
       {
-      pathname->snprintf(U_CONSTANT_TO_PARAM("%.*s/%.*s"), sz, ptr, len, name);
+      path.snprintf(U_CONSTANT_TO_PARAM("%.*s/%.*s"), sz, ptr, len, name);
       }
 
-   if ((file_data = getFileCachePointer(*pathname))) U_RETURN(true);
+   if ((file_data = getFileCachePointer(path))) U_RETURN(true);
 
    U_RETURN(false);
 }
@@ -5051,7 +5057,7 @@ void UHTTP::processRequest()
             return;
             }
 
-         file->setPath(*pathname);
+         file->setPath(U_CONSTANT_TO_PARAM("index.html"));
 
          file->st_size  = file_data->size;
          file->st_mode  = file_data->mode;
@@ -5069,9 +5075,7 @@ void UHTTP::processRequest()
 
          mime_index = U_php;
 
-         (void) pathname->replace(U_CONSTANT_TO_PARAM("index.php"));
-
-         file->setPath(*pathname);
+         file->setPath(U_CONSTANT_TO_PARAM("index.php"));
 
          (void) runDynamicPage();
 
@@ -5552,8 +5556,9 @@ void UHTTP::initDbNotFound()
       {
       U_SRV_LOG("WARNING: db NotFound initialization failed");
 
-      delete db_not_found;
-             db_not_found = U_NULLPTR;
+      U_DELETE(db_not_found)
+
+      db_not_found = U_NULLPTR;
       }
 }
 
@@ -5580,8 +5585,9 @@ void UHTTP::initSession()
          {
          U_SRV_LOG("WARNING: db HTTP session initialization failed");
 
-         delete db_session;
-                db_session = U_NULLPTR;
+         U_DELETE(db_session)
+
+         db_session = U_NULLPTR;
          }
       }
 }
@@ -5594,11 +5600,12 @@ void UHTTP::clearSession()
 
    db_session->close();
 
-   if (data_session) delete data_session;
-   if (data_storage) delete data_storage;
+   if (data_session) U_DELETE(data_session)
+   if (data_storage) U_DELETE(data_storage)
 
-   delete db_session;
-          db_session = U_NULLPTR;
+   U_DELETE(db_session)
+
+   db_session = U_NULLPTR;
 }
 
 #ifdef USE_LIBSSL
@@ -5659,8 +5666,9 @@ void UHTTP::initSessionSSL()
       {
       U_SRV_LOG("WARNING: db SSL session initialization failed");
 
-      delete db_session_ssl;
-             db_session_ssl = U_NULLPTR;
+      U_DELETE(db_session_ssl)
+
+      db_session_ssl = U_NULLPTR;
       }
 }
 
@@ -5672,10 +5680,11 @@ void UHTTP::clearSessionSSL()
 
    db_session_ssl->close();
 
-   delete data_session_ssl;
+   U_DELETE(data_session_ssl)
 
-   delete db_session_ssl;
-          db_session_ssl = U_NULLPTR;
+   U_DELETE(db_session_ssl)
+
+   db_session_ssl = U_NULLPTR;
 }
 #endif
 
@@ -6391,7 +6400,10 @@ uint32_t UHTTP::processForm()
 
    UString tmp;
 
-   if (isGETorHEAD()) tmp = UString(U_HTTP_QUERY_TO_PARAM);
+   if (isGETorHEAD())
+      {
+      if (U_http_info.query_len) (void) tmp.assign(U_HTTP_QUERY_TO_PARAM);
+      }
    else
       {
       U_ASSERT(isPOST())
@@ -6438,13 +6450,13 @@ uint32_t UHTTP::processForm()
 
                      basename = UStringExt::basename(filename);
 
-                     pathname->setBuffer(sz + 1 + basename.size());
+                     UString path(sz + 1 + basename.size());
 
-                     pathname->snprintf(U_CONSTANT_TO_PARAM("%.*s/%v"), sz, ptr, basename.rep);
+                     path.snprintf(U_CONSTANT_TO_PARAM("%.*s/%v"), sz, ptr, basename.rep);
 
-                     (void) UFile::writeTo(*pathname, content);
+                     (void) UFile::writeTo(path, content);
 
-                     content = *pathname;
+                     content = path;
 
 #                 ifdef DEBUG
                      basename.clear();
@@ -7185,7 +7197,7 @@ void UHTTP::manageSSE()
    if (subscribe) UServer_Base::sse_event = &subscribe;
    else
       {
-      subscribe               = *UServer_Base::str_asterisk;
+      subscribe               = *UString::str_asterisk;
       UServer_Base::sse_event = U_NULLPTR;
       }
 
@@ -8308,9 +8320,9 @@ U_NO_EXPORT void UHTTP::checkArrayCompressData(UFileCacheData* ptr)
 }
 #endif
 
-U_NO_EXPORT void UHTTP::putDataInCache(const UString& fmt, UString& content)
+U_NO_EXPORT void UHTTP::putDataInCache(const UString& path, const UString& fmt, UString& content)
 {
-   U_TRACE(0, "UHTTP::putDataInCache(%V,%V)", fmt.rep, content.rep)
+   U_TRACE(0, "UHTTP::putDataInCache(%V,%V,%V)", path.rep, fmt.rep, content.rep)
 
    U_INTERNAL_ASSERT_POINTER(file)
    U_INTERNAL_ASSERT_POINTER(file_data)
@@ -8327,7 +8339,7 @@ U_NO_EXPORT void UHTTP::putDataInCache(const UString& fmt, UString& content)
 
    if (content.empty())
       {
-      U_SRV_LOG("File cached (sendfile): %V - %I bytes", pathname->rep, file->st_size);
+      U_SRV_LOG("File cached (sendfile): %V - %I bytes", path.rep, file->st_size);
 
       return;
       }
@@ -8351,10 +8363,10 @@ U_NO_EXPORT void UHTTP::putDataInCache(const UString& fmt, UString& content)
       else if (u_is_png(mime_index)) page_speed->optimize_png(content);
       else                           page_speed->optimize_jpg(content);
 
-      if (content.size() < file_data->size) U_SRV_LOG("WARNING: found image not optimized: %V", pathname->rep);
+      if (content.size() < file_data->size) U_SRV_LOG("WARNING: found image not optimized: %V", path.rep);
 #  endif
 
-      U_SRV_LOG("File cached (image): %V - %u bytes", pathname->rep, file_data->size);
+      U_SRV_LOG("File cached (image): %V - %u bytes", path.rep, file_data->size);
 
       return;
       }
@@ -8394,9 +8406,9 @@ U_NO_EXPORT void UHTTP::putDataInCache(const UString& fmt, UString& content)
       U_INTERNAL_ASSERT(u_endsWith(U_FILE_TO_PARAM(*file), U_CONSTANT_TO_PARAM(".htm")) ||
                         u_endsWith(U_FILE_TO_PARAM(*file), U_CONSTANT_TO_PARAM(".html")))
 
-      U_INTERNAL_ASSERT(pathname->isNullTerminated())
+      U_INTERNAL_ASSERT(path.isNullTerminated())
 
-      page_speed->minify_html(pathname->data(), content);
+      page_speed->minify_html(path.data(), content);
       }
 #endif
 
@@ -8462,16 +8474,14 @@ next:
       }
 #endif
 
-   U_SRV_LOG("File cached: %V - %u bytes - compression ratio (%s %u%%, brotli %u%%)", pathname->rep, file_data->size, UStringExt::deflate_agent, 100-ratio1, 100-ratio2);
+   U_SRV_LOG("File cached: %V - %u bytes - compression ratio (%s %u%%, brotli %u%%)", path.rep, file_data->size, UStringExt::deflate_agent, 100-ratio1, 100-ratio2);
 }
 
-void UHTTP::checkFileForCache()
+void UHTTP::checkFileForCache(const UString& path)
 {
-   U_TRACE_NO_PARAM(0, "UHTTP::checkFileForCache()")
+   U_TRACE(0, "UHTTP::checkFileForCache(%V)", path.rep)
 
-   U_INTERNAL_ASSERT_POINTER(pathname)
-
-   file->setPath(*pathname);
+   file->setPath(path);
 
    UString basename = UStringExt::basename(file->getPath());
 
@@ -8495,8 +8505,6 @@ void UHTTP::checkFileForCache()
           (nocache_file_mask == U_NULLPTR ||
            UServices::dosMatchWithOR(basename, U_STRING_TO_PARAM(*nocache_file_mask), 0) == false))
          {
-         if (pathname->equal(U_FILE_TO_PARAM(*file)) == false) (void) pathname->replace(U_FILE_TO_PARAM(*file)); // NB: it can happen with inotify...
-
          manageDataForCache(basename, file->getSuffix(suffix));
          }
       }
@@ -8514,14 +8522,15 @@ U_NO_EXPORT void UHTTP::manageDataForCache(const UString& basename, const UStrin
    uint32_t    file_len = file->getPathRelativLen();
    const char* file_ptr = file->getPathRelativ();
 
-   U_INTERNAL_DUMP("pathname = %V file = %.*S rpathname = %V", pathname->rep, file_len, file_ptr, rpathname->rep)
+   UString lpathname(file_ptr, file_len);
+
+   U_INTERNAL_DUMP("lpathname = %V file = %.*S rpathname = %V", lpathname.rep, file_len, file_ptr, rpathname->rep)
 
    U_INTERNAL_ASSERT(basename)
    U_INTERNAL_ASSERT_POINTER(file)
-   U_INTERNAL_ASSERT_POINTER(pathname)
    U_INTERNAL_ASSERT_POINTER(cache_file)
    U_ASSERT_EQUALS(suffix, file->getSuffix())
-   U_ASSERT(pathname->equal(file_ptr, file_len))
+   U_ASSERT_EQUALS(basename, UStringExt::basename(file->getPath()))
 
    U_NEW(UHTTP::UFileCacheData, file_data, UHTTP::UFileCacheData);
 
@@ -8545,9 +8554,9 @@ U_NO_EXPORT void UHTTP::manageDataForCache(const UString& basename, const UStrin
    if (rpathname->empty() && // NB: check if we are called from here...
        file->isSymbolicLink())
       {
-      *rpathname = UFile::getRealPath(pathname->data(), true);
+      *rpathname = UFile::getRealPath(lpathname.data(), true);
 
-      U_ASSERT_DIFFERS(*rpathname, *pathname)
+      U_ASSERT_DIFFERS(*rpathname, lpathname)
 
       if (rpathname->first_char() != '/') // NB: if we have something that point outside of document root, it cannot be a link to a cache entry...
          {
@@ -8560,13 +8569,10 @@ U_NO_EXPORT void UHTTP::manageDataForCache(const UString& basename, const UStrin
 
             // NB: we call ourselves...
 
-            UString save = *pathname;
-                           *pathname = *rpathname;
-
             file_data_save = file_data;
                              file_data = U_NULLPTR;
 
-            checkFileForCache();
+            checkFileForCache(*rpathname);
 
             if (file_data == U_NULLPTR)
                {
@@ -8574,8 +8580,6 @@ U_NO_EXPORT void UHTTP::manageDataForCache(const UString& basename, const UStrin
 
                goto error;
                }
-
-            *pathname = save;
 
             file_data_link = (u__isdigit(file_data->mime_index) && // NB: check for dynamic page...
                               (file_data->mime_index == U_usp   || // '0' => USP (ULib Servlet Page)
@@ -8596,7 +8600,7 @@ U_NO_EXPORT void UHTTP::manageDataForCache(const UString& basename, const UStrin
          file_data->ptr  = file_data_link;
          file_data->link = true;
 
-         U_SRV_LOG("Symbolic link found: %V => %V", pathname->rep, rpathname->rep);
+         U_SRV_LOG("Symbolic link found: %V => %V", lpathname.rep, rpathname->rep);
 
          (void) rpathname->clear();
 
@@ -8611,20 +8615,20 @@ U_NO_EXPORT void UHTTP::manageDataForCache(const UString& basename, const UStrin
       {
       // NB: when a pathfile ends by "cgi-bin/*.[sh|php|pl|py|rb|*]" it is assumed to be a cgi script...
 
-      uint32_t pos = U_STRING_FIND(*pathname, 0, "cgi-bin/");
+      uint32_t pos = U_STRING_FIND(lpathname, 0, "cgi-bin/");
 
       U_INTERNAL_ASSERT_DIFFERS(pos, U_NOT_FOUND)
 
       pos += U_CONSTANT_SIZE("cgi-bin");
 
-      if (pathname->c_char(pos+2) != '.') // NB: the directory "cgi-bin" often contains some "functions file" (that starts with '.')...
+      if (lpathname.c_char(pos+2) != '.') // NB: the directory "cgi-bin" often contains some "functions file" (that starts with '.')...
          {
          UHTTP::ucgi* cgi = U_MALLOC_TYPE(UHTTP::ucgi);
 
          cgi->interpreter      = U_NULLPTR;
          cgi->environment_type = U_CGI;
 
-         pathname->copy(cgi->dir);
+         lpathname.copy(cgi->dir);
                         cgi->dir[pos] = '\0';
 
          U_INTERNAL_DUMP("cgi_dir = %S cgi_doc = %S", cgi->dir, cgi->dir + u__strlen(cgi->dir, __PRETTY_FUNCTION__) + 1)
@@ -8692,7 +8696,7 @@ U_NO_EXPORT void UHTTP::manageDataForCache(const UString& basename, const UStrin
                // NB: web password files should not be within the Web server's URI space -- that is, they should not be fetchable with a browser...
 
                U_WARNING("Find file data users permission (%V - %u bytes) inside DOCUMENT_ROOT (%w), for security reason it must be moved into the directory up",
-                          pathname->rep, file_data->size);
+                          lpathname.rep, file_data->size);
 
                goto error;
                }
@@ -8702,7 +8706,7 @@ U_NO_EXPORT void UHTTP::manageDataForCache(const UString& basename, const UStrin
             if (bpasswd &&
                 U_STRING_FIND(content, 0, ":{SHA}") == U_NOT_FOUND) // htpasswd -s .htpasswd admin
                {
-               U_WARNING("Find file data users permission (%V - %u bytes) that don't use SHA encryption for passwords, ignored", pathname->rep, file_data->size);
+               U_WARNING("Find file data users permission (%V - %u bytes) that don't use SHA encryption for passwords, ignored", lpathname.rep, file_data->size);
 
                goto error;
                }
@@ -8710,7 +8714,7 @@ U_NO_EXPORT void UHTTP::manageDataForCache(const UString& basename, const UStrin
             if (bdigest &&
                 U_STRING_FIND(content, 0, ":Protected Area:") == U_NOT_FOUND) // htdigest .htdigest 'Protected Area' admin
                {
-               U_WARNING("Find file data users permission (%V - %u bytes) that don't use the fixed realm name 'Protected Area', ignored", pathname->rep, file_data->size);
+               U_WARNING("Find file data users permission (%V - %u bytes) that don't use the fixed realm name 'Protected Area', ignored", lpathname.rep, file_data->size);
 
                goto error;
                }
@@ -8721,7 +8725,7 @@ U_NO_EXPORT void UHTTP::manageDataForCache(const UString& basename, const UStrin
 
                file_data->array->push_back(content);
 
-               U_SRV_LOG("File data users permission: %V loaded - %u bytes", pathname->rep, file_data->size);
+               U_SRV_LOG("File data users permission: %V loaded - %u bytes", lpathname.rep, file_data->size);
 
                goto end;
                }
@@ -8732,7 +8736,7 @@ U_NO_EXPORT void UHTTP::manageDataForCache(const UString& basename, const UStrin
                {
                U_INTERNAL_ASSERT_EQUALS(htpasswd, U_NULLPTR)
 
-               U_NEW(UString, htpasswd, UString(content));
+               U_NEW_STRING(htpasswd, UString(content));
 
                U_SRV_LOG("File data users permission: ../.htpasswd loaded - %u bytes", file_data->size);
                }
@@ -8741,7 +8745,7 @@ U_NO_EXPORT void UHTTP::manageDataForCache(const UString& basename, const UStrin
                U_INTERNAL_ASSERT(bdigest)
                U_INTERNAL_ASSERT_EQUALS(htdigest, U_NULLPTR)
 
-               U_NEW(UString, htdigest, UString(content));
+               U_NEW_STRING(htdigest, UString(content));
 
                U_SRV_LOG("File data users permission: ../.htdigest loaded - %u bytes", file_data->size);
                }
@@ -8778,7 +8782,7 @@ U_NO_EXPORT void UHTTP::manageDataForCache(const UString& basename, const UStrin
 
             file_gzip_bomb->array->push_back(header);
 
-            U_SRV_LOG("Find gzip bomb: %V - %u bytes", pathname->rep, file_gzip_bomb->size);
+            U_SRV_LOG("Find gzip bomb: %V - %u bytes", lpathname.rep, file_gzip_bomb->size);
             }
 
          goto end;
@@ -8801,11 +8805,9 @@ U_NO_EXPORT void UHTTP::manageDataForCache(const UString& basename, const UStrin
 
             if (usp_src)
                {
-               (void) pathname->shrink();
+               U_ASSERT_EQUALS(cache_file->find(lpathname), false)
 
-               U_ASSERT_EQUALS(cache_file->find(*pathname), false)
-
-               cache_file->insert(*pathname, file_data);
+               cache_file->insert(lpathname, file_data);
 
                U_NEW(UHTTP::UFileCacheData, file_data, UHTTP::UFileCacheData);
 
@@ -8822,7 +8824,7 @@ U_NO_EXPORT void UHTTP::manageDataForCache(const UString& basename, const UStrin
             U_INTERNAL_ASSERT_MAJOR(name_len, 0)
             U_INTERNAL_ASSERT(u__strlen(U_LIB_SUFFIX, __PRETTY_FUNCTION__) >= 2)
 
-            (void) pathname->replace(file_ptr, len);
+            (void) lpathname.replace(file_ptr, len);
 
             struct stat st;
             char buffer[U_PATH_MAX+1];
@@ -8836,7 +8838,7 @@ U_NO_EXPORT void UHTTP::manageDataForCache(const UString& basename, const UStrin
                   file_data->ptr  = usp;
                   file_data->link = true;
 
-                  U_SRV_LOG("USP found: %V (link), USP service registered (URI): %V", basename.rep, pathname->rep);
+                  U_SRV_LOG("USP found: %V (link), USP service registered (URI): %V", basename.rep, lpathname.rep);
 
                   goto end;
                   }
@@ -8863,7 +8865,7 @@ U_NO_EXPORT void UHTTP::manageDataForCache(const UString& basename, const UStrin
 
             file_data->ptr = usp;
 
-            U_SRV_LOG("USP found: %V, USP service registered (URI): %V", basename.rep, pathname->rep);
+            U_SRV_LOG("USP found: %V, USP service registered (URI): %V", basename.rep, lpathname.rep);
             }
 #     ifdef HAVE_LIBTCC
          else if (suffix_len    == 1 &&
@@ -8880,7 +8882,7 @@ U_NO_EXPORT void UHTTP::manageDataForCache(const UString& basename, const UStrin
                {
                U_SRV_LOG("WARNING: CSP load failed: %.*S", file_len, file_ptr);
 
-               delete csp_page;
+               U_DELETE(csp_page)
 
                goto error;
                }
@@ -8890,9 +8892,9 @@ U_NO_EXPORT void UHTTP::manageDataForCache(const UString& basename, const UStrin
             file_data->ptr        = csp_page;
             file_data->mime_index = U_csp;
 
-            (void) pathname->replace(file_ptr, file_len - U_CONSTANT_SIZE(".c"));
+            (void) lpathname.replace(file_ptr, file_len - U_CONSTANT_SIZE(".c"));
 
-            U_SRV_LOG("CSP found: %V, CSP service registered (URI): %V", basename.rep, pathname->rep);
+            U_SRV_LOG("CSP found: %V, CSP service registered (URI): %V", basename.rep, lpathname.rep);
             }
 #     endif
 
@@ -8906,7 +8908,7 @@ U_NO_EXPORT void UHTTP::manageDataForCache(const UString& basename, const UStrin
          {
          file_data->mime_index = U_php;
 
-         U_SRV_LOG("Find php file: %V - %u bytes", pathname->rep, file_data->size);
+         U_SRV_LOG("Find php file: %V - %u bytes", lpathname.rep, file_data->size);
 
          goto end;
          }
@@ -8930,7 +8932,7 @@ manage:
 
       if (file_data->size == 0)
          {
-         U_SRV_LOG("WARNING: found empty file: %V", pathname->rep);
+         U_SRV_LOG("WARNING: found empty file: %V", lpathname.rep);
          }
       else if (file->open())
          {
@@ -8953,24 +8955,23 @@ manage:
             ptr = content.data();
             }
 
-         putDataInCache(getHeaderMimeType(ptr, 0, ctype, U_TIME_FOR_EXPIRE), content);
+         putDataInCache(lpathname, getHeaderMimeType(ptr, 0, ctype, U_TIME_FOR_EXPIRE), content);
          }
       }
 
 end:
    U_INTERNAL_DUMP("file_data->mime_index(%d) = %C", file_data->mime_index, file_data->mime_index)
 
-   (void) pathname->shrink();
+   U_ASSERT_EQUALS(cache_file->find(lpathname), false)
 
-   U_ASSERT_EQUALS(cache_file->find(*pathname), false)
-
-   cache_file->insert(*pathname, file_data); // NB: we don't need to call u_construct<UHTTP::UFileCacheData>()...
+   cache_file->insert(lpathname, file_data); // NB: we don't need to call u_construct<UHTTP::UFileCacheData>()...
 
    return;
 
 error:
-   delete file_data;
-          file_data = U_NULLPTR;
+   U_DELETE(file_data)
+
+   file_data = U_NULLPTR;
 }
 
 void UHTTP::renewFileDataInCache()
@@ -8984,21 +8985,18 @@ void UHTTP::renewFileDataInCache()
 
    // NB: we need to do this before call eraseAfterFind()...
 
-   int fd                = file_data->fd;
-   const UStringRep* key = cache_file->key();
+   int fd      = file_data->fd;
+   UString key = cache_file->getKey();
 
    if (fd != -1) UFile::close(fd);
 
-   U_INTERNAL_DUMP("file_data->fd = %d cache_file->key = %V", file_data->fd, key)
+   U_INTERNAL_DUMP("file_data->fd = %d cache_file->key = %V", file_data->fd, key.rep)
 
-   (void) pathname->replace(U_STRING_TO_PARAM(*key));
-
-   U_DEBUG("renewFileDataInCache() called for file: %V - inotify %s enabled, expired=%b", pathname->rep,
-               UServer_Base::handler_inotify ? "is" : "NOT", (u_now->tv_sec > file_data->expire))
+   U_DEBUG("renewFileDataInCache() called for file: %V - inotify %s enabled, expired=%b", key.rep, UServer_Base::handler_inotify ? "is" : "NOT", (u_now->tv_sec > file_data->expire))
 
    cache_file->eraseAfterFind();
 
-   checkFileForCache();
+   checkFileForCache(key);
 
    if (fd != -1     &&
        file->st_ino && // stat() ok...
@@ -9154,10 +9152,14 @@ U_NO_EXPORT bool UHTTP::checkPathName()
       setForbidden();
 #  endif
 
+      U_MEMCPY(pathname->data(), u_cwd, u_cwd_len);
+
       U_RETURN(true);
       }
 
    if (len1 != len) pathname->rep->_length = len1; // NB: pathname can be referenced by the file obj...
+
+   U_INTERNAL_ASSERT_EQUALS(memcmp(pathname->data(), u_cwd, u_cwd_len), 0)
 
    file->setPath(*pathname);
 
@@ -9190,6 +9192,8 @@ U_NO_EXPORT bool UHTTP::checkPathName()
           u_is_usp(pdata->mime_index))
          {
          pathname->rep->_length -= (U_http_info.uri_len-len1)-1; // NB: pathname can be referenced by the file obj...
+
+         U_INTERNAL_ASSERT_EQUALS(memcmp(pathname->data(), u_cwd, u_cwd_len), 0)
 
          file->setPath(*pathname);
 
@@ -9365,10 +9369,6 @@ nocontent:  UClientImage_Base::setCloseConnection();
             {
             U_DEBUG("Found file not in cache: %V - inotify %s enabled", pathname->rep, UServer_Base::handler_inotify ? "is" : "NOT")
 
-            U_ASSERT_EQUALS(basename, UStringExt::basename(file->getPath()))
-
-            (void) pathname->replace(U_FILE_TO_PARAM(*file));
-
             manageDataForCache(basename, suffix);
 
             U_INTERNAL_ASSERT_POINTER(file_data)
@@ -9409,15 +9409,13 @@ U_NO_EXPORT void UHTTP::processRewriteRule()
          pos = new_uri.find('?');
          len = (pos == U_NOT_FOUND ? new_uri.size() : pos);
 
-         pathname->setBuffer(u_cwd_len + len);
-
          pathname->snprintf(U_CONSTANT_TO_PARAM("%w%.*s"), len, new_uri.data());
 
          U_SRV_LOG("REWRITE_RULE_NF: URI request changed to: %V", new_uri.rep);
 
          U_ClientImage_request = 0; 
 
-         checkPathName();
+         (void) checkPathName();
 
          if (UClientImage_Base::isRequestNeedProcessing())
             {
@@ -10020,20 +10018,20 @@ U_NO_EXPORT void UHTTP::setCGIShellScript(UString& command)
       }
 }
 
-bool UHTTP::manageSendfile(const char* ptr, uint32_t len)
+U_NO_EXPORT bool UHTTP::manageSendfile(const char* ptr, uint32_t len)
 {
    U_TRACE(0, "UHTTP::manageSendfile(%.*S,%u)", len, ptr, len)
 
-   pathname->setBuffer(u_cwd_len + 1 + len);
+   UString path(u_cwd_len + 1 + len);
 
-   if (ptr[0] == '/') pathname->snprintf(U_CONSTANT_TO_PARAM(   "%.*s"), len, ptr);
-   else               pathname->snprintf(U_CONSTANT_TO_PARAM("%w/%.*s"), len, ptr);
+   if (ptr[0] == '/') path.snprintf(U_CONSTANT_TO_PARAM(   "%.*s"), len, ptr);
+   else               path.snprintf(U_CONSTANT_TO_PARAM("%w/%.*s"), len, ptr);
 
-   uint32_t len1 = u_canonicalize_pathname(pathname->data(), (len = pathname->size()));
+   uint32_t len1 = u_canonicalize_pathname(path.data(), (len = path.size()));
 
-   if (len1 != len) pathname->rep->_length = len1; // NB: pathname is referenced...
+   if (len1 != len) path.rep->_length = len1; // NB: pathname is referenced...
 
-   file->setPath(*pathname);
+   file->setPath(path);
 
    if (file->stat()    &&
        file->st_size   &&
@@ -10057,6 +10055,8 @@ bool UHTTP::manageSendfile(const char* ptr, uint32_t len)
       file_data       = file_not_in_cache_data;
       file_data->fd   = file->fd;
       file_data->size = file->st_size;
+
+      U_SRV_LOG("Header X-Sendfile found in CGI output: serving file %V", path.rep);
 
       if (processGetRequest())
          {
@@ -10271,8 +10271,6 @@ loop:
                if (splitCGIOutput(ptr, ptr1) &&
                    manageSendfile(ptr1, ptr - ptr1))
                   {
-                  U_SRV_LOG("Header X-Sendfile found in CGI output: serving file %V", pathname->rep);
-
                   U_RETURN(true);
                   }
 
@@ -10720,8 +10718,6 @@ void UHTTP::checkContentLength(off_t length)
       }
 }
 
-typedef struct { long start, end; } HTTPRange;
-
 /**
  * The Range: header is used with a GET/HEAD request.
  *
@@ -10787,6 +10783,22 @@ U_NO_EXPORT bool UHTTP::checkGetRequestIfRange()
 
    U_RETURN(true);
 }
+
+class U_NO_EXPORT HTTPRange {
+public:
+   // Check for memory error
+   U_MEMORY_TEST
+
+   // Allocator e Deallocator
+   U_MEMORY_ALLOCATOR
+   U_MEMORY_DEALLOCATOR
+
+   long start, end;
+
+#ifdef DEBUG
+   const char* dump(bool reset) const { return ""; }
+#endif
+};
 
 U_NO_EXPORT __pure int UHTTP::sortRange(const void* a, const void* b)
 {
@@ -10882,7 +10894,7 @@ U_NO_EXPORT int UHTTP::checkGetRequestForRange(const char* pdata)
          {
          U_INTERNAL_ASSERT_RANGE(cur_start, cur_end, (long)range_size-1L)
 
-         cur = new HTTPRange;
+         U_NEW(HTTPRange, cur, HTTPRange)
 
          cur->end   = cur_end;
          cur->start = cur_start;
@@ -11518,7 +11530,7 @@ bool UHTTP::checkIfSourceHasChangedAndCompileUSP()
 
    usp = (UServletPage*)file_data->ptr;
 
-   U_INTERNAL_DUMP("pathname = %V file = %.*S suffix = %V usp = %p", pathname->rep, U_FILE_TO_TRACE(*file), suffix.rep, usp)
+   U_INTERNAL_DUMP("file = %.*S suffix = %V usp = %p", U_FILE_TO_TRACE(*file), suffix.rep, usp)
 
    if (suffix.empty())
       {

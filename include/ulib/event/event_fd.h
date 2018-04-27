@@ -69,7 +69,7 @@ public:
       if (pevent)
          {
          UDispatcher::del(pevent);
-                   delete pevent;
+                 U_DELETE(pevent)
          }
 #  endif
       }

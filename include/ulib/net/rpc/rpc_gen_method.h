@@ -22,7 +22,7 @@ public:
 
    URPCGenericMethod(const UString& n, const UString& _ns, UCommand* cmd, int rtype) : URPCMethod(n, _ns), response(U_CAPACITY)
       {
-      U_TRACE_REGISTER_OBJECT(0, URPCGenericMethod, "%V,%V,%p,%d", n.rep, _ns.rep, cmd, rtype) 
+      U_TRACE_CTOR(0, URPCGenericMethod, "%V,%V,%p,%d", n.rep, _ns.rep, cmd, rtype) 
 
       command       = cmd; 
       response_type = rtype;
@@ -30,9 +30,9 @@ public:
 
    virtual ~URPCGenericMethod()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, URPCGenericMethod)
+      U_TRACE_DTOR(0, URPCGenericMethod)
 
-      if (command) delete command;
+      if (command) U_DELETE(command)
       }
 
    // Transforms the method into something that servers and clients can send. The encoder holds the actual

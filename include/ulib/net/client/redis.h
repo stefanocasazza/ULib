@@ -64,7 +64,7 @@ public:
 
    ~UREDISClient_Base()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, UREDISClient_Base)
+      U_TRACE_DTOR(0, UREDISClient_Base)
       }
 
    // RESPONSE
@@ -175,6 +175,14 @@ public:
          }
 
       U_RETURN(false);
+      }
+
+   void clear()
+      {
+      U_TRACE_NO_PARAM(0, "UREDISClient_Base::clear()")
+
+      vitem.clear();
+          x.clear();
       }
 
    // Connect to REDIS server
@@ -685,9 +693,14 @@ public:
 protected:
    int err;
 
+   static uint32_t start;
+   static ptrdiff_t diff;
+   static UVector<UString>* pvec;
+   static UREDISClient_Base* pthis;
+
    UREDISClient_Base() : UClient_Base(U_NULLPTR)
       {
-      U_TRACE_REGISTER_OBJECT(0, UREDISClient_Base, "", 0)
+      U_TRACE_CTOR(0, UREDISClient_Base, "", 0)
 
       err = 0;
       }
@@ -750,8 +763,10 @@ protected:
    bool processRequest(char recvtype, const char* p1, uint32_t len1, const char* p2, uint32_t len2);
    bool processRequest(char recvtype, const char* p1, uint32_t len1, const char* p2, uint32_t len2, const char* p3, uint32_t len3);
 
+   static void manageResponseBufferResize(uint32_t n);
+
 private:
-   char* getResponseItem(char* ptr, UVector<UString>& vec, uint32_t depth) U_NO_EXPORT;
+   bool getResponseItem() U_NO_EXPORT;
 
    U_DISALLOW_COPY_AND_ASSIGN(UREDISClient_Base)
 };
@@ -761,14 +776,14 @@ public:
 
    UREDISClient() : UREDISClient_Base()
       {
-      U_TRACE_REGISTER_OBJECT(0, UREDISClient, "", 0)
+      U_TRACE_CTOR(0, UREDISClient, "", 0)
 
       U_NEW(Socket, UClient_Base::socket, Socket(UClient_Base::bIPv6));
       }
 
    ~UREDISClient()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, UREDISClient)
+      U_TRACE_DTOR(0, UREDISClient)
       }
 
    // DEBUG

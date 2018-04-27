@@ -62,14 +62,14 @@ const char* UTranformRsaSha256::_href  = "http://www.w3.org/2001/04/xmldsig-more
 
 UTranformXPointer::~UTranformXPointer()
 {
-   U_TRACE_UNREGISTER_OBJECT(0, UTranformXPointer)
+   U_TRACE_DTOR(0, UTranformXPointer)
 
    dataList.clear();
 }
 
 UBaseTransform::UBaseTransform()
 {
-   U_TRACE_REGISTER_OBJECT(0, UBaseTransform, "")
+   U_TRACE_CTOR(0, UBaseTransform, "")
 
    status    = 0;
    hereNode  = U_NULLPTR;
@@ -78,7 +78,7 @@ UBaseTransform::UBaseTransform()
 
 UBaseTransform::~UBaseTransform()
 {
-   U_TRACE_UNREGISTER_OBJECT(0, UBaseTransform)
+   U_TRACE_DTOR(0, UBaseTransform)
 }
 
 bool UTranformXPointer::setExpr(const char* expr, int nodeSetType, xmlNodePtr node)
@@ -98,7 +98,7 @@ bool UTranformXPointer::setExpr(const char* expr, int nodeSetType, xmlNodePtr no
       U_RETURN(true);
       }
 
-   delete data;
+   U_DELETE(data)
 
    U_RETURN(false);
 }
@@ -107,7 +107,7 @@ bool UTranformXPointer::setExpr(const char* expr, int nodeSetType, xmlNodePtr no
 
 UTranformInputURI::UTranformInputURI(const char* uri)
 {
-   U_TRACE_REGISTER_OBJECT(0, UTranformInputURI, "%S", uri)
+   U_TRACE_CTOR(0, UTranformInputURI, "%S", uri)
 
    clbks    = U_NULLPTR;
    clbksCtx = U_NULLPTR;

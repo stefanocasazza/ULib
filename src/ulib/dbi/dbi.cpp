@@ -16,7 +16,7 @@
 
 UDBI::UDBI(const char* driverdir, const char* drivername)
 {
-   U_TRACE_REGISTER_OBJECT(0, UDBI, "%S,%S", driverdir, drivername)
+   U_TRACE_CTOR(0, UDBI, "%S,%S", driverdir, drivername)
 
    query_in     = U_NULLPTR;
    query_in_len = 0;
@@ -49,7 +49,7 @@ UDBI::UDBI(const char* driverdir, const char* drivername)
 
 UDBI::~UDBI()
 {
-   U_TRACE_UNREGISTER_OBJECT(0, UDBI)
+   U_TRACE_DTOR(0, UDBI)
 
    close();
 

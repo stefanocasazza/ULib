@@ -37,7 +37,7 @@ int U_EXPORT main(int argc, char* argv[], char* env[])
    U_TRACE(5, "main(%d)", argc)
 
    uint64_t i, size;
-   UFlatBufferSpace space;
+   UFlatBufferSpaceUser space;
    UFlatBuffer fb, vec, vec0, map, map0;
    uint64_t vec1[] = {1, 2, 3, 7}; 
    bool     vec2[] = {true, false, true};

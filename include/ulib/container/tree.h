@@ -23,7 +23,7 @@ public:
 
    UTree(const void* __elem = U_NULLPTR, const void* __parent = U_NULLPTR, uint32_t n = 1) : UVector<void*>(n)
       {
-      U_TRACE_REGISTER_OBJECT(0, UTree<void*>, "%p,%p,%u", __elem, __parent, n)
+      U_TRACE_CTOR(0, UTree<void*>, "%p,%p,%u", __elem, __parent, n)
 
       _elem   = __elem;
       _parent = __parent;
@@ -31,7 +31,7 @@ public:
 
    ~UTree()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, UTree<void*>)
+      U_TRACE_DTOR(0, UTree<void*>)
       }
 
    // ACCESS
@@ -176,7 +176,7 @@ public:
       {
       U_TRACE(0, "UTree<void*>::erase(%u)", pos)
 
-      delete (UTree<void*>*) vec[pos];
+      U_DELETE((UTree<void*>*)vec[pos])
 
       UVector<void*>::erase(pos);
       }
@@ -217,7 +217,7 @@ public:
          {
          const void** _end = vec + _length;
 
-         for (const void** ptr = vec; ptr < _end; ++ptr) delete (UTree<T*>*)(*ptr);
+         for (const void** ptr = vec; ptr < _end; ++ptr) U_DELETE((UTree<T*>*)(*ptr))
 
          _length = 0;
          }
@@ -225,12 +225,12 @@ public:
 
    UTree(const T* __elem = U_NULLPTR, const T* __parent = U_NULLPTR, uint32_t n = 1) : UTree<void*>(__elem, __parent, n)
       {
-      U_TRACE_REGISTER_OBJECT(0, UTree<T*>, "%p,%p,%u", __elem, __parent, n)
+      U_TRACE_CTOR(0, UTree<T*>, "%p,%p,%u", __elem, __parent, n)
       }
 
    ~UTree()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, UTree<T*>)
+      U_TRACE_DTOR(0, UTree<T*>)
 
       clear();
       }
@@ -316,7 +316,7 @@ public:
       {
       U_TRACE(0, "UTree<T*>::erase(%u)", pos)
 
-      delete (UTree<T*>*) vec[pos];
+      U_DELETE((UTree<T*>*)vec[pos])
 
       UVector<void*>::erase(pos);
       }
@@ -376,12 +376,12 @@ public:
 
    UTree(uint32_t n = 64) : UTree<UStringRep*>(U_NULLPTR, U_NULLPTR, n)
       {
-      U_TRACE_REGISTER_OBJECT(0, UTree<UString>, "%u", n)
+      U_TRACE_CTOR(0, UTree<UString>, "%u", n)
       }
 
    ~UTree()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, UTree<UString>)
+      U_TRACE_DTOR(0, UTree<UString>)
       }
 
    // ACCESS

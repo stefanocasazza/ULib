@@ -46,7 +46,7 @@ pthread_rwlock_t* ULog::prwlock;
 
 ULog::ULog(const UString& path, uint32_t _size) : UFile(path, U_NULLPTR)
 {
-   U_TRACE_REGISTER_OBJECT(0, ULog, "%V,%u", path.rep, _size)
+   U_TRACE_CTOR(0, ULog, "%V,%u", path.rep, _size)
 
 #ifdef DEBUG
    U_INTERNAL_DUMP("first = %p next = %p this = %p", first, next, this)
@@ -689,7 +689,7 @@ void ULog::log(const struct iovec* iov, const char* type, int ncount, const char
    u_printf_string_max_length = u_printf_string_max_length_save;
 }
 
-void ULog::logResponse(const UString& data, const char* format, uint32_t fmt_size, ...)
+void ULog::logResponse(const UString& data, const char* format, uint32_t fmt_size, ...) // Ex: log->logResponse(response, U_CONSTANT_TO_PARAM(" from %v"), host_port.rep);
 {
    U_TRACE(0, "ULog::logResponse(%V,%.*S,%u)", data.rep, fmt_size, format, fmt_size)
 
@@ -705,9 +705,7 @@ void ULog::logResponse(const UString& data, const char* format, uint32_t fmt_siz
       {
       u_printf_string_max_length = u_findEndHeader1(ptr, sz);
 
-      if ((uint32_t)u_printf_string_max_length == U_NOT_FOUND) u_printf_string_max_length = U_min(sz,2000);
-
-      U_INTERNAL_ASSERT_MAJOR(u_printf_string_max_length, 0)
+      if (u_printf_string_max_length < 2000) u_printf_string_max_length = 2000U;
       }
 
    U_INTERNAL_DUMP("u_printf_string_max_length = %d UServer_Base::mod_name = %S", u_printf_string_max_length, UServer_Base::mod_name)
@@ -839,7 +837,7 @@ void ULog::closeLogInternal()
 
                 UFile::munmap();
          (void) UFile::ftruncate(ptr_log_data->file_ptr);
-                UFile::fsync();
+             // UFile::fsync();
          }
 
       UFile::close();
@@ -887,7 +885,7 @@ void ULog::setLogRotate(const char* dir_log_gz)
    char suffix[32];
    uint32_t len_suffix = u__snprintf(suffix, sizeof(suffix), U_CONSTANT_TO_PARAM(".%4D.gz"));
 
-   U_NEW(UString, buf_path_compress, UString(MAX_FILENAME_LEN));
+   U_NEW_STRING(buf_path_compress, UString(MAX_FILENAME_LEN));
 
    char* p = buf_path_compress->data();
 

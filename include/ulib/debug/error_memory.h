@@ -42,11 +42,6 @@ public:
    bool invariant() const { return (_this == (void*)U_CHECK_MEMORY_SENTINEL); }
 
    const char* getErrorType(const void* pobj) const;
-
-private:
-   static char* pbuffer;
-
-   friend class ULib;
 };
 
 #endif

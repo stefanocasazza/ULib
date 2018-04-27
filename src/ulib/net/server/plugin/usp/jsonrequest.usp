@@ -24,12 +24,12 @@ public:
 
    Request()
       {
-      U_TRACE_REGISTER_OBJECT(5, Request, "")
+      U_TRACE_CTOR(5, Request, "")
       }
 
    Request(const Request& r) : user(r.user), t(r.t)
       {
-      U_TRACE_REGISTER_OBJECT(5, Request, "%p", &r)
+      U_TRACE_CTOR(5, Request, "%p", &r)
 
       U_MEMORY_TEST_COPY(r)
 
@@ -39,7 +39,7 @@ public:
 
    ~Request()
       {
-      U_TRACE_UNREGISTER_OBJECT(5, Request)
+      U_TRACE_DTOR(5, Request)
       }
 
    void clear()

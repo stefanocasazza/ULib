@@ -36,12 +36,12 @@ public:
 
    USOAPEncoder()
       {
-      U_TRACE_REGISTER_OBJECT(0, USOAPEncoder, "", 0)
+      U_TRACE_CTOR(0, USOAPEncoder, "", 0)
       }
 
    virtual ~USOAPEncoder()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, USOAPEncoder)
+      U_TRACE_DTOR(0, USOAPEncoder)
       }
 
    // ENCODING FUNCTIONS

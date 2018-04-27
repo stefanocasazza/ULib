@@ -175,27 +175,27 @@ int UNoCatPlugIn::handlerTime()
 
 UNoCatPlugIn::UNoCatPlugIn()
 {
-   U_TRACE_REGISTER_OBJECT(0, UNoCatPlugIn, "")
+   U_TRACE_CTOR(0, UNoCatPlugIn, "")
 
    U_NEW(UCommand, fw, UCommand);
    U_NEW(UBitArray, pmask, UBitArray(4096));
 
-   U_NEW(UString, label, UString);
-   U_NEW(UString, input, UString(U_CAPACITY));
-   U_NEW(UString, fw_cmd, UString);
-   U_NEW(UString, fw_env, UString);
-   U_NEW(UString, extdev, UString);
-   U_NEW(UString, intdev, UString);
-   U_NEW(UString, mempool, UString(UFile::contentOf(U_STRING_FROM_CONSTANT("/etc/nodog.mempool"))));
-   U_NEW(UString, hostname, UString);
-   U_NEW(UString, localnet, UString);
-   U_NEW(UString, location, UString(U_CAPACITY));
-   U_NEW(UString, arp_cache, UString);
-   U_NEW(UString, auth_login, UString);
-   U_NEW(UString, decrypt_key, UString);
-   U_NEW(UString, allowed_members, UString);
-   U_NEW(UString, IP_address_trust, UString);
-   U_NEW(UString, peer_present_in_arp_cache, UString);
+   U_NEW_STRING(label, UString);
+   U_NEW_STRING(input, UString(U_CAPACITY));
+   U_NEW_STRING(fw_cmd, UString);
+   U_NEW_STRING(fw_env, UString);
+   U_NEW_STRING(extdev, UString);
+   U_NEW_STRING(intdev, UString);
+   U_NEW_STRING(mempool, UString(UFile::contentOf(U_STRING_FROM_CONSTANT("/etc/nodog.mempool"))));
+   U_NEW_STRING(hostname, UString);
+   U_NEW_STRING(localnet, UString);
+   U_NEW_STRING(location, UString(U_CAPACITY));
+   U_NEW_STRING(arp_cache, UString);
+   U_NEW_STRING(auth_login, UString);
+   U_NEW_STRING(decrypt_key, UString);
+   U_NEW_STRING(allowed_members, UString);
+   U_NEW_STRING(IP_address_trust, UString);
+   U_NEW_STRING(peer_present_in_arp_cache, UString);
 
    U_NEW(UVector<Url*>, vauth_url, UVector<Url*>(4U));
    U_NEW(UVector<UString>, vauth, UVector<UString>(4U));
@@ -217,60 +217,60 @@ UNoCatPlugIn::UNoCatPlugIn()
 
 UNoCatPlugIn::~UNoCatPlugIn()
 {
-   U_TRACE_UNREGISTER_OBJECT(0, UNoCatPlugIn)
+   U_TRACE_DTOR(0, UNoCatPlugIn)
 
-   delete fw;
-   delete label;
-   delete input;
-   delete pmask;
-   delete fw_cmd;
-   delete fw_env;
-   delete extdev;
-   delete intdev;
-   delete client;
-   delete mempool;
-   delete localnet;
-   delete location;
-   delete hostname;
-   delete auth_login;
-   delete decrypt_key;
-   delete allowed_members;
-   delete IP_address_trust;
-   delete peer_present_in_arp_cache;
+   U_DELETE(fw)
+   U_DELETE(label)
+   U_DELETE(input)
+   U_DELETE(pmask)
+   U_DELETE(fw_cmd)
+   U_DELETE(fw_env)
+   U_DELETE(extdev)
+   U_DELETE(intdev)
+   U_DELETE(client)
+   U_DELETE(mempool)
+   U_DELETE(localnet)
+   U_DELETE(location)
+   U_DELETE(hostname)
+   U_DELETE(auth_login)
+   U_DELETE(decrypt_key)
+   U_DELETE(allowed_members)
+   U_DELETE(IP_address_trust)
+   U_DELETE(peer_present_in_arp_cache)
 
-   delete vauth;
-   delete vauth_ip;
-   delete vauth_url;
-   delete vinfo_data;
-   delete vroaming_data;
-   delete vLoginValidate;
-   delete vInternalDevice;
-   delete vLocalNetworkSpec;
-   delete vLocalNetworkMask;
-   delete vLocalNetworkLabel;
+   U_DELETE(vauth)
+   U_DELETE(vauth_ip)
+   U_DELETE(vauth_url)
+   U_DELETE(vinfo_data)
+   U_DELETE(vroaming_data)
+   U_DELETE(vLoginValidate)
+   U_DELETE(vInternalDevice)
+   U_DELETE(vLocalNetworkSpec)
+   U_DELETE(vLocalNetworkMask)
+   U_DELETE(vLocalNetworkLabel)
 
-   delete varp_cache;
-   delete  arp_cache;
+   U_DELETE(varp_cache)
+   U_DELETE( arp_cache)
 
-   if (ipt)     delete ipt;
-   if (peers)   delete peers;
-   if (dirwalk) delete dirwalk;
+   if (ipt)     U_DELETE(ipt)
+   if (peers)   U_DELETE(peers)
+   if (dirwalk) U_DELETE(dirwalk)
 
    if (status_content)
       {
-      delete openlist;
-      delete status_content;
+      U_DELETE(openlist)
+      U_DELETE(status_content)
       }
 
    if (vaddr)
       {
       for (uint32_t i = 0; i < num_radio; ++i)
          {
-         delete vaddr[i];
-         delete sockp[i];
+         U_DELETE(vaddr[i])
+      // U_DELETE(sockp[i])
          }
 
-      UMemoryPool::_free(sockp, num_radio, sizeof(UPing*));
+   // UMemoryPool::_free(sockp, num_radio, sizeof(UPing*));
       UMemoryPool::_free(vaddr, num_radio, sizeof(UVector<UIPAddress*>*));
       }
 
@@ -287,7 +287,7 @@ UNoCatPlugIn::~UNoCatPlugIn()
       }
 
 #ifdef USE_LIBTDB
-   if (pdata) delete (UTDB*)pdata;
+   if (pdata) U_DELETE((UTDB*)pdata)
 #endif
 }
 
@@ -836,6 +836,7 @@ void UNoCatPlugIn::checkSystem()
 
    U_INTERNAL_ASSERT_EQUALS(paddrmask, U_NULLPTR)
 
+   /*
    if (isPingAsyncPending())
       {
       paddrmask = UPing::checkForPingAsyncCompletion(nfds);
@@ -846,6 +847,7 @@ void UNoCatPlugIn::checkSystem()
 
       goto end;
       }
+   */
 
    for (nfds = i = 0; i < num_radio; ++i) vaddr[i]->clear();
 
@@ -863,6 +865,7 @@ void UNoCatPlugIn::checkSystem()
 
    if (nfds)
       {
+      /*
       if ((check_type & U_CHECK_ARP_CACHE) != 0)
          {
          paddrmask = UPing::checkARPCache(*varp_cache, vaddr, num_radio);
@@ -874,6 +877,7 @@ void UNoCatPlugIn::checkSystem()
          }
 #  endif
       else
+      */
          {
          paddrmask = &addrmask;
          }
@@ -881,7 +885,7 @@ void UNoCatPlugIn::checkSystem()
 
    if (paddrmask)
       {
-result:
+//result:
       U_INTERNAL_ASSERT_MAJOR(nfds, 0)
 
 #  ifdef DEBUG
@@ -1135,7 +1139,7 @@ bool UNoCatPlugIn::checkAuthMessage(const UString& msg)
       vLoginValidate->erase(pos);
       }
 
-   peer->user = user.copy();
+   peer->user = user;
 
    // get redirect (destination)
 
@@ -1405,7 +1409,7 @@ void UNoCatPlugIn::setNewPeer()
                {
                peer->mac = (*varp_cache)[i+1].copy();
 
-               U_ASSERT_EQUALS(peer->ifname, (*varp_cache)[i+2])
+            // U_ASSERT_EQUALS(peer->ifname, (*varp_cache)[i+2])
 
                break;
                }
@@ -2079,7 +2083,7 @@ int UNoCatPlugIn::handlerConfig(UFileConfig& cfg)
 
       if (tmp)
          {
-         U_NEW(UTDB, pdata, UTDB);
+         U_NEW_WITHOUT_CHECK_MEMORY(UTDB, pdata, UTDB);
 
          U_INTERNAL_ASSERT(tmp.isNullTerminated())
 
@@ -2091,8 +2095,9 @@ int UNoCatPlugIn::handlerConfig(UFileConfig& cfg)
             {
             U_SRV_LOG("WARNING: fail to open DHCP_DATA_FILE %V", tmp.rep);
 
-            delete (UTDB*)pdata;
-                          pdata = U_NULLPTR;
+            U_DELETE((UTDB*)pdata)
+
+            pdata = U_NULLPTR;
             }
          }
 #  endif
@@ -2178,7 +2183,8 @@ int UNoCatPlugIn::handlerInit()
 
    U_INTERNAL_ASSERT_EQUALS(UPing::addrmask, U_NULLPTR)
 
-   UPing::addrmask = (fd_set*) UServer_Base::getOffsetToDataShare(sizeof(fd_set) + sizeof(uint32_t));
+// UPing::addrmask = (fd_set*) UServer_Base::getOffsetToDataShare(sizeof(fd_set) + sizeof(uint32_t));
+   UPing::addrmask = (fd_set*) UMemoryPool::_malloc(1, sizeof(fd_set) + sizeof(uint32_t));
 
    // crypto cmd
 
@@ -2222,7 +2228,7 @@ int UNoCatPlugIn::handlerInit()
 
    U_NEW(UHashMap<UModNoCatPeer*>, peers, UHashMap<UModNoCatPeer*>(u_nextPowerOfTwo(num_peers_preallocate)));
 
-   U_NEW(UString, status_content, UString(U_CAPACITY));
+   U_NEW_STRING(status_content, UString(U_CAPACITY));
    U_NEW(UVector<UString>, openlist, UVector<UString>);
 
    U_INTERNAL_ASSERT_EQUALS(peers_preallocate, U_NULLPTR)
@@ -2283,14 +2289,16 @@ int UNoCatPlugIn::handlerFork()
 
    U_INTERNAL_DUMP("num_radio = %u", num_radio)
 
-   sockp = (UPing**)                UMemoryPool::_malloc(num_radio, sizeof(UPing*));
+// sockp = (UPing**)                UMemoryPool::_malloc(num_radio, sizeof(UPing*));
    vaddr = (UVector<UIPAddress*>**) UMemoryPool::_malloc(num_radio, sizeof(UVector<UIPAddress*>*));
 
-   UPing::addrmask = (fd_set*) UServer_Base::getPointerToDataShare(UPing::addrmask);
+// UPing::addrmask = (fd_set*) UServer_Base::getPointerToDataShare(UPing::addrmask);
 
    for (i = 0; i < num_radio; ++i)
       {
       U_NEW(UVector<UIPAddress*>, vaddr[i], UVector<UIPAddress*>);
+
+      /*
       U_NEW(UPing, sockp[i], UPing(3000, UClientImage_Base::bIPv6));
 
       if (((check_type & U_CHECK_ARP_PING) != 0))
@@ -2303,6 +2311,7 @@ int UNoCatPlugIn::handlerFork()
          sockp[i]->initArpPing((*vInternalDevice)[i].data());
 #     endif
          }
+      */
       }
 
    // send start to portal
@@ -2311,8 +2320,7 @@ int UNoCatPlugIn::handlerFork()
 
    UString msg(300U), output(U_CAPACITY), allowed_web_hosts(U_CAPACITY);
 
-   msg.snprintf(U_CONSTANT_TO_PARAM("/start_ap?ap=%v@%v&public=%v%%3A%u&pid=%u"), label->rep, hostname->rep, IP_address_trust->rep, UServer_Base::port, U_SRV_CNT_NOCAT);
-                                                                                                                                                        U_SRV_CNT_NOCAT = u_pid;
+   msg.snprintf(U_CONSTANT_TO_PARAM("/start_ap?ap=%v@%v&public=%v%%3A%u&pid=%u"), label->rep, hostname->rep, IP_address_trust->rep, UServer_Base::port, 0);
 
    for (i = 0, n = vauth_url->size(); i < n; ++i)
       {
@@ -2415,7 +2423,7 @@ int UNoCatPlugIn::handlerRequest()
        UClientImage_Base::isRequestNotFound())
       {
       Url url;
-      int mode = UHTTP::NETWORK_AUTHENTICATION_REQUIRED;
+      int mode = 0; // UHTTP::NETWORK_AUTHENTICATION_REQUIRED;
       UString host(U_HTTP_HOST_TO_PARAM), buffer(U_CAPACITY);
 
       U_INTERNAL_DUMP("host = %V UServer_Base::client_address = %.*S", host.rep, U_CLIENT_ADDRESS_TO_TRACE)

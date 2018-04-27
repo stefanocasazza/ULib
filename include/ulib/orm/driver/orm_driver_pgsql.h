@@ -64,7 +64,7 @@ public:
 
    UPgSqlStatementBindParam()
       {
-      U_TRACE_REGISTER_OBJECT(0, UPgSqlStatementBindParam, "", 0)
+      U_TRACE_CTOR(0, UPgSqlStatementBindParam, "", 0)
 
       type   = 0;
       length = 0;
@@ -72,7 +72,7 @@ public:
 
    explicit UPgSqlStatementBindParam(bool* v) : USqlStatementBindParam(v)
       {
-      U_TRACE_REGISTER_OBJECT(0, UPgSqlStatementBindParam, "%p", v)
+      U_TRACE_CTOR(0, UPgSqlStatementBindParam, "%p", v)
 
       type   = BOOLOID;
       length = sizeof(bool);
@@ -80,7 +80,7 @@ public:
 
    explicit UPgSqlStatementBindParam(char* v) : USqlStatementBindParam(v)
       {
-      U_TRACE_REGISTER_OBJECT(0, UPgSqlStatementBindParam, "%p", v)
+      U_TRACE_CTOR(0, UPgSqlStatementBindParam, "%p", v)
 
       type   = CHAROID;
       length = sizeof(char);
@@ -88,7 +88,7 @@ public:
 
    explicit UPgSqlStatementBindParam(unsigned char* v) : USqlStatementBindParam(v)
       {
-      U_TRACE_REGISTER_OBJECT(0, UPgSqlStatementBindParam, "%p", v)
+      U_TRACE_CTOR(0, UPgSqlStatementBindParam, "%p", v)
 
       type   = CHAROID;
       length = sizeof(char);
@@ -96,7 +96,7 @@ public:
 
    explicit UPgSqlStatementBindParam(short* v) : USqlStatementBindParam(v)
       {
-      U_TRACE_REGISTER_OBJECT(0, UPgSqlStatementBindParam, "%p", v)
+      U_TRACE_CTOR(0, UPgSqlStatementBindParam, "%p", v)
 
       type   = INT2OID;
       length = sizeof(short);
@@ -104,7 +104,7 @@ public:
 
    explicit UPgSqlStatementBindParam(unsigned short* v) : USqlStatementBindParam(v)
       {
-      U_TRACE_REGISTER_OBJECT(0, UPgSqlStatementBindParam, "%p", v)
+      U_TRACE_CTOR(0, UPgSqlStatementBindParam, "%p", v)
 
       type   = INT2OID;
       length = sizeof(short);
@@ -112,7 +112,7 @@ public:
 
    explicit UPgSqlStatementBindParam(int* v) : USqlStatementBindParam(v)
       {
-      U_TRACE_REGISTER_OBJECT(0, UPgSqlStatementBindParam, "%p", v)
+      U_TRACE_CTOR(0, UPgSqlStatementBindParam, "%p", v)
 
       type   = INT4OID;
       length = sizeof(int);
@@ -120,7 +120,7 @@ public:
 
    explicit UPgSqlStatementBindParam(unsigned int* v) : USqlStatementBindParam(v)
       {
-      U_TRACE_REGISTER_OBJECT(0, UPgSqlStatementBindParam, "%p", v)
+      U_TRACE_CTOR(0, UPgSqlStatementBindParam, "%p", v)
 
       type   = INT4OID;
       length = sizeof(int);
@@ -128,7 +128,7 @@ public:
 
    explicit UPgSqlStatementBindParam(long* v) : USqlStatementBindParam(v)
       {
-      U_TRACE_REGISTER_OBJECT(0, UPgSqlStatementBindParam, "%p", v)
+      U_TRACE_CTOR(0, UPgSqlStatementBindParam, "%p", v)
 
 #  if SIZEOF_LONG == 4
       type   = INT4OID;
@@ -140,7 +140,7 @@ public:
 
    explicit UPgSqlStatementBindParam(unsigned long* v) : USqlStatementBindParam(v)
       {
-      U_TRACE_REGISTER_OBJECT(0, UPgSqlStatementBindParam, "%p", v)
+      U_TRACE_CTOR(0, UPgSqlStatementBindParam, "%p", v)
 
 #  if SIZEOF_LONG == 4
       type   = INT4OID;
@@ -152,7 +152,7 @@ public:
 
    explicit UPgSqlStatementBindParam(long long* v) : USqlStatementBindParam(v)
       {
-      U_TRACE_REGISTER_OBJECT(0, UPgSqlStatementBindParam, "%p", v)
+      U_TRACE_CTOR(0, UPgSqlStatementBindParam, "%p", v)
 
       type   = INT8OID;
       length = sizeof(long long);
@@ -160,7 +160,7 @@ public:
 
    explicit UPgSqlStatementBindParam(unsigned long long* v) : USqlStatementBindParam(v)
       {
-      U_TRACE_REGISTER_OBJECT(0, UPgSqlStatementBindParam, "%p", v)
+      U_TRACE_CTOR(0, UPgSqlStatementBindParam, "%p", v)
 
       type   = INT8OID;
       length = sizeof(long long);
@@ -168,7 +168,7 @@ public:
 
    explicit UPgSqlStatementBindParam(float* v) : USqlStatementBindParam(v)
       {
-      U_TRACE_REGISTER_OBJECT(0, UPgSqlStatementBindParam, "%p", v)
+      U_TRACE_CTOR(0, UPgSqlStatementBindParam, "%p", v)
 
       type   = FLOAT4OID;
       length = sizeof(float);
@@ -176,7 +176,7 @@ public:
 
    explicit UPgSqlStatementBindParam(double* v) : USqlStatementBindParam(v)
       {
-      U_TRACE_REGISTER_OBJECT(0, UPgSqlStatementBindParam, "%p", v)
+      U_TRACE_CTOR(0, UPgSqlStatementBindParam, "%p", v)
 
       type   = FLOAT8OID;
       length = sizeof(double);
@@ -184,7 +184,7 @@ public:
 
    explicit UPgSqlStatementBindParam(long double* v) : USqlStatementBindParam(v)
       {
-      U_TRACE_REGISTER_OBJECT(0, UPgSqlStatementBindParam, "%p", v)
+      U_TRACE_CTOR(0, UPgSqlStatementBindParam, "%p", v)
 
       type   = FLOAT8OID;
       length = sizeof(double);
@@ -192,14 +192,14 @@ public:
 
    explicit UPgSqlStatementBindParam(const char* s, int n, bool bstatic) : USqlStatementBindParam(s, n, bstatic)
       {
-      U_TRACE_REGISTER_OBJECT(0, UPgSqlStatementBindParam, "%.*S,%u,%b", n, s, n, bstatic)
+      U_TRACE_CTOR(0, UPgSqlStatementBindParam, "%.*S,%u,%b", n, s, n, bstatic)
 
       type = TEXTOID;
       }
 
    virtual ~UPgSqlStatementBindParam()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, UPgSqlStatementBindParam)
+      U_TRACE_DTOR(0, UPgSqlStatementBindParam)
       }
 
    // DEBUG
@@ -216,7 +216,7 @@ public:
 
    explicit UPgSqlStatementBindResult(bool* v) : USqlStatementBindResult(v)
       {
-      U_TRACE_REGISTER_OBJECT(0, UPgSqlStatementBindResult, "%p", v)
+      U_TRACE_CTOR(0, UPgSqlStatementBindResult, "%p", v)
 
       type   = BOOLOID;
       length = sizeof(bool);
@@ -224,7 +224,7 @@ public:
 
    explicit UPgSqlStatementBindResult(char* v) : USqlStatementBindResult(v)
       {
-      U_TRACE_REGISTER_OBJECT(0, UPgSqlStatementBindResult, "%p", v)
+      U_TRACE_CTOR(0, UPgSqlStatementBindResult, "%p", v)
 
       type   = CHAROID;
       length = sizeof(char);
@@ -232,7 +232,7 @@ public:
 
    explicit UPgSqlStatementBindResult(unsigned char* v) : USqlStatementBindResult(v)
       {
-      U_TRACE_REGISTER_OBJECT(0, UPgSqlStatementBindResult, "%p", v)
+      U_TRACE_CTOR(0, UPgSqlStatementBindResult, "%p", v)
 
       type   = CHAROID;
       length = sizeof(char);
@@ -240,7 +240,7 @@ public:
 
    explicit UPgSqlStatementBindResult(short* v) : USqlStatementBindResult(v)
       {
-      U_TRACE_REGISTER_OBJECT(0, UPgSqlStatementBindResult, "%p", v)
+      U_TRACE_CTOR(0, UPgSqlStatementBindResult, "%p", v)
 
       type   = INT2OID;
       length = sizeof(short);
@@ -248,7 +248,7 @@ public:
 
    explicit UPgSqlStatementBindResult(unsigned short* v) : USqlStatementBindResult(v)
       {
-      U_TRACE_REGISTER_OBJECT(0, UPgSqlStatementBindResult, "%p", v)
+      U_TRACE_CTOR(0, UPgSqlStatementBindResult, "%p", v)
 
       type   = INT2OID;
       length = sizeof(short);
@@ -256,7 +256,7 @@ public:
 
    explicit UPgSqlStatementBindResult(int* v) : USqlStatementBindResult(v)
       {
-      U_TRACE_REGISTER_OBJECT(0, UPgSqlStatementBindResult, "%p", v)
+      U_TRACE_CTOR(0, UPgSqlStatementBindResult, "%p", v)
 
       type   = INT4OID;
       length = sizeof(int);
@@ -264,7 +264,7 @@ public:
 
    explicit UPgSqlStatementBindResult(unsigned int* v) : USqlStatementBindResult(v) 
       {
-      U_TRACE_REGISTER_OBJECT(0, UPgSqlStatementBindResult, "%p", v)
+      U_TRACE_CTOR(0, UPgSqlStatementBindResult, "%p", v)
 
       type   = INT4OID;
       length = sizeof(int);
@@ -272,7 +272,7 @@ public:
 
    explicit UPgSqlStatementBindResult(long* v) : USqlStatementBindResult(v)
       {
-      U_TRACE_REGISTER_OBJECT(0, UPgSqlStatementBindResult, "%p", v)
+      U_TRACE_CTOR(0, UPgSqlStatementBindResult, "%p", v)
 
 #  if SIZEOF_LONG == 4
       type   = INT4OID;
@@ -284,7 +284,7 @@ public:
 
    explicit UPgSqlStatementBindResult(unsigned long* v) : USqlStatementBindResult(v)
       {
-      U_TRACE_REGISTER_OBJECT(0, UPgSqlStatementBindResult, "%p", v)
+      U_TRACE_CTOR(0, UPgSqlStatementBindResult, "%p", v)
 
 #  if SIZEOF_LONG == 4
       type   = INT4OID;
@@ -296,7 +296,7 @@ public:
 
    explicit UPgSqlStatementBindResult(long long* v) : USqlStatementBindResult(v)
       {
-      U_TRACE_REGISTER_OBJECT(0, UPgSqlStatementBindResult, "%p", v)
+      U_TRACE_CTOR(0, UPgSqlStatementBindResult, "%p", v)
 
       type   = INT8OID;
       length = sizeof(long long);
@@ -304,7 +304,7 @@ public:
 
    explicit UPgSqlStatementBindResult(unsigned long long* v) : USqlStatementBindResult(v)
       {
-      U_TRACE_REGISTER_OBJECT(0, UPgSqlStatementBindResult, "%p", v)
+      U_TRACE_CTOR(0, UPgSqlStatementBindResult, "%p", v)
 
       type   = INT8OID;
       length = sizeof(long long);
@@ -312,7 +312,7 @@ public:
 
    explicit UPgSqlStatementBindResult(float* v) : USqlStatementBindResult(v)
       {
-      U_TRACE_REGISTER_OBJECT(0, UPgSqlStatementBindResult, "%p", v)
+      U_TRACE_CTOR(0, UPgSqlStatementBindResult, "%p", v)
 
       type   = FLOAT4OID;
       length = sizeof(float);
@@ -320,7 +320,7 @@ public:
 
    explicit UPgSqlStatementBindResult(double* v) : USqlStatementBindResult(v)
       {
-      U_TRACE_REGISTER_OBJECT(0, UPgSqlStatementBindResult, "%p", v)
+      U_TRACE_CTOR(0, UPgSqlStatementBindResult, "%p", v)
 
       type   = FLOAT8OID;
       length = sizeof(double);
@@ -328,7 +328,7 @@ public:
 
    explicit UPgSqlStatementBindResult(long double* v) : USqlStatementBindResult(v)
       {
-      U_TRACE_REGISTER_OBJECT(0, UPgSqlStatementBindResult, "%p", v)
+      U_TRACE_CTOR(0, UPgSqlStatementBindResult, "%p", v)
 
       type   = FLOAT8OID;
       length = sizeof(double);
@@ -336,14 +336,14 @@ public:
 
    explicit UPgSqlStatementBindResult(UStringRep& s) : USqlStatementBindResult(s)
       {
-      U_TRACE_REGISTER_OBJECT(0, UPgSqlStatementBindResult, "%V", &s)
+      U_TRACE_CTOR(0, UPgSqlStatementBindResult, "%V", &s)
 
       type = VARCHAROID;
       }
 
    virtual ~UPgSqlStatementBindResult()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, UPgSqlStatementBindResult)
+      U_TRACE_DTOR(0, UPgSqlStatementBindResult)
       }
 
    // DEBUG
@@ -395,7 +395,7 @@ public:
 
    UOrmDriverPgSql()
       {
-      U_TRACE_REGISTER_OBJECT(0, UOrmDriverPgSql, "")
+      U_TRACE_CTOR(0, UOrmDriverPgSql, "")
 
       U_INTERNAL_ASSERT_POINTER(UString::str_pgsql_name)
 
@@ -404,7 +404,7 @@ public:
 
    UOrmDriverPgSql(const UString& name_drv) : UOrmDriver(name_drv)
       {
-      U_TRACE_REGISTER_OBJECT(0, UOrmDriverPgSql, "%V", name_drv.rep)
+      U_TRACE_CTOR(0, UOrmDriverPgSql, "%V", name_drv.rep)
       }
 
    virtual ~UOrmDriverPgSql();

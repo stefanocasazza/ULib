@@ -29,10 +29,11 @@ public:
 
       if (query)
          {
-         delete posting;
-                posting = U_NULLPTR;
+         U_DELETE(posting)
 
-         delete query;
+         posting = U_NULLPTR;
+
+         U_DELETE(query)
          }
       }
 

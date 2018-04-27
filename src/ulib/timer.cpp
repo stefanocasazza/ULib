@@ -265,8 +265,8 @@ void UTimer::clear()
 
          U_INTERNAL_DUMP("item->alarm = %p next = %p", item->alarm, next)
 
-      // delete item->alarm;
-         delete item;
+      // U_DELETE(item->alarm)
+         U_DELETE(item)
          }
       while (next);
       }
@@ -282,8 +282,8 @@ void UTimer::clear()
 
          U_INTERNAL_DUMP("item->alarm = %p next = %p", item->alarm, next)
 
-      // delete item->alarm;
-         delete item;
+      // U_DELETE(item->alarm)
+         U_DELETE(item)
          }
       while (next);
       }

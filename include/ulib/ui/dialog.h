@@ -42,7 +42,7 @@ public:
    UDialog(const char* _backtitle = U_NULLPTR, int _height = 0, int _width = 0)
          : output(U_CAPACITY), backtitle(_backtitle), command(U_CAPACITY), argument(U_CAPACITY)
       {
-      U_TRACE_REGISTER_OBJECT(0, UDialog, "%S,%d,%d", _backtitle, _height, _width)
+      U_TRACE_CTOR(0, UDialog, "%S,%d,%d", _backtitle, _height, _width)
 
       width  = _width;
       height = _height;
@@ -52,7 +52,7 @@ public:
 
    ~UDialog()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, UDialog)
+      U_TRACE_DTOR(0, UDialog)
       }
 
    // SERVICES: calendar, checklist, fselect, gauge, infobox, inputbox, inputmenu, menu, msgbox (message),

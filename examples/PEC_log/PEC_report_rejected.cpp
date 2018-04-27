@@ -60,10 +60,10 @@ public:
 
       if (sent)
          {
-         delete sent;
-         delete error;
-         delete reason;
-         delete deferred;
+         U_DELETE(sent)
+         U_DELETE(error)
+         U_DELETE(reason)
+         U_DELETE(deferred)
          }
       }
 
@@ -135,10 +135,11 @@ public:
 
       // setting for virus
 
-      sent     = new U_STRING_FROM_CONSTANT("Sent");
-      error    = new UString;
-      reason   = new UString;
-      deferred = new U_STRING_FROM_CONSTANT("Deferred");
+      U_NEW_STRING(sent,     UString(U_CONSTANT_TO_PARAM("Sent")))
+      U_NEW_STRING(deferred, UString(U_CONSTANT_TO_PARAM("Deferred")))
+
+      error  = new UString;
+      reason = new UString;
 
       PEC_report::parse = Application::parseLineForError;
       }

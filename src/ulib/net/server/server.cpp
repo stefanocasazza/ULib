@@ -142,6 +142,7 @@ UProcess*     UServer_Base::proc;
 UEventFd*     UServer_Base::handler_other;
 UEventFd*     UServer_Base::handler_inotify;
 UEventTime*   UServer_Base::ptime;
+UUDPSocket*   UServer_Base::udp_sock;
 const char*   UServer_Base::document_root_ptr;
 unsigned int  UServer_Base::port;
 USmtpClient*  UServer_Base::emailClient;
@@ -203,6 +204,8 @@ uint32_t UServer_Base::stats_connections;
 uint32_t UServer_Base::stats_simultaneous;
 uint32_t UServer_Base::wakeup_for_nothing;
 
+UTimeStat* UServer_Base::pstat;
+
 UString UServer_Base::getStats()
 {
    U_TRACE_NO_PARAM(0, "UServer_Base::getStats()")
@@ -221,12 +224,12 @@ public:
 
    UTimeStat() : UEventTime(U_ONE_HOUR_IN_SECOND, 0L)
       {
-      U_TRACE_REGISTER_OBJECT(0, UTimeStat, "", 0)
+      U_TRACE_CTOR(0, UTimeStat, "", 0)
       }
 
    virtual ~UTimeStat() U_DECL_FINAL
       {
-      U_TRACE_UNREGISTER_OBJECT(0, UTimeStat)
+      U_TRACE_DTOR(0, UTimeStat)
       }
 
    // define method VIRTUAL of class UEventTime
@@ -263,12 +266,12 @@ public:
 
    UTimeoutConnection() : UEventTime(UServer_Base::timeoutMS / 1000L, 0L)
       {
-      U_TRACE_REGISTER_OBJECT(0, UTimeoutConnection, "", 0)
+      U_TRACE_CTOR(0, UTimeoutConnection, "", 0)
       }
 
    virtual ~UTimeoutConnection() U_DECL_FINAL
       {
-      U_TRACE_UNREGISTER_OBJECT(0, UTimeoutConnection)
+      U_TRACE_DTOR(0, UTimeoutConnection)
       }
 
    // define method VIRTUAL of class UEventTime
@@ -352,12 +355,12 @@ public:
 
    UBandWidthThrottling() : UEventTime(U_THROTTLE_TIME, 0L)
       {
-      U_TRACE_REGISTER_OBJECT(0, UBandWidthThrottling, "", 0)
+      U_TRACE_CTOR(0, UBandWidthThrottling, "", 0)
       }
 
    virtual ~UBandWidthThrottling() U_DECL_FINAL
       {
-      U_TRACE_UNREGISTER_OBJECT(0, UBandWidthThrottling)
+      U_TRACE_DTOR(0, UBandWidthThrottling)
       }
 
    // SERVICES
@@ -577,14 +580,14 @@ public:
 
    UClientThrottling(UClientImage_Base* _pClientImage, long sec, long micro_sec) : UEventTime(sec, micro_sec)
       {
-      U_TRACE_REGISTER_OBJECT(0, UClientThrottling, "%p,%ld,%ld", _pClientImage, sec, micro_sec)
+      U_TRACE_CTOR(0, UClientThrottling, "%p,%ld,%ld", _pClientImage, sec, micro_sec)
 
       UNotifier::suspend(pClientImage = _pClientImage);
       }
 
    virtual ~UClientThrottling() U_DECL_FINAL
       {
-      U_TRACE_UNREGISTER_OBJECT(0, UClientThrottling)
+      U_TRACE_DTOR(0, UClientThrottling)
       }
 
    // define method VIRTUAL of class UEventTime
@@ -668,8 +671,9 @@ void UServer_Base::initThrottlingServer()
          {
          U_SRV_LOG("WARNING: db BandWidthThrottling initialization failed");
 
-         delete db_throttling;
-                db_throttling = U_NULLPTR;
+         U_DELETE(db_throttling)
+
+         db_throttling = U_NULLPTR;
          }
       }
 }
@@ -853,8 +857,9 @@ void UServer_Base::initEvasive()
       {
       U_SRV_LOG("WARNING: db Evasive initialization failed");
 
-      delete db_evasive;
-             db_evasive = U_NULLPTR;
+      U_DELETE(db_evasive)
+
+      db_evasive = U_NULLPTR;
       }
 }
 
@@ -935,7 +940,7 @@ bool UServer_Base::checkHitStats(const char* key, uint32_t key_len, uint32_t int
 
    db_evasive->unlockRecord();
 
-   in_addr_t client = UServer_Base::csocket->remoteIPAddress().getInAddr();
+   in_addr_t client = UServer_Base::getClientAddress();
 
    if (db_evasive->getDataStorage(client)) evasive_rec->timestamp = u_now->tv_sec; // Make it wait longer in blacklist land
    else
@@ -1025,7 +1030,7 @@ bool UServer_Base::checkHitSiteStats()
       {
       char key[6] = { '_', 0, 0, 0, 0, '_' };
 
-      u_put_unalignedp32(key+1, UServer_Base::csocket->remoteIPAddress().getInAddr());
+      u_put_unalignedp32(key+1, UServer_Base::getClientAddress());
 
       U_gettimeofday // NB: optimization if it is enough a time resolution of one second...
 
@@ -1052,7 +1057,7 @@ bool UServer_Base::checkHitUriStats()
          {
          char key[260];
          uint32_t key_sz = (sz < 256 ? sz : 256),
-                  addr = UServer_Base::csocket->remoteIPAddress().getInAddr();
+                  addr = UServer_Base::getClientAddress();
 
          union uukey {
             char*     k;
@@ -1110,21 +1115,26 @@ public:
       int fd_sock = -1;
       uint32_t addr = 0;
       uusockaddr srv_addr, cli_addr;
-      UUDPSocket udp_sock(UClientImage_Base::bIPv6);
 
 #   if defined(USERVER_UDP) || defined(USERVER_IPC)
       if (UServer_Base::budp == false &&
           UServer_Base::bipc == false)
 #   endif
       {
-      if (UServer_Base::ifname == U_NULLPTR) U_NEW(UString, UServer_Base::ifname, UString(UServer_Base::getNetworkDevice(U_NULLPTR)));
+      if (UServer_Base::ifname == U_NULLPTR) U_NEW_STRING(UServer_Base::ifname, UString(UServer_Base::getNetworkDevice(U_NULLPTR)));
 
       if (*UServer_Base::ifname)
          {
-         udp_sock._socket();
-         udp_sock.setReuseAddress();
+         fd_sock = UServer_Base::udp_sock->getFd();
 
-         fd_sock = udp_sock.getFd();
+         if (fd_sock != -1)
+            {
+            UServer_Base::udp_sock->reOpen();
+
+            fd_sock = UServer_Base::udp_sock->getFd();
+            }
+
+         UServer_Base::udp_sock->setReuseAddress();
 
          srv_addr.psaIP4Addr.sin_port        = htons(UServer_Base::port);
          srv_addr.psaIP4Addr.sin_family      = PF_INET;
@@ -1137,9 +1147,9 @@ public:
             U_ERROR("set broadcast address on interface %V failed", UServer_Base::ifname->rep);
             }
 
-         if (udp_sock.setSockOpt(SOL_SOCKET, SO_BROADCAST, (const int[]){ 1 }) == false) U_ERROR("setting SO_BROADCAST on udp socket failed");
+         if (UServer_Base::udp_sock->setSockOpt(SOL_SOCKET, SO_BROADCAST, (const int[]){ 1 }) == false) U_ERROR("setting SO_BROADCAST on udp socket failed");
 
-         udp_sock.setNonBlocking();
+         UServer_Base::udp_sock->setNonBlocking();
 
          addr = UServer_Base::socket->cLocalAddress.get_addr();
 
@@ -1325,7 +1335,7 @@ public:
 
       U_INTERNAL_ASSERT_EQUALS(UServer_Base::pthread_ocsp, U_NULLPTR)
 
-      U_NEW_ULIB_OBJECT(UOCSPStapling, UServer_Base::pthread_ocsp, UOCSPStapling);
+      U_NEW(UOCSPStapling, UServer_Base::pthread_ocsp, UOCSPStapling);
 
       U_INTERNAL_DUMP("UServer_Base::pthread_ocsp = %p", UServer_Base::pthread_ocsp)
 
@@ -1354,7 +1364,6 @@ uint32_t      UServer_Base::sse_fifo_pos;
 UThread*      UServer_Base::pthread_sse;
 UString*      UServer_Base::sse_id;
 UString*      UServer_Base::sse_event;
-UString*      UServer_Base::str_asterisk;
 struct iovec  UServer_Base::iov[1] = { { iovbuf, 1 } };
 struct msghdr UServer_Base::msg = { 0, 0, iov, 1, &cmsg, sizeof(struct ucmsghdr), 0 };
 
@@ -1379,14 +1388,14 @@ public:
 
    USSEClient(const UString& id, const UString& subscribe, int _fd, bool process) : sub(subscribe), uniq_id(id), fd(_fd), bprocess(process)
       {
-      U_TRACE_REGISTER_OBJECT(0, USSEClient, "%V,%V,%d,%b", id.rep, subscribe.rep, _fd, process)
+      U_TRACE_CTOR(0, USSEClient, "%V,%V,%d,%b", id.rep, subscribe.rep, _fd, process)
 
       U_INTERNAL_ASSERT_DIFFERS(fd, -1)
       }
 
    ~USSEClient()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, USSEClient)
+      U_TRACE_DTOR(0, USSEClient)
 
       UFile::close(fd);
 
@@ -1447,8 +1456,13 @@ public:
       bool ball, bprocess;
       UVector<UString> vec;
       UVector<UString> vmessage;
+      UString row, _id, token, rID, message, tmp;
       uint32_t pos, mr, sz, last_event_id, i, n, k, start = 0, end = 0;
-      UString input(U_CAPACITY), output(U_CAPACITY), row, _id, token, rID, message, tmp;
+
+      char buffer_input[ 64U * 1024U],
+           buffer_output[64U * 1024U];
+
+      UString input(buffer_input, sizeof(buffer_input)), output(buffer_output, sizeof(buffer_output));
 
       while (U_SRV_FLAG_SIGTERM == false)
          {
@@ -1486,8 +1500,8 @@ public:
                      U_INTERNAL_DUMP("_id = %V token = %V fd = %d bprocess = %b last_event_id = %u U_SRV_SSE_CNT1 = %u", _id.rep, token.rep, fd, bprocess, last_event_id, U_SRV_SSE_CNT1)
 
 
-                     if ((ball = token.equal(*UServer_Base::str_asterisk))) token = *UServer_Base::str_asterisk;
-                     else                                                   token.duplicate();
+                     if ((ball = token.equal(*UString::str_asterisk))) token = *UString::str_asterisk;
+                     else                                              token.duplicate();
 
                      if (last_event_id &&
                          last_event_id < U_SRV_SSE_CNT1)
@@ -1561,7 +1575,7 @@ public:
                            {
                            --n;
 
-                           delete UServer_Base::sse_vclient->remove(i--);
+                           U_DELETE(UServer_Base::sse_vclient->remove(i--))
 
                            break;
                            }
@@ -1611,7 +1625,7 @@ public:
                            {
                            U_SRV_LOG("[sse] send message(%u) to %V: %V", U_SRV_SSE_CNT1, _id.rep, message.rep);
 
-                           if (client->sendMsg(message, U_NULLPTR) == false) delete UServer_Base::sse_vclient->remove(i);
+                           if (client->sendMsg(message, U_NULLPTR) == false) U_DELETE(UServer_Base::sse_vclient->remove(i))
 
                            break;
                            }
@@ -1646,7 +1660,7 @@ public:
                   U_SRV_LOG("[sse] send message(%u) to subscribers of %V%.*s%.*s: %V", U_SRV_SSE_CNT1, token.rep,
                               rID ? U_CONSTANT_SIZE(" except SSE_") : 0, " except SSE_", rID ? rID.size() : 0, rID.data(), message.rep);
 
-                  tmp = ((ball = token.equal(*UServer_Base::str_asterisk)) ? "*="+message : token+'='+message);
+                  tmp = ((ball = token.equal(*UString::str_asterisk)) ? "*="+message : token+'='+message);
 
                   vmessage.insertWithBound(tmp, start, end);
 
@@ -1662,7 +1676,7 @@ public:
                            {
                            --n;
 
-                           delete UServer_Base::sse_vclient->remove(i--);
+                           U_DELETE(UServer_Base::sse_vclient->remove(i--))
                            }
                         }
                      }
@@ -1693,7 +1707,7 @@ static long sysctl_somaxconn, tcp_abort_on_overflow, sysctl_max_syn_backlog, tcp
 
 UServer_Base::UServer_Base(UFileConfig* pcfg)
 {
-   U_TRACE_REGISTER_OBJECT(0, UServer_Base, "%p", pcfg)
+   U_TRACE_CTOR(0, UServer_Base, "%p", pcfg)
 
    U_INTERNAL_ASSERT_EQUALS(pthis, U_NULLPTR)
    U_INTERNAL_ASSERT_EQUALS(cenvironment, U_NULLPTR)
@@ -1702,19 +1716,19 @@ UServer_Base::UServer_Base(UFileConfig* pcfg)
    port  = 80;
    pthis = this;
 
-   U_NEW(UString, as_user,       UString);
-   U_NEW(UString, dh_file,       UString);
-   U_NEW(UString, cert_file,     UString);
-   U_NEW(UString, key_file,      UString);
-   U_NEW(UString, password,      UString);
-   U_NEW(UString, ca_file,       UString);
-   U_NEW(UString, ca_path,       UString);
-   U_NEW(UString, auth_ip,       UString);
-   U_NEW(UString, name_sock,     UString);
-   U_NEW(UString, IP_address,    UString);
-   U_NEW(UString, cenvironment,  UString(U_CAPACITY));
-   U_NEW(UString, senvironment,  UString(U_CAPACITY));
-   U_NEW(UString, document_root, UString);
+   U_NEW_STRING(as_user,       UString);
+   U_NEW_STRING(dh_file,       UString);
+   U_NEW_STRING(cert_file,     UString);
+   U_NEW_STRING(key_file,      UString);
+   U_NEW_STRING(password,      UString);
+   U_NEW_STRING(ca_file,       UString);
+   U_NEW_STRING(ca_path,       UString);
+   U_NEW_STRING(auth_ip,       UString);
+   U_NEW_STRING(name_sock,     UString);
+   U_NEW_STRING(IP_address,    UString);
+   U_NEW_STRING(cenvironment,  UString(U_CAPACITY));
+   U_NEW_STRING(senvironment,  UString(U_CAPACITY));
+   U_NEW_STRING(document_root, UString);
 
    U_NEW(UVector<file_LOG*>, vlog, UVector<file_LOG*>);
 
@@ -1761,7 +1775,7 @@ UServer_Base::UServer_Base(UFileConfig* pcfg)
 
 UServer_Base::~UServer_Base()
 {
-   U_TRACE_UNREGISTER_OBJECT(0, UServer_Base)
+   U_TRACE_DTOR(0, UServer_Base)
 
    U_INTERNAL_ASSERT_POINTER(socket)
 
@@ -1771,14 +1785,14 @@ UServer_Base::~UServer_Base()
       {
       U_INTERNAL_ASSERT_POINTER(UNotifier::pthread)
 
-      delete UNotifier::pthread;
+      U_DELETE(UNotifier::pthread)
       }
 # endif
 
 # ifdef U_LINUX
    if (u_pthread_time)
       {
-      delete (UTimeThread*)u_pthread_time;
+      U_DELETE((UTimeThread*)u_pthread_time)
 
       (void) pthread_rwlock_destroy(ULog::prwlock);
       }
@@ -1786,32 +1800,38 @@ UServer_Base::~UServer_Base()
 #  if defined(USE_LIBSSL) && !defined(OPENSSL_NO_OCSP) && defined(SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB)
    if (bssl)
       {
-      if (pthread_ocsp) delete pthread_ocsp;
+      if (pthread_ocsp) U_DELETE(pthread_ocsp)
 
       USSLSocket::cleanupStapling();
 
-      if (lock_ocsp_staple) delete lock_ocsp_staple;
+      if (lock_ocsp_staple) U_DELETE(lock_ocsp_staple)
       }
 #  endif
 
 #  ifdef U_SSE_ENABLE // SERVER SENT EVENTS (SSE)
-   if (lock_sse) delete lock_sse;
+   if (lock_sse) U_DELETE(lock_sse)
 #  ifdef USE_LIBSSL
-   if (lock_sse_ssl) delete lock_sse_ssl;
+   if (lock_sse_ssl) U_DELETE(lock_sse_ssl)
 #  endif
-   if (pthread_sse) delete (USSEThread*)pthread_sse;
+   if (pthread_sse)
+      {
+      U_DELETE(sse_id)
+      U_DELETE(sse_vclient)
+      U_DELETE((USSEThread*)pthread_sse)
+      }
 #  endif
 # endif
 #endif
 
    UClientImage_Base::clear();
 
-   delete socket;
+   U_DELETE(socket)
+   U_DELETE(udp_sock)
 
    if (vplugin)
       {
-      delete vplugin_name;
-      delete vplugin;
+      U_DELETE(vplugin_name)
+      U_DELETE(vplugin)
       }
 
    UOrmDriver::clear();
@@ -1819,50 +1839,58 @@ UServer_Base::~UServer_Base()
    U_INTERNAL_ASSERT_POINTER(cenvironment)
    U_INTERNAL_ASSERT_POINTER(senvironment)
 
-   delete auth_ip;
-   delete cenvironment;
-   delete senvironment;
+   U_DELETE(auth_ip)
+   U_DELETE(cenvironment)
+   U_DELETE(senvironment)
 
-   if (host)              delete host;
-   if (emailClient)       delete emailClient;
-   if (crashEmailAddress) delete crashEmailAddress;
+   if (host)              U_DELETE(host)
+   if (emailClient)       U_DELETE(emailClient)
+   if (crashEmailAddress) U_DELETE(crashEmailAddress)
 
 #ifdef USE_LOAD_BALANCE
-   if (ifname)         delete ifname;
-   if (vallow_cluster) delete vallow_cluster;
+   if (ifname)         U_DELETE(ifname)
+   if (vallow_cluster) U_DELETE(vallow_cluster)
 #endif
 
 #ifdef U_THROTTLING_SUPPORT
    if (db_throttling)
       {
-             db_throttling->close();
-      delete db_throttling;
+      db_throttling->close();
+
+      U_DELETE(db_throttling)
       }
 
-   if (throttling_mask) delete throttling_mask;
+   if (throttling_mask) U_DELETE(throttling_mask)
 #endif
 
 #ifdef U_EVASIVE_SUPPORT
    if (db_evasive)
       {
-             db_evasive->close();
-      delete db_evasive;
+      db_evasive->close();
+
+      U_DELETE(db_evasive)
       }
 
-   if (vwhitelist_IP)   delete vwhitelist_IP;
-   if (dosEmailAddress) delete dosEmailAddress;
+   if (vwhitelist_IP)   U_DELETE(vwhitelist_IP)
+   if (dosEmailAddress) U_DELETE(dosEmailAddress)
 #endif
 
 #ifdef U_WELCOME_SUPPORT
-   if (msg_welcome) delete msg_welcome;
+   if (msg_welcome) U_DELETE(msg_welcome)
 #endif
 
 #ifdef U_ACL_SUPPORT
-   if (vallow_IP) delete vallow_IP;
+   if (vallow_IP) U_DELETE(vallow_IP)
 #endif
 
 #ifdef U_RFC1918_SUPPORT
-   if (vallow_IP_prv) delete vallow_IP_prv;
+   if (vallow_IP_prv) U_DELETE(vallow_IP_prv)
+#endif
+#ifndef USE_LIBEVENT
+   if (ptime) U_DELETE(ptime)
+#endif
+#ifdef DEBUG
+   if (pstat) U_DELETE(pstat)
 #endif
 
 #ifdef U_LINUX
@@ -1883,23 +1911,23 @@ UServer_Base::~UServer_Base()
       }
 #endif
 
-   if (proc)       delete proc;
-   if (server)     delete server;
-   if (lock_user1) delete lock_user1;
-   if (lock_user2) delete lock_user2;
+   if (proc)       U_DELETE(proc)
+   if (server)     U_DELETE(server)
+   if (lock_user1) U_DELETE(lock_user1)
+   if (lock_user2) U_DELETE(lock_user2)
 
    if (ptr_shared_data) UFile::munmap(ptr_shared_data, map_size);
 
-   delete as_user;
-   delete dh_file;
-   delete cert_file;
-   delete key_file;
-   delete password;
-   delete ca_file;
-   delete ca_path;
-   delete name_sock;
-   delete IP_address;
-   delete document_root;
+   U_DELETE(as_user)
+   U_DELETE(dh_file)
+   U_DELETE(cert_file)
+   U_DELETE(key_file)
+   U_DELETE(password)
+   U_DELETE(ca_file)
+   U_DELETE(ca_path)
+   U_DELETE(name_sock)
+   U_DELETE(IP_address)
+   U_DELETE(document_root)
 
    UDynamic::clear();
 
@@ -1916,7 +1944,7 @@ UServer_Base::~UServer_Base()
       {
       log->ULog::close();
 
-      delete log;
+      U_DELETE(log)
       }
 #endif
 }
@@ -1938,7 +1966,7 @@ void UServer_Base::closeLog()
       apache_like_log->closeLog();
 
 #  ifdef DEBUG 
-      delete apache_like_log;
+      U_DELETE(apache_like_log)
 #  endif
 
       apache_like_log = U_NULLPTR;
@@ -1955,13 +1983,13 @@ void UServer_Base::closeLog()
 
          if (item->LOG->isOpen()) item->LOG->close();
 
-         delete item->LOG;
+         U_DELETE(item->LOG)
          }
 
       vlog->clear();
 
 #  ifdef DEBUG
-      delete vlog;
+      U_DELETE(vlog)
 #  endif
 
       vlog = U_NULLPTR;
@@ -1975,15 +2003,16 @@ void UServer_Base::setMsgWelcome(const UString& msg)
 
    U_INTERNAL_ASSERT(msg)
 
-   U_NEW(UString, msg_welcome, UString(U_CAPACITY));
+   U_NEW_STRING(msg_welcome, UString(U_CAPACITY));
 
    UEscape::decode(msg, *msg_welcome);
 
    if (*msg_welcome) (void) msg_welcome->shrink();
    else
       {
-      delete msg_welcome;
-             msg_welcome = U_NULLPTR;
+      U_DELETE(msg_welcome)
+
+      msg_welcome = U_NULLPTR;
       }
 }
 #endif
@@ -2142,7 +2171,7 @@ void UServer_Base::loadConfigParam()
 
    UString x  = cfg->at(U_CONSTANT_TO_PARAM("SERVER"));
 
-   if (x) U_NEW(UString, server, UString(x));
+   if (x) U_NEW_STRING(server, UString(x));
 
    *IP_address = cfg->at(U_CONSTANT_TO_PARAM("IP_ADDRESS"));
 
@@ -2194,7 +2223,7 @@ void UServer_Base::loadConfigParam()
       {
       U_INTERNAL_ASSERT_EQUALS(crashEmailAddress, U_NULLPTR)
 
-      U_NEW(UString, crashEmailAddress, UString(x));
+      U_NEW_STRING(crashEmailAddress, UString(x));
 
       if (emailClient == U_NULLPTR)
          {
@@ -2287,8 +2316,9 @@ void UServer_Base::loadConfigParam()
 
       if (UIPAllow::parseMask(x, *vallow_IP) == 0)
          {
-         delete vallow_IP;
-                vallow_IP = U_NULLPTR;
+         U_DELETE(vallow_IP)
+
+         vallow_IP = U_NULLPTR;
          }
       }
 #endif
@@ -2304,8 +2334,9 @@ void UServer_Base::loadConfigParam()
 
       if (UIPAllow::parseMask(x, *vallow_IP_prv) == 0)
          {
-         delete vallow_IP_prv;
-                vallow_IP_prv = U_NULLPTR;
+         U_DELETE(vallow_IP_prv)
+
+         vallow_IP_prv = U_NULLPTR;
          }
       }
 
@@ -2425,7 +2456,7 @@ void UServer_Base::loadConfigParam()
       {
       U_INTERNAL_ASSERT_EQUALS(ifname, U_NULLPTR)
 
-      U_NEW(UString, ifname, UString(x));
+      U_NEW_STRING(ifname, UString(x));
       }
 
    x = cfg->at(U_CONSTANT_TO_PARAM("LOAD_BALANCE_LOADAVG_THRESHOLD"));
@@ -2444,8 +2475,9 @@ void UServer_Base::loadConfigParam()
 
       if (UIPAllow::parseMask(x, *vallow_cluster) == 0)
          {
-         delete vallow_cluster;
-                vallow_cluster = U_NULLPTR;
+         U_DELETE(vallow_cluster)
+
+         vallow_cluster = U_NULLPTR;
          }
       }
    }
@@ -2508,8 +2540,9 @@ void UServer_Base::loadConfigParam()
 
       if (UIPAllow::parseMask(x, *vwhitelist_IP) == 0)
          {
-         delete vwhitelist_IP;
-                vwhitelist_IP = U_NULLPTR;
+         U_DELETE(vwhitelist_IP)
+
+         vwhitelist_IP = U_NULLPTR;
          }
       }
 
@@ -2523,7 +2556,7 @@ void UServer_Base::loadConfigParam()
       {
       U_INTERNAL_ASSERT_EQUALS(dosEmailAddress, U_NULLPTR)
 
-      U_NEW(UString, dosEmailAddress, UString(x));
+      U_NEW_STRING(dosEmailAddress, UString(x));
 
       if (emailClient == U_NULLPTR)
          {
@@ -2542,7 +2575,7 @@ void UServer_Base::loadConfigParam()
       {
       U_INTERNAL_ASSERT_EQUALS(systemCommand, U_NULLPTR)
 
-      U_NEW(UString, systemCommand, UString(x));
+      U_NEW_STRING(systemCommand, UString(x));
       }
 
    x = cfg->at(U_CONSTANT_TO_PARAM("DOS_LOGFILE"));
@@ -2585,8 +2618,7 @@ U_NO_EXPORT void UServer_Base::loadStaticLinkedModules(const char* name)
    U_INTERNAL_ASSERT_POINTER(vplugin_name)
    U_INTERNAL_ASSERT_MAJOR(vplugin_size, 0)
 
-   uint32_t name_len;
-   UString x(name, (name_len = u__strlen(name, __PRETTY_FUNCTION__)));
+   UString x((void*)name, u__strlen(name, __PRETTY_FUNCTION__));
 
    if (vplugin_name->find(x) != U_NOT_FOUND) // NB: we load only the plugin that we want from configuration (PLUGIN var)...
       {
@@ -2597,49 +2629,49 @@ U_NO_EXPORT void UServer_Base::loadStaticLinkedModules(const char* name)
     defined(U_STATIC_HANDLER_NOCAT)  || defined(U_STATIC_HANDLER_HTTP)
       const UServerPlugIn* _plugin = U_NULLPTR;
 #  ifdef U_STATIC_HANDLER_RPC
-      if (x.equal(U_CONSTANT_TO_PARAM("rpc")))    { U_NEW(URpcPlugIn, _plugin, URpcPlugIn);  goto next; }
+      if (x.equal(U_CONSTANT_TO_PARAM("rpc")))    { U_NEW_WITHOUT_CHECK_MEMORY(URpcPlugIn, _plugin, URpcPlugIn);  goto next; }
 #  endif
 #  ifdef U_STATIC_HANDLER_SHIB
-      if (x.equal(U_CONSTANT_TO_PARAM("shib")))   { U_NEW(UShibPlugIn, _plugin, UShibPlugIn); goto next; }
+      if (x.equal(U_CONSTANT_TO_PARAM("shib")))   { U_NEW_WITHOUT_CHECK_MEMORY(UShibPlugIn, _plugin, UShibPlugIn); goto next; }
 #  endif
 #  ifdef U_STATIC_HANDLER_ECHO
-      if (x.equal(U_CONSTANT_TO_PARAM("echo")))   { U_NEW(UEchoPlugIn, _plugin, UEchoPlugIn); goto next; }
+      if (x.equal(U_CONSTANT_TO_PARAM("echo")))   { U_NEW_WITHOUT_CHECK_MEMORY(UEchoPlugIn, _plugin, UEchoPlugIn); goto next; }
 #  endif
 #  ifdef U_STATIC_HANDLER_STREAM
-      if (x.equal(U_CONSTANT_TO_PARAM("stream"))) { U_NEW(UStreamPlugIn, _plugin, UStreamPlugIn); goto next; }
+      if (x.equal(U_CONSTANT_TO_PARAM("stream"))) { U_NEW_WITHOUT_CHECK_MEMORY(UStreamPlugIn, _plugin, UStreamPlugIn); goto next; }
 #  endif
 #  ifdef U_STATIC_HANDLER_SOCKET
-      if (x.equal(U_CONSTANT_TO_PARAM("socket"))) { U_NEW(UWebSocketPlugIn, _plugin, UWebSocketPlugIn); goto next; }
+      if (x.equal(U_CONSTANT_TO_PARAM("socket"))) { U_NEW_WITHOUT_CHECK_MEMORY(UWebSocketPlugIn, _plugin, UWebSocketPlugIn); goto next; }
 #  endif
 #  ifdef U_STATIC_HANDLER_SCGI
-      if (x.equal(U_CONSTANT_TO_PARAM("scgi")))   { U_NEW(USCGIPlugIn, _plugin, USCGIPlugIn); goto next; }
+      if (x.equal(U_CONSTANT_TO_PARAM("scgi")))   { U_NEW_WITHOUT_CHECK_MEMORY(USCGIPlugIn, _plugin, USCGIPlugIn); goto next; }
 #  endif
 #  ifdef U_STATIC_HANDLER_FCGI
-      if (x.equal(U_CONSTANT_TO_PARAM("fcgi")))   { U_NEW(UFCGIPlugIn, _plugin, UFCGIPlugIn); goto next; }
+      if (x.equal(U_CONSTANT_TO_PARAM("fcgi")))   { U_NEW_WITHOUT_CHECK_MEMORY(UFCGIPlugIn, _plugin, UFCGIPlugIn); goto next; }
 #  endif
 #  ifdef U_STATIC_HANDLER_GEOIP
-      if (x.equal(U_CONSTANT_TO_PARAM("geoip")))  { U_NEW(UGeoIPPlugIn, _plugin, UGeoIPPlugIn); goto next; }
+      if (x.equal(U_CONSTANT_TO_PARAM("geoip")))  { U_NEW_WITHOUT_CHECK_MEMORY(UGeoIPPlugIn, _plugin, UGeoIPPlugIn); goto next; }
 #  endif
 #  ifdef U_STATIC_HANDLER_PROXY
-      if (x.equal(U_CONSTANT_TO_PARAM("proxy")))  { U_NEW(UProxyPlugIn, _plugin, UProxyPlugIn); goto next; }
+      if (x.equal(U_CONSTANT_TO_PARAM("proxy")))  { U_NEW_WITHOUT_CHECK_MEMORY(UProxyPlugIn, _plugin, UProxyPlugIn); goto next; }
 #  endif
 #  ifdef U_STATIC_HANDLER_SOAP
-      if (x.equal(U_CONSTANT_TO_PARAM("soap")))   { U_NEW(USoapPlugIn, _plugin, USoapPlugIn); goto next; }
+      if (x.equal(U_CONSTANT_TO_PARAM("soap")))   { U_NEW_WITHOUT_CHECK_MEMORY(USoapPlugIn, _plugin, USoapPlugIn); goto next; }
 #  endif
 #  ifdef U_STATIC_HANDLER_SSI
-      if (x.equal(U_CONSTANT_TO_PARAM("ssi")))    { U_NEW(USSIPlugIn, _plugin, USSIPlugIn);  goto next; }
+      if (x.equal(U_CONSTANT_TO_PARAM("ssi")))    { U_NEW_WITHOUT_CHECK_MEMORY(USSIPlugIn, _plugin, USSIPlugIn);  goto next; }
 #  endif
 #  ifdef U_STATIC_HANDLER_TSA
-      if (x.equal(U_CONSTANT_TO_PARAM("tsa")))    { U_NEW(UTsaPlugIn, _plugin, UTsaPlugIn);  goto next; }
+      if (x.equal(U_CONSTANT_TO_PARAM("tsa")))    { U_NEW_WITHOUT_CHECK_MEMORY(UTsaPlugIn, _plugin, UTsaPlugIn);  goto next; }
 #  endif
 #  ifdef U_STATIC_HANDLER_NOCAT
-      if (x.equal(U_CONSTANT_TO_PARAM("nocat")))  { U_NEW(UNoCatPlugIn, _plugin, UNoCatPlugIn); goto next; }
+      if (x.equal(U_CONSTANT_TO_PARAM("nocat")))  { U_NEW_WITHOUT_CHECK_MEMORY(UNoCatPlugIn, _plugin, UNoCatPlugIn); goto next; }
 #  endif
 #  ifdef U_STATIC_HANDLER_NODOG
-      if (x.equal(U_CONSTANT_TO_PARAM("nodog")))  { U_NEW(UNoDogPlugIn, _plugin, UNoDogPlugIn); goto next; }
+      if (x.equal(U_CONSTANT_TO_PARAM("nodog")))  { U_NEW_WITHOUT_CHECK_MEMORY(UNoDogPlugIn, _plugin, UNoDogPlugIn); goto next; }
 #  endif
 #  ifdef U_STATIC_HANDLER_HTTP
-      if (x.equal(U_CONSTANT_TO_PARAM("http")))   { U_NEW(UHttpPlugIn, _plugin, UHttpPlugIn); goto next; }
+      if (x.equal(U_CONSTANT_TO_PARAM("http")))   { U_NEW_WITHOUT_CHECK_MEMORY(UHttpPlugIn, _plugin, UHttpPlugIn); goto next; }
 #  endif
 next: if (_plugin)
          {
@@ -2740,8 +2772,8 @@ int UServer_Base::loadPlugins(UString& plugin_dir, const UString& plugin_list)
    U_INTERNAL_ASSERT_MAJOR(vplugin_size, 0)
    U_INTERNAL_ASSERT_EQUALS(vplugin->size(), vplugin_size)
 
-   delete vplugin_static;
-   delete vplugin_name_static;
+   U_DELETE(vplugin_static)
+   U_DELETE(vplugin_name_static)
 
    if (cfg)
       {
@@ -3066,7 +3098,7 @@ next:
 
    // get name host
 
-   U_NEW(UString, host, UString(server ? *server : USocketExt::getNodeName()));
+   U_NEW_STRING(host, UString(server ? *server : USocketExt::getNodeName()));
 
    if (port != 80)
       {
@@ -3102,15 +3134,15 @@ next:
     * is what we want) of the socket
     */
 
+   U_NEW(UUDPSocket, udp_sock, UUDPSocket(UClientImage_Base::bIPv6));
+
 #ifdef USERVER_IPC
    if (bipc == false)
 #endif
    {
-   UUDPSocket cClientSocket(UClientImage_Base::bIPv6);
-
-   if (cClientSocket.connectServer(U_STRING_FROM_CONSTANT("8.8.8.8"), 1001))
+   if (udp_sock->connectServer(U_STRING_FROM_CONSTANT("8.8.8.8"), 1001))
       {
-      socket->setLocal(cClientSocket.cLocalAddress);
+      socket->setLocal(udp_sock->cLocalAddress);
 
       const char* p = socket->getLocalInfo();
 
@@ -3133,11 +3165,11 @@ next:
       }
    else
       {
-      struct in_addr ia;
+      in_addr_t addr;
 
-      if (UIPAddress::getBinaryForm(IP_address->c_str(), ia.s_addr) == false) U_ERROR("IP_ADDRESS conversion fail: %V", IP_address->rep);
+      if (UIPAddress::getBinaryForm(IP_address->c_str(), addr) == false) U_ERROR("IP_ADDRESS conversion fail: %V", IP_address->rep);
 
-      socket->setAddress(&ia);
+      socket->setAddress(&addr);
 
       public_address = (socket->cLocalAddress.isPrivate() == false);
       }
@@ -3306,7 +3338,7 @@ next:
        UServer_Base::update_date)
 # endif
    {
-   U_NEW_ULIB_OBJECT(UTimeThread, u_pthread_time, UTimeThread);
+   U_NEW_WITHOUT_CHECK_MEMORY(UTimeThread, u_pthread_time, UTimeThread);
 
    (void) UThread::initRwLock((ULog::prwlock = &(ptr_shared_data->rwlock)));
 
@@ -3337,8 +3369,6 @@ next:
 #endif
 
 #ifdef DEBUG
-   UEventTime* pstat;
-
    U_NEW(UTimeStat, pstat, UTimeStat);
 
    UTimer::insert(pstat);
@@ -3505,11 +3535,9 @@ next:
    U_INTERNAL_ASSERT_EQUALS(sse_id, U_NULLPTR)
    U_INTERNAL_ASSERT_EQUALS(sse_vclient, U_NULLPTR)
    U_INTERNAL_ASSERT_EQUALS(pthread_sse, U_NULLPTR)
-   U_INTERNAL_ASSERT_EQUALS(str_asterisk, U_NULLPTR)
 
-   U_NEW(UString, sse_id, UString);
+   U_NEW_STRING(sse_id, UString);
    U_NEW(USSEThread, pthread_sse, USSEThread);
-   U_NEW(UString, str_asterisk, U_STRING_FROM_CONSTANT("*"));
    U_NEW(UVector<USSEClient*>, sse_vclient, UVector<USSEClient*>);
 
    pthread_sse->start(0);
@@ -3546,7 +3574,7 @@ bool UServer_Base::addLog(UFile* plog, int flags)
       {
       file_LOG* item;
 
-      U_NEW(file_LOG, item, file_LOG);
+      U_NEW_WITHOUT_CHECK_MEMORY(file_LOG, item, file_LOG);
 
       item->LOG   = plog;
       item->flags = flags;
@@ -3947,7 +3975,7 @@ try_accept:
    setClientAddress(CSOCKET, CLIENT_ADDRESS, CLIENT_ADDRESS_LEN);
 
 #ifdef U_EVASIVE_SUPPORT
-   if (checkHold(CSOCKET->remoteIPAddress().getInAddr()))
+   if (checkHold(CSOCKET->getClientAddress()))
       {
       CSOCKET->abortive_close();
 
@@ -3978,7 +4006,7 @@ try_accept:
 #endif
 
 #ifdef U_ACL_SUPPORT
-   if (vallow_IP && UIPAllow::isAllowed(CSOCKET->remoteIPAddress().getInAddr(), *vallow_IP) == false)
+   if (vallow_IP && UIPAllow::isAllowed(CSOCKET->getClientAddress(), *vallow_IP) == false)
       {
       CSOCKET->abortive_close();
 
@@ -4011,7 +4039,7 @@ try_accept:
        enable_rfc1918_filter                  &&
        CSOCKET->remoteIPAddress().isPrivate() &&
        (vallow_IP_prv == U_NULLPTR            ||
-        UIPAllow::isAllowed(CSOCKET->remoteIPAddress().getInAddr(), *vallow_IP_prv) == false))
+        UIPAllow::isAllowed(CSOCKET->getClientAddress(), *vallow_IP_prv) == false))
       {
       CSOCKET->abortive_close();
 

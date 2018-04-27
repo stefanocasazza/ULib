@@ -146,7 +146,7 @@ void HttpHeader::clear()
 
       U_INTERNAL_DUMP("f = %p", f)
 
-      delete f;
+      U_DELETE(f)
       }
 }
 

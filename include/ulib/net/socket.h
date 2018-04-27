@@ -106,7 +106,7 @@ public:
 
    virtual ~USocket()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, USocket)
+      U_TRACE_DTOR(0, USocket)
 
       if (isOpen()) _close_socket();
       }
@@ -363,6 +363,15 @@ public:
       U_CHECK_MEMORY
 
       return cRemoteAddress;
+      }
+
+   in_addr_t getClientAddress()
+      {
+      U_TRACE_NO_PARAM(0, "USocket::getClientAddress()")
+
+      U_CHECK_MEMORY
+
+      return cRemoteAddress.getInAddr();
       }
 
    UString getMacAddress(const char* device = "eth0");
@@ -782,6 +791,15 @@ protected:
 
    void  close_socket();
    void _close_socket();
+
+   void reOpen()
+      {
+      U_TRACE_NO_PARAM(0, "USocket::reOpen()")
+
+      _close_socket();
+
+      _socket();
+      }
 
    static SocketAddress* cLocal;
    static bool breuseport, bincoming_cpu;

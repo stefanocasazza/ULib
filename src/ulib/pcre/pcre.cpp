@@ -177,7 +177,7 @@ U_NO_EXPORT void UPCRE::zero(uint32_t flags)
 
 UPCRE::UPCRE()
 {
-   U_TRACE_REGISTER_OBJECT(0, UPCRE, "")
+   U_TRACE_CTOR(0, UPCRE, "")
 
    zero(0);
 }
@@ -240,7 +240,7 @@ void UPCRE::clean()
 
       resultset->clear();
 
-      delete resultset;
+      U_DELETE(resultset)
 
       resultset = U_NULLPTR;
       }
@@ -395,8 +395,9 @@ bool UPCRE::search(const char* stuff, uint32_t stuff_len, int offset, int option
 
          resultset->clear();
 
-         delete resultset;
-                resultset = U_NULLPTR;
+         U_DELETE(resultset)
+
+         resultset = U_NULLPTR;
          }
 
       if (bresultset == false) goto end;
@@ -422,19 +423,26 @@ bool UPCRE::search(const char* stuff, uint32_t stuff_len, int offset, int option
 
       U_NEW(UVector<UString>, resultset, UVector<UString>);
 
+      uint32_t len;
+      const char* p;
+
       for (i = 1; i < num; ++i)
          {
-         const char* p = stringlist[i];
+         len = u__strlen((p = stringlist[i]), __PRETTY_FUNCTION__);
 
-         UString str(p, u__strlen(p, __PRETTY_FUNCTION__));
+         if (len == 0) resultset->push_back(UString::getStringNull());
+         else
+            {
+            UString str(p, len);
 
-         resultset->push_back(str);
+            resultset->push_back(str);
 
-         U_INTERNAL_DUMP("resultset[%d] = (%u) %V", i-1, str.size(), str.rep)
+            U_INTERNAL_DUMP("resultset[%d] = (%u) %V", i-1, str.size(), str.rep)
 
-         U_DUMP("getMatchStart(%d) = %u getMatchEnd(%d) = %u getMatchLength(%d) = %u", i-1, getMatchStart(i-1), i-1, getMatchEnd(i-1), i-1, getMatchLength(i-1))
+            U_DUMP("getMatchStart(%d) = %u getMatchEnd(%d) = %u getMatchLength(%d) = %u", i-1, getMatchStart(i-1), i-1, getMatchEnd(i-1), i-1, getMatchLength(i-1))
 
-         U_ASSERT_EQUALS(str.size(), getMatchLength(i-1))
+            U_ASSERT_EQUALS(str.size(), getMatchLength(i-1))
+            }
          }
       }
 

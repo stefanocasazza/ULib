@@ -36,14 +36,14 @@ public:
 
    UXMLParser()
       {
-      U_TRACE_REGISTER_OBJECT(0, UXMLParser, "", 0)
+      U_TRACE_CTOR(0, UXMLParser, "", 0)
 
       m_parser = U_NULLPTR;
       }
 
    virtual ~UXMLParser()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, UXMLParser)
+      U_TRACE_DTOR(0, UXMLParser)
 
       if (m_parser)
          {

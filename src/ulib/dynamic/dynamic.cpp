@@ -59,7 +59,7 @@ HINSTANCE UDynamic::dload(const char* name, uint32_t name_len)
 {
    U_TRACE(0, "UDynamic::dload(%.*S,%u)", name_len, name, name_len)
 
-   if (plugin_dir == U_NULLPTR) U_NEW(UString, plugin_dir, UString(U_STRING_FROM_CONSTANT(U_LIBEXECDIR)));
+   if (plugin_dir == U_NULLPTR) U_NEW_STRING(plugin_dir, UString(U_STRING_FROM_CONSTANT(U_LIBEXECDIR)))
 
    U_INTERNAL_ASSERT(plugin_dir->isNullTerminated())
 

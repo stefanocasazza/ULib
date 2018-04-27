@@ -30,14 +30,14 @@ UClient_Base* USCGIPlugIn::connection;
 
 USCGIPlugIn::USCGIPlugIn()
 {
-   U_TRACE_REGISTER_OBJECT(0, USCGIPlugIn, "")
+   U_TRACE_CTOR(0, USCGIPlugIn, "")
 }
 
 USCGIPlugIn::~USCGIPlugIn()
 {
-   U_TRACE_UNREGISTER_OBJECT(0, USCGIPlugIn)
+   U_TRACE_DTOR(0, USCGIPlugIn)
 
-   if (connection) delete connection;
+   if (connection) U_DELETE(connection)
 }
 
 // Server-wide hooks
@@ -71,7 +71,7 @@ int USCGIPlugIn::handlerConfig(UFileConfig& cfg)
 
       U_INTERNAL_ASSERT_EQUALS(UHTTP::scgi_uri_mask, U_NULLPTR)
 
-      if (x) U_NEW(UString, UHTTP::scgi_uri_mask, UString(x));
+      if (x) U_NEW_STRING(UHTTP::scgi_uri_mask, UString(x))
 
       scgi_keep_conn = cfg.readBoolean(U_CONSTANT_TO_PARAM("SCGI_KEEP_CONN"));
 
@@ -93,8 +93,8 @@ int USCGIPlugIn::handlerInit()
 
       U_NEW(UTCPSocket, connection->socket, UTCPSocket(connection->bIPv6));
 #  else
-      if (connection->port) U_NEW(UTCPSocket,  connection->socket, UTCPSocket(connection->bIPv6));
-      else                  U_NEW(UUnixSocket, connection->socket, UUnixSocket);
+      if (connection->port) U_NEW(UTCPSocket,  connection->socket, UTCPSocket(connection->bIPv6))
+      else                  U_NEW(UUnixSocket, connection->socket, UUnixSocket)
 #  endif
 
       if (connection->connect())
@@ -106,7 +106,7 @@ int USCGIPlugIn::handlerInit()
 #     else
          // NB: SCGI is NOT a static page...
 
-         if (UHTTP::valias == U_NULLPTR) U_NEW(UVector<UString>, UHTTP::valias, UVector<UString>(2U));
+         if (UHTTP::valias == U_NULLPTR) U_NEW(UVector<UString>, UHTTP::valias, UVector<UString>(2U))
 
          UHTTP::valias->push_back(*UHTTP::scgi_uri_mask);
          UHTTP::valias->push_back(*UString::str_nostat);
@@ -115,8 +115,9 @@ int USCGIPlugIn::handlerInit()
 #     endif
          }
 
-      delete connection;
-             connection = U_NULLPTR;
+      U_DELETE(connection)
+
+      connection = U_NULLPTR;
       }
 
    U_RETURN(U_PLUGIN_HANDLER_ERROR);

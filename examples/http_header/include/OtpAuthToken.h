@@ -43,7 +43,7 @@ public:
 
    OtpAuthToken()
       {
-      U_TRACE_REGISTER_OBJECT(5, OtpAuthToken, "")
+      U_TRACE_CTOR(5, OtpAuthToken, "")
       }
 
    /**
@@ -65,7 +65,7 @@ public:
                                    const UString& cf_,   time_t timestamp_, bool migrate_ = false)
          : tid(srvid), uid(uid_), sid(sid_), cf(cf_)
       {
-      U_TRACE_REGISTER_OBJECT(5, OtpAuthToken, "%p,%.*S,%.*S,%.*S,%.*S,%p,%b", eng_, U_STRING_TO_TRACE(srvid),
+      U_TRACE_CTOR(5, OtpAuthToken, "%p,%.*S,%.*S,%.*S,%.*S,%p,%b", eng_, U_STRING_TO_TRACE(srvid),
                U_STRING_TO_TRACE(uid_), U_STRING_TO_TRACE(sid_), U_STRING_TO_TRACE(cf_), timestamp_, migrate_)
 
       valid     = true;
@@ -78,7 +78,7 @@ public:
    */
    ~OtpAuthToken()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, OtpAuthToken)
+      U_TRACE_DTOR(0, OtpAuthToken)
       }
 
    /**

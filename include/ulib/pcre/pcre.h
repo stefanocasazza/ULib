@@ -99,7 +99,7 @@ public:
 
    UPCRE(const UString& expression, uint32_t flags)
       {
-      U_TRACE_REGISTER_OBJECT(0, UPCRE, "%V,%u", expression.rep, flags)
+      U_TRACE_CTOR(0, UPCRE, "%V,%u", expression.rep, flags)
 
       set(expression, flags);
       }
@@ -121,7 +121,7 @@ public:
 
    UPCRE(const UString& expression, const char* flags)
       {
-      U_TRACE_REGISTER_OBJECT(0, UPCRE, "%V,%S", expression.rep, flags)
+      U_TRACE_CTOR(0, UPCRE, "%V,%S", expression.rep, flags)
 
       set(expression, flags);
       }
@@ -132,7 +132,7 @@ public:
 
    ~UPCRE()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, UPCRE)
+      U_TRACE_DTOR(0, UPCRE)
 
       clear();
       }

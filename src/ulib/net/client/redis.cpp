@@ -14,6 +14,11 @@
 #include <ulib/tokenizer.h>
 #include <ulib/net/client/redis.h>
 
+uint32_t           UREDISClient_Base::start;
+ptrdiff_t          UREDISClient_Base::diff;
+UVector<UString>*  UREDISClient_Base::pvec;
+UREDISClient_Base* UREDISClient_Base::pthis;
+
 // Connect to REDIS server
 
 bool UREDISClient_Base::connect(const char* phost, unsigned int _port)
@@ -46,6 +51,16 @@ bool UREDISClient_Base::connect(const char* phost, unsigned int _port)
       {
       U_DUMP("getRedisVersion() = %V", getRedisVersion().rep)
 
+      clear();
+
+      pthis = this;
+
+      UClient_Base::response.clear();
+
+      UClient_Base::reserve(UString::_getReserveNeed());
+
+      UClient_Base::setForResizeResponseBuffer(manageResponseBufferResize);
+
       U_RETURN(true);
       }
 
@@ -75,53 +90,162 @@ UString UREDISClient_Base::getInfoData(const char* section, const char* key, uin
    return UString::getStringNull();
 }
 
-U_NO_EXPORT char* UREDISClient_Base::getResponseItem(char* ptr, UVector<UString>& vec, uint32_t depth)
+void UREDISClient_Base::manageResponseBufferResize(uint32_t n)
 {
-   U_TRACE(0, "UREDISClient_Base::getResponseItem(%p,%p,%u)", ptr, &vec, depth)
+   U_TRACE(0, "UREDISClient_Base::manageResponseBufferResize(%u)", n)
 
-   U_INTERNAL_DUMP("ptr = %.20S", ptr)
+   U_INTERNAL_DUMP("pthis->UClient_Base::response.size() = %u pthis->UClient_Base::response.capacity() = %u start = %u",
+                    pthis->UClient_Base::response.size(),     pthis->UClient_Base::response.capacity(),     start)
 
-   char prefix = *ptr++;
+   U_INTERNAL_ASSERT_MAJOR(n, 0)
+   U_INTERNAL_ASSERT_MAJOR(start, 0)
+
+   if (n < (64U * 1024U)) n = (64U * 1024U);
+
+   if (pthis->UClient_Base::response.space() < n)
+      {
+      U_ASSERT(pthis->x.empty())
+
+      UStringRep* rep = pthis->UClient_Base::response.rep;
+
+      U_INTERNAL_DUMP("rep = %p rep->parent = %p rep->references = %u rep->_length = %u rep->_capacity = %u",
+                       rep,     rep->parent,     rep->references,     rep->_length,     rep->_capacity)
+
+      UStringRep* nrep = UStringRep::create(rep->_length, n, rep->data());
+
+      if ((n = pthis->vitem.size()))
+         {
+         diff = nrep->data() - rep->data();
+
+         U_INTERNAL_DUMP("diff = %ld", diff)
+
+         UStringRep* r;
+#     if defined(U_SUBSTR_INC_REF) || defined(DEBUG)
+         uint32_t ref = 0;
+#     endif
+
+         for (uint32_t i = 0; i < n; ++i)
+            {
+            r = pthis->vitem.UVector<UStringRep*>::at(i);
+
+            if (r->isSubStringOf(rep))
+               {
+#           if defined(U_SUBSTR_INC_REF) || defined(DEBUG)
+               r->parent = nrep;
+
+               ++ref;
+#           endif
+
+               r->shift(diff);
+               }
+            }
+
+#     if defined(U_SUBSTR_INC_REF) || defined(DEBUG)
+         U_INTERNAL_DUMP("ref = %u rep->child = %u", ref, rep->child)
+
+         nrep->child = rep->child;
+                       rep->child = 0;
+#     endif
+         }
+
+      pthis->UClient_Base::response._set(nrep);
+
+      U_INTERNAL_ASSERT(pthis->UClient_Base::response.invariant())
+      }
+}
+
+U_NO_EXPORT bool UREDISClient_Base::getResponseItem()
+{
+   U_TRACE_NO_PARAM(0, "UREDISClient_Base::getResponseItem()")
+
+   char prefix;
+   uint32_t len;
+   const char* ptr1;
+   const char* ptr2;
+
+   if (start == UClient_Base::response.size() &&
+       UClient_Base::readResponse() == false)
+      {
+      U_RETURN(false);
+      }
+
+   U_INTERNAL_DUMP("start = %u (%.20S)", start, UClient_Base::response.c_pointer(start))
+
+   U_INTERNAL_ASSERT(memcmp(UClient_Base::response.c_pointer(start), U_CRLF, U_CONSTANT_SIZE(U_CRLF)))
+
+   prefix = UClient_Base::response.c_char(start++);
 
    U_INTERNAL_DUMP("prefix = %C", prefix)
 
-   if (prefix != U_RC_BULK &&
-       prefix != U_RC_MULTIBULK)
+   ptr1 =
+   ptr2 = UClient_Base::response.c_pointer(start);
+
+   if (prefix != U_RC_BULK &&    // "$15\r\nmy-value-tester\r\n"
+       prefix != U_RC_MULTIBULK) // "*2\r\n$10\r\n1439822796\r\n$6\r\n311090\r\n"
       {
-      char* start = ptr;
+      U_INTERNAL_ASSERT(prefix == U_RC_ANY   || // '?'
+                        prefix == U_RC_INT   || // ':'
+                        prefix == U_RC_ERROR || // '-'
+                        prefix == U_RC_INLINE)  // '+'
 
-      while (*ptr != '\r') ++ptr;
+      while (*ptr2 != '\r') ++ptr2;
 
-      vec.push_back(UClient_Base::response.substr(start, ptr-start));
+      len = ptr2-ptr1;
 
-      return ptr;
+      if (len     != 1   ||
+          ptr1[0] != '0' ||
+          prefix != U_RC_INT)
+         {
+         pvec->push_back(UClient_Base::response.substr(ptr1, len));
+         }
+
+      start += len + U_CONSTANT_SIZE(U_CRLF);
+
+      U_RETURN(false);
       }
 
-   int len = (int) strtol(ptr, &ptr, 10);
-
-   U_INTERNAL_DUMP("len = %d errno = %d", len, errno)
-
-   U_INTERNAL_ASSERT_EQUALS(memcmp(ptr, U_CRLF, U_CONSTANT_SIZE(U_CRLF)), 0)
-
-   if (len > UClient_Base::response.remain(ptr+U_CONSTANT_SIZE(U_CRLF)))
+   if (ptr2[0] == '-')
       {
-      uint32_t d = UClient_Base::response.distance(ptr);
+      U_INTERNAL_ASSERT_EQUALS(ptr2[1], '1')
+      U_INTERNAL_ASSERT_EQUALS(prefix, U_RC_BULK) // "$-1\r\n" (Null Bulk String)
 
-      (void) UClient_Base::readResponse(len+U_CONSTANT_SIZE(U_CRLF));
+      pvec->push_back(UString::getStringNull());
 
-      ptr = UClient_Base::response.c_pointer(d);
+      start += (ptr2-ptr1) + 2 + U_CONSTANT_SIZE(U_CRLF);
+
+      U_RETURN(false);
       }
+
+   len = u_strtoulp(&ptr2);
+
+   ++ptr2;
+
+   U_INTERNAL_DUMP("len = %u ptr2 = %#.2S", len, ptr2-2)
+
+   U_INTERNAL_ASSERT_EQUALS(memcmp(ptr2-2, U_CRLF, U_CONSTANT_SIZE(U_CRLF)), 0)
 
    if (prefix == U_RC_BULK) // "$15\r\nmy-value-tester\r\n"
       {
-      if (len == -1) vec.push_back(UString::getStringNull());
-      else
+      len += U_CONSTANT_SIZE(U_CRLF);
+
+      while (len > UClient_Base::response.remain(ptr2))
          {
-         vec.push_back(UClient_Base::response.substr(ptr +  U_CONSTANT_SIZE(U_CRLF),len));
-                                                     ptr += U_CONSTANT_SIZE(U_CRLF)+len;
+         uint32_t d = UClient_Base::response.distance(ptr2);
+
+         if (UClient_Base::readResponse() == false)
+            {
+            U_RETURN(false);
+            }
+
+         ptr1 = UClient_Base::response.c_pointer(start);
+         ptr2 = UClient_Base::response.c_pointer(d);
          }
 
-      return ptr;
+      pvec->push_back(UClient_Base::response.substr(ptr2, len-U_CONSTANT_SIZE(U_CRLF)));
+
+      start += (ptr2-ptr1) + len;
+
+      U_RETURN(false);
       }
 
    /**
@@ -148,33 +272,41 @@ U_NO_EXPORT char* UREDISClient_Base::getResponseItem(char* ptr, UVector<UString>
     * The second element of the multi-bulk reply to EXEC is a multi-bulk itself
     */
 
-   bool bnested;
+   U_INTERNAL_ASSERT_EQUALS(prefix, U_RC_MULTIBULK)
+
    UVector<UString> vec1(len);
+   UVector<UString>* pvec1 = pvec;
+                             pvec = &vec1;
 
-   for (int i = 0; i < len; ++i)
+   start += (ptr2-ptr1);
+
+   for (uint32_t i = 0; i < len; ++i)
       {
-      bnested = (ptr[U_CONSTANT_SIZE(U_CRLF)] == U_RC_MULTIBULK && ++depth);
+      if (getResponseItem() == false)
+         {
+         if (UClient_Base::isConnected() == false)
+            {
+            (void) UClient_Base::connect();
 
-      U_INTERNAL_DUMP("prefix = %C bnested = %b", ptr[U_CONSTANT_SIZE(U_CRLF)], bnested)
+            U_RETURN(false);
+            }
 
-      ptr = getResponseItem(ptr+U_CONSTANT_SIZE(U_CRLF), vec1, depth);
-
-      if (bnested == false) vec.move(vec1);
+         pvec1->move(vec1);
+         }
       else
          {
          typedef UVector<UString> uvectorstring;
 
-         UStringRep* rep = UObject2StringRep<uvectorstring>(vec1, true);
+         char buffer_output[64U * 1024U];
+         uint32_t buffer_output_len = UObject2String<uvectorstring>(vec1, buffer_output, sizeof(buffer_output));
 
-         vec.push_back(rep);
+         pvec1->push_back(UStringRep::create(buffer_output_len, buffer_output_len, (const char*)buffer_output));
 
          vec1.clear();
          }
       }
 
-   U_DUMP_CONTAINER(vec)
-
-   return ptr;
+   U_RETURN(true);
 }
 
 void UREDISClient_Base::processResponse()
@@ -185,19 +317,15 @@ void UREDISClient_Base::processResponse()
 
    U_INTERNAL_ASSERT_EQUALS(err, U_RC_OK)
 
-         char* ptr = UClient_Base::response.data();
-   const char* end = UClient_Base::response.pend();
+   start = 0;
+   pvec  = &vitem;
 
    do {
-      ptr = getResponseItem(ptr, vitem, 0);
+      getResponseItem();
 
       U_DUMP_CONTAINER(vitem)
-
-      U_INTERNAL_ASSERT_EQUALS(memcmp(ptr, "\r\n", 2), 0)
-
-      ptr += 2;
       }
-   while (ptr < end);
+   while (start < UClient_Base::response.size());
 }
 
 bool UREDISClient_Base::processRequest(char recvtype)
@@ -205,7 +333,7 @@ bool UREDISClient_Base::processRequest(char recvtype)
    U_TRACE(0, "UREDISClient_Base::processRequest(%C)", recvtype)
 
    if (UClient_Base::sendRequest(false) &&
-       (vitem.clear(), UClient_Base::response.setBuffer(UString::_getReserveNeed()), UClient_Base::readResponse(U_SINGLE_READ)))
+       (clear(), UClient_Base::response.setEmpty(), UClient_Base::readResponse(U_SINGLE_READ)))
       {
       char prefix = UClient_Base::response[0];
 

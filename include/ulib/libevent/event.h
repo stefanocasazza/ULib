@@ -130,14 +130,14 @@ public:
 
    UEvent(int _fd, short __ev, F& handler)
       {
-      U_TRACE_REGISTER_OBJECT(0, UEvent<F>, "%d,%hd,%p", _fd, __ev, &handler)
+      U_TRACE_CTOR(0, UEvent<F>, "%d,%hd,%p", _fd, __ev, &handler)
 
       U_SYSCALL_VOID(event_set, "%p,%d,%hd,%p,%p", this, _fd, __ev, wrapper, (void*)&handler);
       }
 
    ~UEvent()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, UEvent)
+      U_TRACE_DTOR(0, UEvent)
       }
 
 #if defined(U_STDCPP_ENABLE) && defined(DEBUG)
@@ -180,14 +180,14 @@ public:
 
    UEvent(int _fd, short __ev, ccallback_type handler, void* arg = 0)
       {
-      U_TRACE_REGISTER_OBJECT(0, UEvent<ccallback_type>, "%d,%hd,%p,%p", _fd, __ev, handler, arg)
+      U_TRACE_CTOR(0, UEvent<ccallback_type>, "%d,%hd,%p,%p", _fd, __ev, handler, arg)
 
       U_SYSCALL_VOID(event_set, "%p,%d,%hd,%p,%p", this, _fd, __ev, handler, arg);
       }
 
    ~UEvent()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, UEvent)
+      U_TRACE_DTOR(0, UEvent)
       }
 
 #if defined(U_STDCPP_ENABLE) && defined(DEBUG)
@@ -225,14 +225,14 @@ public:
 
    UTimerEv(F& handler)
       {
-      U_TRACE_REGISTER_OBJECT(0, UTimerEv, "%p", &handler)
+      U_TRACE_CTOR(0, UTimerEv, "%p", &handler)
 
       U_SYSCALL_VOID(event_set, "%p,%d,%hd,%p,%p", this, -1, 0, UEvent<F>::wrapper, (void*)&handler);
       }
 
    ~UTimerEv()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, UTimerEv)
+      U_TRACE_DTOR(0, UTimerEv)
       }
 
 #if defined(U_STDCPP_ENABLE) && defined(DEBUG)
@@ -266,14 +266,14 @@ public:
 
    UTimerEv(ccallback_type handler, void* arg = 0)
       {
-      U_TRACE_REGISTER_OBJECT(0, UTimerEv<ccallback_type>, "%p,%p", handler, arg)
+      U_TRACE_CTOR(0, UTimerEv<ccallback_type>, "%p,%p", handler, arg)
 
       U_SYSCALL_VOID(event_set, "%p,%d,%hd,%p,%p", this, -1, 0, handler, arg);
       }
 
    ~UTimerEv()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, UTimerEv)
+      U_TRACE_DTOR(0, UTimerEv)
       }
 
 #if defined(U_STDCPP_ENABLE) && defined(DEBUG)
@@ -312,14 +312,14 @@ public:
 
    USignal(int _signum, F& handler)
       {
-      U_TRACE_REGISTER_OBJECT(0, USignal, "%d,%p", _signum, &handler)
+      U_TRACE_CTOR(0, USignal, "%d,%p", _signum, &handler)
 
       U_SYSCALL_VOID(event_set, "%p,%d,%hd,%p,%p", this, _signum, EV_SIGNAL | EV_PERSIST, UEvent<F>::wrapper, (void*)&handler);
       }
 
    ~USignal()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, USignal)
+      U_TRACE_DTOR(0, USignal)
       }
 
    /**
@@ -362,14 +362,14 @@ public:
 
    USignal(int _signum, ccallback_type handler, void* arg = 0)
       {
-      U_TRACE_REGISTER_OBJECT(0, USignal<ccallback_type>, "%d,%p,%p", _signum, handler, arg)
+      U_TRACE_CTOR(0, USignal<ccallback_type>, "%d,%p,%p", _signum, handler, arg)
 
       U_SYSCALL_VOID(event_set, "%p,%d,%hd,%p,%p", this, _signum, EV_SIGNAL | EV_PERSIST, handler, arg);
       }
 
    ~USignal()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, USignal)
+      U_TRACE_DTOR(0, USignal)
       }
 
    /**

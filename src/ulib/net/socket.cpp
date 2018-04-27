@@ -72,7 +72,7 @@ void USocket::setLocal(const UIPAddress& addr)
 
 USocket::USocket(bool bSocketIsIPv6)
 {
-   U_TRACE_REGISTER_OBJECT(0, USocket, "%b", bSocketIsIPv6)
+   U_TRACE_CTOR(0, USocket, "%b", bSocketIsIPv6)
 
    flags       = O_RDWR;
    iState      = CLOSE;
@@ -595,9 +595,7 @@ loop:
 
    if (errno == EISCONN)
       {
-      _close_socket();
-
-      _socket();
+      reOpen();
 
       goto loop;
       }
@@ -1110,9 +1108,7 @@ ok:      setLocal();
 
          if (errno == EISCONN)
             {
-            _close_socket();
-
-            _socket();
+            reOpen();
 
             goto loop;
             }

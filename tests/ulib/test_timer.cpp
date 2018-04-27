@@ -11,12 +11,12 @@ public:
 
    MyAlarm1(long sec, long usec) : UEventTime(sec, usec)
       {
-      U_TRACE_REGISTER_OBJECT(0, MyAlarm1, "%ld,%ld", sec, usec)
+      U_TRACE_CTOR(0, MyAlarm1, "%ld,%ld", sec, usec)
       }
 
    virtual ~MyAlarm1()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, MyAlarm1)
+      U_TRACE_DTOR(0, MyAlarm1)
       }
 
    virtual int handlerTime()
@@ -48,12 +48,12 @@ public:
 
    MyAlarm2(long sec, long usec) : MyAlarm1(sec, usec)
       {
-      U_TRACE_REGISTER_OBJECT(0, MyAlarm2, "%ld,%ld", sec, usec)
+      U_TRACE_CTOR(0, MyAlarm2, "%ld,%ld", sec, usec)
       }
 
    virtual ~MyAlarm2()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, MyAlarm2)
+      U_TRACE_DTOR(0, MyAlarm2)
       }
 
    virtual int handlerTime()

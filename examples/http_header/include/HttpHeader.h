@@ -23,14 +23,14 @@ public:
 
    HttpHeader()
       {
-      U_TRACE_REGISTER_OBJECT(5, HttpHeader, "")
+      U_TRACE_CTOR(5, HttpHeader, "")
       }
 
    /** Destructor of the class.
    */
    ~HttpHeader()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, HttpHeader)
+      U_TRACE_DTOR(0, HttpHeader)
       }
 
    /**

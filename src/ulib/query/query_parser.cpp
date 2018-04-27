@@ -21,20 +21,20 @@ UVector<UQueryNode*>* UQueryParser::termRoots;
 
 UQueryNode::UQueryNode(Type t, UQueryNode* l, UQueryNode* r) : left(l), right(r), type(t)
 {
-   U_TRACE_REGISTER_OBJECT(0, UQueryNode, "%d,%p,%p", t, l, r)
+   U_TRACE_CTOR(0, UQueryNode, "%d,%p,%p", t, l, r)
 }
 
 UQueryNode::UQueryNode(const UString& d) : left(U_NULLPTR), right(U_NULLPTR), value(d), type(VALUE)
 {
-   U_TRACE_REGISTER_OBJECT(0, UQueryNode, "%V", d.rep)
+   U_TRACE_CTOR(0, UQueryNode, "%V", d.rep)
 }
 
 UQueryNode::~UQueryNode()
 {
-   U_TRACE_UNREGISTER_OBJECT(0, UQueryNode)
+   U_TRACE_DTOR(0, UQueryNode)
 
-   if (left)  delete left;
-   if (right) delete right;
+   if (left)  U_DELETE(left)
+   if (right) U_DELETE(right)
 }
 
 void UQueryParser::clear()
@@ -43,24 +43,35 @@ void UQueryParser::clear()
 
    if (tree)
       {
-      delete tree;
-             tree = U_NULLPTR;
+      U_DELETE(tree)
+
+      tree = U_NULLPTR;
+
+      U_INTERNAL_DUMP("termRoots = %p", termRoots)
 
       if (termRoots)
          {
-         uint32_t i, sz = termRoots->size();
+         UVector<UString>* pvec1;
+         UVector<UString>* pvec2;
+         uint32_t sz = termRoots->size();
 
-         for (i = 0; i < sz; ++i)
+         for (uint32_t i = 0; i < sz; ++i)
             {
-            delete negatives[i];
-            delete positives[i];
+            pvec1 = negatives[i];
+            pvec2 = positives[i];
+
+            U_INTERNAL_DUMP("pvec1 = %p pvec2 = %p", pvec1, pvec2)
+
+            U_DELETE(pvec1)
+            U_DELETE(pvec2)
             }
 
          UMemoryPool::_free(negatives, sz, sizeof(void*));
          UMemoryPool::_free(positives, sz, sizeof(void*));
 
-         delete termRoots;
-                termRoots = U_NULLPTR;
+         U_DELETE(termRoots)
+
+         termRoots = U_NULLPTR;
          }
       }
 
@@ -370,7 +381,7 @@ U_NO_EXPORT UQueryNode* UQueryNode::getRawDNF(UQueryNode* root)
          UQueryNode* newRoot = root->right->right;
                                root->right->right = U_NULLPTR;
 
-         delete root; // deletes two nodes
+         U_DELETE(root) // deletes two nodes
 
          UQueryNode* result = getRawDNF(newRoot);
 
@@ -387,7 +398,7 @@ U_NO_EXPORT UQueryNode* UQueryNode::getRawDNF(UQueryNode* root)
          root->right->left  =
          root->right->right = U_NULLPTR;
 
-         delete root->right;  // destroy the OR node
+         U_DELETE(root->right)  // destroy the OR node
 
          UQueryNode* notA = root;
                      notA->right = a;
@@ -413,7 +424,7 @@ U_NO_EXPORT UQueryNode* UQueryNode::getRawDNF(UQueryNode* root)
          root->right->left  =
          root->right->right = U_NULLPTR;
 
-         delete root->right; // destroy the AND node
+         U_DELETE(root->right) // destroy the AND node
 
          UQueryNode* notA = root;
                      notA->right = a;
@@ -773,7 +784,7 @@ U_NO_EXPORT void UQueryNode::destroyDNFOrNodes(UQueryNode* root)
    root->left  =
    root->right = U_NULLPTR;
 
-   delete root;
+   U_DELETE(root)
 
    destroyDNFOrNodes(_left);
    destroyDNFOrNodes(_right);

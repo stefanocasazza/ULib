@@ -25,7 +25,7 @@ template <class T> inline void u_construct(const T** ptr, bool stream_loading)
    U_INTERNAL_ASSERT_POINTER(ptr)
 
 #ifndef U_COVERITY_FALSE_POSITIVE // coverity[RESOURCE_LEAK]
-   if (stream_loading) U_NEW(T, *ptr, T(**ptr));
+   if (stream_loading) U_NEW_WITHOUT_CHECK_MEMORY(T, *ptr, T(**ptr))
 #endif
 }
 
@@ -41,7 +41,7 @@ template <class T> inline void u_destroy(const T* ptr)
 #ifndef U_COVERITY_FALSE_POSITIVE // coverity[RESOURCE_LEAK]
    if (ptr <= (const void*)0x0000ffff) U_ERROR("u_destroy<T>(%p)", ptr);
 
-   delete ptr;
+   U_DELETE(ptr)
 #endif
 }
 
@@ -54,7 +54,7 @@ template <class T> inline void u_destroy(const T** ptr, uint32_t n)
       {
       U_INTERNAL_DUMP("ptr[%u] = %p", i, ptr[i])
 
-      delete ptr[i];
+      U_DELETE(ptr[i])
       }
 #endif
 }

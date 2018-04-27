@@ -144,7 +144,7 @@ public:
 
    UFtpClient(bool bSocketIsIPv6 = false) : Socket(bSocketIsIPv6), pasv(bSocketIsIPv6)
       {
-      U_TRACE_REGISTER_OBJECT(0, UFtpClient, "%b", bSocketIsIPv6)
+      U_TRACE_CTOR(0, UFtpClient, "%b", bSocketIsIPv6)
       }
 
    virtual ~UFtpClient();

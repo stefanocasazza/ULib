@@ -2,36 +2,81 @@
 
 . ../.function
 
-#DOC_ROOT=/srv/wifi-portal-siena/www
-#DOC_ROOT=/srv/wifi-portal-firenze/www
+DOC_ROOT=wi-auth/www
 
-rm -f nocat.log uclient.log /tmp/firewall.err /tmp/nodog.log /tmp/nocat.err /tmp/nodog.pid \
-		out/uclient.out err/uclient.err out/userver_tcp.out err/userver_tcp.err \
-		trace.*uclient*.[0-9]* object.*uclient*.[0-9]* stack.*uclient*.[0-9]* mempool*uclient*.[0-9]* \
-		trace.*userver_tcp*.[0-9]* object.*userver_tcp*.[0-9]* stack.*userver_tcp*.[0-9]* mempool*userver_tcp*.[0-9]* \
- 		nocat/trace.*userver_tcp*.[0-9]* nocat/object.*userver_tcp*.[0-9]* nocat/stack.*userver_tcp*.[0-9]* nocat/mempool*userver_tcp*.[0-9]* \
- 		/usr/lib/nodog*/trace.*userver_tcp*.[0-9]* /usr/lib/nodog*/object.*userver_tcp*.[0-9]* /usr/lib/nodog*/stack.*userver_tcp*.[0-9]* /usr/lib/nodog*/mempool*userver_tcp*.[0-9]*
-#		$DOC_ROOT/trace.*userver_tcp*.[0-9]* $DOC_ROOT/object.*userver_tcp*.[0-9]* $DOC_ROOT/stack.*userver_tcp*.[0-9]*
+rm -f /tmp/uclient.log \
+		out/uclient.out out/userver_tcp.out err/nodog.err err/uclient.err \
+                trace.*userver_*.[0-9]*           object.*userver_*.[0-9]*           stack.*userver_*.[0-9]*           mempool.*userver_*.[0-9]* \
+      $DOC_ROOT/trace.*userver_*.[0-9]* $DOC_ROOT/object.*userver_*.[0-9]* $DOC_ROOT/stack.*userver_*.[0-9]* $DOC_ROOT/mempool.*userver_*.[0-9]*
 
  UTRACE="0 100M 0"
-#UOBJDUMP="0 5M 10"
+ UTRACE_FOLDER=/tmp
+ TMPDIR=/tmp
+#UOBJDUMP="0 10M 100"
 #USIMERR="error.sim"
- export UTRACE UOBJDUMP USIMERR
+#UMEMUSAGE=yes
+export UTRACE UOBJDUMP USIMERR UTRACE_SIGNAL UMEMUSAGE UTRACE_FOLDER TMPDIR
+
+PORTALE=192.168.42.206
 
 DIR_CMD="../../examples/uclient"
 
-QUERY="start_ap?ap=stefano\&public=10.30.1.131:5280"
+cat <<EOF >inp/webclient.cfg
+uclient {
+#SERVER 10.30.1.131
+#PORT 80
+ RES_TIMEOUT 300
+ LOG_FILE /tmp/uclient.log
+ FOLLOW_REDIRECTS yes
+ USER getconfig
+ PASSWORD_AUTH 1011121314 
+}
+EOF
+
+cat <<EOF >inp/webserver.cfg
+userver {
+ IP_ADDRESS 192.168.42.136
+ DOCUMENT_ROOT $DOC_ROOT
+ LOG_FILE /tmp/nocat.log
+#LOG_FILE_SZ 1M
+ LOG_MSG_SIZE -1
+ PID_FILE /tmp/nocat.pid
+ PLUGIN "nocat http"
+ PLUGIN_DIR ../../../../src/ulib/net/server/plugin/.libs
+ PREFORK_CHILD 0 
+ REQ_TIMEOUT 5
+ CGI_TIMEOUT 60
+ TCP_LINGER_SET -1
+ LISTEN_BACKLOG 128
+}
+http {
+ CACHE_FILE_MASK _off_
+ LIMIT_REQUEST_BODY 700K
+ REQUEST_READ_TIMEOUT 30
+}
+nocat {
+ FW_CMD ../firewall/nodog.fw
+ DECRYPT_KEY puppamelo
+ CHECK_EXPIRE_INTERVAL 60
+ FW_ENV "MasqueradeDevice=eth0 'AuthServiceAddr=http://localhost' FullPrivateNetwork=192.168.0.0/12 LocalNetwork=192.168.0.0/24 InternalDevice=wlan0 'ExternalDevice=eth0 tun0 tun2'"
+ LOCAL_NETWORK_LABEL 1000
+#DHCP_DATA_FILE /tmp/kea-leases.tdb
+}
+EOF
 
 #STRACE=$TRUSS
-#start_prg uclient -i -c uclient.cfg "http://www.auth-firenze.com/$QUERY"
+#start_prg uclient -c inp/webclient.cfg -o /tmp/nodog.conf.portal 'http://localhost/get_config?ap=firenzewificonc-dev-r47188_x86_64\&key=192.168.44.55'
 
 DIR_CMD="../../examples/userver"
 
 #STRACE=$TRUSS
-export DIR_LOG_GZ=/tmp
- start_prg_background userver_tcp -c nocat.cfg
-#start_prg_background userver_tcp -c nodog.conf.portal
-#start_prg_background userver_tcp -c nocat/etc/nodog.conf
+#VALGRIND='valgrind --leak-check=yes --track-origins=yes'
+start_prg_background userver_tcp -c inp/webserver.cfg
+
+wait_server_ready localhost 5280
+
+sync
+echo "PID = `cat /tmp/nocat.pid`"
 
 #$SLEEP
 #kill_prg userver_tcp TERM

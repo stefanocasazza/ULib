@@ -29,16 +29,16 @@ public:
 
    UXMLElement()
       {
-      U_TRACE_REGISTER_OBJECT(0, UXMLElement, "", 0)
+      U_TRACE_CTOR(0, UXMLElement, "", 0)
       }
 
    UXMLElement(const UString& s, const UString& a, const UString& n) : str(s), accessorName(a), namespaceName(n)
       {
-      U_TRACE_REGISTER_OBJECT(0, UXMLElement, "%V,%V,%V", s.rep, a.rep, n.rep) }
+      U_TRACE_CTOR(0, UXMLElement, "%V,%V,%V", s.rep, a.rep, n.rep) }
 
    ~UXMLElement()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, UXMLElement)
+      U_TRACE_DTOR(0, UXMLElement)
       }
 
    // SERVICES

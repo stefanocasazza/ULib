@@ -65,7 +65,7 @@ public:
 
    USSHSocket(bool bSocketIsIPv6 = false) : USocket(bSocketIsIPv6)
       {
-      U_TRACE_REGISTER_OBJECT(0, USSHSocket, "%b", bSocketIsIPv6)
+      U_TRACE_CTOR(0, USSHSocket, "%b", bSocketIsIPv6)
 
       buffer  = 0;
       channel = 0;
@@ -77,7 +77,7 @@ public:
 
    ~USSHSocket()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, USSHSocket)
+      U_TRACE_DTOR(0, USSHSocket)
 
       close();
 

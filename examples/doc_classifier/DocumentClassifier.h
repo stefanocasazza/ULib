@@ -38,30 +38,30 @@ public:
 
    explicit Element(Type t) : type(t)
       {
-      U_TRACE_REGISTER_OBJECT(5, Element, "%d", t)
+      U_TRACE_CTOR(5, Element, "%d", t)
 
       node_to_delete = U_NULLPTR;
       }
 
    Element(Type t, UString& d) : type(t), description(d)
       {
-      U_TRACE_REGISTER_OBJECT(5, Element, "%d,%.*S", t, U_STRING_TO_TRACE(d))
+      U_TRACE_CTOR(5, Element, "%d,%.*S", t, U_STRING_TO_TRACE(d))
 
       node_to_delete = U_NULLPTR;
 
-      description.duplicate();
+      if (description.writeable() == false) description.duplicate();
 
    // d.clear();
       }
 
    Element(Type t, UString& d, UString& c) : type(t), description(d), content_type(c)
       {
-      U_TRACE_REGISTER_OBJECT(5, Element, "%d,%.*S,%.*S", t, U_STRING_TO_TRACE(d), U_STRING_TO_TRACE(c))
+      U_TRACE_CTOR(5, Element, "%d,%.*S,%.*S", t, U_STRING_TO_TRACE(d), U_STRING_TO_TRACE(c))
 
       node_to_delete = U_NULLPTR;
 
-       description.duplicate();
-      content_type.duplicate();
+      if ( description.writeable() == false)  description.duplicate();
+      if (content_type.writeable() == false) content_type.duplicate();
 
    // d.clear();
       c.clear();

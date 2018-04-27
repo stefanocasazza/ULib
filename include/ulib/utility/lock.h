@@ -31,14 +31,14 @@ public:
 
    ULock()
       {
-      U_TRACE_REGISTER_OBJECT(0, ULock, "")
+      U_TRACE_CTOR(0, ULock, "")
 
       sem = 0ULL;
       }
 
    ~ULock()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, ULock)
+      U_TRACE_DTOR(0, ULock)
 
       (void) reset();
       }
@@ -138,7 +138,7 @@ protected:
          {
          unlock();
 
-         delete getPointerToSemaphore();
+         U_DELETE(getPointerToSemaphore())
 
          U_RETURN(true);
          }

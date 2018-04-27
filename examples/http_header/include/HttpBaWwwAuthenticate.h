@@ -16,14 +16,14 @@ public:
       */
     HttpBaWwwAuthenticate(const UString& realm_) : HttpField(U_STRING_FROM_CONSTANT("WWW-Authenticate")), realm(realm_)
       {
-      U_TRACE_REGISTER_OBJECT(5, HttpBaWwwAuthenticate, "%.*S", U_STRING_TO_TRACE(realm_))
+      U_TRACE_CTOR(5, HttpBaWwwAuthenticate, "%.*S", U_STRING_TO_TRACE(realm_))
       }
 
    /** Destructor of the class.
    */
    virtual ~HttpBaWwwAuthenticate()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, HttpBaWwwAuthenticate)
+      U_TRACE_DTOR(0, HttpBaWwwAuthenticate)
       }
 
    /**

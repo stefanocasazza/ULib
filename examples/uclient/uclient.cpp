@@ -39,7 +39,7 @@ public:
       {
       U_TRACE(5, "Application::~Application()")
 
-      delete client;
+      U_DELETE(client)
       }
 
    void run(int argc, char* argv[], char* env[])

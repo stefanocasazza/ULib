@@ -20,13 +20,13 @@ public:
 
    HttpField()
       {
-      U_TRACE_REGISTER_OBJECT(5, HttpField, "")
+      U_TRACE_CTOR(5, HttpField, "")
       }
 
    HttpField(const char* name_, unsigned name_len, const char* value_, unsigned value_len)
          : name(name_, name_len), value(value_, value_len)
       {
-      U_TRACE_REGISTER_OBJECT(5, HttpField, "%.*S,%u,%.*S,%u", name_len, name_, name_len, value_len, value_, value_len)
+      U_TRACE_CTOR(5, HttpField, "%.*S,%u,%.*S,%u", name_len, name_, name_len, value_len, value_, value_len)
       }
 
    /**
@@ -34,7 +34,7 @@ public:
    */
    HttpField(const UString& name_) : name(name_)
       {
-      U_TRACE_REGISTER_OBJECT(5, HttpField, "%.*S", U_STRING_TO_TRACE(name_))
+      U_TRACE_CTOR(5, HttpField, "%.*S", U_STRING_TO_TRACE(name_))
       }
 
    /**
@@ -43,14 +43,14 @@ public:
    */
    HttpField(const UString& name_, const UString& value_) : name(name_), value(value_)
       {
-      U_TRACE_REGISTER_OBJECT(5, HttpField, "%.*S,%.*S", U_STRING_TO_TRACE(name_), U_STRING_TO_TRACE(value_))
+      U_TRACE_CTOR(5, HttpField, "%.*S,%.*S", U_STRING_TO_TRACE(name_), U_STRING_TO_TRACE(value_))
       }
 
    /** Destructor of the class.
    */
    virtual ~HttpField()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, HttpField)
+      U_TRACE_DTOR(0, HttpField)
       }
 
    /// ASSEGNAZIONI

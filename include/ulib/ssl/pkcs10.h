@@ -43,7 +43,7 @@ public:
 
    UPKCS10(X509_REQ* _request = U_NULLPTR) : request(_request)
       {
-      U_TRACE_REGISTER_OBJECT(0, UPKCS10, "%p", _request)
+      U_TRACE_CTOR(0, UPKCS10, "%p", _request)
       }
 
    /**
@@ -58,7 +58,7 @@ public:
 
    UPKCS10(const UString& x, const char* format = U_NULLPTR)
       {
-      U_TRACE_REGISTER_OBJECT(0, UPKCS10, "%V,%S", x.rep, format)
+      U_TRACE_CTOR(0, UPKCS10, "%V,%S", x.rep, format)
 
       request = readPKCS10(x, format);
       }
@@ -80,7 +80,7 @@ public:
 
    ~UPKCS10()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, UPKCS10)
+      U_TRACE_DTOR(0, UPKCS10)
 
       if (request) clear();
       }

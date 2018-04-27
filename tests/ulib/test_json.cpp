@@ -116,7 +116,11 @@ static void testQuery(const UString& json, const char* cquery, const UString& ex
    U_TRACE(5, "testQuery(%V,%S,%V)", json.rep, cquery, expected.rep)
 
    char buffer[4096];
-   UString result, query(cquery, strlen(cquery));
+   UString result, query;
+   uint32_t query_len = strlen(cquery);
+
+   if (query_len) (void) query.assign(cquery, query_len);
+
    int dataType = UValue::jread(json, query, result);
 
    cout.write(buffer, u__snprintf(buffer, sizeof(buffer), U_CONSTANT_TO_PARAM("dataType = (%d %S) query = %V result(%u) = %V UValue::jread_elements = %d "
@@ -370,7 +374,7 @@ U_EXPORT main (int argc, char* argv[], char* env[])
 
    testQuery( U_STRING_FROM_CONSTANT("{ \"_id\" : 3457, \"id\" : 3457, \"randomNumber\" : 8427 }"), "{'randomNumber'", U_STRING_FROM_CONSTANT("8427") );
    testQuery( exampleJson, "", exampleJson );
-   testQuery( exampleJson, "[1", U_STRING_FROM_CONSTANT("") );
+   testQuery( exampleJson, "[1", UString::getStringNull() );
    testQuery( exampleJson, "{'astring'", U_STRING_FROM_CONSTANT("This is a string") );
    testQuery( exampleJson, "{'number1'", U_STRING_FROM_CONSTANT("42") );
    testQuery( exampleJson, "{'number2'", U_STRING_FROM_CONSTANT("-123.45") );
@@ -379,17 +383,17 @@ U_EXPORT main (int argc, char* argv[], char* env[])
    testQuery( exampleJson, "{'isnull'", U_STRING_FROM_CONSTANT("null") );
    testQuery( exampleJson, "{'yes'", U_STRING_FROM_CONSTANT("true") );
    testQuery( exampleJson, "{'no'", U_STRING_FROM_CONSTANT("false") );
-   testQuery( exampleJson, "{'missing'", U_STRING_FROM_CONSTANT("") );
+   testQuery( exampleJson, "{'missing'", UString::getStringNull() );
    testQuery( exampleJson, "{'anObject'{'two'", U_STRING_FROM_CONSTANT("{\"obj2.1\":21,\"obj2.2\":22}") );
    testQuery( exampleJson, "{'anObject' {'two' {'obj2.2'", U_STRING_FROM_CONSTANT("22") );
    testQuery( exampleJson, "{'anObject'{'three'", U_STRING_FROM_CONSTANT("333") );
    testQuery( exampleJson, "{'anArray' [1", U_STRING_FROM_CONSTANT("one") );
    testQuery( exampleJson, "{'anArray' [2 {'two.1'", U_STRING_FROM_CONSTANT("21") );
    testQuery( exampleJson, "{'anArray' [4 [2", U_STRING_FROM_CONSTANT("444") );
-   testQuery( exampleJson, "{'anArray' [999", U_STRING_FROM_CONSTANT("") );
+   testQuery( exampleJson, "{'anArray' [999", UString::getStringNull() );
    testQuery( exampleJson, "{3", U_STRING_FROM_CONSTANT("anObject") );
    testQuery( exampleJson, "{'anObject' {1", U_STRING_FROM_CONSTANT("two") );
-   testQuery( exampleJson, "{999", U_STRING_FROM_CONSTANT("") );
+   testQuery( exampleJson, "{999", UString::getStringNull() );
 
 #if defined(U_STDCPP_ENABLE) && defined(HAVE_CXX11) && defined(U_COMPILER_RANGE_FOR)
    UValue json_vec;

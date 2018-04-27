@@ -66,7 +66,7 @@ USSLSocket::stapling USSLSocket::staple;
 
 USSLSocket::USSLSocket(bool bSocketIsIPv6, SSL_CTX* _ctx, bool bserver) : USocket(bSocketIsIPv6)
 {
-   U_TRACE_REGISTER_OBJECT(0, USSLSocket, "%b,%p,%b", bSocketIsIPv6, _ctx, bserver)
+   U_TRACE_CTOR(0, USSLSocket, "%b,%p,%b", bSocketIsIPv6, _ctx, bserver)
 
    ciphersuite_model = Intermediate;
 
@@ -107,7 +107,7 @@ USSLSocket::USSLSocket(bool bSocketIsIPv6, SSL_CTX* _ctx, bool bserver) : USocke
 
 USSLSocket::~USSLSocket()
 {
-   U_TRACE_UNREGISTER_OBJECT(0, USSLSocket)
+   U_TRACE_DTOR(0, USSLSocket)
 
    U_INTERNAL_ASSERT_POINTER(ctx)
 
@@ -1379,8 +1379,8 @@ next:
          U_INTERNAL_ASSERT_EQUALS(staple.client, U_NULLPTR)
          U_INTERNAL_ASSERT_EQUALS(staple.request, U_NULLPTR)
 
-         U_NEW(UString, staple.url,     UString((void*)s, len));
-         U_NEW(UString, staple.request, UString(U_CAPACITY));
+         U_NEW_STRING(staple.url,     UString((void*)s, len));
+         U_NEW_STRING(staple.request, UString(U_CAPACITY));
 
          U_NEW(UHttpClient<UTCPSocket>, staple.client, UHttpClient<UTCPSocket>(U_NULLPTR));
 
@@ -1665,9 +1665,9 @@ void USSLSocket::cleanupStapling()
 {
    U_TRACE_NO_PARAM(1, "USSLSocket::cleanupStapling()")
 
-   if (staple.url)     delete staple.url;
-   if (staple.client)  delete staple.client;
-   if (staple.request) delete staple.request;
+   if (staple.url)     U_DELETE(staple.url)
+   if (staple.client)  U_DELETE(staple.client)
+   if (staple.request) U_DELETE(staple.request)
 
    if (staple.cert)   U_SYSCALL_VOID(X509_free,         "%p", staple.cert);
    if (staple.pkey)   U_SYSCALL_VOID(EVP_PKEY_free,     "%p", staple.pkey);

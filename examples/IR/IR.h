@@ -116,13 +116,13 @@ public:
 
       if (brdb)
          {
-         delete (URDB*)cdb_names;
-         delete (URDB*)cdb_words;
+         U_DELETE((URDB*)cdb_names)
+         U_DELETE((URDB*)cdb_words)
          }
       else
          {
-         delete cdb_names;
-         delete cdb_words;
+         U_DELETE(cdb_names)
+         U_DELETE(cdb_words)
          }
 
       UApplication::exit_value = 0;

@@ -46,17 +46,17 @@ public:
 
    URPCMethod()
       {
-      U_TRACE_REGISTER_OBJECT(0, URPCMethod, "", 0)
+      U_TRACE_CTOR(0, URPCMethod, "", 0)
       }
 
    URPCMethod(const UString& n, const UString& _ns) : method_name(n), ns(_ns)
       {
-      U_TRACE_REGISTER_OBJECT(0, URPCMethod, "%V,%V", n.rep, _ns.rep)
+      U_TRACE_CTOR(0, URPCMethod, "%V,%V", n.rep, _ns.rep)
       }
 
    virtual ~URPCMethod()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, URPCMethod)
+      U_TRACE_DTOR(0, URPCMethod)
       }
 
    // GLOBAL SERVICES

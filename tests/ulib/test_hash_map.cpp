@@ -73,20 +73,23 @@ static void check2(UHashMap<UString>& y)
    U_TRACE_NO_PARAM(5, "check2()")
 
    U_ASSERT( y.erase(U_STRING_FROM_CONSTANT("NOT_PRESENT")) == UString::getStringNull() )
-   U_ASSERT(       y[                       "NOT_PRESENT"]  == UString::getStringNull() )
+
+   UString x = y["NOT_PRESENT"];
+
+   U_ASSERT_EQUALS(x, UString::getStringNull())
 
    y.insertAfterFind(U_STRING_FROM_CONSTANT("60M"));
 
-   U_ASSERT( y["NOT_PRESENT"] == U_STRING_FROM_CONSTANT("60M") )
+   x = y["NOT_PRESENT"];
 
-   UString value = y["NOT_PRESENT"];
+   U_ASSERT_EQUALS(x, U_STRING_FROM_CONSTANT("60M"))
 
    U_ASSERT( y.erase(U_STRING_FROM_CONSTANT("NOT_PRESENT")) == U_STRING_FROM_CONSTANT("60M") )
 
-   U_ASSERT( value == U_STRING_FROM_CONSTANT("60M") )
+   U_ASSERT_EQUALS(x, U_STRING_FROM_CONSTANT("60M"))
 
-   U_ASSERT( value.strtoul(true)  == 60   * 1024   * 1024 )
-   U_ASSERT( value.strtoull(true) == 60LL * 1024LL * 1024LL )
+   U_ASSERT( x.strtoul(true)  == 60   * 1024   * 1024 )
+   U_ASSERT( x.strtoull(true) == 60LL * 1024LL * 1024LL )
 }
 
 static void print(UStringRep* key, void* value)

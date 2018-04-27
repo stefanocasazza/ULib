@@ -50,7 +50,7 @@ public:
 
    UProcess()
       {
-      U_TRACE_REGISTER_OBJECT(0, UProcess, "", 0)
+      U_TRACE_CTOR(0, UProcess, "", 0)
 
       _pid    = (pid_t)-1;
       status  = 0;
@@ -59,7 +59,7 @@ public:
 
    ~UProcess()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, UProcess)
+      U_TRACE_DTOR(0, UProcess)
       }
 
    // FORK

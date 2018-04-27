@@ -245,7 +245,7 @@ public:
 
    UDBIRow(dbi_result res_ = U_NULLPTR) : res(res_)
       {
-      U_TRACE_REGISTER_OBJECT(0, UDBIRow, "%p", res_)
+      U_TRACE_CTOR(0, UDBIRow, "%p", res_)
 
       owner   = (res_ != U_NULLPTR);
       current = 0;
@@ -253,7 +253,7 @@ public:
 
    ~UDBIRow()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, UDBIRow)
+      U_TRACE_DTOR(0, UDBIRow)
 
       if (owner)
          {
@@ -474,12 +474,12 @@ public:
 
    UDBISet(dbi_result res_ = U_NULLPTR) : res(res_)
       {
-      U_TRACE_REGISTER_OBJECT(0, UDBISet, "%p", res_)
+      U_TRACE_CTOR(0, UDBISet, "%p", res_)
       }
 
    ~UDBISet()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, UDBISet)
+      U_TRACE_DTOR(0, UDBISet)
 
       if (res) clear();
       }
@@ -557,7 +557,7 @@ public:
 
    UDBITransaction(UDBI& s) : sql(s)
       {
-      U_TRACE_REGISTER_OBJECT(0, UDBITransaction, "%p", &s)
+      U_TRACE_CTOR(0, UDBITransaction, "%p", &s)
 
       commited = false;
 
@@ -568,7 +568,7 @@ public:
 
    ~UDBITransaction()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, UDBITransaction)
+      U_TRACE_DTOR(0, UDBITransaction)
 
       if (!commited) sql << "ROLLBACK",exec();
       }

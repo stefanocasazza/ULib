@@ -26,15 +26,15 @@ UCommand* UWebSocketPlugIn::command;
 
 UWebSocketPlugIn::UWebSocketPlugIn()
 {
-   U_TRACE_REGISTER_OBJECT(0, UWebSocketPlugIn, "")
+   U_TRACE_CTOR(0, UWebSocketPlugIn, "")
 }
 
 UWebSocketPlugIn::~UWebSocketPlugIn()
 {
-   U_TRACE_UNREGISTER_OBJECT(0, UWebSocketPlugIn)
+   U_TRACE_DTOR(0, UWebSocketPlugIn)
 
-   if (command)             delete command;
-   if (UWebSocket::rbuffer) delete UWebSocket::rbuffer;
+   if (command)             U_DELETE(command)
+   if (UWebSocket::rbuffer) U_DELETE(UWebSocket::rbuffer)
 }
 
 RETSIGTYPE UWebSocketPlugIn::handlerForSigTERM(int signo)
@@ -76,7 +76,7 @@ int UWebSocketPlugIn::handlerRun()
 
    U_INTERNAL_ASSERT_EQUALS(UWebSocket::rbuffer, U_NULLPTR)
 
-   U_NEW(UString, UWebSocket::rbuffer, UString(U_CAPACITY));
+   U_NEW_STRING(UWebSocket::rbuffer, UString(U_CAPACITY));
 
    if (UHTTP::getUSP(U_CONSTANT_TO_PARAM("modsocket")))
       {

@@ -31,7 +31,7 @@ public:
 
       CSP_CA()
          {
-         U_TRACE_REGISTER_OBJECT(5, CSP_CA, "")
+         U_TRACE_CTOR(5, CSP_CA, "")
 
          days                    = 0;
          URPCMethod::method_name = U_STRING_FROM_CONSTANT("CREA");
@@ -39,7 +39,7 @@ public:
 
       virtual ~CSP_CA()
          {
-         U_TRACE_UNREGISTER_OBJECT(5, CSP_CA)
+         U_TRACE_DTOR(5, CSP_CA)
          }
 
       // Transforms the method into something that SOAP servers and client can send.
@@ -62,14 +62,14 @@ public:
 
       CSP_LIST_CA()
          {
-         U_TRACE_REGISTER_OBJECT(5, CSP_LIST_CA, "")
+         U_TRACE_CTOR(5, CSP_LIST_CA, "")
 
          URPCMethod::method_name = U_STRING_FROM_CONSTANT("LST1");
          }
 
       virtual ~CSP_LIST_CA()
          {
-         U_TRACE_UNREGISTER_OBJECT(5, CSP_LIST_CA)
+         U_TRACE_DTOR(5, CSP_LIST_CA)
          }
 
       virtual void encode()
@@ -86,14 +86,14 @@ public:
 
       CSP_SIGN_P10()
          {
-         U_TRACE_REGISTER_OBJECT(5, CSP_SIGN_P10, "")
+         U_TRACE_CTOR(5, CSP_SIGN_P10, "")
 
          URPCMethod::method_name = U_STRING_FROM_CONSTANT("SIGP");
          }
 
       virtual ~CSP_SIGN_P10()
          {
-         U_TRACE_UNREGISTER_OBJECT(5, CSP_SIGN_P10)
+         U_TRACE_DTOR(5, CSP_SIGN_P10)
          }
 
       // Transforms the method into something that SOAP servers and client can send.
@@ -117,14 +117,14 @@ public:
 
       CSP_SIGN_SPKAC()
          {
-         U_TRACE_REGISTER_OBJECT(5, CSP_SIGN_SPKAC, "")
+         U_TRACE_CTOR(5, CSP_SIGN_SPKAC, "")
 
          URPCMethod::method_name = U_STRING_FROM_CONSTANT("SIGK");
          }
 
       virtual ~CSP_SIGN_SPKAC()
          {
-         U_TRACE_UNREGISTER_OBJECT(5, CSP_SIGN_SPKAC)
+         U_TRACE_DTOR(5, CSP_SIGN_SPKAC)
          }
 
       // Transforms the method into something that SOAP servers and client can send.
@@ -149,7 +149,7 @@ public:
 
       CSP_LIST_CERTS()
          {
-         U_TRACE_REGISTER_OBJECT(5, CSP_LIST_CERTS, "")
+         U_TRACE_CTOR(5, CSP_LIST_CERTS, "")
 
          compress                = 0;
          URPCMethod::method_name = U_STRING_FROM_CONSTANT("LST2");
@@ -157,7 +157,7 @@ public:
 
       virtual ~CSP_LIST_CERTS()
          {
-         U_TRACE_UNREGISTER_OBJECT(5, CSP_LIST_CERTS)
+         U_TRACE_DTOR(5, CSP_LIST_CERTS)
          }
 
       // Transforms the method into something that SOAP servers and client can send.
@@ -180,14 +180,14 @@ public:
 
       CSP_REMOVE_CERT()
          {
-         U_TRACE_REGISTER_OBJECT(5, CSP_REMOVE_CERT, "")
+         U_TRACE_CTOR(5, CSP_REMOVE_CERT, "")
 
          URPCMethod::method_name = U_STRING_FROM_CONSTANT("DELC");
          }
 
       virtual ~CSP_REMOVE_CERT()
          {
-         U_TRACE_UNREGISTER_OBJECT(5, CSP_REMOVE_CERT)
+         U_TRACE_DTOR(5, CSP_REMOVE_CERT)
          }
 
       // Transforms the method into something that SOAP servers and client can send.
@@ -210,14 +210,14 @@ public:
 
       CSP_ZERO_CERTS()
          {
-         U_TRACE_REGISTER_OBJECT(5, CSP_ZERO_CERTS, "")
+         U_TRACE_CTOR(5, CSP_ZERO_CERTS, "")
 
          URPCMethod::method_name = U_STRING_FROM_CONSTANT("ZERO");
          }
 
       virtual ~CSP_ZERO_CERTS()
          {
-         U_TRACE_UNREGISTER_OBJECT(5, CSP_ZERO_CERTS)
+         U_TRACE_DTOR(5, CSP_ZERO_CERTS)
          }
 
       // Transforms the method into something that SOAP servers and client can send.
@@ -239,14 +239,14 @@ public:
 
       CSP_EMIT_CRL()
          {
-         U_TRACE_REGISTER_OBJECT(5, CSP_EMIT_CRL, "")
+         U_TRACE_CTOR(5, CSP_EMIT_CRL, "")
 
          URPCMethod::method_name = U_STRING_FROM_CONSTANT("EMIT");
          }
 
       virtual ~CSP_EMIT_CRL()
          {
-         U_TRACE_UNREGISTER_OBJECT(5, CSP_EMIT_CRL)
+         U_TRACE_DTOR(5, CSP_EMIT_CRL)
          }
 
       // Transforms the method into something that SOAP servers and client can send.
@@ -268,14 +268,14 @@ public:
 
       CSP_GET_CRL()
          {
-         U_TRACE_REGISTER_OBJECT(5, CSP_GET_CRL, "")
+         U_TRACE_CTOR(5, CSP_GET_CRL, "")
 
          URPCMethod::method_name = U_STRING_FROM_CONSTANT("GETL");
          }
 
       virtual ~CSP_GET_CRL()
          {
-         U_TRACE_UNREGISTER_OBJECT(5, CSP_GET_CRL)
+         U_TRACE_DTOR(5, CSP_GET_CRL)
          }
 
       // Transforms the method into something that SOAP servers and client can send.
@@ -297,14 +297,14 @@ public:
 
       CSP_GET_CA()
          {
-         U_TRACE_REGISTER_OBJECT(5, CSP_GET_CA, "")
+         U_TRACE_CTOR(5, CSP_GET_CA, "")
 
          URPCMethod::method_name = U_STRING_FROM_CONSTANT("GETC");
          }
 
       virtual ~CSP_GET_CA()
          {
-         U_TRACE_UNREGISTER_OBJECT(5, CSP_GET_CA)
+         U_TRACE_DTOR(5, CSP_GET_CA)
          }
 
       // Transforms the method into something that SOAP servers and client can send.
@@ -326,14 +326,14 @@ public:
 
       CSP_REVOKE_CERT()
          {
-         U_TRACE_REGISTER_OBJECT(5, CSP_REVOKE_CERT, "")
+         U_TRACE_CTOR(5, CSP_REVOKE_CERT, "")
 
          URPCMethod::method_name = U_STRING_FROM_CONSTANT("REVK");
          }
 
       virtual ~CSP_REVOKE_CERT()
          {
-         U_TRACE_UNREGISTER_OBJECT(5, CSP_REVOKE_CERT)
+         U_TRACE_DTOR(5, CSP_REVOKE_CERT)
          }
 
       // Transforms the method into something that SOAP servers and client can send.
@@ -561,7 +561,7 @@ public:
       {
       U_TRACE(5, "Application::~Application()")
 
-      delete client;
+      U_DELETE(client)
       }
 
    void run(int argc, char* argv[], char* env[])

@@ -76,6 +76,21 @@ __pure uint32_t u_random(uint32_t a)
    return a;
 }
 
+__pure uint32_t u_integerHash(uint32_t value)
+{
+   // http://www.concentric.net/~Ttwang/tech/inthash.htm
+
+   uint32_t key = value;
+
+   key = (key ^ 61) ^ (key >> 16);
+   key += key << 3;
+   key ^= key >> 4;
+   key *= 0x27d4eb2d; // a prime or an odd constant
+   key ^= key >> 15;
+
+   return key;
+}
+
 #ifdef HAVE_ARCH64
 __pure uint32_t u_random64(uint64_t ptr)
 {

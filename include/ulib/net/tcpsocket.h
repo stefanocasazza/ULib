@@ -21,12 +21,12 @@ public:
 
    UTCPSocket(bool bSocketIsIPv6 = false) : USocket(bSocketIsIPv6)
       {
-      U_TRACE_REGISTER_OBJECT(0, UTCPSocket, "%b", bSocketIsIPv6)
+      U_TRACE_CTOR(0, UTCPSocket, "%b", bSocketIsIPv6)
       }
 
    ~UTCPSocket()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, UTCPSocket)
+      U_TRACE_DTOR(0, UTCPSocket)
       }
 
    // DEBUG

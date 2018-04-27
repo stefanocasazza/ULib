@@ -16,16 +16,18 @@
 
 #include <ulib/base/base.h>
 
+#ifdef USE_LIBXML2
+#  include <libxml/xpathInternals.h>
+#endif
+
 /**
  * class UObjectDumpable
  *
  * Base class that defines a uniform interface for all object dumping
  *
- * A mechanism that allow all objects to be registered with a central in-memory "database" that can dump the state of all
- * live objects. The macros which allow easy registration and removal of objects to be dumped (U_REGISTER_OBJECT_PTR,
- * U_TRACE_REGISTER_OBJECT and U_UNREGISTER_OBJECT, U_TRACE_UNREGISTER_OBJECT) are turned into no-ops by compiling with
- * the DEBUG macro undefined. This allows usage to be removed in "release mode" builds without changing code. There are
- * several interesting aspects to this design:
+ * A mechanism that allow all objects to be registered with a central in-memory "database" that can dump the state of all live objects.
+ * The macros which allow easy registration and removal of objects to be dumped are turned into no-ops by compiling with the DEBUG macro
+ * undefined. This allows usage to be removed in "release mode" builds without changing code. There are several interesting aspects to this design:
  *
  * 1. It uses the External Polymorphism pattern to avoid having to derive all classes from a common base class that has
  * virtual methods (this is crucial to avoid unnecessary overhead). In addition, there is no additional space added
@@ -45,8 +47,7 @@ class UHashMapObjectDumpable;
 class U_NO_EXPORT UObjectDumpable {
 public:
 
-   UObjectDumpable(int lv, const char* name, const void* pobj, uint32_t sz, const void** pmem)
-               : level(lv), name_class(name), ptr_object(pobj),  sz_obj(sz),   psentinel(pmem)
+   UObjectDumpable(int lv, const char* name, void* pobj, uint32_t sz, void** pmem) : level(lv), name_class(name), ptr_object(pobj), sz_obj(sz), psentinel(pmem)
       {
       cnt       = 0;
       num_line  = 0;
@@ -64,9 +65,9 @@ protected:
    const char* name_file;
    const char* name_class;
    const char* name_function;
-   const void* ptr_object; // Pointer to the object that is being stored
+   void* ptr_object; // Pointer to the object that is being stored
    uint32_t sz_obj, cnt;
-   const void** psentinel; // Pointer to the memory sentinel of the object (for memory check)
+   void** psentinel; // Pointer to the memory sentinel of the object (for memory check)
 
    friend class UObjectDB;
    friend class UHashMapObjectDumpable;
@@ -84,24 +85,42 @@ protected:
 template <class Concrete> class U_NO_EXPORT UObjectDumpable_Adapter : public UObjectDumpable {
 public:
 
-   UObjectDumpable_Adapter(int lv, const char* name, const Concrete* pobj, const void** pmem) : UObjectDumpable(lv, name, pobj, sizeof(Concrete), pmem)
+   UObjectDumpable_Adapter(int lv, const char* name, const Concrete* pobj, void** pmem) : UObjectDumpable(lv, name, (void*)pobj, sizeof(Concrete), pmem)
       {
-      U_INTERNAL_TRACE("UObjectDumpable_Adapter::UObjectDumpable_Adapter(%d,%s,%p,%p)", lv, name, pobj, pmem)
+      U_INTERNAL_TRACE("UObjectDumpable_Adapter::UObjectDumpable_Adapter<Concrete>(%d,%s,%p,%p)", lv, name, pobj, pmem)
 
       U_INTERNAL_PRINT("this = %p", this)
       }
 
    ~UObjectDumpable_Adapter()
       {
-      U_INTERNAL_TRACE("UObjectDumpable_Adapter::~UObjectDumpable_Adapter()", 0)
+      U_INTERNAL_TRACE("UObjectDumpable_Adapter::~UObjectDumpable_Adapter<Concrete>()", 0)
 
       U_INTERNAL_PRINT("this = %p", this)
       }
 
    // Concrete dump method (simply delegates to the 'dump()' method of class Concrete)
 
-   virtual const char* dump() const __pure { return ((const Concrete*)ptr_object)->dump(true); }
+   virtual const char* dump() const __pure { return ((Concrete*)ptr_object)->dump(true); }
 };
+
+#ifdef USE_LIBXML2
+template <> class U_NO_EXPORT UObjectDumpable_Adapter<_xmlNode> : public UObjectDumpable {
+public:
+
+   UObjectDumpable_Adapter(int lv, const char* name, const _xmlNode* pobj, void** pmem) : UObjectDumpable(lv, name, (void*)pobj, sizeof(_xmlNode), pmem)
+      {
+      U_INTERNAL_TRACE("UObjectDumpable_Adapter::UObjectDumpable_Adapter<_xmlNode>(%d,%s,%p,%p)", lv, name, pobj, pmem)
+      }
+
+   ~UObjectDumpable_Adapter()
+      {
+      U_INTERNAL_TRACE("UObjectDumpable_Adapter::~UObjectDumpable_Adapter<_xmlNode>()", 0)
+      }
+
+   virtual const char* dump() const __pure { return ""; }
+};
+#endif
 
 /**
  * class UObjectDB
@@ -112,23 +131,21 @@ public:
 class U_NO_EXPORT UObjectDB {
 public:
 
-   static bool U_EXPORT flag_new_object;
-   static int  U_EXPORT fd, level_active;
-   static bool U_EXPORT flag_ulib_object;
+   static int U_EXPORT fd, level_active;
 
    static void close();
    static void initFork();
    static void init(bool flag);
 
+   static void U_EXPORT unregisterObject(void* ptr_object);        // Use 'ptr_object' to locate and remove the associated 'dumper' from the list of registered objects
    static void U_EXPORT   registerObject(UObjectDumpable* dumper); // Add the 'dumper' to the list of registered objects
-   static void U_EXPORT unregisterObject(const void* ptr_object);  // Use 'ptr_object' to locate and remove the associated 'dumper' from the list of registered objects
 
    // Iterates through the entire set of registered objects and dumps their state
 
    static void     dumpObjects();
-   static void     dumpObject(const UObjectDumpable* dumper);
+   static void     dumpObject(UObjectDumpable* dumper);
    static uint32_t dumpObject(char* buffer, uint32_t buffer_size, bPFpcpv check_object) U_EXPORT;
-   static uint32_t dumpObject(char* buffer, uint32_t buffer_size, const void* ptr_object);
+   static uint32_t dumpObject(char* buffer, uint32_t buffer_size, void* ptr_object);
 
 private:
    static char* file_ptr;
@@ -143,16 +160,16 @@ private:
    static char buffer1[64];
    static char buffer2[256];
    static char buffer3[64];
+   static void* _ptr_object;
    static bPFpcpv checkObject;
    static const char* _name_class;
-   static const void* _ptr_object;
-   static const UObjectDumpable** vec_obj_live;
+   static UObjectDumpable** vec_obj_live;
 
-   static void _write(const struct iovec* iov, int n) U_NO_EXPORT;
-   static bool addObjLive(const UObjectDumpable* dumper) U_NO_EXPORT;
-   static bool printObjLive(const UObjectDumpable* dumper) U_NO_EXPORT;
+   static void _write(struct iovec* iov, int n) U_NO_EXPORT;
+   static bool addObjLive(UObjectDumpable* dumper) U_NO_EXPORT;
+   static bool printObjLive(UObjectDumpable* dumper) U_NO_EXPORT;
    static int  compareDumper(const void* dumper1, const void* dumper2) __pure U_NO_EXPORT;
-   static bool checkIfObject(const char* name_class, const void* ptr_object) __pure U_NO_EXPORT;
+   static bool checkIfObject(const char* name_class, void* ptr_object) __pure U_NO_EXPORT;
 
    friend void u_debug_print_info();
 };

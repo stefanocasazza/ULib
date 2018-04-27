@@ -139,12 +139,12 @@ public:
 
    UTranformBase64()
       {
-      U_TRACE_REGISTER_OBJECT(0, UTranformBase64, "")
+      U_TRACE_CTOR(0, UTranformBase64, "")
       }
 
    virtual ~UTranformBase64()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, UTranformBase64)
+      U_TRACE_DTOR(0, UTranformBase64)
       }
 
    // define method VIRTUAL of class UBaseTransform
@@ -183,12 +183,12 @@ public:
 
    UTranformInclC14N()
       {
-      U_TRACE_REGISTER_OBJECT(0, UTranformInclC14N, "")
+      U_TRACE_CTOR(0, UTranformInclC14N, "")
       }
 
    virtual ~UTranformInclC14N()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, UTranformInclC14N)
+      U_TRACE_DTOR(0, UTranformInclC14N)
       }
 
    // define method VIRTUAL of class UBaseTransform
@@ -224,12 +224,12 @@ public:
 
    UTranformSha1()
       {
-      U_TRACE_REGISTER_OBJECT(0, UTranformSha1, "")
+      U_TRACE_CTOR(0, UTranformSha1, "")
       }
 
    virtual ~UTranformSha1()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, UTranformSha1)
+      U_TRACE_DTOR(0, UTranformSha1)
       }
 
    // define method VIRTUAL of class UBaseTransform
@@ -265,12 +265,12 @@ public:
 
    UTranformSha256()
       {
-      U_TRACE_REGISTER_OBJECT(0, UTranformSha256, "")
+      U_TRACE_CTOR(0, UTranformSha256, "")
       }
 
    virtual ~UTranformSha256()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, UTranformSha256)
+      U_TRACE_DTOR(0, UTranformSha256)
       }
 
    // define method VIRTUAL of class UBaseTransform
@@ -306,12 +306,12 @@ public:
 
    UTranformRsaMd5()
       {
-      U_TRACE_REGISTER_OBJECT(0, UTranformRsaMd5, "")
+      U_TRACE_CTOR(0, UTranformRsaMd5, "")
       }
 
    virtual ~UTranformRsaMd5()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, UTranformRsaMd5)
+      U_TRACE_DTOR(0, UTranformRsaMd5)
       }
 
    // define method VIRTUAL of class UBaseTransform
@@ -347,12 +347,12 @@ public:
 
    UTranformRsaSha1()
       {
-      U_TRACE_REGISTER_OBJECT(0, UTranformRsaSha1, "")
+      U_TRACE_CTOR(0, UTranformRsaSha1, "")
       }
 
    virtual ~UTranformRsaSha1()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, UTranformRsaSha1)
+      U_TRACE_DTOR(0, UTranformRsaSha1)
       }
 
    // define method VIRTUAL of class UBaseTransform
@@ -388,12 +388,12 @@ public:
 
    UTranformRsaSha256()
       {
-      U_TRACE_REGISTER_OBJECT(0, UTranformRsaSha256, "")
+      U_TRACE_CTOR(0, UTranformRsaSha256, "")
       }
 
    virtual ~UTranformRsaSha256()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, UTranformRsaSha256)
+      U_TRACE_DTOR(0, UTranformRsaSha256)
       }
 
    // define method VIRTUAL of class UBaseTransform
@@ -429,7 +429,7 @@ public:
 
    UTranformXPointer() : dataList(5)
       {
-      U_TRACE_REGISTER_OBJECT(0, UTranformXPointer, "")
+      U_TRACE_CTOR(0, UTranformXPointer, "")
       }
 
    virtual ~UTranformXPointer();
@@ -482,7 +482,7 @@ public:
 
    virtual ~UTranformInputURI()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, UTranformInputURI)
+      U_TRACE_DTOR(0, UTranformInputURI)
       }
 
    // define method VIRTUAL of class UBaseTransform
@@ -541,7 +541,7 @@ public:
                xmlInputReadCallback  readFunc,
                xmlInputCloseCallback closeFunc)
       {
-      U_TRACE_REGISTER_OBJECT(0, UIOCallback, "%p,%p,%p,%p", matchFunc, openFunc, readFunc, closeFunc)
+      U_TRACE_CTOR(0, UIOCallback, "%p,%p,%p,%p", matchFunc, openFunc, readFunc, closeFunc)
 
       matchcallback = matchFunc;
       opencallback  = openFunc;
@@ -551,7 +551,7 @@ public:
 
    ~UIOCallback()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, UIOCallback)
+      U_TRACE_DTOR(0, UIOCallback)
       }
 
 #ifdef DEBUG

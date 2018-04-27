@@ -19,7 +19,7 @@ public:
    HttpSetCookie(const UString& name_, const UString& value_, bool version2_)
          : HttpField(version2_ ? U_STRING_FROM_CONSTANT("Set-Cookie2") : U_STRING_FROM_CONSTANT("Set-Cookie"))
       {
-      U_TRACE_REGISTER_OBJECT(5, HttpSetCookie, "%.*S,%.*S,%b", U_STRING_TO_TRACE(name_),  U_STRING_TO_TRACE(value_), version2_)
+      U_TRACE_CTOR(5, HttpSetCookie, "%.*S,%.*S,%b", U_STRING_TO_TRACE(name_),  U_STRING_TO_TRACE(value_), version2_)
 
       version2 = version2_;
 
@@ -30,7 +30,7 @@ public:
    */
    virtual ~HttpSetCookie()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, HttpSetCookie)
+      U_TRACE_DTOR(0, HttpSetCookie)
       }
 
    /**

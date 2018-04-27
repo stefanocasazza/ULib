@@ -39,7 +39,7 @@
 #ifdef DEBUG
 #  define U_ASSERT_MACRO(assertion,msg,info) \
       if ((bool)(assertion) == false) { \
-         u__printf(STDERR_FILENO, U_CONSTANT_TO_PARAM("%W%N%W: %Q%W%s%W\n" \
+         u__printf(STDERR_FILENO, U_CONSTANT_TO_PARAM("%W%N%W: %9D %Q%W%s%W\n" \
          "-------------------------------------\n" \
          " pid: %W%P%W\n" \
          " file: %W%s%W\n" \
@@ -235,8 +235,8 @@ enum AffermationType {
 #define U_perl   '6' /* Perl script */
 #define U_python '7' /* Python script */
 
-#define U_CTYPE_TEXT              "text/plain"
 #define U_CTYPE_HTML              "text/html; charset=UTF-8"
+#define U_CTYPE_TEXT              "text/plain"
 #define U_CTYPE_TEXT_WITH_CHARSET "text/plain; charset=UTF-8"
 
 /**

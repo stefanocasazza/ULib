@@ -72,7 +72,7 @@ inline void Messaggio::allocDestinatari(int n)
 
 Messaggio::Messaggio() : id(*PEC_report::id), mittente(*PEC_report::mittente), identifier(*PEC_report::identifier)
 {
-   U_TRACE_REGISTER_OBJECT(5, Messaggio, "")
+   U_TRACE_CTOR(5, Messaggio, "")
 
    (void) memset(flag, U_MEMSET_VALUE, sizeof(flag));
 
@@ -134,7 +134,7 @@ Messaggio::Messaggio() : id(*PEC_report::id), mittente(*PEC_report::mittente), i
 
 Messaggio::~Messaggio()
 {
-   U_TRACE_UNREGISTER_OBJECT(5, Messaggio)
+   U_TRACE_DTOR(5, Messaggio)
 
    free(vdestinatari_domini);
    free(vdestinatari_certificati);

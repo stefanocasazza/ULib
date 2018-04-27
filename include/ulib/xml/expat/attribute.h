@@ -33,18 +33,18 @@ public:
 
    UXMLAttribute()
       {
-      U_TRACE_REGISTER_OBJECT(0, UXMLAttribute, "", 0)
+      U_TRACE_CTOR(0, UXMLAttribute, "", 0)
       }
 
    UXMLAttribute(const UString& s, const UString& a, const UString& n, const UString& v)
          : str(s), value(v), accessor(a), namespaceName(n)
       {
-      U_TRACE_REGISTER_OBJECT(0, UXMLAttribute, "%V,%V,%V,%V", s.rep, a.rep, n.rep, v.rep)
+      U_TRACE_CTOR(0, UXMLAttribute, "%V,%V,%V,%V", s.rep, a.rep, n.rep, v.rep)
       }
 
    ~UXMLAttribute()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, UXMLAttribute)
+      U_TRACE_DTOR(0, UXMLAttribute)
       }
 
    // SERVICES

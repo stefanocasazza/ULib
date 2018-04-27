@@ -118,11 +118,18 @@ extern "C" void U_EXPORT u_debug_init(void)
 {
    U_INTERNAL_TRACE("u_debug_init()")
 
+   if (u_trace_folder == U_NULLPTR)
+      {
+      u_trace_folder = getenv("UTRACE_FOLDER");
+
+      if (u_trace_folder == U_NULLPTR) u_trace_folder = ".";
+      }
+
+   u_trace_check_init(); // we go to check if there are previous creation of global objects that can have forced the initialization of trace file...
+
 #ifdef U_STDCPP_ENABLE
    UObjectDB::init(true);
 #endif
-
-   u_trace_check_init(); // we go to check if there are previous creation of global objects that can have forced the initialization of trace file...
 
    u_debug_print_info();
 
@@ -175,7 +182,7 @@ pid_t U_EXPORT u_debug_fork(pid_t _pid, int trace_active)
       u_trace_initFork();
 
 #  ifdef U_STDCPP_ENABLE
-      if (UObjectDB::fd > 0) UObjectDB::initFork();
+      UObjectDB::initFork();
 #  endif
 
       u_debug_print_info();
@@ -253,10 +260,10 @@ __noreturn void U_EXPORT u_debug_exec(const char* pathname, char* const argv[], 
    if (u_fork_called)
       {
 #  ifdef U_STDCPP_ENABLE
-      if (UObjectDB::fd > 0) UObjectDB::close();
+      UObjectDB::close();
 #  endif
 
-      if (u_trace_fd > 0) u_trace_close();
+      u_trace_close();
       }
 
    u_exec_failed = false;

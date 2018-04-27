@@ -140,17 +140,17 @@ public:
       {
       U_TRACE(5, "Application::~Application()")
 
-      if (row)          delete row;
-      if (vec)          delete vec;
-      if (pfile)        delete pfile;
-      if (stype)        delete stype;
-      if (dialog)       delete dialog;
-      if (output)       delete output;
-      if (extract)      delete extract;
-      if (xsltproc)     delete xsltproc;
-      if (xsltproc_cmd) delete xsltproc_cmd;
-      if (xsltproc_out) delete xsltproc_out;
-//                      delete content;
+      if (row)          U_DELETE(row)
+      if (vec)          U_DELETE(vec)
+      if (pfile)        U_DELETE(pfile)
+      if (stype)        U_DELETE(stype)
+      if (dialog)       U_DELETE(dialog)
+      if (output)       U_DELETE(output)
+      if (extract)      U_DELETE(extract)
+      if (xsltproc)     U_DELETE(xsltproc)
+      if (xsltproc_cmd) U_DELETE(xsltproc_cmd)
+      if (xsltproc_out) U_DELETE(xsltproc_out)
+//                      U_DELETE(content)
       }
 
    // HTML representation functions
@@ -185,11 +185,11 @@ public:
                   {
                   if (fd_stderr == 0) fd_stderr = UServices::getDevNull("/tmp/xsltproc.err");
 
-                  U_NEW(UString, row, UString);
+                  U_NEW_STRING(row, UString);
                   U_NEW(UVector<UString>, vec, UVector<UString>);
                   U_NEW(UCommand, xsltproc, UCommand);
-                  U_NEW(UString, xsltproc_cmd, UString(U_CONSTANT_TO_PARAM("xsltproc -")));
-                  U_NEW(UString, xsltproc_out, UString(U_CAPACITY));
+                  U_NEW_STRING(xsltproc_cmd, UString(U_CONSTANT_TO_PARAM("xsltproc -")));
+                  U_NEW_STRING(xsltproc_out, UString(U_CAPACITY));
 
                   xsltproc->set(*xsltproc_cmd, (char**)U_NULLPTR);
                   }
@@ -696,11 +696,11 @@ public:
 
          tmp = opt['e'];
 
-         if (tmp) U_NEW(UString, extract, UString(tmp));
+         if (tmp) U_NEW_STRING(extract, UString(tmp));
 
          tmp = opt['s'];
 
-         if (tmp) U_NEW(UString, css_url, UString(tmp));
+         if (tmp) U_NEW_STRING(css_url, UString(tmp));
          }
 
       // manage arg operation
@@ -711,7 +711,7 @@ public:
 
       U_INTERNAL_DUMP("htmlview = %b treeview = %b inner_p7 = %b", htmlview, treeview, inner_p7)
 
-      U_NEW(UString, content, UString);
+      U_NEW_STRING(content, UString);
 
       if (loadDocument() &&
           checkIfNeedParsing())
@@ -722,7 +722,7 @@ public:
 
             if (UDialog::isXdialog() == false) U_ERROR("I don't find Xdialog");
 
-            U_NEW(UString, output, UString(U_CAPACITY));
+            U_NEW_STRING(output, UString(U_CAPACITY));
             }
          else if (htmlview)
             {
@@ -748,8 +748,8 @@ public:
          (void) U_SYSCALL(memset, "%p,%d,%u", tab, '\t', U_MAX_TAB);
 #     endif
 
-         U_NEW(UString, pfile, UString);
-         U_NEW(UString, stype, UString);
+         U_NEW_STRING(pfile, UString);
+         U_NEW_STRING(stype, UString);
 
 #     ifdef DEBUG
       // UStringRep::check_dead_of_source_string_with_child_alive = false;

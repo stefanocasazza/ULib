@@ -90,12 +90,12 @@ public:
 
    UMimeHeader()
       {
-      U_TRACE_REGISTER_OBJECT(0, UMimeHeader, "", 0)
+      U_TRACE_CTOR(0, UMimeHeader, "", 0)
       }
 
    ~UMimeHeader()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, UMimeHeader)
+      U_TRACE_DTOR(0, UMimeHeader)
       }
 
    // Wrapper for table

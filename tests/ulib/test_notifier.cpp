@@ -40,7 +40,7 @@ static void list_destroy()
 {
    printf("destroy list\n");
 
-   node* prev = 0;
+   node* prev = U_NULLPTR;
 
    for (node* n = node::first; n; prev = n, n = n->next)
       {
@@ -49,7 +49,7 @@ static void list_destroy()
 
    if (prev) free(prev);
 
-   node::first = 0;
+   node::first = U_NULLPTR;
 }
 
 static void list_creat()
@@ -209,12 +209,12 @@ public:
 
    MyAlarm1(long sec, long usec) : UEventTime(sec, usec)
       {
-      U_TRACE_REGISTER_OBJECT(0, MyAlarm1, "%ld,%ld", sec, usec)
+      U_TRACE_CTOR(0, MyAlarm1, "%ld,%ld", sec, usec)
       }
 
    ~MyAlarm1()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, MyAlarm1)
+      U_TRACE_DTOR(0, MyAlarm1)
       }
 
    virtual int handlerTime()
@@ -242,12 +242,12 @@ public:
 
    MyAlarm2(long sec, long usec) : MyAlarm1(sec, usec)
       {
-      U_TRACE_REGISTER_OBJECT(0, MyAlarm2, "%ld,%ld", sec, usec)
+      U_TRACE_CTOR(0, MyAlarm2, "%ld,%ld", sec, usec)
       }
 
    ~MyAlarm2()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, MyAlarm2)
+      U_TRACE_DTOR(0, MyAlarm2)
       }
 
    virtual int handlerTime()
@@ -308,7 +308,7 @@ public:
          return UObjectIO::buffer_output;
          }
 
-      return 0;
+      return U_NULLPTR;
       }
 #endif
 };
@@ -339,9 +339,9 @@ public:
                {
                static handlerOutput* handler_output;
 
-               if (handler_output == 0)
+               if (handler_output == U_NULLPTR)
                   {
-                  U_NEW(handlerOutput, handler_output, handlerOutput);
+                  U_NEW_WITHOUT_CHECK_MEMORY(handlerOutput, handler_output, handlerOutput);
 
                   UNotifier::insert(handler_output);
                   }
@@ -365,7 +365,7 @@ public:
          return UObjectIO::buffer_output;
          }
 
-      return 0;
+      return U_NULLPTR;
       }
 #endif
 };
@@ -393,8 +393,8 @@ int U_EXPORT main(int argc, char* argv[])
    handlerInput* c;
    handlerInput* d;
 
-   U_NEW(handlerInput, c, handlerInput);
-   U_NEW(handlerInput, d, handlerInput);
+   U_NEW_WITHOUT_CHECK_MEMORY(handlerInput, c, handlerInput);
+   U_NEW_WITHOUT_CHECK_MEMORY(handlerInput, d, handlerInput);
 
    UNotifier::init();
    UNotifier::insert(c);
@@ -409,8 +409,8 @@ int U_EXPORT main(int argc, char* argv[])
    MyAlarm1* a;
    MyAlarm2* b;
 
-   U_NEW(MyAlarm1, a, MyAlarm1(1L, 0L));
-   U_NEW(MyAlarm2, b, MyAlarm2(1L, 0L));
+   U_NEW_WITHOUT_CHECK_MEMORY(MyAlarm1, a, MyAlarm1(1L, 0L));
+   U_NEW_WITHOUT_CHECK_MEMORY(MyAlarm2, b, MyAlarm2(1L, 0L));
 
    UTimer::init(UTimer::ASYNC);
 
@@ -434,7 +434,7 @@ int U_EXPORT main(int argc, char* argv[])
              UNotifier::waitForEvent(&timeout);
       (void) UNotifier::waitForRead(fds[0], 500);
 
-      U_NEW(MyAlarm1, a, MyAlarm1(1L, 0L));
+      U_NEW_WITHOUT_CHECK_MEMORY(MyAlarm1, a, MyAlarm1(1L, 0L));
 
       UTimer::insert(a);
 

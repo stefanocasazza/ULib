@@ -101,21 +101,21 @@ public:
       if (is_options)
          {
 #     ifdef PACKAGE
-         opt.package = U_STRING_FROM_CONSTANT(PACKAGE);
+         if (U_CONSTANT_SIZE(PACKAGE)) opt.package = U_STRING_FROM_CONSTANT(PACKAGE);
 #     endif
 #     ifdef VERSION
-         opt.version = U_STRING_FROM_CONSTANT(VERSION);
+         if (U_CONSTANT_SIZE(VERSION)) opt.version = U_STRING_FROM_CONSTANT(VERSION);
 #     else
-         opt.version = U_STRING_FROM_CONSTANT(ULIB_VERSION);
+         if (U_CONSTANT_SIZE(ULIB_VERSION)) opt.version = U_STRING_FROM_CONSTANT(ULIB_VERSION);
 #     endif
 #     ifdef PURPOSE
-         opt.purpose = U_STRING_FROM_CONSTANT(PURPOSE);
+         if (U_CONSTANT_SIZE(PURPOSE)) opt.purpose = U_STRING_FROM_CONSTANT(PURPOSE);
 #     endif
 #     ifdef ARGS
-         opt.args = U_STRING_FROM_CONSTANT(ARGS);
+         if (U_CONSTANT_SIZE(ARGS)) opt.args = U_STRING_FROM_CONSTANT(ARGS);
 #     endif
 #     ifdef REPORT_BUGS
-         opt.report_bugs = U_STRING_FROM_CONSTANT(REPORT_BUGS);
+         if (U_CONSTANT_SIZE(REPORT_BUGS)) opt.report_bugs = U_STRING_FROM_CONSTANT(REPORT_BUGS);
 #     endif
 
 #     ifdef U_OPTIONS
@@ -129,9 +129,15 @@ public:
 #        define U_OPTIONS_3 ""
 #        endif
 
-         _str = UString(U_CONSTANT_TO_PARAM(U_OPTIONS U_OPTIONS_1 U_OPTIONS_2 U_OPTIONS_3));
+         const char* options;
+         uint32_t len = strlen((options = U_OPTIONS U_OPTIONS_1 U_OPTIONS_2 U_OPTIONS_3));
 
-         if (_str) opt.load(_str);
+         if (len)
+            {
+            (void) _str.assign(options, len);
+
+            opt.load(_str);
+            }
 #     endif
 
          num_args = opt.getopt(argc, argv, &optind);

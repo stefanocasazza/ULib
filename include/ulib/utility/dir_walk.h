@@ -56,33 +56,34 @@ public:
 
    UDirWalk(const UString* dir = U_NULLPTR, const char* _filter = U_NULLPTR, uint32_t _filter_len = 0, int _filter_flags = 0)
       {
-      U_TRACE_REGISTER_OBJECT(0, UDirWalk, "%p,%.*S,%u,%d", dir, _filter_len, _filter, _filter_len, _filter_flags)
+      U_TRACE_CTOR(0, UDirWalk, "%p,%.*S,%u,%d", dir, _filter_len, _filter, _filter_len, _filter_flags)
 
       ctor(dir, _filter, _filter_len, _filter_flags);
       }
 
    UDirWalk(const UString* dir, const UString& _filter, int _filter_flags = 0)
       {
-      U_TRACE_REGISTER_OBJECT(0, UDirWalk, "%V,%V,%d", dir->rep, _filter.rep, _filter_flags)
+      U_TRACE_CTOR(0, UDirWalk, "%V,%V,%d", dir->rep, _filter.rep, _filter_flags)
 
       ctor(dir, U_STRING_TO_PARAM(_filter), _filter_flags);
       }
 
    UDirWalk(const UString& dir, const char* _filter = U_NULLPTR, uint32_t _filter_len = 0, int _filter_flags = 0)
       {
-      U_TRACE_REGISTER_OBJECT(0, UDirWalk, "%V,%.*S,%u,%d", dir.rep, _filter_len, _filter, _filter_len, _filter_flags)
+      U_TRACE_CTOR(0, UDirWalk, "%V,%.*S,%u,%d", dir.rep, _filter_len, _filter, _filter_len, _filter_flags)
 
       ctor(&dir, _filter, _filter_len, _filter_flags);
       }
 
    virtual ~UDirWalk()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, UDirWalk)
+      U_TRACE_DTOR(0, UDirWalk)
 
       if (suffix_file_type)
          {
-         delete suffix_file_type;
-                suffix_file_type = U_NULLPTR;
+         U_DELETE(suffix_file_type)
+
+         suffix_file_type = U_NULLPTR;
          }
       }
 
@@ -143,7 +144,7 @@ public:
 
       U_INTERNAL_ASSERT_EQUALS(suffix_file_type, U_NULLPTR)
 
-      U_NEW(UString, suffix_file_type, UString(str, len));
+      U_NEW_STRING(suffix_file_type, UString(str, len));
       }
 
    static void setFilter(const char* _filter, uint32_t _filter_len, int _filter_flags = 0)

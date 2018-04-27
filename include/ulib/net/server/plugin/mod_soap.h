@@ -26,7 +26,7 @@ public:
 
    USoapPlugIn()
       {
-      U_TRACE_REGISTER_OBJECT(0, USoapPlugIn, "")
+      U_TRACE_CTOR(0, USoapPlugIn, "")
 
       UString::str_allocate(STR_ALLOCATE_SOAP);
       }

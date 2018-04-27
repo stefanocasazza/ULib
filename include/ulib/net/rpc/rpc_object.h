@@ -58,14 +58,14 @@ public:
 
    URPCObject()
       {
-      U_TRACE_REGISTER_OBJECT(0, URPCObject, "", 0)
+      U_TRACE_CTOR(0, URPCObject, "", 0)
       }
 
    virtual ~URPCObject()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, URPCObject)
+      U_TRACE_DTOR(0, URPCObject)
 
-      if (URPCMethod::pFault) delete URPCMethod::pFault;
+      if (URPCMethod::pFault) U_DELETE(URPCMethod::pFault)
       }
 
    // Triggers the creation of the URPCFault

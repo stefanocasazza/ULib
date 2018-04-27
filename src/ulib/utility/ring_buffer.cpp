@@ -15,7 +15,7 @@
 
 URingBuffer::URingBuffer(rbuf_data* _ptr, uint32_t sz)
 {
-   U_TRACE_REGISTER_OBJECT(0, URingBuffer, "%p,%u", _ptr, sz)
+   U_TRACE_CTOR(0, URingBuffer, "%p,%u", _ptr, sz)
 
    map_size = sz;
    ptr      = (_ptr ? _ptr : (rbuf_data*) UFile::mmap(&map_size));
@@ -28,7 +28,7 @@ URingBuffer::URingBuffer(rbuf_data* _ptr, uint32_t sz)
 
 URingBuffer::~URingBuffer()
 {
-   U_TRACE_UNREGISTER_OBJECT(0, URingBuffer)
+   U_TRACE_DTOR(0, URingBuffer)
 
    if (ptr &&
        map_size)

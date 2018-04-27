@@ -4,6 +4,7 @@
    
 static void usp_end_wi_auth2();
 static void usp_init_wi_auth2();
+static void usp_fork_wi_auth2();
 #include "wi_auth_declaration2.h"
    
 extern "C" {
@@ -17,12 +18,14 @@ extern U_EXPORT void runDynamicPage_wi_auth2(int param);
       {
       if (param == U_DPAGE_INIT) { usp_init_wi_auth2(); return; }
       if (param == U_DPAGE_DESTROY) { usp_end_wi_auth2(); return; }
-      if (param >= U_DPAGE_FORK) return;
+      if (param == U_DPAGE_FORK) { usp_fork_wi_auth2(); return; }
+      if (param >  U_DPAGE_FORK) return;
       }
    
    U_http_info.endHeader = 0;
    
    static UHTTP::service_info GET_table[] = { // NB: the table must be ordered alphabetically for binary search...
+      GET_ENTRY(anagrafica),
       GET_ENTRY(clean),
       GET_ENTRY(get_config),
       GET_ENTRY(start_ap),

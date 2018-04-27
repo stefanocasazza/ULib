@@ -67,14 +67,11 @@ URPCMethod* URPCObject::find(const UString& methodName)
 {
    U_TRACE(0, "URPCObject::find(%V)", methodName.rep)
 
-   URPCMethod* method;
-   uint32_t n = methodList.size();
-
    // Iterate over the list of methods of the object
 
-   for (uint32_t i = 0; i < n; ++i)
+   for (uint32_t i = 0, n = methodList.size(); i < n; ++i)
       {
-      method = methodList[i];
+      URPCMethod* method = methodList[i];
 
       if (methodName == method->getMethodName()) U_RETURN_POINTER(method, URPCMethod);
       }

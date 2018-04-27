@@ -117,7 +117,7 @@ protected:
 
    URDBClient_Base(UFileConfig* _cfg) : UClient_Base(_cfg)
       {
-      U_TRACE_REGISTER_OBJECT(0, URDBClient_Base, "%p", _cfg)
+      U_TRACE_CTOR(0, URDBClient_Base, "%p", _cfg)
 
       URPC::allocate();
 
@@ -126,9 +126,9 @@ protected:
 
    ~URDBClient_Base()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, URDBClient_Base)
+      U_TRACE_DTOR(0, URDBClient_Base)
 
-      delete URPC::rpc_info;
+      U_DELETE(URPC::rpc_info)
       }
 
    // Call function for all entry
@@ -146,14 +146,14 @@ public:
 
    URDBClient(UFileConfig* _cfg) : URDBClient_Base(_cfg)
       {
-      U_TRACE_REGISTER_OBJECT(0, URDBClient, "%p", _cfg)
+      U_TRACE_CTOR(0, URDBClient, "%p", _cfg)
 
       U_NEW(Socket, UClient_Base::socket, Socket(UClient_Base::bIPv6));
       }
 
    ~URDBClient()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, URDBClient)
+      U_TRACE_DTOR(0, URDBClient)
       }
 
    // DEBUG

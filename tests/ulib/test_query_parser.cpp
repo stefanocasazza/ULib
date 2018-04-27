@@ -53,7 +53,7 @@ U_EXPORT main (int argc, char* argv[])
            << "\n--------------------------------------------------------------------------------------\n";
 
           query.clear();
-         parser.clear();
       termRoots.clear();
+         parser.clear();
       }
 }

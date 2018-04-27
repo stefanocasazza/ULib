@@ -53,8 +53,8 @@
 #  define U_MACROSERVER(server_class,client_type,socket_type) \
 class server_class : public UServer<socket_type> { \
 public: \
- server_class(UFileConfig* pcfg) : UServer<socket_type>(pcfg) { U_TRACE_REGISTER_OBJECT(  5, server_class, "%p", pcfg) } \
-~server_class()                                               { U_TRACE_UNREGISTER_OBJECT(5, server_class) } \
+ server_class(UFileConfig* pcfg) : UServer<socket_type>(pcfg) { U_TRACE_CTOR(  5, server_class, "%p", pcfg) } \
+~server_class()                                               { U_TRACE_DTOR(5, server_class) } \
 const char* dump(bool reset) const { return UServer<socket_type>::dump(reset); } \
 protected: \
 virtual void preallocate() U_DECL_FINAL { \
@@ -99,6 +99,7 @@ vClientImage = new client_type[UNotifier::max_connection]; } }
 class UHTTP;
 class UHTTP2;
 class UCommand;
+class UTimeStat;
 class UDayLight;
 class UTimeStat;
 class USSLSocket;
@@ -582,6 +583,9 @@ public:
    typedef struct file_LOG {
       UFile* LOG;
       int    flags;
+#  ifdef DEBUG
+      const char* dump(bool reset) const { return ""; }
+#  endif
    } file_LOG;
 
    static ULog* log;
@@ -634,7 +638,8 @@ public:
 
    static bool isLocalHost() { return csocket->cRemoteAddress.isLocalHost(); }
 
-   static void setClientAddress() { setClientAddress(csocket, client_address, client_address_len); }
+   static void      setClientAddress() { setClientAddress(csocket, client_address, client_address_len); }
+   static in_addr_t getClientAddress() { return csocket->getClientAddress(); }
 
    static UString getIPAddress()                         { return *IP_address; }
    static UString getNetworkDevice( const char* exclude) { return USocketExt::getNetworkDevice(exclude); }
@@ -788,7 +793,7 @@ public:
 
       U_ASSERT_EQUALS(u_find(U_STRING_TO_PARAM(data),"\n",1), U_NULLPTR)
 
-      eventSSE(U_CONSTANT_TO_PARAM("%v-%v=%v\n"), (sse_event ? sse_event : str_asterisk)->rep, sse_id->rep, data.rep);
+      eventSSE(U_CONSTANT_TO_PARAM("%v-%v=%v\n"), (sse_event ? sse_event : UString::str_asterisk)->rep, sse_id->rep, data.rep);
       }
 #endif
 
@@ -823,6 +828,7 @@ protected:
    static UEventTime* ptime;
    static UServer_Base* pthis;
    static uint32_t crash_count;
+   static UUDPSocket* udp_sock;
    static UString* cenvironment;
    static UString* senvironment;
    static USmtpClient* emailClient;
@@ -859,13 +865,15 @@ protected:
 #endif
 
 #ifdef DEBUG
-# ifndef U_LOG_DISABLE
-   static long last_event;
-# endif
+   static UTimeStat* pstat;
    static uint64_t stats_bytes;
    static uint32_t max_depth, wakeup_for_nothing, nread, nread_again, stats_connections, stats_simultaneous;
 
    static UString getStats();
+
+# ifndef U_LOG_DISABLE
+   static long last_event;
+# endif
 #endif
 
 #ifdef USERVER_UDP
@@ -1001,13 +1009,12 @@ protected:
       int cmsg_data;   /* Ancillary data.                                     */
    };
 
-   static UThread* pthread_sse;
    static UString* sse_id;
    static UString* sse_event;
    static struct msghdr msg;
    static struct iovec iov[1];
    static struct ucmsghdr cmsg;
-   static UString* str_asterisk;
+   static UThread* pthread_sse;
    static uint32_t sse_fifo_pos;
    static UVector<USSEClient*>* sse_vclient;
    static char sse_fifo_name[256], iovbuf[1];
@@ -1194,14 +1201,14 @@ public:
 
    UServer(UFileConfig* pcfg = 0) : UServer_Base(pcfg)
       {
-      U_TRACE_REGISTER_OBJECT(0, UServer, "%p", pcfg)
+      U_TRACE_CTOR(0, UServer, "%p", pcfg)
 
       U_NEW(Socket, socket, Socket(UClientImage_Base::bIPv6));
       }
 
    virtual ~UServer()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, UServer)
+      U_TRACE_DTOR(0, UServer)
       }
 
    // DEBUG
@@ -1257,7 +1264,7 @@ public:
 
    UServer(UFileConfig* pcfg) : UServer_Base(pcfg)
       {
-      U_TRACE_REGISTER_OBJECT(0, UServer<USSLSocket>, "%p", pcfg)
+      U_TRACE_CTOR(0, UServer<USSLSocket>, "%p", pcfg)
 
 #  ifdef DEBUG
       if (pcfg &&
@@ -1274,7 +1281,7 @@ public:
 
    virtual ~UServer()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, UServer<USSLSocket>)
+      U_TRACE_DTOR(0, UServer<USSLSocket>)
       }
 
    // DEBUG
@@ -1327,7 +1334,7 @@ public:
 
    UServer(UFileConfig* pcfg) : UServer_Base(pcfg)
       {
-      U_TRACE_REGISTER_OBJECT(0, UServer<UUDPSocket>, "%p", pcfg)
+      U_TRACE_CTOR(0, UServer<UUDPSocket>, "%p", pcfg)
 
 #  ifdef DEBUG
       if (pcfg &&
@@ -1342,7 +1349,7 @@ public:
 
    virtual ~UServer()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, UServer<UUDPSocket>)
+      U_TRACE_DTOR(0, UServer<UUDPSocket>)
       }
 
    // DEBUG
@@ -1395,7 +1402,7 @@ public:
 
    UServer(UFileConfig* pcfg) : UServer_Base(pcfg)
       {
-      U_TRACE_REGISTER_OBJECT(0, UServer<UUnixSocket>, "%p", pcfg)
+      U_TRACE_CTOR(0, UServer<UUnixSocket>, "%p", pcfg)
 
 #  ifdef DEBUG
       if (pcfg &&
@@ -1410,7 +1417,7 @@ public:
 
    virtual ~UServer()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, UServer<UUnixSocket>)
+      U_TRACE_DTOR(0, UServer<UUnixSocket>)
       }
 
    // DEBUG

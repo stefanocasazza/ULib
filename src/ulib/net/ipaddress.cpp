@@ -231,18 +231,20 @@ bool UIPAddress::setHostName(const UString& pcNewHostName, bool bIPv6)
 
    if (u_isIPAddr(bIPv6, name, pcNewHostName.size()))
       {
+#  ifndef _MSWINDOWS_ // TODO
       union uupcAddress ia;
 
       if (U_SYSCALL(inet_pton, "%d,%p,%p", (bIPv6 ? AF_INET6 : AF_INET), name, &ia) == 1)
          {
          strHostName.clear();
 
-         setAddress(&ia, false);
+         setAddress(&(ia.i), false);
 
          U_ipaddress_StrAddressUnresolved(this) = false;
 
          U_RETURN(true);
          }
+#  endif
 
       U_RETURN(false);
       }
@@ -601,7 +603,7 @@ __pure bool UIPAddress::isWildCard()
    U_INTERNAL_ASSERT_EQUALS(iAddressType, AF_INET)
    U_INTERNAL_ASSERT_EQUALS(iAddressLength, sizeof(in_addr))
 
-   U_DUMP("htonl(pcAddress.i) = %#X %V", htonl(pcAddress.i), UIPAddress::toString(getInAddr()).rep)
+   U_DUMP("htonl(pcAddress.i) = %#x %V", htonl(pcAddress.i), UIPAddress::toString(getInAddr()).rep)
 
    if (pcAddress.i == 0x00000000) U_RETURN(true);
 
@@ -642,7 +644,8 @@ UString UIPAddress::toString(uint8_t* addr)
 
    union uuaddr u = { addr };
 
-   /* The inet_ntoa() function converts the Internet host address in, given in network byte order, to a string in IPv4 dotted-decimal notation.
+   /**
+    * The inet_ntoa() function converts the Internet host address in, given in network byte order, to a string in IPv4 dotted-decimal notation.
     * The string is returned in a statically allocated buffer, which subsequent calls will overwrite
     */
 
@@ -767,7 +770,7 @@ uint32_t UIPAllow::parseMask(const UString& vspec, UVector<UIPAllow*>& vipallow,
 
       U_NEW(UIPAllow, elem, UIPAllow);
 
-      if (elem->parseMask(spec) == false) delete elem;
+      if (elem->parseMask(spec) == false) U_DELETE(elem)
       else
          {
          vipallow.push_back(elem);

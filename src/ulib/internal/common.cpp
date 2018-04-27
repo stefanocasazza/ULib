@@ -179,9 +179,11 @@ void ULib::init(char** argv, const char* mempool)
 
    U_INTERNAL_DUMP("u_progname(%u) = %.*S u_cwd(%u) = %.*S", u_progname_len, u_progname_len, u_progname, u_cwd_len, u_cwd_len, u_cwd)
 
-   // allocation from memory pool
+#ifndef ENABLE_MEMPOOL // allocation from memory pool
+   u_buffer = (char*) U_SYSCALL(malloc, "%u", U_BUFFER_SIZE+1);
+#else
+   // check if we want some preallocation for memory pool - start from 1... (Ex: 768,768,0,1536,2085,0,0,0,121)
 
-#if defined(ENABLE_MEMPOOL) // check if we want some preallocation for memory pool - start from 1... (Ex: 768,768,0,1536,2085,0,0,0,121)
    const char* ptr = (mempool ? (UValue::jsonParseFlags = 2, mempool) : U_SYSCALL(getenv, "%S", "UMEMPOOL"));
 
    // coverity[tainted_scalar]
@@ -199,17 +201,9 @@ void ULib::init(char** argv, const char* mempool)
    if (ptr < u_buffer) u_buffer = (char*)ptr;
 
    U_INTERNAL_DUMP("ptr = %p u_buffer = %p diff = %ld", ptr, u_buffer, ptr - u_buffer)
-
-# ifdef DEBUG
-   UMemoryError::pbuffer = (char*) UMemoryPool::pop(U_SIZE_TO_STACK_INDEX(U_MAX_SIZE_PREALLOCATE));
-# endif
-#else
-   u_buffer = (char*) U_SYSCALL(malloc, "%u", U_BUFFER_SIZE);
-
-# ifdef DEBUG
-   UMemoryError::pbuffer = (char*) U_SYSCALL(malloc, "%u", U_MAX_SIZE_PREALLOCATE);
-# endif
 #endif
+
+   u_buffer[U_BUFFER_SIZE] = '\0';
 
    UFlatBuffer::setBuffer((uint8_t*)u_buffer, U_BUFFER_SIZE);
    UFlatBuffer::setStack((uint8_t*)u_err_buffer, U_CONSTANT_SIZE(u_err_buffer));

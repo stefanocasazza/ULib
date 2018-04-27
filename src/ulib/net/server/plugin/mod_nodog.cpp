@@ -13,11 +13,6 @@
 
 #include <ulib/base/hash.h>
 
-#ifndef HAVE_ARCH64
-#  define U_FLAT_BUFFERS_SPACE_STACK 512U
-#  define U_FLAT_BUFFERS_SPACE_BUFFER (8U * 1024U)
-#endif
-
 #include <ulib/date.h>
 #include <ulib/file_config.h>
 #include <ulib/utility/des3.h>
@@ -50,7 +45,6 @@ UString* UNoDogPlugIn::fw_env;
 UString* UNoDogPlugIn::fw_cmd;
 UString* UNoDogPlugIn::extdev;
 UString* UNoDogPlugIn::intdev;
-UString* UNoDogPlugIn::mempool;
 UString* UNoDogPlugIn::info_data;
 UString* UNoDogPlugIn::arp_cache;
 UString* UNoDogPlugIn::hostname;
@@ -65,8 +59,9 @@ UString* UNoDogPlugIn::auth_notify;
 UString* UNoDogPlugIn::auth_service;
 UString* UNoDogPlugIn::auth_strict_notify;
 
+in_addr_t                  UNoDogPlugIn::addr;
 UCommand*                  UNoDogPlugIn::fw;
-UFlatBuffer*               UNoDogPlugIn::pfb;
+UIPAllow*                  UNoDogPlugIn::pallow;
 UIptAccount*               UNoDogPlugIn::ipt;
 UModNoDogPeer*             UNoDogPlugIn::peer;
 UVector<UString>*          UNoDogPlugIn::varp_cache;
@@ -79,29 +74,29 @@ UHashMap<UModNoDogPeer*>*  UNoDogPlugIn::peers;
 
 UNoDogPlugIn::UNoDogPlugIn() : UEventTime(300L,0L)
 {
-   U_TRACE_REGISTER_OBJECT(0, UNoDogPlugIn, "")
+   U_TRACE_CTOR(0, UNoDogPlugIn, "")
 
    U_NEW(UCommand, fw, UCommand);
 
-   U_NEW(UString, label, UString);
-   U_NEW(UString, chrash, U_STRING_FROM_CONSTANT("/tmp/nodog.chrash"));
-   U_NEW(UString, fw_cmd, UString);
-   U_NEW(UString, fw_env, UString);
-   U_NEW(UString, extdev, UString);
-   U_NEW(UString, intdev, UString);
-   U_NEW(UString, hostname, UString);
-   U_NEW(UString, localnet, UString);
-   U_NEW(UString, info_data, UString);
-   U_NEW(UString, arp_cache, UString);
-   U_NEW(UString, allowed_members, UString);
-   U_NEW(UString, IP_address_trust, UString);
+   U_NEW_STRING(label, UString);
+   U_NEW_STRING(chrash, UString(U_CONSTANT_TO_PARAM("/tmp/nodog.chrash")));
+   U_NEW_STRING(fw_cmd, UString);
+   U_NEW_STRING(fw_env, UString);
+   U_NEW_STRING(extdev, UString);
+   U_NEW_STRING(intdev, UString);
+   U_NEW_STRING(hostname, UString);
+   U_NEW_STRING(localnet, UString);
+   U_NEW_STRING(info_data, UString);
+   U_NEW_STRING(arp_cache, UString);
+   U_NEW_STRING(allowed_members, UString);
+   U_NEW_STRING(IP_address_trust, UString);
 
-   U_NEW(UString, auth_host, UString);
-   U_NEW(UString, auth_info, UString);
-   U_NEW(UString, auth_login, UString);
-   U_NEW(UString, auth_notify, UString);
-   U_NEW(UString, auth_service, UString);
-   U_NEW(UString, auth_strict_notify, UString);
+   U_NEW_STRING(auth_host, UString);
+   U_NEW_STRING(auth_info, UString);
+   U_NEW_STRING(auth_login, UString);
+   U_NEW_STRING(auth_notify, UString);
+   U_NEW_STRING(auth_service, UString);
+   U_NEW_STRING(auth_strict_notify, UString);
 
    U_NEW(UVector<UString>, varp_cache, UVector<UString>);
    U_NEW(UVector<UString>, vInternalDevice, UVector<UString>);
@@ -114,55 +109,47 @@ UNoDogPlugIn::UNoDogPlugIn() : UEventTime(300L,0L)
    client->UClient_Base::setTimeOut(UServer_Base::timeoutMS);
 
    if (UString::str_without_label == U_NULLPTR) UString::str_allocate(STR_ALLOCATE_NOCAT);
-
-#ifdef ENABLE_MEMPOOL
-   U_NEW(UString, mempool, UString(UFile::contentOf(U_STRING_FROM_CONSTANT("/etc/nodog.mempool"))));
-#endif
 }
 
 UNoDogPlugIn::~UNoDogPlugIn()
 {
-   U_TRACE_UNREGISTER_OBJECT(0, UNoDogPlugIn)
+   U_TRACE_DTOR(0, UNoDogPlugIn)
 
-   delete fw;
+   U_DELETE(fw)
 
-   delete label;
-   delete chrash;
-   delete fw_cmd;
-   delete fw_env;
-   delete extdev;
-   delete intdev;
-   delete hostname;
-   delete localnet;
-   delete info_data;
-   delete arp_cache;
-   delete allowed_members;
-   delete IP_address_trust;
+   U_DELETE(label)
+   U_DELETE(chrash)
+   U_DELETE(fw_cmd)
+   U_DELETE(fw_env)
+   U_DELETE(extdev)
+   U_DELETE(intdev)
+   U_DELETE(hostname)
+   U_DELETE(localnet)
+   U_DELETE(info_data)
+   U_DELETE(arp_cache)
+   U_DELETE(allowed_members)
+   U_DELETE(IP_address_trust)
 
-   delete auth_host;
-   delete auth_info;
-   delete auth_login;
-   delete auth_notify;
-   delete auth_service;
-   delete auth_strict_notify;
+   U_DELETE(auth_host)
+   U_DELETE(auth_info)
+   U_DELETE(auth_login)
+   U_DELETE(auth_notify)
+   U_DELETE(auth_service)
+   U_DELETE(auth_strict_notify)
 
-   delete varp_cache;
-   delete vInternalDevice;
-   delete vLocalNetworkSpec;
-   delete vLocalNetworkLabel;
-   delete vLocalNetworkMask;
+   U_DELETE(varp_cache)
+   U_DELETE(vInternalDevice)
+   U_DELETE(vLocalNetworkSpec)
+   U_DELETE(vLocalNetworkLabel)
+   U_DELETE(vLocalNetworkMask)
 
-   delete client;
+   U_DELETE(client)
 
-#ifdef ENABLE_MEMPOOL
-   delete mempool;
-#endif
-
-   if (ipt)   delete ipt;
-   if (peers) delete peers;
+   if (ipt)   U_DELETE(ipt)
+   if (peers) U_DELETE(peers)
 
 #ifdef USE_LIBTDB
-   if (pdata) delete (UTDB*)pdata;
+   if (pdata) U_DELETE((UTDB*)pdata)
 #endif
 }
 
@@ -177,162 +164,210 @@ int UModNoDogPeer::handlerTime()
    U_RETURN(-1); // normal
 }
 
-U_NO_EXPORT void UNoDogPlugIn::getTraffic()
+U_NO_EXPORT void UNoDogPlugIn::makeInfoData(UFlatBuffer* pfb, void* param)
 {
-   U_TRACE_NO_PARAM(0, "UNoDogPlugIn::getTraffic()")
+   U_TRACE(0, "UNoDogPlugIn::makeInfoData(%p,%p)", pfb, param)
 
-#ifdef HAVE_LINUX_NETFILTER_IPV4_IPT_ACCOUNT_H
-   UString ip(17U);
-   const char* table;
-   const unsigned char* bytep;
-   struct ipt_acc_handle_ip* entry;
+   char buffer[256];
 
-   for (uint32_t i = 0, n = vLocalNetworkMask->size(); i < n; ++i)
+   pfb->String(buffer, getApInfo(buffer, sizeof(buffer), *label));
+
+   if (peers->first())
       {
-      U_INTERNAL_ASSERT((*vLocalNetworkSpec)[i].isNullTerminated())
+      uint32_t _ctime = peers->getIndexNode();
 
-      table = (*vLocalNetworkSpec)[i].data();
+#  ifdef HAVE_LINUX_NETFILTER_IPV4_IPT_ACCOUNT_H
+      const char* table;
+      struct ipt_acc_handle_ip* entry;
 
-      if (ipt->readEntries(table, true))
+      for (uint32_t i = 0, n = vLocalNetworkMask->size(); i < n; ++i)
          {
-         while ((entry = ipt->getNextEntry()))
+         U_INTERNAL_ASSERT((*vLocalNetworkSpec)[i].isNullTerminated())
+
+         table = (*vLocalNetworkSpec)[i].data();
+
+         if (ipt->readEntries(table, true))
             {
-            bytep = (const unsigned char*) &(entry->ip);
-
-#        ifdef HAVE_ARCH64
-            ip.snprintf(U_CONSTANT_TO_PARAM("%u.%u.%u.%u"), bytep[3], bytep[2], bytep[1], bytep[0]);
-#        else
-            ip.snprintf(U_CONSTANT_TO_PARAM("%u.%u.%u.%u"), bytep[0], bytep[1], bytep[2], bytep[3]);
-#        endif
-
-            U_SRV_LOG("IP: %v SRC packets: %u bytes: %u DST packets: %u bytes: %u", ip.rep, entry->src_packets, entry->src_bytes, entry->dst_packets, entry->dst_bytes);
-
-            peer = (*peers)[ip];
-
-            U_INTERNAL_DUMP("peer = %p", peer)
-
-            if (peer)
+            while ((entry = ipt->getNextEntry()))
                {
-               peer->ctraffic = (entry->src_bytes ? entry->src_bytes +
-                                                    entry->dst_bytes : 0);
+               /*
+               const unsigned char* bytep = (const unsigned char*) &(entry->ip);
 
-               U_INTERNAL_DUMP("peer->ctraffic = %u peer->mac = %V peer->ip = %V peer->label = %V", peer->ctraffic, peer->mac.rep, peer->ip.rep, peer->label.rep)
+#           ifdef HAVE_ARCH64
+               uint32_t ip_len = u__snprintf(buffer, sizeof(buffer), U_CONSTANT_TO_PARAM("%u.%u.%u.%u"), bytep[3], bytep[2], bytep[1], bytep[0]);
+#           else
+               uint32_t ip_len = u__snprintf(buffer, sizeof(buffer), U_CONSTANT_TO_PARAM("%u.%u.%u.%u"), bytep[0], bytep[1], bytep[2], bytep[3]);
+#           endif
+
+               U_SRV_LOG("IP: %.*s SRC packets: %u bytes: %u DST packets: %u bytes: %u", ip_len, buffer, entry->src_packets, entry->src_bytes, entry->dst_packets, entry->dst_bytes);
+
+               peer = peers->at(buffer, ip_len);
+               */
+
+#           ifdef HAVE_ARCH64
+               *(uint32_t*)buffer = ntohl(entry->ip);
+
+               U_SRV_LOG("IP: %v SRC packets: %u bytes: %u DST packets: %u bytes: %u",
+                          UIPAddress::toString(*(uint32_t*)buffer).rep, entry->src_packets, entry->src_bytes, entry->dst_packets, entry->dst_bytes);
+
+               peer = peers->at(buffer, sizeof(in_addr_t));
+#           else
+               U_SRV_LOG("IP: %v SRC packets: %u bytes: %u DST packets: %u bytes: %u",
+                          UIPAddress::toString(entry->ip).rep, entry->src_packets, entry->src_bytes, entry->dst_packets, entry->dst_bytes);
+
+               peer = peers->at((const char*)&(entry->ip), sizeof(in_addr_t));
+#           endif
+
+               if (peer)
+                  {
+                  U_INTERNAL_DUMP("peer = %p", peer)
+
+                  peer->ctraffic = (entry->src_bytes ? entry->src_bytes +
+                                                       entry->dst_bytes : 0);
+
+                  U_INTERNAL_DUMP("peer->ctraffic = %u peer->mac = %V peer->ip = %V peer->label = %V", peer->ctraffic, peer->mac.rep, peer->ip.rep, peer->label.rep)
+                  }
                }
             }
          }
-      }
-#endif
-}
+#  endif
 
-bool UNoDogPlugIn::getPeerInfo(UStringRep* key, void* value)
-{
-   U_TRACE(0, "UNoDogPlugIn::getPeerInfo(%V,%p)", key, value)
+      peers->setIndexNode(_ctime);
 
-   peer = (UModNoDogPeer*)value;
+      do {
+         peer = peers->elem();
 
-   U_INTERNAL_DUMP("peer = %p", peer)
-
-   U_INTERNAL_ASSERT_POINTER(peer)
-
-   if (U_peer_allowed == false)
-      {
-      uint32_t _ctime = u_now->tv_sec - peer->_ctime;
-                                        peer->_ctime = u_now->tv_sec;
-
-      // -----------------------------------------------------------------------------------------------------------------------------------------
-      // $1 -> mac
-      // $2 -> ip
-      // $3 -> ap
-      // $4 -> time
-      // $5 -> traffic
-      // $6 -> time_no_traffic
-      // -----------------------------------------------------------------------------------------------------------------------------------------
-
-      pfb->String(peer->getMAC());
-      pfb->String(peer->ip);
-      pfb->String(peer->label);
-
-      if (peer->ctraffic)
-         {
-         if (U_peer_permit == false)
+         if (U_peer_allowed == false)
             {
-            U_SRV_LOG("WARNING: Peer IP %v MAC %v has made traffic(%u bytes) but it has status DENY", peer->ip.rep, peer->mac.rep, peer->ctraffic);
+            U_INTERNAL_ASSERT(u_isIPv4Addr(U_STRING_TO_PARAM(peer->ip)))
+
+            // -----------------------------------------------------------------------------------------------------------------------------------------
+            // $1 -> mac
+            // $2 -> ip
+            // $3 -> ap
+            // $4 -> traffic
+            // ---------------------
+            // $5 -> time
+            // $6 -> time_no_traffic
+            // -----------------------------------------------------------------------------------------------------------------------------------------
+
+            peer->getMAC(buffer);
+
+            pfb->String(buffer, 12);
+            pfb->UInt(peer->addr);
+            pfb->String(peer->label);
+
+            _ctime = u_now->tv_sec - peer->_ctime;
+                                     peer->_ctime = u_now->tv_sec;
+
+            if (peer->ctraffic)
+               {
+               if (U_peer_permit == false)
+                  {
+                  U_SRV_LOG("WARNING: Peer IP %v MAC %v has made traffic(%u bytes) but it has status DENY", peer->ip.rep, peer->mac.rep, peer->ctraffic);
+                  }
+
+               pfb->UInt(peer->ctraffic);
+                         peer->ctraffic = 0;
+
+               peer->time_no_traffic = 0U;
+
+               /*
+               pfb->UInt(_ctime);
+               pfb->UInt(0U);
+               */
+               }
+            else
+               {
+               pfb->UInt(0U);
+
+               peer->time_no_traffic += _ctime;
+
+               /*
+               pfb->UInt(0U);
+               pfb->UInt(peer->time_no_traffic);
+               */
+
+               U_SRV_LOG("Peer IP %v MAC %v has made no traffic for %u secs", peer->ip.rep, peer->mac.rep, peer->time_no_traffic);
+               }
             }
-
-         pfb->UInt(_ctime);
-
-         pfb->UInt(peer->ctraffic);
-                   peer->ctraffic = 0;
-
-         pfb->UInt((peer->time_no_traffic = 0U));
          }
-      else
-         {
-         pfb->UInt(0U);
-         pfb->UInt(0U);
-         pfb->UInt((peer->time_no_traffic += _ctime));
-
-         U_SRV_LOG("Peer IP %v MAC %v has made no traffic for %u secs", peer->ip.rep, peer->mac.rep, peer->time_no_traffic);
-         }
-      }
-
-   U_RETURN(true);
-}
-
-U_NO_EXPORT void UNoDogPlugIn::makeInfoData(UFlatBuffer* _pfb, void* param)
-{
-   U_TRACE(0, "UNoDogPlugIn::makeInfoData(%p,%p)", _pfb, param)
-
-   (pfb = _pfb)->String(getApInfo(*label));
-
-   if (peers->empty() == false)
-      {
-      getTraffic();
-
-      peers->callForAllEntry(getPeerInfo);
+      while (peers->next());
       }
 }
 
-U_NO_EXPORT void UNoDogPlugIn::makeNotifyData(UFlatBuffer* _pfb, void* param)
+U_NO_EXPORT void UNoDogPlugIn::makeNotifyData(UFlatBuffer* pfb, void* param)
 {
-   U_TRACE(0, "UNoDogPlugIn::makeNotifyData(%p,%p)", _pfb, param)
+   U_TRACE(0, "UNoDogPlugIn::makeNotifyData(%p,%p)", pfb, param)
 
    U_INTERNAL_DUMP("peer->mac = %V peer->ip = %V peer->label = %V", peer->mac.rep, peer->ip.rep, peer->label.rep)
 
-   U_INTERNAL_ASSERT(u_isMacAddr(U_STRING_TO_PARAM(peer->mac)))
-   U_INTERNAL_ASSERT(u_isIPv4Addr(U_STRING_TO_PARAM(peer->ip)))
+   char buffer[256];
 
-   _pfb->String(getApInfo(peer->label));
-   _pfb->String(peer->getMAC());
-   _pfb->String(peer->ip);
+   pfb->String(buffer, getApInfo(buffer, sizeof(buffer), peer->label));
+
+   peer->getMAC(buffer);
+
+   pfb->String(buffer, 12);
+   pfb->String(peer->ip);
 }
 
-U_NO_EXPORT void UNoDogPlugIn::makeLoginData(UFlatBuffer* _pfb, void* param)
+U_NO_EXPORT void UNoDogPlugIn::makeLoginData(UFlatBuffer* pfb, void* param)
 {
-   U_TRACE(0, "UNoDogPlugIn::makeLoginData(%p,%p)", _pfb, param)
+   U_TRACE(0, "UNoDogPlugIn::makeLoginData(%p,%p)", pfb, param)
 
-   makeNotifyData(_pfb, param);
+   makeNotifyData(pfb, param);
 
-   _pfb->UInt(U_PTR2INT(peer));
+   pfb->UInt(U_PTR2INT(peer));
 }
 
-void UNoDogPlugIn::checkSystem()
+int UNoDogPlugIn::handlerTime()
 {
-   U_TRACE_NO_PARAM(0, "UNoDogPlugIn::checkSystem()")
+   U_TRACE_NO_PARAM(0, "UNoDogPlugIn::handlerTime()")
 
    U_SET_MODULE_NAME(nodog);
 
    U_SRV_LOG("Checking peers for info");
 
-   UFlatBufferSpace space;
+#ifdef HAVE_ARCH64
+   UFlatBufferSpaceLarge space;
+#else
+   UFlatBufferSpaceShort space;
+#endif
 
-   *info_data = UFlatBuffer::toVector(makeInfoData);
+   U_INTERNAL_ASSERT(info_data->isNull())
+
+   UFlatBuffer::toVector(*info_data, makeInfoData);
+
+   U_SRV_LOG("info_data(%u) = %#V", info_data->size(), info_data->rep);
 
    (void) client->sendPOSTRequestAsync(*info_data, *auth_info, true);
 
    info_data->clear();
 
    U_RESET_MODULE_NAME;
+
+   U_RETURN(0); // monitoring
+}
+
+void UNoDogPlugIn::executeCommand(const char* type, uint32_t len)
+{
+   U_TRACE(0, "UNoDogPlugIn::executeCommand(%.*S,%u)", len, type, len)
+
+   U_INTERNAL_ASSERT_POINTER(peer)
+
+   char buffer[256];
+
+   // NB: request(arp|deny|clear|reset|permit|openlist|initialize) mac ip class(Owner|Member|Public) UserDownloadRate UserUploadRate
+
+   UCommand cmd(buffer, u__snprintf(buffer, sizeof(buffer), U_CONSTANT_TO_PARAM("/bin/sh %v %.*s %v %v Member 0 0"),
+                                    fw_cmd->rep, len, type, (U_peer_mac_from_dhcp_data_file ? *UString::str_without_mac : peer->mac).rep, peer->ip.rep), fw_env);
+
+   (void) cmd.executeAndWait(U_NULLPTR, -1, fd_stderr);
+
+#ifndef U_LOG_DISABLE
+   UServer_Base::logCommandMsgError(cmd.getCommand(), false);
+#endif
 }
 
 U_NO_EXPORT void UNoDogPlugIn::setMAC()
@@ -342,9 +377,21 @@ U_NO_EXPORT void UNoDogPlugIn::setMAC()
    if (peer->mac.empty() ||
        peer->mac == *UString::str_without_mac)
       {
-      U_INTERNAL_ASSERT(peer->ifname.isNullTerminated())
+      UString ifname = (*vInternalDevice)[0];
 
-      peer->mac = UServer_Base::csocket->getMacAddress(peer->ifname.data());
+      if (pallow->device &&
+          pallow->device != ifname)
+         {
+         U_SRV_LOG("WARNING: different device (%v => %v) for peer: IP %v MAC %v", ifname.rep, pallow->device.rep, peer->ip.rep, peer->mac.rep);
+
+         ifname = pallow->device;
+         }
+
+      U_INTERNAL_DUMP("ifname = %V", ifname.rep)
+
+      U_INTERNAL_ASSERT(ifname.isNullTerminated())
+
+      peer->mac = UServer_Base::csocket->getMacAddress(ifname.data());
 
       if (peer->mac.empty())
          {
@@ -359,7 +406,7 @@ U_NO_EXPORT void UNoDogPlugIn::setMAC()
                {
                peer->mac = varp_cache[i+1].copy();
 
-               U_ASSERT_EQUALS(peer->ifname, varp_cache[i+2])
+               U_ASSERT_EQUALS(ifname, varp_cache[i+2])
 
                break;
                }
@@ -377,8 +424,6 @@ U_NO_EXPORT void UNoDogPlugIn::setMAC()
 U_NO_EXPORT void UNoDogPlugIn::setLabelAndMAC()
 {
    U_TRACE_NO_PARAM(0, "UNoDogPlugIn::setLabelAndMAC()")
-
-   peer->label = ((uint32_t)U_peer_index_network >= vLocalNetworkLabel->size() ? *UString::str_without_label : (*vLocalNetworkLabel)[U_peer_index_network]);
 
    U_INTERNAL_DUMP("pdata = %p mac_from_dhcp_data_file = %b peer->label = %V", pdata, mac_from_dhcp_data_file, peer->label.rep)
 
@@ -465,46 +510,48 @@ void UNoDogPlugIn::setNewPeer()
 
    U_INTERNAL_ASSERT_POINTER(peer)
 
-   U_INTERNAL_DUMP("peer->UIPAddress::pcStrAddress = %S U_peer_index_network = %u",
-                    peer->UIPAddress::pcStrAddress,     U_peer_index_network)
+   U_INTERNAL_DUMP("U_peer_index_network = %u", U_peer_index_network)
 
    if (U_peer_index_network == 0xFF)
       {
       U_ERROR("IP address for new peer %V not found in LocalNetworkMask %V", peer->ip.rep, localnet->rep);
       }
 
-   UIPAllow* pallow = vLocalNetworkMask->at(U_peer_index_network);
-
-   peer->gateway = (bnetwork_interface ? pallow->host : *UServer_Base::IP_address);
-
-   U_INTERNAL_DUMP("peer->gateway = %V", peer->gateway.rep)
-
-   U_INTERNAL_ASSERT(peer->gateway)
-
-   if (pallow->device &&
-       peer->ifname != pallow->device)
-      {
-      U_SRV_LOG("WARNING: different device (%v=>%v) for peer: IP %v MAC %v", peer->ifname.rep, pallow->device.rep, peer->ip.rep, peer->mac.rep);
-
-      peer->ifname = pallow->device;
-      }
-
-   U_INTERNAL_DUMP("peer->ifname = %V", peer->ifname.rep)
+   peer->label = ((uint32_t)U_peer_index_network >= vLocalNetworkLabel->size() ? *UString::str_without_label : (*vLocalNetworkLabel)[U_peer_index_network]);
 
    setLabelAndMAC();
 
-   // NB: request(arp|deny|clear|reset|permit|openlist|initialize) mac ip class(Owner|Member|Public) UserDownloadRate UserUploadRate
+   if (mac_from_dhcp_data_file) U_peer_flag |= U_PEER_MAC_FROM_DHCP_DATA_FILE;
 
-   UString command(100U);
-
-   command.snprintf(U_CONSTANT_TO_PARAM("/bin/sh %v deny %v %v Member 0 0"), fw_cmd->rep, (mac_from_dhcp_data_file ? *UString::str_without_mac : peer->mac).rep, peer->ip.rep);
-
-   peer->fw.set(command, (char**)U_NULLPTR);
-   peer->fw.setEnvironment(fw_env);
-
-   peers->insert(peer->ip, peer);
+   peers->insert((const char*)&(peer->addr), sizeof(uint32_t), peer); // peers->insert(peer->ip, peer);
 }
 
+U_NO_EXPORT bool UNoDogPlugIn::getPeer()
+{
+   U_TRACE_NO_PARAM(0, "UNoDogPlugIn::getPeer()")
+
+   if (peers->empty() == false)
+      {
+      peer = peers->at((const char*)&addr, sizeof(uint32_t)); // peer = peers->at(U_CLIENT_ADDRESS_TO_PARAM);
+
+      U_INTERNAL_DUMP("peer = %p", peer)
+
+      if (peer) U_RETURN(true);
+      }
+
+   U_RETURN(false);
+}
+
+U_NO_EXPORT void UNoDogPlugIn::erasePeer()
+{
+   U_TRACE_NO_PARAM(0, "UNoDogPlugIn::erasePeer()")
+
+   U_INTERNAL_ASSERT_POINTER(peer)
+
+   U_DELETE(peers->erase((const char*)&(peer->addr), sizeof(uint32_t))) // U_DELETE(peers->erase(peer->ip))
+}
+
+/*
 U_NO_EXPORT void UNoDogPlugIn::printPeers(const char* msg, uint32_t len)
 {
    U_TRACE(0, "UNoDogPlugIn::printPeers(%.*S,%u)", len, msg, len)
@@ -514,25 +561,19 @@ U_NO_EXPORT void UNoDogPlugIn::printPeers(const char* msg, uint32_t len)
       {
       typedef UHashMap<UModNoDogPeer*> uhashpeer;
 
-      UServer_Base::log->log(U_CONSTANT_TO_PARAM("[nodog] %.*S peers = %.*S"), len, msg, UObjectIO::buffer_output_len, UObject2String<uhashpeer>(*peers));
+#  ifdef HAVE_ARCH64
+      char buffer_output[16U * 1024U];
+#  else
+      char buffer_output[ 1U * 1024U];
+#  endif
+
+      uint32_t buffer_output_len = UObject2String<uhashpeer>(*peers, buffer_output, sizeof(buffer_output));
+
+      UServer_Base::log->log(U_CONSTANT_TO_PARAM("[nodog] %.*S peers = %.*S"), len, msg, buffer_output_len, buffer_output);
       }
 #endif
 }
-
-U_NO_EXPORT void UNoDogPlugIn::erasePeer()
-{
-   U_TRACE_NO_PARAM(0, "UNoDogPlugIn::erasePeer()")
-
-   U_INTERNAL_ASSERT_POINTER(peer)
-
-// printPeers(U_CONSTANT_TO_PARAM("before erase"));
-
-   delete peers->erase(peer->ip);
-
-// printPeers(U_CONSTANT_TO_PARAM("after erase"));
-
-   U_ASSERT_EQUALS(peers->at(peer->ip), U_NULLPTR)
-}
+*/
 
 U_NO_EXPORT void UNoDogPlugIn::eraseTimer()
 {
@@ -550,7 +591,7 @@ U_NO_EXPORT void UNoDogPlugIn::sendLogin()
 {
    U_TRACE_NO_PARAM(0, "UNoDogPlugIn::sendLogin()")
 
-   UFlatBufferSpace space;
+   UFlatBufferSpaceUser space;
 
    (void) client->sendPOSTRequestAsync(UFlatBuffer::toVector(makeLoginData), *auth_login, true);
 }
@@ -561,9 +602,9 @@ U_NO_EXPORT void UNoDogPlugIn::sendNotify()
 
    if (U_peer_notify_disable == false)
       {
-      U_peer_flag |= U_PEER_NOTIFY_DISABLE;
+      UFlatBufferSpaceUser space;
 
-      UFlatBufferSpace space;
+      U_peer_flag |= U_PEER_NOTIFY_DISABLE;
 
       (void) client->sendPOSTRequestAsync(UFlatBuffer::toVector(makeNotifyData), *auth_notify, true);
       }
@@ -575,12 +616,59 @@ U_NO_EXPORT void UNoDogPlugIn::sendStrictNotify()
 
    if (U_peer_strict_notify_disable == false)
       {
-      U_peer_flag |= U_PEER_STRICT_NOTIFY_DISABLE;
+      UFlatBufferSpaceUser space;
 
-      UFlatBufferSpace space;
+      U_peer_flag |= U_PEER_STRICT_NOTIFY_DISABLE;
 
       (void) client->sendPOSTRequestAsync(UFlatBuffer::toVector(makeNotifyData), *auth_strict_notify, true);
       }
+}
+
+U_NO_EXPORT bool UNoDogPlugIn::checkOldPeer()
+{
+   U_TRACE_NO_PARAM(0, "UNoDogPlugIn::checkOldPeer()")
+
+   U_INTERNAL_ASSERT_POINTER(peer)
+   U_ASSERT(peer->ip.equal(U_CLIENT_ADDRESS_TO_PARAM))
+
+   UString mac   = peer->mac,
+           label = peer->label;
+
+   peer->mac = *UString::str_without_mac;
+
+   setLabelAndMAC();
+
+   if (  mac != peer->mac ||
+       label != peer->label)
+      {
+      // NB: we assume that the current peer is a different user that has acquired the same IP address from the DHCP...
+
+      U_SRV_LOG("WARNING: different user for peer (IP %v): (MAC %v LABEL %v) => (MAC %v LABEL %v)", peer->ip.rep, mac.rep, label.rep, peer->mac.rep, peer->label.rep);
+
+      U_INTERNAL_ASSERT(mac)
+      U_INTERNAL_ASSERT(label)
+      U_INTERNAL_ASSERT(peer->mac)
+      U_INTERNAL_ASSERT(peer->label)
+
+      if (U_peer_permit)
+         {
+         UString x;
+
+         if (U_peer_mac_from_dhcp_data_file == false)
+            {
+            x = peer->mac;
+                peer->mac = mac;
+            }
+
+         deny();
+
+         if (U_peer_mac_from_dhcp_data_file == false) peer->mac = x;
+         }
+
+      U_RETURN(false);
+      }
+
+   U_RETURN(true);
 }
 
 // Server-wide hooks
@@ -683,7 +771,7 @@ int UNoDogPlugIn::handlerConfig(UFileConfig& cfg)
 
       if (x)
          {
-         U_NEW(UTDB, pdata, UTDB);
+         U_NEW_WITHOUT_CHECK_MEMORY(UTDB, pdata, UTDB);
 
          U_INTERNAL_ASSERT(x.isNullTerminated())
 
@@ -699,8 +787,9 @@ int UNoDogPlugIn::handlerConfig(UFileConfig& cfg)
             {
             U_SRV_LOG("WARNING: fail to open DHCP_DATA_FILE %V", x.rep);
 
-            delete (UTDB*)pdata;
-                          pdata = U_NULLPTR;
+            U_DELETE((UTDB*)pdata)
+
+            pdata = U_NULLPTR;
             }
          }
 #  endif
@@ -769,8 +858,6 @@ int UNoDogPlugIn::handlerInit()
       }
    else
       {
-      UIPAllow* pallow;
-
       for (uint32_t i = 0, n = vLocalNetworkMask->size(); i < n; ++i)
          {
          pallow = vLocalNetworkMask->at(i);
@@ -796,7 +883,7 @@ int UNoDogPlugIn::handlerInit()
 
    // firewall cmd
 
-   UString command(500U);
+   UString command(300U);
 
    command.snprintf(U_CONSTANT_TO_PARAM("/bin/sh %v initialize allowed_web_hosts"), fw_cmd->rep);
 
@@ -822,7 +909,11 @@ int UNoDogPlugIn::handlerInit()
 
    // users table
 
-   U_NEW(UHashMap<UModNoDogPeer*>, peers, UHashMap<UModNoDogPeer*>);
+#ifndef HAVE_ARCH64
+   U_NEW(UHashMap<UModNoDogPeer*>, peers, UHashMap<UModNoDogPeer*>( 256, UHashMap<void*>::setIndexIntHash));
+#else
+   U_NEW(UHashMap<UModNoDogPeer*>, peers, UHashMap<UModNoDogPeer*>(8192, UHashMap<void*>::setIndexIntHash));
+#endif
 
    U_RETURN(U_PLUGIN_HANDLER_OK);
 }
@@ -831,28 +922,18 @@ int UNoDogPlugIn::handlerFork()
 {
    U_TRACE_NO_PARAM(0, "UNoDogPlugIn::handlerFork()")
 
-   /**
-    * check if we want some preallocation for memory pool...
-    *
-    * U_WRITE_MEM_POOL_INFO_TO("mempool.%N.%P.handlerFork", 0)
-    */
-
-#ifdef ENABLE_MEMPOOL
-   if (*mempool) UMemoryPool::allocateMemoryBlocks(mempool->data()); // NB: start from 1... (Ex: 20,30,0,1,1050,0,0,0,2)
-#endif
-
    // send msg start to portal
 
-   UString msg(300U), uptime(20U), allowed_web_hosts;
+   char buffer[256];
+   bool bqueue = false, we_need_response = true;
+   UString msg(200U), uptime(20U), allowed_web_hosts;
 
    uptime.setUpTime();
 
-   msg.snprintf(U_CONSTANT_TO_PARAM("/start_ap?ap=%v&public=%v%%3A%u&pid=%d&uptime=%v"),
-                getApInfo(*label).rep, IP_address_trust->rep, UServer_Base::port, UFile::getSysParam(chrash->data()), uptime.rep);
+   msg.snprintf(U_CONSTANT_TO_PARAM("/start_ap?ap=%.*s&public=%v%%3A%u&pid=%d&uptime=%v"),
+                getApInfo(buffer, sizeof(buffer), *label), buffer, IP_address_trust->rep, UServer_Base::port, UFile::getSysParam(chrash->data()), uptime.rep);
 
    (void) UFile::writeTo(*chrash, u_pid_str, u_pid_str_len);
-
-   bool bqueue = false, we_need_response = true;
 
    U_INTERNAL_ASSERT_EQUALS(UClient_Base::queue_dir, U_NULLPTR)
 
@@ -933,13 +1014,13 @@ end:
       UString ip,
               UserUploadRate,
               UserDownloadRate;
-      uint32_t increment = ((n % 3) ? 5 : 3);
+      uint32_t index_network, increment = ((n % 3) ? 5 : 3);
 
       for (uint32_t i = 0; i < n; i += increment)
          {
          ip = vtmp[i+1];
 
-         uint32_t index_network = UIPAllow::find(ip, *vLocalNetworkMask);
+         index_network = UIPAllow::find(ip, *vLocalNetworkMask);
 
          U_INTERNAL_DUMP("index_network = %u", index_network)
 
@@ -960,15 +1041,12 @@ end:
 
          U_NEW(UModNoDogPeer, peer, UModNoDogPeer);
 
-         peer->ip  = ip;
+         peer->ip  = ip.copy();
          peer->mac = vtmp[i];
-
-         peer->ip.copy(peer->UIPAddress::pcStrAddress);
 
          U_peer_flag |= U_PEER_ALLOWED;
 
-         U_peer_index_network                   = index_network;
-         U_ipaddress_StrAddressUnresolved(peer) = false;
+         U_peer_index_network = index_network;
 
          setNewPeer();
 
@@ -988,8 +1066,9 @@ int UNoDogPlugIn::handlerRequest()
    if (UHTTP::file->isRoot() ||
        UClientImage_Base::isRequestNotFound())
       {
-      UString x, redirect;
-      uint32_t index_network;
+      UString x;
+      uint32_t sz, index_network;
+      char buffer[U_BUFFER_SIZE-512];
 
       U_http_info.nResponseCode = HTTP_NO_CONTENT;
 
@@ -1009,10 +1088,12 @@ int UNoDogPlugIn::handlerRequest()
          // 3) /ping           - check 
          // ------------------------------------------
 
-         U_SRV_LOG("AUTH request: %.*S", U_HTTP_URI_TO_TRACE);
+         U_SRV_LOG("Start REQUEST_FROM_AUTH phase of plugin nodog");
 
          if (U_HTTP_URI_STREQ("/login_validate"))
             {
+            bool bdeny;
+            char policy;
             UFlatBuffer fb, vec;
 
             fb.setRoot(*UClientImage_Base::body);
@@ -1021,109 +1102,98 @@ int UNoDogPlugIn::handlerRequest()
             // $1 -> peer
             // $2 -> deny|permit ('0'|'1') policy: notify|no_notify|strict_notify ('0'|'1'|'2')
 
-            peer = (UModNoDogPeer*) vec.AsVectorGet<uint64_t>(0);
-               x =                  vec.AsVectorGet<UString>(1);
+#        if defined(HAVE_ARCH64) && defined(U_LINUX)
+            peer = (UModNoDogPeer*)  vec.AsVectorGet<uint64_t>(0);
+#        else
+            peer = (UModNoDogPeer*) (vec.AsVectorGet<uint64_t>(0) & 0x00000000ffffffffLL);
+#        endif
 
-            if (peer)
+            U_SRV_LOG("request to validate login: peer = %p", peer);
+
+            U_INTERNAL_ASSERT_POINTER(peer)
+
+            if (peers->findElement(peer) == false) goto bad;
+
+            x = vec.AsVectorGet<UString>(1);
+
+             bdeny = (x.first_char() == '0'); // deny|permit ('0'|'1')
+            policy =  x.c_char(1);            // policy: notify|no_notify|strict_notify ('0'|'1'|'2')
+
+            U_SRV_LOG("request to validate login for peer IP %v MAC %v: bdeny = %b policy = %C", peer->ip.rep, peer->mac.rep, bdeny, policy);
+
+            U_INTERNAL_ASSERT(peer->mac)
+            U_INTERNAL_ASSERT(u_isMacAddr(U_STRING_TO_PARAM(peer->mac)))
+
+            if (bdeny)
                {
-               bool bdeny = (x.first_char() == '0'); // deny|permit ('0'|'1')
-               char policy = x.c_char(1);            // policy: notify|no_notify|strict_notify ('0'|'1'|'2')
+               eraseTimer();
 
-               U_INTERNAL_ASSERT(peer->mac)
-               U_INTERNAL_ASSERT(peer->welcome)
-               U_INTERNAL_ASSERT(u_isMacAddr(U_STRING_TO_PARAM(peer->mac)))
+               if (U_peer_permit) deny();
 
-               U_SRV_LOG("request to validate login for peer IP %v MAC %v: bdeny = %b policy = %C", peer->ip.rep, peer->mac.rep, bdeny, policy);
+               erasePeer();
 
-               if (bdeny)
+               goto end;
+               }
+
+            U_peer_policy = policy; // policy: notify|no_notify|strict_notify ('0'|'1'|'2')
+
+            /*
+            if (U_peer_policy == '0') // '0' (notify) (1<=T1<=3599) (1<=T2<=3599)
+               {
+               }
+            */
+
+            if (policy == '1') // '1' (no notify) (T1==T2==0)
+               {
+               eraseTimer();
+
+               if (U_peer_permit == false) permit();
+
+               goto end;
+               }
+
+            if (policy == '2') // '2' (strict notify)
+               {
+               if (U_peer_permit == false)
                   {
                   eraseTimer();
 
-                  if (U_peer_permit) deny();
-
-                  erasePeer();
-
-                  U_peer_flag |= U_PEER_ALLOW_DISABLE;
-
-                  goto end;
-                  }
-
-               U_peer_policy = policy; // policy: notify|no_notify|strict_notify ('0'|'1'|'2')
-
-               /*
-               if (U_peer_policy == '0') // '0' (notify) (1<=T1<=3599) (1<=T2<=3599)
-                  {
-                  }
-               */
-
-               if (policy == '1') // '1' (no notify) (T1==T2==0)
-                  {
-                  eraseTimer();
-
-                  if (U_peer_permit == false) permit();
-
-                  goto end;
-                  }
-
-               if (policy == '2') // '2' (strict notify)
-                  {
-                  if (U_peer_permit == false)
-                     {
-                     eraseTimer();
-
-                     U_peer_flag |= U_PEER_DELAY_DISABLE;
-                     }
+                  U_peer_flag |= U_PEER_DELAY_DISABLE;
                   }
                }
             }
          else if (U_HTTP_URI_STREQ("/logout"))
             {
-            UString data = UDES3::getSignedData(*UClientImage_Base::body);
+#        ifndef HAVE_ARCH64
+            uint32_t vec[256],
+#        else
+            uint32_t vec[8192],
+#        endif
+            n = UFlatBuffer::toVectorInt(*UClientImage_Base::body, vec);
 
-            if (data.empty())
+            U_SRV_LOG("AUTH request to logout %u users", n);
+
+            for (uint32_t i = 0; i < n; ++i)
                {
-               U_SRV_LOG("WARNING: AUTH request to logout users tampered");
-
-               goto bad;
-               }
-
-            UVector<UString> vec;
-            UString peer_ip, peer_mac;
-
-            UFlatBuffer::toVector(data, vec);
-
-            for (int32_t i = 0, n = (int32_t) vec.size(); i < n; i += 2)
-               {
-               // ---------
+               // --------
                // $1 -> ip
-               // $2 -> mac
-               // ---------
+               // --------
 
-               peer_ip  = vec[i];
-               peer_mac = vec[i+1];
+               peer = peers->at((const char*)(vec+i), sizeof(uint32_t)); // (*peers)[UIPAddress::toString(vec[i])];
 
-               U_INTERNAL_DUMP("peer_ip = %V peer_mac = %V", peer_ip.rep, peer_mac.rep)
+               if (peer == U_NULLPTR) continue;
 
-               if ((peer = (*peers)[peer_ip])) goto next;
+               U_INTERNAL_ASSERT(peer->mac)
+               U_INTERNAL_ASSERT(u_isMacAddr(U_STRING_TO_PARAM(peer->mac)))
 
-               U_INTERNAL_ASSERT_DIFFERS(peer_mac, *UString::str_without_mac)
+               U_SRV_LOG("AUTH request to logout user(%u): IP %v MAC %v", i, peer->ip.rep, peer->mac.rep);
 
-               if (peers->first())
-                  {
-                  do {
-                     if (peer_mac == (peer = peers->elem())->getMAC()) goto next;
-                     }
-                  while (peers->next());
-                  }
-
-               continue;
-
-               eraseTimer();
-
-next:          if (U_peer_permit) deny();
+               if (U_peer_permit) deny();
                else
                   {
-                  U_SRV_LOG("AUTH request to logout user with status DENY: IP %v MAC %v", peer->ip.rep, peer->mac.rep);
+                  eraseTimer();
+
+                  U_SRV_LOG("AUTH request to logout user with status DENY", 0);
                   }
 
                erasePeer();
@@ -1140,26 +1210,28 @@ bad:        UHTTP::setBadRequest();
          goto end;
          }
 
-      U_SRV_LOG("Start REQUEST_FROM_USER phase of plugin nodog: %.*S", U_HTTP_URI_TO_TRACE);
+   // U_SRV_LOG("Start REQUEST_FROM_USER phase of plugin nodog");
 
-      printPeers(U_CONSTANT_TO_PARAM("user request"));
+   // printPeers(U_CONSTANT_TO_PARAM("user request"));
 
-      if (peers->empty() == false &&
-          (peer = peers->at(U_CLIENT_ADDRESS_TO_PARAM)))
+      addr = UServer_Base::getClientAddress();
+
+      if (getPeer())
          {
-         // -----------------
-         // request from user
-         // -----------------
+         // ---------------------
+         // request from OLD user
+         // ---------------------
+
+         U_SRV_LOG("Start REQUEST_FROM_OLD_USER phase of plugin nodog: peer = %p", peer);
 
          U_INTERNAL_ASSERT(peer->mac)
-         U_INTERNAL_ASSERT(peer->welcome)
          U_ASSERT(peer->ip.equal(U_CLIENT_ADDRESS_TO_PARAM))
          U_INTERNAL_ASSERT(u_isMacAddr(U_STRING_TO_PARAM(peer->mac)))
 
-         if (U_peer_allow_disable == false &&
-             U_HTTP_URI_MEMEQ("/nodog_peer_allow.sh"))
+         if (U_HTTP_URI_MEMEQ("/nodog_peer_allow.sh"))
             {
-            if (U_HTTP_QUERY_MEMEQ("url="))
+            if (U_HTTP_QUERY_MEMEQ("url=") &&
+                U_peer_allow_disable == false)
                {
                /**
                 * open firewall, respond with redirect to original request
@@ -1168,6 +1240,7 @@ bad:        UHTTP::setBadRequest();
                 * $2 -> forced ('0'|'1')
                 */
 
+               UString redirect;
                bool forced = false;
                uint32_t n = UHTTP::processForm();
 
@@ -1205,32 +1278,40 @@ next1:            eraseTimer();
             goto end;
             }
 
-         if (U_peer_delay_disable == false &&
-             U_HTTP_URI_STREQ("/nodog_peer_delay.sh"))
+         if (U_HTTP_URI_STREQ("/nodog_peer_delay.sh"))
             {
-            eraseTimer();
-
-            U_INTERNAL_DUMP("T2 = %u", T2)
-
-            if (T2 &&
-                T2 < 3600)
+            if (U_peer_delay_disable == false)
                {
-               peer->UEventTime::setTimeToExpire(T2);
+               eraseTimer();
 
-               U_peer_flag |= U_PEER_TIMER_ACTIVE;
+               U_INTERNAL_DUMP("T2 = %u", T2)
 
-               UTimer::insert(peer);
+               if (T2 &&
+                   T2 < 3600)
+                  {
+                  peer->UEventTime::setTimeToExpire(T2);
+
+                  U_peer_flag |= U_PEER_TIMER_ACTIVE;
+
+                  UTimer::insert(peer);
+                  }
+
+               sendNotify();
                }
-
-            sendNotify();
 
             goto end;
             }
 
-         U_SRV_LOG("user request: %.*S", U_HTTP_URI_TO_TRACE);
+         sz = setRedirect(buffer, sizeof(buffer));
+
+         if (checkOldPeer() == false) goto log;
 
          goto welcome;
          }
+
+      // ---------------------
+      // request from NEW user
+      // ---------------------
 
       index_network = UIPAllow::find(UServer_Base::client_address, *vLocalNetworkMask);
 
@@ -1245,23 +1326,22 @@ next1:            eraseTimer();
 
       U_NEW(UModNoDogPeer, peer, UModNoDogPeer);
 
-      U_peer_index_network = index_network;
+      U_SRV_LOG("Start REQUEST_FROM_NEW_USER phase of plugin nodog: index_network = %u peer = %p", index_network, peer);
 
-      peer->ifname = (*vInternalDevice)[0];
+      pallow = vLocalNetworkMask->at((U_peer_index_network = index_network));
 
-      *((UIPAddress*)peer) = UServer_Base::csocket->remoteIPAddress();
+      U_INTERNAL_ASSERT_POINTER(pallow)
 
-      (void) peer->ip.replace(peer->UIPAddress::pcStrAddress, UServer_Base::client_address_len);
+             peer->addr = addr;
+      (void) peer->ip.replace(U_CLIENT_ADDRESS_TO_PARAM);
 
-      U_INTERNAL_ASSERT_EQUALS(memcmp(peer->UIPAddress::pcStrAddress, U_CLIENT_ADDRESS_TO_PARAM), 0)
+      U_ASSERT_EQUALS(peer->ip, UIPAddress::toString(peer->addr))
 
       setNewPeer();
 
-      sendLogin();
+      sz = setRedirect(buffer, sizeof(buffer));
 
-      (void) redirect.reserve(8 + U_http_host_len + U_HTTP_URI_QUERY_LEN);
-
-      redirect.snprintf(U_CONSTANT_TO_PARAM("http://%.*s/%.*s"), U_HTTP_HOST_TO_TRACE, U_HTTP_URI_QUERY_TO_TRACE);
+log:  sendLogin();
 
       U_INTERNAL_DUMP("T1 = %u", T1)
 
@@ -1269,7 +1349,7 @@ next1:            eraseTimer();
          {
          permit();
 
-         UHTTP::setRedirectResponse(UHTTP::NO_BODY, U_STRING_TO_PARAM(redirect));
+         UHTTP::setRedirectResponse(UHTTP::NO_BODY, buffer, sz);
          }
       else
          {
@@ -1282,16 +1362,18 @@ next1:            eraseTimer();
             UTimer::insert(peer);
             }
 
-         x.setBuffer(redirect.size() * 3);
+welcome: x = UString::getUBuffer();
 
-         Url::encode(redirect, x);
+         x.snprintf(U_CONSTANT_TO_PARAM("%v://%v/welcome?url="), auth_service->rep, auth_host->rep);
 
-         peer->welcome.reserve(128U + auth_host->size() + x.size());
+         Url::encode_add(buffer, sz, x);
 
-         peer->welcome.snprintf(U_CONSTANT_TO_PARAM("%v://%v/welcome?url=%v&mac=%v&apid=%v&gateway=%v%%3A%u"),
-                                auth_service->rep, auth_host->rep, x.rep, peer->getMAC().rep, peer->label.rep, peer->gateway.rep, UServer_Base::port);
+         peer->getMAC(buffer);
 
-welcome: UHTTP::setRedirectResponse(UHTTP::NO_BODY, U_STRING_TO_PARAM(peer->welcome));
+         x.snprintf_add(U_CONSTANT_TO_PARAM("&mac=%.12s&apid=%v&gateway=%v%%3A%u"),
+                        buffer, peer->label.rep, (bnetwork_interface ? pallow->host : *UServer_Base::IP_address).rep, UServer_Base::port);
+
+         UHTTP::setRedirectResponse(UHTTP::NO_BODY, U_STRING_TO_PARAM(x));
          }
 
 end:  UClientImage_Base::setCloseConnection();
@@ -1309,16 +1391,13 @@ end:  UClientImage_Base::setCloseConnection();
 #if defined(U_STDCPP_ENABLE) && defined(DEBUG)
 const char* UModNoDogPeer::dump(bool _reset) const
 {
-   *UObjectIO::os << "next               " << (void*)next      <<  '\n'
-                  << "_ctime             " << _ctime           <<  '\n'
-                  << "ctraffic           " << ctraffic         <<  '\n'
-                  << "ip       (UString  " << (void*)&ip       << ")\n"
-                  << "mac      (UString  " << (void*)&mac      << ")\n"
-                  << "label    (UString  " << (void*)&label    << ")\n"
-                  << "ifname   (UString  " << (void*)&ifname   << ")\n"
-                  << "gateway  (UString  " << (void*)&gateway  << ")\n"
-                  << "welcome  (UString  " << (void*)&welcome  << ")\n"
-                  << "fw       (UCommand " << (void*)&fw       << ')';
+   *UObjectIO::os << "addr              " << addr            <<  '\n'
+                  << "_ctime            " << _ctime          <<  '\n'
+                  << "ctraffic          " << ctraffic        <<  '\n'
+                  << "time_no_traffic   " << time_no_traffic <<  '\n'
+                  << "ip       (UString " << (void*)&ip      << ")\n"
+                  << "mac      (UString " << (void*)&mac     << ")\n"
+                  << "label    (UString " << (void*)&label   << ')';
 
    if (_reset)
       {
@@ -1332,23 +1411,23 @@ const char* UModNoDogPeer::dump(bool _reset) const
 
 const char* UNoDogPlugIn::dump(bool _reset) const
 {
-   *UObjectIO::os << "fd_stderr                                      " << fd_stderr                   <<  '\n'
-                  << "label              (UString                  " << (void*)label                << ")\n"
-                  << "extdev             (UString                  " << (void*)extdev               << ")\n"
-                  << "fw_cmd             (UString                  " << (void*)fw_cmd               << ")\n"
-                  << "fw_env             (UString                  " << (void*)fw_env               << ")\n"
-                  << "intdev             (UString                  " << (void*)intdev               << ")\n"
-                  << "hostname           (UString                  " << (void*)hostname             << ")\n"
-                  << "localnet           (UString                  " << (void*)localnet             << ")\n"
-                  << "auth_info          (UString                  " << (void*)auth_info           << ")\n"
-                  << "auth_login         (UString                  " << (void*)auth_login           << ")\n"
-                  << "allowed_members    (UString                  " << (void*)allowed_members      << ")\n"
-                  << "fw                 (UCommand                 " << (void*)fw                   << ")\n"
-                  << "ipt                (UIptAccount              " << (void*)ipt                  << ")\n"
-                  << "vInternalDevice    (UVector<UString>         " << (void*)vInternalDevice      << ")\n"
-                  << "vLocalNetworkLabel (UVector<UString>         " << (void*)vLocalNetworkLabel   << ")\n"
-                  << "client             (UHttpClient<UTCPSocket>  " << (void*)client               << ")\n"
-                  << "peers              (UHashMap<UModNoDogPeer*> " << (void*)peers                << ')';
+   *UObjectIO::os << "fd_stderr                                    " << fd_stderr                 <<  '\n'
+                  << "label              (UString                  " << (void*)label              << ")\n"
+                  << "extdev             (UString                  " << (void*)extdev             << ")\n"
+                  << "fw_cmd             (UString                  " << (void*)fw_cmd             << ")\n"
+                  << "fw_env             (UString                  " << (void*)fw_env             << ")\n"
+                  << "intdev             (UString                  " << (void*)intdev             << ")\n"
+                  << "hostname           (UString                  " << (void*)hostname           << ")\n"
+                  << "localnet           (UString                  " << (void*)localnet           << ")\n"
+                  << "auth_info          (UString                  " << (void*)auth_info          << ")\n"
+                  << "auth_login         (UString                  " << (void*)auth_login         << ")\n"
+                  << "allowed_members    (UString                  " << (void*)allowed_members    << ")\n"
+                  << "fw                 (UCommand                 " << (void*)fw                 << ")\n"
+                  << "ipt                (UIptAccount              " << (void*)ipt                << ")\n"
+                  << "vInternalDevice    (UVector<UString>         " << (void*)vInternalDevice    << ")\n"
+                  << "vLocalNetworkLabel (UVector<UString>         " << (void*)vLocalNetworkLabel << ")\n"
+                  << "client             (UHttpClient<UTCPSocket>  " << (void*)client             << ")\n"
+                  << "peers              (UHashMap<UModNoDogPeer*> " << (void*)peers              << ')';
 
    if (_reset)
       {

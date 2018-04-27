@@ -25,8 +25,8 @@ public:
 
       if (inizio)
          {
-         delete inizio;
-         delete fine;
+         U_DELETE(inizio)
+         U_DELETE(fine)
          }
       }
 

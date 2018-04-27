@@ -8,7 +8,8 @@
 #UOBJDUMP="0 100k 10"
 #USIMERR="error.sim"
 #VALGRIND=valgrind
- export UTRACE UOBJDUMP USIMERR VALGRIND
+export UTRACE_FOLDER=/tmp
+export UTRACE UOBJDUMP USIMERR VALGRIND
 
 DIR=`pwd`
 DIR_CMD="../../examples/PEC_log"

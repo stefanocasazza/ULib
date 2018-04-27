@@ -181,8 +181,8 @@ public:
       if (ulog) ulog->close();
 
 #ifdef DEBUG
-      delete ulog;
-      delete pcClientSocket;
+      U_DELETE(ulog)
+      U_DELETE(pcClientSocket)
 #endif
       }
 

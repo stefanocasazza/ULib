@@ -36,20 +36,20 @@ UVector<UOrmDriver*>* UOrmDriver::vdriver;
 
 UOrmDriver::~UOrmDriver()
 {
-   U_TRACE_UNREGISTER_OBJECT(0, UOrmDriver)
+   U_TRACE_DTOR(0, UOrmDriver)
 }
 
 void UOrmDriver::clear()
 {
    U_TRACE_NO_PARAM(0, "UOrmDriver::clear()")
 
-   if (driver_dir) delete driver_dir;
+   if (driver_dir) U_DELETE(driver_dir)
 
 #if defined(USE_SQLITE) || defined(USE_MYSQL) || defined(USE_PGSQL)
    if (vdriver)
       {
-      delete vdriver;
-      delete vdriver_name;
+      U_DELETE(vdriver)
+      U_DELETE(vdriver_name)
       }
 #endif
 }
@@ -90,7 +90,7 @@ void UOrmDriver::setDriverDirectory(const UString& dir)
 
    U_INTERNAL_ASSERT_EQUALS(driver_dir, U_NULLPTR)
 
-   U_NEW(UString, driver_dir, UString);
+   U_NEW_STRING(driver_dir, UString);
 
    // NB: we can't use relativ path because after we call chdir()...
 
@@ -186,7 +186,7 @@ bool UOrmDriver::loadDriver(const UString& dir, const UString& driver_list)
          vdriver_name->push_back(item);
          }
 
-      delete vdriver_name_static;
+      U_DELETE(vdriver_name_static)
 
       env_driver = (const char*) U_SYSCALL(getenv, "%S", "ORM_DRIVER");
       env_option = (const char*) U_SYSCALL(getenv, "%S", "ORM_OPTION");
@@ -301,7 +301,7 @@ UString UOrmDriver::getOptionValue(const char* _name, uint32_t len)
 
 USqlStatementBindParam::USqlStatementBindParam(const char* s, int n, bool bstatic)
 {
-   U_TRACE_REGISTER_OBJECT(0, USqlStatementBindParam, "%.*S,%u,%b", n, s, n, bstatic)
+   U_TRACE_CTOR(0, USqlStatementBindParam, "%.*S,%u,%b", n, s, n, bstatic)
 
    type        = 0;
    length      = n;
@@ -314,7 +314,7 @@ USqlStatementBindParam::USqlStatementBindParam(const char* s, int n, bool bstati
       }
    else
       {
-      U_NEW(UString, pstr, UString((void*)s, n));
+      U_NEW_STRING(pstr, UString((void*)s, n));
 
       buffer = pstr->data();
       }
@@ -344,13 +344,13 @@ USqlStatementBindParam* UOrmDriver::creatSqlStatementBindParam(USqlStatement* ps
 
       bstatic = false;
 
-      delete param->pstr;
+      U_DELETE(param->pstr)
       }
 
    if (bstatic) param->buffer = (void*)s;
    else
       {
-      U_NEW(UString, param->pstr, UString((void*)s, n));
+      U_NEW_STRING(param->pstr, UString((void*)s, n));
 
       param->buffer = param->pstr->data();
       }

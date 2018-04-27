@@ -34,7 +34,7 @@ public:
    */
    ~HttpOtpPostLogin()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, HttpOtpPostLogin)
+      U_TRACE_DTOR(0, HttpOtpPostLogin)
       }
 
    // DEBUG

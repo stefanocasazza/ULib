@@ -230,12 +230,7 @@ void u_trace_init(bool bsignal)
 
    env = getenv(bsignal ? "UTRACE_SIGNAL" : "UTRACE");
 
-   if (u_trace_folder == U_NULLPTR)
-      {
-      u_trace_folder = getenv("UTRACE_FOLDER");
-
-      if (u_trace_folder == U_NULLPTR) u_trace_folder = ".";
-      }
+   U_INTERNAL_ASSERT_POINTER(u_trace_folder)
 
    if (bsignal == false     &&
        ( env ==   U_NULLPTR ||

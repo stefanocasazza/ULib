@@ -13,7 +13,7 @@ rm -f /tmp/uclient.log \
                 trace.*userver_*.[0-9]*           object.*userver_*.[0-9]*           stack.*userver_*.[0-9]*           mempool.*userver_*.[0-9]* \
       $DOC_ROOT/trace.*userver_*.[0-9]* $DOC_ROOT/object.*userver_*.[0-9]* $DOC_ROOT/stack.*userver_*.[0-9]* $DOC_ROOT/mempool.*userver_*.[0-9]*
 
-#UTRACE="0 100M 0"
+ UTRACE="0 100M -1"
  UTRACE_FOLDER=/tmp
  TMPDIR=/tmp
 #UOBJDUMP="0 10M 100"
@@ -72,6 +72,8 @@ EOF
 #start_prg uclient -c inp/webclient.cfg -o /tmp/nodog.conf.portal 'http://localhost/get_config?ap=firenzewificonc-dev-r47188_x86_64\&key=192.168.44.55'
 
 DIR_CMD="../../examples/userver"
+
+ulimit -s unlimited
 
 #STRACE=$TRUSS
 #VALGRIND='valgrind --leak-check=yes --track-origins=yes'

@@ -44,7 +44,7 @@ public:
 
    UThread(int _detachstate = 0)
       {
-      U_TRACE_REGISTER_OBJECT(0, UThread, "%d", _detachstate)
+      U_TRACE_CTOR(0, UThread, "%d", _detachstate)
 
       next         = U_NULLPTR;
       detachstate  = _detachstate;
@@ -60,7 +60,7 @@ public:
 
    virtual ~UThread()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, UThread)
+      U_TRACE_DTOR(0, UThread)
 
       if (tid)
          {

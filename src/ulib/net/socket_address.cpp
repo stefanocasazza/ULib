@@ -143,7 +143,7 @@ public:
          }
 #  endif
 
-      cAddr.setAddress(&(addr.psaIP4Addr.sin_addr), false);
+      cAddr.setAddress(&(addr.psaIP4Addr.sin_addr.s_addr), false);
       }
 
    // Returns the port number stored in the sockaddr structure. Based on the

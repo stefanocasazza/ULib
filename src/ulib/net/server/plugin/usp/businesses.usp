@@ -25,19 +25,19 @@ public:
 
    Request()
       {
-      U_TRACE_REGISTER_OBJECT(5, Request, "")
+      U_TRACE_CTOR(5, Request, "")
       }
 
    Request(const Request& r) : token(r.token), type(r.type), radius(r.radius), location(r.location)
       {
-      U_TRACE_REGISTER_OBJECT(5, Request, "%p", &r)
+      U_TRACE_CTOR(5, Request, "%p", &r)
 
       U_MEMORY_TEST_COPY(r)
       }
 
    ~Request()
       {
-      U_TRACE_UNREGISTER_OBJECT(5, Request)
+      U_TRACE_DTOR(5, Request)
       }
 
    void clear()
@@ -114,19 +114,19 @@ public:
 
    Response()
       {
-      U_TRACE_REGISTER_OBJECT(5, Response, "")
+      U_TRACE_CTOR(5, Response, "")
       }
 
    Response(const Response& r) : name(r.name), rating(r.rating), address(r.address), phone(r.phone), url(r.url)
       {
-      U_TRACE_REGISTER_OBJECT(5, Response, "%p", &r)
+      U_TRACE_CTOR(5, Response, "%p", &r)
 
       U_MEMORY_TEST_COPY(r)
       }
 
    ~Response()
       {
-      U_TRACE_UNREGISTER_OBJECT(5, Response)
+      U_TRACE_DTOR(5, Response)
       }
 
    void clear()
@@ -218,6 +218,10 @@ public:
       json.fromJSON(U_JSON_METHOD_HANDLER(deviceModel, UString));
       json.fromJSON(U_JSON_METHOD_HANDLER(authed,      bool));
       }
+
+#ifdef DEBUG
+   const char* dump(bool reset) const { return ""; }
+#endif
 };
 
 class ResponseStartup {
@@ -245,6 +249,10 @@ public:
       json.toJSON(U_JSON_METHOD_HANDLER(token,         UString));
       json.toJSON(U_JSON_METHOD_HANDLER(fbPermissions, UVector<UString>));
       }
+
+#ifdef DEBUG
+   const char* dump(bool reset) const { return ""; }
+#endif
 };
 
 class BusinessCell {
@@ -280,6 +288,10 @@ public:
       json.toJSON(U_JSON_METHOD_HANDLER(filler, bool));
       json.toJSON(U_JSON_METHOD_HANDLER(decay, int64_t));
       }
+
+#ifdef DEBUG
+   const char* dump(bool reset) const { return ""; }
+#endif
 };
 
 class ResponseCells {
@@ -304,6 +316,10 @@ public:
       json.toJSON(U_JSON_METHOD_HANDLER(businesses, UVector<BusinessCell*>));
       json.toJSON(U_JSON_METHOD_HANDLER(status, unsigned));
       }
+
+#ifdef DEBUG
+   const char* dump(bool reset) const { return ""; }
+#endif
 };
 
 class HTTP2Push : public UEventTime {
@@ -313,7 +329,7 @@ public:
 
    HTTP2Push() : UEventTime(15L * 60L, 0L), message(U_STRING_FROM_CONSTANT("{aps:{content-available:1},check:health}")), token(U_CAPACITY)
       {
-      U_TRACE_REGISTER_OBJECT(0, HTTP2Push, "", U_NULLPTR)
+      U_TRACE_CTOR(0, HTTP2Push, "", U_NULLPTR)
 
 #  ifdef USE_LIBCURL
       UCURL::initHTTP2Push("https://api.development.push.apple.com", "/certificates/samplepush/development.pem", "GoGo.Hopscotch");
@@ -322,7 +338,7 @@ public:
 
    virtual ~HTTP2Push() U_DECL_FINAL
       {
-      U_TRACE_UNREGISTER_OBJECT(0, HTTP2Push)
+      U_TRACE_DTOR(0, HTTP2Push)
       }
 
    // define method VIRTUAL of class UEventTime
@@ -401,7 +417,7 @@ static void usp_end_businesses()
 {
    U_TRACE(5, "::usp_end_businesses()")
 
-   delete mc;
+   U_DELETE(mc)
 }
 #endif
 -->
@@ -430,7 +446,7 @@ else if (type.equal(U_CONSTANT_TO_PARAM("cells")))
    BusinessCell* pcell;
    ResponseCells response;
 
-   U_NEW(BusinessCell, pcell, BusinessCell);
+   U_NEW_WITHOUT_CHECK_MEMORY(BusinessCell, pcell, BusinessCell);
 
    response.businesses.push_back(pcell);
 

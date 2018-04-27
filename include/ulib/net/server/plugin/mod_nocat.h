@@ -69,14 +69,14 @@ public:
 
    UModNoCatPeer() : UEventTime(0L,1L), mac(*UString::str_without_mac)
       {
-      U_TRACE_REGISTER_OBJECT(0, UModNoCatPeer, "", 0)
+      U_TRACE_CTOR(0, UModNoCatPeer, "", 0)
 
       init();
       }
 
    virtual ~UModNoCatPeer()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, UModNoCatPeer)
+      U_TRACE_DTOR(0, UModNoCatPeer)
       }
 
    // define method VIRTUAL of class UEventTime

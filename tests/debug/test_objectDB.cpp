@@ -13,14 +13,14 @@ public:
 
    Genitore(const char* n = "genitore")
       {
-      U_TRACE_REGISTER_OBJECT(5,Genitore,"%S",n)
+      U_REGISTER_OBJECT(Genitore)
 
       nome = n;
       }
 
    ~Genitore()
       {
-      U_TRACE_UNREGISTER_OBJECT(5,Genitore)
+      U_UNREGISTER_OBJECT(0)
       }
 
    Genitore(const Genitore& g) { *this = g; }
@@ -45,12 +45,12 @@ public:
 
    Figlio(const char* n = "figlio") : Genitore(n)
       {
-      U_TRACE_REGISTER_OBJECT(5, Figlio, "%S", n)
+      U_REGISTER_OBJECT(Figlio)
       }
 
    ~Figlio()
       {
-      U_TRACE_UNREGISTER_OBJECT(5, Figlio)
+      U_UNREGISTER_OBJECT(0)
       }
 
    const char* dump(bool) const { return nome; }
@@ -80,10 +80,8 @@ int U_EXPORT main (int argc, char* argv[])
 
    U_TRACE(5, "main(%d,%p)", argc, argv)
 
-   int sz = (argc > 1 ? u_atoi(argv[1]) : 1000);
-
    U_SET_LOCATION_INFO;
-   Figlio   figlio;
+   Figlio figlio;
    U_SET_LOCATION_INFO;
    Genitore genitore;
 
@@ -92,7 +90,7 @@ int U_EXPORT main (int argc, char* argv[])
 
    Figlio* vettore_figli;
 
-   U_NEW(Figlio, vettore_figli, Figlio[sz]);
+   U_NEW(Figlio, vettore_figli, Figlio[1000]);
 
    delete[] vettore_figli;
 

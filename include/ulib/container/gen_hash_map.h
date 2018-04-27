@@ -59,6 +59,9 @@ public:
          hash = _hash;
          next = _next;
          }
+#  ifdef DEBUG
+      const char* dump(bool reset) const { return ""; }
+#  endif
       };
 
    E equals;
@@ -96,7 +99,7 @@ protected:
 public:
    UGenericHashMap()
       {
-      U_TRACE_REGISTER_OBJECT(0, UGenericHashMap, "", 0)
+      U_TRACE_CTOR(0, UGenericHashMap, "", 0)
 
       node  = U_NULLPTR;
       table = U_NULLPTR;
@@ -106,7 +109,7 @@ public:
 
    ~UGenericHashMap()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, UGenericHashMap)
+      U_TRACE_DTOR(0, UGenericHashMap)
       }
 
    // Size and capacity
@@ -211,7 +214,7 @@ public:
 
       table[index] = node->next;
 
-      delete node;
+      U_DELETE(node)
 
       --_length;
 
@@ -231,7 +234,7 @@ public:
        * the element at the beginning of the list of collisions
        */
 
-      U_NEW(UGenericHashMapNode, table[index], UGenericHashMapNode(_key, _elem, table[index], hash));
+      U_NEW_WITHOUT_CHECK_MEMORY(UGenericHashMapNode, table[index], UGenericHashMapNode(_key, _elem, table[index], hash));
 
       node = table[index];
 
@@ -350,7 +353,7 @@ public:
 
                _next = node->next;
 
-               delete node;
+               U_DELETE(node)
                }
             while ((node = _next));
 
@@ -527,20 +530,7 @@ private:
 // Functor used by UGenericHashMap class to generate a hashcode for an object of type <unsigned int>
 
 template <> struct UHashCodeFunctor<unsigned int> {
-   uint32_t operator()(const unsigned int& value) const
-      {
-      // http://www.concentric.net/~Ttwang/tech/inthash.htm
-
-      uint32_t key = value;
-
-      key = (key ^ 61) ^ (key >> 16);
-      key += key << 3;
-      key ^= key >> 4;
-      key *= 0x27d4eb2d; // a prime or an odd constant
-      key ^= key >> 15;
-
-      return key;
-      }
+   uint32_t operator()(const unsigned int& value) const { return u_integerHash(value); } // http://www.concentric.net/~Ttwang/tech/inthash.htm
 };
 
 /**

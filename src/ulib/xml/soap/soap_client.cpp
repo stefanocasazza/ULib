@@ -17,9 +17,9 @@
 
 USOAPClient_Base::~USOAPClient_Base()
 {
-   U_TRACE_UNREGISTER_OBJECT(0, USOAPClient_Base)
+   U_TRACE_DTOR(0, USOAPClient_Base)
 
-   if (parser) delete parser;
+   if (parser) U_DELETE(parser)
 }
 
 void USOAPClient_Base::clearData()

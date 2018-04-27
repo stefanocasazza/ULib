@@ -17,12 +17,12 @@ public:
 
    Request()
       {
-      U_TRACE_REGISTER_OBJECT(5, Request, "")
+      U_TRACE_CTOR(5, Request, "")
       }
 
    ~Request()
       {
-      U_TRACE_UNREGISTER_OBJECT(5, Request)
+      U_TRACE_DTOR(5, Request)
       }
 
    void clear()
@@ -212,12 +212,12 @@ public:
    
    Response(): type(U_STRING_FROM_CONSTANT("startup"))
       {
-      U_TRACE_REGISTER_OBJECT(5, Response, "")
+      U_TRACE_CTOR(5, Response, "")
       }
 
    ~Response()
       {
-      U_TRACE_UNREGISTER_OBJECT(5, Response)
+      U_TRACE_DTOR(5, Response)
       }
 
    void clear()
@@ -444,6 +444,10 @@ public:
 		fb.fromFlatBuffer(0, FLATBUFFER(name,  UString));
 		fb.fromFlatBuffer(1, FLATBUFFER(index,	UString));
 		}
+
+#ifdef DEBUG
+   const char* dump(bool reset) const { return ""; }
+#endif
 };
 
 class Social {
@@ -514,6 +518,10 @@ public:
 		fb.fromFlatBuffer(2, FLATBUFFER(key,  unsigned));
 		fb.fromFlatBuffer(3, FLATBUFFER(dateTime,	int64_t));
 		}
+
+#ifdef DEBUG
+   const char* dump(bool reset) const { return ""; }
+#endif
 };
 
 class StrangerSocial {
@@ -570,6 +578,10 @@ public:
 		fb.fromFlatBuffer(0, FLATBUFFER(name,  UString));
 		fb.fromFlatBuffer(1, FLATBUFFER(key,  unsigned));
 		}
+
+#ifdef DEBUG
+   const char* dump(bool reset) const { return ""; }
+#endif
 };
 
 class Link {
@@ -625,6 +637,10 @@ public:
 		fb.fromFlatBuffer(0, FLATBUFFER(url,  UString));
 		fb.fromFlatBuffer(1, FLATBUFFER(imageURL,  UString));
 		}
+
+#ifdef DEBUG
+   const char* dump(bool reset) const { return ""; }
+#endif
 };
 
 class LinkPreview {
@@ -694,6 +710,10 @@ public:
 		fb.fromFlatBuffer(4, FLATBUFFER(imageWidth,	float));
 		fb.fromFlatBuffer(5, FLATBUFFER(imageHeight, float));
 		}
+
+#ifdef DEBUG
+   const char* dump(bool reset) const { return ""; }
+#endif
 };
 
 class Message {
@@ -781,6 +801,10 @@ public:
       fb.fromFlatBuffer(7, FLATBUFFER(dateTime, int64_t));
       fb.fromFlatBuffer(8, FLATBUFFER(readTime, int64_t));
 		}
+
+#ifdef DEBUG
+   const char* dump(bool reset) const { return ""; }
+#endif
 };
 
 class User {
@@ -889,6 +913,10 @@ public:
       fb.fromFlatBuffer(11, FLATBUFFER(work, Organization));
       fb.fromFlatBuffer(12, FLATBUFFER(college, Organization));
 		}
+
+#ifdef DEBUG
+   const char* dump(bool reset) const { return ""; }
+#endif
 };
 
 class Event {
@@ -950,6 +978,10 @@ public:
 		fb.fromFlatBuffer(8, FLATBUFFER(key, unsigned));
       fb.fromFlatBuffer(10, FLATBUFFER(dateTime, int64_t));
 		}
+
+#ifdef DEBUG
+   const char* dump(bool reset) const { return ""; }
+#endif
 };
 
 class ResponseLogin {
@@ -1179,6 +1211,10 @@ public:
 
 		checkObject();
 		}
+
+#ifdef DEBUG
+   const char* dump(bool reset) const { return ""; }
+#endif
 };
 
 class ResponseSearch {
@@ -1324,6 +1360,10 @@ public:
 
 		checkObject();
 		}
+
+#ifdef DEBUG
+   const char* dump(bool reset) const { return ""; }
+#endif
 };
 
 class Multiple {
@@ -1441,16 +1481,19 @@ public:
 		{
 		U_TRACE_NO_PARAM(5, "Multiple::checkObject()")
 
+		typedef UHashMap<UString>   uhashstring;
+		typedef  UVector<UString> uvectorstring;
+
 		U_ASSERT_EQUALS(request.radius,   "near")
 		U_ASSERT_EQUALS(request.location, "40.7831 N, 73.9712 W")
 
-		const char* dump = UObject2String<UHashMap<UString> >(request.table);
+		const char* dump = UObject2String<uhashstring>(request.table);
 
 		U_INTERNAL_DUMP("dump(%u) = %.*S)", UObjectIO::buffer_output_len, UObjectIO::buffer_output_len, dump)
 
 		U_INTERNAL_ASSERT_EQUALS(UObjectIO::buffer_output_len, U_CONSTANT_SIZE("[\ntype\tlocalesData\ntoken\tA619828KAIJ6D3\n]"))
 
-		dump = UObject2String<UVector<UString> >(request.fbPermissions);
+		dump = UObject2String<uvectorstring>(request.fbPermissions);
 
 		U_INTERNAL_DUMP("dump(%u) = %.*S)", UObjectIO::buffer_output_len, UObjectIO::buffer_output_len, dump)
 
@@ -1461,7 +1504,7 @@ public:
 		U_ASSERT_EQUALS(response.token, "")
 		U_ASSERT_EQUALS(response.type,  "startup")
 
-		dump = UObject2String<UVector<UString> >(response.fbPermissions);
+		dump = UObject2String<uvectorstring>(response.fbPermissions);
 
 		U_INTERNAL_DUMP("dump(%u) = %.*S)", UObjectIO::buffer_output_len, UObjectIO::buffer_output_len, dump)
 
@@ -1469,7 +1512,7 @@ public:
 
 		U_INTERNAL_ASSERT(ok)
 
-		dump = UObject2String<UHashMap<UString> >(response.table);
+		dump = UObject2String<uhashstring>(response.table);
 
 		U_INTERNAL_DUMP("dump(%u) = %.*S)", UObjectIO::buffer_output_len, UObjectIO::buffer_output_len, dump)
 
@@ -1537,4 +1580,8 @@ public:
 
 		checkObject();
 		}
+
+#ifdef DEBUG
+   const char* dump(bool reset) const { return ""; }
+#endif
 };

@@ -1049,7 +1049,7 @@ UString UStringExt::evalExpression(const UString& expr, const UString& environme
          token_id = U_TK_VALUE;
          }
 
-      U_NEW(UString, ptoken, UString(token));
+      U_NEW_STRING(ptoken, UString(token));
 
       expressionParser(pParser, token_id, ptoken, &result);
 

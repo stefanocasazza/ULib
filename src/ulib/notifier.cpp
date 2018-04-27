@@ -902,7 +902,8 @@ bool UNotifier::modify(UEventFd* item)
    U_INTERNAL_DUMP("mask = %B", mask)
 
    UDispatcher::del(item->pevent);
-             delete item->pevent;
+
+   U_DELETE(item->pevent)
 
    U_NEW(UEvent<UEventFd>, item->pevent, UEvent<UEventFd>(fd, mask, *item));
 
@@ -1147,7 +1148,7 @@ void UNotifier::clear()
 
    hi_map_fd->deallocate();
 
-   delete hi_map_fd;
+   U_DELETE(hi_map_fd)
 
 #ifndef USE_LIBEVENT
 # ifdef HAVE_EPOLL_WAIT

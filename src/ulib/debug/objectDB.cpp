@@ -21,10 +21,8 @@
 #include <ulib/base/utility.h>
 #include <ulib/debug/error_memory.h>
 
-U_EXPORT int  UObjectDB::fd = -1;
-U_EXPORT int  UObjectDB::level_active;
-U_EXPORT bool UObjectDB::flag_new_object;
-U_EXPORT bool UObjectDB::flag_ulib_object;
+U_EXPORT int UObjectDB::fd = -1;
+U_EXPORT int UObjectDB::level_active;
 
 U_NO_EXPORT iovec UObjectDB::liov[8] = {
    { U_NULLPTR, 0 },
@@ -46,16 +44,16 @@ U_NO_EXPORT char*       UObjectDB::file_mem;
 U_NO_EXPORT char*       UObjectDB::file_limit;
 U_NO_EXPORT char*       UObjectDB::lbuf;
 U_NO_EXPORT char*       UObjectDB::lend;
+U_NO_EXPORT void*       UObjectDB::_ptr_object;
 U_NO_EXPORT uint32_t    UObjectDB::file_size;
 U_NO_EXPORT bPFpcpv     UObjectDB::checkObject;
 U_NO_EXPORT const char* UObjectDB::_name_class;
-U_NO_EXPORT const void* UObjectDB::_ptr_object;
 
-typedef bool (*vPFpObjectDumpable)(const UObjectDumpable*);
+typedef bool (*vPFpObjectDumpable)(UObjectDumpable*);
 
 class U_NO_EXPORT UHashMapObjectDumpable {
 public:
-   const UObjectDumpable* objDumper;
+   UObjectDumpable* objDumper;
 
    UHashMapObjectDumpable()
       {
@@ -85,7 +83,7 @@ public:
       table = (UHashMapObjectDumpable**) calloc((table_size = U_GET_NEXT_PRIME_NUMBER(size)), sizeof(UHashMapObjectDumpable*));
       }
 
-   static void lookup(const void* ptr_object)
+   static void lookup(void* ptr_object)
       {
       U_INTERNAL_TRACE("UHashMapObjectDumpable::lookup(%p)", ptr_object)
 
@@ -168,9 +166,11 @@ public:
       if (node)
          {
          /*
-         U_DEBUG("UHashMapObjectDumpable::insert() - ptr_object = %p base_class = %s derived_class = %s",
-                                 dumper->ptr_object, node->objDumper->name_class, dumper->name_class);
+         U_DEBUG("UHashMapObjectDumpable::insert() - ptr_object = %p base_class = %s derived_class = %s", dumper->ptr_object, node->objDumper->name_class, dumper->name_class);
          */
+
+         (void) free((void*)node->objDumper->name_file);
+         (void) free((void*)node->objDumper->name_function);
 
          delete node->objDumper;
          }
@@ -196,13 +196,18 @@ public:
       U_INTERNAL_PRINT("num = %u counter = %u", num, counter)
       }
 
-   static bool erase(const void* ptr_object)
+   static void erase(void* ptr_object)
       {
       U_INTERNAL_TRACE("UHashMapObjectDumpable::erase(%p)", ptr_object)
 
       lookup(ptr_object);
 
-      if (node == U_NULLPTR) return false;
+      if (node == U_NULLPTR)
+         {
+      // U_DEBUG("UObjectDB::unregisterObject(%p) = false", ptr_object);
+
+         return;
+         }
 
       UHashMapObjectDumpable* prev = U_NULLPTR;
 
@@ -243,14 +248,15 @@ public:
 
       table[index] = node->next;
 
+      (void) free((void*)node->objDumper->name_file);
+      (void) free((void*)node->objDumper->name_function);
+
       delete node->objDumper;
       delete node;
 
       --num;
 
       U_INTERNAL_PRINT("num = %u", num)
-
-      return true;
       }
 
    static void callForAllEntry(vPFpObjectDumpable function)
@@ -319,64 +325,66 @@ void UObjectDB::init(bool flag)
       //                1           500k           100
 
       char suffix;
-      char name[128];
+      char name[U_PATH_MAX];
       uint32_t table_size = 0;
 
       (void) sscanf(env, "%d%u%c%u", &level_active, &file_size, &suffix, &table_size);
 
       if (file_size) U_NUMBER_SUFFIX(file_size, suffix);
 
-      (void) u__snprintf(name, 128, U_CONSTANT_TO_PARAM("object.%N.%P"), 0);
+      (void) u__snprintf(name, U_PATH_MAX, U_CONSTANT_TO_PARAM("%s/object.%N.%P"), u_trace_folder);
 
       /* NB: O_RDWR is needed for mmap(MAP_SHARED)... */
 
-      fd = open(name, O_CREAT | O_RDWR | O_BINARY, 0666);
+      fd = open(name, O_CREAT | O_TRUNC | O_RDWR | O_BINARY | O_APPEND, 0666);
 
-      if (fd != -1)
+      if (fd == -1)
          {
-         /* we manage max size... */
+         U_WARNING("Failed to create file %S%R - current working directory: %.*S - UTRACE_FOLDER: %S", name, 0, u_cwd_len, u_cwd, u_trace_folder);
 
-         if (file_size)
+         file_size = 0;
+
+         return;
+         }
+
+      /* we manage max size... */
+
+      if (file_size)
+         {
+         if (ftruncate(fd, file_size))
             {
-            if (ftruncate(fd, file_size))
+            U_WARNING("Out of space on file system, (required %u bytes)", file_size);
+
+            file_size = 0;
+            }
+         else
+            {
+            /* NB: PROT_READ avoid some strange SIGSEGV... */
+
+            file_mem = (char*) mmap(U_NULLPTR, file_size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+
+            if (file_mem == MAP_FAILED)
                {
-               U_WARNING("Out of space on file system, (required %u bytes)", file_size);
+               file_mem  = U_NULLPTR;
 
-               file_size = 0;
+               (void) ftruncate(fd, (file_size = 0));
                }
-            else
-               {
-               /* NB: PROT_READ avoid some strange SIGSEGV... */
 
-               file_mem = (char*) mmap(U_NULLPTR, file_size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-
-               if (file_mem == MAP_FAILED)
-                  {
-                  file_mem  = U_NULLPTR;
-                  file_size = 0;
-
-                  (void) ftruncate(fd, file_size);
-                  }
-
-               file_ptr   = file_mem;
-               file_limit = file_mem + file_size;
-               }
+            file_ptr   = file_mem;
+            file_limit = file_mem + file_size;
             }
          }
 
-      if (fd != -1)
+      if (flag)
          {
-         if (flag)
-            {
-            UHashMapObjectDumpable::init(table_size);
+         UHashMapObjectDumpable::init(table_size);
 
-            u_atexit(&UObjectDB::close); // register function of close dump at exit...
-            }
+         u_atexit(&UObjectDB::close); // register function of close dump at exit...
          }
       }
 }
 
-U_NO_EXPORT void UObjectDB::_write(const struct iovec* iov, int _n)
+U_NO_EXPORT void UObjectDB::_write(struct iovec* iov, int _n)
 {
    U_INTERNAL_TRACE("UObjectDB::_write(%p,%d)", iov, _n)
 
@@ -401,30 +409,39 @@ U_NO_EXPORT void UObjectDB::_write(const struct iovec* iov, int _n)
 
 void UObjectDB::close()
 {
-   U_INTERNAL_TRACE("UObjectDB::close()")
+   U_TRACE_NO_PARAM(0, "UObjectDB::close()")
 
-   if (fd != -1)
+   int lfd = fd;
+             fd = -1;
+
+   U_INTERNAL_DUMP("fd = %d", lfd)
+
+   if (lfd != -1)
       {
+      u_trace_suspend = 1;
+
       dumpObjects();
+
+      U_INTERNAL_DUMP("file_size = %u", file_size)
 
       if (file_size)
          {
          ptrdiff_t write_size = file_ptr - file_mem;
 
+         U_INTERNAL_DUMP("write_size = %u", write_size)
+
          U_INTERNAL_ASSERT_MINOR(write_size, (ptrdiff_t)file_size)
 
-      // (void) msync(file_mem, write_size, MS_SYNC);
-      
+      // (void)  msync(file_mem, write_size, MS_SYNC | MS_INVALIDATE);
          (void) munmap(file_mem, file_size);
-         (void) ftruncate(fd, write_size);
-         (void) fsync(fd);
+
+         (void) ftruncate(lfd, write_size);
+      // (void) fsync(lfd);
 
          file_size = 0;
          }
 
-      (void) ::close(fd);
-
-      fd = -1;
+      (void) ::close(lfd);
       }
 }
 
@@ -432,68 +449,73 @@ void UObjectDB::initFork()
 {
    U_INTERNAL_TRACE("UObjectDB::initFork()")
 
-   U_INTERNAL_ASSERT_RANGE(0,fd,1024)
-
-   if (file_size)
+   if (fd != -1)
       {
-      (void) munmap(file_mem, file_size);
+      U_INTERNAL_ASSERT_RANGE(0,fd,1024)
 
-      file_size = 0;
+      if (file_size)
+         {
+         (void) munmap(file_mem, file_size);
+
+         file_size = 0;
+         }
+
+      (void) ::close(fd);
+
+      init(false);
       }
-
-   (void) ::close(fd);
-
-   init(false);
 }
 
 void UObjectDB::registerObject(UObjectDumpable* dumper)
 {
    U_INTERNAL_TRACE("UObjectDB::registerObject(%p)", dumper)
 
-   dumper->num_line      = u_num_line;
-   dumper->name_file     = u_name_file;
-   dumper->name_function = u_name_function;
+   U_INTERNAL_ASSERT_POINTER(u_name_file)
+   U_INTERNAL_ASSERT_POINTER(u_name_function)
 
-   if (flag_ulib_object) dumper->level = -1;
+   dumper->num_line      = u_num_line;
+   dumper->name_file     = strdup(u_name_file);
+   dumper->name_function = strdup(u_name_function);
 
    UHashMapObjectDumpable::insert(dumper);
 }
 
-void UObjectDB::unregisterObject(const void* ptr_object)
+void UObjectDB::unregisterObject(void* ptr_object)
 {
    U_INTERNAL_TRACE("UObjectDB::unregisterObject(%p)", ptr_object)
 
-   if (UHashMapObjectDumpable::erase(ptr_object) == false)
-      {
-   // U_DEBUG("UObjectDB::unregisterObject(%p) = false", ptr_object);
-      }
+   UHashMapObjectDumpable::erase(ptr_object);
 }
 
 // dump
 
-void UObjectDB::dumpObject(const UObjectDumpable* dumper)
+void UObjectDB::dumpObject(UObjectDumpable* dumper)
 {
-   U_INTERNAL_TRACE("UObjectDB::dumpObject(%p)", dumper)
+   U_TRACE(0, "UObjectDB::dumpObject(%p)", dumper)
+
+   U_INTERNAL_DUMP("dumper->level = %d level_active = %u", dumper->level, level_active)
 
    U_INTERNAL_ASSERT(dumper->level >= level_active)
 
-   liov[0].iov_len  =  u__strlen(dumper->name_class, __PRETTY_FUNCTION__);
-   liov[0].iov_base = (caddr_t)  dumper->name_class;
+   liov[0].iov_len  =   strlen(dumper->name_class);
+   liov[0].iov_base = (caddr_t)dumper->name_class;
 
-   liov[1].iov_len  = sprintf(buffer1, " %p size %d level %d", // cnt %09d",
-                              dumper->ptr_object, dumper->sz_obj, dumper->level); //, dumper->cnt);
+   liov[1].iov_len = sprintf(buffer1, " %p size %u level %d", // cnt %09u",
+                             dumper->ptr_object, dumper->sz_obj, dumper->level); //, dumper->cnt);
+
+   liov[2].iov_len = sprintf(buffer2, "\n%s(%u)\n", dumper->name_file, dumper->num_line);
+
+   U_SYSCALL_VOID(free, "%p", (void*)dumper->name_file);
+
+   liov[3].iov_len  =   strlen(dumper->name_function);
+   liov[3].iov_base = (caddr_t)dumper->name_function;
+
+// U_DUMP_IOVEC(liov,4)
 
    U_INTERNAL_ASSERT_EQUALS(liov[1].iov_len, strlen(buffer1))
-
-   liov[2].iov_len  = sprintf(buffer2, "\n%s(%d)\n", dumper->name_file, dumper->num_line);
-
    U_INTERNAL_ASSERT_EQUALS(liov[2].iov_len, strlen(buffer2))
 
-   liov[3].iov_len  = u__strlen(dumper->name_function, __PRETTY_FUNCTION__);
-   liov[3].iov_base = (caddr_t) dumper->name_function;
-
-   const void* _this = (dumper->psentinel ? *(dumper->psentinel)
-                                          : (void*)U_CHECK_MEMORY_SENTINEL);
+   void* _this = (dumper->psentinel ? *(dumper->psentinel) : (void*)U_CHECK_MEMORY_SENTINEL);
 
    if (_this == (void*)U_CHECK_MEMORY_SENTINEL) liov[4].iov_len = 0;
    else
@@ -506,13 +528,12 @@ void UObjectDB::dumpObject(const UObjectDumpable* dumper)
    liov[6].iov_base = (caddr_t) dumper->dump();
    liov[6].iov_len  = (UObjectIO::buffer_output_len ? UObjectIO::buffer_output_len : u__strlen((const char*)liov[6].iov_base, __PRETTY_FUNCTION__));
 
-   U_INTERNAL_PRINT("UObjectIO::buffer_output(%u) = \"%.*s\" liov[6](%u) = \"%.*s\"",
-                     UObjectIO::buffer_output_len, UObjectIO::buffer_output_len, UObjectIO::buffer_output, liov[6].iov_len, liov[6].iov_len, liov[6].iov_base)
+   U_DUMP_IOVEC(liov,7)
 }
 
 // dump single object...
 
-U_NO_EXPORT bool __pure UObjectDB::checkIfObject(const char* name_class, const void* ptr_object)
+U_NO_EXPORT bool __pure UObjectDB::checkIfObject(const char* name_class, void* ptr_object)
 {
    U_VAR_UNUSED(name_class)
 
@@ -523,7 +544,7 @@ U_NO_EXPORT bool __pure UObjectDB::checkIfObject(const char* name_class, const v
    return false;
 }
 
-U_NO_EXPORT bool UObjectDB::printObjLive(const UObjectDumpable* dumper)
+U_NO_EXPORT bool UObjectDB::printObjLive(UObjectDumpable* dumper)
 {
    U_INTERNAL_TRACE("UObjectDB::printObjLive(%p)", dumper)
 
@@ -564,7 +585,7 @@ U_EXPORT uint32_t UObjectDB::dumpObject(char* buffer, uint32_t buffer_size, bPFp
    return (lbuf - buffer);
 }
 
-uint32_t UObjectDB::dumpObject(char* buffer, uint32_t buffer_size, const void* ptr_object)
+uint32_t UObjectDB::dumpObject(char* buffer, uint32_t buffer_size, void* ptr_object)
 {
    U_INTERNAL_TRACE("UObjectDB::dumpObject(%p,%u,%p)", buffer, buffer_size, ptr_object)
 
@@ -583,58 +604,67 @@ uint32_t UObjectDB::dumpObject(char* buffer, uint32_t buffer_size, const void* p
 
 // sorting object live for time creation...
 
-uint32_t                UObjectDB::n;
-const UObjectDumpable** UObjectDB::vec_obj_live;
+uint32_t          UObjectDB::n;
+UObjectDumpable** UObjectDB::vec_obj_live;
 
-U_NO_EXPORT bool UObjectDB::addObjLive(const UObjectDumpable* dumper)
+U_NO_EXPORT bool UObjectDB::addObjLive(UObjectDumpable* dumper)
 {
-   U_INTERNAL_TRACE("UObjectDB::addObjLive(%p)", dumper)
+   U_TRACE(0, "UObjectDB::addObjLive(%p)", dumper)
 
    if (n < 8192)
       {
       vec_obj_live[n++] = dumper;
 
-      return true;
+      U_RETURN(true);
       }
 
-   return false;
+   U_RETURN(false);
 }
 
 U_NO_EXPORT int __pure UObjectDB::compareDumper(const void* dumper1, const void* dumper2)
 {
-   U_INTERNAL_TRACE("UObjectDB::compareDumper(%p,%p)", dumper1, dumper2)
+   U_TRACE(0, "UObjectDB::compareDumper(%p,%p)", dumper1, dumper2)
 
-   int cmp = ((*(const UObjectDumpable**)dumper1)->cnt <
-              (*(const UObjectDumpable**)dumper2)->cnt ? -1 : 1);
+   int cmp = ((*(UObjectDumpable**)dumper1)->cnt <
+              (*(UObjectDumpable**)dumper2)->cnt ? -1 : 1);
 
-   return cmp;
+   U_RETURN(cmp);
 }
 
 void UObjectDB::dumpObjects()
 {
-   U_INTERNAL_TRACE("UObjectDB::dumpObjects()")
+   U_TRACE_NO_PARAM(0, "UObjectDB::dumpObjects()")
 
-   const UObjectDumpable* obj_live[8192];
+   UObjectDumpable* obj_live[8192];
 
    vec_obj_live = &obj_live[n = 0];
 
    UHashMapObjectDumpable::callForAllEntry(UObjectDB::addObjLive);
 
-   U_INTERNAL_ASSERT(n <= UHashMapObjectDumpable::num)
-
-   qsort(obj_live, n, sizeof(const UObjectDumpable*), compareDumper);
-
-   for (uint32_t i = 0; i < n; ++i)
+   if (n)
       {
-      const UObjectDumpable* dumper = obj_live[i];
+      qsort(obj_live, n, sizeof(UObjectDumpable*), compareDumper);
 
-      if (dumper->level >= level_active)
+   // u_trace_suspend = 0;
+
+      U_INTERNAL_DUMP("n = %u", n)
+
+      U_INTERNAL_ASSERT(n <= UHashMapObjectDumpable::num)
+
+      for (uint32_t i = 0; i < n; ++i)
          {
-         UObjectIO::buffer_output_len = 0;
+         UObjectDumpable* dumper = obj_live[i];
 
-         dumpObject(dumper);
+         if (dumper->level >= level_active)
+            {
+            UObjectIO::buffer_output_len = 0;
 
-         _write(liov, 8);
+            dumpObject(dumper);
+
+            _write(liov, 8);
+
+            U_SYSCALL_VOID(free, "%p", (void*)dumper->name_function);
+            }
          }
       }
 }

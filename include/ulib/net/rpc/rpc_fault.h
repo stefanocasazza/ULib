@@ -34,14 +34,14 @@ public:
 
    URPCFault() : detail(U_CAPACITY)
       {
-      U_TRACE_REGISTER_OBJECT(0, URPCFault, "", 0)
+      U_TRACE_CTOR(0, URPCFault, "", 0)
 
       faultCode = Sender;
       }
 
    virtual ~URPCFault()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, URPCFault)
+      U_TRACE_DTOR(0, URPCFault)
       }
 
    // Gets the general reason why the call failed.

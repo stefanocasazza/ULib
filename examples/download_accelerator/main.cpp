@@ -88,12 +88,12 @@ public:
 
    ProgressBar(long sec, long usec) : UEventTime(sec, usec)
       {
-      U_TRACE_REGISTER_OBJECT(5, ProgressBar, "%ld,%ld", sec, usec)
+      U_TRACE_CTOR(5, ProgressBar, "%ld,%ld", sec, usec)
       }
 
    ~ProgressBar()
       {
-      U_TRACE_UNREGISTER_OBJECT(5, ProgressBar)
+      U_TRACE_DTOR(5, ProgressBar)
       }
 
    /* Set a progress gauge. INITIAL is the number of bytes the download starts from

@@ -16,14 +16,14 @@ public:
       */
     HttpLocation(const UString& url_) : HttpField(U_STRING_FROM_CONSTANT("Location")), url(url_)
       {
-      U_TRACE_REGISTER_OBJECT(5, HttpLocation, "%.*S", U_STRING_TO_TRACE(url_))
+      U_TRACE_CTOR(5, HttpLocation, "%.*S", U_STRING_TO_TRACE(url_))
       }
 
    /** Destructor of the class.
    */
    virtual ~HttpLocation()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, HttpLocation)
+      U_TRACE_DTOR(0, HttpLocation)
       }
 
    /**

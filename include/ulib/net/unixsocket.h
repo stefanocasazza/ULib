@@ -69,14 +69,14 @@ public:
 
    UUnixSocket(bool _flag = false) : USocket(false)
       {
-      U_TRACE_REGISTER_OBJECT(0, UUnixSocket, "%b", _flag)
+      U_TRACE_CTOR(0, UUnixSocket, "%b", _flag)
 
       U_socket_Type(this) = USocket::SK_UNIX;
       }
 
    virtual ~UUnixSocket()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, UUnixSocket)
+      U_TRACE_DTOR(0, UUnixSocket)
       }
 
    static void setPath(const char* pathname);

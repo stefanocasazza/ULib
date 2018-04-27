@@ -18,7 +18,7 @@
 
 UXML2Schema::UXML2Schema(const UString& xmldoc)
 {
-   U_TRACE_REGISTER_OBJECT(0, UXML2Schema, "%V", xmldoc.rep)
+   U_TRACE_CTOR(0, UXML2Schema, "%V", xmldoc.rep)
 
    xmlSchemaParserCtxtPtr context = (xmlSchemaParserCtxtPtr) U_SYSCALL(xmlSchemaNewMemParserCtxt, "%S,%u", U_STRING_TO_PARAM(xmldoc));
 
@@ -42,7 +42,7 @@ UXML2Schema::UXML2Schema(const UString& xmldoc)
 
 UXML2Schema::~UXML2Schema()
 {
-   U_TRACE_UNREGISTER_OBJECT(0, UXML2Schema)
+   U_TRACE_DTOR(0, UXML2Schema)
 
              U_SYSCALL_VOID(xmlSchemaFree,          "%p", impl_);
    if (ctxt) U_SYSCALL_VOID(xmlSchemaFreeValidCtxt, "%p", ctxt);

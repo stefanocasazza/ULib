@@ -15,7 +15,7 @@
 
 UZIP::UZIP() : tmpdir(U_CAPACITY)
 {
-   U_TRACE_REGISTER_OBJECT(0, UZIP, "")
+   U_TRACE_CTOR(0, UZIP, "")
 
    npart         = 0;
    file          = U_NULLPTR;
@@ -27,7 +27,7 @@ UZIP::UZIP() : tmpdir(U_CAPACITY)
 
 UZIP::UZIP(const UString& _content) : content(_content), tmpdir(U_CAPACITY)
 {
-   U_TRACE_REGISTER_OBJECT(0, UZIP, "%V", _content.rep)
+   U_TRACE_CTOR(0, UZIP, "%V", _content.rep)
 
    npart         = 0;
    file          = U_NULLPTR;
@@ -45,16 +45,18 @@ void UZIP::clear()
       {
       U_INTERNAL_ASSERT(tmpdir)
 
-      delete file;
-             file = U_NULLPTR;
+      U_DELETE(file)
+
+      file = U_NULLPTR;
 
       (void) UFile::rmdir(tmpdir, true);
       }
 
    if (zippartname)
       {
-      delete zippartname;
-             zippartname = U_NULLPTR;
+      U_DELETE(zippartname)
+
+      zippartname = U_NULLPTR;
 
       U_INTERNAL_ASSERT_MAJOR(npart,0)
 
@@ -72,8 +74,9 @@ void UZIP::clear()
 
    if (zippartcontent)
       {
-      delete zippartcontent;
-             zippartcontent = U_NULLPTR;
+      U_DELETE(zippartcontent)
+
+      zippartcontent = U_NULLPTR;
 
       U_INTERNAL_ASSERT_MAJOR(npart,0)
 
@@ -241,9 +244,13 @@ bool UZIP::readContent()
 
       for (uint32_t i = 0; i < npart; ++i)
          {
-         UString item(filecontents[i], filecontents_len[i]);
+         if (filecontents_len[i] == 0) zippartcontent->push_back(UString::getStringNull());
+         else
+            {
+            UString item(filecontents[i], filecontents_len[i]);
 
-         zippartcontent->push_back(item);
+            zippartcontent->push_back(item);
+            }
          }
 
       U_RETURN(true);

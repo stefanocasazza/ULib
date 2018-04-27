@@ -16,15 +16,17 @@
 #include <ulib/net/server/server.h>
 
 int            UClient_Base::queue_fd = -1;
+vPFu           UClient_Base::resize_response_buffer;
 bool           UClient_Base::bIPv6;
 bool           UClient_Base::log_shared_with_server;
 ULog*          UClient_Base::log;
+USocket*       UClient_Base::csocket;
 UFileConfig*   UClient_Base::cfg;
 const UString* UClient_Base::queue_dir;
 
 UClient_Base::UClient_Base(UFileConfig* pcfg) : response(U_CAPACITY), buffer(U_CAPACITY), host_port(100U)
 {
-   U_TRACE_REGISTER_OBJECT(0, UClient_Base, "%p", pcfg)
+   U_TRACE_CTOR(0, UClient_Base, "%p", pcfg)
 
    if (u_hostname_len == 0)
       {
@@ -65,7 +67,7 @@ UClient_Base::UClient_Base(UFileConfig* pcfg) : response(U_CAPACITY), buffer(U_C
 
 UClient_Base::~UClient_Base()
 {
-   U_TRACE_UNREGISTER_OBJECT(0, UClient_Base)
+   U_TRACE_DTOR(0, UClient_Base)
 
 #ifndef U_LOG_DISABLE
    closeLog();
@@ -73,7 +75,7 @@ UClient_Base::~UClient_Base()
 
    U_INTERNAL_ASSERT_POINTER(socket)
 
-   delete socket;
+   U_DELETE(socket)
 
 #ifdef DEBUG
    UStringRep::check_dead_of_source_string_with_child_alive = false;
@@ -96,8 +98,9 @@ void UClient_Base::closeLog()
       {
       log->closeLog();
 
-      delete log;
-             log = U_NULLPTR;
+      U_DELETE(log)
+
+      log = U_NULLPTR;
       }
 #endif
 }
@@ -142,15 +145,17 @@ bool UClient_Base::setHostPort(const UString& host, unsigned int _port)
 
    U_INTERNAL_DUMP("host_port = %V host_differs = %b port_differs = %b", host_port.rep, host_differs, port_differs)
 
-   server = host.copy(); // NB: we must not depend on url...
+   server = host;
    port   = _port;
+
+   U_ASSERT_EQUALS(server.isSubStringOf(url.get()), false) // NB: server must not depend on url...
 
    // If the URL contains a port, then add that to the Host header
 
    if (host_differs ||
        port_differs)
       {
-      host_port.replace(host);
+      (void) host_port.replace(host);
 
       if (_port &&
           _port != 80)
@@ -166,6 +171,8 @@ bool UClient_Base::setHostPort(const UString& host, unsigned int _port)
             U_RETURN(true);
             }
 #     endif
+         (void) host_port.reserve(10U);
+
          (void) host_port.push_back(':');
 
          uint32_t sz = host_port.size();
@@ -395,7 +402,7 @@ bool UClient_Base::setUrl(const char* str, uint32_t len)
 
    // NB: return if it has modified host or port...
 
-   if (setHostPort(url.getHost(), url.getPortNumber())) U_RETURN(true);
+   if (setHostPort(U_STRING_COPY(url.getHost()), url.getPortNumber())) U_RETURN(true); // NB: server must not depend on url...
 
    U_RETURN(false);
 }
@@ -438,7 +445,14 @@ resend:
          {
          close();
 
-         if (++counter <= 2) goto resend;
+         if (++counter <= 2)
+            {
+#        ifndef U_LOG_DISABLE
+            if (log) log->log(U_CONSTANT_TO_PARAM("failed attempts (%u) to sending data (%u bytes) to %V%R"), counter, ncount, host_port.rep, 0); // NB: the last argument (0) is necessary...
+#        endif
+
+            goto resend;
+            }
 
 #     ifndef U_LOG_DISABLE
          if (log) log->log(U_CONSTANT_TO_PARAM("error on sending data to %V%R"), host_port.rep, 0); // NB: the last argument (0) is necessary...
@@ -473,7 +487,7 @@ resend:
       if (log &&
           response)
          {
-         log->logResponse(response, U_CONSTANT_TO_PARAM(" from %v"), host_port.rep);
+         log->logResponse(response, U_CONSTANT_TO_PARAM(" from %V"), host_port.rep);
          }
 #  endif
 

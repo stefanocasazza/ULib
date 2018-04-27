@@ -69,8 +69,8 @@
 #  define U_RETURN_POINTER(r,t) return (r)
 
 #  define U_UNREGISTER_OBJECT(level,pointer)
-#  define U_TRACE_UNREGISTER_OBJECT(level,CLASS)
-#  define U_TRACE_REGISTER_OBJECT(level,CLASS,format,args...)
+#  define U_TRACE_DTOR(level,CLASS)
+#  define U_TRACE_CTOR(level,CLASS,format,args...)
 
 #  define U_EXIT(exit_value) ::exit(exit_value)
 

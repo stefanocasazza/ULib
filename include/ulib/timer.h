@@ -36,7 +36,7 @@ public:
 
    UTimer()
       {
-      U_TRACE_REGISTER_OBJECT(0, UTimer, "", 0)
+      U_TRACE_CTOR(0, UTimer, "", 0)
 
       next  = U_NULLPTR;
       alarm = U_NULLPTR;
@@ -44,7 +44,7 @@ public:
 
    ~UTimer()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, UTimer)
+      U_TRACE_DTOR(0, UTimer)
       }
 
    // SERVICES
@@ -96,7 +96,7 @@ public:
 
       U_INTERNAL_ASSERT_POINTER(first)
 
-      if (mode != NOSIGNAL) delete item;
+      if (mode != NOSIGNAL) U_DELETE(item)
       else
          {
          // put it on the free list

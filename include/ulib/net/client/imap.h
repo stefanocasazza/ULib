@@ -64,7 +64,7 @@ public:
 
    UImapClient(bool bSocketIsIPv6 = false) : Socket(bSocketIsIPv6), buffer(4000)
       {
-      U_TRACE_REGISTER_OBJECT(0, UImapClient, "%b", bSocketIsIPv6)
+      U_TRACE_CTOR(0, UImapClient, "%b", bSocketIsIPv6)
 
       U_INTERNAL_ASSERT_POINTER(UString::str_recent)
 
@@ -151,6 +151,9 @@ public:
    typedef struct ListResponse { // (LIST | LSUB) command representation
       UString name, hierarchyDelimiter;
       bool marked, unmarked, noSelect, noInferiors, hasChildren, hasNoChildren;
+#  ifdef DEBUG
+      const char* dump(bool reset) const { return ""; }
+#  endif
    } ListResponse;
 
    bool list(const UString& ref, const UString& wild, UVector<ListResponse*>& vec, bool subscribedOnly = false);
@@ -163,6 +166,9 @@ public:
    typedef struct StatusInfo { // STATUS command representation
       long messageCount, recentCount, nextUID, uidValidity, unseenCount;
       bool hasMessageCount, hasRecentCount, hasNextUID, hasUIDValidity, hasUnseenCount;
+#  ifdef DEBUG
+      const char* dump(bool reset) const { return ""; }
+#  endif
    } StatusInfo;
 
    enum StatusInfoType {
@@ -182,6 +188,9 @@ public:
       StatusInfo status;
       int flags, permanentFlags;
       bool readWrite, flagsAvailable, permanentFlagsAvailable, readWriteAvailable;
+#  ifdef DEBUG
+      const char* dump(bool reset) const { return ""; }
+#  endif
    } MailboxInfo;
 
    // The flags that are applicable for a mailbox. Flags other than the system flags can also exist,

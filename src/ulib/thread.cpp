@@ -568,7 +568,7 @@ void UThread::sleep(time_t timeoutMS)
 
 UThreadPool::UThreadPool(uint32_t size) : UThread(PTHREAD_CREATE_DETACHED), pool(size)
 {
-   U_TRACE_REGISTER_OBJECT(0, UThreadPool, "%u", size)
+   U_TRACE_CTOR(0, UThreadPool, "%u", size)
 
    UThread* th;
 
@@ -606,7 +606,7 @@ UThreadPool::UThreadPool(uint32_t size) : UThread(PTHREAD_CREATE_DETACHED), pool
             U_WARNING("Create Thread Fail, get_errno fail, returned %d", m_return_value);
             }
 
-         delete th;
+         U_DELETE(th)
 
          continue;
          }
@@ -631,7 +631,7 @@ UThreadPool::UThreadPool(uint32_t size) : UThread(PTHREAD_CREATE_DETACHED), pool
 
       if (pthread_create(&(th->tid), &attr, (pvPFpv)execHandler, this))
          {
-         delete th;
+         U_DELETE(th)
 
          continue;
          }
@@ -647,7 +647,7 @@ UThreadPool::UThreadPool(uint32_t size) : UThread(PTHREAD_CREATE_DETACHED), pool
 
 UThreadPool::~UThreadPool()
 {
-   U_TRACE_UNREGISTER_OBJECT(0, UThread)
+   U_TRACE_DTOR(0, UThread)
 
    active = false;
 
@@ -704,7 +704,7 @@ void UThreadPool::run()
 
       current_task->run(); // execute the task
 
-      delete current_task;
+      U_DELETE(current_task)
 
       signal(&condition_task_finished);
       }

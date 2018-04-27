@@ -169,7 +169,7 @@ UBaseTransform* UTransformCtx::nodeRead(xmlNodePtr node, int usage)
             U_RETURN_POINTER(id, UBaseTransform);
             }
 
-         delete id;
+         U_DELETE(id)
          }
       }
 
@@ -204,7 +204,7 @@ bool UTransformCtx::nodesListRead(xmlNodePtr node, int usage)
 
 UDSIGContext::UDSIGContext()
 {
-   U_TRACE_REGISTER_OBJECT(0, UDSIGContext, "")
+   U_TRACE_CTOR(0, UDSIGContext, "")
 
    U_INTERNAL_ASSERT_EQUALS(pthis, U_NULLPTR)
 
@@ -258,9 +258,9 @@ UDSIGContext::UDSIGContext()
 
 UDSIGContext::~UDSIGContext()
 {
-   U_TRACE_UNREGISTER_OBJECT(0, UDSIGContext)
+   U_TRACE_DTOR(0, UDSIGContext)
 
-   delete UTransformCtx::enabledTransforms;
+   U_DELETE(UTransformCtx::enabledTransforms)
 
 #ifdef LIBXML_FTP_ENABLED       
    U_SYSCALL_VOID_NO_PARAM(xmlNanoFTPCleanup);
@@ -269,7 +269,7 @@ UDSIGContext::~UDSIGContext()
    U_SYSCALL_VOID_NO_PARAM(xmlNanoHTTPCleanup);
 #endif
 
-   delete UTranformInputURI::allIOCallbacks;
+   U_DELETE(UTranformInputURI::allIOCallbacks)
 }
 
 /**

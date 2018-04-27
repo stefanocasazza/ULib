@@ -12,17 +12,17 @@ public:
 
    ParserInterface()
       {
-      U_TRACE_REGISTER_OBJECT(5, ParserInterface, "")
+      U_TRACE_CTOR(5, ParserInterface, "")
       }
 
    ParserInterface(const UString& data) : UBison(data)
       {
-      U_TRACE_REGISTER_OBJECT(5, ParserInterface, "%p", data.data())
+      U_TRACE_CTOR(5, ParserInterface, "%p", data.data())
       }
 
    ~ParserInterface()
       {
-      U_TRACE_UNREGISTER_OBJECT(5, ParserInterface)
+      U_TRACE_DTOR(5, ParserInterface)
       }
 
    // VARIE

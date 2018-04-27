@@ -19,14 +19,16 @@ void WeightWord::clear()
 
       tbl->deallocate();
 
-      delete tbl;
-             tbl = U_NULLPTR;
+      U_DELETE(tbl)
+
+      tbl = U_NULLPTR;
       }
 
    if (vec)
       {
-      delete vec;
-             vec = U_NULLPTR;
+      U_DELETE(vec)
+
+      vec = U_NULLPTR;
       }
 }
 
@@ -50,10 +52,12 @@ void WeightWord::push()
          {
          U_INTERNAL_DUMP("DUPLICATE")
 
-         delete item;
+         U_DELETE(item)
 
          return;
          }
+
+      tbl->hold();
 
       tbl->insertAfterFind(item);
       }
@@ -116,7 +120,7 @@ Query::Query()
    U_INTERNAL_ASSERT_EQUALS(request, U_NULLPTR)
 
    U_NEW(UQueryParser, parser, UQueryParser);
-   U_NEW(UString, request, UString);
+   U_NEW_STRING(request, UString);
 }
 
 Query::~Query()
@@ -125,8 +129,8 @@ Query::~Query()
 
    clear();
 
-   delete parser;
-   delete request;
+   U_DELETE(parser)
+   U_DELETE(request)
 }
 
 void Query::clear()

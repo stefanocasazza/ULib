@@ -17,7 +17,7 @@
 
 UNodeSet::UNodeSet(xmlDocPtr _doc, xmlNodeSetPtr _nodes, int _type)
 {
-   U_TRACE_REGISTER_OBJECT(0, UNodeSet, "%p,%p,%d", _doc, _nodes, _type)
+   U_TRACE_CTOR(0, UNodeSet, "%p,%p,%d", _doc, _nodes, _type)
 
    op          = 0;
    doc         = _doc;
@@ -61,14 +61,14 @@ void UNodeSet::destroy(UNodeSet* nset)
 
 UNodeSet::~UNodeSet()
 {
-   U_TRACE_UNREGISTER_OBJECT(0, UNodeSet)
+   U_TRACE_DTOR(0, UNodeSet)
 
    destroy(this);
 }
 
 UXPathData::UXPathData(int data_type, int _nodeSetType, const char* _expr)
 {
-   U_TRACE_REGISTER_OBJECT(0, UXPathData, "%d,%d,%S", data_type, _nodeSetType, _expr)
+   U_TRACE_CTOR(0, UXPathData, "%d,%d,%S", data_type, _nodeSetType, _expr)
 
    ctx         = U_NULLPTR;
    expr        = _expr;
@@ -93,7 +93,7 @@ UXPathData::UXPathData(int data_type, int _nodeSetType, const char* _expr)
 
 UXPathData::~UXPathData()
 {
-   U_TRACE_UNREGISTER_OBJECT(0, UXPathData)
+   U_TRACE_DTOR(0, UXPathData)
 
    if (ctx) U_SYSCALL_VOID(xmlXPathFreeContext, "%p", ctx);
 }

@@ -24,12 +24,12 @@ public:
 
    USOAPGenericMethod(const UString& n, const UString& _ns, UCommand* cmd, int rtype) : URPCGenericMethod(n, _ns, cmd, rtype)
       {
-      U_TRACE_REGISTER_OBJECT(0, USOAPGenericMethod, "%V,%V,%p,%d", n.rep, _ns.rep, cmd, rtype) 
+      U_TRACE_CTOR(0, USOAPGenericMethod, "%V,%V,%p,%d", n.rep, _ns.rep, cmd, rtype) 
       }
 
    virtual ~USOAPGenericMethod()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, USOAPGenericMethod)
+      U_TRACE_DTOR(0, USOAPGenericMethod)
       }
 
    // VIRTUAL METHOD

@@ -36,16 +36,16 @@ public:
 
    UElasticSearchClient() : uri(U_CAPACITY)
       {
-      U_TRACE_REGISTER_OBJECT(0, UElasticSearchClient, "", 0)
+      U_TRACE_CTOR(0, UElasticSearchClient, "", 0)
 
       client = U_NULLPTR;
       }
 
    ~UElasticSearchClient()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, UElasticSearchClient)
+      U_TRACE_DTOR(0, UElasticSearchClient)
 
-      if (client) delete client;
+      if (client) U_DELETE(client)
       }
 
    // Connect to ElasticSearch server

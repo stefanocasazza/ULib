@@ -27,7 +27,7 @@ U_CREAT_FUNC(server_plugin_http, UHttpPlugIn)
 
 UHttpPlugIn::~UHttpPlugIn()
 {
-   U_TRACE_UNREGISTER_OBJECT(0, UHttpPlugIn)
+   U_TRACE_DTOR(0, UHttpPlugIn)
 
    UHTTP::dtor(); // delete global HTTP context...
 }
@@ -132,7 +132,7 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
          {
          U_INTERNAL_ASSERT_EQUALS(UHTTP::maintenance_mode_page, U_NULLPTR)
 
-         U_NEW(UString, UHTTP::maintenance_mode_page, UString(x));
+         U_NEW_STRING(UHTTP::maintenance_mode_page, UString(x));
 
          U_RETURN(U_PLUGIN_HANDLER_PROCESSED);
          }
@@ -202,7 +202,7 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
 
          if (x.findWhiteSpace() != U_NOT_FOUND) x = UStringExt::removeWhiteSpace(x);
 
-         U_NEW(UString, UHTTP::cache_file_mask, UString(x));
+         U_NEW_STRING(UHTTP::cache_file_mask, UString(x));
          }
 
       x = cfg.at(U_CONSTANT_TO_PARAM("CACHE_AVOID_MASK"));
@@ -213,7 +213,7 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
 
          if (x.findWhiteSpace() != U_NOT_FOUND) x = UStringExt::removeWhiteSpace(x);
 
-         U_NEW(UString, UHTTP::cache_avoid_mask, UString(x));
+         U_NEW_STRING(UHTTP::cache_avoid_mask, UString(x));
          }
 
       x = cfg.at(U_CONSTANT_TO_PARAM("NOCACHE_FILE_MASK"));
@@ -224,7 +224,7 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
 
          if (x.findWhiteSpace() != U_NOT_FOUND) x = UStringExt::removeWhiteSpace(x);
 
-         U_NEW(UString, UHTTP::nocache_file_mask, UString(x));
+         U_NEW_STRING(UHTTP::nocache_file_mask, UString(x));
          }
 
 #  ifdef U_STDCPP_ENABLE
@@ -236,7 +236,7 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
 
          if (x.findWhiteSpace() != U_NOT_FOUND) x = UStringExt::removeWhiteSpace(x);
 
-         U_NEW(UString, UHTTP::cache_file_store, UString(x));
+         U_NEW_STRING(UHTTP::cache_file_store, UString(x));
          }
 #  endif
 
@@ -248,7 +248,7 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
          {
          U_INTERNAL_ASSERT_EQUALS(UHTTP::cgi_cookie_option, U_NULLPTR)
 
-         U_NEW(UString, UHTTP::cgi_cookie_option, UString(x));
+         U_NEW_STRING(UHTTP::cgi_cookie_option, UString(x));
          }
 
       // HTTP STRICT TRANSPORT SECURITY
@@ -273,7 +273,7 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
             }
          else
 #     endif
-         U_NEW(UString, UHTTP::uri_strict_transport_security_mask, UString(x));
+         U_NEW_STRING(UHTTP::uri_strict_transport_security_mask, UString(x));
          }
 #  endif
 
@@ -332,7 +332,7 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
 
          if (x.findWhiteSpace() != U_NOT_FOUND) x = UStringExt::removeWhiteSpace(x);
 
-         U_NEW(UString, UHTTP::uri_protected_mask, UString(x));
+         U_NEW_STRING(UHTTP::uri_protected_mask, UString(x));
          }
 
       x = cfg.at(U_CONSTANT_TO_PARAM("URI_PROTECTED_ALLOWED_IP"));
@@ -345,8 +345,9 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
 
          if (UIPAllow::parseMask(x, *UHTTP::vallow_IP) == 0)
             {
-            delete UHTTP::vallow_IP;
-                   UHTTP::vallow_IP = U_NULLPTR;
+            U_DELETE(UHTTP::vallow_IP)
+
+            UHTTP::vallow_IP = U_NULLPTR;
             }
          }
 
@@ -358,7 +359,7 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
 
          if (x.findWhiteSpace() != U_NOT_FOUND) x = UStringExt::removeWhiteSpace(x);
 
-         U_NEW(UString, UHTTP::uri_request_cert_mask, UString(x));
+         U_NEW_STRING(UHTTP::uri_request_cert_mask, UString(x));
          }
 #  endif
 
@@ -398,7 +399,7 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
          else
 #     endif
          {
-         U_NEW(UString, UServer_Base::throttling_mask, UString(x));
+         U_NEW_STRING(UServer_Base::throttling_mask, UString(x));
          }
          }
 #  endif
@@ -409,7 +410,7 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
          {
          U_INTERNAL_ASSERT_EQUALS(UHTTP::php_mount_point, U_NULLPTR)
 
-         U_NEW(UString, UHTTP::php_mount_point, UString(x));
+         U_NEW_STRING(UHTTP::php_mount_point, UString(x));
          }
 
 #  ifdef USE_RUBY
@@ -419,7 +420,7 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
          {
          U_INTERNAL_ASSERT_EQUALS(UHTTP::ruby_libdir, U_NULLPTR)
 
-         U_NEW(UString, UHTTP::ruby_libdir, UString(x));
+         U_NEW_STRING(UHTTP::ruby_libdir, UString(x));
          }
 #  endif
 
@@ -430,7 +431,7 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
          {
          U_INTERNAL_ASSERT_EQUALS(UHTTP::py_project_app, U_NULLPTR)
 
-         U_NEW(UString, UHTTP::py_project_app, UString(x));
+         U_NEW_STRING(UHTTP::py_project_app, UString(x));
          }
 
       x = cfg.at(U_CONSTANT_TO_PARAM("PY_PROJECT_ROOT")); // python module search root; relative to workdir
@@ -439,7 +440,7 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
          {
          U_INTERNAL_ASSERT_EQUALS(UHTTP::py_project_root, U_NULLPTR)
 
-         U_NEW(UString, UHTTP::py_project_root, UString(x));
+         U_NEW_STRING(UHTTP::py_project_root, UString(x));
          }
 
       x = cfg.at(U_CONSTANT_TO_PARAM("PY_VIRTUALENV_PATH"));
@@ -448,7 +449,7 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
          {
          U_INTERNAL_ASSERT_EQUALS(UHTTP::py_virtualenv_path, U_NULLPTR)
 
-         U_NEW(UString, UHTTP::py_virtualenv_path, UString(x));
+         U_NEW_STRING(UHTTP::py_virtualenv_path, UString(x));
          }
 #  endif
 
@@ -587,10 +588,14 @@ int UHttpPlugIn::handlerRun() // NB: we use this method instead of handlerInit()
 
       UHTTP::on_upload = UHTTP::usp->runDynamicPage;
       }
-      
+
    if (UHTTP::upload_dir->empty()) (void) UHTTP::upload_dir->assign(U_CONSTANT_TO_PARAM("uploads"));
 
    U_RESET_MODULE_NAME;
+
+   U_INTERNAL_ASSERT_MINOR(u_cwd_len, UHTTP::pathname->capacity())
+
+   U_MEMCPY(UHTTP::pathname->data(), u_cwd, u_cwd_len);
 
    U_RETURN(U_PLUGIN_HANDLER_OK);
 }

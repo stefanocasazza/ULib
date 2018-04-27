@@ -66,7 +66,7 @@ public:
 
    UXML2Document()
       {
-      U_TRACE_REGISTER_OBJECT(0, UXML2Document, "", 0)
+      U_TRACE_CTOR(0, UXML2Document, "", 0)
 
       impl_ = (xmlDocPtr) U_SYSCALL(xmlNewDoc, "%S", (xmlChar*)"1.0");
       }
@@ -75,7 +75,7 @@ public:
 
    ~UXML2Document()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, UXML2Document)
+      U_TRACE_DTOR(0, UXML2Document)
 
       U_SYSCALL_VOID(xmlFreeDoc, "%p", impl_);
       }
@@ -327,7 +327,7 @@ protected:
 
    UXML2Document(xmlDocPtr doc) : impl_(doc)
       {
-      U_TRACE_REGISTER_OBJECT(0, UXML2Document, "%p", doc)
+      U_TRACE_CTOR(0, UXML2Document, "%p", doc)
       }
 
    /**

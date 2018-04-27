@@ -462,6 +462,8 @@ U_NO_EXPORT int UDirWalk::cmp_modify(const void* a, const void* b)
 
       (void) ra->stat();
 
+      cache_file_for_compare->hold(); // NB: we increases the reference string...
+
       cache_file_for_compare->insertAfterFind(ra);
       }
 
@@ -474,6 +476,8 @@ U_NO_EXPORT int UDirWalk::cmp_modify(const void* a, const void* b)
       U_NEW(UFile, rb, UFile(key));
 
       (void) rb->stat();
+
+      cache_file_for_compare->hold(); // NB: we increases the reference string...
 
       cache_file_for_compare->insertAfterFind(rb);
       }

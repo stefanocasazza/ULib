@@ -44,7 +44,7 @@ void UXML2Document::init()
 
 UXML2Document::UXML2Document(const UString& _data) : data(_data)
 {
-   U_TRACE_REGISTER_OBJECT(0, UXML2Document, "%V", _data.rep)
+   U_TRACE_CTOR(0, UXML2Document, "%V", _data.rep)
 
    if (binit == false) init();
 

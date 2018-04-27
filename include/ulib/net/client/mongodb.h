@@ -49,7 +49,7 @@ public:
 
     UMongoDBClient() : uri(100)
       {
-      U_TRACE_REGISTER_OBJECT(0, UMongoDBClient, "", 0)
+      U_TRACE_CTOR(0, UMongoDBClient, "", 0)
 
 #  ifdef USE_MONGODB
       puri = U_NULLPTR;
@@ -62,7 +62,7 @@ public:
 
    ~UMongoDBClient()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, UMongoDBClient)
+      U_TRACE_DTOR(0, UMongoDBClient)
 
 #  ifdef USE_MONGODB
       if (puri)       U_SYSCALL_VOID(mongoc_uri_destroy, "%p", puri);

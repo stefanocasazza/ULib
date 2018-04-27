@@ -24,7 +24,7 @@ public:
 
    UMimePKCS7(UMimeEntity& item) : UMimeEntity(item), pkcs7(content, "DER")
       {
-      U_TRACE_REGISTER_OBJECT(0, UMimePKCS7, "%p", &item)
+      U_TRACE_CTOR(0, UMimePKCS7, "%p", &item)
 
       U_ASSERT(UMimeEntity::isPKCS7())
 
@@ -35,7 +35,7 @@ public:
 
    ~UMimePKCS7()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, UMimePKCS7)
+      U_TRACE_DTOR(0, UMimePKCS7)
       }
 
    UPKCS7& getPKCS7() { return pkcs7; }

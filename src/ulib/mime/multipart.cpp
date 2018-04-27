@@ -38,7 +38,7 @@ const char* UMimeMultipartMsg::str_encoding[4] = {
 
 UMimeMultipartMsg::UMimeMultipartMsg(const char* type, uint32_t type_len, Encoding encoding, const char* header, uint32_t header_len, bool bRFC2045MIMEMSG)
 {
-   U_TRACE_REGISTER_OBJECT(0, UMimeMultipartMsg, "%.*S,%u,%d,%.*S,%u,%b", type_len, type, type_len, encoding, header_len, header, header_len, bRFC2045MIMEMSG)
+   U_TRACE_CTOR(0, UMimeMultipartMsg, "%.*S,%u,%d,%.*S,%u,%b", type_len, type, type_len, encoding, header_len, header, header_len, bRFC2045MIMEMSG)
 
    U_INTERNAL_ASSERT_POINTER(type)
    U_INTERNAL_ASSERT_POINTER(header)

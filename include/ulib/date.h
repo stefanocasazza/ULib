@@ -44,7 +44,7 @@ public:
 
    UTimeDate()
       {
-      U_TRACE_REGISTER_OBJECT(0, UTimeDate, "", 0)
+      U_TRACE_CTOR(0, UTimeDate, "", 0)
 
       _day   =
       _month = 1;
@@ -54,14 +54,14 @@ public:
 
    UTimeDate(time_t sec)
       {
-      U_TRACE_REGISTER_OBJECT(0, UTimeDate, "%#19D", sec)
+      U_TRACE_CTOR(0, UTimeDate, "%#19D", sec)
 
       fromTime(sec);
       }
 
    UTimeDate(const char* str, bool UTC = false) // UTC is flag for date and time in Coordinated Universal Time: format YYMMDDMMSSZ
       {
-      U_TRACE_REGISTER_OBJECT(0, UTimeDate, "%S,%b", str, UTC)
+      U_TRACE_CTOR(0, UTimeDate, "%S,%b", str, UTC)
 
       julian = _day = _month = _year = 0;
 
@@ -144,21 +144,21 @@ public:
 
    UTimeDate(int day, int year)
       {
-      U_TRACE_REGISTER_OBJECT(0, UTimeDate, "%d,%d", day, year)
+      U_TRACE_CTOR(0, UTimeDate, "%d,%d", day, year)
 
       fromJulian(julian = toJulian(1,1,year) - 1 + day);
       }
 
    UTimeDate(int day, int month, int year)
       {
-      U_TRACE_REGISTER_OBJECT(0, UTimeDate, "%d,%d,%d", day, month, year)
+      U_TRACE_CTOR(0, UTimeDate, "%d,%d,%d", day, month, year)
 
       set(day, month, year);
       }
 
    ~UTimeDate()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, UTimeDate)
+      U_TRACE_DTOR(0, UTimeDate)
       }
 
    void set(const UTimeDate& d)
@@ -171,7 +171,7 @@ public:
 
    UTimeDate(const UTimeDate& d)
       {
-      U_TRACE_REGISTER_OBJECT(0, UTimeDate, "%p", &d)
+      U_TRACE_CTOR(0, UTimeDate, "%p", &d)
 
       U_MEMORY_TEST_COPY(d)
 

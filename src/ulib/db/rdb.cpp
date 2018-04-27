@@ -14,6 +14,26 @@
 #include <ulib/db/rdb.h>
 #include <ulib/net/server/server.h>
 
+/*
+                _._
+           _.-``__ ''-._
+      _.-``    `.  `_.  ''-._
+  .-`` .-```.  ```\/    _.,_ ''-._
+ (    '      ,       .-`  | `,    )
+ |`-._`-...-` __...-.``-._|'` _.-'|
+ |    `-._   `._    /     _.-'    |
+  `-._    `-._  `-./  _.-'    _.-'
+ |`-._`-._    `-.__.-'    _.-'_.-'|
+ |    `-._`-._        _.-'_.-'    |
+  `-._    `-._`-.__.-'_.-'    _.-'
+ |`-._`-._    `-.__.-'    _.-'_.-'|
+ |    `-._`-._        _.-'_.-'    |
+  `-._    `-._`-.__.-'_.-'    _.-'
+      `-._    `-.__.-'    _.-'
+          `-._        _.-'
+              `-.__.-'
+*/
+
 sem_t    URDB::nolock;
 ULock*   URDB::preclock;
 uint32_t URDB::nerror;
@@ -1818,7 +1838,7 @@ iPFpvpv  URDBObjectHandler<UDataStorage*>::ds_function_to_call;
 
 URDBObjectHandler<UDataStorage*>::URDBObjectHandler(const UString& pathdb, int _ignore_case, void* ptr, bool _bdirect) : URDB(pathdb, _ignore_case)
 {
-   U_TRACE_REGISTER_OBJECT(0, URDBObjectHandler<UDataStorage*>, "%V,%d,%p,%b", pathdb.rep, _ignore_case, ptr, _bdirect)
+   U_TRACE_CTOR(0, URDBObjectHandler<UDataStorage*>, "%V,%d,%p,%b", pathdb.rep, _ignore_case, ptr, _bdirect)
 
    pDataStorage = (UDataStorage*)ptr;
    brecfound    = false;

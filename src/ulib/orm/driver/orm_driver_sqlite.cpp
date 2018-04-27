@@ -22,7 +22,7 @@ U_CREAT_FUNC(orm_driver_sqlite, UOrmDriverSqlite)
 
 UOrmDriverSqlite::~UOrmDriverSqlite()
 {
-   U_TRACE_UNREGISTER_OBJECT(0, UOrmDriverSqlite)
+   U_TRACE_DTOR(0, UOrmDriverSqlite)
 }
 
 void UOrmDriverSqlite::handlerError()
@@ -118,7 +118,7 @@ UOrmDriver* UOrmDriverSqlite::handlerConnect(const UString& option)
 
    if (pdrv->setOption(option) == false)
       {
-      if (UOrmDriver::connection) delete pdrv;
+      if (UOrmDriver::connection) U_DELETE(pdrv)
 
       U_RETURN_POINTER(U_NULLPTR, UOrmDriver);
       }
@@ -180,7 +180,7 @@ UOrmDriver* UOrmDriverSqlite::handlerConnect(const UString& option)
 
       pdrv->printError(__PRETTY_FUNCTION__);
 
-      if (UOrmDriver::connection) delete pdrv;
+      if (UOrmDriver::connection) U_DELETE(pdrv)
 
       U_RETURN_POINTER(U_NULLPTR, UOrmDriver);
       }
@@ -311,7 +311,7 @@ void UOrmDriverSqlite::handlerStatementRemove(USqlStatement* pstmt)
 
    if (UOrmDriver::errcode) UOrmDriver::printError(__PRETTY_FUNCTION__);
 
-   delete (USqliteStatement*)pstmt;
+   U_DELETE((USqliteStatement*)pstmt)
 }
 
 bool USqliteStatement::setBindParam(UOrmDriver* pdrv)

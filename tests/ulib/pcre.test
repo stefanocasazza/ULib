@@ -6,7 +6,7 @@
 
 start_msg pcre
 
-#UTRACE="0 25M 0"
+#UTRACE="0 25M -1"
 #UOBJDUMP="-1 100k 10"
 #USIMERR="error.sim"
 #VALGRIND='valgrind'

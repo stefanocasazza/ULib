@@ -25,21 +25,36 @@ class UIptAccount;
 class UFlatBuffer;
 class UNoDogPlugIn;
 
-class UModNoDogPeer : public UEventTime, UIPAddress {
+class UModNoDogPeer : public UEventTime {
 public:
 
    // Check for memory error
    U_MEMORY_TEST
 
    // Allocator e Deallocator
-   U_MEMORY_ALLOCATOR
-   U_MEMORY_DEALLOCATOR
+
+   void* operator new(size_t sz)
+      {
+      U_TRACE(0, "UModNoDogPeer::operator new(%u)", sz)
+      
+      char* p = (char*) U_SYSCALL(malloc, "%u", sz);
+      
+      U_INTERNAL_ASSERT_POINTER_MSG(p, "cannot allocate memory, exiting...")
+
+      return p;
+      }
+
+   void operator delete(void* _ptr, size_t sz)
+      {
+      U_TRACE(0, "UModNoDogPeer::operator delete(%p,%u)", _ptr, sz)
+      
+      U_SYSCALL_VOID(free, "%p", _ptr);
+      }
 
    UModNoDogPeer() : UEventTime(30L,0L), mac(*UString::str_without_mac)
       {
-      U_TRACE_REGISTER_OBJECT(0, UModNoDogPeer, "", 0)
+      U_TRACE_CTOR(0, UModNoDogPeer, "", 0)
 
-      next            = U_NULLPTR;
       _ctime          = u_now->tv_sec;
       ctraffic        = 
       time_no_traffic =
@@ -48,7 +63,7 @@ public:
 
    virtual ~UModNoDogPeer()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, UModNoDogPeer)
+      U_TRACE_DTOR(0, UModNoDogPeer)
       }
 
    // define method VIRTUAL of class UEventTime
@@ -62,40 +77,27 @@ public:
 #endif
 
 protected:
-   UCommand fw;
-   UModNoDogPeer* next;
-   UString ip, mac, ifname, label, gateway, welcome;
+   UString ip, mac, label;
    long _ctime;
-   uint32_t ctraffic, time_no_traffic;
+   uint32_t addr, ctraffic, time_no_traffic;
    uucflag flag;
 
-   UString getMAC()
+   void getMAC(char* dst)
       {
-      U_TRACE_NO_PARAM(0, "UModNoDogPeer::getMAC()")
+      U_TRACE(0, "UModNoDogPeer::getMAC(%p)", dst)
 
-      UString x(13U);
+      U_INTERNAL_ASSERT(u_isMacAddr(U_STRING_TO_PARAM(mac)))
 
-      unsigned char* src = (unsigned char*)mac.data();
-      unsigned char* dst = (unsigned char*)  x.data();
+      char* src = mac.data();
 
    // "%2u:%2u:%2u:%2u:%2u:%2u"
 
-      dst[ 0] = src[ 0];
-      dst[ 1] = src[ 1];
-      dst[ 2] = src[ 3]; 
-      dst[ 3] = src[ 4];
-      dst[ 4] = src[ 6]; 
-      dst[ 5] = src[ 7];
-      dst[ 6] = src[ 9]; 
-      dst[ 7] = src[10];
-      dst[ 8] = src[12]; 
-      dst[ 9] = src[13];
-      dst[10] = src[15]; 
-      dst[11] = src[16];
-
-      x.size_adjust(12);
-
-      U_RETURN_STRING(x);
+      (void) memcpy(dst,    src,      2);
+      (void) memcpy(dst+ 2, src+ 2+1, 2);
+      (void) memcpy(dst+ 4, src+ 4+2, 2);
+      (void) memcpy(dst+ 6, src+ 6+3, 2);
+      (void) memcpy(dst+ 8, src+ 8+4, 2);
+      (void) memcpy(dst+10, src+10+5, 2);
       }
 
 private:
@@ -105,13 +107,14 @@ private:
 };
 
 enum UPeerType {
-   U_PEER_PERMIT                = 0x01,
-   U_PEER_ALLOWED               = 0x02,
-   U_PEER_ALLOW_DISABLE         = 0x04,
-   U_PEER_DELAY_DISABLE         = 0x08,
-   U_PEER_NOTIFY_DISABLE        = 0x10,
-   U_PEER_STRICT_NOTIFY_DISABLE = 0x20,
-   U_PEER_TIMER_ACTIVE          = 0x40
+   U_PEER_PERMIT                  = 0x01,
+   U_PEER_ALLOWED                 = 0x02,
+   U_PEER_ALLOW_DISABLE           = 0x04,
+   U_PEER_DELAY_DISABLE           = 0x08,
+   U_PEER_NOTIFY_DISABLE          = 0x10,
+   U_PEER_STRICT_NOTIFY_DISABLE   = 0x20,
+   U_PEER_TIMER_ACTIVE            = 0x40,
+   U_PEER_MAC_FROM_DHCP_DATA_FILE = 0x80
 };
 
 #define U_peer_index_network (UNoDogPlugIn::peer)->UModNoDogPeer::flag.c[0]
@@ -123,16 +126,17 @@ enum UPeerType {
 #define U_peer_user          (UNoDogPlugIn::peer)->UModNoDogPeer::flag.c[2]
 #define U_peer_flag          (UNoDogPlugIn::peer)->UModNoDogPeer::flag.c[3]
 
-#define U_peer_permit                ((U_peer_flag & U_PEER_PERMIT)                != 0)
-#define U_peer_allowed               ((U_peer_flag & U_PEER_ALLOWED)               != 0)
-#define U_peer_timer_active          ((U_peer_flag & U_PEER_TIMER_ACTIVE)          != 0)
-#define U_peer_allow_disable         ((U_peer_flag & U_PEER_ALLOW_DISABLE)         != 0)
-#define U_peer_delay_disable         ((U_peer_flag & U_PEER_DELAY_DISABLE)         != 0)
-#define U_peer_notify_disable        ((U_peer_flag & U_PEER_NOTIFY_DISABLE)        != 0)
-#define U_peer_strict_notify_disable ((U_peer_flag & U_PEER_STRICT_NOTIFY_DISABLE) != 0)
+#define U_peer_permit                  ((U_peer_flag & U_PEER_PERMIT)                  != 0)
+#define U_peer_allowed                 ((U_peer_flag & U_PEER_ALLOWED)                 != 0)
+#define U_peer_timer_active            ((U_peer_flag & U_PEER_TIMER_ACTIVE)            != 0)
+#define U_peer_allow_disable           ((U_peer_flag & U_PEER_ALLOW_DISABLE)           != 0)
+#define U_peer_delay_disable           ((U_peer_flag & U_PEER_DELAY_DISABLE)           != 0)
+#define U_peer_notify_disable          ((U_peer_flag & U_PEER_NOTIFY_DISABLE)          != 0)
+#define U_peer_strict_notify_disable   ((U_peer_flag & U_PEER_STRICT_NOTIFY_DISABLE)   != 0)
+#define U_peer_mac_from_dhcp_data_file ((U_peer_flag & U_PEER_MAC_FROM_DHCP_DATA_FILE) != 0)
 
 // override the default...
-template <> inline void u_destroy(const UIPAddress** ptr, uint32_t n) { U_TRACE(0,"u_destroy<UIPAddress*>(%p,%u)", ptr, n) }
+template <> inline void u_destroy(const UModNoDogPeer** ptr, uint32_t n) { U_TRACE(0,"u_destroy<UModNoDogPeer*>(%p,%u)", ptr, n) }
 
 class U_EXPORT UNoDogPlugIn : public UServerPlugIn, UEventTime {
 public:
@@ -158,14 +162,7 @@ public:
 
    // define method VIRTUAL of class UEventTime
 
-   virtual int handlerTime() U_DECL_FINAL
-      {
-      U_TRACE_NO_PARAM(0, "UNoDogPlugIn::handlerTime()")
-
-      checkSystem();
-
-      U_RETURN(0); // monitoring
-      }
+   virtual int handlerTime() U_DECL_FINAL;
 
    // DEBUG
 
@@ -197,13 +194,13 @@ protected:
    static void* pdata;
    static UCommand* fw;
    static int fd_stderr;
-   static UString* mempool;
-   static UFlatBuffer* pfb;
+   static in_addr_t addr;
    static UIptAccount* ipt;
    static uint32_t check_expire, T1, T2;
    static UHttpClient<UTCPSocket>* client;
    static bool mac_from_dhcp_data_file, bnetwork_interface;
 
+   static UIPAllow* pallow;
    static UModNoDogPeer* peer;
    static UHashMap<UModNoDogPeer*>* peers;
 
@@ -214,24 +211,8 @@ protected:
    static UVector<UIPAllow*>* vLocalNetworkMask;
 
    static void setNewPeer();
-   static void checkSystem();
    static bool preallocatePeersFault();
-   static bool getPeerInfo(UStringRep* key, void* value);
-
-   static void executeCommand(const char* type)
-      {
-      U_TRACE(0, "UNoDogPlugIn::executeCommand(%S)", type)
-
-      U_INTERNAL_ASSERT_POINTER(peer)
-
-      peer->fw.setArgument(3, type);
-
-      (void) peer->fw.executeAndWait(U_NULLPTR, -1, fd_stderr);
-
-#  ifndef U_LOG_DISABLE
-      UServer_Base::logCommandMsgError(peer->fw.getCommand(), false);
-#  endif
-      }
+   static void executeCommand(const char* type, uint32_t len);
 
    static void deny()
       {
@@ -247,7 +228,7 @@ protected:
          return;
          }
 
-      executeCommand("deny");
+      executeCommand(U_CONSTANT_TO_PARAM("deny"));
 
       U_SRV_LOG("Peer denied: IP %v MAC %v", peer->ip.rep, peer->mac.rep);
       }
@@ -259,9 +240,9 @@ protected:
       U_INTERNAL_ASSERT_POINTER(peer)
       U_INTERNAL_ASSERT_EQUALS(U_peer_permit, false)
 
-      executeCommand("permit");
+      executeCommand(U_CONSTANT_TO_PARAM("permit"));
 
-      peer->_ctime   = u_now->tv_sec;
+      peer->_ctime = u_now->tv_sec;
 
       U_peer_flag |= U_PEER_PERMIT;
 
@@ -272,39 +253,44 @@ protected:
       {
       U_TRACE(0, "UNoDogPlugIn::getUrlForSendMsgToPortal(%.*S,%u)", service_len, service, service_len)
 
-      UString url(100U + service_len);
+      char buffer[256];
 
-      url.snprintf(U_CONSTANT_TO_PARAM("%v://%v%.*s"), auth_service->rep, auth_host->rep, service_len, service);
+      UString url((void*)buffer, u__snprintf(buffer, sizeof(buffer), U_CONSTANT_TO_PARAM("%v://%v%.*s"), auth_service->rep, auth_host->rep, service_len, service));
 
       U_RETURN_STRING(url);
       }
 
    static UString getUrlForSendMsgToPortal(const UString& service) { return getUrlForSendMsgToPortal(U_STRING_TO_PARAM(service)); }
 
-   static UString getApInfo(const UString& lbl)
+   static uint32_t setRedirect(char* buffer, uint32_t bufsize)
       {
-      U_TRACE(0, "UNoDogPlugIn::getApInfo(%V)", lbl.rep)
+      U_TRACE(0, "UNoDogPlugIn::setRedirect(%p,%u)", buffer, bufsize)
 
-      UString x(1024U);
+      return u__snprintf(buffer, bufsize, U_CONSTANT_TO_PARAM("http://%.*s/%.*s"), U_HTTP_HOST_TO_TRACE, U_HTTP_URI_QUERY_TO_TRACE);
+      }
 
-      x.snprintf(U_CONSTANT_TO_PARAM("%v@%v/%v"), lbl.rep, UServer_Base::IP_address->rep, hostname->rep);
+   static uint32_t getApInfo(char* buffer, uint32_t bufsize, const UString& lbl)
+      {
+      U_TRACE(0, "UNoDogPlugIn::getApInfo(%p,%u,%V)", buffer, bufsize, lbl.rep)
 
-      U_RETURN_STRING(x);
+      return u__snprintf(buffer, bufsize, U_CONSTANT_TO_PARAM("%v@%v/%v"), lbl.rep, UServer_Base::IP_address->rep, hostname->rep);
       }
 
 private:
    U_DISALLOW_COPY_AND_ASSIGN(UNoDogPlugIn)
 
-   static void setMAC() U_NO_EXPORT;
+   static bool   getPeer() U_NO_EXPORT;
    static void erasePeer() U_NO_EXPORT;
+
+   static void setMAC() U_NO_EXPORT;
    static void sendLogin() U_NO_EXPORT;
-   static void getTraffic() U_NO_EXPORT;
    static void sendNotify() U_NO_EXPORT;
    static void eraseTimer() U_NO_EXPORT;
+   static bool checkOldPeer() U_NO_EXPORT;
    static void setLabelAndMAC() U_NO_EXPORT;
    static void sendStrictNotify() U_NO_EXPORT;
 
-   static void printPeers(const char* fmt, uint32_t len) U_NO_EXPORT;
+// static void printPeers(const char* fmt, uint32_t len) U_NO_EXPORT;
    static void makeInfoData(UFlatBuffer* pfb, void* param) U_NO_EXPORT;
    static void makeLoginData(UFlatBuffer* pfb, void* param) U_NO_EXPORT;
    static void makeNotifyData(UFlatBuffer* pfb, void* param) U_NO_EXPORT;

@@ -51,21 +51,21 @@ public:
 
    UFlexer() : yyFlexLexer()
       {
-      U_TRACE_REGISTER_OBJECT(0, UFlexer, "", 0)
+      U_TRACE_CTOR(0, UFlexer, "", 0)
 
       parsed_chars = write_position = 0;
       }
 
    UFlexer(const UString& data_) : yyFlexLexer(), data(data_)
       {
-      U_TRACE_REGISTER_OBJECT(0, UFlexer, "%V", data_.rep)
+      U_TRACE_CTOR(0, UFlexer, "%V", data_.rep)
 
       parsed_chars = write_position = 0;
       }
 
    virtual ~UFlexer()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, UFlexer)
+      U_TRACE_DTOR(0, UFlexer)
       }
 
 #ifndef YY_DECL

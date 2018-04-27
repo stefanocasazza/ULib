@@ -223,7 +223,7 @@ class U_EXPORT URequestMapper : public virtual IRequestMapper, public virtual IP
 public:
 
    URequestMapper(const DOMElement* e);
-   ~URequestMapper() { delete m_mapper; delete m_htaccess; delete m_staKey; delete m_propsKey; }
+   ~URequestMapper() { U_DELETE(m_mapper) U_DELETE(m_htaccess) U_DELETE(m_staKey) U_DELETE(m_propsKey) }
 
    void lock()    { m_mapper->lock(); }
    void unlock()  { m_staKey->setData(NULL); m_propsKey->setData(NULL); m_mapper->unlock(); }
@@ -274,7 +274,7 @@ URequestMapper::URequestMapper(const DOMElement* e) : m_mapper(NULL), m_staKey(N
 
    if (!m_mapper)
       {
-      delete p;
+      U_DELETE(p)
 
       throw UnsupportedExtensionException("Embedded request mapper plugin was not of correct type.");
       }
@@ -687,7 +687,7 @@ int UShibPlugIn::handlerRequest()
                   UHTTP::ext->snprintf_add(U_CONSTANT_TO_PARAM("Set-Cookie: %v=%v\r\n"), name.rep, value.rep);
                   }
 
-               delete UShibTarget::setcookie;
+               U_DELETE(UShibTarget::setcookie)
 
                UShibTarget::setcookie = 0;
                }

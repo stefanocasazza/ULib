@@ -20,7 +20,7 @@
 
 UImapClient::~UImapClient()
 {
-   U_TRACE_UNREGISTER_OBJECT(0, UImapClient)
+   U_TRACE_DTOR(0, UImapClient)
 }
 
 U_NO_EXPORT void UImapClient::setStatus()
@@ -248,7 +248,7 @@ bool UImapClient::list(const UString& ref, const UString& wild, UVector<ListResp
             i += 2;
             attributes = v1[i++];
 
-            U_NEW(ListResponse, elem, ListResponse);
+            U_NEW_WITHOUT_CHECK_MEMORY(ListResponse, elem, ListResponse);
 
             elem->marked      = elem->unmarked =
             elem->noSelect    = elem->noInferiors =

@@ -22,7 +22,7 @@
 
 UModProxyService::UModProxyService()
 {
-   U_TRACE_REGISTER_OBJECT(0, UModProxyService, "")
+   U_TRACE_CTOR(0, UModProxyService, "")
 
    command = U_NULLPTR;
    vremote_address = U_NULLPTR;
@@ -32,9 +32,9 @@ UModProxyService::UModProxyService()
 
 UModProxyService::~UModProxyService()
 {
-   U_TRACE_UNREGISTER_OBJECT(0, UModProxyService)
+   U_TRACE_DTOR(0, UModProxyService)
 
-   if (vremote_address) delete vremote_address;
+   if (vremote_address) U_DELETE(vremote_address)
 }
 
 bool UModProxyService::loadConfig(UFileConfig& cfg)
@@ -182,8 +182,9 @@ loop:       switch (u_get_unalignedp32(msk))
 
             if (UIPAllow::parseMask(x, *(service->vremote_address)) == 0)
                {
-               delete service->vremote_address;
-                      service->vremote_address = U_NULLPTR;
+               U_DELETE(service->vremote_address)
+
+               service->vremote_address = U_NULLPTR;
                }
             }
 

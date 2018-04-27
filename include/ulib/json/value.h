@@ -81,7 +81,7 @@ public:
 
    explicit UValue(double fval = 0.0)
       {
-      U_TRACE_REGISTER_OBJECT(0, UValue, "%g", fval)
+      U_TRACE_CTOR(0, UValue, "%g", fval)
 
       // coverity[uninit_ctor]
 #  ifdef U_COVERITY_FALSE_POSITIVE
@@ -96,7 +96,7 @@ public:
 
    explicit UValue(ValueType tag, void* payload)
       {
-      U_TRACE_REGISTER_OBJECT(0, UValue, "%d,%p", tag, payload)
+      U_TRACE_CTOR(0, UValue, "%d,%p", tag, payload)
 
       // coverity[uninit_ctor]
 #  ifdef U_COVERITY_FALSE_POSITIVE
@@ -111,7 +111,7 @@ public:
 
    UValue(const UString& key, const UString& val)
       {
-      U_TRACE_REGISTER_OBJECT(0, UValue, "%V,%V", key.rep, val.rep)
+      U_TRACE_CTOR(0, UValue, "%V,%V", key.rep, val.rep)
 
       UValue* node;
 
@@ -143,7 +143,7 @@ public:
 
    UValue(const UValue& v)
       {
-      U_TRACE_REGISTER_OBJECT(0, UValue, "%p", &v)
+      U_TRACE_CTOR(0, UValue, "%p", &v)
 
       U_MEMORY_TEST_COPY(v)
 
@@ -698,7 +698,7 @@ protected:
 
    explicit UValue(uint64_t val)
       {
-      U_TRACE_REGISTER_OBJECT(0, UValue, "%#llx", val)
+      U_TRACE_CTOR(0, UValue, "%#llx", val)
 
       next = this;
 
@@ -714,7 +714,7 @@ protected:
 
    explicit UValue(UValue* node)
       {
-      U_TRACE_REGISTER_OBJECT(0, UValue, "%p", node)
+      U_TRACE_CTOR(0, UValue, "%p", node)
 
       next = node;
 
@@ -730,7 +730,7 @@ protected:
 
    explicit UValue(uint64_t val, UValue* node)
       {
-      U_TRACE_REGISTER_OBJECT(0, UValue, "%#llx,%p", val, node)
+      U_TRACE_CTOR(0, UValue, "%#llx,%p", val, node)
 
       next = node;
 
@@ -1121,14 +1121,14 @@ public:
 
    UJsonTypeHandler_Base(const void* ptr) : pval((void*)ptr)
       {
-      U_TRACE_REGISTER_OBJECT(0, UJsonTypeHandler_Base, "%p", ptr)
+      U_TRACE_CTOR(0, UJsonTypeHandler_Base, "%p", ptr)
 
       U_INTERNAL_ASSERT_POINTER(pval)
       }
 
    ~UJsonTypeHandler_Base()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, UJsonTypeHandler_Base)
+      U_TRACE_DTOR(0, UJsonTypeHandler_Base)
 
       U_INTERNAL_ASSERT_POINTER(pval)
       }
@@ -2034,7 +2034,7 @@ public:
          {
          T* pitem;
 
-         U_NEW(T, pitem, T);
+         U_NEW_WITHOUT_CHECK_MEMORY(T, pitem, T);
 
          U_DUMP("pelement = %p pelement->next = %p pelement->type = (%u,%S)",
                  pelement,     pelement->next, pelement->getTag(), UValue::getDataTypeDescription(pelement->getTag()))
@@ -2207,7 +2207,7 @@ public:
          {
          T* pitem;
 
-         U_NEW(T, pitem, T);
+         U_NEW_WITHOUT_CHECK_MEMORY(T, pitem, T);
 
          U_DUMP("pelement = %p pelement->next = %p pelement->type = (%u,%S)",
                  pelement,     pelement->next, pelement->getTag(), UValue::getDataTypeDescription(pelement->getTag()))

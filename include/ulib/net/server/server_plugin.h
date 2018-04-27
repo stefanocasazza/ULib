@@ -128,6 +128,10 @@ public:
       U_RETURN(U_PLUGIN_HANDLER_OK);
       }
 
+#ifdef DEBUG
+   const char* dump(bool reset) const { return ""; }
+#endif
+
 private:
    U_DISALLOW_ASSIGN(UServerPlugIn)
 };

@@ -65,10 +65,10 @@ public:
 
    ~ULog()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, ULog)
+      U_TRACE_DTOR(0, ULog)
 
 #  ifdef USE_LIBZ
-      if (buf_path_compress) delete buf_path_compress;
+      if (buf_path_compress) U_DELETE(buf_path_compress)
 #  endif
 
       if (UFile::isMapped()) UFile::munmap();

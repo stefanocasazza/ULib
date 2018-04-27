@@ -26,7 +26,7 @@ public:
 
    URpcPlugIn()
       {
-      U_TRACE_REGISTER_OBJECT(0, URpcPlugIn, "", 0)
+      U_TRACE_CTOR(0, URpcPlugIn, "", 0)
 
       UString::str_allocate(STR_ALLOCATE_SOAP);
       }

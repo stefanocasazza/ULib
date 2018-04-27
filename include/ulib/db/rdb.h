@@ -78,7 +78,7 @@ public:
 
    URDB(int _ignore_case = false) : UCDB(_ignore_case)
       {
-      U_TRACE_REGISTER_OBJECT(0, URDB, "%d", _ignore_case)
+      U_TRACE_CTOR(0, URDB, "%d", _ignore_case)
 
       plock = U_NULLPTR;
       pnode = U_NULLPTR;
@@ -90,7 +90,7 @@ public:
 
    URDB(const UString& pathdb, int _ignore_case) : UCDB(pathdb, _ignore_case)
       {
-      U_TRACE_REGISTER_OBJECT(0, URDB, "%V,%d", pathdb.rep, _ignore_case)
+      U_TRACE_CTOR(0, URDB, "%V,%d", pathdb.rep, _ignore_case)
 
       plock = U_NULLPTR;
       pnode = U_NULLPTR;
@@ -106,7 +106,7 @@ public:
 #endif
    ~URDB()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, URDB)
+      U_TRACE_DTOR(0, URDB)
 
       if (preclock)
          {
@@ -448,7 +448,7 @@ public:
 #endif
    ~URDBObjectHandler()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, URDBObjectHandler<UDataStorage*>)
+      U_TRACE_DTOR(0, URDBObjectHandler<UDataStorage*>)
 
 #  ifdef DEBUG
       if (bdirect == false &&
@@ -661,12 +661,12 @@ public:
 
    URDBObjectHandler(const UString& pathdb, int _ignore_case, const T* ptr) : URDBObjectHandler<UDataStorage*>(pathdb, _ignore_case, ptr)
       {
-      U_TRACE_REGISTER_OBJECT(0, URDBObjectHandler<T*>, "%V,%d,%p", pathdb.rep, _ignore_case, ptr)
+      U_TRACE_CTOR(0, URDBObjectHandler<T*>, "%V,%d,%p", pathdb.rep, _ignore_case, ptr)
       }
 
    ~URDBObjectHandler()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, URDBObjectHandler<T*>)
+      U_TRACE_DTOR(0, URDBObjectHandler<T*>)
       }
 
    // SERVICES

@@ -36,7 +36,7 @@ enum jsonParseFlagsType {
 
 UValue::~UValue()
 {
-   U_TRACE_UNREGISTER_OBJECT(0, UValue)
+   U_TRACE_DTOR(0, UValue)
 
    switch (getTag())
       {
@@ -61,7 +61,7 @@ UValue::~UValue()
 
             next = element->next;
 
-            delete element;
+            U_DELETE(element)
 
             element = next;
             }
@@ -86,7 +86,7 @@ UValue::~UValue()
 
             next = element->next;
 
-            delete element;
+            U_DELETE(element)
 
             element = next;
             }
@@ -147,7 +147,7 @@ case_array:
 
       next = element->next;
 
-      delete element;
+      U_DELETE(element)
 
       element = next;
       }
@@ -173,7 +173,7 @@ case_object:
 
       next = element->next;
 
-      delete element;
+      U_DELETE(element)
 
       element = next;
       }

@@ -43,14 +43,14 @@ public:
 
       if (table)
          {
-         delete table;
-         delete rdbname;
-         delete Messaggio::id_max_ttl;
+         U_DELETE(table)
+         U_DELETE(rdbname)
+         U_DELETE(Messaggio::id_max_ttl)
 
 #     ifdef U_DB_MANAGE
-         delete lrdb;
+         U_DELETE(lrdb)
 #     else
-         if (rdb) delete rdb;
+         if (rdb) U_DELETE(rdb)
 #     endif
          }
       }
@@ -61,7 +61,7 @@ public:
       U_TRACE(5, "Application::MessageToString(%p,%p)", msg, bdelete)
 
       *bdelete        = true;
-      UStringRep* rep = UObject2StringRep<Messaggio>(*msg, false);
+      UStringRep* rep = UObject2StringRep<Messaggio>(*msg);
 
       U_RETURN_POINTER(rep,UStringRep);
       }
@@ -83,7 +83,7 @@ public:
 
          U_NEW(UStringRep, rep, UStringRep((const char*)&(msg->start), sizeof(time_t)));
 
-         delete msg;
+         U_DELETE(msg)
 
          U_RETURN_POINTER(rep,UStringRep);
          }
@@ -298,6 +298,8 @@ public:
          Messaggio::msg = new Messaggio();
 
          ++nmsg;
+
+         table->hold();
 
          table->insertAfterFind(Messaggio::msg);
          }

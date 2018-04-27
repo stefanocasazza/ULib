@@ -31,12 +31,12 @@ public:
 
    USSLSession()
       {
-      U_TRACE_REGISTER_OBJECT(0, USSLSession, "", 0)
+      U_TRACE_CTOR(0, USSLSession, "", 0)
       }
 
    virtual ~USSLSession() U_DECL_FINAL
       {
-      U_TRACE_UNREGISTER_OBJECT(0, USSLSession)
+      U_TRACE_DTOR(0, USSLSession)
       }
 
    // define method VIRTUAL of class UDataStorage

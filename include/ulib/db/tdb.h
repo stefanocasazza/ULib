@@ -49,14 +49,14 @@ public:
 
    UTDB()
       {
-      U_TRACE_REGISTER_OBJECT(0, UTDB, "", 0)
+      U_TRACE_CTOR(0, UTDB, "", 0)
 
       context = U_NULLPTR;
       }
 
    ~UTDB()
       {
-      U_TRACE_UNREGISTER_OBJECT(1, UTDB)
+      U_TRACE_DTOR(1, UTDB)
 
       if (context) close();
       }

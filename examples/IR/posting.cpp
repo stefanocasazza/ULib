@@ -83,17 +83,17 @@ static u_property property[32];
 
 UPosting::UPosting(uint32_t dimension, bool parsing, bool index)
 {
-   U_TRACE_REGISTER_OBJECT(5, UPosting, "%u,%b,%b", dimension, parsing, index)
+   U_TRACE_CTOR(5, UPosting, "%u,%b,%b", dimension, parsing, index)
 
    U_INTERNAL_ASSERT_EQUALS(word, U_NULLPTR)
    U_INTERNAL_ASSERT_EQUALS(posting, U_NULLPTR)
    U_INTERNAL_ASSERT_EQUALS(filename, U_NULLPTR)
    U_INTERNAL_ASSERT_EQUALS(str_cur_doc_id, U_NULLPTR)
 
-   U_NEW(UString, word, UString);
-   U_NEW(UString, posting, UString);
-   U_NEW(UString, filename, UString);
-   U_NEW(UString, str_cur_doc_id, UString(sizeof(cur_doc_id)));
+   U_NEW_STRING(word, UString);
+   U_NEW_STRING(posting, UString);
+   U_NEW_STRING(filename, UString);
+   U_NEW_STRING(str_cur_doc_id, UString(sizeof(cur_doc_id)));
 
    approximate_num_words = 2000 + (dimension * 8);
 
@@ -114,7 +114,7 @@ UPosting::UPosting(uint32_t dimension, bool parsing, bool index)
       U_INTERNAL_ASSERT_EQUALS(content, U_NULLPTR)
 
       U_NEW(UFile, file, UFile);
-      U_NEW(UString, content, UString);
+      U_NEW_STRING(content, UString);
       }
 }
 
@@ -122,9 +122,9 @@ void UPosting::resetVectorCompositeWord()
 {
    U_TRACE(5, "UPosting::resetVectorCompositeWord()")
 
-   delete sub_word;
-   delete vec_sub_word;
-   delete vec_sub_word_posting;
+   U_DELETE(sub_word)
+   U_DELETE(vec_sub_word)
+   U_DELETE(vec_sub_word_posting)
 
    sub_word             = U_NULLPTR;
    vec_sub_word         = U_NULLPTR;
@@ -143,9 +143,9 @@ void UPosting::reset()
 
    if (vec_word)
       {
-      delete vec_word;
-      delete vec_entry;
-      delete vec_posting;
+      U_DELETE(vec_word)
+      U_DELETE(vec_entry)
+      U_DELETE(vec_posting)
 
       vec_word    = U_NULLPTR;
       vec_entry   = U_NULLPTR;
@@ -155,25 +155,25 @@ void UPosting::reset()
 
 UPosting::~UPosting()
 {
-   U_TRACE_UNREGISTER_OBJECT(5, UPosting)
+   U_TRACE_DTOR(5, UPosting)
 
-   delete posting;
-   delete filename;
-   delete str_cur_doc_id;
+   U_DELETE(posting)
+   U_DELETE(filename)
+   U_DELETE(str_cur_doc_id)
 
    if (tbl_name == U_NULLPTR) reset();
    else
       {
-      delete tbl_name;
-      delete tbl_words;
+      U_DELETE(tbl_name)
+      U_DELETE(tbl_words)
       }
 
-   delete word;
+   U_DELETE(word)
 
    if (file)
       {
-      delete file;
-      delete content;
+      U_DELETE(file)
+      U_DELETE(content)
       }
 }
 
@@ -931,7 +931,7 @@ U_NO_EXPORT bool UPosting::setVectorCompositeWord()
    U_INTERNAL_ASSERT_EQUALS(vec_sub_word,U_NULLPTR)
    U_INTERNAL_ASSERT_EQUALS(vec_sub_word_posting,U_NULLPTR)
 
-   U_NEW(UString, sub_word, UString);
+   U_NEW_STRING(sub_word, UString);
    U_NEW(UVector<UString>, vec_sub_word, UVector<UString>(*word));
    U_NEW(UVector<UString>, vec_sub_word_posting, UVector<UString>);
 
@@ -1439,7 +1439,7 @@ void UPosting::printDB(ostream& s)
 #ifdef U_STDCPP_ENABLE
    os = &s;
 
-   U_NEW(UString, buffer, UString(U_CAPACITY));
+   U_NEW_STRING(buffer, UString(U_CAPACITY));
 
    if (tbl_words) tbl_words->callForAllEntry((bPFprpv)print);
    else
@@ -1456,7 +1456,7 @@ void UPosting::printDB(ostream& s)
 
    os->flush();
 
-   delete buffer;
+   U_DELETE(buffer)
 #endif
 }
 

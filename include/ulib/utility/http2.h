@@ -117,7 +117,7 @@ public:
     Connection();
    ~Connection()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, Connection)
+      U_TRACE_DTOR(0, Connection)
       }
 
    void reset()

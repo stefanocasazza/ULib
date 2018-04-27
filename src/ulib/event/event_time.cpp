@@ -24,7 +24,7 @@ struct timespec UEventTime::timeout2;
 
 UEventTime::UEventTime(long sec, long micro_sec) : UTimeVal(sec, micro_sec)
 {
-   U_TRACE_REGISTER_OBJECT(0, UEventTime, "%ld,%ld", sec, micro_sec)
+   U_TRACE_CTOR(0, UEventTime, "%ld,%ld", sec, micro_sec)
 
    setTolerance();
 
@@ -44,11 +44,12 @@ UEventTime::UEventTime(long sec, long micro_sec) : UTimeVal(sec, micro_sec)
 
 UEventTime::~UEventTime()
 {
-   U_TRACE_UNREGISTER_OBJECT(0, UEventTime)
+   U_TRACE_DTOR(0, UEventTime)
 
 #ifdef USE_LIBEVENT
    UDispatcher::del(pevent);
-             delete pevent;
+
+   U_DELETE(pevent)
 #endif
 }
 

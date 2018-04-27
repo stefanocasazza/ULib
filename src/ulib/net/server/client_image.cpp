@@ -121,13 +121,13 @@ void UClientImage_Base::logRequest()
 
 UClientImage_Base::UClientImage_Base()
 {
-   U_TRACE_REGISTER_OBJECT(0, UClientImage_Base, "")
+   U_TRACE_CTOR(0, UClientImage_Base, "")
 
    socket       = U_NULLPTR;
    logbuf       = U_NULLPTR;
    data_pending = U_NULLPTR;
 
-   if (UServer_Base::isLog()) U_NEW(UString, logbuf, UString(200U));
+   if (UServer_Base::isLog()) U_NEW_STRING(logbuf, UString(200U));
 
    reset();
 
@@ -145,11 +145,11 @@ UClientImage_Base::UClientImage_Base()
 
 UClientImage_Base::~UClientImage_Base()
 {
-   U_TRACE_UNREGISTER_OBJECT(0, UClientImage_Base)
+   U_TRACE_DTOR(0, UClientImage_Base)
 
    // NB: array are not pointers (virtual table can shift the address of 'this')...
 
-   delete socket;
+   U_DELETE(socket)
 
    if (logbuf)
       {
@@ -157,7 +157,7 @@ UClientImage_Base::~UClientImage_Base()
 
    // if (logbuf->rep->memory.invariant() == false) logbuf->rep->memory._this = (void*)U_CHECK_MEMORY_SENTINEL;
 
-      delete logbuf;
+      U_DELETE(logbuf)
       }
 }
 
@@ -260,18 +260,18 @@ void UClientImage_Base::init()
    U_INTERNAL_ASSERT_EQUALS(_encoded, U_NULLPTR)
    U_INTERNAL_ASSERT_EQUALS(request_uri, U_NULLPTR)
 
-   U_NEW(UString, body, UString);
-   U_NEW(UString, rbuffer, UString(8192));
-   U_NEW(UString, wbuffer, UString(U_CAPACITY));
-   U_NEW(UString, request, UString);
-   U_NEW(UString, request_uri, UString);
-   U_NEW(UString, environment, UString(U_CAPACITY));
+   U_NEW_STRING(body, UString);
+   U_NEW_STRING(rbuffer, UString(8192));
+   U_NEW_STRING(wbuffer, UString(U_CAPACITY));
+   U_NEW_STRING(request, UString);
+   U_NEW_STRING(request_uri, UString);
+   U_NEW_STRING(environment, UString(U_CAPACITY));
 
    // NB: these are for ULib Servlet Page (USP) - USP_PRINTF...
 
-   U_NEW(UString, _value, UString(U_CAPACITY));
-   U_NEW(UString, _buffer, UString(U_CAPACITY));
-   U_NEW(UString, _encoded, UString(U_CAPACITY));
+   U_NEW_STRING(_value, UString(U_CAPACITY));
+   U_NEW_STRING(_buffer, UString(U_CAPACITY));
+   U_NEW_STRING(_encoded, UString(U_CAPACITY));
 
    U_NEW(UTimeVal, chronometer, UTimeVal);
 
@@ -294,13 +294,13 @@ void UClientImage_Base::clear()
 
    if (body)
       {
-      delete body;
-      delete wbuffer;
-      delete request;
-      delete rbuffer;
-      delete request_uri;
-      delete environment;
-      delete chronometer;
+      U_DELETE(body)
+      U_DELETE(wbuffer)
+      U_DELETE(request)
+      U_DELETE(rbuffer)
+      U_DELETE(request_uri)
+      U_DELETE(environment)
+      U_DELETE(chronometer)
 
       // NB: these are for ULib Servlet Page (USP) - USP_PRINTF...
 
@@ -308,9 +308,9 @@ void UClientImage_Base::clear()
       U_INTERNAL_ASSERT_POINTER(_buffer)
       U_INTERNAL_ASSERT_POINTER(_encoded)
 
-      delete _value;
-      delete _buffer;
-      delete _encoded;
+      U_DELETE(_value)
+      U_DELETE(_buffer)
+      U_DELETE(_encoded)
       }
 }
 
@@ -320,7 +320,7 @@ __pure bool UClientImage_Base::isAllowed(UVector<UIPAllow*>& vallow_IP)
 {
    U_TRACE(0, "UClientImage_Base::isAllowed(%p)", &vallow_IP)
 
-   if (UIPAllow::isAllowed(UServer_Base::csocket->remoteIPAddress().getInAddr(), vallow_IP)) U_RETURN(true);
+   if (UIPAllow::isAllowed(UServer_Base::getClientAddress(), vallow_IP)) U_RETURN(true);
 
    U_RETURN(false);
 }
@@ -540,8 +540,9 @@ void UClientImage_Base::handlerDelete()
 
    if (data_pending)
       {
-      delete data_pending;
-             data_pending = U_NULLPTR;
+      U_DELETE(data_pending)
+
+      data_pending = U_NULLPTR;
       }
    else if (isPendingSendfile())
       {
@@ -585,8 +586,10 @@ void UClientImage_Base::handlerDelete()
       U_INTERNAL_DUMP("UEventFd::pevent = %p", UEventFd::pevent)
 
       UDispatcher::del(pevent);
-                delete pevent;
-                       pevent = U_NULLPTR;
+
+      U_DELETE(pevent)
+
+      pevent = U_NULLPTR;
       }
 #endif
 }
@@ -1012,7 +1015,7 @@ void UClientImage_Base::prepareForRead()
       U_INTERNAL_DUMP("UServer_Base::client_address = %.*S", U_CLIENT_ADDRESS_TO_TRACE)
 
 #  ifdef U_EVASIVE_SUPPORT
-      if (UServer_Base::checkHold(socket->remoteIPAddress().getInAddr()))
+      if (UServer_Base::checkHold(socket->getClientAddress()))
          {
          abortive_close();
 
@@ -1146,8 +1149,9 @@ bool UClientImage_Base::genericRead()
          U_RETURN(false);
          }
 
-      delete data_pending;
-             data_pending = U_NULLPTR;
+      U_DELETE(data_pending)
+
+      data_pending = U_NULLPTR;
       }
 
    U_gettimeofday // NB: optimization if it is enough a time resolution of one second...
@@ -1272,7 +1276,7 @@ data_missing:
 
       if (U_ClientImage_parallelization == U_PARALLELIZATION_CHILD) goto loop;
 
-      U_NEW(UString, data_pending, UString((void*)U_STRING_TO_PARAM(*request)));
+      U_NEW_STRING(data_pending, UString((void*)U_STRING_TO_PARAM(*request)));
 
       U_INTERNAL_DUMP("data_pending(%u) = %V", data_pending->size(), data_pending->rep)
 
@@ -1309,6 +1313,8 @@ data_missing:
 #endif
 
    size_request = 0;
+
+   U_INTERNAL_ASSERT_EQUALS(UServer_Base::csocket, UServer_Base::pClientImage->socket)
 
    U_ClientImage_state = callerHandlerRead();
 

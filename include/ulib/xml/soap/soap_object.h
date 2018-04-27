@@ -34,12 +34,12 @@ public:
 
    USOAPObject()
       {
-      U_TRACE_REGISTER_OBJECT(0, USOAPObject, "", 0)
+      U_TRACE_CTOR(0, USOAPObject, "", 0)
       }
 
    virtual ~USOAPObject()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, USOAPObject)
+      U_TRACE_DTOR(0, USOAPObject)
       }
 
    // Triggers the creation of the USOAPFault

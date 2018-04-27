@@ -40,7 +40,7 @@ public:
 
    ~UZIP()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, UZIP)
+      U_TRACE_DTOR(0, UZIP)
 
       clear();
       }

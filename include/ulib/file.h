@@ -99,7 +99,7 @@ public:
 
    UFile()
       {
-      U_TRACE_REGISTER_OBJECT(0, UFile, "", 0)
+      U_TRACE_CTOR(0, UFile, "", 0)
 
       reset();
 
@@ -111,7 +111,7 @@ public:
 
    UFile(const UString& path) : pathname(path)
       {
-      U_TRACE_REGISTER_OBJECT(0, UFile, "%V", path.rep)
+      U_TRACE_CTOR(0, UFile, "%V", path.rep)
 
       reset();
 
@@ -122,7 +122,7 @@ public:
 
    UFile(const UString& path, const UString* environment) : pathname(path) 
       {
-      U_TRACE_REGISTER_OBJECT(0, UFile, "%V,%p", path.rep, environment)
+      U_TRACE_CTOR(0, UFile, "%V,%p", path.rep, environment)
 
       reset();
 
@@ -136,7 +136,7 @@ public:
 #endif
    ~UFile()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, UFile)
+      U_TRACE_DTOR(0, UFile)
 
       dec_num_file_object(fd);
 
@@ -151,7 +151,7 @@ public:
 
       reset();
 
-      pathname.setConstant(U_CONSTANT_TO_PARAM("/"));
+      pathname = *UString::str_path_root;
 
       st_mode          = S_IFDIR|0755;
       path_relativ     = pathname.data();
@@ -168,6 +168,17 @@ public:
       reset();
 
       pathname = path;
+
+      setPathRelativ();
+      }
+
+   void setPath(const char* path, uint32_t len)
+      {
+      U_TRACE(0, "UFile::setPath(%.*S,%u)", len, path, len)
+
+      reset();
+
+      (void) pathname.replace(path, len);
 
       setPathRelativ();
       }

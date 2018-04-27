@@ -35,7 +35,7 @@ public:
 
    UMagic(int flags)
       {
-      U_TRACE_REGISTER_OBJECT(0, UMagic, "%d", flags)
+      U_TRACE_CTOR(0, UMagic, "%d", flags)
 
       if (magic == U_NULLPTR) (void) init();
 
@@ -46,7 +46,7 @@ public:
 
    ~UMagic()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, UMagic)
+      U_TRACE_DTOR(0, UMagic)
       }
 
    static void clear()

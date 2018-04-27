@@ -62,7 +62,7 @@ public:
 
    UTwilioClient(const UString& sid, const UString& token) : uri(U_CAPACITY)
       {
-      U_TRACE_REGISTER_OBJECT(0, UTwilioClient, "%V,%V", sid.rep, token.rep)
+      U_TRACE_CTOR(0, UTwilioClient, "%V,%V", sid.rep, token.rep)
 
       U_NEW(UHttpClient<USSLSocket>, client, UHttpClient<USSLSocket>(U_NULLPTR));
 
@@ -71,11 +71,11 @@ public:
 
    ~UTwilioClient()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, UTwilioClient)
+      U_TRACE_DTOR(0, UTwilioClient)
 
       U_INTERNAL_ASSERT_POINTER(client)
 
-      delete client;
+      U_DELETE(client)
       }
 
    // SERVICES

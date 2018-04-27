@@ -35,13 +35,14 @@ UApplication::~UApplication()
 #ifdef DEBUG
    for (int i = 0; i < u_fns_index; ++i) { U_INTERNAL_DUMP("u_fns[%2u] = %p", i, u_fns[i]) }
 
-#  ifdef USE_LIBSSL
+# ifdef USE_LIBSSL
    if (UServices::CApath) 
       {
-      delete UServices::CApath;
-             UServices::CApath = U_NULLPTR;
+      U_DELETE(UServices::CApath)
+
+      UServices::CApath = U_NULLPTR;
       }
-#  endif
+# endif
 #endif
 }
 

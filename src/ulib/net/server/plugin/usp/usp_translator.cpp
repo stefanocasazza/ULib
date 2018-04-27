@@ -781,8 +781,8 @@ loop: distance = t.getDistance();
                "}"),
                basename_sz, basename_ptr,
                basename_sz, basename_ptr,
-               (bsession ? "\n\tif (UHTTP::data_session == U_NULLPTR) U_NEW(UDataSession, UHTTP::data_session, UDataSession);\n" : ""),
-               (bstorage ? "\n\tif (UHTTP::data_storage == U_NULLPTR) { U_NEW(UDataSession, UHTTP::data_storage, UDataSession(*UString::str_storage_keyid)); }\n" : ""));
+               (bsession ? "\n\tif (UHTTP::data_session == U_NULLPTR) U_NEW(UDataSession, UHTTP::data_session, UDataSession)\n" : ""),
+               (bstorage ? "\n\tif (UHTTP::data_storage == U_NULLPTR) { U_NEW(UDataSession, UHTTP::data_storage, UDataSession(*UString::str_storage_keyid)) }\n" : ""));
          }
 
       if (binit) (void) u__snprintf(ptr1, 100, U_CONSTANT_TO_PARAM("\n\t\tif (param == U_DPAGE_INIT) { usp_init_%.*s(); return; }\n"), basename_sz, basename_ptr);

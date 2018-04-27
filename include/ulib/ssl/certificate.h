@@ -48,7 +48,7 @@ public:
 
    UCertificate(X509* px509 = U_NULLPTR) : x509(px509)
       {
-      U_TRACE_REGISTER_OBJECT(0, UCertificate, "%p", px509)
+      U_TRACE_CTOR(0, UCertificate, "%p", px509)
       }
 
    /**
@@ -63,7 +63,7 @@ public:
 
    UCertificate(const UString& x, const char* format = U_NULLPTR)
       {
-      U_TRACE_REGISTER_OBJECT(0, UCertificate, "%V,%S", x.rep, format)
+      U_TRACE_CTOR(0, UCertificate, "%V,%S", x.rep, format)
 
       x509 = readX509(x, format);
       }
@@ -85,7 +85,7 @@ public:
 
    ~UCertificate()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, UCertificate)
+      U_TRACE_DTOR(0, UCertificate)
 
       if (x509) clear();
       }

@@ -16,7 +16,7 @@ public:
       {
       U_TRACE(5, "Application::~Application()")
 
-      if (Messaggio::msg) delete Messaggio::msg;
+      if (Messaggio::msg) U_DELETE(Messaggio::msg)
       }
 
    static void parseLineForAnomalie()
@@ -41,7 +41,7 @@ public:
 
             if (Messaggio::msg->isAnomalia()) reportAnomalie(U_NULLPTR, Messaggio::msg);
 
-            delete Messaggio::msg;
+            U_DELETE(Messaggio::msg)
 
             Messaggio::msg = new Messaggio();
             }

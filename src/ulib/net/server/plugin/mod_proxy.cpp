@@ -32,14 +32,14 @@ U_CREAT_FUNC(server_plugin_proxy, UProxyPlugIn)
 
 UProxyPlugIn::UProxyPlugIn()
 {
-   U_TRACE_REGISTER_OBJECT(0, UProxyPlugIn, "")
+   U_TRACE_CTOR(0, UProxyPlugIn, "")
 }
 
 UProxyPlugIn::~UProxyPlugIn()
 {
-   U_TRACE_UNREGISTER_OBJECT(0, UProxyPlugIn)
+   U_TRACE_DTOR(0, UProxyPlugIn)
 
-   if (client_http) delete client_http;
+   if (client_http) U_DELETE(client_http)
 }
 
 // Server-wide hooks

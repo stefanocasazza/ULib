@@ -45,7 +45,7 @@ public:
       {
       U_TRACE(5, "Application::~Application()")
 
-      delete server;
+      U_DELETE(server)
       }
 
    void run(int argc, char* argv[], char* env[])

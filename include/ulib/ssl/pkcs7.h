@@ -57,7 +57,7 @@ public:
 
    UPKCS7(PKCS7* p7 = U_NULLPTR, BIO* data = U_NULLPTR)
       {
-      U_TRACE_REGISTER_OBJECT(0, UPKCS7, "%p,%p", p7, data)
+      U_TRACE_CTOR(0, UPKCS7, "%p,%p", p7, data)
 
       set(p7, data);
       }
@@ -74,7 +74,7 @@ public:
 
    UPKCS7(const UString& x, const char* format = U_NULLPTR)
       {
-      U_TRACE_REGISTER_OBJECT(0, UPKCS7, "%V,%S", x.rep, format)
+      U_TRACE_CTOR(0, UPKCS7, "%V,%S", x.rep, format)
 
       indata = U_NULLPTR;
       pkcs7  = readPKCS7(x, format);

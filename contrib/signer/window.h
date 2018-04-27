@@ -33,7 +33,7 @@ public:
 
    Window()
       {
-      U_TRACE_REGISTER_OBJECT(2, Window, "", 0)
+      U_TRACE_CTOR(2, Window, "", 0)
 
       Parent        = 0;
       WindowHandle  = 0;
@@ -42,7 +42,7 @@ public:
 
    virtual ~Window()
       {
-      U_TRACE_UNREGISTER_OBJECT(2, Window)
+      U_TRACE_DTOR(2, Window)
 
       // Delete any fonts we created.
       for (unsigned i = 0; i < Fonts.size(); ++i) DeleteObject(Fonts[i]);

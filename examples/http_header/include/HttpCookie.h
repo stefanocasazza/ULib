@@ -18,7 +18,7 @@ public:
    */
    HttpCookie(const UString& name_, const UString& value_) : HttpField(U_STRING_FROM_CONSTANT("Cookie"))
       {
-      U_TRACE_REGISTER_OBJECT(5, HttpCookie, "%.*S,%.*S", U_STRING_TO_TRACE(name_),  U_STRING_TO_TRACE(value_))
+      U_TRACE_CTOR(5, HttpCookie, "%.*S,%.*S", U_STRING_TO_TRACE(name_),  U_STRING_TO_TRACE(value_))
 
       add(name_, value_);
       }
@@ -27,7 +27,7 @@ public:
    */
    virtual ~HttpCookie()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, HttpCookie)
+      U_TRACE_DTOR(0, HttpCookie)
       }
 
    /**

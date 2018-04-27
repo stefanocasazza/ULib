@@ -30,7 +30,7 @@ public:
 
    UDataStorage()
       {
-      U_TRACE_REGISTER_OBJECT(0, UDataStorage, "", 0)
+      U_TRACE_CTOR(0, UDataStorage, "", 0)
 
 #  ifdef DEBUG
       recdata      = U_NULLPTR;
@@ -42,7 +42,7 @@ public:
 
    UDataStorage(const UString& key) : keyid(key)
       {
-      U_TRACE_REGISTER_OBJECT(0, UDataStorage, "%V", key.rep)
+      U_TRACE_CTOR(0, UDataStorage, "%V", key.rep)
 
 #  ifdef DEBUG
       recdata      = U_NULLPTR;
@@ -54,7 +54,7 @@ public:
 
    virtual ~UDataStorage()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, UDataStorage)
+      U_TRACE_DTOR(0, UDataStorage)
 
       U_INTERNAL_DUMP("this = %p recdata = %p", this, recdata)
       }
@@ -155,25 +155,25 @@ public:
 
    UDataSession()
       {
-      U_TRACE_REGISTER_OBJECT(0, UDataSession, "", 0)
+      U_TRACE_CTOR(0, UDataSession, "", 0)
 
       init();
       }
 
    UDataSession(const UString& key) : UDataStorage(key)
       {
-      U_TRACE_REGISTER_OBJECT(0, UDataSession, "%V", key.rep)
+      U_TRACE_CTOR(0, UDataSession, "%V", key.rep)
 
       init();
       }
 
    virtual ~UDataSession()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, UDataSession)
+      U_TRACE_DTOR(0, UDataSession)
 
       U_INTERNAL_ASSERT_POINTER(vec_var)
 
-      delete vec_var;
+      U_DELETE(vec_var)
       }
 
    // SERVICES

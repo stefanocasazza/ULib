@@ -134,14 +134,14 @@ bool UGeoIPPlugIn::checkCountryForbidden()
 
 UGeoIPPlugIn::UGeoIPPlugIn()
 {
-   U_TRACE_REGISTER_OBJECT(0, UGeoIPPlugIn, "")
+   U_TRACE_CTOR(0, UGeoIPPlugIn, "")
 }
 
 UGeoIPPlugIn::~UGeoIPPlugIn()
 {
-   U_TRACE_UNREGISTER_OBJECT(0, UGeoIPPlugIn)
+   U_TRACE_DTOR(0, UGeoIPPlugIn)
 
-   if (country_forbidden_mask) delete country_forbidden_mask;
+   if (country_forbidden_mask) U_DELETE(country_forbidden_mask)
 
    for (uint32_t i = 0; i < NUM_DB_TYPES; ++i) if (gi[i]) U_SYSCALL_VOID(GeoIP_delete, "%p", gi[i]);
 }
@@ -162,7 +162,7 @@ int UGeoIPPlugIn::handlerConfig(UFileConfig& cfg)
 
       if (x)
          {
-         U_NEW(UString, country_forbidden_mask, UString(x));
+         U_NEW_STRING(country_forbidden_mask, UString(x));
 
          U_RETURN(U_PLUGIN_HANDLER_PROCESSED);
          }

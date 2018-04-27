@@ -91,7 +91,7 @@ void UCommand::setCommand()
 {
    U_TRACE_NO_PARAM(0, "UCommand::setCommand()")
 
-   command.duplicate();
+   if (command.writeable() == false) command.duplicate();
 
    freeCommand();
 
@@ -162,7 +162,7 @@ U_NO_EXPORT void UCommand::setEnvironment(UString& env)
 
    freeEnvironment();
 
-   env.duplicate();
+   if (env.writeable() == false) env.duplicate();
 
    nenv = setEnvironment(env, envp);
 }
@@ -575,7 +575,7 @@ UCommand* UCommand::loadConfigCommand(UFileConfig* cfg)
          {
          U_WARNING("loadConfigCommand() failed, command %V not executable", cmd->command.rep);
 
-         delete cmd;
+         U_DELETE(cmd)
 
          U_RETURN_POINTER(U_NULLPTR, UCommand);
          }

@@ -46,18 +46,18 @@ IR::~IR()
 {
    U_TRACE(5, "IR::~IR()")
 
-   if (t) delete t;
+   if (t) U_DELETE(t)
 
    if (filter_ext)
       {
-      delete filter_cmd;
-      delete filter_ext;
+      U_DELETE(filter_cmd)
+      U_DELETE(filter_ext)
       }
 
-   if (posting)             delete posting;
-   if (bad_words)           delete bad_words;
-   if (suffix_bad_words)    delete suffix_bad_words;
-   if (suffix_skip_tag_xml) delete suffix_skip_tag_xml;
+   if (posting)             U_DELETE(posting)
+   if (bad_words)           U_DELETE(bad_words)
+   if (suffix_bad_words)    U_DELETE(suffix_bad_words)
+   if (suffix_skip_tag_xml) U_DELETE(suffix_skip_tag_xml)
 }
 
 void IR::setBadWords()
@@ -74,7 +74,7 @@ void IR::setBadWords()
 
    if (cfg_bad_words)
       {
-      U_NEW(UString, bad_words, UString(cfg_bad_words)); 
+      U_NEW_STRING(bad_words, UString(cfg_bad_words)); 
 
       cfg_bad_words_ext = cfg[U_STRING_FROM_CONSTANT("BAD_WORDS_EXT")];
 

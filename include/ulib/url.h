@@ -99,7 +99,7 @@ public:
 
    Url()
       {
-      U_TRACE_REGISTER_OBJECT(0, Url, "", 0)
+      U_TRACE_CTOR(0, Url, "", 0)
 
       service_end =
        user_begin =
@@ -120,7 +120,7 @@ public:
 
    Url(const UString& x) : url(x)
       {
-      U_TRACE_REGISTER_OBJECT(0, Url, "%V", x.rep)
+      U_TRACE_CTOR(0, Url, "%V", x.rep)
 
       findpos();
       }
@@ -135,7 +135,7 @@ public:
 
    Url(const char* t, uint32_t tlen) : url(t, tlen)
       {
-      U_TRACE_REGISTER_OBJECT(0, Url, "%S,%u", t, tlen)
+      U_TRACE_CTOR(0, Url, "%S,%u", t, tlen)
 
       findpos();
       }
@@ -146,7 +146,7 @@ public:
 
    ~Url()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, Url)
+      U_TRACE_DTOR(0, Url)
       }
 
    // ASSIGNMENT
@@ -435,12 +435,31 @@ public:
       {
       U_TRACE_NO_PARAM(0, "Url::getPath()")
 
-      UString path(U_CAPACITY);
+      if (isPath() == false) return *UString::str_path_root;
 
-      if (path_begin < path_end) decode(url.c_pointer(path_begin), path_end - path_begin, path);
-      else                       path.push_back('/');
+      uint32_t n = path_end - path_begin;
 
-      (void) path.shrink();
+      UString path(n);
+
+      decode(url.c_pointer(path_begin), n, path);
+
+      U_RETURN_STRING(path);
+      }
+
+   /**
+    * Returns the file name for this URL. The file name consists of the path plus the query (if present)
+    *
+    * For example, the file name for the following URL is @a '/search?q=xml'
+    * @c http://www.google.com/search?q=xml
+    */
+
+   UString getPathAndQuery()
+      {
+      U_TRACE_NO_PARAM(0, "Url::getPathAndQuery()")
+
+      if (isPath() == false) return *UString::str_path_root;
+
+      UString path = url.substr(path_begin);
 
       U_RETURN_STRING(path);
       }
@@ -454,25 +473,6 @@ public:
     */
 
    void setPath(const char* path, uint32_t n);
-
-   /**
-    * Returns the file name for this URL. The file name consists of the path plus the query (if present)
-    *
-    * For example, the file name for the following URL is @a '/search?q=xml'
-    * @c http://www.google.com/search?q=xml
-    */
-
-   UString getPathAndQuery()
-      {
-      U_TRACE_NO_PARAM(0, "Url::getPathAndQuery()")
-
-      UString file;
-
-      if (path_begin < path_end) file = url.substr(path_begin);
-      else                       file.push_back('/');
-
-      U_RETURN_STRING(file);
-      }
 
    /**
     * This methode check the existence of the query from the url
@@ -556,7 +556,6 @@ public:
       {
       U_TRACE(0, "Url::encode(%.*S,%u,%p)", len, input, len, &buffer)
 
-      U_ASSERT(buffer.uniq())
       U_ASSERT(buffer.capacity() >= len * 3)
       U_INTERNAL_ASSERT_EQUALS(u_isBase64(input, len), false)
 
@@ -566,6 +565,20 @@ public:
       }
 
    static void encode(const UString& input, UString& buffer) { encode(input.data(), input.size(), buffer); }
+
+   static void encode_add(const char* input, uint32_t len, UString& buffer)
+      {
+      U_TRACE(0, "Url::encode_add(%.*S,%u,%p)", len, input, len, &buffer)
+
+      U_ASSERT(buffer.space() >= len * 3)
+      U_INTERNAL_ASSERT_EQUALS(u_isBase64(input, len), false)
+
+      buffer.rep->_length += u_url_encode((const unsigned char*)input, len, (unsigned char*)buffer.pend());
+
+      U_INTERNAL_DUMP("buffer(%u) = %#V", buffer.size(), buffer.rep)
+      }
+
+   static void encode_add(const UString& input, UString& buffer) { encode_add(input.data(), input.size(), buffer); }
 
    /**
     * Decode a string
@@ -579,7 +592,6 @@ public:
       {
       U_TRACE(0, "Url::decode(%.*S,%u,%p)", len, input, len, &buffer)
 
-      U_ASSERT(buffer.uniq())
       U_ASSERT(buffer.capacity() >= len)
 
       buffer.rep->_length = u_url_decode(input, len, (unsigned char*)buffer.data());

@@ -18,8 +18,8 @@ static void usp_init_ir_web()
    U_INTERNAL_ASSERT_EQUALS(footer, U_NULLPTR)
    U_NEW(IR, ir, IR);
    U_NEW(Query, query, Query);
-   U_NEW(UCrono, crono, UCrono);
-   U_NEW(UString, footer, UString(200U));
+   U_NEW_WITHOUT_CHECK_MEMORY(UCrono, crono, UCrono);
+   U_NEW_STRING(footer, UString(200U));
    ir->loadFileConfig();
    if (ir->openCDB(false) == false)
       {
@@ -36,10 +36,10 @@ static void usp_end_ir_web()
    U_INTERNAL_ASSERT_POINTER(query)
    U_INTERNAL_ASSERT_POINTER(crono)
    U_INTERNAL_ASSERT_POINTER(footer)
-   delete ir;
-   delete query;
-   delete crono;
-   delete footer;
+   U_DELETE(ir)
+   U_DELETE(query)
+   U_DELETE(crono)
+   U_DELETE(footer)
 }
    
 extern "C" {

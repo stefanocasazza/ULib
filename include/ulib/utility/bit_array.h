@@ -30,14 +30,14 @@ public:
 
    UBitArray(uint32_t nbits = 1024U)
       {
-      U_TRACE_REGISTER_OBJECT(0, UBitArray, "%u", nbits)
+      U_TRACE_CTOR(0, UBitArray, "%u", nbits)
 
       allocate((nbits+31)/32);
       }
 
    ~UBitArray()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, UBitArray)
+      U_TRACE_DTOR(0, UBitArray)
 
       deallocate();
       }

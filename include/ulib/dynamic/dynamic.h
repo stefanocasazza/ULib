@@ -88,7 +88,7 @@ public:
 
       U_INTERNAL_ASSERT(dir.isNullTerminated())
 
-      if (plugin_dir == U_NULLPTR) U_NEW(UString, plugin_dir, UString(dir));
+      if (plugin_dir == U_NULLPTR) U_NEW_STRING(plugin_dir, UString(dir))
       else
          {
          U_INTERNAL_DUMP("plugin_dir = %V", plugin_dir->rep)
@@ -175,8 +175,9 @@ protected:
 
       if (plugin_dir)
          {
-         delete plugin_dir;
-                plugin_dir = U_NULLPTR;
+         U_DELETE(plugin_dir)
+
+         plugin_dir = U_NULLPTR;
          }
       }
 

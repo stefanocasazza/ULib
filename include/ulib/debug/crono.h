@@ -40,6 +40,10 @@ struct U_EXPORT UCrono {
    long   getTimeElapsed() const          { return (t1.tv_sec *    1000L) + (t1.tv_usec /    1000L); }
    double getTimeElapsedInSecond() const  { return (t1.tv_sec * 1000000.) + (t1.tv_usec / 1000000.); }
 
+#ifdef DEBUG
+   const char* dump(bool reset) const { return ""; }
+#endif
+
 private:
    struct timeval t0, t1;
 };

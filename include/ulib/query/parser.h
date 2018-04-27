@@ -177,7 +177,7 @@ public:
 
    UQueryParser()
       {
-      U_TRACE_REGISTER_OBJECT(0, UQueryParser, "", 0)
+      U_TRACE_CTOR(0, UQueryParser, "", 0)
 
       U_INTERNAL_ASSERT_POINTER(UString::str_not);
 
@@ -186,7 +186,7 @@ public:
 
    ~UQueryParser()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, UQueryParser)
+      U_TRACE_DTOR(0, UQueryParser)
 
       clear();
       }
@@ -200,7 +200,7 @@ public:
    /**
     * Parses a textual boolean expression and creates a binary syntax tree.
     * Dynamically allocates a tree of nodes that represents the syntactic structure of 'query'.
-    * The returned tree must eventually be destroyed with operator delete 
+    * The returned tree must eventually be destroyed with operator delete
     *
     * @param query text of the boolean expression to parse
     */

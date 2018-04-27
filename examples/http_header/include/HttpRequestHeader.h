@@ -14,7 +14,7 @@ public:
    HttpRequestHeader(const UString& method_, const UString& url_, const UString& httpver_)
                : method(method_), url(url_), httpver(httpver_)
       {
-      U_TRACE_REGISTER_OBJECT(5, HttpRequestHeader, "%.*S,%.*S,%.*S",
+      U_TRACE_CTOR(5, HttpRequestHeader, "%.*S,%.*S,%.*S",
                               U_STRING_TO_TRACE(method_),  U_STRING_TO_TRACE(url_), U_STRING_TO_TRACE(httpver_))
       }
 
@@ -22,7 +22,7 @@ public:
    */
    ~HttpRequestHeader()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, HttpRequestHeader)
+      U_TRACE_DTOR(0, HttpRequestHeader)
       }
 
    /**

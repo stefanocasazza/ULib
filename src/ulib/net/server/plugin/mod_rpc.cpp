@@ -24,13 +24,13 @@ URPCParser* URpcPlugIn::rpc_parser;
 
 URpcPlugIn::~URpcPlugIn()
 {
-   U_TRACE_UNREGISTER_OBJECT(0, URpcPlugIn)
+   U_TRACE_DTOR(0, URpcPlugIn)
 
    if (rpc_parser)
       {
-      delete rpc_parser;
-      delete URPCMethod::encoder;
-      delete URPCObject::dispatcher;
+      U_DELETE(rpc_parser)
+      U_DELETE(URPCMethod::encoder)
+      U_DELETE(URPCObject::dispatcher)
       }
 }
 

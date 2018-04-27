@@ -201,7 +201,6 @@ public:
    static bool isUriRequestNeedCertificate() __pure;
    static bool isValidMethod(const char* ptr) __pure;
    static bool checkContentLength(const UString& response);
-   static bool manageSendfile(const char* ptr, uint32_t len);
    static bool scanfHeaderRequest(const char* ptr, uint32_t size);
    static bool scanfHeaderResponse(const char* ptr, uint32_t size);
    static bool readHeaderResponse(USocket* socket, UString& buffer);
@@ -724,8 +723,8 @@ public:
 # endif
 
    static void manageSSE();
-   static void readSSE(int timeoutMS) __noreturn;
-   static void sendSSE(const UString& data)
+   static void   readSSE(int timeoutMS) __noreturn;
+   static void   sendSSE(const UString& data)
       {
       U_TRACE(0, "UHTTP::sendSSE(%V)", data.rep)
 
@@ -808,14 +807,14 @@ public:
 
    RewriteRule(const UString& _key, const UString& _replacement) : key(_key, PCRE_FOR_REPLACE), replacement(_replacement)
       {
-      U_TRACE_REGISTER_OBJECT(0, RewriteRule, "%V,%V", _key.rep, _replacement.rep)
+      U_TRACE_CTOR(0, RewriteRule, "%V,%V", _key.rep, _replacement.rep)
 
       key.study();
       }
 
    ~RewriteRule()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, RewriteRule)
+      U_TRACE_DTOR(0, RewriteRule)
       }
 
 #if defined(U_STDCPP_ENABLE) && defined(DEBUG)
@@ -870,14 +869,14 @@ public:
 
    UServletPage(const void* name, uint32_t nlen, const char* base = U_NULLPTR, uint32_t blen = 0, vPFi _runDynamicPage = U_NULLPTR) : runDynamicPage(_runDynamicPage), path(name, nlen)
       {
-      U_TRACE_REGISTER_OBJECT(0, UServletPage, "%.*S,%u,%.*S,%u,%p", nlen, name, nlen, blen, base, blen, _runDynamicPage)
+      U_TRACE_CTOR(0, UServletPage, "%.*S,%u,%.*S,%u,%p", nlen, name, nlen, blen, base, blen, _runDynamicPage)
 
       if (blen) (void) basename.replace(base, blen);
       }
 
    ~UServletPage()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, UServletPage)
+      U_TRACE_DTOR(0, UServletPage)
       }
 
    // SERVICE
@@ -957,7 +956,7 @@ private:
 
    UCServletPage()
       {
-      U_TRACE_REGISTER_OBJECT(0, UCServletPage, "", 0)
+      U_TRACE_CTOR(0, UCServletPage, "", 0)
 
       size      = 0;
       relocated = U_NULLPTR;
@@ -966,7 +965,7 @@ private:
 
    ~UCServletPage()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, UCServletPage)
+      U_TRACE_DTOR(0, UCServletPage)
 
       if (relocated) UMemoryPool::_free(relocated, size, 1);
       }
@@ -993,7 +992,7 @@ private:
 
    UPHP()
       {
-      U_TRACE_REGISTER_OBJECT(0, UPHP, "", 0)
+      U_TRACE_CTOR(0, UPHP, "", 0)
 
       initPHP =
        runPHP = U_NULLPTR;
@@ -1002,7 +1001,7 @@ private:
 
    ~UPHP()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, UPHP)
+      U_TRACE_DTOR(0, UPHP)
       }
 
 #if defined(U_STDCPP_ENABLE) && defined(DEBUG)
@@ -1028,7 +1027,7 @@ private:
 
    URUBY()
       {
-      U_TRACE_REGISTER_OBJECT(0, URUBY, "", 0)
+      U_TRACE_CTOR(0, URUBY, "", 0)
 
       initRUBY =
        runRUBY = U_NULLPTR;
@@ -1037,7 +1036,7 @@ private:
 
    ~URUBY()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, URUBY)
+      U_TRACE_DTOR(0, URUBY)
       }
 
 #if defined(U_STDCPP_ENABLE) && defined(DEBUG)
@@ -1063,7 +1062,7 @@ private:
 
    UPYTHON()
       {
-      U_TRACE_REGISTER_OBJECT(0, UPYTHON, "", 0)
+      U_TRACE_CTOR(0, UPYTHON, "", 0)
 
       initPYTHON =
        runPYTHON = U_NULLPTR;
@@ -1072,7 +1071,7 @@ private:
 
    ~UPYTHON()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, UPYTHON)
+      U_TRACE_DTOR(0, UPYTHON)
       }
 
 #if defined(U_STDCPP_ENABLE) && defined(DEBUG)
@@ -1104,7 +1103,7 @@ private:
 
    UPageSpeed()
       {
-      U_TRACE_REGISTER_OBJECT(0, UPageSpeed, "", 0)
+      U_TRACE_CTOR(0, UPageSpeed, "", 0)
 
       minify_html  = 0;
       optimize_gif = optimize_png = optimize_jpg = 0;
@@ -1112,7 +1111,7 @@ private:
 
    ~UPageSpeed()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, UPageSpeed)
+      U_TRACE_DTOR(0, UPageSpeed)
       }
 
 #if defined(U_STDCPP_ENABLE) && defined(DEBUG)
@@ -1134,14 +1133,14 @@ private:
 
    UV8JavaScript()
       {
-      U_TRACE_REGISTER_OBJECT(0, UV8JavaScript, "", 0)
+      U_TRACE_CTOR(0, UV8JavaScript, "", 0)
 
       runv8 = U_NULLPTR;
       }
 
    ~UV8JavaScript()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, UV8JavaScript)
+      U_TRACE_DTOR(0, UV8JavaScript)
       }
 
 #if defined(U_STDCPP_ENABLE) && defined(DEBUG)
@@ -1224,8 +1223,8 @@ private:
       U_RETURN(false);
       }
 
-   static void checkFileForCache();
    static void renewFileDataInCache();
+   static void checkFileForCache(const UString& path);
    static void setResponseFromFileCache(UFileCacheData* pdata);
 
    static UFileCacheData* getFileCachePointer(const char* path, uint32_t len)
@@ -1476,16 +1475,17 @@ private:
    static bool checkIfSourceHasChangedAndCompileUSP() U_NO_EXPORT;
    static int  checkGetRequestForRange(const char* pdata) U_NO_EXPORT;
    static bool compileUSP(const char* path, uint32_t len) U_NO_EXPORT;
+   static bool manageSendfile(const char* ptr, uint32_t len) U_NO_EXPORT;
    static int  sortRange(const void* a, const void* b) __pure U_NO_EXPORT;
    static bool addHTTPVariables(UStringRep* key, void* value) U_NO_EXPORT;
    static void setContentResponse(const UString& content_type) U_NO_EXPORT;
    static bool splitCGIOutput(const char*& ptr1, const char* ptr2) U_NO_EXPORT;
-   static void putDataInCache(const UString& fmt, UString& content) U_NO_EXPORT;
    static void setHeaderForCache(UFileCacheData* ptr, UString& data) U_NO_EXPORT;
    static void setResponseForRange(off_t start, off_t end, uint32_t header) U_NO_EXPORT;
    static bool readDataChunked(USocket* sk, UString* pbuffer, UString& body) U_NO_EXPORT;
    static void manageDataForCache(const UString& basename, const UString& suffix) U_NO_EXPORT;
    static bool checkDataSession(const UString& token, time_t expire, UString* data) U_NO_EXPORT;
+   static void putDataInCache(const UString& path, const UString& fmt, UString& content) U_NO_EXPORT;
    static void addContentLengthToHeader(UString& header, char* ptr, uint32_t size, const char* pEndHeader = U_NULLPTR) U_NO_EXPORT;
    static void setDataInCache(const UString& fmt, const UString& content, const char* encoding, uint32_t encoding_len) U_NO_EXPORT;
    static bool processAuthorization(const char* ptr = U_NULLPTR, uint32_t sz = 0, const char* pattern = U_NULLPTR, uint32_t len = 0) U_NO_EXPORT;
@@ -1543,6 +1543,6 @@ template <> inline void u_destroy(const UHTTP::UFileCacheData* elem)
 #  endif
       }
 
-   delete elem;
+   U_DELETE(elem)
 }
 #endif

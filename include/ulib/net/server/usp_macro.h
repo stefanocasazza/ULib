@@ -29,6 +29,8 @@
 
 #define USP_OBJ_JSON_stringify(obj) JSON_OBJ_stringify(*UClientImage_Base::wbuffer,(obj))
 
+#define USP_SERIALIZE_OBJECT(class,obj) UFlatBuffer::toObject<class>(*UClientImage_Base::body,(obj))
+
 #define USP_XML_PUTS(string) \
    ((void)UClientImage_Base::_encoded->reserve((string).size() * 4), \
     UXMLEscape::encode((string),*UClientImage_Base::_encoded), \

@@ -82,14 +82,14 @@ public:
 
    UCDB(int ignore_case = 0)
       {
-      U_TRACE_REGISTER_OBJECT(0, UCDB, "%d", ignore_case)
+      U_TRACE_CTOR(0, UCDB, "%d", ignore_case)
 
       init_internal(ignore_case);
       }
 
    UCDB(const UString& path, int ignore_case) : UFile(path)
       {
-      U_TRACE_REGISTER_OBJECT(0, UCDB, "%V,%d", path.rep, ignore_case)
+      U_TRACE_CTOR(0, UCDB, "%V,%d", path.rep, ignore_case)
 
       init_internal(ignore_case);
       }
@@ -99,7 +99,7 @@ public:
 #endif
    ~UCDB()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, UCDB)
+      U_TRACE_DTOR(0, UCDB)
       }
 
    // Open a Constant DataBase

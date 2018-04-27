@@ -175,7 +175,7 @@ struct option UOptions::long_options[128] = {
 
 UOptions::UOptions(uint32_t n)
 {
-   U_TRACE_REGISTER_OBJECT(0, UOptions, "%u", n)
+   U_TRACE_CTOR(0, UOptions, "%u", n)
 
    length   = 0;
    item     = (option_item*) UMemoryPool::_malloc(&n, sizeof(option_item));
@@ -184,7 +184,7 @@ UOptions::UOptions(uint32_t n)
 
 UOptions::~UOptions()
 {
-   U_TRACE_UNREGISTER_OBJECT(0, UOptions)
+   U_TRACE_DTOR(0, UOptions)
 
        package.clear();
        version.clear();

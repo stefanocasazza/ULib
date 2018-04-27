@@ -335,7 +335,7 @@ public:
 
    UFlatBuffer()
       {
-      U_TRACE_REGISTER_OBJECT(0, UFlatBuffer, "", 0)
+      U_TRACE_CTOR(0, UFlatBuffer, "", 0)
 
       // coverity[uninit_ctor]
 #  ifdef U_COVERITY_FALSE_POSITIVE
@@ -347,9 +347,16 @@ public:
 #  endif
       }
 
+   UFlatBuffer(const UString& str)
+      {
+      U_TRACE_CTOR(0, UFlatBuffer, "%V", str.rep)
+
+      setRoot(str);
+      }
+
    ~UFlatBuffer()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, UFlatBuffer)
+      U_TRACE_DTOR(0, UFlatBuffer)
       }
 
    // SERVICES
@@ -638,6 +645,13 @@ public:
 
    template <class T> void   toObject(T& obj);
    template <class T> void fromObject(T& obj);
+
+   template <class T> static void toObject(const UString& str, T& obj)
+      {
+      U_TRACE(0, "UFlatBuffer::toObject(%V,%p)", str.rep, &obj)
+
+      UFlatBuffer(str).toObject<T>(obj);
+      }
 
    // INIT
 
@@ -1142,22 +1156,39 @@ public:
       type_ = UFlatBufferValue::TYPE_MAP;
       }
 
-   static inline void toVector(const UString& data, UVector<UString>& vec);
-   static UString     toVector(vPFpfbpv func, bool typed = false, void* param = U_NULLPTR);
-
-   static UString fromVector(UVector<UString>& vec)
+   static UString fromVectorInt(uint32_t* vec)
       {
-      U_TRACE(0, "UFlatBuffer::fromVector(%p)", &vec)
+      U_TRACE(0, "UFlatBuffer::fromVectorInt(%p)", vec)
 
-      return toVector(UFlatBuffer::setFromVector, true, &vec);
+      return toVector(UFlatBuffer::setFromVectorInt, true, vec);
       }
 
-   static void setFromVector(UFlatBuffer* pfb, void* param)
+   static void setFromVectorInt(UFlatBuffer* pfb, void* param)
+      {
+      uint32_t* vec = (uint32_t*)param;
+
+      for (uint32_t i = 0; vec[i]; ++i) pfb->UInt(vec[i]);
+      }
+
+   static UString fromVectorString(UVector<UString>& vec)
+      {
+      U_TRACE(0, "UFlatBuffer::fromVectorString(%p)", &vec)
+
+      return toVector(UFlatBuffer::setFromVectorString, true, &vec);
+      }
+
+   static void setFromVectorString(UFlatBuffer* pfb, void* param)
       {
       UVector<UString>* pvec = (UVector<UString>*)param;
 
       for (uint32_t i = 0, n = pvec->size(); i < n; ++i) pfb->String((*pvec)[i]);
       }
+
+   static inline uint32_t toVectorInt(   const UString& data, uint32_t*         vec);
+   static inline void     toVectorString(const UString& data, UVector<UString>& vec);
+
+   static void    toVector(UString& result, vPFpfbpv func, bool typed = false, void* param = U_NULLPTR);
+   static UString toVector(                 vPFpfbpv func, bool typed = false, void* param = U_NULLPTR);
 
 #ifdef DEBUG
    const char* dump(bool reset) const;
@@ -1966,9 +1997,16 @@ protected:
 
       uint8_t* str = Indirect(ptr, parent_width_);
 
-      UString x((const char*)str, getSize(str));
+      uint32_t str_len = getSize(str);
 
-      U_RETURN_STRING(x);
+      if (str_len)
+         {
+         UString x((const char*)str, str_len);
+
+         U_RETURN_STRING(x);
+         }
+
+      return UString::getStringNull();
       }
 
    UString GetString(const uint8_t* ptr)
@@ -2030,18 +2068,20 @@ private:
    template <class T> friend class UFlatBufferTypeHandler;
 };
 
-#ifndef U_FLAT_BUFFERS_SPACE_STACK 
-#define U_FLAT_BUFFERS_SPACE_STACK (8U * 1024U)
-#endif
-#ifndef U_FLAT_BUFFERS_SPACE_BUFFER 
-#define U_FLAT_BUFFERS_SPACE_BUFFER (64U * 1024U)
-#endif
-
-class U_EXPORT UFlatBufferSpace {
+class U_EXPORT UFlatBufferSpaceShort {
 public:
 
-   UFlatBufferSpace()
+   // Check for memory error
+   U_MEMORY_TEST
+
+   // Allocator e Deallocator
+   U_MEMORY_ALLOCATOR
+   U_MEMORY_DEALLOCATOR
+
+   UFlatBufferSpaceShort()
       {
+      U_TRACE_CTOR(0, UFlatBufferSpaceShort, "", 0)
+
       prev_stack       = UFlatBuffer::getStack();
       prev_buffer      = UFlatBuffer::getBuffer();
       prev_stack_size  = UFlatBuffer::getStackMax();
@@ -2051,11 +2091,168 @@ public:
       UFlatBuffer::setBuffer(buffer, sizeof(buffer));
       }
 
-   ~UFlatBufferSpace()
+   ~UFlatBufferSpaceShort()
       {
+      U_TRACE_DTOR(0, UFlatBufferSpaceShort)
+
       UFlatBuffer::setStack( prev_stack,  prev_stack_size);
       UFlatBuffer::setBuffer(prev_buffer, prev_buffer_size);
       }
+
+#ifdef DEBUG
+   const char* dump(bool reset) const { return ""; }
+#endif
+
+protected:
+   uint8_t* prev_stack;
+   uint8_t* prev_buffer;
+   uint32_t prev_stack_size,
+            prev_buffer_size;
+
+   uint8_t stack[ 8U * 1024U],
+          buffer[64U * 1024U];
+
+private:
+   U_DISALLOW_COPY_AND_ASSIGN(UFlatBufferSpaceShort)
+};
+
+class U_EXPORT UFlatBufferSpaceMedium {
+public:
+
+   // Check for memory error
+   U_MEMORY_TEST
+
+   // Allocator e Deallocator
+   U_MEMORY_ALLOCATOR
+   U_MEMORY_DEALLOCATOR
+
+   UFlatBufferSpaceMedium()
+      {
+      U_TRACE_CTOR(0, UFlatBufferSpaceMedium, "", 0)
+
+      prev_stack       = UFlatBuffer::getStack();
+      prev_buffer      = UFlatBuffer::getBuffer();
+      prev_stack_size  = UFlatBuffer::getStackMax();
+      prev_buffer_size = UFlatBuffer::getBufferMax();
+
+      UFlatBuffer::setStack(  stack, sizeof(stack));
+      UFlatBuffer::setBuffer(buffer, sizeof(buffer));
+      }
+
+   ~UFlatBufferSpaceMedium()
+      {
+      U_TRACE_DTOR(0, UFlatBufferSpaceMedium)
+
+      UFlatBuffer::setStack( prev_stack,  prev_stack_size);
+      UFlatBuffer::setBuffer(prev_buffer, prev_buffer_size);
+      }
+
+#ifdef DEBUG
+   const char* dump(bool reset) const { return ""; }
+#endif
+
+protected:
+   uint8_t* prev_stack;
+   uint8_t* prev_buffer;
+   uint32_t prev_stack_size,
+            prev_buffer_size;
+
+   uint8_t stack[ 80U * 1024U],
+          buffer[640U * 1024U];
+
+private:
+   U_DISALLOW_COPY_AND_ASSIGN(UFlatBufferSpaceMedium)
+};
+
+class U_EXPORT UFlatBufferSpaceLarge {
+public:
+
+   // Check for memory error
+   U_MEMORY_TEST
+
+   // Allocator e Deallocator
+   U_MEMORY_ALLOCATOR
+   U_MEMORY_DEALLOCATOR
+
+   UFlatBufferSpaceLarge()
+      {
+      U_TRACE_CTOR(0, UFlatBufferSpaceLarge, "", 0)
+
+      prev_stack       = UFlatBuffer::getStack();
+      prev_buffer      = UFlatBuffer::getBuffer();
+      prev_stack_size  = UFlatBuffer::getStackMax();
+      prev_buffer_size = UFlatBuffer::getBufferMax();
+
+      UFlatBuffer::setStack(  stack, sizeof(stack));
+      UFlatBuffer::setBuffer(buffer, sizeof(buffer));
+      }
+
+   ~UFlatBufferSpaceLarge()
+      {
+      U_TRACE_DTOR(0, UFlatBufferSpaceLarge)
+
+      UFlatBuffer::setStack( prev_stack,  prev_stack_size);
+      UFlatBuffer::setBuffer(prev_buffer, prev_buffer_size);
+      }
+
+#ifdef DEBUG
+   const char* dump(bool reset) const { return ""; }
+#endif
+
+protected:
+   uint8_t* prev_stack;
+   uint8_t* prev_buffer;
+   uint32_t prev_stack_size,
+            prev_buffer_size;
+
+   uint8_t stack[1U * 1024U * 1024U],
+          buffer[8U * 1024U * 1024U];
+
+private:
+   U_DISALLOW_COPY_AND_ASSIGN(UFlatBufferSpaceLarge)
+};
+
+#ifndef U_FLAT_BUFFERS_SPACE_STACK
+#define U_FLAT_BUFFERS_SPACE_STACK  (1U * 1024U)
+#endif
+#ifndef U_FLAT_BUFFERS_SPACE_BUFFER
+#define U_FLAT_BUFFERS_SPACE_BUFFER (8U * 1024U)
+#endif
+
+class U_EXPORT UFlatBufferSpaceUser {
+public:
+
+   // Check for memory error
+   U_MEMORY_TEST
+
+   // Allocator e Deallocator
+   U_MEMORY_ALLOCATOR
+   U_MEMORY_DEALLOCATOR
+
+   UFlatBufferSpaceUser()
+      {
+      U_TRACE_CTOR(0, UFlatBufferSpaceUser, "", 0)
+
+      prev_stack       = UFlatBuffer::getStack();
+      prev_buffer      = UFlatBuffer::getBuffer();
+      prev_stack_size  = UFlatBuffer::getStackMax();
+      prev_buffer_size = UFlatBuffer::getBufferMax();
+
+      UFlatBuffer::setStack(  stack, sizeof(stack));
+      UFlatBuffer::setBuffer(buffer, sizeof(buffer));
+      }
+
+   ~UFlatBufferSpaceUser()
+      {
+      U_TRACE_DTOR(0, UFlatBufferSpaceUser)
+
+      UFlatBuffer::setStack( prev_stack,  prev_stack_size);
+      UFlatBuffer::setBuffer(prev_buffer, prev_buffer_size);
+      }
+
+#ifdef DEBUG
+   const char* dump(bool reset) const { return ""; }
+#endif
 
 protected:
    uint8_t* prev_stack;
@@ -2065,6 +2262,9 @@ protected:
 
    uint8_t stack[U_FLAT_BUFFERS_SPACE_STACK],
           buffer[U_FLAT_BUFFERS_SPACE_BUFFER];
+
+private:
+   U_DISALLOW_COPY_AND_ASSIGN(UFlatBufferSpaceUser)
 };
 
 // Template specialization
@@ -2401,9 +2601,27 @@ template<> inline UString UFlatBuffer::AsMapGet<UString>(const char* key, uint32
    U_RETURN_STRING(value);
 }
 
-inline void UFlatBuffer::toVector(const UString& data, UVector<UString>& vec)
+inline uint32_t UFlatBuffer::toVectorInt(const UString& data, uint32_t* vec)
 {
-   U_TRACE(0, "UFlatBuffer::toVector(%V,%p)", data.rep, &vec)
+   U_TRACE(0, "UFlatBuffer::toVectorInt(%V,%p)", data.rep, vec)
+
+   UFlatBuffer fb, vec1;
+
+   fb.setRoot(data);
+   fb.AsTypedVector(vec1);
+
+   uint32_t n = vec1.GetSize();
+
+#ifndef HAVE_OLD_IOSTREAM
+   for (uint32_t i = 0; i < n; ++i) vec[i] = vec1.AsTypedOrFixedVectorGet<uint32_t>(i);
+#endif
+
+   U_RETURN(n);
+}
+
+inline void UFlatBuffer::toVectorString(const UString& data, UVector<UString>& vec)
+{
+   U_TRACE(0, "UFlatBuffer::toVectorString(%V,%p)", data.rep, &vec)
 
    UFlatBuffer fb, vec1;
 
@@ -2428,14 +2646,14 @@ public:
 
    UFlatBufferTypeHandler_Base(const void* ptr) : pval((void*)ptr)
       {
-      U_TRACE_REGISTER_OBJECT(0, UFlatBufferTypeHandler_Base, "%p", ptr)
+      U_TRACE_CTOR(0, UFlatBufferTypeHandler_Base, "%p", ptr)
 
       U_INTERNAL_ASSERT_POINTER(pval)
       }
 
    ~UFlatBufferTypeHandler_Base()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, UFlatBufferTypeHandler_Base)
+      U_TRACE_DTOR(0, UFlatBufferTypeHandler_Base)
 
       U_INTERNAL_ASSERT_POINTER(pval)
       }
@@ -2909,7 +3127,7 @@ public:
          {
          T* _pitem;
 
-         U_NEW(T, _pitem, T);
+         U_NEW_WITHOUT_CHECK_MEMORY(T, _pitem, T);
 
          if (typed == false) vec.AsVectorGet(i, fbb);
          else                vec.AsTypedOrFixedVectorGet(i, fbb);
@@ -3009,7 +3227,7 @@ public:
          {
          T* _pitem;
 
-         U_NEW(T, _pitem, T);
+         U_NEW_WITHOUT_CHECK_MEMORY(T, _pitem, T);
 
          values.AsVectorGet(i, fbb);
 
@@ -3171,7 +3389,7 @@ public:
          {
          T* _pitem;
 
-         U_NEW(T, _pitem, T);
+         U_NEW_WITHOUT_CHECK_MEMORY(T, _pitem, T);
 
          values.AsVectorGet(i, fbb);
 

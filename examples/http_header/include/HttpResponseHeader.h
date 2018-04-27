@@ -14,7 +14,7 @@ public:
    HttpResponseHeader(const UString& httpver_, const UString& status_, const UString& reason_)
                : httpver(httpver_), status(status_), reason(reason_)
       {
-      U_TRACE_REGISTER_OBJECT(5, HttpResponseHeader, "%.*S,%.*S,%.*S",
+      U_TRACE_CTOR(5, HttpResponseHeader, "%.*S,%.*S,%.*S",
                               U_STRING_TO_TRACE(httpver_),  U_STRING_TO_TRACE(status_), U_STRING_TO_TRACE(reason_))
       }
 
@@ -22,7 +22,7 @@ public:
    */
    ~HttpResponseHeader()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, HttpResponseHeader)
+      U_TRACE_DTOR(0, HttpResponseHeader)
       }
 
    /**

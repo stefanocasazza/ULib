@@ -522,16 +522,16 @@ public:
 
    UClientImage() : UClientImage_Base()
       {
-      U_TRACE_REGISTER_OBJECT(0, UClientImage<Socket>, "", 0)
+      U_TRACE_CTOR(0, UClientImage<Socket>, "", 0)
 
-      U_NEW(Socket, socket, Socket(UClientImage_Base::bIPv6));
+      U_NEW(Socket, socket, Socket(UClientImage_Base::bIPv6))
 
       set();
       }
 
    virtual ~UClientImage()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, UClientImage<Socket>)
+      U_TRACE_DTOR(0, UClientImage<Socket>)
       }
 
    // DEBUG
@@ -550,16 +550,16 @@ public:
 
    UClientImage() : UClientImage_Base()
       {
-      U_TRACE_REGISTER_OBJECT(0, UClientImage<USSLSocket>, "", 0)
+      U_TRACE_CTOR(0, UClientImage<USSLSocket>, "", 0)
 
-      U_NEW(USSLSocket, socket, USSLSocket(UClientImage_Base::bIPv6, USSLSocket::sctx, true));
+      U_NEW(USSLSocket, socket, USSLSocket(UClientImage_Base::bIPv6, USSLSocket::sctx, true))
 
       set();
       }
 
    virtual ~UClientImage()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, UClientImage<USSLSocket>)
+      U_TRACE_DTOR(0, UClientImage<USSLSocket>)
       }
 
    // DEBUG

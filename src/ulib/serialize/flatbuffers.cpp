@@ -342,6 +342,25 @@ UString UFlatBuffer::toVector(vPFpfbpv func, bool typed, void* param)
    return fb.getResult();
 }
 
+void UFlatBuffer::toVector(UString& result, vPFpfbpv func, bool typed, void* param)
+{
+   U_TRACE(0, "UFlatBuffer::toVector(%V,%p,%b,%p)", result.rep, func, typed, param)
+
+   UFlatBuffer fb;
+
+   fb.StartBuild();
+
+   (void) fb.StartVector();
+
+   result.setConstant((const char*)buffer_str, buffer_max);
+
+   func(&fb, param);
+
+   fb.EndVector(0, typed);
+
+   result.rep->_length = fb.EndBuild();
+}
+
 // DEBUG
 
 #ifdef DEBUG

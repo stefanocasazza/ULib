@@ -31,7 +31,7 @@ enum StringAllocationType {
 };
 
 enum StringAllocationIndex {
-   STR_ALLOCATE_INDEX_SOAP         = 18,
+   STR_ALLOCATE_INDEX_SOAP         = 20,
    STR_ALLOCATE_INDEX_IMAP         = STR_ALLOCATE_INDEX_SOAP+14,
    STR_ALLOCATE_INDEX_SSI          = STR_ALLOCATE_INDEX_IMAP+4,
    STR_ALLOCATE_INDEX_NOCAT        = STR_ALLOCATE_INDEX_SSI+2,
@@ -48,8 +48,9 @@ enum StringAllocationIndex {
 #define U_STRING_FIND_EXT(x,start,str,n)       (x).find(str,(start),U_CONSTANT_SIZE(str),n)       // string constant
 #define U_STRING_FINDNOCASE_EXT(x,start,str,n) (x).findnocase(str,(start),U_CONSTANT_SIZE(str),n) // string constant
 
-#define U_STRING_FROM_CONSTANT(str) UString(str,U_CONSTANT_SIZE(str))                             // string constant
-#define U_ENDS_WITH(x,str)          u_endsWith((x).data(),(x).size(),U_CONSTANT_TO_PARAM(str))    // string constant
+#define U_STRING_COPY(str)          UString((void*)(str).data(),(str).size())
+#define U_STRING_FROM_CONSTANT(str) UString(str,U_CONSTANT_SIZE(str))                          // string constant
+#define U_ENDS_WITH(x,str)          u_endsWith((x).data(),(x).size(),U_CONSTANT_TO_PARAM(str)) // string constant
 
 // UString content and size
 
@@ -523,8 +524,8 @@ public:
 
       U_CHECK_MEMORY
 
-      U_INTERNAL_ASSERT_MAJOR((int32_t)_capacity, 0)
       U_INTERNAL_ASSERT(value <= _capacity)
+      U_INTERNAL_ASSERT_MAJOR((int32_t)_capacity, 0)
 
       ((char*)str)[_length = value] = '\0';
 
@@ -876,8 +877,8 @@ protected:
    static UStringRep* parent_destroy;
    static UStringRep* string_rep_share;
 
-   static bool checkIfChild(     const char* name_class, const void* ptr_object);
-   static bool checkIfReferences(const char* name_class, const void* ptr_object);
+   static bool checkIfChild(     const char* name_class, void* ptr_object);
+   static bool checkIfReferences(const char* name_class, void* ptr_object);
 #endif
 
 private:
@@ -904,7 +905,7 @@ private:
 
    explicit UStringRep(const char* t, uint32_t tlen) // NB: to use only with new(UStringRep(t,tlen))...
       {
-      U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(0, UStringRep, "%p,%u", t, tlen)
+      U_TRACE_CTOR(0, UStringRep, "%p,%u", t, tlen)
 
       U_INTERNAL_ASSERT_POINTER(t)
       U_INTERNAL_ASSERT_MAJOR(tlen, 0)
@@ -925,11 +926,25 @@ private:
       U_INTERNAL_ASSERT_DIFFERS(diff, 0)
       U_INTERNAL_ASSERT_EQUALS(_capacity, 0) // mode: 0 -> const
 
+      U_INTERNAL_DUMP("this = %V", this)
+
       str += diff;
+
+      U_INTERNAL_DUMP("this = %V", this)
 
       U_INTERNAL_ASSERT_DIFFERS(str[0], 0)
 
       U_INTERNAL_ASSERT(invariant())
+      }
+
+   UStringRep* duplicate() const
+      {
+      U_TRACE_NO_PARAM(0, "UStringRep::duplicate()")
+
+      U_INTERNAL_ASSERT_MAJOR(_length, 0)
+      U_INTERNAL_ASSERT_EQUALS(_capacity, 0) // mode: 0 -> const
+
+      return UStringRep::create(_length, _length, str);
       }
 
    // equal lookup use case
@@ -1019,6 +1034,7 @@ private:
    friend class URDBClient_Base;
    friend class UQuotedPrintable;
    friend class UClientImage_Base;
+   friend class UREDISClient_Base;
 
    friend struct UObjectIO;
 
@@ -1053,6 +1069,8 @@ public:
    static const UString* str_nostat;
    static const UString* str_tsa;
    static const UString* str_soap;
+   static const UString* str_path_root;
+   static const UString* str_asterisk;
    // SOAP
    static const UString* str_ns;
    static const UString* str_boolean;
@@ -1125,7 +1143,6 @@ public:
    static const UString* str_method_get;
    static const UString* str_method_post;
    static const UString* str_path;
-   static const UString* str_path_root;
    static const UString* str_path_index;
    static const UString* str_scheme;
    static const UString* str_scheme_https;
@@ -1228,16 +1245,17 @@ protected:
 
    explicit UString(UStringRep** pr) : rep(*pr) // NB: for toUTF8() and fromUTF8()...
       {
-      U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(0, UString, "%V", *pr)
+      U_TRACE_CTOR(0, UString, "%V", *pr)
       }
 
    explicit UString(uint32_t len, uint32_t sz, char* ptr);
 
    explicit UString(unsigned char* t, uint32_t tlen, uint32_t need) // NB: for UHTTP2::CONTINUATION...
       {
-      U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(0, UString, "%.*S,%u,%u", tlen, t, tlen, need)
+      U_TRACE_CTOR(0, UString, "%.*S,%u,%u", tlen, t, tlen, need)
 
       U_INTERNAL_ASSERT_POINTER(t)
+      U_INTERNAL_ASSERT_MAJOR(tlen, 0)
       U_INTERNAL_ASSERT_MAJOR(need, tlen)
 
       rep = UStringRep::create(tlen, need, (const char*)t);
@@ -1300,7 +1318,9 @@ protected:
 
    UString(const UStringRep* _rep, const char* t, uint32_t tlen)
       {
-      U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(0, UString, "%V,%p,%u", _rep, t, tlen)
+      U_TRACE_CTOR(0, UString, "%V,%p,%u", _rep, t, tlen)
+
+      U_INTERNAL_ASSERT_MAJOR(tlen, 0)
 
       rep = _rep->substr(t, tlen);
 
@@ -1309,13 +1329,14 @@ protected:
 
    UString(const UStringRep* _rep, uint32_t pos, uint32_t n = U_NOT_FOUND)
       {
-      U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(0, UString, "%V,%u,%u", _rep, pos, n)
+      U_TRACE_CTOR(0, UString, "%V,%u,%u", _rep, pos, n)
 
       rep = _rep->substr(pos, _rep->fold(pos, n));
 
       U_INTERNAL_ASSERT(invariant())
       }
 
+public:
    static uint32_t _getReserveNeed(uint32_t need = U_CAPACITY * 2)
       {
       U_TRACE(0, "UString::_getReserveNeed(%u)", need)
@@ -1333,7 +1354,6 @@ protected:
 
    uint32_t getReserveNeed(uint32_t n) { return _getReserveNeed(rep->_length + n); }
 
-public:
    void _assign(UStringRep* r)
       {
       U_TRACE(0, "UString::_assign(%V)", r)
@@ -1353,7 +1373,7 @@ public:
 
    UString() : rep(UStringRep::string_rep_null)
       {
-      U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(0, UString, "", 0)
+      U_TRACE_CTOR(0, UString, "", 0)
 
       rep->hold();
 
@@ -1362,7 +1382,7 @@ public:
 
    explicit UString(const UStringRep* r) : rep((UStringRep*)r)
       {
-      U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(0, UString, "%V", r)
+      U_TRACE_CTOR(0, UString, "%V", r)
 
       rep->hold();
 
@@ -1371,7 +1391,7 @@ public:
 
    explicit UString(ustringrep* r)
       {
-      U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(0, UString, "%p", r)
+      U_TRACE_CTOR(0, UString, "%p", r)
 
 #  ifdef DEBUG
       r->_this = (void*)U_CHECK_MEMORY_SENTINEL;
@@ -1386,10 +1406,11 @@ public:
 
    explicit UString(const char* t, uint32_t tlen)
       {
-      U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(0, UString, "%.*S,%u", tlen, t, tlen)
+      U_TRACE_CTOR(0, UString, "%.*S,%u", tlen, t, tlen)
 
-      if (tlen) U_NEW(UStringRep, rep, UStringRep(t, tlen));
-      else      _copy(UStringRep::string_rep_null);
+      U_INTERNAL_ASSERT_MAJOR(tlen, 0)
+
+      U_NEW(UStringRep, rep, UStringRep(t, tlen));
 
       U_INTERNAL_ASSERT(invariant())
       }
@@ -1398,7 +1419,7 @@ public:
 
    explicit UString(uint32_t n)
       {
-      U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(0, UString, "%u", n)
+      U_TRACE_CTOR(0, UString, "%u", n)
 
       rep = UStringRep::create(0U, n, U_NULLPTR);
 
@@ -1407,11 +1428,11 @@ public:
 
    explicit UString(const char* t)
       {
-      U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(0, UString, "%S", t)
+      U_TRACE_CTOR(0, UString, "%S", t)
 
       uint32_t len = (t ? u__strlen(t, __PRETTY_FUNCTION__) : 0);
 
-      if (len) U_NEW(UStringRep, rep, UStringRep(t, len));
+      if (len) U_NEW(UStringRep, rep, UStringRep(t, len))
       else     _copy(UStringRep::string_rep_null);
 
       U_INTERNAL_ASSERT(invariant())
@@ -1419,9 +1440,10 @@ public:
 
    explicit UString(const void* t, uint32_t tlen)
       {
-      U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(0, UString, "%.*S,%u", tlen, (char*)t, tlen)
+      U_TRACE_CTOR(0, UString, "%.*S,%u", tlen, (char*)t, tlen)
 
       U_INTERNAL_ASSERT_POINTER(t)
+      U_INTERNAL_ASSERT_MAJOR(tlen, 0)
 
       rep = UStringRep::create(tlen, tlen, (const char*)t);
 
@@ -1430,7 +1452,7 @@ public:
 
    explicit UString(uint32_t n, unsigned char c)
       {
-      U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(0, UString, "%u,%C", n, c)
+      U_TRACE_CTOR(0, UString, "%u,%C", n, c)
 
       rep = UStringRep::create(n, n, U_NULLPTR);
 
@@ -1441,7 +1463,7 @@ public:
 
    explicit UString(uint32_t sz, const char* format, uint32_t fmt_size, ...) // ctor with var arg
       {
-      U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(0, UString, "%u,%.*S,%u", sz, fmt_size, format, fmt_size)
+      U_TRACE_CTOR(0, UString, "%u,%.*S,%u", sz, fmt_size, format, fmt_size)
 
       U_INTERNAL_ASSERT_POINTER(format)
 
@@ -1459,7 +1481,7 @@ public:
 
    explicit UString(const UString& str, uint32_t pos, uint32_t n = U_NOT_FOUND)
       {
-      U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(0, UString, "%p,%u,%u", &str, pos, n)
+      U_TRACE_CTOR(0, UString, "%p,%u,%u", &str, pos, n)
 
       U_INTERNAL_ASSERT(pos <= str.size())
 
@@ -1477,7 +1499,7 @@ public:
       {
       U_TRACE(0, "UString::substr(%.*S,%u)", tlen, t, tlen)
 
-      if (tlen == 0) return *string_null; 
+      if (tlen == 0) return *string_null;
 
       UString result(rep, t, tlen);
 
@@ -1499,7 +1521,7 @@ public:
 
    ~UString()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, UString)
+      U_TRACE_DTOR(0, UString)
 
       U_INTERNAL_ASSERT_POINTER(rep)
 
@@ -1514,7 +1536,7 @@ public:
 
    UString(const UString& str) : rep(str.rep)
       {
-      U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(0, UString, "%p", &str)
+      U_TRACE_CTOR(0, UString, "%p", &str)
 
       rep->hold();
 
@@ -1796,7 +1818,7 @@ public:
       U_INTERNAL_ASSERT(invariant())
       }
 
-   void resize(uint32_t n, unsigned char c = '\0');
+   void resize(uint32_t n, unsigned char c);
 
    // it can shrink the space used (capacity)...
 
@@ -1839,6 +1861,8 @@ public:
 
       if (rep->_length)
          {
+         U_INTERNAL_ASSERT_EQUALS(rep->_capacity, 0) // mode: 0 -> const
+
          UString copia((void*)rep->str, rep->_length);
 
          U_RETURN_STRING(copia);
@@ -2054,6 +2078,7 @@ public:
       uint32_t sz = size();
 
       U_INTERNAL_ASSERT_MAJOR(sz, 0)
+      U_INTERNAL_ASSERT_EQUALS(rep->_capacity, 0) // mode: 0 -> const
 
       _set(UStringRep::create(sz, sz, rep->str));
 
@@ -2068,10 +2093,12 @@ public:
    void setConstant(const char* t, uint32_t tlen)
       {
       U_TRACE(0, "UString::setConstant(%.*S,%u)", tlen, t, tlen)
+ 
+      U_INTERNAL_ASSERT_MAJOR(tlen, 0)
 
       UStringRep* r;
 
-      U_NEW(UStringRep, r, UStringRep(t, tlen));
+      U_NEW(UStringRep, r, UStringRep(t, tlen))
 
       _set(r);
 
@@ -2113,7 +2140,34 @@ public:
       rep->size_adjust_force(0U);
       }
 
-   void setBuffer(uint32_t n);
+   void setBuffer(uint32_t n)
+      {
+      U_TRACE(0, "UString::setBuffer(%u)", n)
+
+      if (rep->references ||
+          n > rep->_capacity)
+         {
+         resize(n);
+         }
+      else
+         {
+         rep->_length = 0;
+         }
+      }
+
+   void setBufferForce(uint32_t n)
+      {
+      U_TRACE(0, "UString::setBufferForce(%u)", n)
+
+      if (n > rep->_capacity)
+         {
+         resize(n);
+         }
+      else
+         {
+         rep->_length = 0;
+         }
+      }
 
    void moveToBeginDataInBuffer(uint32_t n)
       {
@@ -2333,6 +2387,7 @@ public:
       U_TRACE(0, "UString::appendData(%.*S,%u)", tlen, t, tlen)
 
       U_ASSERT_MAJOR(space(), tlen)
+      U_INTERNAL_ASSERT_MAJOR(tlen, 0)
 
       char* ptr = pend();
 
@@ -2495,6 +2550,20 @@ private:
    char* __append(uint32_t n);
    char* __replace(uint32_t pos, uint32_t n1, uint32_t n2);
 
+   void resize(uint32_t n)
+      {
+      U_TRACE(0, "UString::resize(%u)", n)
+
+      U_INTERNAL_ASSERT_RANGE(1, n, max_size())
+
+      U_INTERNAL_DUMP("rep = %p rep->parent = %p rep->references = %u rep->child = %d rep->_capacity = %u",
+                       rep,     rep->parent,     rep->references,     rep->child,     rep->_capacity)
+
+      _set(UStringRep::create(0U, (n < U_CAPACITY ? U_CAPACITY : n), U_NULLPTR));
+
+      U_INTERNAL_ASSERT(invariant())
+      }
+
    void __push(uint8_t c)
       {
       U_TRACE(0, "UString::__push(%u)", c)
@@ -2507,6 +2576,9 @@ private:
 
       U_INTERNAL_ASSERT(invariant())
       }
+
+   friend class UHTTP;
+   friend class URDBClient_Base;
 
    template <class T> friend class UJsonTypeHandler;
 };

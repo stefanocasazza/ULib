@@ -20,7 +20,7 @@ URDB* URDBServer::rdb;
 
 URDBServer::URDBServer(UFileConfig* cfg, bool ignore_case) : UServer<UTCPSocket>(cfg)
 {
-   U_TRACE_REGISTER_OBJECT(0, URDBServer, "%p,%b", cfg, ignore_case)
+   U_TRACE_CTOR(0, URDBServer, "%p,%b", cfg, ignore_case)
 
    U_NEW(URDB, rdb, URDB(ignore_case));
 
@@ -29,12 +29,12 @@ URDBServer::URDBServer(UFileConfig* cfg, bool ignore_case) : UServer<UTCPSocket>
 
 URDBServer::~URDBServer()
 {
-   U_TRACE_UNREGISTER_OBJECT(0, URDBServer)
+   U_TRACE_DTOR(0, URDBServer)
 
    rdb->close();
 
-   delete rdb;
-   delete URPC::rpc_info;
+   U_DELETE(rdb)
+   U_DELETE(URPC::rpc_info)
 }
 
 // Open a reliable database

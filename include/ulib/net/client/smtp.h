@@ -88,7 +88,7 @@ public:
 
    USmtpClient(bool bSocketIsIPv6 = false) : Socket(bSocketIsIPv6)
       {
-      U_TRACE_REGISTER_OBJECT(0, USmtpClient, "%b", bSocketIsIPv6)
+      U_TRACE_CTOR(0, USmtpClient, "%b", bSocketIsIPv6)
 
       state    = INIT;
       response = NONE;
@@ -96,7 +96,7 @@ public:
 
    virtual ~USmtpClient()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, USmtpClient)
+      U_TRACE_DTOR(0, USmtpClient)
       }
 
    /**

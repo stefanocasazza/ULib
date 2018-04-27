@@ -29,7 +29,7 @@ U_CREAT_FUNC(server_plugin_echo, UEchoPlugIn)
 
 UEchoPlugIn::~UEchoPlugIn()
 {
-   U_TRACE_UNREGISTER_OBJECT(0, UEchoPlugIn)
+   U_TRACE_DTOR(0, UEchoPlugIn)
 }
 
 // Server-wide hooks

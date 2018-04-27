@@ -179,6 +179,8 @@ U_NO_EXPORT inline bool UCDB::match(uint32_t pos)
       data.dsize = u_get_unaligned32(hr->dlen);
       data.dptr  = U_SYSCALL(malloc, "%lu", data.dsize);
 
+      U_INTERNAL_ASSERT_POINTER_MSG(data.dptr, "cannot allocate memory, exiting...")
+
       (void) UFile::pread(data.dptr, data.dsize, pos);
 
       U_RETURN(true);

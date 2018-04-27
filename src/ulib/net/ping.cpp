@@ -142,7 +142,7 @@ UProcess* UPing::proc;
 
 UPing::UPing(int _timeoutMS, bool bSocketIsIPv6) : USocket(bSocketIsIPv6)
 {
-   U_TRACE_REGISTER_OBJECT(0, UPing, "%d,%b", _timeoutMS, bSocketIsIPv6)
+   U_TRACE_CTOR(0, UPing, "%d,%b", _timeoutMS, bSocketIsIPv6)
 
    rep       = U_NULLPTR;
    timeoutMS = _timeoutMS;
@@ -162,12 +162,13 @@ UPing::UPing(int _timeoutMS, bool bSocketIsIPv6) : USocket(bSocketIsIPv6)
 
 UPing::~UPing()
 {
-   U_TRACE_UNREGISTER_OBJECT(0, UPing)
+   U_TRACE_DTOR(0, UPing)
 
    if (proc)
       {
-      delete proc;
-             proc = U_NULLPTR;
+      U_DELETE(proc)
+
+      proc = U_NULLPTR;
       }
 
    if (addrmask &&

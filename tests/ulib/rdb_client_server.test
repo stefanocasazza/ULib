@@ -9,7 +9,7 @@ rm -f rdb_server.log
 start_msg rdb_server
 start_msg rdb_client
 
-#UTRACE="0 50M 0"
+#UTRACE="0 50M -1"
 #UOBJDUMP="0 10M 100"
 #USIMERR="error.sim"
  export UTRACE UOBJDUMP USIMERR

@@ -25,12 +25,12 @@ public:
 
    USOAPFault()
       {
-      U_TRACE_REGISTER_OBJECT(0, USOAPFault, "", 0)
+      U_TRACE_CTOR(0, USOAPFault, "", 0)
       }
 
    virtual ~USOAPFault()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, USOAPFault)
+      U_TRACE_DTOR(0, USOAPFault)
       }
 
    // Encodes the complete fault into a string

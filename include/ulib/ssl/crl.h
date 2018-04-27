@@ -48,7 +48,7 @@ public:
 
    UCrl(X509_CRL* _crl = U_NULLPTR) : crl(_crl)
       {
-      U_TRACE_REGISTER_OBJECT(0, UCrl, "%p", _crl)
+      U_TRACE_CTOR(0, UCrl, "%p", _crl)
       }
 
    /**
@@ -63,7 +63,7 @@ public:
 
    UCrl(const UString& x, const char* format = U_NULLPTR)
       {
-      U_TRACE_REGISTER_OBJECT(0, UCrl, "%V,%S", x.rep, format)
+      U_TRACE_CTOR(0, UCrl, "%V,%S", x.rep, format)
 
       crl = readCRL(x, format);
       }
@@ -85,7 +85,7 @@ public:
 
    ~UCrl()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, UCrl)
+      U_TRACE_DTOR(0, UCrl)
 
       if (crl) clear();
       }

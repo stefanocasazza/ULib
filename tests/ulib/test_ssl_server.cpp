@@ -10,12 +10,12 @@ public:
 
    USSLClientImage() : UClientImage<USSLSocket>()
       {
-      U_TRACE_REGISTER_OBJECT(5, USSLClientImage, "", 0)
+      U_TRACE_CTOR(5, USSLClientImage, "", 0)
       }
 
    ~USSLClientImage()
       {
-      U_TRACE_UNREGISTER_OBJECT(5, USSLClientImage)
+      U_TRACE_DTOR(5, USSLClientImage)
       }
 
    // DEBUG

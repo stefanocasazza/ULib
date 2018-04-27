@@ -45,31 +45,31 @@ UString* USSIPlugIn::alternative_include;
 
 USSIPlugIn::USSIPlugIn()
 {
-   U_TRACE_REGISTER_OBJECT(0, USSIPlugIn, "")
+   U_TRACE_CTOR(0, USSIPlugIn, "")
 
-   U_NEW(UString, errmsg,  UString);
-   U_NEW(UString, timefmt, UString);
-   U_NEW(UString, docname, UString);
+   U_NEW_STRING(errmsg,  UString);
+   U_NEW_STRING(timefmt, UString);
+   U_NEW_STRING(docname, UString);
 
    UString::str_allocate(STR_ALLOCATE_SSI);
 }
 
 USSIPlugIn::~USSIPlugIn()
 {
-   U_TRACE_UNREGISTER_OBJECT(0, USSIPlugIn)
+   U_TRACE_DTOR(0, USSIPlugIn)
 
-   delete errmsg;
-   delete timefmt;
-   delete docname;
+   U_DELETE(errmsg)
+   U_DELETE(timefmt)
+   U_DELETE(docname)
 
    if (body)
       {
-      delete body;  
-      delete header;
-      delete alternative_include;
+      U_DELETE(body)  
+      U_DELETE(header)
+      U_DELETE(alternative_include)
       }
 
-   if (environment) delete environment;
+   if (environment) U_DELETE(environment)
 }
 
 void USSIPlugIn::setAlternativeRedirect(const char* fmt, ...)
@@ -950,7 +950,7 @@ int USSIPlugIn::handlerConfig(UFileConfig& cfg)
 
       if (x)
          {
-         U_NEW(UString, environment, UString(UStringExt::prepareForEnvironmentVar(UFile::contentOf(x, O_RDONLY, false, U_NULLPTR))));
+         U_NEW_STRING(environment, UString(UStringExt::prepareForEnvironmentVar(UFile::contentOf(x, O_RDONLY, false, U_NULLPTR))));
 
          const char* home = U_SYSCALL(getenv, "%S", "HOME");
 
@@ -979,9 +979,9 @@ int USSIPlugIn::handlerInit()
    U_INTERNAL_ASSERT_EQUALS(header, U_NULLPTR)
    U_INTERNAL_ASSERT_EQUALS(alternative_include, U_NULLPTR)
 
-   U_NEW(UString, body,  UString);
-   U_NEW(UString, header, UString);
-   U_NEW(UString, alternative_include, UString);
+   U_NEW_STRING(body,  UString);
+   U_NEW_STRING(header, UString);
+   U_NEW_STRING(alternative_include, UString);
 
    U_RETURN(U_PLUGIN_HANDLER_OK);
 }

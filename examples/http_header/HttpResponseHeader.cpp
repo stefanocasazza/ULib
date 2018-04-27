@@ -4,7 +4,7 @@
 
 HttpResponseHeader::HttpResponseHeader(const char* h, unsigned h_len, const char* s, unsigned s_len, const char* r, unsigned r_len)
 {
-   U_TRACE_REGISTER_OBJECT(5, HttpResponseHeader, "%.*S,%u,%.*S,%u,%.*S,%u", h_len, h, h_len, s_len, s, s_len, r_len, r, r_len)
+   U_TRACE_CTOR(5, HttpResponseHeader, "%.*S,%u,%.*S,%u,%.*S,%u", h_len, h, h_len, s_len, s, s_len, r_len, r, r_len)
 
    httpver.assign(h, h_len);
    status.assign(s, s_len);

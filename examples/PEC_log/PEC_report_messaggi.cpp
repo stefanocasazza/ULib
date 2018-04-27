@@ -151,6 +151,10 @@ public:
       count.RilevazioneVirusInp      += c.count.RilevazioneVirusInp;
       count.RilevazioneVirusOut      += c.count.RilevazioneVirusOut;
       }
+
+#ifdef DEBUG
+   const char* dump(bool reset) const { return ""; }
+#endif
 };
 
 typedef UVector<CasellaIdCounter*> VCasellaIdCounter;
@@ -168,8 +172,8 @@ public:
 
       if (gds)
          {
-         delete gds;
-         delete table;
+         U_DELETE(gds)
+         U_DELETE(table)
          }
       }
 
@@ -246,11 +250,7 @@ public:
             {
             vc = new VCasellaIdCounter();
 
-            // NB: need duplicate string because depends on mmap()'s content of document...
-
-            key.duplicate();
-
-            UHashMap<void*>::lkey = key.rep;
+            table->duplicate(); // NB: need duplicate string because depends on mmap()'s content of document...
 
             table->insertAfterFind(vc);
             }

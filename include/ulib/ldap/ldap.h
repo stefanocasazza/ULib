@@ -124,7 +124,7 @@ public:
 
    ULDAP()
       {
-      U_TRACE_REGISTER_OBJECT(0, ULDAP, "", 0)
+      U_TRACE_CTOR(0, ULDAP, "", 0)
 
       ld           = U_NULLPTR;
       ludpp        = U_NULLPTR;
@@ -136,7 +136,7 @@ public:
 
    ~ULDAP()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, ULDAP)
+      U_TRACE_DTOR(0, ULDAP)
 
       clear();
       }

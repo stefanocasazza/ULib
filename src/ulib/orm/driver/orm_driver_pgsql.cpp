@@ -18,7 +18,7 @@ U_CREAT_FUNC(orm_driver_pgsql, UOrmDriverPgSql)
 
 UOrmDriverPgSql::~UOrmDriverPgSql()
 {
-   U_TRACE_UNREGISTER_OBJECT(0, UOrmDriverPgSql)
+   U_TRACE_DTOR(0, UOrmDriverPgSql)
 }
 
 void UOrmDriverPgSql::handlerError()
@@ -76,7 +76,7 @@ UOrmDriver* UOrmDriverPgSql::handlerConnect(const UString& option)
 
       pdrv->printError(__PRETTY_FUNCTION__);
 
-      if (UOrmDriver::connection) delete pdrv;
+      if (UOrmDriver::connection) U_DELETE(pdrv)
 
       U_RETURN_POINTER(U_NULLPTR, UOrmDriver);
       }
@@ -87,7 +87,7 @@ UOrmDriver* UOrmDriverPgSql::handlerConnect(const UString& option)
 
       U_SYSCALL_VOID(PQfinish, "%p", (PGconn*)pdrv->connection);
 
-      if (UOrmDriver::connection) delete pdrv;
+      if (UOrmDriver::connection) U_DELETE(pdrv)
 
       U_RETURN_POINTER(U_NULLPTR, UOrmDriver);
       }
@@ -149,7 +149,7 @@ bool UOrmDriverPgSql::handlerQuery(const char* query, uint32_t query_len)
 
 UPgSqlStatement::UPgSqlStatement(const char* s, uint32_t n) : USqlStatement(U_NULLPTR, 0, 10), stmt(U_CAPACITY)
 {
-   U_TRACE_REGISTER_OBJECT(0, UPgSqlStatement, "%.*S,%u", n, s, n)
+   U_TRACE_CTOR(0, UPgSqlStatement, "%.*S,%u", n, s, n)
 
    char* p = stmtName;
    uint32_t start = 0, len;
@@ -201,7 +201,7 @@ UPgSqlStatement::UPgSqlStatement(const char* s, uint32_t n) : USqlStatement(U_NU
 
 UPgSqlStatement::~UPgSqlStatement()
 {
-   U_TRACE_UNREGISTER_OBJECT(0, UPgSqlStatement)
+   U_TRACE_DTOR(0, UPgSqlStatement)
 
    reset();
 
@@ -252,7 +252,7 @@ void UOrmDriverPgSql::handlerStatementRemove(USqlStatement* pstmt)
    (void) handlerQuery(query, 0);
    */
 
-   delete (UPgSqlStatement*)pstmt;
+   U_DELETE((UPgSqlStatement*)pstmt)
 }
 
 bool UPgSqlStatement::setBindParam(UOrmDriver* pdrv)

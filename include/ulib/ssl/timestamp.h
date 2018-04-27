@@ -42,7 +42,7 @@ public:
 
    UTimeStamp(const UString& x) : UPKCS7(U_NULLPTR,U_NULLPTR)
       {
-      U_TRACE_REGISTER_OBJECT(0, UTimeStamp, "%V", x.rep)
+      U_TRACE_CTOR(0, UTimeStamp, "%V", x.rep)
 
       response = readTimeStampResponse(x);
 
@@ -57,7 +57,7 @@ public:
 
    ~UTimeStamp()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, UTimeStamp)
+      U_TRACE_DTOR(0, UTimeStamp)
 
       if (response)
          {

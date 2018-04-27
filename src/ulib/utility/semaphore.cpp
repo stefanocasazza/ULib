@@ -86,7 +86,7 @@ void USemaphore::init(sem_t* ptr, int resource)
 
 USemaphore::~USemaphore()
 {
-   U_TRACE_UNREGISTER_OBJECT(0, USemaphore)
+   U_TRACE_DTOR(0, USemaphore)
 
    U_INTERNAL_ASSERT_POINTER(psem)
 

@@ -109,6 +109,7 @@ U_EXPORT uint32_t u_hash_ignore_case(const unsigned char* restrict t, uint32_t t
 U_EXPORT uint32_t u_cdb_hash(const unsigned char* restrict t, uint32_t tlen, int flags) __pure;
 
 U_EXPORT uint32_t u_random(uint32_t val) __pure; /* quick 4byte hashing function */
+U_EXPORT uint32_t u_integerHash(uint32_t val) __pure;
 #ifdef HAVE_ARCH64
 U_EXPORT uint32_t u_random64(uint64_t ptr) __pure;
 #endif

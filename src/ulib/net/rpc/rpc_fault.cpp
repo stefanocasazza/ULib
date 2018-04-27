@@ -31,7 +31,8 @@ UString URPCFault::getFaultCode()
 
    UString retval;
 
-   /* SOAP:
+   /**
+    * SOAP:
     * ----------------------------------------------------------------------------------------------------
     * VersionMismatch: The faulting node found an invalid element information item instead of the expected
     * Envelope element information item. The namespace, local name or both did not match
@@ -75,7 +76,7 @@ void URPCFault::encode(UString& response)
 
    response.setBuffer(100U + code.size() + faultReason.size() + detail.size());
 
-   response.snprintf(U_CONSTANT_TO_PARAM("%v: %v%s%v"), code.rep, faultReason.rep, (detail.empty() ? "" : " - "), detail.rep);
+   response.snprintf(U_CONSTANT_TO_PARAM("%v: %v%.*s%v"), code.rep, faultReason.rep, (detail.empty() ? 0 : U_CONSTANT_SIZE(" - ")), " - ", detail.rep);
 }
 
 #if defined(U_STDCPP_ENABLE) && defined(DEBUG)

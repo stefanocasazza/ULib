@@ -21,6 +21,10 @@ class Product {
 public:
     Product() {}
    ~Product() { cout << "\ndistruttore Product\n"; }
+
+#ifdef DEBUG
+   const char* dump(bool reset) const { return ""; }
+#endif
 };
 
 // how to override the default...

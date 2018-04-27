@@ -28,7 +28,7 @@ public:
 
    ~UFileConfig()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, UFileConfig)
+      U_TRACE_DTOR(0, UFileConfig)
       }
 
    // SERVICES

@@ -187,7 +187,7 @@ bool UVector<void*>::check_memory() // check all element
 
 UVector<UString>::UVector(const UString& str, char delim) : UVector<UStringRep*>(64)
 {
-   U_TRACE_REGISTER_OBJECT(0, UVector<UString>, "%V,%C", str.rep, delim)
+   U_TRACE_CTOR(0, UVector<UString>, "%V,%C", str.rep, delim)
 
    uint32_t n = str.size() / 128;
 
@@ -209,7 +209,7 @@ UVector<UString>::UVector(const UString& str, char delim) : UVector<UStringRep*>
 
 UVector<UString>::UVector(const UString& x, const char* delim) : UVector<UStringRep*>(64)
 {
-   U_TRACE_REGISTER_OBJECT(0, UVector<UString>, "%V,%S", x.rep, delim)
+   U_TRACE_CTOR(0, UVector<UString>, "%V,%S", x.rep, delim)
 
    const char* s = x.data();
          char  c = *s;

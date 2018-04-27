@@ -51,14 +51,14 @@ public:
 
    UCommand()
       {
-      U_TRACE_REGISTER_OBJECT(0, UCommand, "", 0)
+      U_TRACE_CTOR(0, UCommand, "", 0)
 
       zero();
       }
 
    UCommand(const UString& cmd, char** penv = U_NULLPTR) : command(cmd)
       {
-      U_TRACE_REGISTER_OBJECT(0, UCommand, "%V,%p", cmd.rep, penv)
+      U_TRACE_CTOR(0, UCommand, "%V,%p", cmd.rep, penv)
 
       zero();
       setCommand();
@@ -67,7 +67,16 @@ public:
 
    UCommand(const UString& cmd, const UString* penv) : command(cmd)
       {
-      U_TRACE_REGISTER_OBJECT(0, UCommand, "%V,%p", cmd.rep, penv)
+      U_TRACE_CTOR(0, UCommand, "%V,%p", cmd.rep, penv)
+
+      zero();
+      setCommand();
+      setEnvironment(penv);
+      }
+
+   UCommand(const char* cmd, uint32_t len, const UString* penv) : command(cmd, len)
+      {
+      U_TRACE_CTOR(0, UCommand, "%.*S,%u,%p", len, cmd, len, penv)
 
       zero();
       setCommand();
@@ -76,7 +85,7 @@ public:
 
    ~UCommand()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, UCommand)
+      U_TRACE_DTOR(0, UCommand)
 
       reset(U_NULLPTR);
       }
@@ -126,6 +135,8 @@ public:
    void setArgument(uint32_t n, const char* argument)
       {
       U_TRACE(0, "UCommand::setArgument(%u,%S)", n, argument)
+
+      U_INTERNAL_DUMP("ncmd = %u", ncmd)
 
       U_INTERNAL_ASSERT_RANGE(2,n,ncmd)
       U_INTERNAL_ASSERT_POINTER(argv_exec)

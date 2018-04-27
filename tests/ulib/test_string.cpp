@@ -219,12 +219,12 @@ static void test_capacity_01()
    U_ASSERT( sz01 > 0 )
 
    sz01 = str01.size() + 5;
-   str01.resize(sz01);
+   str01.resize(sz01, '\0');
    sz02 = str01.size();
    U_ASSERT( sz01 == sz02 )
 
    sz01 = str01.size() - 5;
-   str01.resize(sz01);
+   str01.resize(sz01, '\0');
    sz02 = str01.size();
    U_ASSERT( sz01 == sz02 )
 
@@ -248,12 +248,12 @@ static void test_capacity_01()
    U_ASSERT( sz03 > 0 )
 
    sz03 = str02.size() + 5;
-   str02.resize(sz03);
+   str02.resize(sz03, '\0');
    sz04 = str02.size();
    U_ASSERT( sz03 == sz04 )
 
    sz03 = str02.size() - 5;
-   str02.resize(sz03);
+   str02.resize(sz03, '\0');
    sz04 = str02.size();
    U_ASSERT( sz03 == sz04 )
 

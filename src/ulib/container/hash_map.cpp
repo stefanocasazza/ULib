@@ -35,15 +35,17 @@ void UHashMap<void*>::_allocate(uint32_t n)
    info  = (uint8_t*) U_SYSCALL(malloc, "%u", n*(1+UHashMapNode::size())); // UMemoryPool::_malloc(n, 1+UHashMapNode::size(), false);
    table = (char*) (info + n);
 
+   U_INTERNAL_ASSERT_POINTER_MSG(info, "cannot allocate memory, exiting...")
+
    (void) U_SYSCALL(memset, "%p,%d,%u", info, 0, n);
 
    mask = (_capacity = n) - 1;
 
    U_INTERNAL_ASSERT_EQUALS(_capacity & mask, 0)
 
-   max_num_num_elements_allowed = U_min(_capacity-2, (uint32_t)(_capacity * U_MAX_LOAD_FACTOR)); // max * (1 - 1/20) = max * 0.95
+   max_num_elements_allowed = U_min(_capacity-2, (uint32_t)(_capacity * U_MAX_LOAD_FACTOR)); // max * (1 - 1/20) = max * 0.95
 
-   U_INTERNAL_DUMP("_capacity = %u mask = %u max_num_num_elements_allowed = %u", _capacity, mask, max_num_num_elements_allowed)
+   U_INTERNAL_DUMP("_capacity = %u mask = %u max_num_elements_allowed = %u", _capacity, mask, max_num_elements_allowed)
 }
 
 bool UHashMap<void*>::lookup()
@@ -55,11 +57,12 @@ bool UHashMap<void*>::lookup()
    U_INTERNAL_ASSERT_POINTER(set_index)
    U_INTERNAL_ASSERT_MAJOR(_capacity, 0)
 
-   bool ignore_case = set_index(this);
+   const char* s1;
+   const char* s2;
+   bool ignore_case = set_index(this),
+        bIntHash = (ignore_case ? false : isIntHash());
 
-   U_INTERNAL_DUMP("lhash = %u index = %u ignore_case = %b", lhash, index, ignore_case)
-
-   U_INTERNAL_ASSERT_MINOR(index, _capacity)
+   U_INTERNAL_DUMP("lhash = %u index = %u ignore_case = %b bIntHash = %b", lhash, index, ignore_case, bIntHash)
 
    /**
     * Robin Hood Hashing uses the hash value to calculate the position to place it, than does linear probing until it finds an empty spot to place it.
@@ -90,9 +93,27 @@ bool UHashMap<void*>::lookup()
 
    while (linfo == info[index])
       {
+      U_INTERNAL_DUMP("index = %u (info[index] & U_IS_BUCKET_TAKEN_MASK) = %b", index, (info[index] & U_IS_BUCKET_TAKEN_MASK))
+
+      U_INTERNAL_ASSERT(info[index] & U_IS_BUCKET_TAKEN_MASK)
+
       setNodePointer();
 
-      if (UStringRep::equal_lookup(lkey, node->key, ignore_case)) U_RETURN(true);
+      if (bIntHash == false)
+         {
+         if (UStringRep::equal_lookup(lkey, node->key, ignore_case)) U_RETURN(true);
+         }
+      else
+         {
+         U_INTERNAL_ASSERT_POINTER(node->key)
+         U_INTERNAL_ASSERT_EQUALS(     lkey->size(), sizeof(uint32_t))
+         U_INTERNAL_ASSERT_EQUALS(node->key->size(), sizeof(uint32_t))
+
+         s1 =      lkey->data();
+         s2 = node->key->data();
+
+         if (*(uint32_t*)s1 == *(uint32_t*)s2) U_RETURN(true);
+         }
 
       index = (index+1) & mask;
 
@@ -100,6 +121,13 @@ bool UHashMap<void*>::lookup()
       }
 
    U_INTERNAL_DUMP("info[%u] = %u linfo = %u", index, info[index], linfo)
+
+#ifdef DEBUG
+   if (linfo >= 255)
+      {
+      U_WARNING("you have reached the maximum number of collisions, consider changing the hashing method...");
+      }
+#endif
 
    // nothing found!
 
@@ -264,9 +292,9 @@ void UHashMap<void*>::insertAfterFind()
 
    U_CHECK_MEMORY
 
-   U_INTERNAL_DUMP("_length = %u max_num_num_elements_allowed = %u", _length, max_num_num_elements_allowed)
+   U_INTERNAL_DUMP("_length = %u max_num_elements_allowed = %u", _length, max_num_elements_allowed)
 
-   U_INTERNAL_ASSERT_MINOR(_length, max_num_num_elements_allowed)
+   U_INTERNAL_ASSERT_MINOR(_length, max_num_elements_allowed)
 
    U_INTERNAL_DUMP("info[%u] = %u linfo = %u", index, info[index], linfo)
 
@@ -306,7 +334,7 @@ loop:
       goto loop;
       }
 
-   if (++_length == max_num_num_elements_allowed) increase_size();
+   if (++_length == max_num_elements_allowed) increase_size();
 }
 
 void UHashMap<void*>::eraseAfterFind()
@@ -360,6 +388,25 @@ void UHashMap<void*>::eraseAfterFind()
    --_length;
 
    U_INTERNAL_DUMP("_length = %u", _length)
+}
+
+bool UHashMap<void*>::findElement(const void* elem)
+{
+   U_TRACE(0, "UHashMap<void*>::findElement(%p)", elem)
+
+   U_INTERNAL_DUMP("_length = %u", _length)
+
+   for (uint32_t idx = 0; idx < _capacity; ++idx)
+      {
+      if ((info[idx] & U_IS_BUCKET_TAKEN_MASK) != 0)
+         {
+         setNodePointer(idx);
+
+         if (node->elem == elem) U_RETURN(true);
+         }
+      }
+
+   U_RETURN(false);
 }
 
 __pure bool UHashMap<UString>::operator==(const UHashMap<UString>& t)
@@ -604,12 +651,12 @@ U_EXPORT istream& operator>>(istream& is, UHashMap<UString>& t)
 
          sb->sputbackc(c);
 
-         UString key(U_CAPACITY);
+         UString _key(U_CAPACITY);
 
-         key.get(is);
+         _key.get(is);
 
-         U_INTERNAL_ASSERT(key)
-         U_INTERNAL_ASSERT(key.isNullTerminated())
+         U_INTERNAL_ASSERT(_key)
+         U_INTERNAL_ASSERT(_key.isNullTerminated())
 
          do { c = sb->sbumpc(); } while (c != EOF && u__isspace(c)); // skip white-space
 
@@ -628,7 +675,7 @@ U_EXPORT istream& operator>>(istream& is, UHashMap<UString>& t)
          U_INTERNAL_ASSERT(str)
          U_INTERNAL_ASSERT(str.isNullTerminated())
 
-         t.insert(key, str);
+         t.insert(_key, str);
          }
       while (c != EOF);
       }
@@ -644,15 +691,15 @@ U_EXPORT istream& operator>>(istream& is, UHashMap<UString>& t)
 #  ifdef DEBUG
 const char* UHashMap<void*>::dump(bool reset) const
 {
-   *UObjectIO::os << "mask                         " << mask          << '\n'
-                  << "info                         " << (void*)info   << '\n'
-                  << "lhash                        " << lhash         << '\n'
-                  << "linfo                        " << linfo         << '\n'
-                  << "table                        " << (void*)table  << '\n'
-                  << "index                        " << index         << '\n'
-                  << "_length                      " << _length       << "\n"
-                  << "_capacity                    " << _capacity     << '\n'
-                  << "max_num_num_elements_allowed " << max_num_num_elements_allowed;
+   *UObjectIO::os << "mask                     " << mask         << '\n'
+                  << "info                     " << (void*)info  << '\n'
+                  << "lhash                    " << lhash        << '\n'
+                  << "linfo                    " << linfo        << '\n'
+                  << "table                    " << (void*)table << '\n'
+                  << "index                    " << index        << '\n'
+                  << "_length                  " << _length      << "\n"
+                  << "_capacity                " << _capacity    << '\n'
+                  << "max_num_elements_allowed " << max_num_elements_allowed;
 
    if (reset)
       {

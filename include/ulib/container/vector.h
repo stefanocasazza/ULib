@@ -56,7 +56,7 @@ public:
 
    UVector(uint32_t n = 64U) // create an empty vector with a size estimate
       {
-      U_TRACE_REGISTER_OBJECT(0, UVector<void*>, "%u", n)
+      U_TRACE_CTOR(0, UVector<void*>, "%u", n)
 
 #  if defined(U_RING_BUFFER) && !defined(U_STATIC_ONLY)
       head = tail = 0;
@@ -69,7 +69,7 @@ public:
 
    ~UVector()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, UVector<void*>)
+      U_TRACE_DTOR(0, UVector<void*>)
 
       deallocate();
       }
@@ -455,12 +455,12 @@ public:
 
    UVector(uint32_t n = 64U) : UVector<void*>(n)
       {
-      U_TRACE_REGISTER_OBJECT(0, UVector<T*>, "%u", n)
+      U_TRACE_CTOR(0, UVector<T*>, "%u", n)
       }
 
    ~UVector()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, UVector<T*>)
+      U_TRACE_DTOR(0, UVector<T*>)
 
       clear();
       }
@@ -940,7 +940,7 @@ public:
 
    explicit UVector(uint32_t n = 64) : UVector<UStringRep*>(n)
       {
-      U_TRACE_REGISTER_OBJECT(0, UVector<UString>, "%u", n)
+      U_TRACE_CTOR(0, UVector<UString>, "%u", n)
       }
 
    explicit UVector(const UString& str,       char  delim);
@@ -948,14 +948,14 @@ public:
 
    explicit UVector(UVector<UString>& source, uint32_t n) : UVector<UStringRep*>(n)
       {
-      U_TRACE_REGISTER_OBJECT(0, UVector<UString>, "%p,%u", &source, n)
+      U_TRACE_CTOR(0, UVector<UString>, "%p,%u", &source, n)
 
       UVector<void*>::move(source); // add to end and reset source
       }
 
    ~UVector()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, UVector<UString>)
+      U_TRACE_DTOR(0, UVector<UString>)
 
       U_ASSERT(check_memory())
       }
@@ -1259,6 +1259,23 @@ public:
       U_TRACE(0, "UVector<UString>::copy(%p)", &source)
 
       for (uint32_t i = 0; i < source._length; ++i) push_back(source[i].copy());
+      }
+
+   void duplicate()
+      {
+      U_TRACE(0, "UVector<UString>::duplicate()")
+
+      for (uint32_t i = 0; i < _length; ++i)
+         {
+         UStringRep* r = UVector<UStringRep*>::at(i);
+
+         if (r->writeable() == false)
+            {
+            vec[i] = r->duplicate();
+
+            U_DELETE(r)
+            }
+         }
       }
 
    void move(UVector<UString>& source) { UVector<void*>::move(source); } // add to end and reset source

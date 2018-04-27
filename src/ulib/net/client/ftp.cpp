@@ -16,7 +16,7 @@
 
 UFtpClient::~UFtpClient()
 {
-   U_TRACE_UNREGISTER_OBJECT(0, UFtpClient)
+   U_TRACE_DTOR(0, UFtpClient)
 }
 
 void UFtpClient::setStatus()

@@ -29,7 +29,7 @@ public:
 
    USqlStatementBindParam()
       {
-      U_TRACE_REGISTER_OBJECT(0, USqlStatementBindParam, "", 0)
+      U_TRACE_CTOR(0, USqlStatementBindParam, "", 0)
 
       buffer = U_NULLPTR;
       pstr   = U_NULLPTR;
@@ -41,7 +41,7 @@ public:
 
    USqlStatementBindParam(void* v)
       {
-      U_TRACE_REGISTER_OBJECT(0, USqlStatementBindParam, "%p", v)
+      U_TRACE_CTOR(0, USqlStatementBindParam, "%p", v)
 
       buffer = v;
       pstr   = U_NULLPTR;
@@ -55,9 +55,9 @@ public:
 
    virtual ~USqlStatementBindParam()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, USqlStatementBindParam)
+      U_TRACE_DTOR(0, USqlStatementBindParam)
 
-      if (pstr) delete pstr;
+      if (pstr) U_DELETE(pstr)
       }
 
    // DEBUG
@@ -85,7 +85,7 @@ public:
 
    USqlStatementBindResult(void* v)
       {
-      U_TRACE_REGISTER_OBJECT(0, USqlStatementBindResult, "%p", v)
+      U_TRACE_CTOR(0, USqlStatementBindResult, "%p", v)
 
       buffer = v;
       pstr   = U_NULLPTR;
@@ -97,7 +97,7 @@ public:
 
    explicit USqlStatementBindResult(UStringRep& s)
       {
-      U_TRACE_REGISTER_OBJECT(0, USqlStatementBindResult, "%V", &s)
+      U_TRACE_CTOR(0, USqlStatementBindResult, "%V", &s)
 
       buffer = s.data();
       length = s.capacity(); // NB: after fetch become the length of the actual data value...
@@ -109,7 +109,7 @@ public:
 
    virtual ~USqlStatementBindResult()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, USqlStatementBindResult)
+      U_TRACE_DTOR(0, USqlStatementBindResult)
       }
 
    // DEBUG
@@ -139,7 +139,7 @@ public:
 
    USqlStatement(void* pstmt, uint32_t nbind, uint32_t nresult) : vparam(nbind), vresult(nresult)
       {
-      U_TRACE_REGISTER_OBJECT(0, USqlStatement, "%p,%u,%u", nbind, nresult)
+      U_TRACE_CTOR(0, USqlStatement, "%p,%u,%u", nbind, nresult)
 
       pHandle         = pstmt;
       num_bind_param  = nbind;
@@ -149,7 +149,7 @@ public:
 
    virtual ~USqlStatement()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, USqlStatement)
+      U_TRACE_DTOR(0, USqlStatement)
       }
 
    // SERVICES
@@ -210,7 +210,7 @@ public:
 
    UOrmDriver()
       {
-      U_TRACE_REGISTER_OBJECT(0, UOrmDriver, "")
+      U_TRACE_CTOR(0, UOrmDriver, "")
 
       errmsg     = errname = U_NULLPTR;
       errcode    = 0;
@@ -220,7 +220,7 @@ public:
 
    UOrmDriver(const UString& name_drv) : name(name_drv)
       {
-      U_TRACE_REGISTER_OBJECT(0, UOrmDriver, "%V", name.rep)
+      U_TRACE_CTOR(0, UOrmDriver, "%V", name.rep)
 
       errmsg     = errname = U_NULLPTR;
       errcode    = 0;
