@@ -31,7 +31,7 @@
 
 PROGRAM=libtool
 PACKAGE=libtool
-VERSION="2.4.6 Debian-2.4.6-2"
+VERSION=2.4.6
 package_revision=2.4.6
 
 
@@ -64,7 +64,7 @@ package_revision=2.4.6
 # libraries, which are installed to $pkgauxdir.
 
 # Set a version string for this script.
-scriptversion=2015-01-20.17; # UTC
+scriptversion=2015-10-04.22; # UTC
 
 # General shell script boiler plate, and helper functions.
 # Written by Gary V. Vaughan, 2004
@@ -1091,6 +1091,57 @@ func_relative_path ()
 }
 
 
+# func_quote ARG
+# --------------
+# Aesthetically quote one ARG, store the result into $func_quote_result.  Note
+# that we keep attention to performance here (so far O(N) complexity as long as
+# func_append is O(1)).
+func_quote ()
+{
+    $debug_cmd
+
+    func_quote_result=$1
+
+    case $func_quote_result in
+      *[\\\`\"\$]*)
+        case $func_quote_result in
+          *[\[\*\?]*)
+            func_quote_result=`$ECHO "$func_quote_result" | $SED "$sed_quote_subst"`
+            return 0
+            ;;
+        esac
+
+        func_quote_old_IFS=$IFS
+        for _G_char in '\' '`' '"' '$'
+        do
+          # STATE($1) PREV($2) SEPARATOR($3)
+          set start "" ""
+          func_quote_result=dummy"$_G_char$func_quote_result$_G_char"dummy
+          IFS=$_G_char
+          for _G_part in $func_quote_result
+          do
+            case $1 in
+            quote)
+              func_append func_quote_result "$3$2"
+              set quote "$_G_part" "\\$_G_char"
+              ;;
+            start)
+              set first "" ""
+              func_quote_result=
+              ;;
+            first)
+              set quote "$_G_part" ""
+              ;;
+            esac
+          done
+          IFS=$func_quote_old_IFS
+        done
+        ;;
+      *) ;;
+    esac
+}
+
+
 # func_quote_for_eval ARG...
 # --------------------------
 # Aesthetically quote ARGs to be evaled later.
@@ -1107,12 +1158,8 @@ func_quote_for_eval ()
     func_quote_for_eval_unquoted_result=
     func_quote_for_eval_result=
     while test 0 -lt $#; do
-      case $1 in
-        *[\\\`\"\$]*)
-	  _G_unquoted_arg=`printf '%s\n' "$1" |$SED "$sed_quote_subst"` ;;
-        *)
-          _G_unquoted_arg=$1 ;;
-      esac
+      func_quote "$1"
+      _G_unquoted_arg=$func_quote_result
       if test -n "$func_quote_for_eval_unquoted_result"; then
 	func_append func_quote_for_eval_unquoted_result " $_G_unquoted_arg"
       else
@@ -2068,12 +2115,12 @@ include the following information:
        compiler:       $LTCC
        compiler flags: $LTCFLAGS
        linker:         $LD (gnu? $with_gnu_ld)
-       version:        $progname $scriptversion Debian-2.4.6-2
+       version:        $progname (GNU libtool) 2.4.6
        automake:       `($AUTOMAKE --version) 2>/dev/null |$SED 1q`
        autoconf:       `($AUTOCONF --version) 2>/dev/null |$SED 1q`
 
 Report bugs to <bug-libtool@gnu.org>.
-GNU libtool home page: <http://www.gnu.org/s/libtool/>.
+GNU libtool home page: <http://www.gnu.org/software/libtool/>.
 General help using GNU software: <http://www.gnu.org/gethelp/>."
     exit 0
 }
@@ -5258,7 +5305,8 @@ else
   if test \"\$libtool_execute_magic\" != \"$magic\"; then
     file=\"\$0\""
 
-    qECHO=`$ECHO "$ECHO" | $SED "$sed_quote_subst"`
+    func_quote "$ECHO"
+    qECHO=$func_quote_result
     $ECHO "\
 
 # A function that is used when there is no print builtin or printf.
@@ -7275,10 +7323,11 @@ func_mode_link ()
       # -specs=*             GCC specs files
       # -stdlib=*            select c++ std lib with clang
       # -fsanitize=*         Clang/GCC memory and address sanitizer
+      # -fuse-ld=*           Linker select flags for GCC
       -64|-mips[0-9]|-r[0-9][0-9]*|-xarch=*|-xtarget=*|+DA*|+DD*|-q*|-m*| \
       -t[45]*|-txscale*|-p|-pg|--coverage|-fprofile-*|-F*|@*|-tp=*|--sysroot=*| \
       -O*|-g*|-flto*|-fwhopr*|-fuse-linker-plugin|-fstack-protector*|-stdlib=*| \
-      -specs=*|-fsanitize=*)
+      -specs=*|-fsanitize=*|-fuse-ld=*)
         func_quote_for_eval "$arg"
 	arg=$func_quote_for_eval_result
         func_append compile_command " $arg"
@@ -7571,10 +7620,7 @@ func_mode_link ()
 	case $pass in
 	dlopen) libs=$dlfiles ;;
 	dlpreopen) libs=$dlprefiles ;;
-	link)
-	  libs="$deplibs %DEPLIBS%"
-	  test "X$link_all_deplibs" != Xno && libs="$libs $dependency_libs"
-	  ;;
+	link) libs="$deplibs %DEPLIBS% $dependency_libs" ;;
 	esac
       fi
       if test lib,dlpreopen = "$linkmode,$pass"; then
@@ -7893,19 +7939,19 @@ func_mode_link ()
 	    # It is a libtool convenience library, so add in its objects.
 	    func_append convenience " $ladir/$objdir/$old_library"
 	    func_append old_convenience " $ladir/$objdir/$old_library"
-	    tmp_libs=
-	    for deplib in $dependency_libs; do
-	      deplibs="$deplib $deplibs"
-	      if $opt_preserve_dup_deps; then
-		case "$tmp_libs " in
-		*" $deplib "*) func_append specialdeplibs " $deplib" ;;
-		esac
-	      fi
-	      func_append tmp_libs " $deplib"
-	    done
 	  elif test prog != "$linkmode" && test lib != "$linkmode"; then
 	    func_fatal_error "'$lib' is not a convenience library"
 	  fi
+	  tmp_libs=
+	  for deplib in $dependency_libs; do
+	    deplibs="$deplib $deplibs"
+	    if $opt_preserve_dup_deps; then
+	      case "$tmp_libs " in
+	      *" $deplib "*) func_append specialdeplibs " $deplib" ;;
+	      esac
+	    fi
+	    func_append tmp_libs " $deplib"
+	  done
 	  continue
 	fi # $pass = conv
 
@@ -8828,9 +8874,6 @@ func_mode_link ()
 	    age=$number_minor
 	    revision=$number_minor
 	    lt_irix_increment=no
-	    ;;
-	  *)
-	    func_fatal_configuration "$modename: unknown library version type '$version_type'"
 	    ;;
 	  esac
 	  ;;
@@ -10515,8 +10558,8 @@ EOF
 	    relink_command="$var=$func_quote_for_eval_result; export $var; $relink_command"
 	  fi
 	done
-	relink_command="(cd `pwd`; $relink_command)"
-	relink_command=`$ECHO "$relink_command" | $SED "$sed_quote_subst"`
+	func_quote "(cd `pwd`; $relink_command)"
+	relink_command=$func_quote_result
       fi
 
       # Only actually do things if not in dry run mode.
@@ -10762,7 +10805,8 @@ EOF
       done
       # Quote the link command for shipping.
       relink_command="(cd `pwd`; $SHELL \"$progpath\" $preserve_args --mode=relink $libtool_args @inst_prefix_dir@)"
-      relink_command=`$ECHO "$relink_command" | $SED "$sed_quote_subst"`
+      func_quote "$relink_command"
+      relink_command=$func_quote_result
       if test yes = "$hardcode_automatic"; then
 	relink_command=
       fi
