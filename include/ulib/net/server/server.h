@@ -545,9 +545,9 @@ public:
 #  endif
       }
 
-   // PARALLELIZATION (dedicated process for long-running task)
+   static uint32_t num_client_threshold;
 
-   static uint32_t num_client_for_parallelization, num_client_threshold;
+   // PARALLELIZATION (dedicated process for long-running task)
 
    static void    endNewChild() __noreturn;
    static pid_t startNewChild();

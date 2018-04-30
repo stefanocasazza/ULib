@@ -303,12 +303,14 @@ int USocketExt::write(USocket* sk, const char* ptr, uint32_t count, int timeoutM
    int byte_written = 0;
 
 write:
+   /*
    if (sk->isBlocking() &&
        timeoutMS != 0   &&
        (errno = 0, UNotifier::waitForWrite(sk->iSockDesc, timeoutMS) != 1))
       {
       goto error;
       }
+   */
 
    value = sk->send(ptr + byte_written, count);
 
@@ -316,7 +318,8 @@ write:
       {
       if (value == -1)
          {
-error:   U_INTERNAL_DUMP("errno = %d", errno)
+//error:
+         U_INTERNAL_DUMP("errno = %d", errno)
 
               if (errno != EAGAIN) sk->abortive_close();
          else if (timeoutMS != 0)
@@ -373,12 +376,14 @@ int USocketExt::sendfile(USocket* sk, int in_fd, off_t* poffset, off_t count, in
    int byte_written = 0;
 
 loop:
+   /*
    if (sk->isBlocking() &&
        timeoutMS != 0   &&
        (errno = 0, UNotifier::waitForWrite(sk->iSockDesc, timeoutMS) != 1))
       {
       goto error;
       }
+   */
 
 #if defined(HAVE_MACOSX_SENDFILE)
    /**
@@ -408,7 +413,8 @@ loop:
       {
       if (value == -1)
          {
-error:   U_INTERNAL_DUMP("errno = %d", errno)
+//error:  
+         U_INTERNAL_DUMP("errno = %d", errno)
 
          if (errno != EAGAIN)
             {
@@ -499,12 +505,14 @@ int USocketExt::_writev(USocket* sk, struct iovec* iov, int iovcnt, uint32_t cou
 #endif
 
 loop:
+   /*
    if (sk->isBlocking() &&
        timeoutMS != 0   &&
        (errno = 0, UNotifier::waitForWrite(sk->iSockDesc, timeoutMS) != 1))
       {
       goto error;
       }
+   */
 
 #if defined(USE_LIBSSL) && !defined(_MSWINDOWS_)
    if (sk->isSSLActive())
@@ -527,7 +535,8 @@ check:
       {
       if (value == -1)
          {
-error:   U_INTERNAL_DUMP("errno = %d", errno)
+//error:
+         U_INTERNAL_DUMP("errno = %d", errno)
 
          if (errno != EAGAIN)
             {

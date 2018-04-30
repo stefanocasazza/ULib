@@ -287,9 +287,7 @@ bool UClient_Base::connect()
 
    response.snprintf(U_CONSTANT_TO_PARAM("Sorry, couldn't connect to server %v%R"), host_port.rep, 0); // NB: the last argument (0) is necessary...
 
-#ifndef U_LOG_DISABLE
-   if (log) log->log(U_CONSTANT_TO_PARAM("%v"), response.rep);
-#endif
+   U_CLIENT_LOG("%v", response.rep)
 
    U_RETURN(false);
 }
@@ -322,20 +320,6 @@ bool UClient_Base::connectServer(const UString& _url)
       }
 
    if (connect()) U_RETURN(true);
-
-   U_RETURN(false);
-}
-
-bool UClient_Base::remoteIPAddress(UIPAddress& addr)
-{
-   U_TRACE(0, "UClient_Base::::remoteIPAddress(%p)", &addr)
-
-   if (socket->iRemotePort)
-      {
-      addr = socket->cRemoteAddress;
-
-      U_RETURN(true);
-      }
 
    U_RETURN(false);
 }
@@ -435,9 +419,7 @@ bool UClient_Base::sendRequest(bool bread_response)
 resend:
    if (connect())
       {
-#  ifndef U_LOG_DISABLE
-      if (log) log->log(iov, "request", ncount, "", 0, U_CONSTANT_TO_PARAM(" to %v"),  host_port.rep);
-#  endif
+      U_CLIENT_LOG_REQUEST(ncount)
 
       ok = (USocketExt::writev(socket, iov, iovcnt, ncount, timeoutMS, 1) == ncount);
 
@@ -447,16 +429,12 @@ resend:
 
          if (++counter <= 2)
             {
-#        ifndef U_LOG_DISABLE
-            if (log) log->log(U_CONSTANT_TO_PARAM("failed attempts (%u) to sending data (%u bytes) to %V%R"), counter, ncount, host_port.rep, 0); // NB: the last argument (0) is necessary...
-#        endif
+            U_CLIENT_LOG_WITH_ADDR("failed attempts (%u) to sending data (%u bytes) to", counter, ncount)
 
             goto resend;
             }
 
-#     ifndef U_LOG_DISABLE
-         if (log) log->log(U_CONSTANT_TO_PARAM("error on sending data to %V%R"), host_port.rep, 0); // NB: the last argument (0) is necessary...
-#     endif
+         U_CLIENT_LOG_WITH_ADDR("error on sending data (%u bytes) to", ncount)
 
          goto end;
          }
@@ -476,20 +454,12 @@ resend:
             goto resend;
             }
 
-#     ifndef U_LOG_DISABLE
-         if (log) log->log(U_CONSTANT_TO_PARAM("error on reading data from %V%R"), host_port.rep, 0); // NB: the last argument (0) is necessary...
-#     endif
+         U_CLIENT_LOG_WITH_ADDR("error on reading data from")
 
          goto end;
          }
 
-#  ifndef U_LOG_DISABLE
-      if (log &&
-          response)
-         {
-         log->logResponse(response, U_CONSTANT_TO_PARAM(" from %V"), host_port.rep);
-         }
-#  endif
+      U_CLIENT_LOG_RESPONSE()
 
       reset();
       }
@@ -549,13 +519,7 @@ bool UClient_Base::readResponse(uint32_t count)
 
    if (USocketExt::read(socket, response, count, timeoutMS))
       {
-#  ifndef U_LOG_DISABLE
-      if (log &&
-          response)
-         {
-         log->logResponse(response, U_CONSTANT_TO_PARAM(" from %V"), host_port.rep);
-         }
-#  endif
+      U_CLIENT_LOG_RESPONSE()
 
       U_RETURN(true);
       }
@@ -577,13 +541,7 @@ bool UClient_Base::readHTTPResponse()
          {
          if (UHTTP::readBodyResponse(socket, &buffer, response) == false) U_RETURN(false);
 
-#     ifndef U_LOG_DISABLE
-         if (log &&
-             response)
-            {
-            log->logResponse(response, U_CONSTANT_TO_PARAM(" from %V"), host_port.rep);
-            }
-#     endif
+         U_CLIENT_LOG_RESPONSE()
          }
 
       U_RETURN(true);

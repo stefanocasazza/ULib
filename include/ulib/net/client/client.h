@@ -40,8 +40,26 @@ class UProxyPlugIn;
 class UNoCatPlugIn;
 class UServer_Base;
 class UHttpClient_Base;
+class UClientImage_Base;
 class UREDISClient_Base;
 class UElasticSearchClient;
+
+// manage client write to log
+
+#ifdef U_LOG_DISABLE
+#  define U_CLIENT_LOG_RESPONSE() {}
+#  define U_CLIENT_LOG_REQUEST(n) {}
+
+#  define U_CLIENT_LOG(          fmt,args...) {}
+#  define U_CLIENT_LOG_WITH_ADDR(fmt,args...) {}
+#else
+#  define U_CLIENT_LOG(          fmt,args...) { if (UClient_Base::log) UClient_Base::log->log(U_CONSTANT_TO_PARAM(fmt), ##args); }
+#  define U_CLIENT_LOG_WITH_ADDR(fmt,args...) { if (UClient_Base::log) UClient_Base::log->log(U_CONSTANT_TO_PARAM(fmt " %V%R"), ##args,  UClient_Base::host_port.rep, 0); }
+
+#  define U_CLIENT_LOG_REQUEST(n) { if (UClient_Base::log) UClient_Base::log->log(UClient_Base::iov, "request", n, "", 0, U_CONSTANT_TO_PARAM(" to %V"), UClient_Base::host_port.rep); }
+#  define U_CLIENT_LOG_RESPONSE() { if (UClient_Base::log && UClient_Base::response) \
+                                        UClient_Base::log->logResponse(UClient_Base::response, U_CONSTANT_TO_PARAM(" from %V"), UClient_Base::host_port.rep); }
+#endif
 
 class U_EXPORT UClient_Base {
 public:
@@ -102,13 +120,15 @@ public:
       if (isOpen()) socket->_close_socket();
       }
 
-   void reOpen()
+   bool reConnect()
       {
-      U_TRACE_NO_PARAM(0, "UClient_Base::reOpen()")
+      U_TRACE_NO_PARAM(0, "UClient_Base::reConnect()")
 
       U_INTERNAL_ASSERT_POINTER(socket)
 
       socket->reOpen();
+
+      return connect();
       }
 
    bool shutdown(int how = SHUT_WR)
@@ -185,9 +205,22 @@ public:
    unsigned int getPort() const         { return port; }
 
    bool connect();
-   bool remoteIPAddress(UIPAddress& addr);
    bool readResponse(uint32_t count = U_SINGLE_READ);
    bool setHostPort(const UString& host, unsigned int port);
+
+   bool remoteIPAddress(UIPAddress& addr)
+      {
+      U_TRACE(0, "UClient_Base::::remoteIPAddress(%p)", &addr)
+
+      if (socket->iRemotePort)
+         {
+         addr = socket->cRemoteAddress;
+
+         U_RETURN(true);
+         }
+
+      U_RETURN(false);
+      }
 
    static void closeLog();
 
@@ -297,6 +330,7 @@ private:
    friend class UNoCatPlugIn;
    friend class UServer_Base;
    friend class UHttpClient_Base;
+   friend class UClientImage_Base;
    friend class UREDISClient_Base;
    friend class UElasticSearchClient;
 };

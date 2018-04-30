@@ -1009,7 +1009,7 @@ void USocket::setMsgError()
 
    if (isSysError())
       {
-      u_errno = errno = -iState;
+      errno = -iState;
 
       (void) u__snprintf(u_buffer, U_BUFFER_SIZE, U_CONSTANT_TO_PARAM("%#R"), 0); // NB: the last argument (0) is necessary...
       }
@@ -1083,7 +1083,7 @@ ok:      setLocal();
 
                if (error == 0) goto ok;
 
-               iState = -(u_errno = errno = error);
+               iState = -(errno = error);
                }
             else if (result == 0)
                {
@@ -1091,9 +1091,8 @@ ok:      setLocal();
 
                _close_socket();
 
-               iState  = TIMEOUT;
-                 errno =
-               u_errno = ETIMEDOUT;
+                errno = ETIMEDOUT;
+               iState = TIMEOUT;
                }
 
             U_RETURN(false);

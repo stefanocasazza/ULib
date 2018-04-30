@@ -2277,12 +2277,16 @@ case_R: /* extension: print msg - u_getSysError() */
          *bp++ = ' ';
          }
 
-      if (errno == 0) errno = u_errno;
+      if (errno == 0)
+         {
+         errno = u_errno;
+                 u_errno = 0;
+         }
 
 #  ifdef _MSWINDOWS_
       if (errno < 0)
          {
-         errno = - errno;
+         errno = -errno;
 
          cp = getSysError_w32((uint32_t*)&len);
 
@@ -2797,7 +2801,8 @@ void u__printf(int fd, const char* format, uint32_t fmt_size, ...)
          {
          /* check if warning due to syscall */
 
-         if (u_flag_exit != 2 || errno == 0)
+         if (u_flag_exit != 2 ||
+             errno == 0)
             {
             struct iovec iov[1] = { { (caddr_t)buffer, bytes_written } };
 

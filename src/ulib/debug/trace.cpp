@@ -170,7 +170,7 @@ void UTrace::trace_syscall(const char* format, uint32_t fmt_size, ...)
 #ifdef _MSWINDOWS_
    SetLastError(0);
 #endif
-   errno = u_errno = 0;
+   errno = 0;
 }
 
 void UTrace::trace_sysreturn(bool error, const char* format, uint32_t fmt_size, ...)

@@ -260,7 +260,7 @@ static void usp_init_wi_auth2()
 
    if (rc->connect() == false)
       {
-      U_ERROR("usp_fork_wi_auth2(): %V", rc->UClient_Base::getResponse().rep);
+      U_ERROR("usp_init_wi_auth2(): %V", rc->UClient_Base::getResponse().rep);
       }
 
    // ANAGRAFICA
@@ -276,7 +276,10 @@ static void usp_fork_wi_auth2()
 
    U_INTERNAL_ASSERT_POINTER(rc)
 
-   rc->UClient_Base::reOpen();
+   if (rc->UClient_Base::reConnect() == false)
+      {
+      U_ERROR("usp_fork_wi_auth2(): %V", rc->UClient_Base::getResponse().rep);
+      }
 }
 
 static void usp_end_wi_auth2()

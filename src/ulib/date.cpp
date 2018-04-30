@@ -290,65 +290,70 @@ time_t UTimeDate::getSecondFromDate(const char* str, bool gmt, struct tm* tm, co
 
          tm->tm_sec = u__strtoul(str, 2);
          }
-      else if ((tm->tm_mon = u_getMonth(str)))
-         {
-         /**
-          * Jan 25 11:54:00 2005 GMT
-          * |   |  |  |  |  |
-          * 0   4  7 10 13 16
-          */
-
-         str += 4;
-
-         tm->tm_mday = u_strtoulp(&str);
-
-         tm->tm_hour = u__strtoul(str, 2);
-
-         str += 3;
-
-         tm->tm_min = u__strtoul(str, 2);
-
-         str += 3;
-
-         tm->tm_sec = u__strtoul(str, 2);
-
-         str += 3;
-
-         tm->tm_year = u__strtoul(str, 4);
-         }
       else
          {
-         /**
-          * 100212124550Z (zulu time)
-          * | | | | | |
-          * 0 2 4 6 8 10
-          */
+         if (u__isspace(*str)) while (u__isspace((*++str))) {}
 
-         tm->tm_mday = u__strtoul(str, 2);
+         if ((tm->tm_mon = u_getMonth(str)))
+            {
+            /**
+             * Jan 25 11:54:00 2005 GMT
+             * |   |  |  |  |  |
+             * 0   4  7 10 13 16
+             */
 
-         str += 2;
+            str += 4;
 
-         tm->tm_mon = u__strtoul(str, 2);
+            tm->tm_mday = u_strtoulp(&str);
 
-         str += 2;
+            tm->tm_hour = u__strtoul(str, 2);
 
-         tm->tm_year = u__strtoul(str, 2) + 2000; // ts.tm_year is number of years since 1900
+            str += 3;
 
-      // if (tm->tm_year > 2050) tm->tm_year -= 100;
+            tm->tm_min = u__strtoul(str, 2);
 
-         str += 2;
+            str += 3;
 
-         tm->tm_hour = u__strtoul(str, 2);
+            tm->tm_sec = u__strtoul(str, 2);
 
-         str += 2;
+            str += 3;
 
-         tm->tm_min = u__strtoul(str, 2);
+            tm->tm_year = u__strtoul(str, 4);
+            }
+         else
+            {
+            /**
+             * 100212124550Z (zulu time)
+             * | | | | | |
+             * 0 2 4 6 8 10
+             */
 
-         str += 2;
+            tm->tm_mday = u__strtoul(str, 2);
 
-         tm->tm_sec = u__strtoul(str, 2);
+            str += 2;
 
-      // U_INTERNAL_ASSERT_EQUALS(str[2], 'Z')
+            tm->tm_mon = u__strtoul(str, 2);
+
+            str += 2;
+
+            tm->tm_year = u__strtoul(str, 2) + 2000; // ts.tm_year is number of years since 1900
+
+         // if (tm->tm_year > 2050) tm->tm_year -= 100;
+
+            str += 2;
+
+            tm->tm_hour = u__strtoul(str, 2);
+
+            str += 2;
+
+            tm->tm_min = u__strtoul(str, 2);
+
+            str += 2;
+
+            tm->tm_sec = u__strtoul(str, 2);
+
+         // U_INTERNAL_ASSERT_EQUALS(str[2], 'Z')
+            }
          }
 
       U_INTERNAL_DUMP("tm_year = %u tm_mon = %u tm_mday = %u tm_hour = %d tm_min = %d tm_sec = %d", tm->tm_year, tm->tm_mon, tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec)

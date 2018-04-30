@@ -957,7 +957,7 @@ void UNoCatPlugIn::checkSystem()
 end:
    U_RESET_MODULE_NAME;
 
-   u_errno = errno = EINTR;
+   errno = EINTR;
 
    flag_check_system = false;
 

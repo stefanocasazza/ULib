@@ -17,11 +17,9 @@
 #
 # MIN_SIZE_FOR_SENDFILE for major size it is better to use sendfile() to serve static content
 #
-# LISTEN_BACKLOG             max number of ready to be delivered connections to accept()
-# SET_REALTIME_PRIORITY      flag indicating that the preforked processes will be scheduled under the real-time policies SCHED_FIFO
-#
-# CLIENT_THRESHOLD           min number of clients to active polling
-# CLIENT_FOR_PARALLELIZATION min number of clients to active parallelization (dedicated process)
+# LISTEN_BACKLOG        max number of ready to be delivered connections to accept()
+# CLIENT_THRESHOLD      min number of clients to active polling
+# SET_REALTIME_PRIORITY flag indicating that the preforked processes will be scheduled under the real-time policies SCHED_FIFO
 #
 # LOAD_BALANCE_CLUSTER           list of comma separated IP address (IPADDR[/MASK]) to define the load balance cluster
 # LOAD_BALANCE_DEVICE_NETWORK    network interface name of cluster of physical server
@@ -104,10 +102,8 @@ userver {
 # MIN_SIZE_FOR_SENDFILE 500k 
 
 # LISTEN_BACKLOG        1024
+# CLIENT_THRESHOLD      100
 # SET_REALTIME_PRIORITY yes
-
-# CLIENT_THRESHOLD           100
-# CLIENT_FOR_PARALLELIZATION  10
  
 # LOAD_BALANCE_CLUSTER           10.30.0.0/16 
 # LOAD_BALANCE_DEVICE_NETWORK    eth1

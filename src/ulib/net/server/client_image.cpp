@@ -14,15 +14,16 @@
 #include <ulib/utility/uhttp.h>
 #include <ulib/utility/websocket.h>
 
-#ifdef HAVE_SCHED_GETCPU
-#  include <sched.h>
-#endif
 #ifndef U_HTTP2_DISABLE
 #  include <ulib/utility/http2.h>
 #endif
-
 #ifdef U_SERVER_CHECK_TIME_BETWEEN_REQUEST
+#  include <ulib/net/client/client.h>
 #  define U_NUM_CLIENT_THRESHOLD 128
+#endif
+
+#ifdef HAVE_SCHED_GETCPU
+#  include <sched.h>
 #endif
 
 int           UClientImage_Base::idx;
@@ -1161,7 +1162,8 @@ bool UClientImage_Base::genericRead()
 #ifdef U_SERVER_CHECK_TIME_BETWEEN_REQUEST
    if (U_ClientImage_advise_for_parallelization)
       {
-      if (checkRequestToCache() == 2 &&
+      if (checkRequestToCache() == 2         &&
+          UClient_Base::csocket == U_NULLPTR &&
           UServer_Base::startParallelization(U_NUM_CLIENT_THRESHOLD))
          {
          // parent

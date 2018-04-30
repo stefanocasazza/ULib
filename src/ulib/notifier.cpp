@@ -1275,8 +1275,7 @@ loop:
    if (ret >  0) U_RETURN(ret);
    if (ret == 0)
       {
-        errno =
-      u_errno = EAGAIN;
+      errno = EAGAIN;
 
       U_RETURN(0);
       }

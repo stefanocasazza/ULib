@@ -2440,7 +2440,11 @@ U_NO_EXPORT bool UHTTP::readBodyRequest()
          U_RETURN(false);
          }
 
-      if (UServer_Base::startParallelization()) U_RETURN(false); // parent
+      if (UClient_Base::csocket == U_NULLPTR && // NB: after forking we can have problem with the shared db connection...
+          UServer_Base::startParallelization())
+         {
+         U_RETURN(false); // parent
+         }
 
       // NB: wait for other data to complete the read of the request...
 

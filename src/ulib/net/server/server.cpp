@@ -118,7 +118,6 @@ uint32_t      UServer_Base::client_address_len;
 uint32_t      UServer_Base::document_root_size;
 uint32_t      UServer_Base::num_client_threshold;
 uint32_t      UServer_Base::min_size_for_sendfile;
-uint32_t      UServer_Base::num_client_for_parallelization;
 sigset_t      UServer_Base::mask;
 UString*      UServer_Base::host;
 UString*      UServer_Base::server;
@@ -2200,14 +2199,13 @@ void UServer_Base::loadConfigParam()
    set_tcp_keep_alive    = cfg->readBoolean(U_CONSTANT_TO_PARAM("TCP_KEEP_ALIVE"));
    set_realtime_priority = cfg->readBoolean(U_CONSTANT_TO_PARAM("SET_REALTIME_PRIORITY"), true);
 
-   crash_count                    = cfg->readLong(U_CONSTANT_TO_PARAM("CRASH_COUNT"), 5);
-   tcp_linger_set                 = cfg->readLong(U_CONSTANT_TO_PARAM("TCP_LINGER_SET"), -2);
-   USocket::iBackLog              = cfg->readLong(U_CONSTANT_TO_PARAM("LISTEN_BACKLOG"), SOMAXCONN);
-   min_size_for_sendfile          = cfg->readLong(U_CONSTANT_TO_PARAM("MIN_SIZE_FOR_SENDFILE"), 500 * 1024); // 500k: for major size we assume is better to use sendfile()
-   num_client_threshold           = cfg->readLong(U_CONSTANT_TO_PARAM("CLIENT_THRESHOLD"));
-   UNotifier::max_connection      = cfg->readLong(U_CONSTANT_TO_PARAM("MAX_KEEP_ALIVE"));
-   u_printf_string_max_length     = cfg->readLong(U_CONSTANT_TO_PARAM("LOG_MSG_SIZE"));
-   num_client_for_parallelization = cfg->readLong(U_CONSTANT_TO_PARAM("CLIENT_FOR_PARALLELIZATION"));
+   crash_count                = cfg->readLong(U_CONSTANT_TO_PARAM("CRASH_COUNT"), 5);
+   tcp_linger_set             = cfg->readLong(U_CONSTANT_TO_PARAM("TCP_LINGER_SET"), -2);
+   USocket::iBackLog          = cfg->readLong(U_CONSTANT_TO_PARAM("LISTEN_BACKLOG"), SOMAXCONN);
+   min_size_for_sendfile      = cfg->readLong(U_CONSTANT_TO_PARAM("MIN_SIZE_FOR_SENDFILE"), 500 * 1024); // 500k: for major size we assume is better to use sendfile()
+   num_client_threshold       = cfg->readLong(U_CONSTANT_TO_PARAM("CLIENT_THRESHOLD"));
+   UNotifier::max_connection  = cfg->readLong(U_CONSTANT_TO_PARAM("MAX_KEEP_ALIVE"));
+   u_printf_string_max_length = cfg->readLong(U_CONSTANT_TO_PARAM("LOG_MSG_SIZE"));
 
 #ifdef USERVER_UDP
    if (budp &&
@@ -3459,12 +3457,10 @@ next:
    UNotifier::max_connection = (UNotifier::max_connection ? UNotifier::max_connection : USocket::iBackLog) + (UNotifier::num_connection = UNotifier::min_connection);
 
    if (num_client_threshold == 0) num_client_threshold = U_NOT_FOUND;
-
-   if (num_client_for_parallelization == 0) num_client_for_parallelization = UNotifier::max_connection / 2;
    }
 
-   U_INTERNAL_DUMP("UNotifier::max_connection = %u UNotifier::min_connection = %u num_client_for_parallelization = %u num_client_threshold = %u",
-                    UNotifier::max_connection,     UNotifier::min_connection,     num_client_for_parallelization,     num_client_threshold)
+   U_INTERNAL_DUMP("UNotifier::max_connection = %u UNotifier::min_connection = %u num_client_threshold = %u",
+                    UNotifier::max_connection,     UNotifier::min_connection,     num_client_threshold)
 
    pthis->preallocate();
 
@@ -4946,6 +4942,13 @@ bool UServer_Base::startParallelization(uint32_t nclient)
    {
    if (isParallelizationGoingToStart(nclient))
       {
+#  ifdef DEBUG
+      if (UClient_Base::csocket)
+         {
+         U_WARNING("after forking you can have problem with the shared db connection...");
+         }
+#  endif
+
       pid_t pid = startNewChild();
 
       if (pid > 0)
