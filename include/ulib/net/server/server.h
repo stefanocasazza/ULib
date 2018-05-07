@@ -1156,7 +1156,7 @@ private:
       }
 
    static bool clientImageHandlerRead() U_NO_EXPORT;
-   static void loadStaticLinkedModules(const char* name) U_NO_EXPORT;
+   static void loadStaticLinkedModules(const UString& name) U_NO_EXPORT;
    static void manageCommand(const char* format, uint32_t fmt_size, ...) U_NO_EXPORT;
 
    U_DISALLOW_COPY_AND_ASSIGN(UServer_Base)

@@ -18,9 +18,9 @@
 
 URDB* URDBServer::rdb;
 
-URDBServer::URDBServer(UFileConfig* cfg, bool ignore_case) : UServer<UTCPSocket>(cfg)
+URDBServer::URDBServer(UFileConfig* pcfg, bool ignore_case) : UServer<UTCPSocket>(pcfg)
 {
-   U_TRACE_CTOR(0, URDBServer, "%p,%b", cfg, ignore_case)
+   U_TRACE_CTOR(0, URDBServer, "%p,%b", pcfg, ignore_case)
 
    U_NEW(URDB, rdb, URDB(ignore_case));
 

@@ -21,6 +21,7 @@ creat_link ../uploads $DOC_ROOT/uploads
 
 cat <<EOF >inp/webserver.cfg
 userver {
+ PORT 8080
 #RUN_AS_USER apache
  LOG_FILE webserver_uclient.log
  LOG_FILE_SZ 1M
@@ -49,6 +50,7 @@ start_prg_background userver_tcp -c inp/webserver.cfg
 
 cat <<EOF >inp/webclient.cfg
 uclient {
+ PORT 8080
  LOG_FILE uclient.log
  LOG_FILE_SZ 1M
  FOLLOW_REDIRECTS yes
@@ -67,7 +69,7 @@ DIR_CMD="../../examples/uclient"
 
 mkdir -p uploads
 
-start_prg uclient -u inp/PEC/PEC.log -c inp/webclient.cfg http://localhost/cgi-bin/uploader.sh # -q 10
+start_prg uclient -u inp/PEC/PEC.log -c inp/webclient.cfg http://localhost:8080/cgi-bin/uploader.sh # -q 10
 
 diff inp/PEC/PEC.log uploads/PEC.log
 RESULT=$?

@@ -1135,11 +1135,16 @@ void UHTTP::init()
    if (cache_file_store)
       {
 #  ifdef U_STDCPP_ENABLE
-      content_cache = (UStringExt::endsWith(U_STRING_TO_PARAM(*cache_file_store), U_CONSTANT_TO_PARAM(".gz"))
-                        ? UStringExt::gunzip(UFile::contentOf(*cache_file_store))
-                        :                    UFile::contentOf(*cache_file_store));
+      content_cache = UFile::contentOf(*cache_file_store);
 
-      if (content_cache) n += (content_cache.size() / (1024 + 512)); // NB: we assume as medium file size something like ~1.5k...
+      if (content_cache)
+         {
+#     ifdef USE_LIBZ
+         if (UStringExt::endsWith(U_STRING_TO_PARAM(*cache_file_store), U_CONSTANT_TO_PARAM(".gz"))) content_cache = UStringExt::gunzip(content_cache);
+#     endif
+         }
+
+      n += (content_cache.size() / (1024 + 512)); // NB: we assume as medium file size something like ~1.5k...
 #  endif
       }
 
@@ -1226,7 +1231,7 @@ void UHTTP::init()
 
    U_INTERNAL_DUMP("htdigest = %p htpasswd = %p", htdigest, htpasswd)
 
-#ifdef U_STDCPP_ENABLE
+#if defined(U_STDCPP_ENABLE) && defined(USE_LIBZ)
    if (htdigest ||
        htpasswd)
       {
@@ -1237,7 +1242,7 @@ void UHTTP::init()
       if (file_data == U_NULLPTR)
          {
          static const unsigned char dir_store[] = {
-#           include "dir_store.bin" // od -A n -t x1 dir_store.bin.gz
+#           include "bin/dir_store.bin" // od -A n -t x1 dir_store.bin.gz
          };
 
          content_cache = UStringExt::gunzip((const char*)dir_store, sizeof(dir_store), 0);
@@ -1255,7 +1260,7 @@ void UHTTP::init()
    if (getFileCachePointer(U_CONSTANT_TO_PARAM("favicon.ico")) == U_NULLPTR)
       {
       static const unsigned char favicon_store[] = {
-#        include "favicon_store.bin" // od -A n -t x1 favicon_store.bin.gz
+#        include "bin/favicon_store.bin" // od -A n -t x1 favicon_store.bin.gz
       };
 
       content_cache = UStringExt::gunzip((const char*)favicon_store, sizeof(favicon_store), 0);
@@ -1271,7 +1276,7 @@ void UHTTP::init()
    if (getFileCachePointer(U_CONSTANT_TO_PARAM("css/pagination.min.css")) == U_NULLPTR)
       {
       static const unsigned char pagination_store[] = {
-#        include "pagination_store.bin" // od -A n -t x1 pagination_store.bin.gz
+#        include "bin/pagination_store.bin" // od -A n -t x1 pagination_store.bin.gz
       };
 
       content_cache = UStringExt::gunzip((const char*)pagination_store, sizeof(pagination_store), 0);
@@ -2717,13 +2722,16 @@ U_NO_EXPORT inline void UHTTP::setAcceptLanguage(const char* ptr, uint32_t len)
    U_INTERNAL_DUMP("Accept-Language: = %.*S", U_HTTP_ACCEPT_LANGUAGE_TO_TRACE)
 }
 
-U_NO_EXPORT inline void UHTTP::setIfModSince(const char* ptr)
+U_NO_EXPORT inline void UHTTP::setIfModSince(const char* ptr, uint32_t len)
 {
-   U_TRACE(0, "UHTTP::setIfModSince(%p)", ptr)
+   U_TRACE(0, "UHTTP::setIfModSince(%.*S,%u)", len, ptr, len)
 
-   U_http_info.if_modified_since = UTimeDate::getSecondFromDate(ptr);
+   if (len >= U_CONSTANT_SIZE("100212124550Z"))
+      {
+      U_http_info.if_modified_since = UTimeDate::getSecondFromDate(ptr);
 
-   U_INTERNAL_DUMP("If-Modified-Since = %u", U_http_info.if_modified_since)
+      U_INTERNAL_DUMP("If-Modified-Since = %u", U_http_info.if_modified_since)
+      }
 }
 
 U_NO_EXPORT void UHTTP::checkIPClient()
@@ -3101,7 +3109,7 @@ U_NO_EXPORT bool UHTTP::checkRequestForHeader()
             {
             SET_POINTER_CHECK_REQUEST_FOR_HEADER
 
-            setIfModSince(ptr1);
+            setIfModSince(ptr1, pn-ptr1);
 
             goto next;
             }
@@ -3242,7 +3250,7 @@ U_NO_EXPORT bool UHTTP::checkRequestForHeader()
                 u_get_unalignedp64(p+3)  == U_MULTICHAR_CONSTANT64('o','d','i','f','i','e','d','-') &&
                 u_get_unalignedp32(p+12) == U_MULTICHAR_CONSTANT32('i','n','c','e'))
                {
-               setIfModSince(ptr1);
+               setIfModSince(ptr1, pn-ptr1);
                }
             }
          break;
@@ -5107,7 +5115,7 @@ void UHTTP::processRequest()
 
       // now we check the directory...
 
-      if (U_http_info.if_modified_since == false ||
+      if (U_http_info.if_modified_since == 0 ||
           checkGetRequestIfModified())
          {
          // check if it's OK to do directory listing via authentication (digest|basic)
@@ -5201,8 +5209,8 @@ next:
 
    U_INTERNAL_DUMP("file->st_mode = %d file_data->size = %u file->st_size = %I file->st_mtime = %#3D", file->st_mode, file_data->size, file->st_size, file->st_mtime)
 
-   if (file_data == file_not_in_cache_data     ||
-       (U_http_info.if_modified_since == false ||
+   if (file_data == file_not_in_cache_data ||
+       (U_http_info.if_modified_since == 0 ||
         checkGetRequestIfModified()))
       {
       if (file_data->size)
@@ -7481,14 +7489,18 @@ U_NO_EXPORT bool UHTTP::processAuthorization(const char* request, uint32_t sz, c
          }
       }
 
-   U_INTERNAL_DUMP("digest_authentication = %b", digest_authentication)
+   UHTTP::UFileCacheData* ptr_file_data = U_NULLPTR;
 
-   UHTTP::UFileCacheData* ptr_file_data = getFileCachePointerVar(U_CONSTANT_TO_PARAM("..%.*s.ht%6s"), sz-pos, request, digest_authentication ? "digest" : "passwd");
+   if ((sz-pos) > 1)
+      {
+      ptr_file_data = getFileCachePointerVar(U_CONSTANT_TO_PARAM("..%.*s.ht%6s"), sz-pos, request, digest_authentication ? "digest" : "passwd");
 
-   U_INTERNAL_DUMP("ptr_file_data = %p htpasswd = %p", ptr_file_data, htpasswd)
+      if (ptr_file_data) fpasswd = ptr_file_data->array->operator[](0);
+      }
 
-   if (ptr_file_data) fpasswd = ptr_file_data->array->operator[](0);
-   else
+   U_INTERNAL_DUMP("digest_authentication = %b (sz-pos) = %u ptr_file_data = %p htpasswd = %p", digest_authentication, (sz-pos), ptr_file_data, htpasswd)
+
+   if (ptr_file_data == U_NULLPTR)
       {
       if (digest_authentication)
          {
@@ -9232,18 +9244,6 @@ U_NO_EXPORT bool UHTTP::checkPathName()
 
       if (len >= 9)
          {
-#     if defined(U_SERVER_CAPTIVE_PORTAL) && !defined(ENABLE_THREAD)
-         if (u_get_unalignedp64(ptr)   == U_MULTICHAR_CONSTANT64('c','h','e','c','k','Z','o','m') &&
-             u_get_unalignedp32(ptr+8) == U_MULTICHAR_CONSTANT32('b','i','e','s'))
-            {
-            // ask to check for zombies...
-
-            UServer_Base::removeZombies();
-
-            goto nocontent;
-            }
-#     endif
-
 #     ifdef U_ALIAS
          if (                   ptr[len-9] == 'n' &&
              u_get_unalignedp64(ptr+len-8) == U_MULTICHAR_CONSTANT64('o','c','o','n','t','e','n','t'))

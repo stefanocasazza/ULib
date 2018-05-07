@@ -326,7 +326,7 @@ public:
 
    UValue* at(const UString& key) const { return at(U_STRING_TO_PARAM(key)); }
 
-   UValue& operator[](uint32_t pos) const          { return *at(pos); }
+   UValue& operator[](uint32_t lpos) const         { return *at(lpos); }
    UValue& operator[](const UString& key) const    { return *at(U_STRING_TO_PARAM(key)); }
    UValue& operator[](const UStringRep* key) const { return *at(U_STRING_TO_PARAM(*key)); }
 
@@ -399,7 +399,7 @@ public:
       {
       U_TRACE(0, "UValue::stringify(%V,%p)", result.rep, &json)
 
-      (void) result.reserve(U_max(json.size_output+100U,U_CAPACITY));
+      (void) result.reserve(U_max(json.size_output+100U,4000));
 
       pstringify = result.pend(); // buffer to stringify json
 

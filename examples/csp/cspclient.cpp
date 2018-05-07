@@ -19,8 +19,8 @@ public:
 
    // COSTRUTTORE
 
-   explicit UClientCSP(UFileConfig* cfg) : USOAPClient<T>(cfg) {}
-   virtual ~UClientCSP()                                       {}
+   explicit UClientCSP(UFileConfig* pcfg) : USOAPClient<T>(pcfg) {}
+   virtual ~UClientCSP()                                         {}
 
    // OBJECT FOR METHOD REQUEST
 

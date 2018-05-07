@@ -26,28 +26,26 @@
 #  include <sched.h>
 #endif
 
-int           UClientImage_Base::idx;
-int           UClientImage_Base::iovcnt;
-bool          UClientImage_Base::bIPv6;
-bool          UClientImage_Base::bsendGzipBomb;
-char          UClientImage_Base::cbuffer[128];
-long          UClientImage_Base::time_run;
-long          UClientImage_Base::time_between_request = 10;
-off_t         UClientImage_Base::ncount;
-uint32_t      UClientImage_Base::resto;
-uint32_t      UClientImage_Base::rstart;
-uint32_t      UClientImage_Base::nrequest;
-uint32_t      UClientImage_Base::size_request;
-UString*      UClientImage_Base::body;
-UString*      UClientImage_Base::rbuffer;
-UString*      UClientImage_Base::wbuffer;
-UString*      UClientImage_Base::request;
-UString*      UClientImage_Base::request_uri;
-UString*      UClientImage_Base::environment;
-UTimeVal*     UClientImage_Base::chronometer;
-struct iovec  UClientImage_Base::iov_vec[4];
-struct iovec  UClientImage_Base::iov_sav[4];
-struct iovec* UClientImage_Base::piov;
+int          UClientImage_Base::idx;
+int          UClientImage_Base::iovcnt;
+bool         UClientImage_Base::bIPv6;
+bool         UClientImage_Base::bsendGzipBomb;
+char         UClientImage_Base::cbuffer[128];
+long         UClientImage_Base::time_run;
+long         UClientImage_Base::time_between_request = 10;
+uint32_t     UClientImage_Base::resto;
+uint32_t     UClientImage_Base::rstart;
+uint32_t     UClientImage_Base::ncount;
+uint32_t     UClientImage_Base::nrequest;
+uint32_t     UClientImage_Base::size_request;
+UString*     UClientImage_Base::body;
+UString*     UClientImage_Base::rbuffer;
+UString*     UClientImage_Base::wbuffer;
+UString*     UClientImage_Base::request;
+UString*     UClientImage_Base::request_uri;
+UString*     UClientImage_Base::environment;
+UTimeVal*    UClientImage_Base::chronometer;
+struct iovec UClientImage_Base::iov_vec[4];
 
 iPF    UClientImage_Base::callerHandlerRead       = UServer_Base::pluginsHandlerREAD;
 vPF    UClientImage_Base::callerHandlerRequest    = UServer_Base::pluginsHandlerRequest;
@@ -243,7 +241,7 @@ void UClientImage_Base::saveRequestResponse()
    {
    if (*rbuffer) U_FILE_WRITE_TO_TMP(*rbuffer, "request.%P");
 
-   if (U_http_info.nResponseCode) (void) UFile::writeToTmp(iov_sav, 4, O_RDWR | O_TRUNC, U_CONSTANT_TO_PARAM("response.%P"), 0);
+   if (U_http_info.nResponseCode) (void) UFile::writeToTmp(iov_vec, 4, O_RDWR | O_TRUNC, U_CONSTANT_TO_PARAM("response.%P"), 0);
    }
 }
 #endif
@@ -675,19 +673,10 @@ const char* UClientImage_Base::getRequestUri(uint32_t& sz)
    return ptr;
 }
 
-#ifdef U_CACHE_REQUEST_DISABLE
-#  define U_IOV_TO_SAVE     sizeof(struct iovec)
-#  define U_IOV_TO_SAVE_CNT 1
-#else
-#  define U_IOV_TO_SAVE     (sizeof(struct iovec) * 4)
-#  define U_IOV_TO_SAVE_CNT 4 
-#endif
-
+#if defined(U_SERVER_CHECK_TIME_BETWEEN_REQUEST) || (defined(DEBUG) && !defined(U_LOG_DISABLE))
 void UClientImage_Base::startRequest()
 {
    U_TRACE_NO_PARAM(0, "UClientImage_Base::startRequest()")
-
-   iov_sav[0].iov_len = 0;
 
 #ifdef U_SERVER_CHECK_TIME_BETWEEN_REQUEST
    long time_elapsed = chronometer->restart();
@@ -741,6 +730,7 @@ void UClientImage_Base::startRequest()
       }
 #endif
 }
+#endif
 
 void UClientImage_Base::endRequest()
 {
@@ -775,13 +765,6 @@ void UClientImage_Base::endRequest()
       if (U_http_info.uri_len)
 #  endif
       {
-      if (iov_sav[0].iov_len)
-         {
-         U_DUMP_IOVEC(iov_sav,U_IOV_TO_SAVE_CNT)
-
-         U_MEMCPY(iov_vec, iov_sav, U_IOV_TO_SAVE);
-         }
-
 #  if defined(DEBUG) && !defined(U_LOG_DISABLE)
       if (UServer_Base::isLog())
          {
@@ -1035,7 +1018,6 @@ void UClientImage_Base::prepareForRead()
       U_INTERNAL_ASSERT_DIFFERS(socket->iSockDesc, -1)
       U_INTERNAL_ASSERT_EQUALS(UServer_Base::csocket, socket)
       U_INTERNAL_ASSERT_EQUALS(UServer_Base::pClientImage, this)
-      U_INTERNAL_ASSERT_MAJOR(UServer_Base::client_address_len, 0)
 
       UEventFd::fd = socket->iSockDesc;
 
@@ -1157,11 +1139,15 @@ bool UClientImage_Base::genericRead()
 
    U_gettimeofday // NB: optimization if it is enough a time resolution of one second...
 
+#if defined(U_SERVER_CHECK_TIME_BETWEEN_REQUEST) || (defined(DEBUG) && !defined(U_LOG_DISABLE))
    startRequest();
+#endif
 
 #ifdef U_SERVER_CHECK_TIME_BETWEEN_REQUEST
    if (U_ClientImage_advise_for_parallelization)
       {
+      U_INTERNAL_DUMP("U_ClientImage_advise_for_parallelization = %u", U_ClientImage_advise_for_parallelization)
+
       if (checkRequestToCache() == 2         &&
           UClient_Base::csocket == U_NULLPTR &&
           UServer_Base::startParallelization(U_NUM_CLIENT_THRESHOLD))
@@ -1485,7 +1471,7 @@ write:
 #endif
          U_INTERNAL_DUMP("U_ClientImage_pipeline = %b U_ClientImage_data_missing = %b", U_ClientImage_pipeline, U_ClientImage_data_missing)
 
-         result = handlerResponse();
+         result = (writeResponse() ? U_NOTIFIER_OK : U_NOTIFIER_DELETE);
 
 #     ifndef U_PIPELINE_HOMOGENEOUS_DISABLE
          U_INTERNAL_DUMP("nrequest = %u resto = %u U_ClientImage_pipeline = %b U_ClientImage_close = %b rstart = %u",
@@ -1540,8 +1526,11 @@ write:
       {
       if (U_ClientImage_pipeline)
          {
-           endRequest();
+         endRequest();
+
+#     if defined(U_SERVER_CHECK_TIME_BETWEEN_REQUEST) || (defined(DEBUG) && !defined(U_LOG_DISABLE))
          startRequest();
+#     endif
 
          U_ClientImage_request = 0;
 
@@ -1557,10 +1546,18 @@ error:
       U_ClientImage_close = true;
       }
 
-   endRequest();
-
 #ifdef U_THROTTLING_SUPPORT
    if (uri) UServer_Base::clearThrottling();
+#endif
+
+#if defined(U_SERVER_CAPTIVE_PORTAL) && defined(ENABLE_THREAD)
+   U_INTERNAL_DUMP("U_ClientImage_request_is_cached = %b", U_ClientImage_request_is_cached)
+
+   if (U_ClientImage_request_is_cached == false) endRequest();
+
+   U_RETURN(U_NOTIFIER_OK);
+#else
+   endRequest();
 #endif
 
    U_DUMP("U_ClientImage_close = %b UServer_Base::isParallelizationChild() = %b", U_ClientImage_close, UServer_Base::isParallelizationChild())
@@ -1611,8 +1608,12 @@ bool UClientImage_Base::writeResponse()
    U_INTERNAL_ASSERT_DIFFERS(U_http_version, '2')
    U_INTERNAL_ASSERT_DIFFERS(U_ClientImage_parallelization, U_PARALLELIZATION_PARENT)
 
-   int iBytesWrite;
-   uint32_t sz1 = wbuffer->size(),
+   struct iovec* iov;
+#if !defined(U_PIPELINE_HOMOGENEOUS_DISABLE) || defined(U_CLIENT_RESPONSE_PARTIAL_WRITE_SUPPORT) 
+   struct iovec liov[256];
+#endif
+   uint32_t iBytesWrite,
+            sz1 = wbuffer->size(),
             sz2 = (U_http_method_type == HTTP_HEAD ? 0 : body->size());
 #ifndef U_LOG_DISABLE
    uint32_t msg_len = (U_ClientImage_pipeline ? U_CONSTANT_SIZE("[pipeline] ") : 0);
@@ -1634,9 +1635,9 @@ bool UClientImage_Base::writeResponse()
 #  ifdef USERVER_UDP
       if (UServer_Base::budp)
          {
-         iBytesWrite = socket->sendTo(iov_vec[2].iov_base, iov_vec[2].iov_len);
+         U_INTERNAL_ASSERT_EQUALS(iov_vec[2].iov_len, ncount)
 
-         if (iBytesWrite == (int)ncount) U_RETURN(true);
+         if (socket->sendTo(iov_vec[2].iov_base, ncount) == (int)ncount) U_RETURN(true);
 
          U_RETURN(false);
          }
@@ -1666,10 +1667,6 @@ bool UClientImage_Base::writeResponse()
       ncount += iov_vec[0].iov_len +
                 iov_vec[1].iov_len;
 
-      U_MEMCPY(iov_sav, iov_vec, U_IOV_TO_SAVE);
-
-      U_INTERNAL_ASSERT_MAJOR(iov_sav[0].iov_len, 0)
-
 #  if defined(U_LINUX) && defined(ENABLE_THREAD)
       U_INTERNAL_ASSERT_EQUALS(iov_vec[1].iov_base, ULog::ptr_shared_date->date3)
 #  else
@@ -1683,27 +1680,37 @@ bool UClientImage_Base::writeResponse()
 #  endif
       }
 
+   iov = iov_vec+idx;
+
 #ifndef U_PIPELINE_HOMOGENEOUS_DISABLE
    if (nrequest)
       {
       U_INTERNAL_ASSERT_MAJOR(nrequest, 1)
 
+      char* ptr   = (char*)liov;
+      uint32_t sz = sizeof(struct iovec) * iovcnt;
+
+      U_MEMCPY(ptr, iov, sz);
+
+      for (uint32_t i = 1; i < nrequest; ++i)
+         {
+                  ptr +=    sz;
+         U_MEMCPY(ptr, iov, sz);
+         }
+
+      iovcnt *= nrequest;
       ncount *= nrequest;
 
-      iBytesWrite = USocketExt::writev(socket, iov_vec+idx, iovcnt, ncount, 0, nrequest);
+      iBytesWrite = USocketExt::writev(socket, (iov = liov), iovcnt, ncount, 0);
       }
    else
 #endif
    {
-   U_DUMP_IOVEC(iov_vec+idx,iovcnt)
+   U_DUMP_IOVEC(iov,iovcnt)
 
    U_INTERNAL_ASSERT_EQUALS(nrequest, 0)
 
-#if defined(USE_LIBSSL) || defined(_MSWINDOWS_)
-   iBytesWrite = USocketExt::writev( socket, iov_vec+idx, iovcnt, ncount, U_ClientImage_pipeline ? U_TIMEOUT_MS : 0);
-#else
-   iBytesWrite = USocketExt::_writev(socket, iov_vec+idx, iovcnt, ncount, U_ClientImage_pipeline ? U_TIMEOUT_MS : 0);
-#endif
+   iBytesWrite = USocketExt::writev(socket, iov, iovcnt, ncount, U_ClientImage_pipeline ? U_TIMEOUT_MS : 0);
    }
 
 #ifdef U_THROTTLING_SUPPORT
@@ -1713,132 +1720,48 @@ bool UClientImage_Base::writeResponse()
    if (iBytesWrite > 0) UServer_Base::stats_bytes += iBytesWrite;
 #endif
 
-   if (iBytesWrite == (int)ncount) U_RETURN(true);
+   if (iBytesWrite == ncount) U_RETURN(true);
+
+   U_SRV_LOG("write failed (remain %u bytes) - sock_fd %u", ncount - iBytesWrite, socket->iSockDesc);
 
    if (socket->isClosed()) U_RETURN(false);
 
-   if (iBytesWrite == 0)
+#ifndef U_CLIENT_RESPONSE_PARTIAL_WRITE_SUPPORT
+   resetPipelineAndSetCloseConnection();
+
+   U_RETURN(false);
+#else
+   U_INTERNAL_ASSERT_EQUALS(UServer_Base::bssl, false)
+   U_INTERNAL_ASSERT_EQUALS(UEventFd::op_mask, EPOLLIN | EPOLLRDHUP | EPOLLET)
+   U_INTERNAL_ASSERT_DIFFERS(U_ClientImage_parallelization, U_PARALLELIZATION_CHILD) // NB: we must not have pending write...
+
+   sfd = UFile::mkTemp();
+
+   if (sfd == -1)
       {
-      piov = iov_vec+idx;
+      U_SRV_LOG("partial write failed: (remain %u bytes) - error on create temporary file - sock_fd %u", ncount, socket->iSockDesc);
 
       U_RETURN(false);
       }
 
-#ifndef U_PIPELINE_HOMOGENEOUS_DISABLE
-   if (nrequest)
+   iBytesWrite = UFile::writev(sfd, liov, USocketExt::iov_resize(liov, iov, iovcnt, iBytesWrite));
+
+   if (iBytesWrite != ncount)
       {
-      idx    = 3;
-      iovcnt = 1;
+      U_SRV_LOG("partial write failed: (remain %u bytes) - error on write (%u bytes) on temporary file - sock_fd %u sfd %u", ncount, iBytesWrite, socket->iSockDesc, sfd);
 
-      iov_vec[3].iov_base = u_buffer;
-      iov_vec[3].iov_len  = u_buffer_len;
-      }
-#endif
+      UFile::close(sfd);
+                   sfd = -1;
 
-   bool result = false, bflag = false;
-
-   if (UServer_Base::startParallelization()) goto end; // parent
-
-#ifdef DEBUG
-   int i;
-   uint32_t sum;
-#endif
-
-   bool bopen;
-
-loop:
-   U_INTERNAL_ASSERT(socket->isOpen())
-   U_INTERNAL_ASSERT_MAJOR(iBytesWrite, 0)
-
-   U_SRV_LOG_WITH_ADDR("sent partial response: (%u bytes of %u)%.*s parallelization(%u,%u) - to",
-                        iBytesWrite, ncount, msg_len, " [pipeline]", U_ClientImage_parallelization, U_SRV_CNT_PARALLELIZATION);
-
-   ncount -= iBytesWrite;
-
-   while (iov_vec[idx].iov_len == 0)
-      {
-      ++idx;
-      --iovcnt;
-
-      U_INTERNAL_ASSERT_MINOR(idx, 4)
-      U_INTERNAL_ASSERT_MAJOR(iovcnt, 0)
+      U_RETURN(false);
       }
 
-   piov = iov_vec+idx;
+   U_SRV_LOG("partial write: (remain %u bytes) - create temporary file - sock_fd %u sfd %u", ncount, socket->iSockDesc, sfd);
 
-#ifdef DEBUG
-   for (i = sum = 0; i < iovcnt; ++i) sum += piov[i].iov_len;
+   setPendingSendfile(); // NB: now we have a pending sendfile...
 
-   if (sum != ncount)
-      {
-      U_ERROR("sum = %u ncount = %u iBytesWrite = %u iov_vec[%u].iov_len = %u iovcnt = %u", sum, ncount, iBytesWrite, idx, iov_vec[idx].iov_len, iovcnt);
-      }
+   U_RETURN(true);
 #endif
-
-#ifdef USE_LIBSSL
-   if (UServer_Base::bssl == false)
-#endif
-   {
-#ifdef U_CLIENT_RESPONSE_PARTIAL_WRITE_SUPPORT
-   if (U_ClientImage_parallelization != U_PARALLELIZATION_CHILD) goto end;
-#endif
-   }
-
-#if defined(USE_LIBSSL) || defined(_MSWINDOWS_)
-   iBytesWrite = USocketExt::writev( socket, piov, iovcnt, ncount, U_TIMEOUT_MS);
-#else
-   iBytesWrite = USocketExt::_writev(socket, piov, iovcnt, ncount, U_TIMEOUT_MS);
-#endif
-
-#ifdef U_THROTTLING_SUPPORT
-   if (iBytesWrite > 0) bytes_sent += iBytesWrite;
-#endif
-#ifdef DEBUG
-   if (iBytesWrite > 0) UServer_Base::stats_bytes += iBytesWrite;
-#endif
-
-   if (iBytesWrite != (int)ncount)
-      {
-      bopen = socket->isOpen();
-
-      if (bopen &&
-          iBytesWrite > 0)
-         {
-         if (UServer_Base::bssl ||
-             U_ClientImage_parallelization == U_PARALLELIZATION_CHILD) // NB: we must not have pending write...
-            {
-            if (bflag == false)
-               {
-               bflag = true;
-
-               socket->setBlocking();
-               }
-            }
-
-         goto loop;
-         }
-
-      bflag = false;
-
-      U_SRV_LOG_WITH_ADDR("sending partial response: failed - sk %s, (%u bytes of %u)%.*s to", bopen ? "open" : "close", iBytesWrite, ncount, msg_len, " [pipeline]");
-
-      if (bopen) socket->abortive_close();
-
-      goto end;
-      }
-
-   result = true;
-
-   U_SRV_LOG_WITH_ADDR("sending partial response: completed (%u bytes of %u)%.*s to", iBytesWrite, ncount, msg_len, " [pipeline]");
-
-end:
-#ifndef U_PIPELINE_HOMOGENEOUS_DISABLE
-   if (nrequest) u_buffer_len = 0;
-#endif
-
-   if (bflag) socket->setNonBlocking(); // restore socket status flags
-
-   U_RETURN(result);
 }
 
 void UClientImage_Base::close()
@@ -1885,7 +1808,7 @@ void UClientImage_Base::resetPipeline()
 
 void UClientImage_Base::prepareForSendfile()
 {
-   U_TRACE_NO_PARAM(0, "UClientImage_Base::prepareForSendfile()")
+   U_TRACE_NO_PARAM(0, "UClientImage::prepareForSendfile()")
 
    U_INTERNAL_ASSERT_MAJOR(sfd, 0)
    U_INTERNAL_ASSERT_MAJOR(count, 0)
@@ -1905,59 +1828,6 @@ void UClientImage_Base::prepareForSendfile()
    if (UNotifier::isHandler(UEventFd::fd)) (void) UNotifier::modify(this);
 
    U_INTERNAL_DUMP("offset = %I count = %I", offset, count)
-}
-
-int UClientImage_Base::handlerResponse()
-{
-   U_TRACE_NO_PARAM(0, "UClientImage_Base::handlerResponse()")
-
-   U_INTERNAL_ASSERT_DIFFERS(U_http_version, '2')
-
-   if (writeResponse()) U_RETURN(U_NOTIFIER_OK);
-
-   if (socket->isOpen())
-      {
-      U_INTERNAL_ASSERT_EQUALS(UServer_Base::bssl, false)
-      U_INTERNAL_ASSERT_EQUALS(UEventFd::op_mask, EPOLLIN | EPOLLRDHUP | EPOLLET)
-      U_INTERNAL_ASSERT_DIFFERS(U_ClientImage_parallelization, U_PARALLELIZATION_CHILD) // NB: we must not have pending write...
-
-#  ifndef U_CLIENT_RESPONSE_PARTIAL_WRITE_SUPPORT
-      resetPipelineAndSetCloseConnection();
-#  else
-      sfd = UFile::mkTemp();
-
-      if (sfd == -1)
-         {
-         U_SRV_LOG("partial write failed: (remain %u bytes) - error on create temporary file - sock_fd %d", ncount, socket->iSockDesc);
-
-         U_RETURN(U_NOTIFIER_DELETE);
-         }
-
-      U_INTERNAL_ASSERT_POINTER(piov)
-
-      int iBytesWrite = UFile::writev(sfd, piov, iovcnt);
-
-      if (iBytesWrite != (int)ncount)
-         {
-         U_SRV_LOG("partial write failed: (remain %u bytes) - error on write (%d bytes) on temporary file - sock_fd %d sfd %d", ncount, iBytesWrite, socket->iSockDesc, sfd);
-
-         UFile::close(sfd);
-                      sfd = -1;
-
-         U_RETURN(U_NOTIFIER_DELETE);
-         }
-
-      U_SRV_LOG("partial write: (remain %u bytes) - create temporary file - sock_fd %d sfd %d", ncount, socket->iSockDesc, sfd);
-
-      setPendingSendfile(); // NB: now we have a pending sendfile...
-
-      U_RETURN(U_NOTIFIER_OK);
-#  endif
-      }
-
-   U_INTERNAL_ASSERT_DIFFERS(UEventFd::fd, -1)
-
-   U_RETURN(U_NOTIFIER_DELETE);
 }
 
 int UClientImage_Base::handlerWrite()
@@ -1994,7 +1864,7 @@ int UClientImage_Base::handlerWrite()
    if (UServer_Base::checkThrottlingBeforeSend(bwrite) == false) U_RETURN(U_NOTIFIER_OK);
 #endif
 
-   int iBytesWrite;
+   uint32_t iBytesWrite;
 
 write:
    iBytesWrite = USocketExt::sendfile(socket, sfd, &offset, count, 0);
@@ -2006,7 +1876,7 @@ write:
    if (iBytesWrite > 0) UServer_Base::stats_bytes += iBytesWrite;
 #endif
 
-   if (iBytesWrite == (int)count)
+   if (iBytesWrite == count)
       {
       U_SRV_LOG_WITH_ADDR("sending sendfile response completed (%u bytes of %I) to", iBytesWrite, count);
 
@@ -2043,15 +1913,15 @@ write:
 
       U_INTERNAL_ASSERT_MAJOR(count, 0)
 
+      if (socket->isOpen() == false) goto end;
+
       if (bwrite) U_RETURN(U_NOTIFIER_OK);
 
       if (U_ClientImage_parallelization == U_PARALLELIZATION_CHILD)
          {
-wait:    if (socket->isOpen() &&
-             UNotifier::waitForWrite(socket->iSockDesc, U_TIMEOUT_MS) == 1)
-            {
-            goto write;
-            }
+wait:    socket->setBlocking();
+
+         if (UNotifier::waitForWrite(socket->iSockDesc, U_TIMEOUT_MS) == 1) goto write;
 
          goto end;
          }

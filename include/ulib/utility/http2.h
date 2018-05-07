@@ -406,14 +406,7 @@ protected:
 
       U_DUMP_IOVEC(iov,iovcnt)
 
-      int iBytesWrite =
-#  if defined(USE_LIBSSL) || defined(_MSWINDOWS_)
-      USocketExt::writev( UServer_Base::csocket, iov, iovcnt, count, 0);
-#  else
-      USocketExt::_writev(UServer_Base::csocket, iov, iovcnt, count, 0);
-#  endif
-
-      if (iBytesWrite == (int)count) U_RETURN(true);
+      if (USocketExt::writev(UServer_Base::csocket, iov, iovcnt, count, 0) == count) U_RETURN(true);
 
       nerror = CONNECT_ERROR;
 

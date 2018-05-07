@@ -331,7 +331,6 @@ public:
    static char cbuffer[128];
    static UString* request_uri;
    static UString* environment;
-   static struct iovec iov_sav[4];
    static struct iovec iov_vec[4];
    static uint32_t rstart, size_request;
 
@@ -404,22 +403,15 @@ protected:
       wbuffer->setBuffer(U_CAPACITY); // NB: this string can be referenced more than one (often if U_SUBSTR_INC_REF is defined)...
       }
 
-   int  handlerResponse();
-   void prepareForSendfile();
-
-   void setPendingSendfile()
+   int handlerResponse()
       {
-      U_TRACE_NO_PARAM(0, "UClientImage::setPendingSendfile()")
+      U_TRACE_NO_PARAM(0, "UClientImage::handlerResponse()")
 
-      U_INTERNAL_ASSERT_DIFFERS(U_ClientImage_parallelization, U_PARALLELIZATION_CHILD)
+      if (writeResponse()) U_RETURN(U_NOTIFIER_OK);
 
-      count = ncount;
-
-      prepareForSendfile();
-
-      U_ClientImage_pclose(this) |= U_CLOSE;
+      U_RETURN(U_NOTIFIER_DELETE);
       }
-      
+
    static uint32_t getCountToRead()
       {
       U_TRACE_NO_PARAM(0, "UClientImage_Base::getCountToRead()")
@@ -442,16 +434,16 @@ protected:
    bool logCertificate(); // append on log the peer certicate of client ("issuer","serial")
    bool askForClientCertificate();
 
-   static off_t ncount;
    static int idx, iovcnt;
-   static struct iovec* piov;
    static UTimeVal* chronometer;
-   static uint32_t nrequest, resto;
+   static uint32_t ncount, nrequest, resto;
    static long time_between_request, time_run;
 
-   static void   endRequest();
+#if defined(U_SERVER_CHECK_TIME_BETWEEN_REQUEST) || (defined(DEBUG) && !defined(U_LOG_DISABLE))
    static void startRequest();
+#endif
 
+   static void endRequest();
    static void resetReadBuffer();
    static void resetWriteBuffer();
    static void saveRequestResponse();
@@ -480,6 +472,23 @@ protected:
 
       U_ClientImage_request_is_from_userver(this) = true;
       }
+
+   void prepareForSendfile();
+
+#if defined(U_THROTTLING_SUPPORT) || defined(U_CLIENT_RESPONSE_PARTIAL_WRITE_SUPPORT)
+   void setPendingSendfile()
+      {
+      U_TRACE_NO_PARAM(0, "UClientImage::setPendingSendfile()")
+
+      U_INTERNAL_ASSERT_DIFFERS(U_ClientImage_parallelization, U_PARALLELIZATION_CHILD)
+
+      count = ncount;
+
+      prepareForSendfile();
+
+      U_ClientImage_pclose(this) |= U_CLOSE;
+      }
+#endif
 
 #ifndef U_CACHE_REQUEST_DISABLE
    static bool isRequestCacheable() __pure;

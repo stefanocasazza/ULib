@@ -63,8 +63,8 @@ public:
    U_MEMORY_ALLOCATOR
    U_MEMORY_DEALLOCATOR
 
-            UServerPlugIn()        {}
-   virtual ~UServerPlugIn() __pure {}
+       UServerPlugIn() {}
+   virtual ~UServerPlugIn() {}
 
    // Server-wide hooks
 

@@ -525,7 +525,7 @@ protected:
    static void setDriverDirectory(const UString& dir);
 
 private:
-   static void loadStaticLinkedModules(const char* name) U_NO_EXPORT;
+   static void loadStaticLinkedModules(const UString& name) U_NO_EXPORT;
 
    U_DISALLOW_ASSIGN(UOrmDriver)
 

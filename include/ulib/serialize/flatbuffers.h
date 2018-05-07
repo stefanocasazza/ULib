@@ -1993,17 +1993,18 @@ protected:
 
       U_DUMP("parent_width_ = %u byte_width_ = %u type_ = (%u,%S)", parent_width_, byte_width_, type_, getTypeDescription(type_))
 
-      U_INTERNAL_ASSERT(IsString())
-
-      uint8_t* str = Indirect(ptr, parent_width_);
-
-      uint32_t str_len = getSize(str);
-
-      if (str_len)
+      if (IsString())
          {
-         UString x((const char*)str, str_len);
+         uint8_t* str = Indirect(ptr, parent_width_);
 
-         U_RETURN_STRING(x);
+         uint32_t str_len = getSize(str);
+
+         if (str_len)
+            {
+            UString x((const char*)str, str_len);
+
+            U_RETURN_STRING(x);
+            }
          }
 
       return UString::getStringNull();

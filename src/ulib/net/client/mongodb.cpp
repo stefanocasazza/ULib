@@ -150,7 +150,11 @@ bool UMongoDBClient::find(bson_t* query, bson_t* projection, mongoc_query_flags_
     * read_prefs  A mongoc_read_prefs_t or NULL for default read preferences
     */
 
+#if MONGOC_CHECK_VERSION(1, 9, 0)
+   cursor = (mongoc_cursor_t*) U_SYSCALL(mongoc_collection_find_with_opts, "%p,%p,%p,%p", collection, query, U_NULLPTR, read_prefs);
+#else
    cursor = (mongoc_cursor_t*) U_SYSCALL(mongoc_collection_find, "%p,%d,%u,%u,%u,%p,%p,%p", collection, flags, 0, 0, 0, query, projection, read_prefs);
+#endif
 
    if (cursor)
       {

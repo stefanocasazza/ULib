@@ -19,7 +19,7 @@ int      UApplication::exit_value;
 bool     UApplication::is_options;
 uint32_t UApplication::num_args;
 
-UApplication::UApplication() : opt(126)
+UApplication::UApplication() : opt(128)
 {
    U_TRACE_NO_PARAM(0, "UApplication::UApplication()")
 }

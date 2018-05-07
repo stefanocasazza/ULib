@@ -183,7 +183,11 @@ public:
       U_INTERNAL_ASSERT_POINTER(client)
       U_INTERNAL_ASSERT_POINTER(collection)
 
+#  if MONGOC_CHECK_VERSION(1, 9, 0)
+      mongoc_bulk_operation_t* bulk = (mongoc_bulk_operation_t*) U_SYSCALL(mongoc_collection_create_bulk_operation_with_opts, "%p,%p", collection, U_NULLPTR);  
+#  else
       mongoc_bulk_operation_t* bulk = (mongoc_bulk_operation_t*) U_SYSCALL(mongoc_collection_create_bulk_operation, "%p,%b,%p", collection, ordered, write_concern);  
+#  endif
 
       U_RETURN_POINTER(bulk, mongoc_bulk_operation_t);
 #  endif

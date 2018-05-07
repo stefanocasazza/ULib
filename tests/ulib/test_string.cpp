@@ -12,10 +12,13 @@
 #endif
 
 #ifdef U_STDCPP_ENABLE
-#undef min
+#  undef min
 using std::min;
-#include <fstream>
-#include <iomanip>
+#  include <fstream>
+#  include <iomanip>
+#  if defined(HAVE_CXX11)
+#  include <unordered_map>
+#  endif
 #endif
 
 #define TEST_MEMMOVE
@@ -1493,6 +1496,10 @@ U_EXPORT main(int argc, char* argv[])
    U_ULIB_INIT(argv);
 
    U_TRACE(5, "main(%d)", argc)
+
+#if defined(U_STDCPP_ENABLE) && defined(HAVE_CXX11)
+   std::unordered_map<UString, uint64_t> arounds;
+#endif
 
    const char* ptr = ".banner.swpx" + U_CONSTANT_SIZE(".banner.swpx") - sizeof(".swp");
 

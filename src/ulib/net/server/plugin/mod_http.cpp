@@ -548,8 +548,6 @@ int UHttpPlugIn::handlerRun() // NB: we use this method instead of handlerInit()
                     UClientImage_Base::iov_vec[0].iov_len, UClientImage_Base::iov_vec[0].iov_base,
                     UClientImage_Base::iov_vec[1].iov_len, UClientImage_Base::iov_vec[1].iov_base)
 
-   U_MEMCPY(UClientImage_Base::iov_sav, UClientImage_Base::iov_vec, sizeof(struct iovec) * 4);
-
    UClientImage_Base::callerIsValidMethod     = UHTTP::isValidMethod;
    UClientImage_Base::callerIsValidRequest    = UHTTP::isValidRequest;
    UClientImage_Base::callerIsValidRequestExt = UHTTP::isValidRequestExt;

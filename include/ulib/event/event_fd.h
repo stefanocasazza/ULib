@@ -63,7 +63,7 @@ public:
 #  endif
       }
 
-   virtual ~UEventFd() __pure
+   virtual ~UEventFd()
       {
 #  ifdef USE_LIBEVENT
       if (pevent)

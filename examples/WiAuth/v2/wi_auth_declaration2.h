@@ -464,7 +464,11 @@ static bool setAccessPoint()
 }
 
 static inline void setSessionkey()
-{ key_session->setBuffer(200U); key_session->snprintf(U_CONSTANT_TO_PARAM("captiveId:%u;apId:%v;deviceId:%v;ip:%v"), addr, ap_label->rep, mac->rep, ip->rep); }
+{
+   U_TRACE_NO_PARAM(5, "::setSessionkey()")
+
+   key_session->setBuffer(200U); key_session->snprintf(U_CONSTANT_TO_PARAM("captiveId:%u;apId:%v;deviceId:%v;ip:%v"), addr, ap_label->rep, mac->rep, ip->rep);
+}
 
 static void setSessionPolicy()
 {
@@ -526,9 +530,9 @@ static void setSessionPolicy()
    U_INTERNAL_DUMP("policySessionNotify = %u", policySessionNotify)
 }
 
-static bool getSession()
+static bool getSession(const char* op, uint32_t op_len)
 {
-   U_TRACE_NO_PARAM(5, "::getSession()")
+   U_TRACE(5, "::getSession(%.*S,%u)", op_len, op, op_len)
 
    (void) rc->hmget(U_CONSTANT_TO_PARAM("SESSION:%v created pId notify consume counter lastUpdate captiveId apId deviceId ip"), key_session->rep);
 
@@ -558,7 +562,7 @@ static bool getSession()
       U_RETURN(true);
       }
 
-   U_LOGGER("*** SESSION(%V) NOT FOUND ***", key_session->rep);
+   U_LOGGER("*** SESSION(%V) NOT FOUND at %.*s() ***", key_session->rep, op_len, op);
 
    U_RETURN(false);
 }
@@ -608,6 +612,8 @@ static void deleteSession()
    (void) rc->del(U_CONSTANT_TO_PARAM("SESSION:%v"), key_session->rep);
    (void) rc->zrem(U_CONSTANT_TO_PARAM("SESSION:byCaptiveIdAndApId deviceId:%v;ip:%v"), mac->rep, ip->rep);
    (void) rc->zrem(U_CONSTANT_TO_PARAM("SESSION:byLastUpdate %v"), key_session->rep);
+
+   U_LOGGER("*** SESSION(%V) deleted at deleteSession() ***", key_session->rep);
 }
 
 static void resetDeviceDailyCounter()
@@ -697,7 +703,7 @@ static void lostSession(bool bclean)
 {
    U_TRACE(5, "::lostSession(%b)", bclean)
 
-   if (getSession())
+   if (getSession(U_CONSTANT_TO_PARAM("lostSession")))
       {
       if (bclean)
          {
@@ -1105,6 +1111,8 @@ static void POST_login()
          (void) rc->hmset(U_CONSTANT_TO_PARAM("SESSION:%v captiveId %u apId %v deviceId %v ip %v created %u pId %v notify %c consume %c counter 0 lastUpdate %u"), key_session->rep,
                           addr, ap_label->rep, mac->rep, ip->rep, u_now->tv_sec, policySessionId->rep, buffer[1], '0'+ap_consume, u_now->tv_sec);
 
+         U_LOGGER("*** SESSION(%V) created at POST_login() ***", key_session->rep);
+
          (void) rc->zadd(U_CONSTANT_TO_PARAM("SESSION:byCaptiveIdAndApId %u%06u deviceId:%v;ip:%v"), addr, ap_label->strtoul(), mac->rep, ip->rep);
          (void) rc->zadd(U_CONSTANT_TO_PARAM("SESSION:byLastUpdate %u %v"), u_now->tv_sec, key_session->rep);
          }
@@ -1269,20 +1277,20 @@ static void POST_info()
          time_no_traffic = vec.AsVectorGet<uint32_t>(i+5);
          */
 
-         *ip = UIPAddress::toString(ip_peer);
+         *ip = UIPAddress::toString(htonl(ip_peer));
 
          U_INTERNAL_DUMP("ap_label = %V mac = %V ip = %V ctraffic = %u", ap_label->rep, mac->rep, ip->rep, ctraffic)
 
-         if (u_isIPv4Addr(U_STRING_TO_PARAM(*ip)) == false)
+         if (mac->empty())
             {
-            U_LOGGER("*** INFO (ap_label = %V mac = %V ip = %V ctraffic = %u) NOT VALID ***", ap_label->rep, mac->rep, ip->rep, ctraffic);
+            U_LOGGER("*** INFO (ap_label = %V mac = \"\" ip = %V ctraffic = %u) NOT VALID ***", ap_label->rep, ip->rep, ctraffic);
 
             continue;
             }
 
          setSessionkey();
 
-         if (getSession() == false) goto del_login;
+         if (getSession(U_CONSTANT_TO_PARAM("POST_info")) == false) goto del_login;
 
          U_INTERNAL_DUMP("ap_label = %V mac = %V ip = %V", rc->getString(7).rep, rc->getString(8).rep, rc->getString(9).rep)
 

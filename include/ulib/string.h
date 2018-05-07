@@ -82,11 +82,11 @@ enum StringAllocationIndex {
  */
 
 #ifdef DEBUG
-#  define U_STRINGREP_FROM_CONSTANT(c_str) (void*)U_CHECK_MEMORY_SENTINEL, U_NULLPTR, 0, U_CONSTANT_SIZE(c_str), 0, 0, c_str
+#  define U_STRINGREP_FROM_CONSTANT(cstr) (void*)U_CHECK_MEMORY_SENTINEL, U_NULLPTR, 0, U_CONSTANT_SIZE(cstr), 0, 0, cstr
 #elif defined(U_SUBSTR_INC_REF)
-#  define U_STRINGREP_FROM_CONSTANT(c_str)                                 U_NULLPTR,    U_CONSTANT_SIZE(c_str), 0, 0, c_str
+#  define U_STRINGREP_FROM_CONSTANT(cstr)                                 U_NULLPTR,    U_CONSTANT_SIZE(cstr), 0, 0, cstr
 #else
-#  define U_STRINGREP_FROM_CONSTANT(c_str)                                               U_CONSTANT_SIZE(c_str), 0, 0, c_str
+#  define U_STRINGREP_FROM_CONSTANT(cstr)                                               U_CONSTANT_SIZE(cstr), 0, 0, cstr
 #endif
 
 class Url;
@@ -223,7 +223,7 @@ public:
       }
 
    bool  isNullTerminated() const { return (str [_length] == '\0'); }
-   void setNullTerminated()       { ((char*)str)[_length]  = '\0'; }
+   void setNullTerminated() const { ((char*)str)[_length]  = '\0'; }
 
    uint32_t space() const
       {
@@ -1827,19 +1827,19 @@ public:
 
    // C-Style String
 
-   void setNullTerminated()
+   void setNullTerminated() const
       {
       U_TRACE_NO_PARAM(0, "UString::setNullTerminated()")
 
       U_INTERNAL_ASSERT_MAJOR(rep->_length, 0)
 
       if (writeable()) rep->setNullTerminated();
-      else             duplicate();
+      else             ((UString*)this)->duplicate();
 
       U_ASSERT_EQUALS(u__strlen(rep->str, __PRETTY_FUNCTION__), rep->_length)
       }
 
-   const char* c_str()
+   char* c_str() const
       {
       U_TRACE_NO_PARAM(0, "UString::c_str()")
 
@@ -1849,7 +1849,7 @@ public:
          setNullTerminated();
          }
 
-      U_RETURN(rep->str);
+      return (char*)rep->str;
       }
 
    char* c_strdup() const                                            { return strndup(rep->str, rep->_length); }
@@ -2625,4 +2625,13 @@ inline bool operator>=(const UString& lhs,    const UString& rhs)    { return lh
 inline bool operator>=(const char* lhs,       const UString& rhs)    { return rhs.compare(lhs)  <= 0; }
 inline bool operator>=(const UString& lhs,    const char* rhs)       { return lhs.compare(rhs)  >= 0; }
 
+// by Victor Stewart
+
+#if defined(U_STDCPP_ENABLE) && defined(HAVE_CXX11)
+namespace std {
+   template<> struct hash<UString> {
+      std::size_t operator()(UString const& str) const noexcept { return std::hash<char *>()(str.c_str()); }
+   };
+}
+#endif
 #endif

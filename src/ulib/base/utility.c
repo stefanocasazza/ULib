@@ -1147,7 +1147,7 @@ void u_bind2cpu(cpu_set_t* cpuset, int n)
     * mask = 13 (1101b): cpu0, 2, 3
     */
 
-#if (!defined(U_SERVER_CAPTIVE_PORTAL) || defined(ENABLE_THREAD)) && defined(HAVE_SCHED_GETAFFINITY)
+#ifdef HAVE_SCHED_GETAFFINITY
    CPU_SET(n, cpuset);
 
    (void) sched_setaffinity(u_pid, sizeof(cpu_set_t), cpuset);
@@ -1162,7 +1162,7 @@ void u_bind2cpu(cpu_set_t* cpuset, int n)
 
 void u_switch_to_realtime_priority(void)
 {
-#if (!defined(U_SERVER_CAPTIVE_PORTAL) || defined(ENABLE_THREAD)) && defined(_POSIX_PRIORITY_SCHEDULING) && \
+#if defined(_POSIX_PRIORITY_SCHEDULING) && \
     (_POSIX_PRIORITY_SCHEDULING > 0) && (defined(HAVE_SCHED_H) || defined(HAVE_SYS_SCHED_H))
    struct sched_param sp;
 

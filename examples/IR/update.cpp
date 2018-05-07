@@ -42,10 +42,10 @@ public:
       U_TRACE(5, "Application::buildFilenameListFrom(%p,%.*S)", &vec, U_STRING_TO_TRACE(arg))
 
       uint32_t pos;
-      UTokenizer t(arg);
+      UTokenizer lt(arg);
       UString dir, filename, filter;
 
-      while (t.next(filename, ','))
+      while (lt.next(filename, ','))
          {
          if (filename.find_first_of("?*", 0, 2) == U_NOT_FOUND) vec.push(filename);
          else

@@ -501,7 +501,7 @@ void USocket::reusePort(int _flags)
 
    U_CHECK_MEMORY
 
-#if defined(U_LINUX) && (!defined(U_SERVER_CAPTIVE_PORTAL) || defined(ENABLE_THREAD))
+#ifdef U_LINUX
    U_INTERNAL_DUMP("breuseport = %b", breuseport)
 
    if (breuseport)

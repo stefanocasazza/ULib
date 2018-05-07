@@ -955,13 +955,13 @@ bool UServer_Base::checkHitStats(const char* key, uint32_t key_len, uint32_t int
    U_INTERNAL_ASSERT_EQUALS(evasive_rec->timestamp, (uint32_t)u_now->tv_sec)
    */
 
-   char msg[4096];
+   char lmsg[4096];
    uint32_t msg_len;
    bool bmail = false;
 
    if (count == site_count)
       {
-      msg_len = u__snprintf(msg, sizeof(msg), U_CONSTANT_TO_PARAM("(pid %P) it has requested more than %u objects within the past %u seconds"), site_count, site_interval);
+      msg_len = u__snprintf(lmsg, sizeof(lmsg), U_CONSTANT_TO_PARAM("(pid %P) it has requested more than %u objects within the past %u seconds"), site_count, site_interval);
 
       if (dosEmailAddress)
          {
@@ -977,17 +977,17 @@ bool UServer_Base::checkHitStats(const char* key, uint32_t key_len, uint32_t int
       uint32_t sz;
       const char* ptr = UClientImage_Base::getRequestUri(sz);
 
-      msg_len = u__snprintf(msg, sizeof(msg), U_CONSTANT_TO_PARAM("(pid %P) it has requested the same page %.*S more than %u within the past %u seconds"),
+      msg_len = u__snprintf(lmsg, sizeof(lmsg), U_CONSTANT_TO_PARAM("(pid %P) it has requested the same page %.*S more than %u within the past %u seconds"),
                             sz, ptr, page_count, page_interval);
 
       UClientImage_Base::abortive_close();
       }
 
-   U_DEBUG("blacklisting address %.*S, possible DoS attack: %.*s", U_CLIENT_ADDRESS_TO_TRACE, msg_len, msg);
+   U_DEBUG("blacklisting address %.*S, possible DoS attack: %.*s", U_CLIENT_ADDRESS_TO_TRACE, msg_len, lmsg);
 
-   U_SRV_LOG("WARNING: blacklisting address %.*S, possible DoS attack: %.*s", U_CLIENT_ADDRESS_TO_TRACE, msg_len, msg);
+   U_SRV_LOG("WARNING: blacklisting address %.*S, possible DoS attack: %.*s", U_CLIENT_ADDRESS_TO_TRACE, msg_len, lmsg);
 
-   if (dos_LOG) ULog::log(dos_LOG->getFd(), U_CONSTANT_TO_PARAM("blacklisting %.*S: %.*s"), U_CLIENT_ADDRESS_TO_TRACE, msg_len, msg);
+   if (dos_LOG) ULog::log(dos_LOG->getFd(), U_CONSTANT_TO_PARAM("blacklisting %.*S: %.*s"), U_CLIENT_ADDRESS_TO_TRACE, msg_len, lmsg);
 
    if (bmail ||
        systemCommand)
@@ -1000,7 +1000,7 @@ bool UServer_Base::checkHitStats(const char* key, uint32_t key_len, uint32_t int
 
       // child
 
-      if (systemCommand) manageCommand(U_STRING_TO_PARAM(*systemCommand), U_CLIENT_ADDRESS_TO_TRACE, msg_len, msg);
+      if (systemCommand) manageCommand(U_STRING_TO_PARAM(*systemCommand), U_CLIENT_ADDRESS_TO_TRACE, msg_len, lmsg);
 
       if (bmail)
          {
@@ -1008,7 +1008,7 @@ bool UServer_Base::checkHitStats(const char* key, uint32_t key_len, uint32_t int
 
          UString body(100U);
 
-         body.snprintf(U_CONSTANT_TO_PARAM("blacklisting address %.*S, possible DoS attack: %.*s"), U_CLIENT_ADDRESS_TO_TRACE, msg_len, msg);
+         body.snprintf(U_CONSTANT_TO_PARAM("blacklisting address %.*S, possible DoS attack: %.*s"), U_CLIENT_ADDRESS_TO_TRACE, msg_len, lmsg);
 
          emailClient->sendEmail(*dosEmailAddress, U_STRING_FROM_CONSTANT("possible DoS attack"), body);
          }
@@ -1996,15 +1996,15 @@ void UServer_Base::closeLog()
 }
 
 #ifdef U_WELCOME_SUPPORT
-void UServer_Base::setMsgWelcome(const UString& msg)
+void UServer_Base::setMsgWelcome(const UString& lmsg)
 {
-   U_TRACE(0, "UServer_Base::setMsgWelcome(%V)", msg.rep)
+   U_TRACE(0, "UServer_Base::setMsgWelcome(%V)", lmsg.rep)
 
-   U_INTERNAL_ASSERT(msg)
+   U_INTERNAL_ASSERT(lmsg)
 
    U_NEW_STRING(msg_welcome, UString(U_CAPACITY));
 
-   UEscape::decode(msg, *msg_welcome);
+   UEscape::decode(lmsg, *msg_welcome);
 
    if (*msg_welcome) (void) msg_welcome->shrink();
    else
@@ -2609,16 +2609,14 @@ void UServer_Base::loadConfigParam()
    }
 }
 
-U_NO_EXPORT void UServer_Base::loadStaticLinkedModules(const char* name)
+U_NO_EXPORT void UServer_Base::loadStaticLinkedModules(const UString& name)
 {
-   U_TRACE(0, "UServer_Base::loadStaticLinkedModules(%S)", name)
+   U_TRACE(0, "UServer_Base::loadStaticLinkedModules(%V)", name.rep)
 
    U_INTERNAL_ASSERT_POINTER(vplugin_name)
    U_INTERNAL_ASSERT_MAJOR(vplugin_size, 0)
 
-   UString x((void*)name, u__strlen(name, __PRETTY_FUNCTION__));
-
-   if (vplugin_name->find(x) != U_NOT_FOUND) // NB: we load only the plugin that we want from configuration (PLUGIN var)...
+   if (vplugin_name->find(name) != U_NOT_FOUND) // NB: we load only the plugin that we want from configuration (PLUGIN var)...
       {
 #if defined(U_STATIC_HANDLER_RPC)    || defined(U_STATIC_HANDLER_SHIB)   || defined(U_STATIC_HANDLER_ECHO)  || \
     defined(U_STATIC_HANDLER_STREAM) || defined(U_STATIC_HANDLER_SOCKET) || defined(U_STATIC_HANDLER_SCGI)  || \
@@ -2627,61 +2625,60 @@ U_NO_EXPORT void UServer_Base::loadStaticLinkedModules(const char* name)
     defined(U_STATIC_HANDLER_NOCAT)  || defined(U_STATIC_HANDLER_HTTP)
       const UServerPlugIn* _plugin = U_NULLPTR;
 #  ifdef U_STATIC_HANDLER_RPC
-      if (x.equal(U_CONSTANT_TO_PARAM("rpc")))    { U_NEW_WITHOUT_CHECK_MEMORY(URpcPlugIn, _plugin, URpcPlugIn);  goto next; }
+      if (name.equal(U_CONSTANT_TO_PARAM("rpc")))    { U_NEW_WITHOUT_CHECK_MEMORY(URpcPlugIn, _plugin, URpcPlugIn);  goto next; }
 #  endif
 #  ifdef U_STATIC_HANDLER_SHIB
-      if (x.equal(U_CONSTANT_TO_PARAM("shib")))   { U_NEW_WITHOUT_CHECK_MEMORY(UShibPlugIn, _plugin, UShibPlugIn); goto next; }
+      if (name.equal(U_CONSTANT_TO_PARAM("shib")))   { U_NEW_WITHOUT_CHECK_MEMORY(UShibPlugIn, _plugin, UShibPlugIn); goto next; }
 #  endif
 #  ifdef U_STATIC_HANDLER_ECHO
-      if (x.equal(U_CONSTANT_TO_PARAM("echo")))   { U_NEW_WITHOUT_CHECK_MEMORY(UEchoPlugIn, _plugin, UEchoPlugIn); goto next; }
+      if (name.equal(U_CONSTANT_TO_PARAM("echo")))   { U_NEW_WITHOUT_CHECK_MEMORY(UEchoPlugIn, _plugin, UEchoPlugIn); goto next; }
 #  endif
 #  ifdef U_STATIC_HANDLER_STREAM
-      if (x.equal(U_CONSTANT_TO_PARAM("stream"))) { U_NEW_WITHOUT_CHECK_MEMORY(UStreamPlugIn, _plugin, UStreamPlugIn); goto next; }
+      if (name.equal(U_CONSTANT_TO_PARAM("stream"))) { U_NEW_WITHOUT_CHECK_MEMORY(UStreamPlugIn, _plugin, UStreamPlugIn); goto next; }
 #  endif
 #  ifdef U_STATIC_HANDLER_SOCKET
-      if (x.equal(U_CONSTANT_TO_PARAM("socket"))) { U_NEW_WITHOUT_CHECK_MEMORY(UWebSocketPlugIn, _plugin, UWebSocketPlugIn); goto next; }
+      if (name.equal(U_CONSTANT_TO_PARAM("socket"))) { U_NEW_WITHOUT_CHECK_MEMORY(UWebSocketPlugIn, _plugin, UWebSocketPlugIn); goto next; }
 #  endif
 #  ifdef U_STATIC_HANDLER_SCGI
-      if (x.equal(U_CONSTANT_TO_PARAM("scgi")))   { U_NEW_WITHOUT_CHECK_MEMORY(USCGIPlugIn, _plugin, USCGIPlugIn); goto next; }
+      if (name.equal(U_CONSTANT_TO_PARAM("scgi")))   { U_NEW_WITHOUT_CHECK_MEMORY(USCGIPlugIn, _plugin, USCGIPlugIn); goto next; }
 #  endif
 #  ifdef U_STATIC_HANDLER_FCGI
-      if (x.equal(U_CONSTANT_TO_PARAM("fcgi")))   { U_NEW_WITHOUT_CHECK_MEMORY(UFCGIPlugIn, _plugin, UFCGIPlugIn); goto next; }
+      if (name.equal(U_CONSTANT_TO_PARAM("fcgi")))   { U_NEW_WITHOUT_CHECK_MEMORY(UFCGIPlugIn, _plugin, UFCGIPlugIn); goto next; }
 #  endif
 #  ifdef U_STATIC_HANDLER_GEOIP
-      if (x.equal(U_CONSTANT_TO_PARAM("geoip")))  { U_NEW_WITHOUT_CHECK_MEMORY(UGeoIPPlugIn, _plugin, UGeoIPPlugIn); goto next; }
+      if (name.equal(U_CONSTANT_TO_PARAM("geoip")))  { U_NEW_WITHOUT_CHECK_MEMORY(UGeoIPPlugIn, _plugin, UGeoIPPlugIn); goto next; }
 #  endif
 #  ifdef U_STATIC_HANDLER_PROXY
-      if (x.equal(U_CONSTANT_TO_PARAM("proxy")))  { U_NEW_WITHOUT_CHECK_MEMORY(UProxyPlugIn, _plugin, UProxyPlugIn); goto next; }
+      if (name.equal(U_CONSTANT_TO_PARAM("proxy")))  { U_NEW_WITHOUT_CHECK_MEMORY(UProxyPlugIn, _plugin, UProxyPlugIn); goto next; }
 #  endif
 #  ifdef U_STATIC_HANDLER_SOAP
-      if (x.equal(U_CONSTANT_TO_PARAM("soap")))   { U_NEW_WITHOUT_CHECK_MEMORY(USoapPlugIn, _plugin, USoapPlugIn); goto next; }
+      if (name.equal(U_CONSTANT_TO_PARAM("soap")))   { U_NEW_WITHOUT_CHECK_MEMORY(USoapPlugIn, _plugin, USoapPlugIn); goto next; }
 #  endif
 #  ifdef U_STATIC_HANDLER_SSI
-      if (x.equal(U_CONSTANT_TO_PARAM("ssi")))    { U_NEW_WITHOUT_CHECK_MEMORY(USSIPlugIn, _plugin, USSIPlugIn);  goto next; }
+      if (name.equal(U_CONSTANT_TO_PARAM("ssi")))    { U_NEW_WITHOUT_CHECK_MEMORY(USSIPlugIn, _plugin, USSIPlugIn);  goto next; }
 #  endif
 #  ifdef U_STATIC_HANDLER_TSA
-      if (x.equal(U_CONSTANT_TO_PARAM("tsa")))    { U_NEW_WITHOUT_CHECK_MEMORY(UTsaPlugIn, _plugin, UTsaPlugIn);  goto next; }
+      if (name.equal(U_CONSTANT_TO_PARAM("tsa")))    { U_NEW_WITHOUT_CHECK_MEMORY(UTsaPlugIn, _plugin, UTsaPlugIn);  goto next; }
 #  endif
 #  ifdef U_STATIC_HANDLER_NOCAT
-      if (x.equal(U_CONSTANT_TO_PARAM("nocat")))  { U_NEW_WITHOUT_CHECK_MEMORY(UNoCatPlugIn, _plugin, UNoCatPlugIn); goto next; }
+      if (name.equal(U_CONSTANT_TO_PARAM("nocat")))  { U_NEW_WITHOUT_CHECK_MEMORY(UNoCatPlugIn, _plugin, UNoCatPlugIn); goto next; }
 #  endif
 #  ifdef U_STATIC_HANDLER_NODOG
-      if (x.equal(U_CONSTANT_TO_PARAM("nodog")))  { U_NEW_WITHOUT_CHECK_MEMORY(UNoDogPlugIn, _plugin, UNoDogPlugIn); goto next; }
+      if (name.equal(U_CONSTANT_TO_PARAM("nodog")))  { U_NEW_WITHOUT_CHECK_MEMORY(UNoDogPlugIn, _plugin, UNoDogPlugIn); goto next; }
 #  endif
 #  ifdef U_STATIC_HANDLER_HTTP
-      if (x.equal(U_CONSTANT_TO_PARAM("http")))   { U_NEW_WITHOUT_CHECK_MEMORY(UHttpPlugIn, _plugin, UHttpPlugIn); goto next; }
+      if (name.equal(U_CONSTANT_TO_PARAM("http")))   { U_NEW_WITHOUT_CHECK_MEMORY(UHttpPlugIn, _plugin, UHttpPlugIn); goto next; }
 #  endif
 next: if (_plugin)
          {
-         vplugin_name_static->push_back(x);
-
          vplugin_static->push_back(_plugin);
+         vplugin_name_static->push_back(name);
 
-         U_SRV_LOG("Link phase of static plugin %V success", x.rep);
+         U_SRV_LOG("Link phase of static plugin %V success", name.rep);
          }
       else
          {
-         U_SRV_LOG("WARNING: Link phase of static plugin %V failed", x.rep);
+         U_SRV_LOG("WARNING: Link phase of static plugin %V failed", name.rep);
          }
 #endif
       }
@@ -3968,9 +3965,10 @@ try_accept:
       goto end;
       }
 
+#if !defined(U_SERVER_CAPTIVE_PORTAL) || !defined(ENABLE_THREAD)
    setClientAddress(CSOCKET, CLIENT_ADDRESS, CLIENT_ADDRESS_LEN);
 
-#ifdef U_EVASIVE_SUPPORT
+# ifdef U_EVASIVE_SUPPORT
    if (checkHold(CSOCKET->getClientAddress()))
       {
       CSOCKET->abortive_close();
@@ -3988,6 +3986,7 @@ try_accept:
 
       goto next;
       }
+# endif
 #endif
 
 #if defined(_MSWINDOWS_) && !defined(USE_LIBEVENT)
@@ -4160,7 +4159,7 @@ retry:   pid = UProcess::waitpid(-1, &status, WNOHANG); // NB: to avoid too much
    else
 #endif
    {
-#if defined(DEBUG) && (!defined(U_SERVER_CAPTIVE_PORTAL) || defined(ENABLE_THREAD))
+#ifdef DEBUG
    uint32_t len = 0;
    int cpu = U_SYSCALL_NO_PARAM(sched_getcpu), scpu = -1;
 
@@ -4359,9 +4358,9 @@ void UServer_Base::runLoop(const char* user)
    if (pluginsHandlerFork() != U_PLUGIN_HANDLER_FINISHED) U_ERROR("Plugins stage fork failed");
    }
 
+#ifdef U_LINUX
    socket->reusePort(socket_flags);
 
-#ifdef U_LINUX
 # if defined(USERVER_UDP) || defined(USERVER_IPC)
    if (budp == false &&
        bipc == false)
@@ -4609,9 +4608,7 @@ void UServer_Base::run()
     * >1 - pool of process serialize plus monitoring process
     */
 
-#if defined(U_SERVER_CAPTIVE_PORTAL) && !defined(ENABLE_THREAD)
-   monitoring_process = true;
-#else
+# if !defined(U_SERVER_CAPTIVE_PORTAL) || defined(ENABLE_THREAD)
         if (preforked_num_kids > 1) monitoring_process = true;
    else if (monitoring_process == false)
       {
@@ -4619,6 +4616,8 @@ void UServer_Base::run()
 
       goto stop;
       }
+#else
+   monitoring_process = true;
 #endif
 
    /**
@@ -4632,7 +4631,7 @@ void UServer_Base::run()
    cpu_set_t cpuset;
    pid_t pid, pid_to_wait;
 
-#if defined(HAVE_SCHED_GETAFFINITY) && (!defined(U_SERVER_CAPTIVE_PORTAL) || defined(ENABLE_THREAD))
+#ifdef HAVE_SCHED_GETAFFINITY
    if (u_get_num_cpu() > 1 &&
        (preforked_num_kids % u_num_cpu) == 0)
       {
@@ -4674,7 +4673,7 @@ void UServer_Base::run()
 
             U_INTERNAL_DUMP("child = %P UNotifier::num_connection = %d", UNotifier::num_connection)
 
-#        if defined(HAVE_SCHED_GETAFFINITY) && (!defined(U_SERVER_CAPTIVE_PORTAL) || defined(ENABLE_THREAD))
+#        ifdef HAVE_SCHED_GETAFFINITY
             if (baffinity)
                {
                CPU_ZERO(&cpuset);

@@ -25,29 +25,29 @@
 
 #include <ulib/application.h>
 
-#define U_DATA_URI                           (const char*)(num_args >= 1  ?        argv[optind+0]   : "")
-#define U_X509                               (const char*)(num_args >= 2  ?        argv[optind+1]   : "")
-#define U_KEY_HANDLE                         (const char*)(num_args >= 3  ?        argv[optind+2]   : "")
-#define U_DIGEST_ALGORITHM                   (const char*)(num_args >= 4  ?        argv[optind+3]   : "")
-#define U_SIGNING_TIME                                    (num_args >= 5  ? u_atoi(argv[optind+4])  : 0)
-#define U_CLAIMED_ROLE                       (const char*)(num_args >= 6  ?        argv[optind+5]   : "")
-#define U_PRODUCTION_PLACE_CITY              (const char*)(num_args >= 7  ?        argv[optind+6]   : "")
-#define U_PRODUCTION_PLACE_STATE_OR_PROVINCE (const char*)(num_args >= 8  ?        argv[optind+7]   : "")
-#define U_PRODUCTION_PLACE_POSTAL_CODE       (const char*)(num_args >= 9  ?        argv[optind+8]   : "")
-#define U_PRODUCTION_PLACE_COUNTRY_NAME      (const char*)(num_args >= 10 ?        argv[optind+9]   : "")
-#define U_CA_STORE                           (const char*)(num_args >= 11 ?        argv[optind+10]  : "")
-#define U_SIGNATURE_TIMESTAMP                (const char*)(num_args >= 12 ?        argv[optind+11]  : "")
+#define U_DATA_URI                           (const char*)(lnum_args >= 1  ?        argv[optind+0]   : "")
+#define U_X509                               (const char*)(lnum_args >= 2  ?        argv[optind+1]   : "")
+#define U_KEY_HANDLE                         (const char*)(lnum_args >= 3  ?        argv[optind+2]   : "")
+#define U_DIGEST_ALGORITHM                   (const char*)(lnum_args >= 4  ?        argv[optind+3]   : "")
+#define U_SIGNING_TIME                                    (lnum_args >= 5  ? u_atoi(argv[optind+4])  : 0)
+#define U_CLAIMED_ROLE                       (const char*)(lnum_args >= 6  ?        argv[optind+5]   : "")
+#define U_PRODUCTION_PLACE_CITY              (const char*)(lnum_args >= 7  ?        argv[optind+6]   : "")
+#define U_PRODUCTION_PLACE_STATE_OR_PROVINCE (const char*)(lnum_args >= 8  ?        argv[optind+7]   : "")
+#define U_PRODUCTION_PLACE_POSTAL_CODE       (const char*)(lnum_args >= 9  ?        argv[optind+8]   : "")
+#define U_PRODUCTION_PLACE_COUNTRY_NAME      (const char*)(lnum_args >= 10 ?        argv[optind+9]   : "")
+#define U_CA_STORE                           (const char*)(lnum_args >= 11 ?        argv[optind+10]  : "")
+#define U_SIGNATURE_TIMESTAMP                (const char*)(lnum_args >= 12 ?        argv[optind+11]  : "")
 
-#define U_ARCHIVE_TIMESTAMP                  (const char*)(num_args >= 0  ?        argv[optind+0]   : "")
-#define U_SCHEMA                             (const char*)(num_args >= 1  ?        argv[optind+1]   : "")
+#define U_ARCHIVE_TIMESTAMP                  (const char*)(lnum_args >= 0  ?        argv[optind+0]   : "")
+#define U_SCHEMA                             (const char*)(lnum_args >= 1  ?        argv[optind+1]   : "")
 
 template <class T> class UClientXAdES : public USOAPClient<T> {
 public:
 
    // COSTRUTTORE
 
-   explicit UClientXAdES(UFileConfig* cfg) : USOAPClient<T>(cfg) {}
-   virtual ~UClientXAdES()                                       {}
+   explicit UClientXAdES(UFileConfig* pcfg) : USOAPClient<T>(pcfg) {}
+   virtual ~UClientXAdES()                                         {}
 
    // OBJECT FOR METHOD REQUEST
 
@@ -350,9 +350,9 @@ public:
 
       if (method == U_NULLPTR) usage();
 
-      int op = u_atoi(method), num_args = (argc - optind);
+      int op = u_atoi(method), lnum_args = (argc - optind);
 
-      U_INTERNAL_DUMP("optind = %d num_args = %d", optind, num_args)
+      U_INTERNAL_DUMP("optind = %d lnum_args = %d", optind, lnum_args)
 
       // manage file configuration
 

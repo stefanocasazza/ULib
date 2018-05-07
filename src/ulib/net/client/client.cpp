@@ -412,7 +412,7 @@ bool UClient_Base::sendRequest(bool bread_response)
       }
 
    bool ok = false;
-   int ncount = 0, counter = 0;
+   uint32_t ncount = 0, counter = 0;
 
    for (int i = 0; i < iovcnt; ++i) ncount += iov[i].iov_len;
 
@@ -421,7 +421,7 @@ resend:
       {
       U_CLIENT_LOG_REQUEST(ncount)
 
-      ok = (USocketExt::writev(socket, iov, iovcnt, ncount, timeoutMS, 1) == ncount);
+      ok = (USocketExt::writev(socket, iov, iovcnt, ncount, timeoutMS) == ncount);
 
       if (ok == false)
          {

@@ -2093,7 +2093,7 @@ for mod in $use_static_module; do
 
 	if echo $use_static_module | grep -w $mod >/dev/null || echo $use_static_module | grep all >/dev/null; then
 
-		add_calls1="$add_calls1 \n loadStaticLinkedModules(\"$mod\");"
+		add_calls1="$add_calls1 \n loadStaticLinkedModules(U_STRING_FROM_CONSTANT(\"$mod\"));"
 
 		if test "$mod" = "rpc"; then
 			static_handler_rpc="yes"
@@ -2203,7 +2203,7 @@ for drv in $use_static_driver; do
 
 	if echo $use_static_driver | grep -w $drv >/dev/null || echo $use_static_driver | grep all >/dev/null; then
 
-		add_calls2="$add_calls2 \n loadStaticLinkedModules(\"$drv\");"
+		add_calls2="$add_calls2 \n loadStaticLinkedModules(U_STRING_FROM_CONSTANT(\"$drv\"));"
 
 		if test "$drv" = "sqlite"; then
 			static_handler_sqlite="yes"
@@ -2369,7 +2369,7 @@ if test "$ac_cv_c_compiler_gnu" = "yes" -a "x$OPERATINGSYSTEM" = xlinux; then
 
 		MAYBE_FLAGS="-Wstrict-aliasing=2 -Wall -Wextra -Wsign-compare -Wpointer-arith -Wwrite-strings \
 						 -Wmissing-declarations -Wpacked -Wswitch-enum -Wmissing-format-attribute -Winit-self -Wformat \
-						 -Wformat-extra-args -Wenum-compare -Wlogical-not-parentheses -Wsizeof-array-argument -Wbool-compare"
+						 -Wformat-extra-args -Wenum-compare -Wlogical-not-parentheses -Wsizeof-array-argument -Wbool-compare -Wno-cast-function-type"
 
 		# -------------------------------------------------------------------------------------
 		# to turn various gcc/glibc-specific preprocessor checks
@@ -2404,7 +2404,7 @@ if test "$ac_cv_c_compiler_gnu" = "yes" -a "x$OPERATINGSYSTEM" = xlinux; then
 											-Wlogical-op -Wduplicated-cond -Wtautological-compare -Wswitch-bool -Wshift-negative-value \
 											-Wshift-overflow -Wshift-overflow=2 -Wnull-dereference -Wnonnull"
 			CXX_MAYBE_FLAGS_MODERN="-Wterminate -Wlto-type-mismatch -Wsubobject-linkage -Wplacement-new -Woverride-init-side-effects \
-											-Wvirtual-inheritance -Wnamespaces" # -Wnamespaces -Wtemplates -Wmultiple-inheritance
+											-Wvirtual-inheritance" # -Wnamespaces -Wtemplates -Wmultiple-inheritance
 			;;
 		esac
 
@@ -2442,7 +2442,7 @@ if test "$ac_cv_c_compiler_gnu" = "yes" -a "x$OPERATINGSYSTEM" = xlinux; then
 		else
 			## _FORTIFY_SOURCE is enabled by default from g++ 4.7.2
 			MAYBE_FLAGS="$MAYBE_FLAGS -Wunsafe-loop-optimizations -Wno-unused-parameter -rdynamic -fdiagnostics-color=auto -Wmisleading-indentation"
-			CXX_MAYBE_FLAGS="$CXX_MAYBE_FLAGS -Wc++11-compat" ## -Wzero-as-null-pointer-constant -Wno-implicit-fallthrough
+			CXX_MAYBE_FLAGS="$CXX_MAYBE_FLAGS -Wc++11-compat -Wno-implicit-fallthrough" ## -Wzero-as-null-pointer-constant
 		fi
 	fi
 

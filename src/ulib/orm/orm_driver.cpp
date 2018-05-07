@@ -56,30 +56,29 @@ void UOrmDriver::clear()
 
 // load driver modules
 
-U_NO_EXPORT void UOrmDriver::loadStaticLinkedModules(const char* name)
+U_NO_EXPORT void UOrmDriver::loadStaticLinkedModules(const UString& name)
 {
-   U_TRACE(0, "UOrmDriver::loadStaticLinkedModules(%S)", name)
+   U_TRACE(0, "UOrmDriver::loadStaticLinkedModules(%V)", name.rep)
 
 #if defined(U_STATIC_ORM_DRIVER_SQLITE) || defined(U_STATIC_ORM_DRIVER_MYSQL) || defined(U_STATIC_ORM_DRIVER_PGSQL)
-   UString x(name);
    UOrmDriver* _driver = U_NULLPTR;
 
 # ifdef U_STATIC_ORM_DRIVER_SQLITE
-   if (x.equal(U_CONSTANT_TO_PARAM("sqlite"))) { U_NEW(UOrmDriverSqlite, _driver, UOrmDriverSqlite);  goto next; }
+   if (name.equal(U_CONSTANT_TO_PARAM("sqlite"))) { U_NEW(UOrmDriverSqlite, _driver, UOrmDriverSqlite);  goto next; }
 # endif
 # ifdef U_STATIC_ORM_DRIVER_MYSQL
-   if (x.equal(U_CONSTANT_TO_PARAM("mysql")))  { U_NEW(UOrmDriverMySql, _driver, UOrmDriverMySql); goto next; }
+   if (name.equal(U_CONSTANT_TO_PARAM("mysql")))  { U_NEW(UOrmDriverMySql, _driver, UOrmDriverMySql); goto next; }
 # endif
 # ifdef U_STATIC_ORM_DRIVER_PGSQL
-   if (x.equal(U_CONSTANT_TO_PARAM("pgsql")))  { U_NEW(UOrmDriverPgSql, _driver, UOrmDriverPgSql); goto next; }
+   if (name.equal(U_CONSTANT_TO_PARAM("pgsql")))  { U_NEW(UOrmDriverPgSql, _driver, UOrmDriverPgSql); goto next; }
 # endif
 next:
    if (_driver)
       {
       vdriver->push_back(_driver);
-      vdriver_name_static->push_back(x);
+      vdriver_name_static->push_back(name);
 
-      U_SRV_LOG("[orm] Link of static driver %V ok", x.rep);
+      U_SRV_LOG("[orm] Link of static driver %V ok", name.rep);
       }
 #endif
 }

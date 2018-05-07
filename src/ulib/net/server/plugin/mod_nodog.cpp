@@ -205,18 +205,13 @@ U_NO_EXPORT void UNoDogPlugIn::makeInfoData(UFlatBuffer* pfb, void* param)
                */
 
 #           ifdef HAVE_ARCH64
-               *(uint32_t*)buffer = ntohl(entry->ip);
-
-               U_SRV_LOG("IP: %v SRC packets: %u bytes: %u DST packets: %u bytes: %u",
-                          UIPAddress::toString(*(uint32_t*)buffer).rep, entry->src_packets, entry->src_bytes, entry->dst_packets, entry->dst_bytes);
-
-               peer = peers->at(buffer, sizeof(in_addr_t));
-#           else
-               U_SRV_LOG("IP: %v SRC packets: %u bytes: %u DST packets: %u bytes: %u",
-                          UIPAddress::toString(entry->ip).rep, entry->src_packets, entry->src_bytes, entry->dst_packets, entry->dst_bytes);
-
-               peer = peers->at((const char*)&(entry->ip), sizeof(in_addr_t));
+               entry->ip = htonl(entry->ip);
 #           endif
+
+               peer = peers->at((const char*)&(entry->ip), sizeof(uint32_t));
+
+               U_SRV_LOG("IP: %v SRC packets: %u bytes: %u DST packets: %u bytes: %u peer = %p",
+                          UIPAddress::toString(entry->ip).rep, entry->src_packets, entry->src_bytes, entry->dst_packets, entry->dst_bytes, peer);
 
                if (peer)
                   {
@@ -232,7 +227,7 @@ U_NO_EXPORT void UNoDogPlugIn::makeInfoData(UFlatBuffer* pfb, void* param)
          }
 #  endif
 
-      peers->setIndexNode(_ctime);
+      peers->setNodePointer(_ctime);
 
       do {
          peer = peers->elem();
@@ -254,7 +249,7 @@ U_NO_EXPORT void UNoDogPlugIn::makeInfoData(UFlatBuffer* pfb, void* param)
             peer->getMAC(buffer);
 
             pfb->String(buffer, 12);
-            pfb->UInt(peer->addr);
+            pfb->UInt(ntohl(peer->addr));
             pfb->String(peer->label);
 
             _ctime = u_now->tv_sec - peer->_ctime;
@@ -395,18 +390,15 @@ U_NO_EXPORT void UNoDogPlugIn::setMAC()
 
       if (peer->mac.empty())
          {
-         UString arp_cache;
-         UVector<UString> varp_cache;
+         (void) USocketExt::getARPCache(*arp_cache, *varp_cache);
 
-         (void) USocketExt::getARPCache(arp_cache, varp_cache);
-
-         for (uint32_t i = 0, n = varp_cache.size(); i < n; i += 3)
+         for (uint32_t i = 0, n = varp_cache->size(); i < n; i += 3)
             {
-            if (varp_cache[i].equal(peer->ip))
+            if ((*varp_cache)[i].equal(peer->ip))
                {
-               peer->mac = varp_cache[i+1].copy();
+               peer->mac = (*varp_cache)[i+1].copy();
 
-               U_ASSERT_EQUALS(ifname, varp_cache[i+2])
+               U_ASSERT_EQUALS(ifname, (*varp_cache)[i+2])
 
                break;
                }
@@ -631,22 +623,22 @@ U_NO_EXPORT bool UNoDogPlugIn::checkOldPeer()
    U_INTERNAL_ASSERT_POINTER(peer)
    U_ASSERT(peer->ip.equal(U_CLIENT_ADDRESS_TO_PARAM))
 
-   UString mac   = peer->mac,
-           label = peer->label;
+   UString mac    = peer->mac,
+           llabel = peer->label;
 
    peer->mac = *UString::str_without_mac;
 
    setLabelAndMAC();
 
-   if (  mac != peer->mac ||
-       label != peer->label)
+   if (   mac != peer->mac ||
+       llabel != peer->label)
       {
       // NB: we assume that the current peer is a different user that has acquired the same IP address from the DHCP...
 
-      U_SRV_LOG("WARNING: different user for peer (IP %v): (MAC %v LABEL %v) => (MAC %v LABEL %v)", peer->ip.rep, mac.rep, label.rep, peer->mac.rep, peer->label.rep);
+      U_SRV_LOG("WARNING: different user for peer (IP %v): (MAC %v LABEL %v) => (MAC %v LABEL %v)", peer->ip.rep, mac.rep, llabel.rep, peer->mac.rep, peer->label.rep);
 
       U_INTERNAL_ASSERT(mac)
-      U_INTERNAL_ASSERT(label)
+      U_INTERNAL_ASSERT(llabel)
       U_INTERNAL_ASSERT(peer->mac)
       U_INTERNAL_ASSERT(peer->label)
 
@@ -1169,7 +1161,7 @@ int UNoDogPlugIn::handlerRequest()
 #        else
             uint32_t vec[8192],
 #        endif
-            n = UFlatBuffer::toVectorInt(*UClientImage_Base::body, vec);
+            n = UFlatBuffer::toVectorInt(*UClientImage_Base::body, vec), ip_peer;
 
             U_SRV_LOG("AUTH request to logout %u users", n);
 
@@ -1179,9 +1171,16 @@ int UNoDogPlugIn::handlerRequest()
                // $1 -> ip
                // --------
 
-               peer = peers->at((const char*)(vec+i), sizeof(uint32_t)); // (*peers)[UIPAddress::toString(vec[i])];
+               ip_peer = htonl(vec[i]);
 
-               if (peer == U_NULLPTR) continue;
+               peer = peers->at((const char*)&ip_peer, sizeof(uint32_t)); // (*peers)[UIPAddress::toString(vec[i])];
+
+               if (peer == U_NULLPTR)
+                  {
+                  U_SRV_LOG("AUTH request to logout user failed: IP %V", UIPAddress::toString(ip_peer).rep);
+
+                  continue;
+                  }
 
                U_INTERNAL_ASSERT(peer->mac)
                U_INTERNAL_ASSERT(u_isMacAddr(U_STRING_TO_PARAM(peer->mac)))

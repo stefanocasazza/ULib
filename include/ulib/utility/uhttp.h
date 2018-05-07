@@ -354,7 +354,9 @@ public:
       {
       U_TRACE_NO_PARAM(0, "UHTTP::startRequest()")
 
+#  if defined(U_SERVER_CHECK_TIME_BETWEEN_REQUEST) || (defined(DEBUG) && !defined(U_LOG_DISABLE))
       UClientImage_Base::startRequest();
+#  endif
 
       // ------------------------------
       // U_http_info.uri
@@ -732,7 +734,7 @@ public:
 
       uint32_t sz = buffer.size();
 
-      if (USocketExt::write(UServer_Base::csocket, buffer.data(), sz, UServer_Base::timeoutMS) != (int32_t)sz)
+      if (USocketExt::write(UServer_Base::csocket, buffer.data(), sz, UServer_Base::timeoutMS) != sz)
          {
          UServer_Base::eventSSE(U_CONSTANT_TO_PARAM("DEL %v\n"), UServer_Base::sse_id->rep);
 
@@ -1494,8 +1496,8 @@ private:
    static inline void setUpgrade(const char* ptr) U_NO_EXPORT;
    static inline bool checkPathName(uint32_t len) U_NO_EXPORT;
    static inline bool checkGetRequestIfModified() U_NO_EXPORT;
-   static inline void setIfModSince(const char* ptr) U_NO_EXPORT;
    static inline void setConnection(const char* ptr) U_NO_EXPORT;
+   static inline void setIfModSince(const char* ptr, uint32_t len) U_NO_EXPORT;
    static inline bool setSendfile(int fd, off_t start, off_t count) U_NO_EXPORT;
    static inline void setContentLength(const char* ptr1, const char* ptr2) U_NO_EXPORT;
 

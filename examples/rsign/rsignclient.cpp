@@ -23,8 +23,8 @@ public:
 
    // COSTRUTTORE
 
-   explicit UClientRSIGN(UFileConfig* cfg) : USOAPClient<T>(cfg) {}
-   virtual ~UClientRSIGN()                                       {}
+   explicit UClientRSIGN(UFileConfig* pcfg) : USOAPClient<T>(pcfg) {}
+   virtual ~UClientRSIGN()                                         {}
 
    // OBJECT FOR METHOD REQUEST
 

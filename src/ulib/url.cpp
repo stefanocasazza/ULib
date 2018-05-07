@@ -313,7 +313,7 @@ void Url::findpos()
    U_INTERNAL_DUMP("field_mask = %u %B", field_mask, field_mask)
 
    if (user_begin == user_end       &&
-       (field_mask | U_SCHEMA) != 0 &&
+       (field_mask & U_SCHEMA) != 0 &&
        strncmp(url.data(), U_CONSTANT_TO_PARAM("http")) == 0)
       {
       U_ASSERT(u_isURL(U_STRING_TO_PARAM(url)))
