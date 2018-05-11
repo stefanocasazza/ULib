@@ -16,87 +16,39 @@
 #include <ulib/utility/websocket.h>
 #include <ulib/net/server/server.h>
 
-#define OPCODE_CONTINUATION 0x0
-#define OPCODE_TEXT         0x1
-#define OPCODE_BINARY       0x2
-#define OPCODE_CLOSE        0x8
-#define OPCODE_PING         0x9
-#define OPCODE_PONG         0xA
+#define U_WS_DATA_FRAMING_MASK               0
+#define U_WS_DATA_FRAMING_START              1
+#define U_WS_DATA_FRAMING_PAYLOAD_LENGTH     2
+#define U_WS_DATA_FRAMING_PAYLOAD_LENGTH_EXT 3
+#define U_WS_DATA_FRAMING_EXTENSION_DATA     4
+#define U_WS_DATA_FRAMING_APPLICATION_DATA   5
+#define U_WS_DATA_FRAMING_CLOSE              6
 
-#define DATA_FRAMING_MASK               0
-#define DATA_FRAMING_START              1
-#define DATA_FRAMING_PAYLOAD_LENGTH     2
-#define DATA_FRAMING_PAYLOAD_LENGTH_EXT 3
-#define DATA_FRAMING_EXTENSION_DATA     4
-#define DATA_FRAMING_APPLICATION_DATA   5
-#define DATA_FRAMING_CLOSE              6
+#define U_WS_FRAME_GET_FIN(BYTE)         (((BYTE) >> 7) & 0x01)
+#define U_WS_FRAME_GET_RSV1(BYTE)        (((BYTE) >> 6) & 0x01)
+#define U_WS_FRAME_GET_RSV2(BYTE)        (((BYTE) >> 5) & 0x01)
+#define U_WS_FRAME_GET_RSV3(BYTE)        (((BYTE) >> 4) & 0x01)
+#define U_WS_FRAME_GET_OPCODE(BYTE)      ( (BYTE)       & 0x0F)
+#define U_WS_FRAME_GET_MASK(BYTE)        (((BYTE) >> 7) & 0x01)
+#define U_WS_FRAME_GET_PAYLOAD_LEN(BYTE) ( (BYTE)       & 0x7F)
 
-#define FRAME_GET_FIN(BYTE)         (((BYTE) >> 7) & 0x01)
-#define FRAME_GET_RSV1(BYTE)        (((BYTE) >> 6) & 0x01)
-#define FRAME_GET_RSV2(BYTE)        (((BYTE) >> 5) & 0x01)
-#define FRAME_GET_RSV3(BYTE)        (((BYTE) >> 4) & 0x01)
-#define FRAME_GET_OPCODE(BYTE)      ( (BYTE)       & 0x0F)
-#define FRAME_GET_MASK(BYTE)        (((BYTE) >> 7) & 0x01)
-#define FRAME_GET_PAYLOAD_LEN(BYTE) ( (BYTE)       & 0x7F)
+#define U_WS_FRAME_SET_FIN(BYTE)         (((BYTE) & 0x01) << 7)
+#define U_WS_FRAME_SET_OPCODE(BYTE)       ((BYTE) & 0x0F)
+#define U_WS_FRAME_SET_MASK(BYTE)        (((BYTE) & 0x01) << 7)
+#define U_WS_FRAME_SET_LENGTH(X64, IDX)  (unsigned char)(((uint64_t)(X64) >> ((IDX)*8)) & 0xFF)
 
-#define FRAME_SET_FIN(BYTE)         (((BYTE) & 0x01) << 7)
-#define FRAME_SET_OPCODE(BYTE)       ((BYTE) & 0x0F)
-#define FRAME_SET_MASK(BYTE)        (((BYTE) & 0x01) << 7)
-#define FRAME_SET_LENGTH(X64, IDX)  (unsigned char)(((uint64_t)(X64) >> ((IDX)*8)) & 0xFF)
-
-#define WEBSOCKET_GUID     "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
-#define WEBSOCKET_GUID_LEN 36
+#define U_WS_GUID     "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
+#define U_WS_GUID_LEN 36
 
 int         UWebSocket::status_code;
 int         UWebSocket::message_type;
 UString*    UWebSocket::rbuffer;
+UString*    UWebSocket::message;
 uint32_t    UWebSocket::max_message_size;
 const char* UWebSocket::upgrade_settings;
 
 UWebSocket::WebSocketFrameData UWebSocket::control_frame = { U_NULLPTR, 0, 1, 8, 0 };
 UWebSocket::WebSocketFrameData UWebSocket::message_frame = { U_NULLPTR, 0, 1, 0, 0 };
-
-bool UWebSocket::sendAccept()
-{
-   U_TRACE_NO_PARAM(0, "UWebSocket::sendAccept()")
-
-   U_INTERNAL_ASSERT_MAJOR(U_http_websocket_len, 0)
-
-   // In order to establish a websocket connection, a client (a web browser) sends a HTTP GET request with a number of HTTP headers. Among those
-   // headers there is the Sec-WebSocket-Key header, which contains a handshake key. According to the WebSocket protocol, the server should:
-   //
-   // 1) Concatenate the handshake key with the magic guid {258EAFA5-E914-47DA-95CA-C5AB0DC85B11}
-   // 2) Take the SHA1 hash of the concatenation result
-   // 3) Send the base64 equivalent of the hash in HTTP response to the client
-
-   unsigned char challenge[128];
-
-   U_MEMCPY(challenge,                  upgrade_settings, U_http_websocket_len);
-   U_MEMCPY(challenge+U_http_websocket_len, WEBSOCKET_GUID, WEBSOCKET_GUID_LEN);
-
-   // SHA1(challenge)
-
-   UString accept(U_CAPACITY);
-
-   UServices::generateDigest(U_HASH_SHA1, 0, challenge, U_http_websocket_len + WEBSOCKET_GUID_LEN, accept, true);
-
-   UClientImage_Base::wbuffer->snprintf(U_CONSTANT_TO_PARAM("HTTP/1.1 101 Switching Protocols\r\n"
-                                        "Upgrade: websocket\r\n"
-                                        "Connection: Upgrade\r\n"
-                                        "Sec-WebSocket-Accept: %v\r\n\r\n"), accept.rep);
-
-   if (USocketExt::write(UServer_Base::csocket, *UClientImage_Base::wbuffer, UServer_Base::timeoutMS))
-      {
-      status_code  = STATUS_CODE_INTERNAL_ERROR;
-      message_type = MESSAGE_TYPE_INVALID;
-
-      if (max_message_size == 0) max_message_size = U_STRING_MAX_SIZE;
-
-      U_RETURN(true);
-      }
-
-   U_RETURN(false);
-}
 
 void UWebSocket::checkForInitialData()
 {
@@ -113,22 +65,62 @@ void UWebSocket::checkForInitialData()
       {
       // we have read more data than necessary...
 
-      const char* ptr = UClientImage_Base::rbuffer->c_pointer(UClientImage_Base::size_request);
-
-      (void) rbuffer->append(ptr, sz - UClientImage_Base::size_request);
+      (void) rbuffer->append(UClientImage_Base::rbuffer->c_pointer(UClientImage_Base::size_request), sz - UClientImage_Base::size_request);
 
       U_INTERNAL_DUMP("rbuffer(%u) = %V", rbuffer->size(), rbuffer->rep)
       }
 }
 
+bool UWebSocket::sendAccept(USocket* socket)
+{
+   U_TRACE(0, "UWebSocket::sendAccept(%p)", socket)
+
+   U_INTERNAL_ASSERT_MAJOR(U_http_websocket_len, 0)
+
+   // In order to establish a websocket connection, a client (a web browser) sends a HTTP GET request with a number of HTTP headers. Among those
+   // headers there is the Sec-WebSocket-Key header, which contains a handshake key. According to the WebSocket protocol, the server should:
+   //
+   // 1) Concatenate the handshake key with the magic guid {258EAFA5-E914-47DA-95CA-C5AB0DC85B11}
+   // 2) Take the SHA1 hash of the concatenation result
+   // 3) Send the base64 equivalent of the hash in HTTP response to the client
+
+   unsigned char challenge[128];
+
+   U_MEMCPY(challenge,                      upgrade_settings, U_http_websocket_len);
+   U_MEMCPY(challenge+U_http_websocket_len, U_WS_GUID, U_WS_GUID_LEN);
+
+   // SHA1(challenge)
+
+   UString accept(U_CAPACITY), buffer(U_CAPACITY);
+
+   UServices::generateDigest(U_HASH_SHA1, 0, challenge, U_http_websocket_len + U_WS_GUID_LEN, accept, true);
+
+   buffer.snprintf(U_CONSTANT_TO_PARAM("HTTP/1.1 101 Switching Protocols\r\n"
+                                        "Upgrade: websocket\r\n"
+                                        "Connection: Upgrade\r\n"
+                                        "Sec-WebSocket-Accept: %v\r\n\r\n"), accept.rep);
+
+   if (USocketExt::write(socket, buffer, UServer_Base::timeoutMS))
+      {
+      status_code  = U_WS_STATUS_CODE_INTERNAL_ERROR;
+      message_type = U_WS_MESSAGE_TYPE_INVALID;
+
+      if (max_message_size == 0) max_message_size = U_STRING_MAX_SIZE;
+
+      U_RETURN(true);
+      }
+
+   U_RETURN(false);
+}
+
 /**
- * So, WebSockets presents a sequence of infinitely long byte streams
- * with a termination indicator (the FIN bit in the frame header) and
- * not a message based interface as you might initially believe. Given
- * that a general purpose protocol handler can only work in terms of
- * partial frames, we effectively have a stream based protocol with
- * lots of added complexity to provide the illusion of a message based
+ * @see: http://tools.ietf.org/html/rfc6455#section-5.2 Base Framing Protocol
+ *
+ * So, WebSockets presents a sequence of infinitely long byte streams with a termination indicator (the FIN bit in the frame header) and
+ * not a message based interface as you might initially believe. Given that a general purpose protocol handler can only work in terms of
+ * partial frames, we effectively have a stream based protocol with lots of added complexity to provide the illusion of a message based
  * protocol that can actually only ever be dealt with as a stream of bytes
+ *
  * +-+-+-+-+-------+-+-------------+-------------------------------+
  * 0                   1                   2                   3   |
  * 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 |
@@ -159,13 +151,13 @@ int UWebSocket::handleDataFraming(USocket* socket)
    WebSocketFrameData* frame = &UWebSocket::control_frame;
    unsigned char fin = 0, opcode = 0xFF, mask[4] = { 0, 0, 0, 0 };
    int32_t extension_bytes_remaining = 0, payload_length = 0, mask_offset = 0;
-   int framing_state = DATA_FRAMING_START, payload_length_bytes_remaining = 0, mask_index = 0, masking = 0;
+   int framing_state = U_WS_DATA_FRAMING_START, payload_length_bytes_remaining = 0, mask_index = 0, masking = 0;
 
 loop:
    if (rbuffer->empty() &&
        USocketExt::read(socket, *rbuffer, U_SINGLE_READ, UServer_Base::timeoutMS) == false)
       {
-      status_code = STATUS_CODE_INTERNAL_ERROR;
+      status_code = U_WS_STATUS_CODE_INTERNAL_ERROR;
 
       U_RETURN(status_code);
       }
@@ -179,35 +171,35 @@ loop:
 
       switch (framing_state)
          {
-         case DATA_FRAMING_START: // 1
+         case U_WS_DATA_FRAMING_START: // 1
             {
             // Since we don't currently support any extensions, the reserve bits must be 0
 
-            if ((FRAME_GET_RSV1(block[block_offset]) != 0) ||
-                (FRAME_GET_RSV2(block[block_offset]) != 0) ||
-                (FRAME_GET_RSV3(block[block_offset]) != 0))
+            if ((U_WS_FRAME_GET_RSV1(block[block_offset]) != 0) ||
+                (U_WS_FRAME_GET_RSV2(block[block_offset]) != 0) ||
+                (U_WS_FRAME_GET_RSV3(block[block_offset]) != 0))
                {
-               // framing_state = DATA_FRAMING_CLOSE; // 6
+               // framing_state = U_WS_DATA_FRAMING_CLOSE; // 6
 
-               status_code = STATUS_CODE_PROTOCOL_ERROR;
+               status_code = U_WS_STATUS_CODE_PROTOCOL_ERROR;
 
                U_RETURN(status_code);
                }
 
-            fin    = FRAME_GET_FIN(   block[block_offset]);
-            opcode = FRAME_GET_OPCODE(block[block_offset++]);
+            fin    = U_WS_FRAME_GET_FIN(   block[block_offset]);
+            opcode = U_WS_FRAME_GET_OPCODE(block[block_offset++]);
 
             U_INTERNAL_DUMP("fin = %d opcode = %X", fin, opcode)
 
-            framing_state = DATA_FRAMING_PAYLOAD_LENGTH; // 2
+            framing_state = U_WS_DATA_FRAMING_PAYLOAD_LENGTH; // 2
 
             if (opcode >= 0x8) // Control frame
                {
                if (fin == 0)
                   {
-                  // framing_state = DATA_FRAMING_CLOSE; // 6
+                  // framing_state = U_WS_DATA_FRAMING_CLOSE; // 6
 
-                  status_code = STATUS_CODE_PROTOCOL_ERROR;
+                  status_code = U_WS_STATUS_CODE_PROTOCOL_ERROR;
 
                   U_RETURN(status_code);
                   }
@@ -224,9 +216,9 @@ loop:
                   {
                   if (frame->fin == 0)
                      {
-                     // framing_state = DATA_FRAMING_CLOSE; // 6
+                     // framing_state = U_WS_DATA_FRAMING_CLOSE; // 6
 
-                     status_code = STATUS_CODE_PROTOCOL_ERROR;
+                     status_code = U_WS_STATUS_CODE_PROTOCOL_ERROR;
 
                      U_RETURN(status_code);
                      }
@@ -237,9 +229,9 @@ loop:
                else if (frame->fin ||
                         ((opcode = frame->opcode) == 0))
                   {
-                  // framing_state = DATA_FRAMING_CLOSE; // 6
+                  // framing_state = U_WS_DATA_FRAMING_CLOSE; // 6
 
-                  status_code = STATUS_CODE_PROTOCOL_ERROR;
+                  status_code = U_WS_STATUS_CODE_PROTOCOL_ERROR;
 
                   U_RETURN(status_code);
                   }
@@ -257,10 +249,10 @@ loop:
 
          /* FALLTHRU */
 
-         case DATA_FRAMING_PAYLOAD_LENGTH: // 2
+         case U_WS_DATA_FRAMING_PAYLOAD_LENGTH: // 2
             {
-            payload_length = FRAME_GET_PAYLOAD_LEN(block[block_offset]);
-            masking        = FRAME_GET_MASK(       block[block_offset++]);
+            payload_length = U_WS_FRAME_GET_PAYLOAD_LEN(block[block_offset]);
+            masking        = U_WS_FRAME_GET_MASK(       block[block_offset++]);
 
             U_INTERNAL_DUMP("masking = %d payload_length = %d", masking, payload_length)
 
@@ -283,14 +275,14 @@ loop:
                 ((opcode >= 0x8) && // Control opcodes cannot have a payload larger than 125 bytes
                 (payload_length_bytes_remaining != 0)))
                {
-               // framing_state = DATA_FRAMING_CLOSE; // 6
+               // framing_state = U_WS_DATA_FRAMING_CLOSE; // 6
 
-               status_code = STATUS_CODE_PROTOCOL_ERROR;
+               status_code = U_WS_STATUS_CODE_PROTOCOL_ERROR;
 
                U_RETURN(status_code);
                }
 
-            framing_state = DATA_FRAMING_PAYLOAD_LENGTH_EXT; // 3
+            framing_state = U_WS_DATA_FRAMING_PAYLOAD_LENGTH_EXT; // 3
 
             if (block_offset >= block_size) goto next;
 
@@ -299,7 +291,7 @@ loop:
 
          /* FALLTHRU */
 
-         case DATA_FRAMING_PAYLOAD_LENGTH_EXT: // 3
+         case U_WS_DATA_FRAMING_PAYLOAD_LENGTH_EXT: // 3
             {
             while ((payload_length_bytes_remaining > 0) &&
                    (block_offset < block_size))
@@ -317,21 +309,21 @@ loop:
                   {
                   U_SRV_LOG_WITH_ADDR("Got frame with payload greater than maximum frame buffer size: (%u > %u) from", payload_length, max_message_size);
 
-                  // framing_state = DATA_FRAMING_CLOSE; // 6
+                  // framing_state = U_WS_DATA_FRAMING_CLOSE; // 6
 
-                  status_code = STATUS_CODE_MESSAGE_TOO_LARGE; // Invalid payload length
+                  status_code = U_WS_STATUS_CODE_MESSAGE_TOO_LARGE; // Invalid payload length
 
                   U_RETURN(status_code);
                   }
 
                if (masking == 0)
                   {
-                  framing_state = DATA_FRAMING_EXTENSION_DATA; // 4
+                  framing_state = U_WS_DATA_FRAMING_EXTENSION_DATA; // 4
 
                   break;
                   }
 
-               framing_state = DATA_FRAMING_MASK; // 0
+               framing_state = U_WS_DATA_FRAMING_MASK; // 0
                }
 
             if (block_offset >= block_size) goto next;
@@ -341,7 +333,7 @@ loop:
 
          /* FALLTHRU */
 
-         case DATA_FRAMING_MASK: // 0
+         case U_WS_DATA_FRAMING_MASK: // 0
             {
             U_INTERNAL_DUMP("mask_index = %d", mask_index)
 
@@ -353,7 +345,7 @@ loop:
 
             mask_index    = 0;
             mask_offset   = 0;
-            framing_state = DATA_FRAMING_EXTENSION_DATA; // 4
+            framing_state = U_WS_DATA_FRAMING_EXTENSION_DATA; // 4
 
             if ((mask[0] == 0) &&
                 (mask[1] == 0) &&
@@ -368,7 +360,7 @@ loop:
 
          /* FALLTHRU */
 
-         case DATA_FRAMING_EXTENSION_DATA: // 4
+         case U_WS_DATA_FRAMING_EXTENSION_DATA: // 4
             {
             // Deal with extension data when we support them -- FIXME
 
@@ -378,12 +370,12 @@ loop:
                {
                if (payload_length > 0)
                   {
-                  (void) UClientImage_Base::wbuffer->reserve(frame->application_data_offset + payload_length);
+                  (void) message->setBuffer(frame->application_data_offset + payload_length);
 
-                  frame->application_data = (unsigned char*) UClientImage_Base::wbuffer->data();
+                  frame->application_data = (unsigned char*) message->data();
                   }
 
-               framing_state = DATA_FRAMING_APPLICATION_DATA; // 5
+               framing_state = U_WS_DATA_FRAMING_APPLICATION_DATA; // 5
                }
 
             U_INTERNAL_DUMP("framing_state = %d", framing_state)
@@ -391,7 +383,7 @@ loop:
 
          /* FALLTHRU */
 
-         case DATA_FRAMING_APPLICATION_DATA: // 5
+         case U_WS_DATA_FRAMING_APPLICATION_DATA: // 5
             {
             int32_t block_length      = block_size - block_offset,
                     block_data_length = (payload_length > block_length ? block_length
@@ -404,7 +396,7 @@ loop:
                {
                int32_t i;
 
-               if (opcode == OPCODE_TEXT)
+               if (opcode == U_WS_OPCODE_TEXT)
                   {
                   unsigned int utf8_state = frame->utf8_state;
 
@@ -440,7 +432,7 @@ loop:
                {
                U_MEMCPY(&application_data[application_data_offset], &block[block_offset], block_data_length);
                
-               if (opcode == OPCODE_TEXT)
+               if (opcode == U_WS_OPCODE_TEXT)
                   {
                   unsigned int utf8_state = frame->utf8_state;
                   int32_t i, application_data_end = application_data_offset + block_data_length;
@@ -468,51 +460,56 @@ loop:
 
             if (payload_length == 0)
                {
-               message_type = MESSAGE_TYPE_INVALID;
+               message_type = U_WS_MESSAGE_TYPE_INVALID;
 
                switch (opcode)
                   {
-                  case OPCODE_TEXT:
+                  case U_WS_OPCODE_TEXT:
                      {
                      if ((fin &&
                          (frame->utf8_state != 0)) ||
                          (frame->utf8_state == 1))
                         {
-                        // framing_state = DATA_FRAMING_CLOSE; // 6
+                        // framing_state = U_WS_DATA_FRAMING_CLOSE; // 6
 
-                        status_code = STATUS_CODE_INVALID_UTF8;
+                        status_code = U_WS_STATUS_CODE_INVALID_UTF8;
 
                         U_RETURN(status_code);
                         }
 
-                     message_type = MESSAGE_TYPE_TEXT;
+                     message_type = U_WS_MESSAGE_TYPE_TEXT;
                      }
                   break;
 
-                  case OPCODE_BINARY: message_type = MESSAGE_TYPE_BINARY; break;
+                  case U_WS_OPCODE_BINARY: message_type = U_WS_MESSAGE_TYPE_BINARY; break;
 
-                  case OPCODE_CLOSE:
+                  case U_WS_OPCODE_CLOSE:
                      {
-                     // framing_state = DATA_FRAMING_CLOSE; // 6
+                     // framing_state = U_WS_DATA_FRAMING_CLOSE; // 6
 
-                     status_code = STATUS_CODE_OK;
+                     status_code = U_WS_STATUS_CODE_OK;
 
                      U_RETURN(status_code);
                      }
 
-                  case OPCODE_PING:
+                  case U_WS_OPCODE_PING:
                      {
-                     (void) sendData(MESSAGE_TYPE_PONG, application_data, application_data_offset);
+                     if (sendControlFrame(socket, U_WS_OPCODE_PONG, application_data, application_data_offset) == false)
+                        {
+                        status_code = U_WS_STATUS_CODE_PROTOCOL_ERROR;
+
+                        U_RETURN(status_code);
+                        }
                      }
                   break;
 
-                  case OPCODE_PONG: break;
+                  case U_WS_OPCODE_PONG: break;
 
                   default:
                      {
-                     // framing_state = DATA_FRAMING_CLOSE; // 6
+                     // framing_state = U_WS_DATA_FRAMING_CLOSE; // 6
 
-                     status_code = STATUS_CODE_PROTOCOL_ERROR;
+                     status_code = U_WS_STATUS_CODE_PROTOCOL_ERROR;
 
                      U_RETURN(status_code);
                      }
@@ -522,17 +519,17 @@ loop:
                   {
                   U_INTERNAL_DUMP("framing_state = %d message_type = %d status_code = %d", framing_state, message_type, status_code)
 
-                  if (message_type != MESSAGE_TYPE_INVALID)
+                  if (message_type != U_WS_MESSAGE_TYPE_INVALID)
                      {
-                     U_INTERNAL_ASSERT_EQUALS(framing_state, DATA_FRAMING_APPLICATION_DATA)
+                     U_INTERNAL_ASSERT_EQUALS(framing_state, U_WS_DATA_FRAMING_APPLICATION_DATA)
 
-                     UClientImage_Base::wbuffer->size_adjust_force(application_data_offset);
+                     message->size_adjust_force(application_data_offset);
 
                      U_SRV_LOG_WITH_ADDR("received websocket data (%u+%u bytes) %V from",
-                                             ncount - UClientImage_Base::wbuffer->size(),
-                                                      UClientImage_Base::wbuffer->size(), UClientImage_Base::wbuffer->rep)
+                                             ncount - message->size(),
+                                                      message->size(), message->rep)
 
-                     status_code = STATUS_CODE_OK;
+                     status_code = U_WS_STATUS_CODE_OK;
 
                      U_RETURN(status_code);
                      }
@@ -541,20 +538,20 @@ loop:
                          application_data_offset = 0;
                   }
 
-               framing_state = DATA_FRAMING_START; // 1
+               framing_state = U_WS_DATA_FRAMING_START; // 1
                }
 
             frame->application_data_offset = application_data_offset;
             }
          break;
 
-      // case DATA_FRAMING_CLOSE: block_offset = block_size; break;
+      // case U_WS_DATA_FRAMING_CLOSE: block_offset = block_size; break;
 
          default:
             {
-            // framing_state = DATA_FRAMING_CLOSE; // 6
+            // framing_state = U_WS_DATA_FRAMING_CLOSE; // 6
 
-            status_code = STATUS_CODE_PROTOCOL_ERROR;
+            status_code = U_WS_STATUS_CODE_PROTOCOL_ERROR;
 
             U_RETURN(status_code);
             }
@@ -564,69 +561,110 @@ loop:
 
 next:
    U_INTERNAL_ASSERT(block_offset >= block_size)
-   U_INTERNAL_ASSERT_DIFFERS(framing_state, DATA_FRAMING_CLOSE) // 6
+   U_INTERNAL_ASSERT_DIFFERS(framing_state, U_WS_DATA_FRAMING_CLOSE) // 6
 
    rbuffer->setEmpty();
 
    goto loop;
 }
 
-bool UWebSocket::sendData(int type, const unsigned char* buffer, uint32_t buffer_size)
+bool UWebSocket::sendData(USocket* socket, int type, const char* data, uint32_t len)
 {
-   U_TRACE(0, "UWebSocket::sendData(%d,%p,%u)", type, buffer, buffer_size)
+   U_TRACE(0, "UWebSocket::sendData(%p,%d,%.*S,%u)", socket, type, len, data, len)
 
-   uint32_t pos = 0;
-   unsigned char opcode, header[32];
-   uint32_t payload_length = (buffer ? buffer_size : 0);
+   uint8_t opcode, masking_key[4];
+   uint32_t header_length = 6U + (len > 125U ? 2U : 0) + (len > 0xffff ? 8U : 0), ncount = header_length + len;
+
+   UString tmp(ncount);
+   unsigned char* header = (unsigned char*)tmp.data();
+
+   *((uint32_t*)masking_key) = u_get_num_random(0);
 
    switch (type)
       {
-      case MESSAGE_TYPE_TEXT:
-      case MESSAGE_TYPE_INVALID:
-         opcode = OPCODE_TEXT;
+      case U_WS_MESSAGE_TYPE_TEXT:
+      case U_WS_MESSAGE_TYPE_INVALID:
+         opcode = U_WS_OPCODE_TEXT;
       break;
 
-      case MESSAGE_TYPE_PING:   opcode = OPCODE_PING;   break;
-      case MESSAGE_TYPE_PONG:   opcode = OPCODE_PONG;   break;
-      case MESSAGE_TYPE_BINARY: opcode = OPCODE_BINARY; break;
+      case U_WS_MESSAGE_TYPE_PING:   opcode = U_WS_OPCODE_PING;   break;
+      case U_WS_MESSAGE_TYPE_PONG:   opcode = U_WS_OPCODE_PONG;   break;
+      case U_WS_MESSAGE_TYPE_BINARY: opcode = U_WS_OPCODE_BINARY; break;
 
-      case MESSAGE_TYPE_CLOSE:
+      case U_WS_MESSAGE_TYPE_CLOSE:
       default:
-         opcode = OPCODE_CLOSE;
+         opcode = U_WS_OPCODE_CLOSE;
       break;
       }
 
-   header[pos++] = FRAME_SET_FIN(1) | FRAME_SET_OPCODE(opcode);
+   header[0] = (opcode | 0x80);
 
-   if (payload_length < 126) header[pos++] = FRAME_SET_MASK(0) | FRAME_SET_LENGTH(payload_length, 0);
+   if (len <= 125)
+      {
+      header[1] = (len | 0x80);
+
+      u_put_unalignedp32(header+2, *((uint32_t*)masking_key));
+      }
+   else if (len >  125 &&
+            len <= 0xffff) // 125 && 65535
+      {
+      header[1] = (126 | 0x80);
+
+      u_put_unalignedp16(header+2, htons(len));
+      u_put_unalignedp32(header+4, *((uint32_t*)masking_key));
+      }
+   else if (len >  0xffff &&
+            len <= 0xffffffff)
+      {
+      header[1] = (127 | 0x80);
+
+      u_put_unalignedp64(header+2, htonl(len));
+      u_put_unalignedp32(header+10, *((uint32_t*)masking_key));
+      }
    else
       {
-      if (payload_length < 65536) header[pos++] = FRAME_SET_MASK(0) | 126;
-      else
-         {
-         header[pos++] = FRAME_SET_MASK(0) | 127;
-         header[pos++] = 0; // FRAME_SET_LENGTH(payload_length, 7);
-         header[pos++] = 0; // FRAME_SET_LENGTH(payload_length, 6);
-         header[pos++] = 0; // FRAME_SET_LENGTH(payload_length, 5);
-         header[pos++] = 0; // FRAME_SET_LENGTH(payload_length, 4);
-         header[pos++] = FRAME_SET_LENGTH(payload_length, 3);
-         header[pos++] = FRAME_SET_LENGTH(payload_length, 2);
-         }
+      status_code = U_WS_STATUS_CODE_MESSAGE_TOO_LARGE;
 
-      header[pos++] = FRAME_SET_LENGTH(payload_length, 1);
-      header[pos++] = FRAME_SET_LENGTH(payload_length, 0);
+      U_RETURN(false);
       }
 
-   U_SRV_LOG_WITH_ADDR("send websocket data (%u+%u bytes) %.*S to", pos, buffer_size, buffer_size, buffer)
+   for (uint32_t i = 0; i < len; ++i)
+      {
+      header[6+i] = (data[i] ^ masking_key[i % 4]) & 0xff;
+      }
 
-   struct iovec iov[2] = { { (caddr_t)header, pos },
-                           { (caddr_t)buffer, payload_length } };
+   U_SRV_LOG_WITH_ADDR("send websocket data (%u+%u bytes) %.*S to", header_length, len, len, data)
 
-   int iBytesWrite = (payload_length
-            ? (pos += payload_length, USocketExt::writev(UServer_Base::csocket, iov, 2,              pos, UServer_Base::timeoutMS))
-            :                         USocketExt::write( UServer_Base::csocket, (const char*)header, pos, UServer_Base::timeoutMS));
+   if (USocketExt::write(socket, (const char*)header, ncount, UServer_Base::timeoutMS) == ncount) U_RETURN(true);
 
-   if (iBytesWrite == (int)pos) U_RETURN(true);
+   U_RETURN(false);
+}
+
+bool UWebSocket::sendControlFrame(USocket* socket, int opcode, const unsigned char* payload, uint32_t payload_length)
+{
+   U_TRACE(0, "UWebSocket::sendControlFrame(%p,%d,%.*S,%u)", socket, opcode, payload_length, payload, payload_length)
+
+   uint8_t masking_key[4];
+   uint32_t ncount = 6U + payload_length;
+
+   UString tmp(ncount);
+   unsigned char* header = (unsigned char*)tmp.data();
+
+   *((uint32_t*)masking_key) = u_get_num_random(0);
+
+   header[0] = (        opcode | 0x80);
+   header[1] = (payload_length | 0x80);
+
+   u_put_unalignedp32(header+2, *((uint32_t*)masking_key));
+
+   for (uint32_t i = 0; i < payload_length; ++i)
+      {
+      header[6+i] = (payload[i] ^ masking_key[i % 4]) & 0xff;
+      }
+
+   U_SRV_LOG_WITH_ADDR("send control frame(%d) (6+%u bytes) %.*S to", opcode, payload_length, payload_length, payload)
+
+   if (USocketExt::write(socket, (const char*)header, ncount, UServer_Base::timeoutMS) == ncount) U_RETURN(true);
 
    U_RETURN(false);
 }

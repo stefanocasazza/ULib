@@ -1,3 +1,87 @@
+<!--#
+prototype for Victor Stewart
+-->
+<!--#declaration
+static UWebSocketClient* wsclient;
+static vPFi message_for_another_usp;
+
+static void usp_init_modsocket()
+{
+   U_TRACE_NO_PARAM(5, "::usp_init_modsocket()")
+
+   U_NEW(UWebSocketClient, wsclient, UWebSocketClient());
+}
+
+static void usp_end_modsocket()
+{
+   U_TRACE_NO_PARAM(5, "::usp_end_modsocket()")
+
+#ifdef DEBUG
+   U_DELETE(wsclient)
+#endif
+}
+
+static void usp_open_modsocket()
+{
+   U_TRACE_NO_PARAM(0, "::usp_open_modsocket()")
+
+   U_DEBUG("usp_open_modsocket(): called");
+}
+
+static void usp_close_modsocket()
+{
+   U_TRACE_NO_PARAM(0, "::usp_close_modsocket()")
+
+   U_DEBUG("usp_close_modsocket(): called");
+}
+
+static bool isMessageForAnotherUSP(const UString& msg)
+{
+   U_TRACE(5, "::isMessageForAnotherUSP(%V)", msg.rep)
+
+   // TODO
+
+   U_RETURN(false);
+}
+
+static bool isMessageForAnotherWebSocket(const UString& msg)
+{
+   U_TRACE(5, "::isMessageForAnotherWebSocket(%V)", msg.rep)
+
+   // TODO
+
+   U_RETURN(true);
+}
+-->
+
 <!--#code
-if (UWebSocket::sendData(UWebSocket::message_type, (const unsigned char*)U_STRING_TO_PARAM(*UClientImage_Base::wbuffer)) == false) U_http_info.nResponseCode = HTTP_INTERNAL_ERROR;
+U_DEBUG("modsocket(): message %V", UWebSocket::message->rep);
+
+if (isMessageForAnotherUSP(*UWebSocket::message))
+   {
+   if (message_for_another_usp == U_NULLPTR)
+      {
+      (void) UHTTP::getUSP(U_CONSTANT_TO_PARAM("another_usp"));
+
+      U_INTERNAL_ASSERT_POINTER(UHTTP::usp->runDynamicPage)
+
+      message_for_another_usp = UHTTP::usp->runDynamicPage;
+      }
+
+   message_for_another_usp(0);
+
+   // ...
+   }
+else if (isMessageForAnotherWebSocket(*UWebSocket::message))
+   {
+   if (wsclient->connectServer(U_STRING_FROM_CONSTANT("ws://localhost:8888/websocket"))) (void) wsclient->sendMessage(*UWebSocket::message);
+
+   // ...
+   }
+else
+   {
+   // echo
+
+   if (UWebSocket::sendData(UServer_Base::csocket, UWebSocket::message_type, *UWebSocket::message) == false) U_http_info.nResponseCode = HTTP_INTERNAL_ERROR;
+   }
 -->

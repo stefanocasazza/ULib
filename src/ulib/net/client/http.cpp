@@ -882,7 +882,7 @@ bool UHttpClient_Base::sendRequestEngine()
       responseHeader->clear();
 
       result = (UClient_Base::sendRequestAndReadResponse() &&
-                responseHeader->readHeader(UClient_Base::socket, UClient_Base::response) // read the HTTP response header
+                UClient_Base::processHeader(responseHeader)
                      ? checkResponse(redirectCount, _uri)
                      : -1);
 

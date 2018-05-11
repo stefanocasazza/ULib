@@ -53,7 +53,7 @@ extern U_EXPORT void runDynamicPage_ir_web(int param);
       {
       if (param == U_DPAGE_INIT) { usp_init_ir_web(); return; }
       if (param == U_DPAGE_DESTROY) { usp_end_ir_web(); return; }
-      if (param >= U_DPAGE_FORK) return;
+      return;
       }
    
    UHTTP::mime_index = U_html;

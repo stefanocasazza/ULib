@@ -19,7 +19,7 @@ extern U_EXPORT void runDynamicPage_wi_auth2(int param);
       if (param == U_DPAGE_INIT) { usp_init_wi_auth2(); return; }
       if (param == U_DPAGE_DESTROY) { usp_end_wi_auth2(); return; }
       if (param == U_DPAGE_FORK) { usp_fork_wi_auth2(); return; }
-      if (param >  U_DPAGE_FORK) return;
+      return;
       }
    
    U_http_info.endHeader = 0;

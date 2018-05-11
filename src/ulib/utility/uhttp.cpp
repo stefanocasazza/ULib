@@ -3101,6 +3101,7 @@ U_NO_EXPORT bool UHTTP::checkRequestForHeader()
             }
 #     endif
          }
+#  if defined(USE_LIBSSL) && !defined(U_SERVER_CAPTIVE_PORTAL)
       else if (pn[17] == ':') // "If-Modified-Since|Sec-WebSocket-Key:"
          {
          pn += 17;
@@ -3127,6 +3128,7 @@ U_NO_EXPORT bool UHTTP::checkRequestForHeader()
             goto next;
             }
          }
+#  endif
 #  ifndef U_LOG_DISABLE
       else if (pn[22] == ':') // "X-Http-X-Forwarded-For:"
          {
@@ -4622,12 +4624,12 @@ from_cache:
       }
 #endif
 
-#ifndef U_SERVER_CAPTIVE_PORTAL
+#if defined(USE_LIBSSL) && !defined(U_SERVER_CAPTIVE_PORTAL)
    U_INTERNAL_DUMP("U_http_websocket_len = %u", U_http_websocket_len)
 
    if (U_http_websocket_len)
       {
-      if (UWebSocket::sendAccept() == false)
+      if (UWebSocket::sendAccept(UServer_Base::csocket) == false)
          {
          setBadRequest();
 
@@ -4635,6 +4637,8 @@ from_cache:
          }
 
       UClientImage_Base::setRequestNoCache();
+
+      if (UServer_Base::startParallelization()) U_RETURN(U_PLUGIN_HANDLER_OK); // parent
       }
 #endif
 
@@ -10630,9 +10634,7 @@ bool UHTTP::processCGIRequest(UCommand* cmd, UHTTP::ucgi* cgi)
 
    if (cgi) (void) UFile::chdir(U_NULLPTR, true);
 
-#ifndef U_LOG_DISABLE
-   UServer_Base::logCommandMsgError(cmd->getCommand(), false);
-#endif
+   U_SRV_LOG_CMD_MSG_ERR(*cmd, false);
 
    cmd->reset(UClientImage_Base::environment);
 

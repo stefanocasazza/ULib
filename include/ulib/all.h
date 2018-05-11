@@ -53,6 +53,7 @@
 #  include <ulib/ssl/digest.h>
 #  include <ulib/ssl/certificate.h>
 #  include <ulib/net/client/twilio.h>
+#  include <ulib/net/client/websocket.h>
 #  include <ulib/ssl/mime/mime_pkcs7.h>
 #  include <ulib/ssl/net/ssl_session.h>
 #  ifdef HAVE_SSL_TS

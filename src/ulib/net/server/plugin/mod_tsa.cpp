@@ -100,9 +100,7 @@ int UTsaPlugIn::handlerRequest()
          UHTTP::setResponse(*UString::str_ctype_tsa, &body);
          }
 
-#  ifndef U_LOG_DISABLE
-      UServer_Base::logCommandMsgError(command->getCommand(), true);
-#  endif
+      U_SRV_LOG_CMD_MSG_ERR(*command, true);
 
       U_RETURN(U_PLUGIN_HANDLER_PROCESSED);
       }

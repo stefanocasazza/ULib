@@ -33,7 +33,6 @@
  */
 
 class UHTTP;
-class UMimeHeader;
 class Application;
 class WiAuthNodog;
 class UServer_Base;

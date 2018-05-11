@@ -4163,7 +4163,9 @@ static bool runAuthCmd(const char* password, const char* prealm)
 
    *output = UCommand::outputCommand(cmd, U_NULLPTR, -1, fd_stderr);
 
+#ifdef U_LOG_DISABLE
    UServer_Base::logCommandMsgError(cmd.data(), true);
+#endif
 
    if (UCommand::exit_value ||
        output->empty())

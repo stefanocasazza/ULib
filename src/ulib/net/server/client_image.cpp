@@ -923,7 +923,9 @@ void UClientImage_Base::manageReadBufferResize(uint32_t n)
       if (U_http_info.user_agent_len)  U_http_info.user_agent      += diff;
       if (U_http_accept_language_len)  U_http_info.accept_language += diff;
 
+#  if defined(USE_LIBSSL) && !defined(U_SERVER_CAPTIVE_PORTAL)
       if (U_http_websocket_len) UWebSocket::upgrade_settings += diff;
+#  endif
 
       U_INTERNAL_DUMP("host            = %.*S", U_HTTP_HOST_TO_TRACE)
       U_INTERNAL_DUMP("vhost           = %.*S", U_HTTP_VHOST_TO_TRACE)

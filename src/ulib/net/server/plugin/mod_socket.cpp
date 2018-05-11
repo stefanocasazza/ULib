@@ -21,7 +21,9 @@
 
 U_CREAT_FUNC(server_plugin_socket, UWebSocketPlugIn)
 
+int       UWebSocketPlugIn::fd_stderr;
 vPFi      UWebSocketPlugIn::on_message;
+UString*  UWebSocketPlugIn::penvironment;
 UCommand* UWebSocketPlugIn::command;
 
 UWebSocketPlugIn::UWebSocketPlugIn()
@@ -33,8 +35,17 @@ UWebSocketPlugIn::~UWebSocketPlugIn()
 {
    U_TRACE_DTOR(0, UWebSocketPlugIn)
 
-   if (command)             U_DELETE(command)
-   if (UWebSocket::rbuffer) U_DELETE(UWebSocket::rbuffer)
+   if (command)
+      {
+      U_DELETE(command)
+      U_DELETE(penvironment)
+      }
+
+   if (UWebSocket::rbuffer)
+      {
+      U_DELETE(UWebSocket::rbuffer)
+      U_DELETE(UWebSocket::message)
+      }
 }
 
 RETSIGTYPE UWebSocketPlugIn::handlerForSigTERM(int signo)
@@ -50,10 +61,11 @@ int UWebSocketPlugIn::handlerConfig(UFileConfig& cfg)
 {
    U_TRACE(0, "UWebSocketPlugIn::handlerConfig(%p)", &cfg)
 
+   // ----------------------------------------------------------------------------------------------
    // Perform registration of web socket method
    // ----------------------------------------------------------------------------------------------
-   // COMMAND                          command (alternative to USP websocket) to execute
-   // ENVIRONMENT      environment for command (alternative to USP websocket) to execute
+   // COMMAND                     command (alternative to USP modsocket) to execute
+   // ENVIRONMENT environment for command (alternative to USP modsocket) to execute
    //
    // MAX_MESSAGE_SIZE Maximum size (in bytes) of a message to accept; default is approximately 4GB
    // ----------------------------------------------------------------------------------------------
@@ -62,7 +74,11 @@ int UWebSocketPlugIn::handlerConfig(UFileConfig& cfg)
       {
       command = UServer_Base::loadConfigCommand();
 
+      U_NEW_STRING(penvironment, UString(U_CAPACITY));
+
       UWebSocket::max_message_size = cfg.readLong(U_CONSTANT_TO_PARAM("MAX_MESSAGE_SIZE"), U_STRING_MAX_SIZE);
+
+      fd_stderr = UServices::getDevNull("/tmp/UWebSocketPlugIn.err");
 
       U_RETURN(U_PLUGIN_HANDLER_PROCESSED);
       }
@@ -75,20 +91,20 @@ int UWebSocketPlugIn::handlerRun()
    U_TRACE_NO_PARAM(0, "UWebSocketPlugIn::handlerRun()")
 
    U_INTERNAL_ASSERT_EQUALS(UWebSocket::rbuffer, U_NULLPTR)
+   U_INTERNAL_ASSERT_EQUALS(UWebSocket::message, U_NULLPTR)
 
    U_NEW_STRING(UWebSocket::rbuffer, UString(U_CAPACITY));
+   U_NEW_STRING(UWebSocket::message, UString(U_CAPACITY));
 
-   if (UHTTP::getUSP(U_CONSTANT_TO_PARAM("modsocket")))
+   if (command == U_NULLPTR)
       {
+      if (UHTTP::getUSP(U_CONSTANT_TO_PARAM("modsocket")) == false) U_RETURN(U_PLUGIN_HANDLER_ERROR);
+
       U_INTERNAL_DUMP("modsocket->runDynamicPage = %p", UHTTP::usp->runDynamicPage)
 
       U_INTERNAL_ASSERT_POINTER(UHTTP::usp->runDynamicPage)
 
       on_message = UHTTP::usp->runDynamicPage;
-      }
-   else
-      {
-      if (command == U_NULLPTR) U_RETURN(U_PLUGIN_HANDLER_ERROR);
       }
 
    U_RETURN(U_PLUGIN_HANDLER_OK);
@@ -102,45 +118,40 @@ int UWebSocketPlugIn::handlerRequest()
 
    if (U_http_websocket_len)
       {
-      int fdmax = 0;
+      int fdmax = 0; // NB: to avoid 'warning: fdmax may be used uninitialized in this function'...
       fd_set fd_set_read, read_set;
-      bool bcommand = (command && on_message == U_NULLPTR);
-
-      if (bcommand)
-         {
-         // Set environment for the command application server
-
-         static int fd_stderr;
-
-         if (fd_stderr == 0) fd_stderr = UServices::getDevNull("/tmp/UWebSocketPlugIn.err");
-
-         UString environment(U_CAPACITY);
-
-         (void) environment.append(command->getStringEnvironment());
-
-         if (UHTTP::getCGIEnvironment(environment, U_GENERIC) == false) U_RETURN(U_PLUGIN_HANDLER_ERROR);
-
-         command->setEnvironment(&environment);
-
-         if (command->execute((UString*)-1, (UString*)-1, -1, fd_stderr))
-            {
-#        ifndef U_LOG_DISABLE
-            UServer_Base::logCommandMsgError(command->getCommand(), true);
-#        endif
-
-            UInterrupt::setHandlerForSignal(SIGTERM, (sighandler_t)UWebSocketPlugIn::handlerForSigTERM); // sync signal
-            }
-
-         FD_ZERO(&fd_set_read);
-         FD_SET(UProcess::filedes[2], &fd_set_read);
-         FD_SET(UServer_Base::csocket->iSockDesc, &fd_set_read);
-
-         fdmax = U_max(UServer_Base::csocket->iSockDesc, UProcess::filedes[2]) + 1;
-         }
 
       UWebSocket::checkForInitialData(); // check if we have read more data than necessary...
 
-      if (bcommand == false) goto handle_data;
+      if (command == U_NULLPTR)
+         {
+         on_message(U_DPAGE_OPEN);
+
+         goto data;
+         }
+
+      // Set environment for the command application server
+
+      penvironment->setBuffer(U_CAPACITY);
+
+      (void) penvironment->append(command->getStringEnvironment());
+
+      if (UHTTP::getCGIEnvironment(*penvironment, U_GENERIC) == false) U_RETURN(U_PLUGIN_HANDLER_ERROR);
+
+      command->setEnvironment(penvironment);
+
+      if (command->execute((UString*)-1, (UString*)-1, -1, fd_stderr))
+         {
+         U_SRV_LOG_CMD_MSG_ERR(*command, true);
+
+         UInterrupt::setHandlerForSignal(SIGTERM, (sighandler_t)UWebSocketPlugIn::handlerForSigTERM); // sync signal
+         }
+
+      FD_ZERO(&fd_set_read);
+      FD_SET(UProcess::filedes[2], &fd_set_read);
+      FD_SET(UServer_Base::csocket->iSockDesc, &fd_set_read);
+
+      fdmax = U_max(UServer_Base::csocket->iSockDesc, UProcess::filedes[2]) + 1;
 
 loop: read_set = fd_set_read;
 
@@ -151,7 +162,7 @@ loop: read_set = fd_set_read;
             UWebSocket::rbuffer->setEmpty();
 
             if (UServices::read(UProcess::filedes[2], *UWebSocket::rbuffer) &&
-                UWebSocket::sendData(UWebSocket::message_type, (const unsigned char*)U_STRING_TO_PARAM(*UWebSocket::rbuffer)))
+                UWebSocket::sendData(UServer_Base::csocket, UWebSocket::message_type, *UWebSocket::rbuffer))
                {
                UWebSocket::rbuffer->setEmpty();
 
@@ -160,16 +171,25 @@ loop: read_set = fd_set_read;
             }
          else if (FD_ISSET(UServer_Base::csocket->iSockDesc, &read_set))
             {
-handle_data:
-            if (UWebSocket::handleDataFraming(UServer_Base::csocket) == STATUS_CODE_OK &&
-                (bcommand == false ? (on_message(0), U_http_info.nResponseCode != HTTP_INTERNAL_ERROR)
-                                   : UNotifier::write(UProcess::filedes[1], U_STRING_TO_PARAM(*UClientImage_Base::wbuffer))))
+data:       if (UWebSocket::handleDataFraming(UServer_Base::csocket) == U_WS_STATUS_CODE_OK)
                {
-               UWebSocket::rbuffer->setEmpty();
+               if (command == U_NULLPTR)
+                  {
+                  on_message(0);
 
-               if (bcommand == false) goto handle_data;
+                  if (U_http_info.nResponseCode != HTTP_INTERNAL_ERROR)
+                     {
+                     UWebSocket::rbuffer->setEmpty();
 
-               goto loop;
+                     goto data;
+                     }
+                  }
+               else if (UNotifier::write(UProcess::filedes[1], U_STRING_TO_PARAM(*UClientImage_Base::wbuffer)))
+                  {
+                  UWebSocket::rbuffer->setEmpty();
+
+                  goto loop;
+                  }
                }
             }
          }
@@ -177,7 +197,7 @@ handle_data:
       // Send server-side closing handshake
 
       if (UServer_Base::csocket->isOpen() &&
-          UWebSocket::sendClose())
+          UWebSocket::sendClose(UServer_Base::csocket))
          {
          UClientImage_Base::close();
          }
@@ -185,6 +205,8 @@ handle_data:
          {
          UClientImage_Base::setRequestProcessed();
          }
+
+      if (command == U_NULLPTR) on_message(U_DPAGE_CLOSE);
 
       U_RETURN(U_PLUGIN_HANDLER_PROCESSED);
       }
@@ -197,8 +219,10 @@ handle_data:
 #if defined(U_STDCPP_ENABLE) && defined(DEBUG)
 const char* UWebSocketPlugIn::dump(bool reset) const
 {
-   *UObjectIO::os << "on_message        " << (void*)on_message << '\n'
-                  << "command (UCommand " << (void*)command    << ')';
+   *UObjectIO::os << "fd_stderr              " << fd_stderr           << '\n'
+                  << "on_message             " << (void*)on_message   << '\n'
+                  << "command      (UCommand " << (void*)command      << ")\n"
+                  << "penvironment (UString  " << (void*)penvironment << ')';
 
    if (reset)
       {

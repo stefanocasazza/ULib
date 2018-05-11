@@ -416,8 +416,8 @@ http {
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # socket - plugin parameters
 # ------------------------------------------------------------------------------------------------------------------------------------------------
-# COMMAND                     command (alternative to USP websocket) to execute
-# ENVIRONMENT environment for command (alternative to USP websocket) to execute
+# COMMAND                     command (alternative to USP modsocket) to execute
+# ENVIRONMENT environment for command (alternative to USP modsocket) to execute
 #
 # MAX_MESSAGE_SIZE Maximum size (in bytes) of a message to accept; default is approximately 4GB
 # ------------------------------------------------------------------------------------------------------------------------------------------------

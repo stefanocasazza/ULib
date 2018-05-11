@@ -232,12 +232,34 @@ public:
       U_RETURN_STRING(srv);
       }
 
+   bool isLDAP() const
+      {
+      U_TRACE_NO_PARAM(0, "Url::isLDAP()")
+
+      if (u_get_unalignedp32(url.data()) == U_MULTICHAR_CONSTANT32('l','d','a','p')) U_RETURN(true);
+
+      U_RETURN(false);
+      }
+
    bool isHTTP() const
       {
       U_TRACE_NO_PARAM(0, "Url::isHTTP()")
 
       if (service_end == 4 &&
-          UString::str_http->equal(url.data(), (uint32_t)service_end))
+          u_get_unalignedp32(url.data()) == U_MULTICHAR_CONSTANT32('h','t','t','p'))
+         {
+         U_RETURN(true);
+         }
+
+      U_RETURN(false);
+      }
+
+   bool isWS() const
+      {
+      U_TRACE_NO_PARAM(0, "Url::isWS()")
+
+      if (service_end == 2 &&
+          u_get_unalignedp16(url.data()) == U_MULTICHAR_CONSTANT16('w','s'))
          {
          U_RETURN(true);
          }
@@ -251,7 +273,7 @@ public:
 
       if (service_end == 5     &&
           url.c_char(4) == 's' &&
-          UString::str_http->equal(url.data(), 4))
+          u_get_unalignedp32(url.data()) == U_MULTICHAR_CONSTANT32('h','t','t','p'))
          {
          U_RETURN(true);
          }
@@ -259,11 +281,16 @@ public:
       U_RETURN(false);
       }
 
-   bool isLDAP() const
+   bool isWSS() const
       {
-      U_TRACE_NO_PARAM(0, "Url::isLDAP()")
+      U_TRACE_NO_PARAM(0, "Url::isWSS()")
 
-      if (getService().equal(U_CONSTANT_TO_PARAM("ldap"))) U_RETURN(true);
+      if (service_end == 3     &&
+          url.c_char(2) == 's' &&
+          u_get_unalignedp16(url.data()) == U_MULTICHAR_CONSTANT16('w','s'))
+         {
+         U_RETURN(true);
+         }
 
       U_RETURN(false);
       }
@@ -272,7 +299,12 @@ public:
       {
       U_TRACE_NO_PARAM(0, "Url::isLDAPS()")
 
-      if (getService().equal(U_CONSTANT_TO_PARAM("ldaps"))) U_RETURN(true);
+      if (service_end == 5     &&
+          url.c_char(4) == 's' &&
+          u_get_unalignedp32(url.data()) == U_MULTICHAR_CONSTANT32('l','d','a','p'))
+         {
+         U_RETURN(true);
+         }
 
       U_RETURN(false);
       }

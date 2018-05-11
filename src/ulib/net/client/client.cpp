@@ -378,7 +378,7 @@ bool UClient_Base::setUrl(const char* str, uint32_t len)
 
    url.set(str, len);
 
-   if (socket->isSSL()) socket->setSSLActive(url.isHTTPS());
+   if (socket->isSSL()) socket->setSSLActive(url.isHTTPS() | url.isWSS());
 
    uri = url.getPathAndQuery();
 

@@ -91,7 +91,7 @@ kill_server userver_tcp
 $SLEEP
 pkill userver_tcp 2>/dev/null
 
-cat err/userver_tcp.err >> err/webserver_proxy.err
+cat err/userver_tcp.err > err/webserver_proxy.err
 rm  err/userver_tcp.err
 
 # Test against expected output

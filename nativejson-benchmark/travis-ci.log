@@ -1,0 +1,1905 @@
+@see: https://travis-ci.org/miloyip/nativejson-benchmark/jobs/214711212
+
+Read 'canada.json' (2251051 bytes)
+objectCount:           4
+arrayCount:        56045
+numberCount:      111126
+stringCount:          12
+trueCount:             0
+falseCount:            0
+nullCount:             0
+memberCount:           8
+elementCount:     167170
+stringLength:         90
+
+Read 'citm_catalog.json' (1727204 bytes)
+objectCount:       10937
+arrayCount:        10451
+numberCount:       14392
+stringCount:       26604
+trueCount:             0
+falseCount:            0
+nullCount:          1263
+memberCount:       25869
+elementCount:      11908
+stringLength:     221379
+
+Read 'twitter.json' (631514 bytes)
+objectCount:        1264
+arrayCount:         1050
+numberCount:        2109
+stringCount:       18099
+trueCount:           345
+falseCount:         2446
+nullCount:          1946
+memberCount:       13345
+elementCount:        568
+stringLength:     367917
+
+
+Verifying ULib (C++) ... OK
+Verifying ArduinoJson (C++) ... OK
+Verifying CAJUN (C++) ... OK
+Verifying ccan/json (C) ... OK
+Verifying cJSON (C) ... OK
+Verifying Configuru (C++11) ... OK
+Verifying dropbox/json11 (C++11) ... 
+Warning: potential memory leak (3 allocations for 136 bytes)
+OK
+Verifying mikeando/FastJson (C++) ... OK
+Verifying gason (C++11) ... OK
+Verifying Jansson (C) ... OK
+Verifying JeayeSON (C++14) ... OK
+Verifying jsmn (C) ... 
+Statistics of 'citm_catalog.json' is different from reference.
+
+Reference
+---------
+objectCount:       10937
+arrayCount:        10451
+numberCount:       14392
+stringCount:       26604
+trueCount:             0
+falseCount:            0
+nullCount:          1263
+memberCount:       25869
+elementCount:      11908
+stringLength:     221379
+
+Stat 1
+--------
+objectCount:       10937
+arrayCount:        10451
+numberCount:       14392
+stringCount:       26604
+trueCount:             0
+falseCount:            0
+nullCount:          1263
+memberCount:       25869
+elementCount:      11908
+stringLength:     221381
+
+
+Statistics of 'twitter.json' is different from reference.
+
+Reference
+---------
+objectCount:        1264
+arrayCount:         1050
+numberCount:        2109
+stringCount:       18099
+trueCount:           345
+falseCount:         2446
+nullCount:          1946
+memberCount:       13345
+elementCount:        568
+stringLength:     367917
+
+Stat 1
+--------
+objectCount:        1264
+arrayCount:         1050
+numberCount:        2109
+stringCount:       18099
+trueCount:           345
+falseCount:         2446
+nullCount:          1946
+memberCount:       13345
+elementCount:        568
+stringLength:     369145
+
+Failed
+Verifying JsonBox (C++) ... OK
+Verifying jsoncons (C++) ... OK
+Verifying JsonCpp (C++) ... OK
+Verifying json-c (C) ... OK
+Verifying JSON Spirit (C++) ... 
+Warning: potential memory leak (4 allocations for 128 bytes)
+OK
+Verifying hjiang/JSON++ (C++) ... 
+Warning: potential memory leak (256 allocations for 10240 bytes)
+OK
+Verifying juson (C) ... OK
+Verifying JVar (C++) ... 
+Failed to parse 'citm_catalog.json' 2nd time
+Failed to parse 'twitter.json' 2nd time
+Failed
+Verifying Jzon (C++) ... OK
+Verifying nbsdx_SimpleJSON (C++11) ... 
+Statistics of 'canada.json' is different from reference.
+
+Reference
+---------
+objectCount:           4
+arrayCount:        56045
+numberCount:      111126
+stringCount:          12
+trueCount:             0
+falseCount:            0
+nullCount:             0
+memberCount:           8
+elementCount:     167170
+stringLength:         90
+
+Stat #1
+--------
+objectCount:           4
+arrayCount:        56045
+numberCount:      111126
+stringCount:          12
+trueCount:             0
+falseCount:            0
+nullCount:             0
+memberCount:           0
+elementCount:     167178
+stringLength:         90
+
+
+Statistics of 'citm_catalog.json' is different from reference.
+
+Reference
+---------
+objectCount:       10937
+arrayCount:        10451
+numberCount:       14392
+stringCount:       26604
+trueCount:             0
+falseCount:            0
+nullCount:          1263
+memberCount:       25869
+elementCount:      11908
+stringLength:     221379
+
+Stat #1
+--------
+objectCount:       10937
+arrayCount:        10451
+numberCount:       14392
+stringCount:       26604
+trueCount:             0
+falseCount:            0
+nullCount:          1263
+memberCount:           0
+elementCount:      37777
+stringLength:     221381
+
+
+Statistics of 'twitter.json' is different from reference.
+
+Reference
+---------
+objectCount:        1264
+arrayCount:         1050
+numberCount:        2109
+stringCount:       18099
+trueCount:           345
+falseCount:         2446
+nullCount:          1946
+memberCount:       13345
+elementCount:        568
+stringLength:     367917
+
+Stat #1
+--------
+objectCount:        1264
+arrayCount:         1050
+numberCount:        2109
+stringCount:       18099
+trueCount:           345
+falseCount:         2446
+nullCount:          1946
+memberCount:           0
+elementCount:      13913
+stringLength:     369145
+
+Failed
+Verifying Nlohmann (C++11) ... OK
+Verifying Parson (C) ... OK
+Verifying PicoJSON (C++) ... OK
+Verifying pjson (C) ... 
+Failed to parse 'canada.json'
+
+Failed to parse 'citm_catalog.json'
+
+Failed to parse 'twitter.json'
+Failed
+Verifying RapidJSON_AutoUTF (C++) ... OK
+Verifying RapidJSON_FullPrec (C++) ... OK
+Verifying RapidJSON_Insitu (C++) ... OK
+Verifying RapidJSON_Iterative (C++) ... OK
+Verifying RapidJSON (C++) ... OK
+Verifying sajson (C++) ... OK
+Verifying Sheredom json.h (C) ... OK
+Verifying SimpleJSON (C++) ... 
+Statistics of 'twitter.json' is different from reference.
+
+Reference
+---------
+objectCount:        1264
+arrayCount:         1050
+numberCount:        2109
+stringCount:       18099
+trueCount:           345
+falseCount:         2446
+nullCount:          1946
+memberCount:       13345
+elementCount:        568
+stringLength:     367917
+
+Stat #1
+--------
+objectCount:        1264
+arrayCount:         1050
+numberCount:        2109
+stringCount:       18099
+trueCount:           345
+falseCount:         2446
+nullCount:          1946
+memberCount:       13345
+elementCount:        568
+stringLength:     304319
+
+Failed
+Verifying strdup (C) ... Not support Statistics
+Not support Statistics
+Not support Statistics
+OK
+Verifying taocpp/json & Nlohmann (C++11) ... OK
+Verifying taocpp/json (C++11) ... OK
+Verifying tunnuz/JSON++ (C++) ... 
+Warning: potential memory leak (1 allocations for 72 bytes)
+
+error: syntax error
+
+Failed to parse 'citm_catalog.json' 2nd time
+error: syntax error
+
+Failed to parse 'twitter.json' 2nd time
+Failed
+Verifying ujson4c (C) ... 
+Statistics of 'twitter.json' is different from reference.
+
+Reference
+---------
+objectCount:        1264
+arrayCount:         1050
+numberCount:        2109
+stringCount:       18099
+trueCount:           345
+falseCount:         2446
+nullCount:          1946
+memberCount:       13345
+elementCount:        568
+stringLength:     367917
+
+Stat 1
+--------
+objectCount:        1264
+arrayCount:         1050
+numberCount:        2109
+stringCount:       18099
+trueCount:           345
+falseCount:         2446
+nullCount:          1946
+memberCount:       13345
+elementCount:        568
+stringLength:     304319
+
+Failed
+Verifying ujson (C++) ... OK
+Verifying Vinenthz/libjson (C) ... OK
+Verifying JSON Voorhees (C++) ... 
+Warning: potential memory leak (47 allocations for 11864 bytes)
+OK
+Verifying YAJL (C) ... OK
+
+Benchmarking Performance of ULib (C++)
+          Parse canada.json          ...  5.997 ms  357.974 MB/s
+          Parse citm_catalog.json    ...  4.168 ms  395.199 MB/s
+          Parse twitter.json         ...  1.473 ms  408.865 MB/s
+      Stringify canada.json          ...  7.679 ms  279.564 MB/s
+      Stringify citm_catalog.json    ...  0.619 ms  2661.050 MB/s
+      Stringify twitter.json         ...  0.624 ms  965.158 MB/s
+       Prettify canada.json          ...  8.072 ms  265.953 MB/s
+       Prettify citm_catalog.json    ...  0.794 ms  2074.547 MB/s
+       Prettify twitter.json         ...  0.712 ms  845.869 MB/s
+     Statistics canada.json          ...  0.496 ms  4328.164 MB/s
+     Statistics citm_catalog.json    ...  0.381 ms  4323.334 MB/s
+     Statistics twitter.json         ...  0.243 ms  2478.431 MB/s
+   SaxRoundtrip canada.json          ... Not support
+   SaxRoundtrip citm_catalog.json    ... Not support
+   SaxRoundtrip twitter.json         ... Not support
+ Sax Statistics canada.json          ... Not support
+ Sax Statistics citm_catalog.json    ... Not support
+ Sax Statistics twitter.json         ... Not support
+objectCount:           4
+arrayCount:        56045
+numberCount:      111126
+stringCount:          12
+trueCount:             0
+falseCount:            0
+nullCount:             0
+memberCount:           8
+elementCount:     167170
+stringLength:         90
+jsonstat file size = 116560
+
+Benchmarking Performance of ArduinoJson (C++)
+          Parse canada.json          ... 750.417 ms  2.861 MB/s
+          Parse citm_catalog.json    ...  4.063 ms  405.412 MB/s
+          Parse twitter.json         ...  3.542 ms  170.034 MB/s
+      Stringify canada.json          ... 43.471 ms  49.384 MB/s
+      Stringify citm_catalog.json    ... 10.858 ms  151.703 MB/s
+      Stringify twitter.json         ... 10.538 ms  57.151 MB/s
+       Prettify canada.json          ... 122.200 ms  17.568 MB/s
+       Prettify citm_catalog.json    ... 27.439 ms  60.031 MB/s
+       Prettify twitter.json         ... 16.004 ms  37.632 MB/s
+     Statistics canada.json          ... 30.232 ms  71.010 MB/s
+     Statistics citm_catalog.json    ...  1.195 ms  1378.402 MB/s
+     Statistics twitter.json         ...  0.722 ms  834.153 MB/s
+   SaxRoundtrip canada.json          ... Not support
+   SaxRoundtrip citm_catalog.json    ... Not support
+   SaxRoundtrip twitter.json         ... Not support
+ Sax Statistics canada.json          ... Not support
+ Sax Statistics citm_catalog.json    ... Not support
+ Sax Statistics twitter.json         ... Not support
+objectCount:           4
+arrayCount:        56045
+numberCount:      111126
+stringCount:          12
+trueCount:             0
+falseCount:            0
+nullCount:             0
+memberCount:           8
+elementCount:     167170
+stringLength:         90
+jsonstat file size = 18824
+
+Benchmarking Performance of CAJUN (C++)
+          Parse canada.json          ... 626.339 ms  3.427 MB/s
+          Parse citm_catalog.json    ... 130.574 ms  12.615 MB/s
+          Parse twitter.json         ... 45.863 ms  13.132 MB/s
+      Stringify canada.json          ... 173.782 ms  12.353 MB/s
+      Stringify citm_catalog.json    ... 23.749 ms  69.358 MB/s
+      Stringify twitter.json         ... 11.628 ms  51.794 MB/s
+       Prettify canada.json          ... Not support
+       Prettify citm_catalog.json    ... Not support
+       Prettify twitter.json         ... Not support
+     Statistics canada.json          ...  3.744 ms  573.389 MB/s
+     Statistics citm_catalog.json    ...  0.476 ms  3460.483 MB/s
+     Statistics twitter.json         ...  0.161 ms  3740.737 MB/s
+   SaxRoundtrip canada.json          ... Not support
+   SaxRoundtrip citm_catalog.json    ... Not support
+   SaxRoundtrip twitter.json         ... Not support
+ Sax Statistics canada.json          ... Not support
+ Sax Statistics citm_catalog.json    ... Not support
+ Sax Statistics twitter.json         ... Not support
+objectCount:           4
+arrayCount:        56045
+numberCount:      111126
+stringCount:          12
+trueCount:             0
+falseCount:            0
+nullCount:             0
+memberCount:           8
+elementCount:     167170
+stringLength:         90
+jsonstat file size = 72408
+
+Benchmarking Performance of ccan/json (C)
+          Parse canada.json          ... 29.637 ms  72.435 MB/s
+          Parse citm_catalog.json    ...  5.412 ms  304.359 MB/s
+          Parse twitter.json         ...  3.012 ms  199.953 MB/s
+      Stringify canada.json          ... 103.115 ms  20.819 MB/s
+      Stringify citm_catalog.json    ... 10.668 ms  154.405 MB/s
+      Stringify twitter.json         ...  3.529 ms  170.660 MB/s
+       Prettify canada.json          ... 117.128 ms  18.328 MB/s
+       Prettify citm_catalog.json    ... 13.170 ms  125.071 MB/s
+       Prettify twitter.json         ...  4.075 ms  147.794 MB/s
+     Statistics canada.json          ...  0.569 ms  3772.881 MB/s
+     Statistics citm_catalog.json    ...  0.371 ms  4439.865 MB/s
+     Statistics twitter.json         ...  0.147 ms  4096.998 MB/s
+   SaxRoundtrip canada.json          ... Not support
+   SaxRoundtrip citm_catalog.json    ... Not support
+   SaxRoundtrip twitter.json         ... Not support
+ Sax Statistics canada.json          ... Not support
+ Sax Statistics citm_catalog.json    ... Not support
+ Sax Statistics twitter.json         ... Not support
+objectCount:           4
+arrayCount:        56045
+numberCount:      111126
+stringCount:          12
+trueCount:             0
+falseCount:            0
+nullCount:             0
+memberCount:           8
+elementCount:     167170
+stringLength:         90
+jsonstat file size = 31136
+
+Benchmarking Performance of cJSON (C)
+          Parse canada.json          ... 25.980 ms  82.632 MB/s
+          Parse citm_catalog.json    ...  5.796 ms  284.194 MB/s
+          Parse twitter.json         ...  3.092 ms  194.780 MB/s
+      Stringify canada.json          ... 73.583 ms  29.175 MB/s
+      Stringify citm_catalog.json    ...  3.574 ms  460.881 MB/s
+      Stringify twitter.json         ...  2.394 ms  251.570 MB/s
+       Prettify canada.json          ... 72.713 ms  29.524 MB/s
+       Prettify citm_catalog.json    ...  3.814 ms  431.880 MB/s
+       Prettify twitter.json         ...  2.599 ms  231.727 MB/s
+     Statistics canada.json          ...  0.656 ms  3272.515 MB/s
+     Statistics citm_catalog.json    ...  0.267 ms  6169.251 MB/s
+     Statistics twitter.json         ...  0.170 ms  3542.698 MB/s
+   SaxRoundtrip canada.json          ... Not support
+   SaxRoundtrip citm_catalog.json    ... Not support
+   SaxRoundtrip twitter.json         ... Not support
+ Sax Statistics canada.json          ... Not support
+ Sax Statistics citm_catalog.json    ... Not support
+ Sax Statistics twitter.json         ... Not support
+objectCount:           4
+arrayCount:        56045
+numberCount:      111126
+stringCount:          12
+trueCount:             0
+falseCount:            0
+nullCount:             0
+memberCount:           8
+elementCount:     167170
+stringLength:         90
+jsonstat file size = 47512
+
+Benchmarking Performance of Configuru (C++11)
+          Parse canada.json          ... 42.585 ms  50.411 MB/s
+          Parse citm_catalog.json    ... 16.664 ms  98.847 MB/s
+          Parse twitter.json         ...  7.321 ms  82.265 MB/s
+      Stringify canada.json          ... 268.136 ms  8.006 MB/s
+      Stringify citm_catalog.json    ...  5.192 ms  317.255 MB/s
+      Stringify twitter.json         ...  2.398 ms  251.150 MB/s
+       Prettify canada.json          ... 274.004 ms  7.835 MB/s
+       Prettify citm_catalog.json    ...  7.830 ms  210.369 MB/s
+       Prettify twitter.json         ...  3.789 ms  158.949 MB/s
+     Statistics canada.json          ...  0.901 ms  2382.652 MB/s
+     Statistics citm_catalog.json    ...  0.584 ms  2820.531 MB/s
+     Statistics twitter.json         ...  0.274 ms  2198.024 MB/s
+   SaxRoundtrip canada.json          ... Not support
+   SaxRoundtrip citm_catalog.json    ... Not support
+   SaxRoundtrip twitter.json         ... Not support
+ Sax Statistics canada.json          ... Not support
+ Sax Statistics citm_catalog.json    ... Not support
+ Sax Statistics twitter.json         ... Not support
+objectCount:           4
+arrayCount:        56045
+numberCount:      111126
+stringCount:          12
+trueCount:             0
+falseCount:            0
+nullCount:             0
+memberCount:           8
+elementCount:     167170
+stringLength:         90
+jsonstat file size = 105272
+
+Benchmarking Performance of dropbox/json11 (C++11)
+          Parse canada.json          ... 39.691 ms  54.087 MB/s
+          Parse citm_catalog.json    ... 15.839 ms  103.996 MB/s
+          Parse twitter.json         ... 10.583 ms  56.908 MB/s
+      Stringify canada.json          ... 112.624 ms  19.061 MB/s
+      Stringify citm_catalog.json    ...  4.411 ms  373.428 MB/s
+      Stringify twitter.json         ...  3.060 ms  196.817 MB/s
+       Prettify canada.json          ... Not support
+       Prettify citm_catalog.json    ... Not support
+       Prettify twitter.json         ... Not support
+     Statistics canada.json          ...  1.020 ms  2104.676 MB/s
+     Statistics citm_catalog.json    ...  0.570 ms  2889.807 MB/s
+     Statistics twitter.json         ...  0.266 ms  2264.130 MB/s
+   SaxRoundtrip canada.json          ... Not support
+   SaxRoundtrip citm_catalog.json    ... Not support
+   SaxRoundtrip twitter.json         ... Not support
+ Sax Statistics canada.json          ... Not support
+ Sax Statistics citm_catalog.json    ... Not support
+ Sax Statistics twitter.json         ... Not support
+objectCount:           4
+arrayCount:        56045
+numberCount:      111126
+stringCount:          12
+trueCount:             0
+falseCount:            0
+nullCount:             0
+memberCount:           8
+elementCount:     167170
+stringLength:         90
+jsonstat file size = 105112
+
+Benchmarking Performance of mikeando/FastJson (C++)
+          Parse canada.json          ... 16.735 ms  128.280 MB/s
+          Parse citm_catalog.json    ...  6.876 ms  239.556 MB/s
+          Parse twitter.json         ...  3.105 ms  193.964 MB/s
+      Stringify canada.json          ... 92.373 ms  23.240 MB/s
+      Stringify citm_catalog.json    ... 10.308 ms  159.797 MB/s
+      Stringify twitter.json         ...  2.476 ms  243.239 MB/s
+       Prettify canada.json          ... Not support
+       Prettify citm_catalog.json    ... Not support
+       Prettify twitter.json         ... Not support
+     Statistics canada.json          ...  0.742 ms  2893.220 MB/s
+     Statistics citm_catalog.json    ...  0.158 ms  10425.254 MB/s
+     Statistics twitter.json         ...  0.072 ms  8364.704 MB/s
+   SaxRoundtrip canada.json          ... Not support
+   SaxRoundtrip citm_catalog.json    ... Not support
+   SaxRoundtrip twitter.json         ... Not support
+ Sax Statistics canada.json          ... Not support
+ Sax Statistics citm_catalog.json    ... Not support
+ Sax Statistics twitter.json         ... Not support
+objectCount:           4
+arrayCount:        56045
+numberCount:      111126
+stringCount:          12
+trueCount:             0
+falseCount:            0
+nullCount:             0
+memberCount:           8
+elementCount:     167170
+stringLength:         90
+jsonstat file size = 76280
+
+Benchmarking Performance of gason (C++11)
+          Parse canada.json          ...  4.031 ms  532.565 MB/s
+          Parse citm_catalog.json    ...  2.240 ms  735.353 MB/s
+          Parse twitter.json         ...  1.037 ms  580.770 MB/s
+      Stringify canada.json          ... 77.532 ms  27.689 MB/s
+      Stringify citm_catalog.json    ... 15.620 ms  105.454 MB/s
+      Stringify twitter.json         ...  6.157 ms  97.817 MB/s
+       Prettify canada.json          ... 100.443 ms  21.373 MB/s
+       Prettify citm_catalog.json    ... 20.131 ms  81.824 MB/s
+       Prettify twitter.json         ...  7.244 ms  83.139 MB/s
+     Statistics canada.json          ...  0.640 ms  3354.327 MB/s
+     Statistics citm_catalog.json    ...  0.285 ms  5779.614 MB/s
+     Statistics twitter.json         ...  0.209 ms  2881.620 MB/s
+   SaxRoundtrip canada.json          ... Not support
+   SaxRoundtrip citm_catalog.json    ... Not support
+   SaxRoundtrip twitter.json         ... Not support
+ Sax Statistics canada.json          ... Not support
+ Sax Statistics citm_catalog.json    ... Not support
+ Sax Statistics twitter.json         ... Not support
+objectCount:           4
+arrayCount:        56045
+numberCount:      111126
+stringCount:          12
+trueCount:             0
+falseCount:            0
+nullCount:             0
+memberCount:           8
+elementCount:     167170
+stringLength:         90
+jsonstat file size = 18776
+
+Benchmarking Performance of Jansson (C)
+          Parse canada.json          ... 62.454 ms  34.374 MB/s
+          Parse citm_catalog.json    ... 19.629 ms  83.916 MB/s
+          Parse twitter.json         ...  9.949 ms  60.535 MB/s
+      Stringify canada.json          ... 112.966 ms  19.004 MB/s
+      Stringify citm_catalog.json    ...  4.673 ms  352.491 MB/s
+      Stringify twitter.json         ...  2.831 ms  212.737 MB/s
+       Prettify canada.json          ... 118.850 ms  18.063 MB/s
+       Prettify citm_catalog.json    ...  5.819 ms  283.071 MB/s
+       Prettify twitter.json         ...  3.223 ms  186.863 MB/s
+     Statistics canada.json          ...  0.981 ms  2188.348 MB/s
+     Statistics citm_catalog.json    ...  0.699 ms  2356.495 MB/s
+     Statistics twitter.json         ...  0.317 ms  1899.870 MB/s
+   SaxRoundtrip canada.json          ... Not support
+   SaxRoundtrip citm_catalog.json    ... Not support
+   SaxRoundtrip twitter.json         ... Not support
+ Sax Statistics canada.json          ... Not support
+ Sax Statistics citm_catalog.json    ... Not support
+ Sax Statistics twitter.json         ... Not support
+objectCount:           4
+arrayCount:        56045
+numberCount:      111126
+stringCount:          12
+trueCount:             0
+falseCount:            0
+nullCount:             0
+memberCount:           8
+elementCount:     167170
+stringLength:         90
+jsonstat file size = 76344
+
+Benchmarking Performance of JeayeSON (C++14)
+          Parse canada.json          ... 51.139 ms  41.979 MB/s
+          Parse citm_catalog.json    ... 32.074 ms  51.356 MB/s
+          Parse twitter.json         ... 17.301 ms  34.811 MB/s
+      Stringify canada.json          ... 82.428 ms  26.044 MB/s
+      Stringify citm_catalog.json    ...  8.346 ms  197.363 MB/s
+      Stringify twitter.json         ...  5.052 ms  119.212 MB/s
+       Prettify canada.json          ... Not support
+       Prettify citm_catalog.json    ... Not support
+       Prettify twitter.json         ... Not support
+     Statistics canada.json          ...  0.616 ms  3485.015 MB/s
+     Statistics citm_catalog.json    ...  0.346 ms  4760.665 MB/s
+     Statistics twitter.json         ...  0.196 ms  3072.748 MB/s
+   SaxRoundtrip canada.json          ... Not support
+   SaxRoundtrip citm_catalog.json    ... Not support
+   SaxRoundtrip twitter.json         ... Not support
+ Sax Statistics canada.json          ... Not support
+ Sax Statistics citm_catalog.json    ... Not support
+ Sax Statistics twitter.json         ... Not support
+objectCount:           4
+arrayCount:        56045
+numberCount:      111126
+stringCount:          12
+trueCount:             0
+falseCount:            0
+nullCount:             0
+memberCount:           8
+elementCount:     167170
+stringLength:         90
+jsonstat file size = 96928
+
+Benchmarking Performance of jsmn (C)
+          Parse canada.json          ... 449.918 ms  4.771 MB/s
+          Parse citm_catalog.json    ... 14.829 ms  111.079 MB/s
+          Parse twitter.json         ...  4.246 ms  141.841 MB/s
+      Stringify canada.json          ... Not support
+      Stringify citm_catalog.json    ... Not support
+      Stringify twitter.json         ... Not support
+       Prettify canada.json          ... Not support
+       Prettify citm_catalog.json    ... Not support
+       Prettify twitter.json         ... Not support
+     Statistics canada.json          ...  0.277 ms  7750.070 MB/s
+     Statistics citm_catalog.json    ...  0.130 ms  12670.693 MB/s
+     Statistics twitter.json         ...  0.057 ms  10565.942 MB/s
+   SaxRoundtrip canada.json          ... Not support
+   SaxRoundtrip citm_catalog.json    ... Not support
+   SaxRoundtrip twitter.json         ... Not support
+ Sax Statistics canada.json          ... Not support
+ Sax Statistics citm_catalog.json    ... Not support
+ Sax Statistics twitter.json         ... Not support
+objectCount:           4
+arrayCount:        56045
+numberCount:      111126
+stringCount:          12
+trueCount:             0
+falseCount:            0
+nullCount:             0
+memberCount:           8
+elementCount:     167170
+stringLength:         90
+jsonstat file size = 14680
+
+Benchmarking Performance of JsonBox (C++)
+          Parse canada.json          ... 231.900 ms  9.257 MB/s
+          Parse citm_catalog.json    ... 84.496 ms  19.494 MB/s
+          Parse twitter.json         ... 42.321 ms  14.231 MB/s
+      Stringify canada.json          ... 210.738 ms  10.187 MB/s
+      Stringify citm_catalog.json    ... 44.971 ms  36.628 MB/s
+      Stringify twitter.json         ... 30.826 ms  19.537 MB/s
+       Prettify canada.json          ... 197.909 ms  10.847 MB/s
+       Prettify citm_catalog.json    ... 40.981 ms  40.194 MB/s
+       Prettify twitter.json         ... 28.738 ms  20.957 MB/s
+     Statistics canada.json          ...  0.748 ms  2870.013 MB/s
+     Statistics citm_catalog.json    ...  0.381 ms  4323.334 MB/s
+     Statistics twitter.json         ...  0.212 ms  2840.843 MB/s
+   SaxRoundtrip canada.json          ... Not support
+   SaxRoundtrip citm_catalog.json    ... Not support
+   SaxRoundtrip twitter.json         ... Not support
+ Sax Statistics canada.json          ... Not support
+ Sax Statistics citm_catalog.json    ... Not support
+ Sax Statistics twitter.json         ... Not support
+objectCount:           4
+arrayCount:        56045
+numberCount:      111126
+stringCount:          12
+trueCount:             0
+falseCount:            0
+nullCount:             0
+memberCount:           8
+elementCount:     167170
+stringLength:         90
+jsonstat file size = 93128
+
+Benchmarking Performance of jsoncons (C++)
+          Parse canada.json          ... 58.148 ms  36.919 MB/s
+          Parse citm_catalog.json    ...  9.153 ms  179.962 MB/s
+          Parse twitter.json         ...  4.830 ms  124.691 MB/s
+      Stringify canada.json          ... 124.034 ms  17.308 MB/s
+      Stringify citm_catalog.json    ...  2.488 ms  662.054 MB/s
+      Stringify twitter.json         ...  2.503 ms  240.615 MB/s
+       Prettify canada.json          ... 124.056 ms  17.305 MB/s
+       Prettify citm_catalog.json    ...  2.489 ms  661.788 MB/s
+       Prettify twitter.json         ...  2.504 ms  240.519 MB/s
+     Statistics canada.json          ...  1.393 ms  1541.112 MB/s
+     Statistics citm_catalog.json    ...  0.578 ms  2849.810 MB/s
+     Statistics twitter.json         ...  0.512 ms  1176.286 MB/s
+   SaxRoundtrip canada.json          ... Not support
+   SaxRoundtrip citm_catalog.json    ... Not support
+   SaxRoundtrip twitter.json         ... Not support
+ Sax Statistics canada.json          ... Not support
+ Sax Statistics citm_catalog.json    ... Not support
+ Sax Statistics twitter.json         ... Not support
+objectCount:           4
+arrayCount:        56045
+numberCount:      111126
+stringCount:          12
+trueCount:             0
+falseCount:            0
+nullCount:             0
+memberCount:           8
+elementCount:     167170
+stringLength:         90
+jsonstat file size = 125936
+
+Benchmarking Performance of JsonCpp (C++)
+          Parse canada.json          ... 72.169 ms  29.746 MB/s
+          Parse citm_catalog.json    ... 15.019 ms  109.674 MB/s
+          Parse twitter.json         ... 10.293 ms  58.511 MB/s
+      Stringify canada.json          ... 155.721 ms  13.786 MB/s
+      Stringify citm_catalog.json    ... 17.528 ms  93.975 MB/s
+      Stringify twitter.json         ... 11.738 ms  51.308 MB/s
+       Prettify canada.json          ... Not support
+       Prettify citm_catalog.json    ... Not support
+       Prettify twitter.json         ... Not support
+     Statistics canada.json          ...  2.272 ms  944.881 MB/s
+     Statistics citm_catalog.json    ...  0.617 ms  2669.676 MB/s
+     Statistics twitter.json         ...  0.589 ms  1022.510 MB/s
+   SaxRoundtrip canada.json          ... Not support
+   SaxRoundtrip citm_catalog.json    ... Not support
+   SaxRoundtrip twitter.json         ... Not support
+ Sax Statistics canada.json          ... Not support
+ Sax Statistics citm_catalog.json    ... Not support
+ Sax Statistics twitter.json         ... Not support
+objectCount:           4
+arrayCount:        56045
+numberCount:      111126
+stringCount:          12
+trueCount:             0
+falseCount:            0
+nullCount:             0
+memberCount:           8
+elementCount:     167170
+stringLength:         90
+jsonstat file size = 203704
+
+Benchmarking Performance of json-c (C)
+          Parse canada.json          ... 79.288 ms  27.076 MB/s
+          Parse citm_catalog.json    ... 16.277 ms  101.197 MB/s
+          Parse twitter.json         ...  7.993 ms  75.348 MB/s
+      Stringify canada.json          ... 15.741 ms  136.381 MB/s
+      Stringify citm_catalog.json    ...  8.879 ms  185.515 MB/s
+      Stringify twitter.json         ...  4.933 ms  122.088 MB/s
+       Prettify canada.json          ... 27.362 ms  78.458 MB/s
+       Prettify citm_catalog.json    ... 12.217 ms  134.828 MB/s
+       Prettify twitter.json         ...  5.623 ms  107.106 MB/s
+     Statistics canada.json          ...  3.403 ms  630.846 MB/s
+     Statistics citm_catalog.json    ...  0.649 ms  2538.043 MB/s
+     Statistics twitter.json         ...  0.227 ms  2653.122 MB/s
+   SaxRoundtrip canada.json          ... Not support
+   SaxRoundtrip citm_catalog.json    ... Not support
+   SaxRoundtrip twitter.json         ... Not support
+ Sax Statistics canada.json          ... Not support
+ Sax Statistics citm_catalog.json    ... Not support
+ Sax Statistics twitter.json         ... Not support
+objectCount:           4
+arrayCount:        56045
+numberCount:      111126
+stringCount:          12
+trueCount:             0
+falseCount:            0
+nullCount:             0
+memberCount:           8
+elementCount:     167170
+stringLength:         90
+jsonstat file size = 55888
+
+Benchmarking Performance of JSON Spirit (C++)
+          Parse canada.json          ... 54.744 ms  39.215 MB/s
+          Parse citm_catalog.json    ... 44.186 ms  37.279 MB/s
+          Parse twitter.json         ... 12.845 ms  46.887 MB/s
+      Stringify canada.json          ... 125.009 ms  17.173 MB/s
+      Stringify citm_catalog.json    ... 12.899 ms  127.699 MB/s
+      Stringify twitter.json         ... 16.039 ms  37.550 MB/s
+       Prettify canada.json          ... 160.222 ms  13.399 MB/s
+       Prettify citm_catalog.json    ... 21.829 ms  75.459 MB/s
+       Prettify twitter.json         ... 18.138 ms  33.204 MB/s
+     Statistics canada.json          ...  0.850 ms  2525.611 MB/s
+     Statistics citm_catalog.json    ...  0.294 ms  5602.687 MB/s
+     Statistics twitter.json         ...  0.125 ms  4818.069 MB/s
+   SaxRoundtrip canada.json          ... Not support
+   SaxRoundtrip citm_catalog.json    ... Not support
+   SaxRoundtrip twitter.json         ... Not support
+ Sax Statistics canada.json          ... Not support
+ Sax Statistics citm_catalog.json    ... Not support
+ Sax Statistics twitter.json         ... Not support
+objectCount:           4
+arrayCount:        56045
+numberCount:      111126
+stringCount:          12
+trueCount:             0
+falseCount:            0
+nullCount:             0
+memberCount:           8
+elementCount:     167170
+stringLength:         90
+jsonstat file size = 113368
+
+Benchmarking Performance of hjiang/JSON++ (C++)
+          Parse canada.json          ... 139.530 ms  15.386 MB/s
+          Parse citm_catalog.json    ... 44.772 ms  36.791 MB/s
+          Parse twitter.json         ... 20.322 ms  29.636 MB/s
+      Stringify canada.json          ... 296.907 ms  7.230 MB/s
+      Stringify citm_catalog.json    ... 57.010 ms  28.893 MB/s
+      Stringify twitter.json         ... 22.574 ms  26.679 MB/s
+       Prettify canada.json          ... Not support
+       Prettify citm_catalog.json    ... Not support
+       Prettify twitter.json         ... Not support
+     Statistics canada.json          ...  0.767 ms  2798.917 MB/s
+     Statistics citm_catalog.json    ...  0.485 ms  3396.268 MB/s
+     Statistics twitter.json         ...  0.247 ms  2438.294 MB/s
+   SaxRoundtrip canada.json          ... Not support
+   SaxRoundtrip citm_catalog.json    ... Not support
+   SaxRoundtrip twitter.json         ... Not support
+ Sax Statistics canada.json          ... Not support
+ Sax Statistics citm_catalog.json    ... Not support
+ Sax Statistics twitter.json         ... Not support
+objectCount:           4
+arrayCount:        56045
+numberCount:      111126
+stringCount:          12
+trueCount:             0
+falseCount:            0
+nullCount:             0
+memberCount:           8
+elementCount:     167170
+stringLength:         90
+jsonstat file size = 88856
+
+Benchmarking Performance of juson (C)
+          Parse canada.json          ... 32.277 ms  66.511 MB/s
+          Parse citm_catalog.json    ...  5.747 ms  286.617 MB/s
+          Parse twitter.json         ...  1.815 ms  331.823 MB/s
+      Stringify canada.json          ... Not support
+      Stringify citm_catalog.json    ... Not support
+      Stringify twitter.json         ... Not support
+       Prettify canada.json          ... Not support
+       Prettify citm_catalog.json    ... Not support
+       Prettify twitter.json         ... Not support
+     Statistics canada.json          ...  0.764 ms  2809.908 MB/s
+     Statistics citm_catalog.json    ...  0.371 ms  4439.865 MB/s
+     Statistics twitter.json         ...  0.180 ms  3345.882 MB/s
+   SaxRoundtrip canada.json          ... Not support
+   SaxRoundtrip citm_catalog.json    ... Not support
+   SaxRoundtrip twitter.json         ... Not support
+ Sax Statistics canada.json          ... Not support
+ Sax Statistics citm_catalog.json    ... Not support
+ Sax Statistics twitter.json         ... Not support
+objectCount:           4
+arrayCount:        56045
+numberCount:      111126
+stringCount:          12
+trueCount:             0
+falseCount:            0
+nullCount:             0
+memberCount:           8
+elementCount:     167170
+stringLength:         90
+jsonstat file size = 22928
+
+Benchmarking Performance of JVar (C++)
+          Parse canada.json          ... 67.610 ms  31.752 MB/s
+          Parse citm_catalog.json    ... 16.838 ms  97.826 MB/s
+          Parse twitter.json         ...  8.261 ms  72.904 MB/s
+      Stringify canada.json          ... 70.717 ms  30.357 MB/s
+      Stringify citm_catalog.json    ...  5.152 ms  319.719 MB/s
+      Stringify twitter.json         ...  2.197 ms  274.128 MB/s
+       Prettify canada.json          ... Not support
+       Prettify citm_catalog.json    ... Not support
+       Prettify twitter.json         ... Not support
+     Statistics canada.json          ...  0.942 ms  2278.949 MB/s
+     Statistics citm_catalog.json    ...  0.470 ms  3504.660 MB/s
+     Statistics twitter.json         ...  0.224 ms  2688.655 MB/s
+   SaxRoundtrip canada.json          ... Not support
+   SaxRoundtrip citm_catalog.json    ... Not support
+   SaxRoundtrip twitter.json         ... Not support
+ Sax Statistics canada.json          ... Not support
+ Sax Statistics citm_catalog.json    ... Not support
+ Sax Statistics twitter.json         ... Not support
+objectCount:           4
+arrayCount:        56045
+numberCount:      111126
+stringCount:          12
+trueCount:             0
+falseCount:            0
+nullCount:             0
+memberCount:           8
+elementCount:     167170
+stringLength:         90
+jsonstat file size = 84704
+
+Benchmarking Performance of Jzon (C++)
+          Parse canada.json          ... 147.979 ms  14.507 MB/s
+          Parse citm_catalog.json    ... 51.278 ms  32.123 MB/s
+          Parse twitter.json         ... 24.314 ms  24.770 MB/s
+      Stringify canada.json          ... 18.681 ms  114.917 MB/s
+      Stringify citm_catalog.json    ...  7.140 ms  230.699 MB/s
+      Stringify twitter.json         ...  4.492 ms  134.074 MB/s
+       Prettify canada.json          ... 34.808 ms  61.675 MB/s
+       Prettify citm_catalog.json    ... 11.196 ms  147.123 MB/s
+       Prettify twitter.json         ...  5.690 ms  105.845 MB/s
+     Statistics canada.json          ...  1.118 ms  1920.187 MB/s
+     Statistics citm_catalog.json    ...  0.372 ms  4427.930 MB/s
+     Statistics twitter.json         ...  0.215 ms  2801.203 MB/s
+   SaxRoundtrip canada.json          ... Not support
+   SaxRoundtrip citm_catalog.json    ... Not support
+   SaxRoundtrip twitter.json         ... Not support
+ Sax Statistics canada.json          ... Not support
+ Sax Statistics citm_catalog.json    ... Not support
+ Sax Statistics twitter.json         ... Not support
+objectCount:           4
+arrayCount:        56045
+numberCount:      111126
+stringCount:          12
+trueCount:             0
+falseCount:            0
+nullCount:             0
+memberCount:           8
+elementCount:     167170
+stringLength:         90
+jsonstat file size = 80656
+
+Benchmarking Performance of nbsdx_SimpleJSON (C++11)
+          Parse canada.json          ... 151.309 ms  14.188 MB/s
+          Parse citm_catalog.json    ... 47.413 ms  34.741 MB/s
+          Parse twitter.json         ... 24.783 ms  24.301 MB/s
+      Stringify canada.json          ... 152.319 ms  14.094 MB/s
+      Stringify citm_catalog.json    ... 37.047 ms  44.462 MB/s
+      Stringify twitter.json         ... 16.030 ms  37.571 MB/s
+       Prettify canada.json          ... 153.677 ms  13.969 MB/s
+       Prettify citm_catalog.json    ... 37.512 ms  43.911 MB/s
+       Prettify twitter.json         ... 15.745 ms  38.251 MB/s
+     Statistics canada.json          ...  1.714 ms  1252.491 MB/s
+     Statistics citm_catalog.json    ...  0.810 ms  2033.568 MB/s
+     Statistics twitter.json         ...  2.434 ms  247.436 MB/s
+   SaxRoundtrip canada.json          ... Not support
+   SaxRoundtrip citm_catalog.json    ... Not support
+   SaxRoundtrip twitter.json         ... Not support
+ Sax Statistics canada.json          ... Not support
+ Sax Statistics citm_catalog.json    ... Not support
+ Sax Statistics twitter.json         ... Not support
+objectCount:           4
+arrayCount:        56045
+numberCount:      111126
+stringCount:          12
+trueCount:             0
+falseCount:            0
+nullCount:             0
+memberCount:           0
+elementCount:     167178
+stringLength:         90
+jsonstat file size = 72312
+
+Benchmarking Performance of Nlohmann (C++11)
+          Parse canada.json          ... 39.755 ms  54.000 MB/s
+          Parse citm_catalog.json    ...  9.888 ms  166.585 MB/s
+          Parse twitter.json         ...  5.880 ms  102.425 MB/s
+      Stringify canada.json          ... 113.745 ms  18.874 MB/s
+      Stringify citm_catalog.json    ...  6.952 ms  236.938 MB/s
+      Stringify twitter.json         ...  4.522 ms  133.184 MB/s
+       Prettify canada.json          ... 134.119 ms  16.006 MB/s
+       Prettify citm_catalog.json    ... 11.144 ms  147.810 MB/s
+       Prettify twitter.json         ...  5.973 ms  100.830 MB/s
+     Statistics canada.json          ...  0.731 ms  2936.757 MB/s
+     Statistics citm_catalog.json    ...  0.777 ms  2119.936 MB/s
+     Statistics twitter.json         ...  0.483 ms  1246.912 MB/s
+   SaxRoundtrip canada.json          ... Not support
+   SaxRoundtrip citm_catalog.json    ... Not support
+   SaxRoundtrip twitter.json         ... Not support
+ Sax Statistics canada.json          ... Not support
+ Sax Statistics citm_catalog.json    ... Not support
+ Sax Statistics twitter.json         ... Not support
+objectCount:           4
+arrayCount:        56045
+numberCount:      111126
+stringCount:          12
+trueCount:             0
+falseCount:            0
+nullCount:             0
+memberCount:           8
+elementCount:     167170
+stringLength:         90
+jsonstat file size = 68304
+
+Benchmarking Performance of Parson (C)
+          Parse canada.json          ... 47.780 ms  44.930 MB/s
+          Parse citm_catalog.json    ... 11.760 ms  140.067 MB/s
+          Parse twitter.json         ...  5.963 ms  100.999 MB/s
+      Stringify canada.json          ... 206.665 ms  10.388 MB/s
+      Stringify citm_catalog.json    ...  9.956 ms  165.447 MB/s
+      Stringify twitter.json         ...  8.718 ms  69.082 MB/s
+       Prettify canada.json          ... 205.552 ms  10.444 MB/s
+       Prettify citm_catalog.json    ... 10.043 ms  164.014 MB/s
+       Prettify twitter.json         ...  8.833 ms  68.183 MB/s
+     Statistics canada.json          ...  1.135 ms  1891.427 MB/s
+     Statistics citm_catalog.json    ...  1.014 ms  1624.448 MB/s
+     Statistics twitter.json         ...  1.262 ms  477.226 MB/s
+   SaxRoundtrip canada.json          ... Not support
+   SaxRoundtrip citm_catalog.json    ... Not support
+   SaxRoundtrip twitter.json         ... Not support
+ Sax Statistics canada.json          ... Not support
+ Sax Statistics citm_catalog.json    ... Not support
+ Sax Statistics twitter.json         ... Not support
+objectCount:           4
+arrayCount:        56045
+numberCount:      111126
+stringCount:          12
+trueCount:             0
+falseCount:            0
+nullCount:             0
+memberCount:           8
+elementCount:     167170
+stringLength:         90
+jsonstat file size = 59864
+
+Benchmarking Performance of PicoJSON (C++)
+          Parse canada.json          ... 97.705 ms  21.972 MB/s
+          Parse citm_catalog.json    ... 28.257 ms  58.293 MB/s
+          Parse twitter.json         ... 12.714 ms  47.370 MB/s
+      Stringify canada.json          ... 125.060 ms  17.166 MB/s
+      Stringify citm_catalog.json    ... 12.354 ms  133.333 MB/s
+      Stringify twitter.json         ...  4.128 ms  145.896 MB/s
+       Prettify canada.json          ... Not support
+       Prettify citm_catalog.json    ... Not support
+       Prettify twitter.json         ... Not support
+     Statistics canada.json          ...  0.642 ms  3343.878 MB/s
+     Statistics citm_catalog.json    ...  0.333 ms  4946.517 MB/s
+     Statistics twitter.json         ...  0.239 ms  2519.911 MB/s
+   SaxRoundtrip canada.json          ... Not support
+   SaxRoundtrip citm_catalog.json    ... Not support
+   SaxRoundtrip twitter.json         ... Not support
+ Sax Statistics canada.json          ... Not support
+ Sax Statistics citm_catalog.json    ... Not support
+ Sax Statistics twitter.json         ... Not support
+objectCount:           4
+arrayCount:        56045
+numberCount:      111126
+stringCount:          12
+trueCount:             0
+falseCount:            0
+nullCount:             0
+memberCount:           8
+elementCount:     167170
+stringLength:         90
+jsonstat file size = 59976
+
+Benchmarking Performance of pjson (C)
+          Parse canada.json          ... Not support
+          Parse citm_catalog.json    ... Not support
+          Parse twitter.json         ... Not support
+      Stringify canada.json          ... Not support
+      Stringify citm_catalog.json    ... Not support
+      Stringify twitter.json         ... Not support
+       Prettify canada.json          ... Not support
+       Prettify citm_catalog.json    ... Not support
+       Prettify twitter.json         ... Not support
+     Statistics canada.json          ... Not support
+     Statistics citm_catalog.json    ... Not support
+     Statistics twitter.json         ... Not support
+   SaxRoundtrip canada.json          ... Not support
+   SaxRoundtrip citm_catalog.json    ... Not support
+   SaxRoundtrip twitter.json         ... Not support
+ Sax Statistics canada.json          ...  4.761 ms  450.907 MB/s
+ Sax Statistics citm_catalog.json    ...  2.731 ms  603.145 MB/s
+ Sax Statistics twitter.json         ...  1.358 ms  443.489 MB/s
+Not support Statistics
+jsonstat file size = 10576
+
+Benchmarking Performance of RapidJSON_AutoUTF (C++)
+          Parse canada.json          ...  9.671 ms  221.980 MB/s
+          Parse citm_catalog.json    ...  7.879 ms  209.061 MB/s
+          Parse twitter.json         ...  4.650 ms  129.518 MB/s
+      Stringify canada.json          ... 16.961 ms  126.571 MB/s
+      Stringify citm_catalog.json    ...  2.173 ms  758.026 MB/s
+      Stringify twitter.json         ...  1.917 ms  314.167 MB/s
+       Prettify canada.json          ... 32.052 ms  66.978 MB/s
+       Prettify citm_catalog.json    ...  5.784 ms  284.784 MB/s
+       Prettify twitter.json         ...  2.993 ms  201.222 MB/s
+     Statistics canada.json          ...  0.646 ms  3323.173 MB/s
+     Statistics citm_catalog.json    ...  0.209 ms  7881.292 MB/s
+     Statistics twitter.json         ...  0.078 ms  7721.265 MB/s
+   SaxRoundtrip canada.json          ... 23.674 ms  90.680 MB/s
+   SaxRoundtrip citm_catalog.json    ...  9.034 ms  182.332 MB/s
+   SaxRoundtrip twitter.json         ...  5.963 ms  100.999 MB/s
+ Sax Statistics canada.json          ...  7.797 ms  275.333 MB/s
+ Sax Statistics citm_catalog.json    ...  7.206 ms  228.586 MB/s
+ Sax Statistics twitter.json         ...  4.221 ms  142.682 MB/s
+objectCount:           4
+arrayCount:        56045
+numberCount:      111126
+stringCount:          12
+trueCount:             0
+falseCount:            0
+nullCount:             0
+memberCount:           8
+elementCount:     167170
+stringLength:         90
+jsonstat file size = 35168
+
+Benchmarking Performance of RapidJSON_FullPrec (C++)
+          Parse canada.json          ... 12.431 ms  172.695 MB/s
+          Parse citm_catalog.json    ...  2.919 ms  564.299 MB/s
+          Parse twitter.json         ...  1.852 ms  325.194 MB/s
+      Stringify canada.json          ...  8.581 ms  250.177 MB/s
+      Stringify citm_catalog.json    ...  1.222 ms  1347.946 MB/s
+      Stringify twitter.json         ...  0.857 ms  702.752 MB/s
+       Prettify canada.json          ...  9.766 ms  219.821 MB/s
+       Prettify citm_catalog.json    ...  1.591 ms  1035.317 MB/s
+       Prettify twitter.json         ...  1.140 ms  528.297 MB/s
+     Statistics canada.json          ...  0.635 ms  3380.739 MB/s
+     Statistics citm_catalog.json    ...  0.204 ms  8074.461 MB/s
+     Statistics twitter.json         ...  0.077 ms  7821.541 MB/s
+   SaxRoundtrip canada.json          ... 19.961 ms  107.548 MB/s
+   SaxRoundtrip citm_catalog.json    ...  3.488 ms  472.245 MB/s
+   SaxRoundtrip twitter.json         ...  2.316 ms  260.043 MB/s
+ Sax Statistics canada.json          ... 12.428 ms  172.737 MB/s
+ Sax Statistics citm_catalog.json    ...  2.217 ms  742.982 MB/s
+ Sax Statistics twitter.json         ...  1.422 ms  423.529 MB/s
+objectCount:           4
+arrayCount:        56045
+numberCount:      111126
+stringCount:          12
+trueCount:             0
+falseCount:            0
+nullCount:             0
+memberCount:           8
+elementCount:     167170
+stringLength:         90
+jsonstat file size = 31072
+
+Benchmarking Performance of RapidJSON_Insitu (C++)
+          Parse canada.json          ...  5.665 ms  378.953 MB/s
+          Parse citm_catalog.json    ...  2.244 ms  734.042 MB/s
+          Parse twitter.json         ...  1.261 ms  477.604 MB/s
+      Stringify canada.json          ...  8.397 ms  255.659 MB/s
+      Stringify citm_catalog.json    ...  1.264 ms  1303.157 MB/s
+      Stringify twitter.json         ...  0.996 ms  604.677 MB/s
+       Prettify canada.json          ...  9.706 ms  221.180 MB/s
+       Prettify citm_catalog.json    ...  1.613 ms  1021.197 MB/s
+       Prettify twitter.json         ...  1.243 ms  484.520 MB/s
+     Statistics canada.json          ...  0.638 ms  3364.843 MB/s
+     Statistics citm_catalog.json    ...  0.201 ms  8194.976 MB/s
+     Statistics twitter.json         ...  0.088 ms  6843.849 MB/s
+   SaxRoundtrip canada.json          ... 13.494 ms  159.091 MB/s
+   SaxRoundtrip citm_catalog.json    ...  2.982 ms  552.378 MB/s
+   SaxRoundtrip twitter.json         ...  2.106 ms  285.973 MB/s
+ Sax Statistics canada.json          ...  4.472 ms  480.047 MB/s
+ Sax Statistics citm_catalog.json    ...  1.795 ms  917.655 MB/s
+ Sax Statistics twitter.json         ...  1.171 ms  514.311 MB/s
+objectCount:           4
+arrayCount:        56045
+numberCount:      111126
+stringCount:          12
+trueCount:             0
+falseCount:            0
+nullCount:             0
+memberCount:           8
+elementCount:     167170
+stringLength:         90
+jsonstat file size = 31072
+
+Benchmarking Performance of RapidJSON_Iterative (C++)
+          Parse canada.json          ...  6.238 ms  344.144 MB/s
+          Parse citm_catalog.json    ...  3.186 ms  517.009 MB/s
+          Parse twitter.json         ...  1.894 ms  317.982 MB/s
+      Stringify canada.json          ...  8.533 ms  251.584 MB/s
+      Stringify citm_catalog.json    ...  1.223 ms  1346.844 MB/s
+      Stringify twitter.json         ...  0.856 ms  703.573 MB/s
+       Prettify canada.json          ...  9.890 ms  217.065 MB/s
+       Prettify citm_catalog.json    ...  1.600 ms  1029.494 MB/s
+       Prettify twitter.json         ...  1.163 ms  517.849 MB/s
+     Statistics canada.json          ...  0.635 ms  3380.739 MB/s
+     Statistics citm_catalog.json    ...  0.204 ms  8074.461 MB/s
+     Statistics twitter.json         ...  0.080 ms  7528.234 MB/s
+   SaxRoundtrip canada.json          ... 14.365 ms  149.444 MB/s
+   SaxRoundtrip citm_catalog.json    ...  3.683 ms  447.241 MB/s
+   SaxRoundtrip twitter.json         ...  2.497 ms  241.193 MB/s
+ Sax Statistics canada.json          ...  5.183 ms  414.194 MB/s
+ Sax Statistics citm_catalog.json    ...  2.333 ms  706.039 MB/s
+ Sax Statistics twitter.json         ...  1.509 ms  399.111 MB/s
+objectCount:           4
+arrayCount:        56045
+numberCount:      111126
+stringCount:          12
+trueCount:             0
+falseCount:            0
+nullCount:             0
+memberCount:           8
+elementCount:     167170
+stringLength:         90
+jsonstat file size = 31072
+
+Benchmarking Performance of RapidJSON (C++)
+          Parse canada.json          ...  5.377 ms  399.250 MB/s
+          Parse citm_catalog.json    ...  2.569 ms  641.179 MB/s
+          Parse twitter.json         ...  1.769 ms  340.451 MB/s
+      Stringify canada.json          ...  8.552 ms  251.025 MB/s
+      Stringify citm_catalog.json    ...  1.224 ms  1345.744 MB/s
+      Stringify twitter.json         ...  0.852 ms  706.876 MB/s
+       Prettify canada.json          ...  9.892 ms  217.021 MB/s
+       Prettify citm_catalog.json    ...  1.594 ms  1033.369 MB/s
+       Prettify twitter.json         ...  1.105 ms  545.030 MB/s
+     Statistics canada.json          ...  0.641 ms  3349.094 MB/s
+     Statistics citm_catalog.json    ...  0.204 ms  8074.461 MB/s
+     Statistics twitter.json         ...  0.079 ms  7623.528 MB/s
+   SaxRoundtrip canada.json          ... 13.008 ms  165.035 MB/s
+   SaxRoundtrip citm_catalog.json    ...  3.115 ms  528.793 MB/s
+   SaxRoundtrip twitter.json         ...  2.328 ms  258.702 MB/s
+ Sax Statistics canada.json          ...  4.245 ms  505.717 MB/s
+ Sax Statistics citm_catalog.json    ...  1.899 ms  867.399 MB/s
+ Sax Statistics twitter.json         ...  1.387 ms  434.217 MB/s
+objectCount:           4
+arrayCount:        56045
+numberCount:      111126
+stringCount:          12
+trueCount:             0
+falseCount:            0
+nullCount:             0
+memberCount:           8
+elementCount:     167170
+stringLength:         90
+jsonstat file size = 31072
+
+Benchmarking Performance of sajson (C++)
+          Parse canada.json          ...  4.845 ms  443.090 MB/s
+          Parse citm_catalog.json    ...  2.534 ms  650.036 MB/s
+          Parse twitter.json         ...  1.179 ms  510.822 MB/s
+      Stringify canada.json          ... Not support
+      Stringify citm_catalog.json    ... Not support
+      Stringify twitter.json         ... Not support
+       Prettify canada.json          ... Not support
+       Prettify citm_catalog.json    ... Not support
+       Prettify twitter.json         ... Not support
+     Statistics canada.json          ...  0.904 ms  2374.745 MB/s
+     Statistics citm_catalog.json    ...  0.233 ms  7069.485 MB/s
+     Statistics twitter.json         ...  0.069 ms  8728.387 MB/s
+   SaxRoundtrip canada.json          ... Not support
+   SaxRoundtrip citm_catalog.json    ... Not support
+   SaxRoundtrip twitter.json         ... Not support
+ Sax Statistics canada.json          ... Not support
+ Sax Statistics citm_catalog.json    ... Not support
+ Sax Statistics twitter.json         ... Not support
+objectCount:           4
+arrayCount:        56045
+numberCount:      111126
+stringCount:          12
+trueCount:             0
+falseCount:            0
+nullCount:             0
+memberCount:           8
+elementCount:     167170
+stringLength:         90
+jsonstat file size = 35256
+
+Benchmarking Performance of Sheredom json.h (C)
+          Parse canada.json          ... 11.502 ms  186.643 MB/s
+          Parse citm_catalog.json    ...  4.674 ms  352.416 MB/s
+          Parse twitter.json         ...  2.537 ms  237.390 MB/s
+      Stringify canada.json          ... 69.411 ms  30.928 MB/s
+      Stringify citm_catalog.json    ...  9.776 ms  168.493 MB/s
+      Stringify twitter.json         ...  2.594 ms  232.174 MB/s
+       Prettify canada.json          ... 75.012 ms  28.619 MB/s
+       Prettify citm_catalog.json    ... 10.900 ms  151.118 MB/s
+       Prettify twitter.json         ...  2.927 ms  205.760 MB/s
+     Statistics canada.json          ...  0.486 ms  4417.221 MB/s
+     Statistics citm_catalog.json    ...  0.219 ms  7521.416 MB/s
+     Statistics twitter.json         ...  0.099 ms  6083.421 MB/s
+   SaxRoundtrip canada.json          ... Not support
+   SaxRoundtrip citm_catalog.json    ... Not support
+   SaxRoundtrip twitter.json         ... Not support
+ Sax Statistics canada.json          ... Not support
+ Sax Statistics citm_catalog.json    ... Not support
+ Sax Statistics twitter.json         ... Not support
+objectCount:           4
+arrayCount:        56045
+numberCount:      111126
+stringCount:          12
+trueCount:             0
+falseCount:            0
+nullCount:             0
+memberCount:           8
+elementCount:     167170
+stringLength:         90
+jsonstat file size = 31064
+
+Benchmarking Performance of SimpleJSON (C++)
+          Parse canada.json          ... 26.579 ms  80.769 MB/s
+          Parse citm_catalog.json    ... 21.227 ms  77.599 MB/s
+          Parse twitter.json         ... 16.495 ms  36.512 MB/s
+      Stringify canada.json          ... 235.647 ms  9.110 MB/s
+      Stringify citm_catalog.json    ... 47.634 ms  34.580 MB/s
+      Stringify twitter.json         ... 18.953 ms  31.776 MB/s
+       Prettify canada.json          ... Not support
+       Prettify citm_catalog.json    ... Not support
+       Prettify twitter.json         ... Not support
+     Statistics canada.json          ...  0.581 ms  3694.956 MB/s
+     Statistics citm_catalog.json    ...  0.484 ms  3403.285 MB/s
+     Statistics twitter.json         ...  0.233 ms  2584.801 MB/s
+   SaxRoundtrip canada.json          ... Not support
+   SaxRoundtrip citm_catalog.json    ... Not support
+   SaxRoundtrip twitter.json         ... Not support
+ Sax Statistics canada.json          ... Not support
+ Sax Statistics citm_catalog.json    ... Not support
+ Sax Statistics twitter.json         ... Not support
+objectCount:           4
+arrayCount:        56045
+numberCount:      111126
+stringCount:          12
+trueCount:             0
+falseCount:            0
+nullCount:             0
+memberCount:           8
+elementCount:     167170
+stringLength:         90
+jsonstat file size = 43656
+
+Benchmarking Performance of strdup (C)
+          Parse canada.json          ...  0.187 ms  11480.051 MB/s
+          Parse citm_catalog.json    ...  0.147 ms  11205.375 MB/s
+          Parse twitter.json         ...  0.052 ms  11581.898 MB/s
+      Stringify canada.json          ...  0.192 ms  11181.091 MB/s
+      Stringify citm_catalog.json    ...  0.146 ms  11282.124 MB/s
+      Stringify twitter.json         ...  0.052 ms  11581.898 MB/s
+       Prettify canada.json          ... Not support
+       Prettify citm_catalog.json    ... Not support
+       Prettify twitter.json         ... Not support
+     Statistics canada.json          ... Not support
+     Statistics citm_catalog.json    ... Not support
+     Statistics twitter.json         ... Not support
+   SaxRoundtrip canada.json          ... Not support
+   SaxRoundtrip citm_catalog.json    ... Not support
+   SaxRoundtrip twitter.json         ... Not support
+ Sax Statistics canada.json          ... Not support
+ Sax Statistics citm_catalog.json    ... Not support
+ Sax Statistics twitter.json         ... Not support
+Not support Statistics
+jsonstat file size = 10584
+
+Benchmarking Performance of taocpp/json & Nlohmann (C++11)
+          Parse canada.json          ... 41.324 ms  51.950 MB/s
+          Parse citm_catalog.json    ... 20.303 ms  81.130 MB/s
+          Parse twitter.json         ...  9.541 ms  63.123 MB/s
+      Stringify canada.json          ... 23.453 ms  91.535 MB/s
+      Stringify citm_catalog.json    ...  3.864 ms  426.291 MB/s
+      Stringify twitter.json         ...  2.489 ms  241.968 MB/s
+       Prettify canada.json          ... 31.876 ms  67.348 MB/s
+       Prettify citm_catalog.json    ...  6.150 ms  267.836 MB/s
+       Prettify twitter.json         ...  3.206 ms  187.854 MB/s
+     Statistics canada.json          ...  1.604 ms  1338.385 MB/s
+     Statistics citm_catalog.json    ...  0.968 ms  1701.643 MB/s
+     Statistics twitter.json         ...  0.576 ms  1045.588 MB/s
+   SaxRoundtrip canada.json          ... Not support
+   SaxRoundtrip citm_catalog.json    ... Not support
+   SaxRoundtrip twitter.json         ... Not support
+ Sax Statistics canada.json          ... Not support
+ Sax Statistics citm_catalog.json    ... Not support
+ Sax Statistics twitter.json         ... Not support
+objectCount:           4
+arrayCount:        56045
+numberCount:      111126
+stringCount:          12
+trueCount:             0
+falseCount:            0
+nullCount:             0
+memberCount:           8
+elementCount:     167170
+stringLength:         90
+jsonstat file size = 72448
+
+Benchmarking Performance of taocpp/json (C++11)
+          Parse canada.json          ... 23.937 ms  89.684 MB/s
+          Parse citm_catalog.json    ... 12.030 ms  136.924 MB/s
+          Parse twitter.json         ...  5.307 ms  113.484 MB/s
+      Stringify canada.json          ... 22.099 ms  97.143 MB/s
+      Stringify citm_catalog.json    ...  3.109 ms  529.813 MB/s
+      Stringify twitter.json         ...  2.242 ms  268.626 MB/s
+       Prettify canada.json          ... 30.258 ms  70.949 MB/s
+       Prettify citm_catalog.json    ...  5.413 ms  304.303 MB/s
+       Prettify twitter.json         ...  3.034 ms  198.503 MB/s
+     Statistics canada.json          ...  0.669 ms  3208.923 MB/s
+     Statistics citm_catalog.json    ...  0.343 ms  4802.303 MB/s
+     Statistics twitter.json         ...  0.243 ms  2478.431 MB/s
+   SaxRoundtrip canada.json          ... 37.599 ms  57.096 MB/s
+   SaxRoundtrip citm_catalog.json    ... 12.116 ms  135.952 MB/s
+   SaxRoundtrip twitter.json         ...  6.197 ms  97.186 MB/s
+ Sax Statistics canada.json          ... 12.684 ms  169.250 MB/s
+ Sax Statistics citm_catalog.json    ...  7.968 ms  206.726 MB/s
+ Sax Statistics twitter.json         ...  3.751 ms  160.559 MB/s
+objectCount:           4
+arrayCount:        56045
+numberCount:      111126
+stringCount:          12
+trueCount:             0
+falseCount:            0
+nullCount:             0
+memberCount:           8
+elementCount:     167170
+stringLength:         90
+jsonstat file size = 64176
+
+Benchmarking Performance of tunnuz/JSON++ (C++)
+          Parse canada.json          ... 145.362 ms  14.768 MB/s
+          Parse citm_catalog.json    ... 68.999 ms  23.873 MB/s
+          Parse twitter.json         ... 34.307 ms  17.555 MB/s
+      Stringify canada.json          ... 199.031 ms  10.786 MB/s
+      Stringify citm_catalog.json    ... 29.755 ms  55.358 MB/s
+      Stringify twitter.json         ...  9.840 ms  61.205 MB/s
+       Prettify canada.json          ... Not support
+       Prettify citm_catalog.json    ... Not support
+       Prettify twitter.json         ... Not support
+     Statistics canada.json          ... 69.066 ms  31.083 MB/s
+     Statistics citm_catalog.json    ... 16.651 ms  98.924 MB/s
+     Statistics twitter.json         ...  5.696 ms  105.734 MB/s
+   SaxRoundtrip canada.json          ... Not support
+   SaxRoundtrip citm_catalog.json    ... Not support
+   SaxRoundtrip twitter.json         ... Not support
+ Sax Statistics canada.json          ... Not support
+ Sax Statistics citm_catalog.json    ... Not support
+ Sax Statistics twitter.json         ... Not support
+objectCount:           4
+arrayCount:        56045
+numberCount:      111126
+stringCount:          12
+trueCount:             0
+falseCount:            0
+nullCount:             0
+memberCount:           8
+elementCount:     167170
+stringLength:         90
+jsonstat file size = 68360
+
+Benchmarking Performance of ujson4c (C)
+          Parse canada.json          ...  4.951 ms  433.603 MB/s
+          Parse citm_catalog.json    ...  2.461 ms  669.317 MB/s
+          Parse twitter.json         ...  1.494 ms  403.118 MB/s
+      Stringify canada.json          ... Not support
+      Stringify citm_catalog.json    ... Not support
+      Stringify twitter.json         ... Not support
+       Prettify canada.json          ... Not support
+       Prettify citm_catalog.json    ... Not support
+       Prettify twitter.json         ... Not support
+     Statistics canada.json          ...  1.280 ms  1677.164 MB/s
+     Statistics citm_catalog.json    ...  0.466 ms  3534.743 MB/s
+     Statistics twitter.json         ...  0.216 ms  2788.235 MB/s
+   SaxRoundtrip canada.json          ... Not support
+   SaxRoundtrip citm_catalog.json    ... Not support
+   SaxRoundtrip twitter.json         ... Not support
+ Sax Statistics canada.json          ... Not support
+ Sax Statistics citm_catalog.json    ... Not support
+ Sax Statistics twitter.json         ... Not support
+objectCount:           4
+arrayCount:        56045
+numberCount:      111126
+stringCount:          12
+trueCount:             0
+falseCount:            0
+nullCount:             0
+memberCount:           8
+elementCount:     167170
+stringLength:         90
+jsonstat file size = 27008
+
+Benchmarking Performance of ujson (C++)
+          Parse canada.json          ... 25.838 ms  83.086 MB/s
+          Parse citm_catalog.json    ...  9.200 ms  179.042 MB/s
+          Parse twitter.json         ...  5.423 ms  111.056 MB/s
+      Stringify canada.json          ... 22.349 ms  96.057 MB/s
+      Stringify citm_catalog.json    ...  4.034 ms  408.327 MB/s
+      Stringify twitter.json         ...  2.027 ms  297.118 MB/s
+       Prettify canada.json          ... 26.366 ms  81.422 MB/s
+       Prettify citm_catalog.json    ...  5.144 ms  320.216 MB/s
+       Prettify twitter.json         ...  2.450 ms  245.820 MB/s
+     Statistics canada.json          ...  1.214 ms  1768.344 MB/s
+     Statistics citm_catalog.json    ...  0.578 ms  2849.810 MB/s
+     Statistics twitter.json         ...  0.263 ms  2289.957 MB/s
+   SaxRoundtrip canada.json          ... Not support
+   SaxRoundtrip citm_catalog.json    ... Not support
+   SaxRoundtrip twitter.json         ... Not support
+ Sax Statistics canada.json          ... Not support
+ Sax Statistics citm_catalog.json    ... Not support
+ Sax Statistics twitter.json         ... Not support
+objectCount:           4
+arrayCount:        56045
+numberCount:      111126
+stringCount:          12
+trueCount:             0
+falseCount:            0
+nullCount:             0
+memberCount:           8
+elementCount:     167170
+stringLength:         90
+jsonstat file size = 96912
+
+Benchmarking Performance of Vinenthz/libjson (C)
+          Parse canada.json          ... 50.267 ms  42.707 MB/s
+          Parse citm_catalog.json    ... 16.192 ms  101.729 MB/s
+          Parse twitter.json         ...  7.504 ms  80.258 MB/s
+      Stringify canada.json          ... 109.105 ms  19.676 MB/s
+      Stringify citm_catalog.json    ...  5.432 ms  303.238 MB/s
+      Stringify twitter.json         ...  4.354 ms  138.323 MB/s
+       Prettify canada.json          ... 109.421 ms  19.619 MB/s
+       Prettify citm_catalog.json    ...  5.417 ms  304.078 MB/s
+       Prettify twitter.json         ...  4.342 ms  138.705 MB/s
+     Statistics canada.json          ...  0.684 ms  3138.552 MB/s
+     Statistics citm_catalog.json    ...  0.350 ms  4706.257 MB/s
+     Statistics twitter.json         ...  0.153 ms  3936.331 MB/s
+   SaxRoundtrip canada.json          ... 14.119 ms  152.048 MB/s
+   SaxRoundtrip citm_catalog.json    ... 11.729 ms  140.437 MB/s
+   SaxRoundtrip twitter.json         ...  7.008 ms  85.939 MB/s
+ Sax Statistics canada.json          ... 11.463 ms  187.278 MB/s
+ Sax Statistics citm_catalog.json    ...  8.546 ms  192.744 MB/s
+ Sax Statistics twitter.json         ...  3.314 ms  181.732 MB/s
+objectCount:           4
+arrayCount:        56045
+numberCount:      111126
+stringCount:          12
+trueCount:             0
+falseCount:            0
+nullCount:             0
+memberCount:           8
+elementCount:     167170
+stringLength:         90
+jsonstat file size = 31096
+
+Benchmarking Performance of JSON Voorhees (C++)
+          Parse canada.json          ... 248.772 ms  8.629 MB/s
+          Parse citm_catalog.json    ... 48.753 ms  33.786 MB/s
+          Parse twitter.json         ... 17.957 ms  33.539 MB/s
+      Stringify canada.json          ... 85.937 ms  24.981 MB/s
+      Stringify citm_catalog.json    ... 10.478 ms  157.205 MB/s
+      Stringify twitter.json         ... 12.564 ms  47.935 MB/s
+       Prettify canada.json          ... 188.738 ms  11.374 MB/s
+       Prettify citm_catalog.json    ... 32.949 ms  49.992 MB/s
+       Prettify twitter.json         ... 17.679 ms  34.066 MB/s
+     Statistics canada.json          ...  5.082 ms  422.426 MB/s
+     Statistics citm_catalog.json    ...  0.904 ms  1822.113 MB/s
+     Statistics twitter.json         ...  0.402 ms  1498.156 MB/s
+   SaxRoundtrip canada.json          ... Not support
+   SaxRoundtrip citm_catalog.json    ... Not support
+   SaxRoundtrip twitter.json         ... Not support
+ Sax Statistics canada.json          ... Not support
+ Sax Statistics citm_catalog.json    ... Not support
+ Sax Statistics twitter.json         ... Not support
+objectCount:           4
+arrayCount:        56045
+numberCount:      111126
+stringCount:          12
+trueCount:             0
+falseCount:            0
+nullCount:             0
+memberCount:           8
+elementCount:     167170
+stringLength:         90
+jsonstat file size = 369256
+
+Benchmarking Performance of YAJL (C)
+          Parse canada.json          ... 55.202 ms  38.889 MB/s
+          Parse citm_catalog.json    ... 15.281 ms  107.793 MB/s
+          Parse twitter.json         ...  6.051 ms  99.530 MB/s
+      Stringify canada.json          ... 128.608 ms  16.692 MB/s
+      Stringify citm_catalog.json    ...  4.628 ms  355.918 MB/s
+      Stringify twitter.json         ...  2.609 ms  230.839 MB/s
+       Prettify canada.json          ... 147.799 ms  14.525 MB/s
+       Prettify citm_catalog.json    ...  9.244 ms  178.190 MB/s
+       Prettify twitter.json         ...  3.865 ms  155.824 MB/s
+     Statistics canada.json          ...  0.766 ms  2802.571 MB/s
+     Statistics citm_catalog.json    ...  0.355 ms  4639.972 MB/s
+     Statistics twitter.json         ...  0.169 ms  3563.661 MB/s
+   SaxRoundtrip canada.json          ... 160.616 ms  13.366 MB/s
+   SaxRoundtrip citm_catalog.json    ... 10.740 ms  153.370 MB/s
+   SaxRoundtrip twitter.json         ...  4.419 ms  136.288 MB/s
+ Sax Statistics canada.json          ... 31.220 ms  68.763 MB/s
+ Sax Statistics citm_catalog.json    ...  6.041 ms  272.668 MB/s
+ Sax Statistics twitter.json         ...  1.991 ms  302.491 MB/s
+objectCount:           4
+arrayCount:        56045
+numberCount:      111126
+stringCount:          12
+trueCount:             0
+falseCount:            0
+nullCount:             0
+memberCount:           8
+elementCount:     167170
+stringLength:         90
+jsonstat file size = 47576
+
+Benchmarking Conformance of ULib (C++)
+
+Benchmarking Conformance of ArduinoJson (C++)
+
+Benchmarking Conformance of CAJUN (C++)
+
+Benchmarking Conformance of ccan/json (C)
+
+Benchmarking Conformance of cJSON (C)
+
+Benchmarking Conformance of Configuru (C++11)
+
+Benchmarking Conformance of dropbox/json11 (C++11)
+
+Benchmarking Conformance of mikeando/FastJson (C++)
+fastjson : an error occured [6001] : Input ended while in non-root state
+It seems to have happened here...
+sed array"
+          ^
+fastjson : an error occured [5002] : Unexpected character while parsing dict start
+It seems to have happened here...
+unquoted_k
+^
+fastjson : an error occured [2002] : Invalid data found
+It seems to have happened here...
+]
+^
+fastjson : an error occured [2002] : Invalid data found
+It seems to have happened here...
+,]
+^
+fastjson : an error occured [2002] : Invalid data found
+It seems to have happened here...
+, "<-- mis
+^
+fastjson : an error occured [2002] : Invalid data found
+It seems to have happened here...
+,
+^
+fastjson : an error occured [2002] : Invalid data found
+It seems to have happened here...
+]
+^
+fastjson : an error occured [5008] : Unexpected character when looking for dict key
+It seems to have happened here...
+,}
+ ^
+fastjson : an error occured [5006] : Unexpected character when looking for comma in dict
+It seems to have happened here...
++ 2}
+^
+fastjson : an error occured [2002] : Invalid data found
+It seems to have happened here...
+ alert()}
+ ^
+fastjson : an error occured [5006] : Unexpected character when looking for comma in dict
+It seems to have happened here...
+13}
+^
+fastjson : an error occured [5006] : Unexpected character when looking for comma in dict
+It seems to have happened here...
+x14}
+^
+fastjson : an error occured [3006] : Invalid escape
+It seems to have happened here...
+ escape: \x15"]
+          ^
+fastjson : an error occured [2002] : Invalid data found
+It seems to have happened here...
+\naked]
+^
+fastjson : an error occured [3006] : Invalid escape
+It seems to have happened here...
+ escape: \017"]
+          ^
+fastjson : an error occured [5004] : Unexpected character while looking for dict seperator
+It seems to have happened here...
+null}
+^
+fastjson : an error occured [2002] : Invalid data found
+It seems to have happened here...
+: null}
+^
+fastjson : an error occured [5004] : Unexpected character while looking for dict seperator
+It seems to have happened here...
+, null}
+^
+fastjson : an error occured [4003] : Unexpected character while parsing array
+It seems to have happened here...
+: false]
+^
+fastjson : an error occured [2001] : Invalid litteral found when expecting object
+It seems to have happened here...
+ truth]
+ ^
+fastjson : an error occured [2002] : Invalid data found
+It seems to have happened here...
+'single qu
+^
+fastjson : an error occured [3006] : Invalid escape
+It seems to have happened here...
+tab\   charact
+    ^
+fastjson : an error occured [3006] : Invalid escape
+It seems to have happened here...
+line\
+break"]
+     ^
+fastjson : an error occured [4003] : Unexpected character while parsing array
+It seems to have happened here...
+e]
+^
+fastjson : an error occured [4003] : Unexpected character while parsing array
+It seems to have happened here...
+e+]
+^
+fastjson : an error occured [4003] : Unexpected character while parsing array
+It seems to have happened here...
+e+-1]
+^
+fastjson : an error occured [5007] : Unexpected end of input when looking for dict key
+It seems to have happened here...
+,
+ ^
+fastjson : an error occured [4003] : Unexpected character while parsing array
+It seems to have happened here...
+}
+^
+
+Benchmarking Conformance of gason (C++11)
+
+Benchmarking Conformance of Jansson (C)
+
+Benchmarking Conformance of JeayeSON (C++14)
+
+Benchmarking Conformance of jsmn (C)
+Error -3
+Error -2
+Error -2
+Error -2
+Error -2
+Error -2
+Error -2
+Error -2
+Error -2
+Error -2
+Error -2
+Error -2
+Error -2
+Error -3
+Error -2
+
+Benchmarking Conformance of JsonBox (C++)
+Expected '"', got 'u', ignoring it.
+Expected '"', got 'n', ignoring it.
+Expected '"', got 'q', ignoring it.
+Expected '"', got 'u', ignoring it.
+Expected '"', got 'o', ignoring it.
+Expected '"', got 't', ignoring it.
+Expected '"', got 'e', ignoring it.
+Expected '"', got 'd', ignoring it.
+Expected '"', got '_', ignoring it.
+Expected '"', got 'k', ignoring it.
+Expected '"', got 'e', ignoring it.
+Expected '"', got 'y', ignoring it.
+Expected '"', got ':', ignoring it.
+Expected '"', got 'u', ignoring it.
+Expected '"', got 'l', ignoring it.
+Expected '"', got 'l', ignoring it.
+Expected '"', got 'n', ignoring it.
+Expected '"', got 'u', ignoring it.
+Expected '"', got 'l', ignoring it.
+Expected '"', got 'l', ignoring it.
+Expected a digit, '.', 'e' or 'E', got '-' instead, ignoring it.
+
+Benchmarking Conformance of jsoncons (C++)
+
+Benchmarking Conformance of JsonCpp (C++)
+
+Benchmarking Conformance of json-c (C)
+
+Benchmarking Conformance of JSON Spirit (C++)
+
+Benchmarking Conformance of hjiang/JSON++ (C++)
+
+Benchmarking Conformance of juson (C)
+Benchmarking Conformance of JVar (C++)
+
+Benchmarking Conformance of Jzon (C++)
+
+Benchmarking Conformance of nbsdx_SimpleJSON (C++11)
+ERROR: Array: Expected ',' or ']', found ''
+ERROR: Parse: Unknown starting character 'u'
+Error: Object: Expected colon, found 'u'
+ERROR: Parse: Unknown starting character ']'
+ERROR: Parse: Unknown starting character ','
+ERROR: Parse: Unknown starting character ']'
+ERROR: Parse: Unknown starting character ','
+ERROR: Parse: Unknown starting character '}'
+Error: Object: Expected colon, found '}'
+ERROR: Object: Expected comma, found '+'
+ERROR: Parse: Unknown starting character 'a'
+ERROR: Object: Expected comma, found 'a'
+ERROR: Number: unexpected character 'x'
+ERROR: Object: Expected comma, found '1'
+ERROR: Parse: Unknown starting character '\'
+ERROR: Array: Expected ',' or ']', found '\'
+Error: Object: Expected colon, found 'n'
+ERROR: Parse: Unknown starting character ':'
+ERROR: Object: Expected comma, found ':'
+Error: Object: Expected colon, found ','
+ERROR: Array: Expected ',' or ']', found ':'
+ERROR: Bool: Expected 'true' or 'false', found 'truth'
+ERROR: Array: Expected ',' or ']', found 't'
+ERROR: Parse: Unknown starting character '''
+ERROR: Array: Expected ',' or ']', found '''
+ERROR: Number: Expected a number for exponent, found ''
+ERROR: Array: Expected ',' or ']', found 'e'
+ERROR: Number: Expected a number for exponent, found '-'
+ERROR: Array: Expected ',' or ']', found '1'
+ERROR: Parse: Unknown starting character ''
+Error: Object: Expected colon, found ''
+ERROR: Array: Expected ',' or ']', found '}'
+
+Benchmarking Conformance of Nlohmann (C++11)
+
+Benchmarking Conformance of Parson (C)
+
+Warning: potential memory leak (1 allocations for 24 bytes)
+...
+
+Benchmarking Conformance of PicoJSON (C++)
+
+Benchmarking Conformance of RapidJSON_AutoUTF (C++)
+
+Benchmarking Conformance of RapidJSON_FullPrec (C++)
+
+Benchmarking Conformance of RapidJSON_Insitu (C++)
+
+Benchmarking Conformance of RapidJSON_Iterative (C++)
+
+Benchmarking Conformance of RapidJSON (C++)
+
+Benchmarking Conformance of sajson (C++)
+
+Benchmarking Conformance of Sheredom json.h (C)
+
+Benchmarking Conformance of SimpleJSON (C++)
+
+Benchmarking Conformance of taocpp/json & Nlohmann (C++11)
+
+Benchmarking Conformance of taocpp/json (C++11)
+
+Benchmarking Conformance of tunnuz/JSON++ (C++)
+error: syntax error
+
+Warning: potential memory leak (5 allocations for 296 bytes)
+...
+
+error: syntax error
+
+Benchmarking Conformance of ujson4c (C)
+
+Benchmarking Conformance of ujson (C++)
+
+Benchmarking Conformance of Vinenthz/libjson (C)
+
+Warning: potential memory leak (4 allocations for 96 bytes)
+...
+Benchmarking Conformance of JSON Voorhees (C++)
+
+Benchmarking Conformance of YAJL (C)
+
+Warning: potential memory leak (5 allocations for 152 bytes)
+...

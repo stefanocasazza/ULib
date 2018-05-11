@@ -360,9 +360,7 @@ void UNoDogPlugIn::executeCommand(const char* type, uint32_t len)
 
    (void) cmd.executeAndWait(U_NULLPTR, -1, fd_stderr);
 
-#ifndef U_LOG_DISABLE
-   UServer_Base::logCommandMsgError(cmd.getCommand(), false);
-#endif
+   U_SRV_LOG_CMD_MSG_ERR(cmd, false);
 }
 
 U_NO_EXPORT void UNoDogPlugIn::setMAC()
@@ -989,9 +987,7 @@ end:
 
    (void) fw->executeAndWait(U_NULLPTR, -1, fd_stderr);
 
-#ifndef U_LOG_DISABLE
-   UServer_Base::logCommandMsgError(fw->getCommand(), false);
-#endif
+   U_SRV_LOG_CMD_MSG_ERR(*fw, false);
 
    fw->delArgument();
    fw->setLastArgument("openlist");
@@ -1277,7 +1273,7 @@ next1:            eraseTimer();
             goto end;
             }
 
-         if (U_HTTP_URI_STREQ("/nodog_peer_delay.sh"))
+         if (U_HTTP_URI_MEMEQ("/nodog_peer_delay.sh"))
             {
             if (U_peer_delay_disable == false)
                {

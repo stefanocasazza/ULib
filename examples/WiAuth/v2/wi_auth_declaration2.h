@@ -94,10 +94,10 @@ loop:
    U_INTERNAL_ASSERT(lnetmask)
    U_ASSERT(vnetmask.empty())
 
-   U_INTERNAL_DUMP("tok.current() = %C", tok.current())
+   U_INTERNAL_DUMP("tok.previous() = %C tok.current() = %C", tok.previous(), tok.current())
 
-   if (u__isdigit(tok.current())) name.clear();
-   else           (void) tok.next(name, (bool*)U_NULLPTR);
+   if (tok.previous() != ',') name.clear();
+   else       (void) tok.next(name, (bool*)U_NULLPTR);
 
    vnetmask.push_back(lnetmask);
 
@@ -613,7 +613,7 @@ static void deleteSession()
    (void) rc->zrem(U_CONSTANT_TO_PARAM("SESSION:byCaptiveIdAndApId deviceId:%v;ip:%v"), mac->rep, ip->rep);
    (void) rc->zrem(U_CONSTANT_TO_PARAM("SESSION:byLastUpdate %v"), key_session->rep);
 
-   U_LOGGER("*** SESSION(%V) deleted at deleteSession() ***", key_session->rep);
+// U_LOGGER("*** SESSION(%V) deleted at deleteSession() ***", key_session->rep);
 }
 
 static void resetDeviceDailyCounter()
@@ -1111,7 +1111,7 @@ static void POST_login()
          (void) rc->hmset(U_CONSTANT_TO_PARAM("SESSION:%v captiveId %u apId %v deviceId %v ip %v created %u pId %v notify %c consume %c counter 0 lastUpdate %u"), key_session->rep,
                           addr, ap_label->rep, mac->rep, ip->rep, u_now->tv_sec, policySessionId->rep, buffer[1], '0'+ap_consume, u_now->tv_sec);
 
-         U_LOGGER("*** SESSION(%V) created at POST_login() ***", key_session->rep);
+      // U_LOGGER("*** SESSION(%V) created at POST_login() ***", key_session->rep);
 
          (void) rc->zadd(U_CONSTANT_TO_PARAM("SESSION:byCaptiveIdAndApId %u%06u deviceId:%v;ip:%v"), addr, ap_label->strtoul(), mac->rep, ip->rep);
          (void) rc->zadd(U_CONSTANT_TO_PARAM("SESSION:byLastUpdate %u %v"), u_now->tv_sec, key_session->rep);

@@ -158,6 +158,17 @@ public:
       --s;
       }
 
+   // get previous char
+
+   char previous()
+      {
+      U_TRACE_NO_PARAM(0, "UTokenizer::previous()")
+
+      U_INTERNAL_ASSERT(s <= end)
+
+      U_RETURN(*(s-1));
+      }
+
    // get current char
 
    char current()

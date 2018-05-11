@@ -657,9 +657,7 @@ loop:
 
    ok = fw->execute(U_NULLPTR, &output, -1, fd_stderr);
 
-#ifndef U_LOG_DISABLE
-   UServer_Base::logCommandMsgError(fw->getCommand(), false);
-#endif
+   U_SRV_LOG_CMD_MSG_ERR(*fw, false);
 
    if (ok == false)
       {
@@ -771,9 +769,7 @@ bool UNoCatPlugIn::checkFirewall()
 
             (void) _fw.executeAndWait(U_NULLPTR, -1, fd_stderr);
 
-#        ifndef U_LOG_DISABLE
-            UServer_Base::logCommandMsgError(_fw.getCommand(), false);
-#        endif
+            U_SRV_LOG_CMD_MSG_ERR(_fw, false);
             }
          }
 
@@ -1057,9 +1053,7 @@ UString UNoCatPlugIn::getSignedData(const char* ptr, uint32_t len)
 
       (void) pgp.execute(&input, &output, -1, fd_stderr);
 
-#  ifndef U_LOG_DISABLE
-      UServer_Base::logCommandMsgError(pgp.getCommand(), false);
-#  endif
+      U_SRV_LOG_CMD_MSG_ERR(pgp, false);
       }
    */
 
@@ -2337,9 +2331,7 @@ int UNoCatPlugIn::handlerFork()
 
    (void) fw->executeAndWait(U_NULLPTR, -1, fd_stderr);
 
-#ifndef U_LOG_DISABLE
-   UServer_Base::logCommandMsgError(fw->getCommand(), false);
-#endif
+   U_SRV_LOG_CMD_MSG_ERR(*fw, false);
 
    fw->delArgument();
    fw->setLastArgument("openlist");

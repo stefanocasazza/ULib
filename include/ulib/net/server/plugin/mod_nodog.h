@@ -266,7 +266,7 @@ protected:
       {
       U_TRACE(0, "UNoDogPlugIn::setRedirect(%p,%u)", buffer, bufsize)
 
-      return u__snprintf(buffer, bufsize, U_CONSTANT_TO_PARAM("http://%.*s/%.*s"), U_HTTP_HOST_TO_TRACE, U_HTTP_URI_QUERY_TO_TRACE);
+      return u__snprintf(buffer, bufsize, U_CONSTANT_TO_PARAM("http://%.*s%.*s"), U_HTTP_HOST_TO_TRACE, U_HTTP_URI_QUERY_TO_TRACE);
       }
 
    static uint32_t getApInfo(char* buffer, uint32_t bufsize, const UString& lbl)

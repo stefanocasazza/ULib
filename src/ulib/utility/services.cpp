@@ -198,9 +198,7 @@ int UServices::askToLDAP(UString* pinput, UHashMap<UString>* ptable, const char*
 
    bool result = cmd.execute(pinput, &output, -1, _fd_stderr);
 
-#ifndef U_LOG_DISABLE
-   UServer_Base::logCommandMsgError(cmd.getCommand(), false);
-#endif
+   U_SRV_LOG_CMD_MSG_ERR(cmd, false);
 
    if (pinput == U_NULLPTR) ptable->clear();
 

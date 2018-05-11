@@ -2,34 +2,52 @@
 
 . ../.function
 
+# set -x
+
+## web_socket.test -- Test web socket feature
+
 start_msg web_socket
 
 DOC_ROOT=websocket
 
-rm -f $DOC_ROOT/web_socket.log \
-		/tmp/UWebSocketPlugIn.err \
-      out/userver_tcp.out err/userver_tcp.err \
+rm -f /tmp/web_socket*.log /tmp/UWebSocketPlugIn.err out/userver_tcp.out err/userver_tcp.err \
                 trace.*userver_*.[0-9]*           object.*userver_*.[0-9]*           stack.*userver_*.[0-9]*           mempool.*userver_*.[0-9]* \
+           /tmp/trace.*userver_*.[0-9]*      /tmp/object.*userver_*.[0-9]*      /tmp/stack.*userver_*.[0-9]*      /tmp/mempool.*userver_*.[0-9]* \
       $DOC_ROOT/trace.*userver_*.[0-9]* $DOC_ROOT/object.*userver_*.[0-9]* $DOC_ROOT/stack.*userver_*.[0-9]* $DOC_ROOT/mempool.*userver_*.[0-9]*
 
-#UTRACE="0 50M 0"
-#UOBJDUMP="0 50M 1000"
+#UTRACE="0 100M 0"
+ UTRACE_FOLDER=/tmp
+ TMPDIR=/tmp
+#UOBJDUMP="0 10M 100"
 #USIMERR="error.sim"
- export UTRACE UOBJDUMP USIMERR
+#UMEMUSAGE=yes
+export UTRACE UOBJDUMP USIMERR UTRACE_SIGNAL UMEMUSAGE UTRACE_FOLDER TMPDIR
 
 cat <<EOF >inp/webserver.cfg
 userver {
  PORT 8787
- RUN_AS_USER apache
- MAX_KEEP_ALIVE 6
- LOG_FILE web_socket.log
+ LOG_FILE /tmp/web_socket.log
  LOG_FILE_SZ 1M
  LOG_MSG_SIZE -1
+ PID_FILE /tmp/userver_tcp.pid
  PLUGIN "socket http"
  DOCUMENT_ROOT websocket
  PLUGIN_DIR     ../../../src/ulib/net/server/plugin/.libs
  ORM_DRIVER_DIR ../../../src/ulib/orm/driver/.libs
- PREFORK_CHILD 1
+}
+EOF
+
+cat <<EOF >inp/webserver_proxy.cfg
+userver {
+ PORT 8888
+ LOG_FILE /tmp/webserver_proxy.log
+ LOG_FILE_SZ 10M
+ LOG_MSG_SIZE -1
+ PID_FILE /tmp/userver_tcp_proxy.pid
+ PREFORK_CHILD 0 
+ DOCUMENT_ROOT python 
+ PLUGIN "socket http"
+ PLUGIN_DIR ../../../src/ulib/net/server/plugin/.libs
 }
 socket {
  COMMAND ../my_websocket.sh
@@ -42,14 +60,21 @@ check_for_netcat
 
 #STRACE=$TRUSS
 start_prg_background userver_tcp -c inp/webserver.cfg
-
 wait_server_ready localhost 8787
+start_prg_background userver_tcp -c inp/webserver_proxy.cfg
+wait_server_ready localhost 8888
+
+sync
+#echo "PID1 = `cat /tmp/userver_tcp.pid`"
+#echo "PID2 = `cat /tmp/userver_tcp_proxy.pid`"
 
 send_req $NCAT localhost 8787 inp/http/websocket.req web_socket 3 kill
-$SLEEP
-kill_prg userver_tcp TERM
 
-mv err/userver_tcp.err err/web_socket.err
+kill_prg userver_tcp TERM
+$SLEEP
+pkill userver_tcp 2>/dev/null
+
+mv err/userver_tcp.err err/websocket.err
 
 # Test against expected output
 test_output_wc l web_socket

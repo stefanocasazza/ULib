@@ -300,9 +300,7 @@ protected:
 
       (void) peer->fw.executeAndWait(U_NULLPTR, -1, fd_stderr);
 
-#  ifndef U_LOG_DISABLE
-      UServer_Base::logCommandMsgError(peer->fw.getCommand(), false);
-#  endif
+      U_SRV_LOG_CMD_MSG_ERR(peer->fw, false);
 
       U_peer_status = type;
       }

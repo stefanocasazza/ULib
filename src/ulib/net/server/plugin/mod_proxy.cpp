@@ -146,6 +146,7 @@ int UProxyPlugIn::handlerRequest()
          client_http->UClient_Base::close();
          }
 
+#  if defined(USE_LIBSSL) && !defined(U_SERVER_CAPTIVE_PORTAL)
       // --------------------------------------------------------------------------------------------------------------------
       // A WebSocket is a long-lived connection, lasting hours or days. If each WebSocket proxy holds the original thread,
       // won't that consume all of the workers very quickly? It looks as if my server, with 16 workers, will be unable to
@@ -158,9 +159,9 @@ int UProxyPlugIn::handlerRequest()
          {
          UWebSocket::checkForInitialData(); // check if we have read more data than necessary...
 
-         while (UWebSocket::handleDataFraming(UServer_Base::csocket) == STATUS_CODE_OK                                                            &&
+         while (UWebSocket::handleDataFraming(UServer_Base::csocket) == U_WS_STATUS_CODE_OK                                                       &&
                 (client_http->UClient_Base::prepareRequest(*UClientImage_Base::wbuffer), client_http->UClient_Base::sendRequestAndReadResponse()) &&
-                UWebSocket::sendData(UWebSocket::message_type, (const unsigned char*)U_STRING_TO_PARAM(client_http->UClient_Base::response)))
+                UWebSocket::sendData(UServer_Base::csocket, UWebSocket::message_type, client_http->UClient_Base::response))
             {
             client_http->UClient_Base::clearData();
 
@@ -169,6 +170,7 @@ int UProxyPlugIn::handlerRequest()
 
          U_RETURN(U_PLUGIN_HANDLER_ERROR);
          }
+#  endif
 
                                              client_http->setFollowRedirects(UHTTP::service->isFollowRedirects(), true);
       if (UHTTP::service->isAuthorization()) client_http->setRequestPasswordAuthentication(UHTTP::service->getUser(), UHTTP::service->getPassword());

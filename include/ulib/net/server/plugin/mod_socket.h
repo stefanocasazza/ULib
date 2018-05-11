@@ -45,8 +45,10 @@ public:
 #endif
 
 protected:
+   static int fd_stderr;
    static vPFi on_message;
    static UCommand* command;
+   static UString* penvironment;
 
    static RETSIGTYPE handlerForSigTERM(int signo);
 

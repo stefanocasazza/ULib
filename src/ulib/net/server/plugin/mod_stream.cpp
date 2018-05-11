@@ -111,9 +111,7 @@ int UStreamPlugIn::handlerInit()
 
    bool result = command->execute(U_NULLPTR, (UString*)-1, -1, fd_stderr);
 
-#ifndef U_LOG_DISABLE
-   UServer_Base::logCommandMsgError(command->getCommand(), true);
-#endif
+   U_SRV_LOG_CMD_MSG_ERR(*command, false);
 
    if (result == false)
       {

@@ -712,37 +712,56 @@ loop: distance = t.getDistance();
 
       U_INTERNAL_DUMP("declaration = %V", declaration.rep)
 
-      bool binit,   // usp_init (Server-wide hooks)...
+      /**
+       * Server-wide hooks
+       *
+       * enum DynamicPageType {
+       * U_DPAGE_INIT    = -1,
+       * U_DPAGE_RESET   = -2,
+       * U_DPAGE_DESTROY = -3,
+       * U_DPAGE_SIGHUP  = -4,
+       * U_DPAGE_FORK    = -5,
+       * U_DPAGE_OPEN    = -6,
+       * U_DPAGE_CLOSE   = -7 };
+       */
+
+      bool binit,   // usp_init
+           breset,  // usp_reset
            bend,    // usp_end
            bsighup, // usp_sighup
-           bfork;   // usp_fork
+           bfork,   // usp_fork
+           bopen,   // usp_open
+           bclose;  // usp_close
 
             char  ptr1[100] = { '\0' };
             char  ptr2[100] = { '\0' };
             char  ptr3[100] = { '\0' };
             char  ptr4[100] = { '\0' };
             char  ptr5[100] = { '\0' };
-      const char* ptr6      = "";
-      const char* ptr7      = "";
+            char  ptr6[100] = { '\0' };
+            char  ptr7[100] = { '\0' };
+      const char* ptr8      = "";
 
 #  ifndef U_CACHE_REQUEST_DISABLE
       if (usp.c_char(4) == '#'      &&
           u__isspace(usp.c_char(5)) &&
           u_get_unalignedp32(usp.data()) == U_MULTICHAR_CONSTANT32('<','!','-','-')) // <!--# --> (comment)
          {
-         ptr7 = "\n\tUClientImage_Base::setRequestNoCache();\n\t\n";
+         ptr8 = "\n\tUClientImage_Base::setRequestNoCache();\n\t\n";
          }
 #  endif
 
       if (declaration)
          {
          binit   = (U_STRING_FIND(declaration, 0, "static void usp_init_")   != U_NOT_FOUND);
+         breset  = (U_STRING_FIND(declaration, 0, "static void usp_reset_")  != U_NOT_FOUND);
          bend    = (U_STRING_FIND(declaration, 0, "static void usp_end_")    != U_NOT_FOUND);
          bsighup = (U_STRING_FIND(declaration, 0, "static void usp_sighup_") != U_NOT_FOUND);
          bfork   = (U_STRING_FIND(declaration, 0, "static void usp_fork_")   != U_NOT_FOUND);
+         bopen   = (U_STRING_FIND(declaration, 0, "static void usp_open_")   != U_NOT_FOUND);
+         bclose  = (U_STRING_FIND(declaration, 0, "static void usp_close_")  != U_NOT_FOUND);
 
-         if (bfork)   (void) u__snprintf(ptr5, 100, U_CONSTANT_TO_PARAM("\n\t\tif (param == U_DPAGE_FORK) { usp_fork_%.*s(); return; }\n"),     basename_sz, basename_ptr);
-         if (bsighup) (void) u__snprintf(ptr4, 100, U_CONSTANT_TO_PARAM("\n\t\tif (param == U_DPAGE_SIGHUP) { usp_sighup_%.*s(); return; }\n"), basename_sz, basename_ptr);
+         if (breset) (void) u__snprintf(ptr2, 100, U_CONSTANT_TO_PARAM("\n\t\tif (param == U_DPAGE_RESET) { usp_reset_%.*s(); return; }\n"), basename_sz, basename_ptr);
 
          if (bend)
             {
@@ -752,16 +771,24 @@ loop: distance = t.getDistance();
 #        endif
             (void) u__snprintf(ptr3, 100, U_CONSTANT_TO_PARAM("\n\t\tif (param == U_DPAGE_DESTROY) { usp_end_%.*s(); return; }\n"), basename_sz, basename_ptr);
             }
+
+         if (bsighup) (void) u__snprintf(ptr4, 100, U_CONSTANT_TO_PARAM("\n\t\tif (param == U_DPAGE_SIGHUP) { usp_sighup_%.*s(); return; }\n"), basename_sz, basename_ptr);
+         if (bfork)   (void) u__snprintf(ptr5, 100, U_CONSTANT_TO_PARAM("\n\t\tif (param == U_DPAGE_FORK) { usp_fork_%.*s(); return; }\n"),     basename_sz, basename_ptr);
+         if (bopen)   (void) u__snprintf(ptr6, 100, U_CONSTANT_TO_PARAM("\n\t\tif (param == U_DPAGE_OPEN) { usp_open_%.*s(); return; }\n"),     basename_sz, basename_ptr);
+         if (bclose)  (void) u__snprintf(ptr7, 100, U_CONSTANT_TO_PARAM("\n\t\tif (param == U_DPAGE_CLOSE) { usp_close_%.*s(); return; }\n"),   basename_sz, basename_ptr);
          }
       else
          {
          binit   =
+         breset  =
          bend    =
          bsighup =
-         bfork   = false;
+         bfork   =
+         bopen   =
+         bclose  = false;
          }
 
-      U_INTERNAL_DUMP("binit = %b bend = %b bsighup = %b bfork = %b", binit, bend, bsighup, bfork)
+      U_INTERNAL_DUMP("binit = %b breset = %b bend = %b bsighup = %b bfork = %b bopen = %b bclose = %b", binit, breset, bend, bsighup, bfork, bopen, bclose)
 
       if (binit == false &&
           (bsession || bstorage))
@@ -786,15 +813,6 @@ loop: distance = t.getDistance();
          }
 
       if (binit) (void) u__snprintf(ptr1, 100, U_CONSTANT_TO_PARAM("\n\t\tif (param == U_DPAGE_INIT) { usp_init_%.*s(); return; }\n"), basename_sz, basename_ptr);
-
-      if (binit   == false ||
-          bend    == false ||
-          bsighup == false ||
-          bfork   == false)
-         {
-         ptr6 = (bfork ? "\n\t\tif (param >  U_DPAGE_FORK) return;\n"
-                       : "\n\t\tif (param >= U_DPAGE_FORK) return;\n");
-         }
 
       if (bvar)
          {
@@ -837,6 +855,8 @@ loop: distance = t.getDistance();
             "%s"
             "%s"
             "%s"
+            "%s"
+            "\t\treturn;\n"
             "\t\t}\n"
             "\t\n"
             "%v"
@@ -863,12 +883,13 @@ loop: distance = t.getDistance();
             ptr4,
             ptr5,
             ptr6,
+            ptr7,
             vcode.rep,
             http_header.rep,
             output0.rep,
             output1.rep,
             output2.rep,
-            ptr7);
+            ptr8);
 
       UString name(200U);
 

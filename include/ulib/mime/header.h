@@ -178,9 +178,8 @@ public:
 
       U_ASSERT(empty() == false)
 
-      if (getHeader(U_CONSTANT_TO_PARAM("Connection")).equal(U_CONSTANT_TO_PARAM("close")))
+      if (getHeader(U_CONSTANT_TO_PARAM("Connection")).equal(U_CONSTANT_TO_PARAM("close"))) U_RETURN(true);
 
-      U_RETURN(true);
       U_RETURN(false);
       }
 

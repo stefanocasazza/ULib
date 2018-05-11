@@ -104,9 +104,7 @@ bool UFileConfig::processData(bool bload)
 
          (void) cmd.execute(&data, &output, -1, fd_stderr);
 
-#     ifndef U_LOG_DISABLE
-         UServer_Base::logCommandMsgError(cmd.getCommand(), true);
-#     endif
+         U_SRV_LOG_CMD_MSG_ERR(cmd, true);
 
 #     ifdef HAVE_MCPP
          if (data.empty())
@@ -117,9 +115,7 @@ bool UFileConfig::processData(bool bload)
 
             (void) _cmd.execute(&data, &output, -1, fd_stderr);
 
-#        ifndef U_LOG_DISABLE
-            UServer_Base::logCommandMsgError(_cmd.getCommand(), true);
-#        endif
+            U_SRV_LOG_CMD_MSG_ERR(_cmd, true);
             }
 #     endif
 

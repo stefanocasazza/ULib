@@ -16,6 +16,7 @@
 
 #include <ulib/url.h>
 #include <ulib/net/rpc/rpc.h>
+#include <ulib/mime/header.h>
 #include <ulib/utility/uhttp.h>
 
 #ifdef USE_LIBSSL
@@ -39,6 +40,7 @@ class USCGIPlugIn;
 class UProxyPlugIn;
 class UNoCatPlugIn;
 class UServer_Base;
+class UWebSocketClient;
 class UHttpClient_Base;
 class UClientImage_Base;
 class UREDISClient_Base;
@@ -297,6 +299,8 @@ protected:
 
    bool sendRequestAndReadResponse() { return sendRequest(true); }
 
+   bool processHeader(UMimeHeader* responseHeader) { return responseHeader->readHeader(socket, response); }
+
 #ifdef USE_LIBSSL
    void setSSLContext();
 
@@ -329,6 +333,7 @@ private:
    friend class UProxyPlugIn;
    friend class UNoCatPlugIn;
    friend class UServer_Base;
+   friend class UWebSocketClient;
    friend class UHttpClient_Base;
    friend class UClientImage_Base;
    friend class UREDISClient_Base;

@@ -3676,7 +3676,9 @@ U_NO_EXPORT void UServer_Base::manageCommand(const char* format, uint32_t fmt_si
 
    UString output = UCommand::outputCommand(cmd, U_NULLPTR, -1, fd_stderr);
 
-   logCommandMsgError(cmd.data(), true);
+#ifdef U_LOG_DISABLE
+   UServer_Base::logCommandMsgError(cmd.data(), true);
+#endif
 
    if (UCommand::exit_value) U_WARNING("command failed: EXIT_VALUE=%d OUTPUT=%V", UCommand::exit_value, output.rep);
 

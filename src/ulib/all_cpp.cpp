@@ -119,6 +119,7 @@
 #     include "ssl/crl.cpp"
 #     include "ssl/pkcs10.cpp"
 #     include "net/client/twilio.cpp"
+#     include "net/client/uwebsocket.cpp"
 #     include "ssl/mime/mime_pkcs7.cpp"
 #     include "ssl/net/sslsocket.cpp"
 #     include "ssl/net/ssl_session.cpp"

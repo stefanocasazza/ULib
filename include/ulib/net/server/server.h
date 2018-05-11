@@ -86,7 +86,11 @@ vClientImage = new client_type[UNotifier::max_connection]; } }
 
 #  define U_SRV_LOG(          fmt,args...) {}
 #  define U_SRV_LOG_WITH_ADDR(fmt,args...) {}
+
+#  define U_SRV_LOG_CMD_MSG_ERR(cmd,balways) {}
 #else
+#  define U_SRV_LOG_CMD_MSG_ERR(cmd,balways) { if (UServer_Base::isLog()) UServer_Base::logCommandMsgError((cmd).getCommand(),balways); }
+
 #  define U_RESET_MODULE_NAME              { if (UServer_Base::isLog())   (void) strcpy(UServer_Base::mod_name[0], UServer_Base::mod_name[1]); }
 #  define   U_SET_MODULE_NAME(name)        { if (UServer_Base::isLog()) { (void) strcpy(UServer_Base::mod_name[1], UServer_Base::mod_name[0]); \
                                                                           (void) strcpy(UServer_Base::mod_name[0], "["#name"] "); } }
@@ -94,6 +98,7 @@ vClientImage = new client_type[UNotifier::max_connection]; } }
 #  define U_SRV_LOG(          fmt,args...) { if (UServer_Base::isLog()) UServer_Base::log->log(U_CONSTANT_TO_PARAM("%s" fmt),       UServer_Base::mod_name[0] , ##args); }
 #  define U_SRV_LOG_WITH_ADDR(fmt,args...) { if (UServer_Base::isLog()) UServer_Base::log->log(U_CONSTANT_TO_PARAM("%s" fmt " %v"), UServer_Base::mod_name[0] , ##args, \
                                                                                                UServer_Base::pClientImage->logbuf->rep); }
+
 #endif
 
 class UHTTP;
@@ -617,13 +622,12 @@ public:
       U_TRACE(0, "UServer_Base::logCommandMsgError(%S,%b)", cmd, balways)
 
 #  ifndef U_LOG_DISABLE
-      if (isLog())
-         {
-         if (UCommand::setMsgError(cmd, !balways) || balways) log->log(U_CONSTANT_TO_PARAM("%s%.*s"), mod_name[0], u_buffer_len, u_buffer);
+      U_INTERNAL_ASSERT_POINTER(log)
 
-         errno        = 0;
-         u_buffer_len = 0;
-         }
+      if (UCommand::setMsgError(cmd, !balways) || balways) log->log(U_CONSTANT_TO_PARAM("%s%.*s"), mod_name[0], u_buffer_len, u_buffer);
+
+      errno        = 0;
+      u_buffer_len = 0;
 #  endif
       }
 
