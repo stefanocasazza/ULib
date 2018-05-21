@@ -601,7 +601,7 @@ void ULog::log(const struct iovec* iov, const char* type, int ncount, const char
 
    U_INTERNAL_ASSERT_MAJOR(ncount, 0)
 
-   char buffer1[2000], buffer2[8192];
+   char buffer1[8192], buffer2[8192];
    const char* ptr = (const char*)iov[2].iov_base;
    uint32_t len, u_printf_string_max_length_save = u_printf_string_max_length,
             sz = iov[2].iov_len, sz1 = iov[0].iov_len + iov[1].iov_len, sz_header = sz1 + sz;

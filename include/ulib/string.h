@@ -673,6 +673,17 @@ public:
       U_RETURN(false);
       }
 
+   bool isXMacAddr() const
+      {
+      U_TRACE_NO_PARAM(0, "UStringRep::isXMacAddr()")
+
+      U_CHECK_MEMORY
+
+      if (u_isXMacAddr(str, _length)) U_RETURN(true);
+
+      U_RETURN(false);
+      }
+
    bool   isEndHeader(uint32_t pos) const __pure;
    bool findEndHeader(uint32_t pos) const __pure
       {
@@ -2000,6 +2011,7 @@ public:
 
    bool isNull() const                                          { return (rep == UStringRep::string_rep_null); }
    bool isNullTerminated() const                                { return rep->isNullTerminated(); }
+   bool isXMacAddr() const                                      { return rep->isXMacAddr(); }
    bool isText(uint32_t pos = 0) const                          { return rep->isText(pos); }
    bool isUTF8(uint32_t pos = 0) const                          { return rep->isUTF8(pos); }
    bool isUTF16(uint32_t pos = 0) const                         { return rep->isUTF16(pos); }

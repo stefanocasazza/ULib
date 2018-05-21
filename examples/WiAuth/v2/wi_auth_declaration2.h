@@ -463,11 +463,13 @@ static bool setAccessPoint()
    U_RETURN(true);
 }
 
-static inline void setSessionkey()
+static inline void setSessionkey(const UString& lmac)
 {
-   U_TRACE_NO_PARAM(5, "::setSessionkey()")
+   U_TRACE(5, "::setSessionkey(%V)", lmac.rep)
 
-   key_session->setBuffer(200U); key_session->snprintf(U_CONSTANT_TO_PARAM("captiveId:%u;apId:%v;deviceId:%v;ip:%v"), addr, ap_label->rep, mac->rep, ip->rep);
+   U_INTERNAL_ASSERT(u_isXMacAddr(U_STRING_TO_PARAM(lmac)))
+
+   key_session->setBuffer(200U); key_session->snprintf(U_CONSTANT_TO_PARAM("captiveId:%u;apId:%v;deviceId:%v;ip:%v"), addr, ap_label->rep, lmac.rep, ip->rep);
 }
 
 static void setSessionPolicy()
@@ -670,6 +672,11 @@ static bool getDataFromPOST(bool bpeer)
    // $3 -> ip
    // $4 -> peer
 
+    ip->clear();
+   mac->clear();
+
+   peer = U_NULLPTR;
+
    UFlatBuffer fb, vec;
 
    fb.setRoot(*UClientImage_Base::body);
@@ -685,12 +692,29 @@ static bool getDataFromPOST(bool bpeer)
       *ip  = vec.AsVectorGet<UString>(2);
 
       U_INTERNAL_ASSERT(u_isIPv4Addr(U_STRING_TO_PARAM(*ip)))
+      U_INTERNAL_ASSERT(u_isXMacAddr(U_STRING_TO_PARAM(*mac)))
 
-      setSessionPolicy();
-
-      if (bpeer)
+      if (bpeer == false) setSessionPolicy();
+      else
          {
          peer = (void*) vec.AsVectorGet<uint64_t>(3);
+
+         UString   mac_old = vec.AsVectorGet<UString>(4),
+                 label_old = vec.AsVectorGet<UString>(5);
+
+         if (mac_old)
+            {
+            setSessionkey(mac_old);
+
+            if (getSession(U_CONSTANT_TO_PARAM("getDataFromPOST(true)")))
+               {
+               deleteSession();
+
+               writeSessionToLOG(U_CONSTANT_TO_PARAM("DENY_NO_TRAFFIC"));
+               }
+            }
+
+         setSessionPolicy();
 
          ok = checkDevice();
          }
@@ -705,6 +729,22 @@ static void lostSession(bool bclean)
 
    if (getSession(U_CONSTANT_TO_PARAM("lostSession")))
       {
+      *ip = rc->getString(9);
+
+      if (u_isIPv4Addr(U_STRING_TO_PARAM(*ip)) == false)
+         {
+         (void) rc->del(U_CONSTANT_TO_PARAM("SESSION:%v"), key_session->rep);
+         (void) rc->zrem(U_CONSTANT_TO_PARAM("SESSION:byLastUpdate %v"), key_session->rep);
+
+         U_LOGGER("*** SESSION(%V) have a wrong ip: %V ***", key_session->rep, ip->rep);
+
+         return;
+         }
+
+      *mac = rc->getString(8);
+
+      U_INTERNAL_ASSERT(u_isXMacAddr(U_STRING_TO_PARAM(*mac)))
+
       if (bclean)
          {
          *ap_label = rc->getString(7);
@@ -715,14 +755,20 @@ static void lostSession(bool bclean)
          *ap_hostname = rc->getString(1);
          }
 
-      *mac = rc->getString(8);
-      *ip  = rc->getString(9);
-
-      U_INTERNAL_ASSERT(u_isIPv4Addr(U_STRING_TO_PARAM(*ip)))
-
       writeSessionToLOG(U_CONSTANT_TO_PARAM("DENY_LOST"));
 
       deleteSession();
+      }
+   else
+      {
+      uint32_t pos = U_STRING_FIND(*key_session, 10, "deviceId:"); // 10 => U_CONSTANT_SIZE("captiveId:")
+
+      U_INTERNAL_ASSERT_DIFFERS(pos, U_NOT_FOUND)
+
+      const char* ptr = key_session->c_pointer(pos);
+
+      (void) rc->zrem(U_CONSTANT_TO_PARAM("SESSION:byCaptiveIdAndApId %.*s"), key_session->remain(ptr), ptr);
+      (void) rc->zrem(U_CONSTANT_TO_PARAM("SESSION:byLastUpdate %v"), key_session->rep);
       }
 }
 
@@ -748,7 +794,9 @@ static void GET_clean()
 
       (void) rc->zrangebyscore(U_CONSTANT_TO_PARAM("SESSION:byLastUpdate 0 %u"), last_update);
 
-      if ((n = rc->vitem.size()))
+      n = rc->vitem.size();
+
+      if (n)
          {
          UVector<UString> vec(n);
 
@@ -764,14 +812,19 @@ static void GET_clean()
 
       (void) rc->zrangebyscore(U_CONSTANT_TO_PARAM("CAPTIVE:byLastUpdate 0 %u"), last_update);
 
-      if ((n = rc->vitem.size()))
+      n = rc->vitem.size();
+
+      if (n)
          {
          uint8_t status;
          UString url(100U);
+         UVector<UString> vec(n);
+
+         vec.copy(rc->vitem);
 
          for (i = 0; i < n; ++i)
             {
-            *ap_address = rc->vitem[i];
+            *ap_address = vec[i];
 
             (void) UIPAddress::getBinaryForm(ap_address->c_str(), addr, true);
 
@@ -807,26 +860,6 @@ static void GET_clean()
             (void) rc->hmset(U_CONSTANT_TO_PARAM("CAPTIVE:id:%u status %c"), addr, status);
             }
          }
-
-      /*
-      (void) rc->zrangebyscore(U_CONSTANT_TO_PARAM("DEVICE:bylastAccess 0 %u"), u_now->tv_sec - U_CLEAN_INTERVAL);
-
-      if ((n = rc->vitem.size()))
-         {
-         UString x;
-         UVector<UString> vec(n);
-
-         vec.copy(rc->vitem);
-
-         for (i = 0; i < n; ++i)
-            {
-            x = vec[i];
-
-            (void) rc->del(U_CONSTANT_TO_PARAM("DEVICE:%v"), x.rep);
-            (void) rc->zrem(U_CONSTANT_TO_PARAM("DEVICE:bylastAccess %v"), x.rep);
-            }
-         }
-      */
       }
 }
 
@@ -1070,6 +1103,8 @@ static void GET_welcome()
       UHTTP::getFormValue(*mac,      U_CONSTANT_TO_PARAM("mac"),  0, 3, 8);
       UHTTP::getFormValue(*ap_label, U_CONSTANT_TO_PARAM("apid"), 0, 5, 8);
 
+      U_INTERNAL_ASSERT(u_isXMacAddr(U_STRING_TO_PARAM(*mac)))
+
       setSessionPolicy();
 
       ok = checkDevice();
@@ -1089,11 +1124,9 @@ static void POST_login()
    // $3 -> ip
    // $4 -> peer
 
-   peer = U_NULLPTR;
-
    bool ko = (getDataFromPOST(true) == false);
 
-   if (*ap_address)
+   if (*mac)
       {
       UFlatBuffer fb;
       char buffer[2] = { '1'-ko, '0'+policySessionNotify }; // deny|permit: ('0'|'1') policy: notify|no_notify|strict_notify ('0'|'1'|'2')
@@ -1106,7 +1139,7 @@ static void POST_login()
       if (ko) writeSessionToLOG(U_CONSTANT_TO_PARAM("DENY_POLICY"));
       else
          {
-         setSessionkey();
+         setSessionkey(*mac);
 
          (void) rc->hmset(U_CONSTANT_TO_PARAM("SESSION:%v captiveId %u apId %v deviceId %v ip %v created %u pId %v notify %c consume %c counter 0 lastUpdate %u"), key_session->rep,
                           addr, ap_label->rep, mac->rep, ip->rep, u_now->tv_sec, policySessionId->rep, buffer[1], '0'+ap_consume, u_now->tv_sec);
@@ -1288,7 +1321,9 @@ static void POST_info()
             continue;
             }
 
-         setSessionkey();
+         U_INTERNAL_ASSERT(u_isXMacAddr(U_STRING_TO_PARAM(*mac)))
+
+         setSessionkey(*mac);
 
          if (getSession(U_CONSTANT_TO_PARAM("POST_info")) == false) goto del_login;
 

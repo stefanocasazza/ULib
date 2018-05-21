@@ -297,9 +297,10 @@ time_t UTimeDate::getSecondFromDate(const char* str, bool gmt, struct tm* tm, co
          if ((tm->tm_mon = u_getMonth(str)))
             {
             /**
-             * Jan 25 11:54:00 2005 GMT
+             * Jan 25 11:54:00 2005 GMT 
              * |   |  |  |  |  |
              * 0   4  7 10 13 16
+             *
              */
 
             str += 4;
@@ -320,7 +321,37 @@ time_t UTimeDate::getSecondFromDate(const char* str, bool gmt, struct tm* tm, co
 
             tm->tm_year = u__strtoul(str, 4);
             }
-         else
+         else if (u_isDayOfWeek(str) != U_NOT_FOUND)
+            {
+            /**
+             * Fri May  4 08:09:15 2018
+             * |   |   |  |  |  |  |
+             * 0   4   8 11 14 17 20
+             */
+
+            str += 4;
+
+            tm->tm_mon = u_getMonth(str);
+
+            str += 4;
+
+            tm->tm_mday = u_strtoulp(&str);
+
+            tm->tm_hour = u__strtoul(str, 2);
+
+            str += 3;
+
+            tm->tm_min = u__strtoul(str, 2);
+
+            str += 3;
+
+            tm->tm_sec = u__strtoul(str, 2);
+
+            str += 3;
+
+            tm->tm_year = u__strtoul(str, 4);
+            }
+         else if (str[12] == 'Z')
             {
             /**
              * 100212124550Z (zulu time)
@@ -351,8 +382,10 @@ time_t UTimeDate::getSecondFromDate(const char* str, bool gmt, struct tm* tm, co
             str += 2;
 
             tm->tm_sec = u__strtoul(str, 2);
-
-         // U_INTERNAL_ASSERT_EQUALS(str[2], 'Z')
+            }
+         else
+            {
+            U_RETURN(0);
             }
          }
 

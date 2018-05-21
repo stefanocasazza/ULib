@@ -477,15 +477,6 @@ U_NO_EXPORT void URDB::copy1(URDB* prdb, uint32_t _offset) // entry present on c
       uint32_t size_key  = RDB_cache_node(n, key.dsize),
                size_data = RDB_cache_node(n,data.dsize);
 
-      union uucdb_record_header {
-         uint32_t*                p;
-         UCDB::cdb_record_header* prec;
-      };
-
-      union uucdb_record_header u = { &size_key };
-
-      U_INTERNAL_DUMP("prec = { %u, %u }", u.prec->klen, u.prec->dlen)
-
       const char* ptr_key = (const char*)((ptrdiff_t)RDB_cache_node(n, key.dptr) + (ptrdiff_t)journal.map);
 
       prdb->UCDB::data.dsize = size_data;
@@ -515,9 +506,10 @@ U_NO_EXPORT void URDB::copy1(URDB* prdb, uint32_t _offset) // entry present on c
 
       char* journal_ptr = prdb->journal.map + RDB_off(prdb);
 
-      U_MEMCPY(journal_ptr, u.prec, sizeof(UCDB::cdb_record_header));
-
       // i == 0
+
+      u_put_unalignedp32(journal_ptr,   size_key);
+      u_put_unalignedp32(journal_ptr+4, size_data);
 
       journal_ptr += sizeof(UCDB::cdb_record_header);
 

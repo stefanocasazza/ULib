@@ -553,6 +553,7 @@ U_EXPORT bool u_isDigit(     const char* restrict s, uint32_t n) __pure;
 U_EXPORT bool u_isBase64(    const char* restrict s, uint32_t n) __pure;
 U_EXPORT bool u_isBase64Url( const char* restrict s, uint32_t n) __pure;
 U_EXPORT bool u_isMacAddr(   const char* restrict s, uint32_t n) __pure;
+U_EXPORT bool u_isXMacAddr(  const char* restrict s, uint32_t n) __pure;
 U_EXPORT bool u_isHostName(  const char* restrict s, uint32_t n) __pure;
 U_EXPORT bool u_isFileName(  const char* restrict s, uint32_t n) __pure;
 U_EXPORT bool u_isWhiteSpace(const char* restrict s, uint32_t n) __pure;
@@ -562,6 +563,33 @@ U_EXPORT bool u_isUrlEncodeNeeded(const char* restrict s, uint32_t n) __pure;
 U_EXPORT bool u_isUrlEncoded(     const char* restrict s, uint32_t n, bool bquery) __pure;
 
 U_EXPORT const char* u_isUrlScheme(const char* restrict url, uint32_t len) __pure;
+
+static inline void u_getXMAC(const char* restrict src, char* restrict dst)
+{
+   U_INTERNAL_TRACE("u_getXMAC(%p,%p)", src, dst)
+
+   U_INTERNAL_ASSERT(u_isMacAddr(src,12+5))
+
+   /**
+    * %2u:%2u:%2u:%2u:%2u:%2u
+    *
+    * (void) memcpy(dst,    src,      2);
+    * (void) memcpy(dst+ 2, src+ 2+1, 2);
+    * (void) memcpy(dst+ 4, src+ 4+2, 2);
+    * (void) memcpy(dst+ 6, src+ 6+3, 2);
+    * (void) memcpy(dst+ 8, src+ 8+4, 2);
+    * (void) memcpy(dst+10, src+10+5, 2);
+    */
+
+   u_put_unalignedp16(dst,    *(uint16_t*)src);
+   u_put_unalignedp16(dst+ 2, *(uint16_t*)(src+ 2+1));
+   u_put_unalignedp16(dst+ 4, *(uint16_t*)(src+ 4+2));
+   u_put_unalignedp16(dst+ 6, *(uint16_t*)(src+ 6+3));
+   u_put_unalignedp16(dst+ 8, *(uint16_t*)(src+ 8+4));
+   u_put_unalignedp16(dst+10, *(uint16_t*)(src+10+5));
+
+   U_INTERNAL_ASSERT(u_isXMacAddr(dst,12))
+}
 
 static inline int u_equal(const void* restrict s1, const void* restrict s2, uint32_t n, bool ignore_case) /* Equal with ignore case */
 {

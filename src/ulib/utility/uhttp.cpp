@@ -6957,6 +6957,7 @@ void UHTTP::setRedirectResponse(int mode, const char* ptr_location, uint32_t len
 
    UClientImage_Base::resetPipelineAndSetCloseConnection();
 
+   uint32_t sz;
    UString tmp(100U + len_location);
 
    tmp.snprintf(U_CONSTANT_TO_PARAM("%s%.*s\r\n"),
@@ -6979,12 +6980,11 @@ void UHTTP::setRedirectResponse(int mode, const char* ptr_location, uint32_t len
 
    if ((mode & NO_BODY) != 0)
       {
-      ext->setBuffer(U_CAPACITY);
+      sz = tmp.size();
 
-      UClientImage_Base::body->clear(); // clean body to avoid writev() in response...
+      ext->setBuffer(sz + U_CONSTANT_SIZE("Content-Length: 0\r\n\r\n"));
 
       char* ptr = ext->data();
-      uint32_t sz = tmp.size();
 
       U_MEMCPY(ptr, tmp.data(), sz);
                ptr           += sz;
@@ -6993,38 +6993,40 @@ void UHTTP::setRedirectResponse(int mode, const char* ptr_location, uint32_t len
       u_put_unalignedp64(ptr+8,  U_MULTICHAR_CONSTANT64('L','e','n','g','t','h',':',' '));
       u_put_unalignedp64(ptr+16, U_MULTICHAR_CONSTANT64('0','\r','\n','\r','\n','\0','\0','\0'));
 
-      ext->size_adjust(ptr + U_CONSTANT_SIZE("Content-Length: 0\r\n\r\n"));
+      ext->size_adjust(sz);
+
+      UClientImage_Base::body->clear(); // clean body to avoid writev() in response...
 
       handlerResponse();
-
-      return;
-      }
-
-   char msg[4096];
-   uint32_t sz, len;
-
-   if ((mode & NETWORK_AUTHENTICATION_REQUIRED) != 0)
-      {
-      len = u__snprintf(msg, sizeof(msg), U_CONSTANT_TO_PARAM("You need to <a href=\"%.*s\">authenticate with the local network</a> in order to get access"),
-                        len_location, ptr_location);
       }
    else
       {
-      len = u__snprintf(msg, sizeof(msg), U_CONSTANT_TO_PARAM("The document has moved <a href=\"%.*s\">here</a>"), len_location, ptr_location);
+      uint32_t len;
+      char msg[4096];
+
+      if ((mode & NETWORK_AUTHENTICATION_REQUIRED) != 0)
+         {
+         len = u__snprintf(msg, sizeof(msg), U_CONSTANT_TO_PARAM("You need to <a href=\"%.*s\">authenticate with the local network</a> in order to get access"),
+                           len_location, ptr_location);
+         }
+      else
+         {
+         len = u__snprintf(msg, sizeof(msg), U_CONSTANT_TO_PARAM("The document has moved <a href=\"%.*s\">here</a>"), len_location, ptr_location);
+         }
+
+      const char* status = getStatusDescription(&sz);
+      UString body(500U + len_location), content_type(U_CAPACITY);
+
+      body.snprintf(U_CONSTANT_TO_PARAM(U_STR_FMR_BODY),
+                    U_http_info.nResponseCode, sz, status,
+                                               sz, status,
+                    len, msg);
+
+      (void) content_type.assign(U_CONSTANT_TO_PARAM(U_CTYPE_HTML "\r\n"));
+      (void) content_type.append(tmp);
+
+      setResponse(content_type, &body);
       }
-
-   const char* status = getStatusDescription(&sz);
-   UString body(500U + len_location), content_type(U_CAPACITY);
-
-   body.snprintf(U_CONSTANT_TO_PARAM(U_STR_FMR_BODY),
-                 U_http_info.nResponseCode, sz, status,
-                                            sz, status,
-                 len, msg);
-
-   (void) content_type.assign(U_CONSTANT_TO_PARAM(U_CTYPE_HTML "\r\n"));
-   (void) content_type.append(tmp);
-
-   setResponse(content_type, &body);
 }
 
 void UHTTP::setErrorResponse(const UString& content_type, int code, const char* fmt, uint32_t fmt_size, bool bformat)

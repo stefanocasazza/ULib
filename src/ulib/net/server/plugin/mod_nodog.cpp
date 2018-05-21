@@ -33,6 +33,7 @@
 U_CREAT_FUNC(server_plugin_nodog, UNoDogPlugIn)
 
 int      UNoDogPlugIn::fd_stderr;
+bool     UNoDogPlugIn::bdifferent;
 bool     UNoDogPlugIn::bnetwork_interface;
 bool     UNoDogPlugIn::mac_from_dhcp_data_file;
 void*    UNoDogPlugIn::pdata;
@@ -45,14 +46,17 @@ UString* UNoDogPlugIn::fw_env;
 UString* UNoDogPlugIn::fw_cmd;
 UString* UNoDogPlugIn::extdev;
 UString* UNoDogPlugIn::intdev;
-UString* UNoDogPlugIn::info_data;
-UString* UNoDogPlugIn::arp_cache;
+UString* UNoDogPlugIn::mac_old;
+UString* UNoDogPlugIn::label_old;
 UString* UNoDogPlugIn::hostname;
 UString* UNoDogPlugIn::localnet;
+UString* UNoDogPlugIn::info_data;
+UString* UNoDogPlugIn::arp_cache;
 UString* UNoDogPlugIn::allowed_members;
 UString* UNoDogPlugIn::IP_address_trust;
 
 UString* UNoDogPlugIn::auth_host;
+UString* UNoDogPlugIn::auth_deny;
 UString* UNoDogPlugIn::auth_info;
 UString* UNoDogPlugIn::auth_login;
 UString* UNoDogPlugIn::auth_notify;
@@ -84,6 +88,8 @@ UNoDogPlugIn::UNoDogPlugIn() : UEventTime(300L,0L)
    U_NEW_STRING(fw_env, UString);
    U_NEW_STRING(extdev, UString);
    U_NEW_STRING(intdev, UString);
+   U_NEW_STRING(mac_old, UString);
+   U_NEW_STRING(label_old, UString);
    U_NEW_STRING(hostname, UString);
    U_NEW_STRING(localnet, UString);
    U_NEW_STRING(info_data, UString);
@@ -92,6 +98,7 @@ UNoDogPlugIn::UNoDogPlugIn() : UEventTime(300L,0L)
    U_NEW_STRING(IP_address_trust, UString);
 
    U_NEW_STRING(auth_host, UString);
+   U_NEW_STRING(auth_deny, UString);
    U_NEW_STRING(auth_info, UString);
    U_NEW_STRING(auth_login, UString);
    U_NEW_STRING(auth_notify, UString);
@@ -123,21 +130,22 @@ UNoDogPlugIn::~UNoDogPlugIn()
    U_DELETE(fw_env)
    U_DELETE(extdev)
    U_DELETE(intdev)
+   U_DELETE(mac_old)
+   U_DELETE(label_old)
    U_DELETE(hostname)
    U_DELETE(localnet)
    U_DELETE(info_data)
-   U_DELETE(arp_cache)
    U_DELETE(allowed_members)
    U_DELETE(IP_address_trust)
 
    U_DELETE(auth_host)
+   U_DELETE(auth_deny)
    U_DELETE(auth_info)
    U_DELETE(auth_login)
    U_DELETE(auth_notify)
    U_DELETE(auth_service)
    U_DELETE(auth_strict_notify)
 
-   U_DELETE(varp_cache)
    U_DELETE(vInternalDevice)
    U_DELETE(vLocalNetworkSpec)
    U_DELETE(vLocalNetworkLabel)
@@ -147,6 +155,9 @@ UNoDogPlugIn::~UNoDogPlugIn()
 
    if (ipt)   U_DELETE(ipt)
    if (peers) U_DELETE(peers)
+
+   U_DELETE(varp_cache)
+   U_DELETE( arp_cache) // NB: must be here to avoid DEAD OF SOURCE STRING WITH CHILD ALIVE...
 
 #ifdef USE_LIBTDB
    if (pdata) U_DELETE((UTDB*)pdata)
@@ -159,7 +170,7 @@ int UModNoDogPeer::handlerTime()
 
    UNoDogPlugIn::peer = this;
 
-   if (U_peer_permit == false) UNoDogPlugIn::permit();
+   if (U_peer_permit == false) UNoDogPlugIn::permit(U_peer_mac_from_dhcp_data_file ? *UString::str_without_mac : UNoDogPlugIn::peer->mac);
 
    U_RETURN(-1); // normal
 }
@@ -246,7 +257,7 @@ U_NO_EXPORT void UNoDogPlugIn::makeInfoData(UFlatBuffer* pfb, void* param)
             // $6 -> time_no_traffic
             // -----------------------------------------------------------------------------------------------------------------------------------------
 
-            peer->getMAC(buffer);
+            u_getXMAC(peer->mac.data(), buffer);
 
             pfb->String(buffer, 12);
             pfb->UInt(ntohl(peer->addr));
@@ -291,31 +302,6 @@ U_NO_EXPORT void UNoDogPlugIn::makeInfoData(UFlatBuffer* pfb, void* param)
       }
 }
 
-U_NO_EXPORT void UNoDogPlugIn::makeNotifyData(UFlatBuffer* pfb, void* param)
-{
-   U_TRACE(0, "UNoDogPlugIn::makeNotifyData(%p,%p)", pfb, param)
-
-   U_INTERNAL_DUMP("peer->mac = %V peer->ip = %V peer->label = %V", peer->mac.rep, peer->ip.rep, peer->label.rep)
-
-   char buffer[256];
-
-   pfb->String(buffer, getApInfo(buffer, sizeof(buffer), peer->label));
-
-   peer->getMAC(buffer);
-
-   pfb->String(buffer, 12);
-   pfb->String(peer->ip);
-}
-
-U_NO_EXPORT void UNoDogPlugIn::makeLoginData(UFlatBuffer* pfb, void* param)
-{
-   U_TRACE(0, "UNoDogPlugIn::makeLoginData(%p,%p)", pfb, param)
-
-   makeNotifyData(pfb, param);
-
-   pfb->UInt(U_PTR2INT(peer));
-}
-
 int UNoDogPlugIn::handlerTime()
 {
    U_TRACE_NO_PARAM(0, "UNoDogPlugIn::handlerTime()")
@@ -345,25 +331,25 @@ int UNoDogPlugIn::handlerTime()
    U_RETURN(0); // monitoring
 }
 
-void UNoDogPlugIn::executeCommand(const char* type, uint32_t len)
+void UNoDogPlugIn::executeCommand(const char* type, uint32_t len, const UString& mac)
 {
-   U_TRACE(0, "UNoDogPlugIn::executeCommand(%.*S,%u)", len, type, len)
+   U_TRACE(0, "UNoDogPlugIn::executeCommand(%.*S,%u,%V)", len, type, len, mac.rep)
 
    U_INTERNAL_ASSERT_POINTER(peer)
+   U_INTERNAL_ASSERT(u_isMacAddr(U_STRING_TO_PARAM(mac)))
 
    char buffer[256];
 
    // NB: request(arp|deny|clear|reset|permit|openlist|initialize) mac ip class(Owner|Member|Public) UserDownloadRate UserUploadRate
 
-   UCommand cmd(buffer, u__snprintf(buffer, sizeof(buffer), U_CONSTANT_TO_PARAM("/bin/sh %v %.*s %v %v Member 0 0"),
-                                    fw_cmd->rep, len, type, (U_peer_mac_from_dhcp_data_file ? *UString::str_without_mac : peer->mac).rep, peer->ip.rep), fw_env);
+   UCommand cmd(buffer, u__snprintf(buffer, sizeof(buffer), U_CONSTANT_TO_PARAM("/bin/sh %v %.*s %v %v Member 0 0"), fw_cmd->rep, len, type, mac.rep, peer->ip.rep), fw_env);
 
    (void) cmd.executeAndWait(U_NULLPTR, -1, fd_stderr);
 
    U_SRV_LOG_CMD_MSG_ERR(cmd, false);
 }
 
-U_NO_EXPORT void UNoDogPlugIn::setMAC()
+U_NO_EXPORT bool UNoDogPlugIn::setMAC()
 {
    U_TRACE_NO_PARAM(0, "UNoDogPlugIn::setMAC()")
 
@@ -384,7 +370,7 @@ U_NO_EXPORT void UNoDogPlugIn::setMAC()
 
       U_INTERNAL_ASSERT(ifname.isNullTerminated())
 
-      peer->mac = UServer_Base::csocket->getMacAddress(ifname.data());
+      peer->mac = USocketExt::getMacAddress(UServer_Base::csocket, ifname.data());
 
       if (peer->mac.empty())
          {
@@ -405,19 +391,31 @@ U_NO_EXPORT void UNoDogPlugIn::setMAC()
 
       U_INTERNAL_DUMP("peer->mac = %V", peer->mac.rep)
 
+      if (peer->mac.empty())
+         {
+         peer->mac = *UString::str_without_mac;
+
+         U_RETURN(false);
+         }
+
       U_INTERNAL_ASSERT(peer->mac)
       U_INTERNAL_ASSERT(u_isMacAddr(U_STRING_TO_PARAM(peer->mac)))
       U_ASSERT_EQUALS(peer->mac, USocketExt::getMacAddress(peer->ip))
       }
+
+   U_RETURN(true);
 }
 
-U_NO_EXPORT void UNoDogPlugIn::setLabelAndMAC()
+U_NO_EXPORT bool UNoDogPlugIn::setLabelAndMAC()
 {
    U_TRACE_NO_PARAM(0, "UNoDogPlugIn::setLabelAndMAC()")
 
    U_INTERNAL_DUMP("pdata = %p mac_from_dhcp_data_file = %b peer->label = %V", pdata, mac_from_dhcp_data_file, peer->label.rep)
 
-   if (pdata == U_NULLPTR) setMAC();
+   if (pdata == U_NULLPTR)
+      {
+      if (setMAC() == false) U_RETURN(false);
+      }
 #ifdef USE_LIBTDB
    else
       {
@@ -441,7 +439,7 @@ U_NO_EXPORT void UNoDogPlugIn::setLabelAndMAC()
          {
          uint32_t t5, t6;
 
-         setMAC();
+         if (setMAC() == false) U_RETURN(false);
 
          if (U_SYSCALL(sscanf, "%p,%S,%p,%p,%p,%p,%p,%p", peer->mac.data(), "%x:%x:%x:%x:%x:%x", &t1, &t2, &t3, &t4, &t5, &t6) == 6)
             {
@@ -483,18 +481,29 @@ U_NO_EXPORT void UNoDogPlugIn::setLabelAndMAC()
                mac.snprintf(U_CONSTANT_TO_PARAM("%02x:%02x:%02x:%02x:%02x:%02x"), bytep[0], bytep[1], bytep[2], bytep[3], bytep[4], bytep[5]);
 
                peer->mac = mac;
+
+               U_INTERNAL_ASSERT(u_isMacAddr(U_STRING_TO_PARAM(mac)))
                }
 
             U_SRV_LOG("get data from DHCP_DATA_FILE - key: %#.*S data: %#.10S peer->label = %V peer->mac = %V", sz, (const char*)&ks+start, value.data(), peer->label.rep, peer->mac.rep);
             }
          }
+
+      if (peer->mac.empty())
+         {
+         peer->mac = *UString::str_without_mac;
+
+         U_RETURN(false);
+         }
       }
 #endif
 
    U_INTERNAL_DUMP("peer->label = %V peer->mac = %V", peer->label.rep, peer->mac.rep)
+
+   U_RETURN(true);
 }
 
-void UNoDogPlugIn::setNewPeer()
+bool UNoDogPlugIn::setNewPeer()
 {
    U_TRACE_NO_PARAM(0, "UNoDogPlugIn::setNewPeer()")
 
@@ -504,16 +513,23 @@ void UNoDogPlugIn::setNewPeer()
 
    if (U_peer_index_network == 0xFF)
       {
-      U_ERROR("IP address for new peer %V not found in LocalNetworkMask %V", peer->ip.rep, localnet->rep);
+      U_SRV_LOG("WARNING: IP address for new peer %V not found in LocalNetworkMask %V", peer->ip.rep, localnet->rep);
+
+      U_RETURN(false);
       }
 
    peer->label = ((uint32_t)U_peer_index_network >= vLocalNetworkLabel->size() ? *UString::str_without_label : (*vLocalNetworkLabel)[U_peer_index_network]);
 
-   setLabelAndMAC();
+   if (setLabelAndMAC())
+      {
+      if (mac_from_dhcp_data_file) U_peer_flag |= U_PEER_MAC_FROM_DHCP_DATA_FILE;
 
-   if (mac_from_dhcp_data_file) U_peer_flag |= U_PEER_MAC_FROM_DHCP_DATA_FILE;
+      peers->insert((const char*)&(peer->addr), sizeof(uint32_t), peer); // peers->insert(peer->ip, peer);
 
-   peers->insert((const char*)&(peer->addr), sizeof(uint32_t), peer); // peers->insert(peer->ip, peer);
+      U_RETURN(true);
+      }
+
+   U_RETURN(false);
 }
 
 U_NO_EXPORT bool UNoDogPlugIn::getPeer()
@@ -577,6 +593,50 @@ U_NO_EXPORT void UNoDogPlugIn::eraseTimer()
       }
 }
 
+U_NO_EXPORT void UNoDogPlugIn::makeNotifyData(UFlatBuffer* pfb, void* param)
+{
+   U_TRACE(0, "UNoDogPlugIn::makeNotifyData(%p,%p)", pfb, param)
+
+   U_INTERNAL_DUMP("peer->mac = %V peer->ip = %V peer->label = %V", peer->mac.rep, peer->ip.rep, peer->label.rep)
+
+   char buffer[256];
+
+   pfb->String(buffer, getApInfo(buffer, sizeof(buffer), (bdifferent == false ? peer->label : *label_old)));
+
+   u_getXMAC(peer->mac.data(), buffer);
+
+   pfb->String(buffer, 12);
+   pfb->String(peer->ip);
+}
+
+U_NO_EXPORT void UNoDogPlugIn::makeLoginData(UFlatBuffer* pfb, void* param)
+{
+   U_TRACE(0, "UNoDogPlugIn::makeLoginData(%p,%p)", pfb, param)
+
+   makeNotifyData(pfb, param);
+
+   pfb->UInt(U_PTR2INT(peer));
+
+   if (bdifferent == false)
+      {
+      pfb->StringNull();
+      pfb->StringNull();
+      }
+   else
+      {
+      bdifferent = false;
+
+      pfb->String(peer->label);
+                  peer->label = *label_old;
+
+      char buffer[16];
+
+      u_getXMAC(mac_old->data(), buffer);
+
+      pfb->String(buffer, 12);
+      }
+}
+
 U_NO_EXPORT void UNoDogPlugIn::sendLogin()
 {
    U_TRACE_NO_PARAM(0, "UNoDogPlugIn::sendLogin()")
@@ -612,53 +672,6 @@ U_NO_EXPORT void UNoDogPlugIn::sendStrictNotify()
 
       (void) client->sendPOSTRequestAsync(UFlatBuffer::toVector(makeNotifyData), *auth_strict_notify, true);
       }
-}
-
-U_NO_EXPORT bool UNoDogPlugIn::checkOldPeer()
-{
-   U_TRACE_NO_PARAM(0, "UNoDogPlugIn::checkOldPeer()")
-
-   U_INTERNAL_ASSERT_POINTER(peer)
-   U_ASSERT(peer->ip.equal(U_CLIENT_ADDRESS_TO_PARAM))
-
-   UString mac    = peer->mac,
-           llabel = peer->label;
-
-   peer->mac = *UString::str_without_mac;
-
-   setLabelAndMAC();
-
-   if (   mac != peer->mac ||
-       llabel != peer->label)
-      {
-      // NB: we assume that the current peer is a different user that has acquired the same IP address from the DHCP...
-
-      U_SRV_LOG("WARNING: different user for peer (IP %v): (MAC %v LABEL %v) => (MAC %v LABEL %v)", peer->ip.rep, mac.rep, llabel.rep, peer->mac.rep, peer->label.rep);
-
-      U_INTERNAL_ASSERT(mac)
-      U_INTERNAL_ASSERT(llabel)
-      U_INTERNAL_ASSERT(peer->mac)
-      U_INTERNAL_ASSERT(peer->label)
-
-      if (U_peer_permit)
-         {
-         UString x;
-
-         if (U_peer_mac_from_dhcp_data_file == false)
-            {
-            x = peer->mac;
-                peer->mac = mac;
-            }
-
-         deny();
-
-         if (U_peer_mac_from_dhcp_data_file == false) peer->mac = x;
-         }
-
-      U_RETURN(false);
-      }
-
-   U_RETURN(true);
 }
 
 // Server-wide hooks
@@ -859,6 +872,7 @@ int UNoDogPlugIn::handlerInit()
       }
 
    *auth_info          = getUrlForSendMsgToPortal(U_CONSTANT_TO_PARAM("/info"));
+   *auth_deny          = getUrlForSendMsgToPortal(U_CONSTANT_TO_PARAM("/deny"));
    *auth_login         = getUrlForSendMsgToPortal(U_CONSTANT_TO_PARAM("/login"));
    *auth_notify        = getUrlForSendMsgToPortal(U_CONSTANT_TO_PARAM("/notify"));
    *auth_strict_notify = getUrlForSendMsgToPortal(U_CONSTANT_TO_PARAM("/strict_notify"));
@@ -1036,13 +1050,38 @@ end:
 
          U_peer_index_network = index_network;
 
-         setNewPeer();
+         (void) setNewPeer();
 
-         permit();
+         permit(peer->mac);
          }
       }
 
    U_RETURN(U_PLUGIN_HANDLER_OK);
+}
+
+uint32_t UNoDogPlugIn::checkUrl(char* buffer, uint32_t buffer_len, uint32_t sz, const char* user, uint32_t user_len)
+{
+   U_TRACE(0, "UNoDogPlugIn::checkUrl(%p,%u,%u,%.*S,%u)", buffer, buffer_len, sz, user_len, user, user_len)
+
+   if (sz > (buffer_len / 3))
+      {
+      U_SRV_LOG("url request size (%u bytes) too big from %.*s USER", sz, user_len, user);
+
+      U_RETURN(0);
+      }
+
+   if (auth_host->equal(U_HTTP_HOST_TO_PARAM))
+      {
+      U_SRV_LOG("request url (%.*S) invalid from %.*s USER", U_HTTP_HOST_TO_TRACE, user_len, user);
+
+      U_RETURN(0);
+      }
+
+   sz = UHTTP::setUrl(buffer, buffer_len);
+
+   U_INTERNAL_ASSERT_MAJOR(sz, 0)
+
+   U_RETURN(sz);
 }
 
 // Connection-wide hooks
@@ -1116,7 +1155,7 @@ int UNoDogPlugIn::handlerRequest()
                {
                eraseTimer();
 
-               if (U_peer_permit) deny();
+               if (U_peer_permit) deny(U_peer_mac_from_dhcp_data_file ? *UString::str_without_mac : peer->mac);
 
                erasePeer();
 
@@ -1135,7 +1174,7 @@ int UNoDogPlugIn::handlerRequest()
                {
                eraseTimer();
 
-               if (U_peer_permit == false) permit();
+               if (U_peer_permit == false) permit(U_peer_mac_from_dhcp_data_file ? *UString::str_without_mac : peer->mac);
 
                goto end;
                }
@@ -1183,7 +1222,7 @@ int UNoDogPlugIn::handlerRequest()
 
                U_SRV_LOG("AUTH request to logout user(%u): IP %v MAC %v", i, peer->ip.rep, peer->mac.rep);
 
-               if (U_peer_permit) deny();
+               if (U_peer_permit) deny(U_peer_mac_from_dhcp_data_file ? *UString::str_without_mac : peer->mac);
                else
                   {
                   eraseTimer();
@@ -1194,10 +1233,7 @@ int UNoDogPlugIn::handlerRequest()
                erasePeer();
                }
             }
-         else if (U_HTTP_URI_STREQ("/ping"))
-            {
-            }
-         else
+         else if (U_HTTP_URI_STREQ("/ping") == false)
             {
 bad:        UHTTP::setBadRequest();
             }
@@ -1208,6 +1244,15 @@ bad:        UHTTP::setBadRequest();
    // U_SRV_LOG("Start REQUEST_FROM_USER phase of plugin nodog");
 
    // printPeers(U_CONSTANT_TO_PARAM("user request"));
+
+      if (U_HTTP_URI_QUERY_LEN > (sizeof(buffer) / 4))
+         {
+         U_SRV_LOG("request url query size (%u bytes) too big", U_HTTP_URI_QUERY_LEN);
+
+         goto end;
+         }
+
+      sz = 7+U_http_host_len+U_HTTP_URI_QUERY_LEN;
 
       addr = UServer_Base::getClientAddress();
 
@@ -1220,8 +1265,44 @@ bad:        UHTTP::setBadRequest();
          U_SRV_LOG("Start REQUEST_FROM_OLD_USER phase of plugin nodog: peer = %p", peer);
 
          U_INTERNAL_ASSERT(peer->mac)
+         U_INTERNAL_ASSERT(peer->label)
          U_ASSERT(peer->ip.equal(U_CLIENT_ADDRESS_TO_PARAM))
          U_INTERNAL_ASSERT(u_isMacAddr(U_STRING_TO_PARAM(peer->mac)))
+
+         if (checkUrl(buffer, sizeof(buffer), sz, U_CONSTANT_TO_PARAM("OLD")) == 0) goto end;
+
+           *mac_old = peer->mac;
+         *label_old = peer->label;
+
+         peer->mac.clear();
+
+         if (setLabelAndMAC() == false) goto end;
+
+         if (  *mac_old != peer->mac ||
+             *label_old != peer->label)
+            {
+            // NB: we assume that the current peer is a different user that has acquired the same IP address from the DHCP...
+
+            U_SRV_LOG("WARNING: different user for peer (IP %v): (MAC %v LABEL %v) => (MAC %v LABEL %v)", peer->ip.rep, mac_old->rep, label_old->rep, peer->mac.rep, peer->label.rep);
+
+            U_INTERNAL_ASSERT(peer->mac)
+            U_INTERNAL_ASSERT(peer->label)
+
+            if (peer->mac != *mac_old)
+               {
+               bdifferent = true;
+
+               if (U_peer_permit &&
+                   U_peer_mac_from_dhcp_data_file == false)
+                  {
+                  deny(*mac_old);
+                  }
+
+               goto log;
+               }
+
+            goto welcome;
+            }
 
          if (U_HTTP_URI_MEMEQ("/nodog_peer_allow.sh"))
             {
@@ -1252,7 +1333,7 @@ bad:        UHTTP::setBadRequest();
                   {
                   sendStrictNotify();
 
-                  goto next1;
+                  goto next;
                   }
 
                U_INTERNAL_DUMP("T2 = %u U_peer_policy = %C", T2, U_peer_policy)
@@ -1262,9 +1343,9 @@ bad:        UHTTP::setBadRequest();
                   {
                   sendNotify();
 
-next1:            eraseTimer();
+next:             eraseTimer();
 
-                  if (U_peer_permit == false) permit();
+                  if (U_peer_permit == false) permit(U_peer_mac_from_dhcp_data_file ? *UString::str_without_mac : peer->mac);
 
                   UHTTP::setRedirectResponse(UHTTP::NO_BODY, U_STRING_TO_PARAM(redirect));
                   }
@@ -1297,16 +1378,22 @@ next1:            eraseTimer();
             goto end;
             }
 
-         sz = setRedirect(buffer, sizeof(buffer));
-
-         if (checkOldPeer() == false) goto log;
-
          goto welcome;
          }
 
       // ---------------------
       // request from NEW user
       // ---------------------
+
+      if (U_HTTP_URI_MEMEQ("/nodog_peer_allow.sh") ||
+          U_HTTP_URI_MEMEQ("/nodog_peer_delay.sh"))
+         {
+         U_SRV_LOG("/nodog_peer_(allow|delay).sh from NEW USER: %.*s", U_CLIENT_ADDRESS_TO_PARAM);
+
+         goto end;
+         }
+
+      if (checkUrl(buffer, sizeof(buffer), sz, U_CONSTANT_TO_PARAM("NEW")) == 0) goto end;
 
       index_network = UIPAllow::find(UServer_Base::client_address, *vLocalNetworkMask);
 
@@ -1332,9 +1419,12 @@ next1:            eraseTimer();
 
       U_ASSERT_EQUALS(peer->ip, UIPAddress::toString(peer->addr))
 
-      setNewPeer();
+      if (setNewPeer() == false)
+         {
+         U_DELETE(peer)
 
-      sz = setRedirect(buffer, sizeof(buffer));
+         goto end;
+         }
 
 log:  sendLogin();
 
@@ -1342,7 +1432,7 @@ log:  sendLogin();
 
       if (T1 == 0)
          {
-         permit();
+         permit(U_peer_mac_from_dhcp_data_file ? *UString::str_without_mac : peer->mac);
 
          UHTTP::setRedirectResponse(UHTTP::NO_BODY, buffer, sz);
          }
@@ -1363,7 +1453,7 @@ welcome: x = UString::getUBuffer();
 
          Url::encode_add(buffer, sz, x);
 
-         peer->getMAC(buffer);
+         u_getXMAC(peer->mac.data(), buffer);
 
          x.snprintf_add(U_CONSTANT_TO_PARAM("&mac=%.12s&apid=%v&gateway=%v%%3A%u"),
                         buffer, peer->label.rep, (bnetwork_interface ? pallow->host : *UServer_Base::IP_address).rep, UServer_Base::port);

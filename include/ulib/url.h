@@ -588,12 +588,14 @@ public:
       {
       U_TRACE(0, "Url::encode(%.*S,%u,%p)", len, input, len, &buffer)
 
-      U_ASSERT(buffer.capacity() >= len * 3)
+      U_ASSERT(buffer.capacity() >= len * 2)
       U_INTERNAL_ASSERT_EQUALS(u_isBase64(input, len), false)
 
       buffer.rep->_length = u_url_encode((const unsigned char*)input, len, (unsigned char*)buffer.data());
 
       U_INTERNAL_DUMP("buffer(%u) = %#V", buffer.size(), buffer.rep)
+
+      U_INTERNAL_ASSERT(buffer.invariant())
       }
 
    static void encode(const UString& input, UString& buffer) { encode(input.data(), input.size(), buffer); }
@@ -602,12 +604,14 @@ public:
       {
       U_TRACE(0, "Url::encode_add(%.*S,%u,%p)", len, input, len, &buffer)
 
-      U_ASSERT(buffer.space() >= len * 3)
+      U_ASSERT(buffer.space() >= (len * 2))
       U_INTERNAL_ASSERT_EQUALS(u_isBase64(input, len), false)
 
       buffer.rep->_length += u_url_encode((const unsigned char*)input, len, (unsigned char*)buffer.pend());
 
       U_INTERNAL_DUMP("buffer(%u) = %#V", buffer.size(), buffer.rep)
+
+      U_INTERNAL_ASSERT(buffer.invariant())
       }
 
    static void encode_add(const UString& input, UString& buffer) { encode_add(input.data(), input.size(), buffer); }
@@ -629,6 +633,8 @@ public:
       buffer.rep->_length = u_url_decode(input, len, (unsigned char*)buffer.data());
 
       U_INTERNAL_DUMP("buffer(%u) = %#V", buffer.size(), buffer.rep)
+
+      U_INTERNAL_ASSERT(buffer.invariant())
       }
 
    static void decode(const UString& input, UString& buffer) { decode(U_STRING_TO_PARAM(input), buffer); }

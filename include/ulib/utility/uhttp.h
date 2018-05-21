@@ -463,6 +463,27 @@ public:
       setDynamicResponse();
       }
 
+   static uint32_t setUrl(char* buffer, uint32_t sz)
+      {
+      U_TRACE(0, "UHTTP::setUrl(%p,%u)", buffer, sz)
+
+      uint32_t len = 7+U_http_host_len+U_HTTP_URI_QUERY_LEN;
+
+      if (sz > len)
+         {
+         u_put_unalignedp64(buffer, U_MULTICHAR_CONSTANT64('h','t','t','p',':','/','/','\0'));
+
+         buffer += 7;
+
+         u__memcpy(buffer,                 u_clientimage_info.http_info.host, U_http_host_len,      __PRETTY_FUNCTION__);
+         u__memcpy(buffer+U_http_host_len, u_clientimage_info.http_info.uri,  U_HTTP_URI_QUERY_LEN, __PRETTY_FUNCTION__);
+
+         U_RETURN(len);
+         }
+
+      U_RETURN(0);
+      }
+
    static void setDynamicResponse();
    static void setResponse(const UString& content_type, UString* pbody = U_NULLPTR);
    static void setRedirectResponse(int mode, const char* ptr_location, uint32_t len_location);

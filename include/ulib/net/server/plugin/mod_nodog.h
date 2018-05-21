@@ -82,24 +82,6 @@ protected:
    uint32_t addr, ctraffic, time_no_traffic;
    uucflag flag;
 
-   void getMAC(char* dst)
-      {
-      U_TRACE(0, "UModNoDogPeer::getMAC(%p)", dst)
-
-      U_INTERNAL_ASSERT(u_isMacAddr(U_STRING_TO_PARAM(mac)))
-
-      char* src = mac.data();
-
-   // "%2u:%2u:%2u:%2u:%2u:%2u"
-
-      (void) memcpy(dst,    src,      2);
-      (void) memcpy(dst+ 2, src+ 2+1, 2);
-      (void) memcpy(dst+ 4, src+ 4+2, 2);
-      (void) memcpy(dst+ 6, src+ 6+3, 2);
-      (void) memcpy(dst+ 8, src+ 8+4, 2);
-      (void) memcpy(dst+10, src+10+5, 2);
-      }
-
 private:
    U_DISALLOW_ASSIGN(UModNoDogPeer)
 
@@ -177,6 +159,8 @@ protected:
    static UString* fw_env;
    static UString* extdev;
    static UString* intdev;
+   static UString* mac_old;
+   static UString* label_old;
    static UString* hostname;
    static UString* localnet;
    static UString* info_data;
@@ -185,6 +169,7 @@ protected:
    static UString* IP_address_trust;
 
    static UString* auth_host;
+   static UString* auth_deny;
    static UString* auth_info;
    static UString* auth_login;
    static UString* auth_notify;
@@ -198,7 +183,7 @@ protected:
    static UIptAccount* ipt;
    static uint32_t check_expire, T1, T2;
    static UHttpClient<UTCPSocket>* client;
-   static bool mac_from_dhcp_data_file, bnetwork_interface;
+   static bool mac_from_dhcp_data_file, bnetwork_interface, bdifferent;
 
    static UIPAllow* pallow;
    static UModNoDogPeer* peer;
@@ -210,43 +195,43 @@ protected:
    static UVector<UString>* vLocalNetworkLabel;
    static UVector<UIPAllow*>* vLocalNetworkMask;
 
-   static void setNewPeer();
+   static bool setNewPeer();
    static bool preallocatePeersFault();
-   static void executeCommand(const char* type, uint32_t len);
+   static void executeCommand(const char* type, uint32_t len, const UString& mac);
 
-   static void deny()
+   static void deny(const UString& mac)
       {
-      U_TRACE_NO_PARAM(0, "UNoDogPlugIn::deny()")
+      U_TRACE(0, "UNoDogPlugIn::deny(%V)", mac.rep)
 
       U_INTERNAL_ASSERT_POINTER(peer)
       U_INTERNAL_ASSERT(U_peer_permit)
 
       if (U_peer_allowed)
          {
-         U_SRV_LOG("WARNING: I should to deny user allowed: IP %v MAC %v", peer->ip.rep, peer->mac.rep);
+         U_SRV_LOG("WARNING: I should to deny user allowed: IP %v MAC %v", peer->ip.rep, mac.rep);
 
          return;
          }
 
-      executeCommand(U_CONSTANT_TO_PARAM("deny"));
+      executeCommand(U_CONSTANT_TO_PARAM("deny"), mac);
 
-      U_SRV_LOG("Peer denied: IP %v MAC %v", peer->ip.rep, peer->mac.rep);
+      U_SRV_LOG("Peer denied: IP %v MAC %v", peer->ip.rep, mac.rep);
       }
 
-   static void permit()
+   static void permit(const UString& mac)
       {
-      U_TRACE_NO_PARAM(0, "UNoDogPlugIn::permit()")
+      U_TRACE(0, "UNoDogPlugIn::permit(%V)", mac.rep)
 
       U_INTERNAL_ASSERT_POINTER(peer)
       U_INTERNAL_ASSERT_EQUALS(U_peer_permit, false)
 
-      executeCommand(U_CONSTANT_TO_PARAM("permit"));
+      executeCommand(U_CONSTANT_TO_PARAM("permit"), mac);
 
       peer->_ctime = u_now->tv_sec;
 
       U_peer_flag |= U_PEER_PERMIT;
 
-      U_SRV_LOG("Peer permitted: IP %v MAC %v", peer->ip.rep, peer->mac.rep);
+      U_SRV_LOG("Peer permitted: IP %v MAC %v", peer->ip.rep, mac.rep);
       }
 
    static UString getUrlForSendMsgToPortal(const char* service, uint32_t service_len)
@@ -262,13 +247,6 @@ protected:
 
    static UString getUrlForSendMsgToPortal(const UString& service) { return getUrlForSendMsgToPortal(U_STRING_TO_PARAM(service)); }
 
-   static uint32_t setRedirect(char* buffer, uint32_t bufsize)
-      {
-      U_TRACE(0, "UNoDogPlugIn::setRedirect(%p,%u)", buffer, bufsize)
-
-      return u__snprintf(buffer, bufsize, U_CONSTANT_TO_PARAM("http://%.*s%.*s"), U_HTTP_HOST_TO_TRACE, U_HTTP_URI_QUERY_TO_TRACE);
-      }
-
    static uint32_t getApInfo(char* buffer, uint32_t bufsize, const UString& lbl)
       {
       U_TRACE(0, "UNoDogPlugIn::getApInfo(%p,%u,%V)", buffer, bufsize, lbl.rep)
@@ -276,18 +254,19 @@ protected:
       return u__snprintf(buffer, bufsize, U_CONSTANT_TO_PARAM("%v@%v/%v"), lbl.rep, UServer_Base::IP_address->rep, hostname->rep);
       }
 
+   static uint32_t checkUrl(char* buffer, uint32_t buffer_len, uint32_t sz, const char* user, uint32_t user_len);
+
 private:
    U_DISALLOW_COPY_AND_ASSIGN(UNoDogPlugIn)
 
    static bool   getPeer() U_NO_EXPORT;
    static void erasePeer() U_NO_EXPORT;
 
-   static void setMAC() U_NO_EXPORT;
+   static bool setMAC() U_NO_EXPORT;
    static void sendLogin() U_NO_EXPORT;
    static void sendNotify() U_NO_EXPORT;
    static void eraseTimer() U_NO_EXPORT;
-   static bool checkOldPeer() U_NO_EXPORT;
-   static void setLabelAndMAC() U_NO_EXPORT;
+   static bool setLabelAndMAC() U_NO_EXPORT;
    static void sendStrictNotify() U_NO_EXPORT;
 
 // static void printPeers(const char* fmt, uint32_t len) U_NO_EXPORT;

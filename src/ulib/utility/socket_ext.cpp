@@ -36,6 +36,9 @@
 #ifdef HAVE_SYS_IOCTL_H
 #  include <sys/ioctl.h>
 #endif
+#ifdef HAVE_ARPA_INET_H
+#  include <net/if_arp.h>
+#endif
 
 #ifdef USE_C_ARES
 #  include <ares.h>
@@ -513,7 +516,7 @@ loop:
 
    for (int i = 0; i < iovcnt; ++i) sum += iov[i].iov_len;
 
-   U_INTERNAL_ASSERT_EQUALS(sum, count)
+   U_INTERNAL_ASSERT_EQUALS(sum, count-byte_written)
 #endif
 
    /*
@@ -1074,6 +1077,82 @@ UString USocketExt::getMacAddress(int fd, const char* device)
                       hwaddr[3] & 0xFF,
                       hwaddr[4] & 0xFF,
                       hwaddr[5] & 0xFF);
+
+      U_INTERNAL_ASSERT(u_isMacAddr(U_STRING_TO_PARAM(result)))
+      }
+#endif
+
+   U_RETURN_STRING(result);
+}
+
+UString USocketExt::getMacAddress(USocket* socket, const char* device)
+{
+   U_TRACE(1, "USocketExt::getMacAddress(%p,%S)", socket, device)
+
+   U_INTERNAL_ASSERT_POINTER(device)
+
+   UString result(100U);
+
+#if defined(U_LINUX) && defined(HAVE_SYS_IOCTL_H) && defined(HAVE_ARPA_INET_H)
+   U_INTERNAL_ASSERT(socket->isOpen())
+
+   /**
+    * ARP ioctl request
+    *
+    * struct arpreq {
+    *    struct sockaddr arp_pa;       // Protocol address
+    *    struct sockaddr arp_ha;       // Hardware address
+    *    int arp_flags;                // Flags
+    *    struct sockaddr arp_netmask;  // Netmask (only for proxy arps)
+    *    char arp_dev[16];
+    * };
+    */
+
+   struct arpreq arpreq;
+
+   (void) U_SYSCALL(memset, "%p,%d,%u", &arpreq, 0, sizeof(arpreq));
+
+   union uupsockaddr {
+      struct sockaddr*    p;
+      struct sockaddr_in* psin;
+   };
+
+   union uupsockaddr u = { &arpreq.arp_pa };
+
+   // arp_pa must be an AF_INET address
+   // arp_ha must have the same type as the device which is specified in arp_dev
+   // arp_dev is a zero-terminated string which names a device
+
+   u.psin->sin_family      = AF_INET;
+   u.psin->sin_addr.s_addr = socket->getClientAddress();
+   arpreq.arp_ha.sa_family = AF_INET;
+
+   (void) u__strncpy(arpreq.arp_dev, device, 15);
+
+   if (U_SYSCALL(ioctl, "%d,%d,%p", socket->iSockDesc, SIOCGARP, &arpreq) == 0)
+      {
+      if ((arpreq.arp_flags & ATF_COM) != 0)
+         {
+         unsigned char* hwaddr = (unsigned char*)arpreq.arp_ha.sa_data;
+
+         result.snprintf(U_CONSTANT_TO_PARAM("%02x:%02x:%02x:%02x:%02x:%02x"),
+            hwaddr[0] & 0xFF,
+            hwaddr[1] & 0xFF,
+            hwaddr[2] & 0xFF,
+            hwaddr[3] & 0xFF,
+            hwaddr[4] & 0xFF,
+            hwaddr[5] & 0xFF);
+
+         U_INTERNAL_ASSERT(u_isMacAddr(U_STRING_TO_PARAM(result)))
+
+         /**
+          * if (arpreq.arp_flags & ATF_PERM)        printf("PERM");
+          * if (arpreq.arp_flags & ATF_PUBL)        printf("PUBLISHED");
+          * if (arpreq.arp_flags & ATF_USETRAILERS) printf("TRAILERS");
+          * if (arpreq.arp_flags & ATF_PROXY)       printf("PROXY");
+          */
+         }
+   // else printf("*** INCOMPLETE ***");
       }
 #endif
 

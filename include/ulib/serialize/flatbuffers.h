@@ -437,6 +437,19 @@ public:
 
    void String(const char* key, uint32_t len1, const char* str, uint32_t len2) { Key(key, len1); CreateString(str, len2); }
 
+   void StringNull()
+      {
+      U_TRACE_NO_PARAM(0, "UFlatBuffer::StringNull()")
+
+      buffer_str[buffer_idx++] = 0;
+
+      U_INTERNAL_DUMP("buffer_idx = %u buffer_max = %u", buffer_idx, buffer_max)
+
+      U_INTERNAL_ASSERT_MINOR(buffer_idx, buffer_max)
+
+      pushOnStack(buffer_idx, UFlatBufferValue::TYPE_STRING, UFlatBufferValue::BIT_WIDTH_8);
+      }
+
    // Overloaded Add that tries to call the correct function above
 
    static void Add()           { Null(); }
@@ -1296,15 +1309,19 @@ protected:
       {
       U_TRACE(0, "UFlatBuffer::CreateString(%.*S,%u)", len, data, len)
 
-      uint8_t bit_width = UFlatBufferValue::WidthL(len);
+      if (len == 0) StringNull();
+      else
+         {
+         uint8_t bit_width = UFlatBufferValue::WidthL(len);
 
-      WriteScalar<uint32_t>(len, Align(bit_width));
+         WriteScalar<uint32_t>(len, Align(bit_width));
 
-      uint32_t sloc = buffer_idx;
+         uint32_t sloc = buffer_idx;
 
-      WriteBytes(data, len);
+         WriteBytes(data, len);
 
-      pushOnStack(sloc, UFlatBufferValue::TYPE_STRING, bit_width);
+         pushOnStack(sloc, UFlatBufferValue::TYPE_STRING, bit_width);
+         }
       }
 
    void CreateVector(uint32_t start, uint32_t vec_len, uint32_t step, bool typed, bool fixed, UFlatBufferValue* pval);
@@ -1362,6 +1379,8 @@ protected:
    void WriteBytes(const void* val, uint32_t len)
       {
       U_TRACE(0, "UFlatBuffer::WriteBytes<T>(%#.*S,%u)", len, val, len)
+
+      U_INTERNAL_ASSERT_MAJOR(len, 0)
 
       (void) memcpy(getPointer(), val, len);
 

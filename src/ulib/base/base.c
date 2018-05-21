@@ -212,7 +212,7 @@ static inline char* u_itoa(uint32_t u, char* restrict p, uint32_t d, uint32_t n)
 
 static char* num2str32(uint32_t u, char* restrict p)
 {
-   uint32_t d, n;
+   uint32_t n, d = 0;
 
    U_INTERNAL_TRACE("num2str32(%u,%p)", u, p)
 
@@ -771,6 +771,25 @@ void u_init_ulib(char** restrict argv)
    (void) u_setStartTime();
 
    U_DEBUG("u_flag_sse = %u", u_flag_sse)
+}
+
+__pure uint32_t u_isDayOfWeek(const char* restrict str)
+{
+   uint32_t i;
+
+   U_INTERNAL_TRACE("u_isDayOfWeek(%.4s)", str)
+
+   for (i = 0; i < 7; ++i)
+      {
+      if (u_get_unalignedp32(str) == U_MULTICHAR_CONSTANT32(u_day_name[i][0],
+                                                            u_day_name[i][1],
+                                                            u_day_name[i][2],' '))
+         {
+         return i;
+         }
+      }
+
+   return U_NOT_FOUND;
 }
 
 /**

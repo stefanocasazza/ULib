@@ -374,8 +374,6 @@ public:
       return cRemoteAddress.getInAddr();
       }
 
-   UString getMacAddress(const char* device = "eth0");
-
    /**
     * This method manage the buffer of the socket connection
     */

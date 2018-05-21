@@ -13,7 +13,7 @@ rm -f /tmp/uclient.log \
                 trace.*userver_*.[0-9]*           object.*userver_*.[0-9]*           stack.*userver_*.[0-9]*           mempool.*userver_*.[0-9]* \
       $DOC_ROOT/trace.*userver_*.[0-9]* $DOC_ROOT/object.*userver_*.[0-9]* $DOC_ROOT/stack.*userver_*.[0-9]* $DOC_ROOT/mempool.*userver_*.[0-9]*
 
-#UTRACE="0 100M -1"
+ UTRACE="0 100M -1"
  UTRACE_FOLDER=/tmp
  TMPDIR=/tmp
 #UOBJDUMP="0 10M 100"
@@ -62,7 +62,7 @@ nodog {
  FW_CMD ../firewall/nodog.fw
  DECRYPT_KEY vivalatopa
  CHECK_EXPIRE_INTERVAL 60
- FW_ENV "MasqueradeDevice=eth0 'AuthServiceAddr=http://localhost' FullPrivateNetwork=192.168.0.0/12 LocalNetwork=192.168.0.0/24 InternalDevice=wlan0 'ExternalDevice=eth0 tun0 tun2'"
+ FW_ENV "MasqueradeDevice=eth0 'AuthServiceAddr=http://localhost' FullPrivateNetwork=192.168.0.0/12 LocalNetwork=192.168.0.0/16 InternalDevice=usb0 'ExternalDevice=eth0 tun0 tun2'"
  LOCAL_NETWORK_LABEL 1000
 #DHCP_DATA_FILE /tmp/kea-leases.tdb
 }
@@ -83,6 +83,8 @@ wait_server_ready localhost 5280
 
 sync
 echo "PID = `cat /tmp/nodog.pid`"
+
+#netcat -w 10 192.168.42.129 5280 < /mnt/storage/srv/realtime.req 
 
 #$SLEEP
 #kill_prg userver_tcp TERM

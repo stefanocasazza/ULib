@@ -3445,6 +3445,20 @@ __pure bool u_isMacAddr(const char* restrict p, uint32_t len)
    return false;
 }
 
+__pure bool u_isXMacAddr(const char* restrict s, uint32_t n)
+{
+   U_INTERNAL_TRACE("u_isXMacAddr(%.*s,%u)", U_min(n,128), s, n)
+
+   if (n == 12)
+      {
+      U_LOOP_STRING( if (u__isxdigit(c) == false) return false )
+
+      return true;
+      }
+
+   return false;
+}
+
 /************************************************************************
  * From rfc2044: encoding of the Unicode values on UTF-8:               *
  *                                                                      *

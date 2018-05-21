@@ -64,10 +64,11 @@ public:
 
    static bool getARPCache(UString& cache, UVector<UString>& vec);
 
-   static UString getNetworkDevice(const char* exclude); // eth0
-   static UString getIPAddress(int fd, const char* device); // eth0
-   static UString getMacAddress(int fd, const char* device); // eth0
-   static UString getNetworkAddress(int fd, const char* device); // eth0
+   static UString getNetworkDevice(const char* exclude = "eth0");
+   static UString getIPAddress(int fd, const char* device = "eth0");
+   static UString getMacAddress(int fd, const char* device = "eth0");
+   static UString getMacAddress(USocket* s, const char* device = "eth0");
+   static UString getNetworkAddress(int fd, const char* device = "eth0");
 
    static UString getMacAddress(          const char* ip, uint32_t ip_len);
    static UString getNetworkInterfaceName(const char* ip, uint32_t ip_len);

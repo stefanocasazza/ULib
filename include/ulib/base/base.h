@@ -514,6 +514,8 @@ static inline void u_gettimenow(void)
 #endif
 */
 
+U_EXPORT uint32_t u_isDayOfWeek(const char* restrict str) __pure;
+
 U_EXPORT      uint32_t u_strftime1(char* restrict buffer, uint32_t buffer_size, const char* restrict fmt, uint32_t fmt_size);
 static inline uint32_t u_strftime2(char* restrict buffer, uint32_t buffer_size, const char* restrict fmt, uint32_t fmt_size, time_t when)
 {

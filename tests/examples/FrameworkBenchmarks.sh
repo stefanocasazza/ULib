@@ -28,37 +28,37 @@ export ORM_DRIVER ORM_OPTION UMEMPOOL
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------
 #Running 15s test @ http://localhost:8080/plaintext
 #  4 threads and 256 connections
-# Thread Stats   Avg      Stdev     Max   +/- Stdev
-#   Latency     1.86ms    2.30ms  28.08ms   88.21%
-#   Req/Sec   552.42k   200.56k    1.39M    68.22%
-# Latency Distribution
-#    50%    1.00ms
-#    75%    2.46ms
-#    90%    4.53ms
-#    99%   11.03ms
-# 30638208 requests in 14.99s, 3.68GB read
-#Requests/sec: 2044562.05
-#Transfer/sec:    251.53MB
+#  Thread Stats   Avg      Stdev     Max   +/- Stdev
+#    Latency     0.91ms  564.97us  25.85ms   97.24%
+#    Req/Sec   615.24k    52.86k    0.90M    75.81%
+#  Latency Distribution
+#     50%    0.86ms
+#     75%    0.95ms
+#     90%    1.04ms
+#     99%    1.80ms
+#  34769232 requests in 15.00s, 4.18GB read
+#Requests/sec: 2318061.92
+#Transfer/sec:    285.18MB
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------
 # JSON
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------
-#UMEMPOOL="58,0,0,41,273,-15,-14,-20,36"
+#UMEMPOOL="58,0,0,41,16401,-14,-15,11,25"
 #sed -i "s|TCP_LINGER_SET .*|TCP_LINGER_SET 0|g"	 benchmark/FrameworkBenchmarks/fbenchmark.cfg
 #sed -i "s|LISTEN_BACKLOG .*|LISTEN_BACKLOG 256|g"	 benchmark/FrameworkBenchmarks/fbenchmark.cfg
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------
 #Running 15s test @ http://localhost:8080/json
 #  4 threads and 256 connections
 #  Thread Stats   Avg      Stdev     Max   +/- Stdev
-#    Latency     0.90ms    2.52ms  36.05ms   93.49%
-#    Req/Sec    89.35k    47.88k  229.78k    65.55%
+#    Latency   404.71us  577.61us  13.07ms   98.46%
+#    Req/Sec    92.85k    19.62k  174.55k    79.88%
 #  Latency Distribution
-#     50%  166.00us
-#     75%  408.00us
-#     90%    2.27ms
-#     99%   11.68ms
-#  4845404 requests in 15.00s, 688.52MB read
-#Requests/sec: 323059.07
-#Transfer/sec:     45.91MB
+#     50%  333.00us
+#     75%  458.00us
+#     90%  581.00us
+#     99%    1.86ms
+#  5256998 requests in 15.00s, 747.01MB read
+#Requests/sec: 350480.62
+#Transfer/sec:     49.80MB
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------
 # DB
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------

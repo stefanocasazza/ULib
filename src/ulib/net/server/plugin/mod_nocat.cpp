@@ -1390,7 +1390,7 @@ void UNoCatPlugIn::setNewPeer()
       {
       U_INTERNAL_ASSERT(peer->ifname.isNullTerminated())
 
-      UString mac = UServer_Base::csocket->getMacAddress(peer->ifname.data());
+      UString mac = USocketExt::getMacAddress(UServer_Base::csocket, peer->ifname.data());
 
       if (mac) peer->mac = mac;
       else
@@ -1464,7 +1464,7 @@ void UNoCatPlugIn::checkOldPeer()
 
    if ((check_type & U_CHECK_MAC) != 0) // not unifi (L2)
       {
-      mac = UServer_Base::csocket->getMacAddress(peer->ifname.data());
+      mac = USocketExt::getMacAddress(UServer_Base::csocket, peer->ifname.data());
 
       if (mac.empty()) return;
 
