@@ -783,17 +783,18 @@ typedef enum ValueType {
   U_ARRAY_VALUE =  7, // array value (ordered list)
  U_OBJECT_VALUE =  8, // object value (collection of name/value pairs)
    U_NULL_VALUE =  9, // null value
-U_BOOLEAN_VALUE = 10, // bool value
-   U_CHAR_VALUE = 11, //   signed char value
-  U_UCHAR_VALUE = 12, // unsigned char value
-  U_SHORT_VALUE = 13, //   signed short integer value
- U_USHORT_VALUE = 14, // unsigned short integer value
-   U_LONG_VALUE = 15, //   signed long value
-  U_ULONG_VALUE = 16, // unsigned      long value
-  U_LLONG_VALUE = 17, //   signed long long value
- U_ULLONG_VALUE = 18, // unsigned long long value
-  U_FLOAT_VALUE = 19, // float value
-  U_LREAL_VALUE = 20  // long double value
+U_COMPACT_VALUE = 10, // compact value
+U_BOOLEAN_VALUE = 11, // bool value
+   U_CHAR_VALUE = 12, //   signed char value
+  U_UCHAR_VALUE = 13, // unsigned char value
+  U_SHORT_VALUE = 14, //   signed short integer value
+ U_USHORT_VALUE = 15, // unsigned short integer value
+   U_LONG_VALUE = 16, //   signed long value
+  U_ULONG_VALUE = 17, // unsigned      long value
+  U_LLONG_VALUE = 18, //   signed long long value
+ U_ULLONG_VALUE = 19, // unsigned long long value
+  U_FLOAT_VALUE = 20, // float value
+  U_LREAL_VALUE = 21  // long double value
 } ValueType;
 
 static inline uint8_t  u_getTag(    uint64_t val) { return (val >> U_VALUE_TAG_SHIFT) & U_VALUE_TAG_MASK; }

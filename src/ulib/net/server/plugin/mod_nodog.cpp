@@ -243,59 +243,61 @@ U_NO_EXPORT void UNoDogPlugIn::makeInfoData(UFlatBuffer* pfb, void* param)
       do {
          peer = peers->elem();
 
-         if (U_peer_allowed == false)
+         U_INTERNAL_ASSERT(u_isIPv4Addr(U_STRING_TO_PARAM(peer->ip)))
+
+         if (U_peer_allowed) continue;
+
+         if (peer->ctraffic &&
+             U_peer_permit == false)
             {
-            U_INTERNAL_ASSERT(u_isIPv4Addr(U_STRING_TO_PARAM(peer->ip)))
+            U_SRV_LOG("WARNING: Peer IP %v MAC %v has made traffic(%u bytes) but it has status DENY", peer->ip.rep, peer->mac.rep, peer->ctraffic);
 
-            // -----------------------------------------------------------------------------------------------------------------------------------------
-            // $1 -> mac
-            // $2 -> ip
-            // $3 -> ap
-            // $4 -> traffic
-            // ---------------------
-            // $5 -> time
-            // $6 -> time_no_traffic
-            // -----------------------------------------------------------------------------------------------------------------------------------------
+            continue;
+            }
 
-            u_getXMAC(peer->mac.data(), buffer);
+         // -----------------------------------------------------------------------------------------------------------------------------------------
+         // $1 -> mac
+         // $2 -> ip
+         // $3 -> ap
+         // $4 -> traffic
+         // ---------------------
+         // $5 -> time
+         // $6 -> time_no_traffic
+         // -----------------------------------------------------------------------------------------------------------------------------------------
 
-            pfb->String(buffer, 12);
-            pfb->UInt(ntohl(peer->addr));
-            pfb->String(peer->label);
+         u_getXMAC(peer->mac.data(), buffer);
 
-            _ctime = u_now->tv_sec - peer->_ctime;
-                                     peer->_ctime = u_now->tv_sec;
+         pfb->String(buffer, 12);
+         pfb->IPAddress(peer->addr);
+         pfb->String(peer->label);
 
-            if (peer->ctraffic)
-               {
-               if (U_peer_permit == false)
-                  {
-                  U_SRV_LOG("WARNING: Peer IP %v MAC %v has made traffic(%u bytes) but it has status DENY", peer->ip.rep, peer->mac.rep, peer->ctraffic);
-                  }
+         _ctime = u_now->tv_sec - peer->_ctime;
+                                  peer->_ctime = u_now->tv_sec;
 
-               pfb->UInt(peer->ctraffic);
-                         peer->ctraffic = 0;
+         if (peer->ctraffic)
+            {
+            pfb->UInt(peer->ctraffic);
+                      peer->ctraffic = 0;
 
-               peer->time_no_traffic = 0U;
+            peer->time_no_traffic = 0U;
 
-               /*
-               pfb->UInt(_ctime);
-               pfb->UInt(0U);
-               */
-               }
-            else
-               {
-               pfb->UInt(0U);
+            /*
+            pfb->UInt(_ctime);
+            pfb->UInt(0U);
+            */
+            }
+         else
+            {
+            pfb->UInt(0U);
 
-               peer->time_no_traffic += _ctime;
+            peer->time_no_traffic += _ctime;
 
-               /*
-               pfb->UInt(0U);
-               pfb->UInt(peer->time_no_traffic);
-               */
+            /*
+            pfb->UInt(0U);
+            pfb->UInt(peer->time_no_traffic);
+            */
 
-               U_SRV_LOG("Peer IP %v MAC %v has made no traffic for %u secs", peer->ip.rep, peer->mac.rep, peer->time_no_traffic);
-               }
+            U_SRV_LOG("Peer IP %v MAC %v has made no traffic for %u secs", peer->ip.rep, peer->mac.rep, peer->time_no_traffic);
             }
          }
       while (peers->next());
@@ -601,7 +603,7 @@ U_NO_EXPORT void UNoDogPlugIn::makeNotifyData(UFlatBuffer* pfb, void* param)
 
    char buffer[256];
 
-   pfb->String(buffer, getApInfo(buffer, sizeof(buffer), (bdifferent == false ? peer->label : *label_old)));
+   pfb->String(buffer, getApInfo(buffer, sizeof(buffer), peer->label));
 
    u_getXMAC(peer->mac.data(), buffer);
 
@@ -624,15 +626,13 @@ U_NO_EXPORT void UNoDogPlugIn::makeLoginData(UFlatBuffer* pfb, void* param)
       }
    else
       {
-      bdifferent = false;
-
-      pfb->String(peer->label);
-                  peer->label = *label_old;
-
       char buffer[16];
+
+      bdifferent = false;
 
       u_getXMAC(mac_old->data(), buffer);
 
+      pfb->String(*label_old);
       pfb->String(buffer, 12);
       }
 }
@@ -1191,12 +1191,13 @@ int UNoDogPlugIn::handlerRequest()
             }
          else if (U_HTTP_URI_STREQ("/logout"))
             {
-#        ifndef HAVE_ARCH64
-            uint32_t vec[256],
-#        else
-            uint32_t vec[8192],
-#        endif
-            n = UFlatBuffer::toVectorInt(*UClientImage_Base::body, vec), ip_peer;
+            uint32_t n, ip_peer;
+            UFlatBuffer fb, vec;
+
+            fb.setRoot(*UClientImage_Base::body);
+            fb.AsVector(vec);
+
+            n = vec.GetSize();
 
             U_SRV_LOG("AUTH request to logout %u users", n);
 
@@ -1205,8 +1206,8 @@ int UNoDogPlugIn::handlerRequest()
                // --------
                // $1 -> ip
                // --------
-
-               ip_peer = htonl(vec[i]);
+               
+               ip_peer = vec.AsVectorGetIPAddress(i);
 
                peer = peers->at((const char*)&ip_peer, sizeof(uint32_t)); // (*peers)[UIPAddress::toString(vec[i])];
 
@@ -1227,7 +1228,7 @@ int UNoDogPlugIn::handlerRequest()
                   {
                   eraseTimer();
 
-                  U_SRV_LOG("AUTH request to logout user with status DENY", 0);
+                  U_SRV_LOG("AUTH request to logout user with status DENY");
                   }
 
                erasePeer();
@@ -1276,7 +1277,13 @@ bad:        UHTTP::setBadRequest();
 
          peer->mac.clear();
 
-         if (setLabelAndMAC() == false) goto end;
+         if (setLabelAndMAC() == false)
+            {
+            peer->mac   =   *mac_old;
+            peer->label = *label_old;
+
+            goto end;
+            }
 
          if (  *mac_old != peer->mac ||
              *label_old != peer->label)
@@ -1301,7 +1308,9 @@ bad:        UHTTP::setBadRequest();
                goto log;
                }
 
-            goto welcome;
+            peer->label = *label_old;
+
+            goto end;
             }
 
          if (U_HTTP_URI_MEMEQ("/nodog_peer_allow.sh"))
@@ -1374,6 +1383,13 @@ next:             eraseTimer();
 
                sendNotify();
                }
+
+            goto end;
+            }
+
+         if (U_peer_permit)
+            {
+            U_SRV_LOG("request from OLD USER but it has status PERMIT");
 
             goto end;
             }

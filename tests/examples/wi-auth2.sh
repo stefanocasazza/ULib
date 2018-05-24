@@ -12,7 +12,7 @@ rm -f out/userver_tcp.out err/wi-auth2.err err/uclient.err \
                 trace.*userver_*.[0-9]*           object.*userver_*.[0-9]*           stack.*userver_*.[0-9]*           mempool.*userver_*.[0-9]* \
       $DOC_ROOT/trace.*userver_*.[0-9]* $DOC_ROOT/object.*userver_*.[0-9]* $DOC_ROOT/stack.*userver_*.[0-9]* $DOC_ROOT/mempool.*userver_*.[0-9]*
 
-#UTRACE="0 100M -1"
+ UTRACE="0 100M -1"
  UTRACE_FOLDER=/tmp
  TMPDIR=/tmp
 #UOBJDUMP="0 10M 100"

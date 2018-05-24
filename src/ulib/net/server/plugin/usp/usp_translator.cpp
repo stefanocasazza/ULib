@@ -482,7 +482,7 @@ public:
 
          (void) http_header.reserve(200U + encoded.size());
 
-         (void) http_header.snprintf(U_CONSTANT_TO_PARAM("\n\tU_INTERNAL_ASSERT_EQUALS(UClientImage_Base::wbuffer->findEndHeader(),false)"
+         (void) http_header.snprintf(U_CONSTANT_TO_PARAM("\n\tU_ASSERT_EQUALS(UClientImage_Base::wbuffer->findEndHeader(),false)"
                                                          "\n\tU_http_info.endHeader = %u;"
                                                          "\n\t(void) UClientImage_Base::wbuffer->insert(0, U_CONSTANT_TO_PARAM(%v));\n\t\n"), n, encoded.rep);
          }

@@ -28,6 +28,7 @@
 #else
 #  include <pwd.h>
 #  include <sys/prctl.h>
+#  include <sys/resource.h>
 #  include <ulib/net/unixsocket.h>
 #  ifdef HAVE_SCHED_GETCPU
 #     include <sched.h>
@@ -4640,6 +4641,30 @@ void UServer_Base::run()
       baffinity = true;
 
       U_SRV_LOG("cpu affinity is to be set; thread count (%u) multiple of cpu count (%u)", preforked_num_kids, u_num_cpu);
+      }
+#endif
+
+#if defined(_POSIX_PRIORITY_SCHEDULING) && \
+    (_POSIX_PRIORITY_SCHEDULING > 0) && (defined(HAVE_SCHED_H) || defined(HAVE_SYS_SCHED_H))
+   if (set_realtime_priority)
+      {
+      /**
+       * struct rlimit {
+       *    rlim_t rlim_cur; // Soft limit
+       *    rlim_t rlim_max; // Hard limit (ceiling for rlim_cur)
+       * };
+       */
+
+      struct rlimit rtprio = { 99, 99 };
+
+      if (U_SYSCALL(setrlimit, "%d,%p", RLIMIT_RTPRIO, &rtprio) == 0)
+         {
+         U_SRV_LOG("Updated real-time priority ceiling to 99");
+         }
+      else if (U_SYSCALL(getrlimit, "%d,%p", RLIMIT_RTPRIO, &rtprio) == 0)
+         {
+         U_WARNING("Current real-time priority ceiling is %u. If you need higher increase 'ulimit -r'", rtprio.rlim_max);
+         }
       }
 #endif
 

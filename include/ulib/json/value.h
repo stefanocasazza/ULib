@@ -113,17 +113,13 @@ public:
       {
       U_TRACE_CTOR(0, UValue, "%V,%V", key.rep, val.rep)
 
-      UValue* node;
+      // coverity[uninit_ctor]
+#  ifdef U_COVERITY_FALSE_POSITIVE
+      next = 0;
+#  endif
 
-      U_NEW(UValue, node, UValue((UValue*)U_NULLPTR));
-
-      value.ival = getValue(U_OBJECT_VALUE, node);
-
-      key.hold();
-      val.hold();
-
-      node->pkey.ival  = getValue(U_STRING_VALUE, key.rep);
-      node->value.ival = getValue(U_STRING_VALUE, val.rep);
+       pkey.ival = getValue(U_STRING_VALUE,  key.rep);
+      value.ival = getValue(U_COMPACT_VALUE, val.rep);
 
       U_INTERNAL_DUMP("this = %p", this)
       }
@@ -672,7 +668,7 @@ protected:
 
       U_INTERNAL_DUMP("tag = %u", tag)
 
-      U_INTERNAL_ASSERT(tag <= U_NULL_VALUE)
+      U_INTERNAL_ASSERT(tag < U_BOOLEAN_VALUE)
 
       U_RETURN(tag);
       }

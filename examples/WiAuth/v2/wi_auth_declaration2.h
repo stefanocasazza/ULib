@@ -30,7 +30,7 @@ static bool ap_consume;
 static UString* policySessionId;
 static uint8_t policySessionNotify;
 static uint64_t counter, device_counter;
-static uint32_t addr, created, lastUpdate, lastReset;
+static uint32_t addr, old_addr, ip_peer, created, lastUpdate, lastReset, idx, vec_logout[8192];
 
 //#define U_TEST
 #define U_CLEAN_INTERVAL (60U * 60U) // 1h 
@@ -723,9 +723,26 @@ static bool getDataFromPOST(bool bpeer)
    U_RETURN(ok);
 }
 
-static void lostSession(bool bclean)
+static void sendLogoutToNodog()
 {
-   U_TRACE(5, "::lostSession(%b)", bclean)
+   U_TRACE_NO_PARAM(5, "::sendLogoutToNodog()")
+
+   U_INTERNAL_ASSERT_RANGE(1,idx,sizeof(vec_logout))
+
+   vec_logout[idx] = 0; // sentinel
+
+   UFlatBufferSpaceMedium space;
+
+   U_SRV_LOG("send request to nodog to logout %u users", idx);
+
+   (void) sendRequestToNodog(U_CONSTANT_TO_PARAM("logout"), UFlatBuffer::fromVectorInt(vec_logout));
+
+   idx = 0;
+}
+
+static void lostSession(int bclean)
+{
+   U_TRACE(5, "::lostSession(%d)", bclean)
 
    if (getSession(U_CONSTANT_TO_PARAM("lostSession")))
       {
@@ -747,12 +764,32 @@ static void lostSession(bool bclean)
 
       if (bclean)
          {
+         if (bclean == 2 &&
+             ((u_now->tv_sec - lastUpdate) < U_ONE_HOUR_IN_SECOND))
+            {
+            return;
+            }
+
+              addr = rc->getULong(6);
          *ap_label = rc->getString(7);
 
-         (void) rc->hmget(U_CONSTANT_TO_PARAM("CAPTIVE:id:%u ip name"), rc->getULong(6));
+         (void) rc->hmget(U_CONSTANT_TO_PARAM("CAPTIVE:id:%u ip name"), addr);
+
+         U_INTERNAL_DUMP("idx = %u old_addr = %u", idx, old_addr)
+
+         if (old_addr != addr)
+            {
+            old_addr = addr;
+
+            if (idx) sendLogoutToNodog();
+            }
 
          *ap_address  = rc->getString(0);
          *ap_hostname = rc->getString(1);
+
+         (void) UIPAddress::getBinaryForm(ip->c_str(), ip_peer, true);
+
+         vec_logout[idx++] = ntohl(ip_peer);
          }
 
       writeSessionToLOG(U_CONSTANT_TO_PARAM("DENY_LOST"));
@@ -770,6 +807,19 @@ static void lostSession(bool bclean)
       (void) rc->zrem(U_CONSTANT_TO_PARAM("SESSION:byCaptiveIdAndApId %.*s"), key_session->remain(ptr), ptr);
       (void) rc->zrem(U_CONSTANT_TO_PARAM("SESSION:byLastUpdate %v"), key_session->rep);
       }
+}
+
+static void sessionClean(const UString& key)
+{
+   U_TRACE(5, "::sessionClean(%V)", key.rep)
+
+   const char* ptr = key.c_pointer(U_CONSTANT_SIZE("SESSION:"));
+
+   key_session->setBuffer(200U);
+
+   key_session->snprintf(U_CONSTANT_TO_PARAM("%.*s"), key.remain(ptr), ptr);
+
+   lostSession(2);
 }
 
 static void GET_anagrafica()
@@ -792,6 +842,8 @@ static void GET_clean()
       {
       uint32_t i, n, last_update = u_now->tv_sec - U_CLEAN_INTERVAL;
 
+      old_addr = 0;
+
       (void) rc->zrangebyscore(U_CONSTANT_TO_PARAM("SESSION:byLastUpdate 0 %u"), last_update);
 
       n = rc->vitem.size();
@@ -806,9 +858,15 @@ static void GET_clean()
             {
             *key_session = vec[i];
 
-            lostSession(true);
+            lostSession(1);
             }
          }
+
+      (void) rc->scan(sessionClean, U_CONSTANT_TO_PARAM("SESSION:captiveId:*"));
+
+      U_INTERNAL_DUMP("idx = %u", idx)
+
+      if (idx) sendLogoutToNodog();
 
       (void) rc->zrangebyscore(U_CONSTANT_TO_PARAM("CAPTIVE:byLastUpdate 0 %u"), last_update);
 
@@ -1076,7 +1134,7 @@ loop:    (void) rc->zrangebyscore(U_CONSTANT_TO_PARAM("SESSION:byCaptiveIdAndApI
                   key_session->snprintf(U_CONSTANT_TO_PARAM("%v%v;%v"), tmp.rep, ap_label->rep, vec[i].rep);
                   }
 
-               lostSession(false);
+               lostSession(0);
                }
 
             goto loop;
@@ -1283,7 +1341,7 @@ static void POST_info()
       {
       const char* op;
       UString x(200U);
-      uint32_t ip_peer, ctraffic, ctime_no_traffic, op_len, midnigth = u_getLocalTime() / U_ONE_DAY_IN_SECOND, idx = 0, vec_logout[8192]; // _ctime, time_no_traffic
+      uint32_t ctraffic, ctime_no_traffic, op_len, midnigth = u_getLocalTime() / U_ONE_DAY_IN_SECOND; // _ctime, time_no_traffic
 
       (void) rc->hmset(U_CONSTANT_TO_PARAM("CAPTIVE:id:%u status 1 lastUpdate %u"), addr, u_now->tv_sec);
       (void) rc->zadd(U_CONSTANT_TO_PARAM("CAPTIVE:byLastUpdate %u %v"), u_now->tv_sec, ap_address->rep);
@@ -1301,7 +1359,7 @@ static void POST_info()
          // -----------------------------------------------------------------------------------------------------------------------------------------
 
          *mac      = vec.AsVectorGet<UString>(i);
-         ip_peer   = vec.AsVectorGet<uint32_t>(i+1);
+         ip_peer   = vec.AsVectorGetIPAddress(i+1);
          *ap_label = vec.AsVectorGet<UString>(i+2);
          ctraffic  = vec.AsVectorGet<uint32_t>(i+3);
 
@@ -1310,7 +1368,7 @@ static void POST_info()
          time_no_traffic = vec.AsVectorGet<uint32_t>(i+5);
          */
 
-         *ip = UIPAddress::toString(htonl(ip_peer));
+         *ip = UIPAddress::toString(ip_peer);
 
          U_INTERNAL_DUMP("ap_label = %V mac = %V ip = %V ctraffic = %u", ap_label->rep, mac->rep, ip->rep, ctraffic)
 
@@ -1355,7 +1413,7 @@ del_sess:      writeSessionToLOG(op, op_len);
 
                deleteSession();
 
-del_login:     vec_logout[idx++] = ip_peer;
+del_login:     vec_logout[idx++] = ntohl(ip_peer);
 
                continue;
                }
@@ -1396,20 +1454,9 @@ del_login:     vec_logout[idx++] = ip_peer;
             }
          }
 
-      if (idx)
-         {
-         U_INTERNAL_DUMP("idx = %u", idx)
+      U_INTERNAL_DUMP("idx = %u", idx)
 
-         U_INTERNAL_ASSERT_MINOR(idx, 8192)
-
-         vec_logout[idx] = 0; // sentinel
-
-         UFlatBufferSpaceMedium space;
-
-         U_SRV_LOG("send request to nodog to logout %u users", idx);
-
-         (void) sendRequestToNodog(U_CONSTANT_TO_PARAM("logout"), UFlatBuffer::fromVectorInt(vec_logout));
-         }
+      if (idx) sendLogoutToNodog();
       }
 
    ap->clear();

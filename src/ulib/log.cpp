@@ -613,14 +613,12 @@ void ULog::log(const struct iovec* iov, const char* type, int ncount, const char
       {
       uint32_t endHeader = (sz ? u_findEndHeader1(ptr, sz) : U_NOT_FOUND);
 
+      U_INTERNAL_DUMP("endHeader = %u sz_header = %u", endHeader, sz_header)
+
       if (endHeader == U_NOT_FOUND) u_printf_string_max_length = U_min(sz_header, sizeof(buffer1));
       else                          u_printf_string_max_length = sz1 + endHeader;
 
-      U_INTERNAL_DUMP("endHeader = %u sz_header = %u", endHeader, sz_header)
-
-      // NB: with partial response we can have u_printf_string_max_length == 0...
-
-      U_INTERNAL_ASSERT(u_printf_string_max_length <= (int)sz_header)
+      if (u_printf_string_max_length < 2000) u_printf_string_max_length = 2000;
       }
 
    U_INTERNAL_DUMP("u_printf_string_max_length = %d sz1 = %u", u_printf_string_max_length, sz1)
@@ -705,7 +703,7 @@ void ULog::logResponse(const UString& data, const char* format, uint32_t fmt_siz
       {
       u_printf_string_max_length = u_findEndHeader1(ptr, sz);
 
-      if (u_printf_string_max_length < 2000) u_printf_string_max_length = 2000U;
+      if (u_printf_string_max_length < 2000) u_printf_string_max_length = 2000;
       }
 
    U_INTERNAL_DUMP("u_printf_string_max_length = %d UServer_Base::mod_name = %S", u_printf_string_max_length, UServer_Base::mod_name)

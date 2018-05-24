@@ -16,6 +16,8 @@
 
 #include <ulib/container/hash_map.h>
 
+#include <arpa/inet.h>
+
 /**
  * @see http://google.github.io/flatbuffers/index.html
  *
@@ -406,6 +408,8 @@ public:
    static void UInt(uint64_t u) { pushOnStack(u,  UFlatBufferValue::TYPE_UINT, UFlatBufferValue::WidthU(u)); }
    static void Float(float f)   { pushOnStack(f); }
    static void Double(double d) { pushOnStack(d); }
+
+   static void IPAddress(uint32_t u) { UInt(ntohl(u)); }
 
    static void setNumber(int64_t l)
       {
@@ -890,6 +894,8 @@ public:
 
       return value;
       }
+
+   inline uint32_t AsVectorGetIPAddress(uint32_t i);
 
    template <typename T> T AsVectorGetIndirect(uint32_t i)
       {
@@ -2329,6 +2335,17 @@ template<> inline bool UFlatBuffer::AsTypedOrFixedVectorGet<bool>(uint32_t i)
    return Get<bool>(AsTypedOrFixedVectorSetIndex(i));
 }
 
+template<> inline uint32_t UFlatBuffer::AsVectorGet<uint32_t>(uint32_t i)
+{
+   U_TRACE(0, "UFlatBuffer::AsVectorGet<uint32_t>(%u)", i)
+
+   uint32_t value = Get<uint32_t>(AsVectorSetIndex(i));
+
+   type_ = UFlatBufferValue::TYPE_VECTOR;
+
+   U_RETURN(value);
+}
+
 template<> inline uint64_t UFlatBuffer::AsVectorGet<uint64_t>(uint32_t i)
 {
    U_TRACE(0, "UFlatBuffer::AsVectorGet<uint64_t>(%u)", i)
@@ -2338,6 +2355,17 @@ template<> inline uint64_t UFlatBuffer::AsVectorGet<uint64_t>(uint32_t i)
    type_ = UFlatBufferValue::TYPE_VECTOR;
 
    U_RETURN(value);
+}
+
+inline uint32_t UFlatBuffer::AsVectorGetIPAddress(uint32_t i)
+{
+   U_TRACE(0, "UFlatBuffer::AsVectorGetIPAddress(%u)", i)
+
+   uint32_t value = Get<uint32_t>(AsVectorSetIndex(i));
+
+   type_ = UFlatBufferValue::TYPE_VECTOR;
+
+   return htonl(value);
 }
 
 template<> inline uint64_t UFlatBuffer::AsTypedOrFixedVectorGet<uint64_t>(uint32_t i)

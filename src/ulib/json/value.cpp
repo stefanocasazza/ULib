@@ -423,7 +423,8 @@ void UValue::stringify() const
       (int)((char*)&&case_utf-(char*)&&case_double),
       (int)((char*)&&case_array-(char*)&&case_double),
       (int)((char*)&&case_object-(char*)&&case_double),
-      (int)((char*)&&case_null-(char*)&&case_double)
+      (int)((char*)&&case_null-(char*)&&case_double),
+      (int)((char*)&&case_compact-(char*)&&case_double)
    };
 
    uint8_t type = getTag();
@@ -523,6 +524,19 @@ case_null:
    u_put_unalignedp32(pstringify, U_MULTICHAR_CONSTANT32('n','u','l','l'));
 
    pstringify += U_CONSTANT_SIZE("null");
+
+   return;
+
+case_compact:
+   *pstringify++ = '{';
+
+   emitString((UStringRep*)u_getPayload(pkey.ival));
+
+   *pstringify++ = ':';
+
+   emitString((UStringRep*)u_getPayload(value.ival));
+
+   *pstringify++ = '}';
 }
 
 void UValue::prettify(uint32_t indent) const
@@ -1869,12 +1883,12 @@ void UValue::nextParser()
 // substring of the source json string
 // =======================================================================================================================
 
-#define U_JR_EOL     (U_NULL_VALUE+1) // 10 end of input string (ptr at '\0')
-#define U_JR_COLON   (U_NULL_VALUE+2) // 11 ":"
-#define U_JR_COMMA   (U_NULL_VALUE+3) // 12 ","
-#define U_JR_EARRAY  (U_NULL_VALUE+4) // 13 "]"
-#define U_JR_QPARAM  (U_NULL_VALUE+5) // 14 "*" query string parameter
-#define U_JR_EOBJECT (U_NULL_VALUE+6) // 15 "}"
+#define U_JR_EOL     (U_COMPACT_VALUE+1) // 10 end of input string (ptr at '\0')
+#define U_JR_COLON   (U_COMPACT_VALUE+2) // 11 ":"
+#define U_JR_COMMA   (U_COMPACT_VALUE+3) // 12 ","
+#define U_JR_EARRAY  (U_COMPACT_VALUE+4) // 13 "]"
+#define U_JR_QPARAM  (U_COMPACT_VALUE+5) // 14 "*" query string parameter
+#define U_JR_EOBJECT (U_COMPACT_VALUE+6) // 15 "}"
 
 int      UValue::jread_error;
 uint32_t UValue::jread_pos;
@@ -2648,6 +2662,7 @@ const char* UValue::getDataTypeDescription(uint8_t type)
       U_ENTRY(U_ARRAY_VALUE),
       U_ENTRY(U_OBJECT_VALUE),
       U_ENTRY(U_NULL_VALUE),
+      U_ENTRY(U_COMPACT_VALUE),
       U_ENTRY(U_JR_EOL),
       U_ENTRY(U_JR_COLON),
       U_ENTRY(U_JR_COMMA),

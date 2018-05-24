@@ -480,7 +480,7 @@ public:
 
    bool deleteKeys(const char* pattern, uint32_t len); // Delete all keys matching pattern
 
-   bool scan(const char* pattern, uint32_t len, vPFcs function); // Returns all keys matching pattern (scan 0 MATCH *11*)
+   bool scan(vPFcs function, const char* pattern = "*", uint32_t len = 1); // Returns all keys matching pattern (scan 0 MATCH *11*)
 
    bool dump(const char* key, uint32_t keylen) // Return a serialized version of the value stored at the specified key
       {

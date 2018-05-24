@@ -459,9 +459,9 @@ bool UREDISClient_Base::processMultiRequest(const char* format, uint32_t fmt_siz
    U_RETURN(false);
 }
 
-bool UREDISClient_Base::scan(const char* pattern, uint32_t len, vPFcs function) // Returns all keys matching pattern (scan 0 MATCH *11*)
+bool UREDISClient_Base::scan(vPFcs function, const char* pattern, uint32_t len) // Returns all keys matching pattern (scan 0 MATCH *11*)
 {
-   U_TRACE(0, "UREDISClient_Base::scan(%.*S,%u,%p)", len, pattern, len, function)
+   U_TRACE(0, "UREDISClient_Base::scan(%p,%.*S,%u)", function, len, pattern, len)
 
    /**
     * You start by giving a cursor value of 0; each call returns a new cursor value which you pass into the next SCAN call. A value of 0 indicates iteration is finished.
@@ -469,7 +469,7 @@ bool UREDISClient_Base::scan(const char* pattern, uint32_t len, vPFcs function) 
     */
 
    char buf[4096];
-   uint32_t buf_len = u__snprintf(buf, U_CONSTANT_SIZE(buf), U_CONSTANT_TO_PARAM("MATCH %.*s COUNT 1000"), len, pattern);
+   uint32_t buf_len = u__snprintf(buf, U_CONSTANT_SIZE(buf), U_CONSTANT_TO_PARAM("MATCH %.*s COUNT 500"), len, pattern);
 
    if (processRequest(U_RC_MULTIBULK, U_CONSTANT_TO_PARAM("SCAN"), U_CONSTANT_TO_PARAM("0"), buf, buf_len))
       {
@@ -484,7 +484,7 @@ loop: if (setMultiBulk(vec))
 
       if (cursor == 0) U_RETURN(true);
 
-      if (processRequest(U_RC_MULTIBULK, U_CONSTANT_TO_PARAM("SCAN"), ncursor, u__snprintf(ncursor, u_num2str32(cursor,ncursor)-ncursor, buf, buf_len)))
+      if (processRequest(U_RC_MULTIBULK, U_CONSTANT_TO_PARAM("SCAN"), ncursor, u_num2str32(cursor,ncursor)-ncursor, buf, buf_len))
          {
          cursor = getULong();
 
