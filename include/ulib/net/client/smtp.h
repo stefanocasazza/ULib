@@ -69,6 +69,8 @@ public:
       GREET                       = 220, // greeting from server
       GOODBYE                     = 221, // server acknolages quit
       SUCCESSFUL                  = 250, // command successful
+      AUTHENTICATED               = 235, // Authentication successful
+      CHALLENGE                   = 334, // Login Credential Reqested
       READYDATA                   = 354, // server ready to receive data
       UNAVAILABLE                 = 450, // service not available
       ERR_PROCESSING              = 451, // error in processing
@@ -116,7 +118,8 @@ public:
    UString getRecipientAddress() const { return rcptoAddress; }
 
    bool startTLS();
-   bool sendMessage(bool secure = false);
+   bool authLogin(const UString* username, const UString* password);
+   bool sendMessage(bool secure = false, const UString* username = U_NULLPTR, const UString* password = U_NULLPTR);
 
    void setDomainName(      const UString& name)      { domainName     = name; }
    void setMessageBody(     const UString& message)   { messageBody    = message; }
