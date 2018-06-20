@@ -85,7 +85,7 @@ uint32_t URPC::readTokenVector(USocket* s, const char* token, UString& buffer, U
          {
          if (readTokenString(s, "ARGV", buffer, rstart, data) == 0) break;
 
-         vec.push(data);
+         vec.push_back(data);
 
          if (++i == argc) break;
          }

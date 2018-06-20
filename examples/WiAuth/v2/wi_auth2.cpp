@@ -23,11 +23,13 @@ extern U_EXPORT void runDynamicPage_wi_auth2(int param);
       }
    
    U_http_info.endHeader = 0;
-   
    static UHTTP::service_info GET_table[] = { // NB: the table must be ordered alphabetically for binary search...
       GET_ENTRY(anagrafica),
+      GET_ENTRY(checkCaptive),
       GET_ENTRY(clean),
+      GET_ENTRY(cleanSession),
       GET_ENTRY(get_config),
+      GET_ENTRY(logout),
       GET_ENTRY(start_ap),
       GET_ENTRY(welcome)
    };

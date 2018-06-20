@@ -60,8 +60,8 @@ bool UXAdESUtility::checkDocument(const UString& document, const char* pathname,
          {
          namefile = zip.getFilenameAt(i);
 
-         ZipStructure.push(namefile);
-           ZipContent.push(zip.getFileContentAt(i));
+         ZipStructure.push_back(namefile);
+           ZipContent.push_back(zip.getFileContentAt(i));
 
          U_INTERNAL_DUMP("Part %d: Filename=%.*S", i+1, U_STRING_TO_TRACE(namefile));
          }
@@ -164,8 +164,8 @@ bool UXAdESUtility::checkDocument(const UString& document, const char* pathname,
                else if (namefile == content2_name) content = content2;
                }
 
-                 vuri.push(namefile);
-            vdocument.push(content);
+                 vuri.push_back(namefile);
+            vdocument.push_back(content);
             }
 
          docout.snprintf(U_CONSTANT_TO_PARAM("%.*s/%.*s"), U_STRING_TO_TRACE(tmpdir), U_STRING_TO_TRACE(MSname));
@@ -218,8 +218,8 @@ bool UXAdESUtility::checkDocument(const UString& document, const char* pathname,
                if (namefile == content1_name) content = content1;
                }
 
-                 vuri.push(namefile);
-            vdocument.push(content);
+                 vuri.push_back(namefile);
+            vdocument.push_back(content);
             }
 
          docout.snprintf(U_CONSTANT_TO_PARAM("%.*s/%.*s"), U_STRING_TO_TRACE(tmpdir), U_STRING_TO_TRACE(OOname));
@@ -228,8 +228,8 @@ bool UXAdESUtility::checkDocument(const UString& document, const char* pathname,
          }
       }
 
-   vdocument.push(document);
-        vuri.push(UString(pathname));
+   vdocument.push_back(document);
+        vuri.push_back(UString(pathname));
 
    U_RETURN(false);
 }

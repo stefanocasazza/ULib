@@ -216,6 +216,14 @@ public:
 
    void execute();
 
+   // ASYNC with PIPELINE
+
+   bool asyncPipelineProcessQueue(uint32_t n);
+   bool asyncPipelineSendQueryPrepared(uint32_t i);
+   bool asyncPipelineMode(vPFu function = U_NULLPTR);
+   void setAsyncPipelineHandlerResult(vPFu function);
+   bool asyncPipelineSendQuery(const char* query, uint32_t query_len, uint32_t n);
+
    // This function returns the number of database rows that were changed
    // or inserted or deleted by the most recently completed SQL statement
 

@@ -20,6 +20,8 @@
 #  include <ulib/libevent/event.h>
 #endif
 
+#include <sys/epoll.h>
+
 #ifndef EPOLLIN
 #define EPOLLIN    0x0001
 #endif

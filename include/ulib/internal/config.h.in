@@ -329,6 +329,9 @@
 /* define if the compiler implements old style iostreams */
 #undef HAVE_OLD_IOSTREAM
 
+/* Define to 1 if PostgreSQL pg_config.h is available */
+#undef HAVE_PG_CONFIG_H
+
 /* has pipe2 */
 #undef HAVE_PIPE2
 
@@ -773,6 +776,9 @@
 
 /* Define if enable PostgreSQL database support */
 #undef USE_PGSQL
+
+/* Define if PostgreSQL database support batch API */
+#undef USE_PGSQL_BATCH_API
 
 /* Define if enable php support */
 #undef USE_PHP

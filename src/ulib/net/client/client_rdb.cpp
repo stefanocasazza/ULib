@@ -148,8 +148,8 @@ int URDBClient_Base::store(const UString& key, const UString& data, int flag)
 
    reset();
 
-   URPC::rpc_info->push(key);
-   URPC::rpc_info->push(data);
+   URPC::rpc_info->push_back(key);
+   URPC::rpc_info->push_back(data);
 
    if (processRequest(token))
       {
@@ -174,7 +174,7 @@ int URDBClient_Base::remove(const UString& key)
 
    reset();
 
-   URPC::rpc_info->push(key);
+   URPC::rpc_info->push_back(key);
 
    if (processRequest("REMV"))
       {
@@ -203,9 +203,9 @@ int URDBClient_Base::substitute(const UString& key, const UString& new_key, cons
 
    reset();
 
-   URPC::rpc_info->push(key);
-   URPC::rpc_info->push(new_key);
-   URPC::rpc_info->push(data);
+   URPC::rpc_info->push_back(key);
+   URPC::rpc_info->push_back(new_key);
+   URPC::rpc_info->push_back(data);
 
    if (processRequest(token))
       {
@@ -230,7 +230,7 @@ UString URDBClient_Base::operator[](const UString& key)
 
    reset();
 
-   URPC::rpc_info->push(key);
+   URPC::rpc_info->push_back(key);
 
    if (processRequest("FIND") && isOK()) U_RETURN_STRING(response);
 

@@ -2,6 +2,7 @@
 prototype for Victor Stewart
 -->
 <!--#declaration
+#ifdef USE_LIBSSL
 static UWebSocketClient* wsclient;
 static vPFi message_for_another_usp;
 
@@ -12,14 +13,14 @@ static void usp_init_modsocket()
    U_NEW(UWebSocketClient, wsclient, UWebSocketClient());
 }
 
+#ifdef DEBUG
 static void usp_end_modsocket()
 {
    U_TRACE_NO_PARAM(5, "::usp_end_modsocket()")
 
-#ifdef DEBUG
    U_DELETE(wsclient)
-#endif
 }
+#endif
 
 static void usp_open_modsocket()
 {
@@ -52,9 +53,10 @@ static bool isMessageForAnotherWebSocket(const UString& msg)
 
    U_RETURN(true);
 }
+#endif
 -->
-
 <!--#code
+#ifdef USE_LIBSSL
 U_DEBUG("modsocket(): message %V", UWebSocket::message->rep);
 
 if (isMessageForAnotherUSP(*UWebSocket::message))
@@ -84,4 +86,5 @@ else
 
    if (UWebSocket::sendData(UServer_Base::csocket, UWebSocket::message_type, *UWebSocket::message) == false) U_http_info.nResponseCode = HTTP_INTERNAL_ERROR;
    }
+#endif
 -->

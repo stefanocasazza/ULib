@@ -76,14 +76,6 @@ GET /test.cgi?foo=bar?baz HTTP/1.0
 
 GET /test HTTP/1.0
 
-GET /demo HTTP/1.1
-Host: example.com
-Connection: Upgrade
-Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==
-Sec-WebSocket-Protocol: sample
-Upgrade: WebSocket
-Origin: http://example.com
-
 GET * HTTP/1.1
 HOST: 239.255.255.250:1900
 MAN: \ssdp:discover\r

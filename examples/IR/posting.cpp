@@ -945,7 +945,7 @@ U_NO_EXPORT bool UPosting::setVectorCompositeWord()
 
       if (sub_word->size() < min_word_size)
          {
-         vec_sub_word_posting->push(UString::getStringNull());
+         vec_sub_word_posting->push_back(UString::getStringNull());
 
          continue;
          }
@@ -959,7 +959,7 @@ U_NO_EXPORT bool UPosting::setVectorCompositeWord()
          U_RETURN(false);
          }
 
-      vec_sub_word_posting->push(*posting);
+      vec_sub_word_posting->push_back(*posting);
       }
 
    U_RETURN(true);
@@ -1087,7 +1087,7 @@ bool UPosting::findDocID(UStringRep* word_rep)
 
       i = vec_word->size();
 
-      vec_word->push(*word);
+      vec_word->push_back(*word);
 
       if (word_rep->isQuoted('"'))
          {
@@ -1138,7 +1138,7 @@ bool UPosting::findDocID(UStringRep* word_rep)
 
          if (cdb_words->getValuesWithKeyNask(*vec_entry, *word, &size_entry)) entry = extractDocID();
 
-         vec_posting->push(entry);
+         vec_posting->push_back(entry);
          }
 
       if (entry &&

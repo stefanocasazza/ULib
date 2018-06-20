@@ -1596,7 +1596,7 @@ UString UStringExt::brotli(const char* s, uint32_t len, uint32_t quality, uint32
       return UString::getStringNull();
       }
 
-   result.size_adjust_constant(sz);
+   result.checkConstant(sz);
 
 // U_INTERNAL_ASSERT(isBrotli(result)) // check magic byte
 
@@ -1699,7 +1699,7 @@ UString UStringExt::deflate(const char* s, uint32_t len, uint32_t quality) // .g
 
    if (ratio > ratio_threshold) return UString::getStringNull();
 
-   result.size_adjust_constant(sz);
+   result.checkConstant(sz);
 
 #ifdef DEBUG
    uint32_t* psize_original = (uint32_t*)result.c_pointer(sz - 4);

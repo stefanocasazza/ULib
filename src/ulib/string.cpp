@@ -1207,12 +1207,13 @@ void UString::setConstant(uint32_t sz)
       }
 }
 
-void UString::size_adjust_constant(uint32_t sz)
+void UString::checkConstant(uint32_t sz)
 {
-   U_TRACE(0, "UString::size_adjust_constant(%u)", sz)
+   U_TRACE(0, "UString::checkConstant(%u)", sz)
 
-   rep->_length = sz;
+   size_adjust_constant(sz);
 
+#ifdef ENABLE_MEMPOOL
    if (rep->str == UFile::pfree)
       {
       sz = UFile::getSizeAligned(sz);
@@ -1220,6 +1221,7 @@ void UString::size_adjust_constant(uint32_t sz)
       UFile::pfree += sz;
       UFile::nfree -= sz;
       }
+#endif
 
    U_INTERNAL_ASSERT(invariant())
 }

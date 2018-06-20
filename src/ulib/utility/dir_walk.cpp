@@ -443,7 +443,7 @@ U_NO_EXPORT void UDirWalk::vectorPush()
 
    UString str((void*)ptr, len);
 
-   pvector->push(str);
+   pvector->push_back(str);
 }
 
 U_NO_EXPORT int UDirWalk::cmp_modify(const void* a, const void* b)

@@ -279,7 +279,6 @@ AM_CONDITIONAL(CLANG, true)
 gcc_version=`clang -dumpversion`
 fi
 
-
 ULIB_LIBS=
 MODULE_LIBTOOL_OPTIONS="-shared -export-dynamic -avoid-version"
 
@@ -1409,15 +1408,49 @@ TWOCAN_CONF_MSG(Checking for libraries to link against)
 
 AC_CHECK_PACKAGE
 
+AC_DEFUN([AC_SEARCH_LIBS_VAR],
+[AC_PREREQ([2.13])
+AC_CACHE_CHECK([for library containing $1], [ac_cv_search_$1],
+[ac_func_search_save_LIBS="$LIBS"
+ac_cv_search_$1="no"
+AC_TRY_LINK_FUNC([$1], [ac_cv_search_$1="none required"])
+test "$ac_cv_search_$1" = "no" && for i in $2; do
+LIBS="-l$i $5 $ac_func_search_save_LIBS"
+AC_TRY_LINK_FUNC([$1],
+[ac_cv_search_$1="-l$i"
+break])
+done
+LIBS="$ac_func_search_save_LIBS"])
+if test "$ac_cv_search_$1" != "no"; then
+  test "$ac_cv_search_$1" = "none required" || $6="$$6 $ac_cv_search_$1"
+  $3
+else :
+  $4
+fi])
+
 AC_CHECK_SQLITE3
 AC_CHECK_MYSQL
 AX_LIB_POSTGRESQL
 
+AM_CONDITIONAL(HAVE_PGSQL, false)
+AM_CONDITIONAL(HAVE_PGSQL_BATCH_API, false)
+AM_CONDITIONAL(POSTGRESQL_USE_OPENSSL, false)
+
 if test "$found_postgresql" = "yes"; then
    AM_CONDITIONAL(HAVE_PGSQL, true)
 	AC_DEFINE(USE_PGSQL, 1, [Define if enable PostgreSQL database support])
-else
-   AM_CONDITIONAL(HAVE_PGSQL, false)
+   AC_SEARCH_LIBS_VAR([PQenterBatchMode], pq, , , , POSTGRESQL_LIBS)
+	if test "$ac_cv_search_PQenterBatchMode" = "yes"; then
+		AM_CONDITIONAL(HAVE_PGSQL_BATCH_API, true)
+		AC_DEFINE(USE_PGSQL_BATCH_API, 1, [Define if PostgreSQL database support batch API])
+	fi
+	AC_MSG_CHECKING([whether PostgreSQL use openssl])
+	if test -n "`pg_config --configure | grep openssl`"; then
+		AC_MSG_RESULT([yes])
+		AM_CONDITIONAL(POSTGRESQL_USE_OPENSSL, true)
+	else
+		AC_MSG_RESULT([no])
+   fi
 fi
 
 AC_SUBST(PRG_LDFLAGS)
@@ -2215,7 +2248,7 @@ for drv in $use_static_driver; do
 			static_handler_pgsql="yes"
          ULIB_LIBS="$ULIB_LIBS $POSTGRESQL_LIBS"
 			LDFLAGS="$POSTGRESQL_LDFLAGS $LDFLAGS"
-			CXXFLAGS="$POSTGRESQL_CPPFLAGS $CXXFLAGS"
+			CPPFLAGS="$POSTGRESQL_CPPFLAGS $CPPFLAGS"
 			AC_DEFINE(U_STATIC_ORM_DRIVER_PGSQL,, [STATIC_ORM_DRIVER_PGSQL])
 		elif test "$drv" = "mysql"; then
 			static_handler_mysql="yes"
@@ -2380,12 +2413,25 @@ if test "$ac_cv_c_compiler_gnu" = "yes" -a "x$OPERATINGSYSTEM" = xlinux; then
 		# -Wcast-qual
 		# -------------------------------------------------------------------------------------
 
-		 CC_MAYBE_FLAGS="-Werror-implicit-function-declaration -Wstrict-prototypes -Wc++-compat \
-							  -Wmissing-prototypes -Wnested-externs -Wdeclaration-after-statement -Wold-style-definition -Wsizeof-pointer-memaccess"
+		 CC_MAYBE_FLAGS="-Werror-implicit-function-declaration -Wstrict-prototypes \
+							  -Wmissing-prototypes -Wnested-externs -Wdeclaration-after-statement -Wsizeof-pointer-memaccess"
+
+
+
 		CXX_MAYBE_FLAGS="-fno-check-new -fno-enforce-eh-specs -Wno-deprecated -Wdelete-non-virtual-dtor -Wodr"
 
 			 MAYBE_FLAGS_MODERN=""
 		CXX_MAYBE_FLAGS_MODERN=""
+
+		if test "$found_postgresql" = "yes"; then
+			if test "$ac_cv_search_PQenterBatchMode" = "yes"; then
+				CC_MAYBE_FLAGS="$CC_MAYBE_FLAGS -Wc++-compat -Wold-style-definition"
+			else
+				CC_MAYBE_FLAGS="$CC_MAYBE_FLAGS -Wno-discarded-qualifiers -Wno-switch-enum -Wno-missing-field-initializers -Wno-sign-compare -Wno-strict-aliasing \
+									 -Wno-packed -Wno-shadow -Wno-suggest-attribute=pure -Wno-strict-prototypes -Wno-stringop-truncation -Wno-format-truncation \
+									 -Wno-implicit-fallthrough -Wno-null-dereference"
+			fi
+		fi
 
 		case "$gcc_version" in
 			2*|3*|4.0*|4.1*|4.2*)
@@ -2833,7 +2879,7 @@ AC_MSG_NOTICE([Configured to build src/ulib/lib${ULIB}:
           PgSQL support: ${ulib_pgsql_msg}
             DBI support: ${ulib_dbi_msg}
         libuuid support: ${ulib_libuuid_msg}
-       libevent support: ${ulib_libevent_msg}
+       libevent support: ${ulib_libevent_msg} (deprecated)
         libxml2 support: ${ulib_libxml2_msg}
          c-ares support: ${ulib_cares_msg}
      Page-Speed support: ${ulib_pagespeed_msg}
@@ -2857,10 +2903,10 @@ See include/ulib/internal/config.h for further configuration information
 AC_CONFIG_FILES([
 	Makefile rpm.sh ULib.spec userver.service m4/Makefile doc/Makefile include/Makefile contrib/Makefile
 	include/ulib/Makefile contrib/HCSP/Makefile contrib/RSIGN/Makefile contrib/signer/Makefile fuzz/Makefile
-	src/ulib/Makefile src/ulib/ULib.rc src/ulib/ULib.pc src/ulib/orm/driver/Makefile src/ulib/net/server/plugin/Makefile
 	src/ulib/net/server/plugin/v8/Makefile src/ulib/net/server/plugin/php/Makefile src/ulib/net/server/plugin/usp/Makefile
 	src/ulib/net/server/plugin/ruby/Makefile src/ulib/net/server/plugin/mod_shib/Makefile src/ulib/net/server/plugin/mod_geoip/Makefile
 	src/ulib/net/server/plugin/usp/usp_compile.sh src/ulib/net/server/plugin/page_speed/Makefile src/ulib/net/server/plugin/python/Makefile
+	src/ulib/Makefile src/ulib/ULib.rc src/ulib/ULib.pc src/ulib/orm/driver/Makefile src/ulib/net/server/plugin/Makefile src/ulib/orm/driver/libpq/Makefile
 	examples/Makefile examples/IR/Makefile examples/csp/Makefile examples/lcsp/Makefile examples/rsign/Makefile examples/hello/Makefile
 	examples/serialize/Makefile examples/WiAuth/Makefile examples/WiAuth/v2/Makefile examples/xml2txt/Makefile examples/uclient/Makefile examples/userver/Makefile
 	examples/PEC_log/Makefile examples/workflow/Makefile examples/doc_parse/Makefile examples/lrp_session/Makefile examples/http_header/Makefile

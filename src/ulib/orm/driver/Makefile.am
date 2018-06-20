@@ -16,7 +16,7 @@ module_LTLIBRARIES =
 
 if HAVE_SQLITE3
 if !STATIC_ORM_DRIVER_SQLITE
-module_LTLIBRARIES  += orm_driver_sqlite.la
+module_LTLIBRARIES += orm_driver_sqlite.la
 orm_driver_sqlite_la_SOURCES  = orm_driver_sqlite.cpp
 orm_driver_sqlite_la_CXXFLAGS = @SQLITE3_INCLUDE@
 orm_driver_sqlite_la_LIBADD   = $(ulib_la)
@@ -26,7 +26,7 @@ endif
 
 if HAVE_MYSQL
 if !STATIC_ORM_DRIVER_MYSQL
-module_LTLIBRARIES  += orm_driver_mysql.la
+module_LTLIBRARIES += orm_driver_mysql.la
 orm_driver_mysql_la_SOURCES  = orm_driver_mysql.cpp
 orm_driver_mysql_la_CXXFLAGS = @MYSQL_INCLUDE@
 orm_driver_mysql_la_LIBADD   = $(ulib_la)
@@ -36,7 +36,7 @@ endif
 
 if HAVE_PGSQL
 if !STATIC_ORM_DRIVER_PGSQL
-module_LTLIBRARIES  += orm_driver_pgsql.la
+module_LTLIBRARIES += orm_driver_pgsql.la
 orm_driver_pgsql_la_SOURCES  = orm_driver_pgsql.cpp
 orm_driver_pgsql_la_CXXFLAGS = @POSTGRESQL_CPPFLAGS@
 orm_driver_pgsql_la_LIBADD   = $(ulib_la)

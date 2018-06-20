@@ -50,6 +50,7 @@ userver {
  PLUGIN_DIR ../../../src/ulib/net/server/plugin/.libs
 }
 socket {
+ ENABLE_DB yes
  COMMAND ../my_websocket.sh
 }
 EOF

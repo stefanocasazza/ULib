@@ -720,13 +720,13 @@ dnl		ldap_version=$(ldapsearch -VV 2>&1 | tail -n1 | cut -d':' -f2 | cut -d')' -
 	fi
 	], [AC_MSG_RESULT(no)])
 
-	AC_MSG_CHECKING(if libevent library is wanted)
+	AC_MSG_CHECKING(if libevent library is wanted (deprecated))
 	wanted=1;
 	if test -z "$with_libevent" ; then
 		wanted=0;
 		with_libevent="no";
 	fi
-	AC_ARG_WITH(libevent, [  --with-libevent         use system libevent library - [[will check /usr /usr/local]]],
+	AC_ARG_WITH(libevent, [  --with-libevent         use system libevent library (deprecated) - [[will check /usr /usr/local]]],
 	[if test "$withval" = "no"; then
 		AC_MSG_RESULT(no)
 	else
@@ -860,26 +860,6 @@ dnl		ldap_version=$(ldapsearch -VV 2>&1 | tail -n1 | cut -d':' -f2 | cut -d')' -
 	fi
 	], [AC_MSG_RESULT(no)])
 ])
-
-AC_DEFUN([AC_SEARCH_LIBS_VAR],
-[AC_PREREQ([2.13])
-AC_CACHE_CHECK([for library containing $1], [ac_cv_search_$1],
-[ac_func_search_save_LIBS="$LIBS"
-ac_cv_search_$1="no"
-AC_TRY_LINK_FUNC([$1], [ac_cv_search_$1="none required"])
-test "$ac_cv_search_$1" = "no" && for i in $2; do
-LIBS="-l$i $5 $ac_func_search_save_LIBS"
-AC_TRY_LINK_FUNC([$1],
-[ac_cv_search_$1="-l$i"
-break])
-done
-LIBS="$ac_func_search_save_LIBS"])
-if test "$ac_cv_search_$1" != "no"; then
-  test "$ac_cv_search_$1" = "none required" || $6="$$6 $ac_cv_search_$1"
-  $3
-else :
-  $4
-fi])
 
 AC_DEFUN([AC_CHECK_SQLITE3], [
 ac_sqlite3="no"

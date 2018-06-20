@@ -59,6 +59,7 @@ class UFile;
 class UHTTP;
 class UHTTP2;
 class UNotifier;
+class UWebSocket;
 class USocketExt;
 class UFtpClient;
 class UTimeThread;
@@ -514,7 +515,7 @@ public:
       U_TRACE_NO_PARAM(0, "USocket::setTcpDeferAccept()")
 
 #  if defined(TCP_DEFER_ACCEPT) && defined(U_LINUX)
-      (void) setSockOpt(SOL_TCP, TCP_DEFER_ACCEPT, (const int[]){ 1 });
+      (void) setSockOpt(SOL_TCP, TCP_DEFER_ACCEPT, (const int[]){ 10 });
 #  endif
       }
 
@@ -526,7 +527,7 @@ public:
 #    ifndef TCP_FASTOPEN
 #    define TCP_FASTOPEN 23 /* Enable FastOpen on listeners */
 #    endif
-      (void) setSockOpt(SOL_TCP, TCP_FASTOPEN, (const int[]){ 5 });
+      (void) setSockOpt(SOL_TCP, TCP_FASTOPEN, (const int[]){ 4096 });
 #  endif
       }
 
@@ -821,6 +822,7 @@ private:
                       friend class UHTTP2;
                       friend class UFile;
                       friend class UNotifier;
+                      friend class UWebSocket;
                       friend class USocketExt;
                       friend class UFtpClient;
                       friend class UTimeThread;
@@ -829,7 +831,6 @@ private:
                       friend class UStreamPlugIn;
                       friend class URDBClientImage;
                       friend class UHttpClient_Base;
-                      friend class UWebSocketPlugIn;
                       friend class UClientImage_Base;
                       friend class UREDISClient_Base;
    template <class T> friend class UServer;

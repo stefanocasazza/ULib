@@ -215,6 +215,8 @@ protected:
 
       executeCommand(U_CONSTANT_TO_PARAM("deny"), mac);
 
+      U_peer_flag &= ~U_PEER_PERMIT;
+
       U_SRV_LOG("Peer denied: IP %v MAC %v", peer->ip.rep, mac.rep);
       }
 
@@ -232,6 +234,29 @@ protected:
       U_peer_flag |= U_PEER_PERMIT;
 
       U_SRV_LOG("Peer permitted: IP %v MAC %v", peer->ip.rep, mac.rep);
+      }
+
+   static bool checkMAC(const UString& mac)
+      {
+      U_TRACE(0, "UNoDogPlugIn::checkMAC(%V)", mac.rep)
+
+      U_ASSERT(mac.isXMacAddr())
+      U_INTERNAL_ASSERT_POINTER(peer)
+
+      const char* p1 =       mac.data();
+      const char* p2 = peer->mac.data(); // %2u:%2u:%2u:%2u:%2u:%2u
+
+      if ((u_get_unalignedp16(p1)    == *(uint16_t*) p2)       &&
+          (u_get_unalignedp16(p1+ 2) == *(uint16_t*)(p2+ 2+1)) &&
+          (u_get_unalignedp16(p1+ 4) == *(uint16_t*)(p2+ 4+2)) &&
+          (u_get_unalignedp16(p1+ 6) == *(uint16_t*)(p2+ 6+3)) &&
+          (u_get_unalignedp16(p1+ 8) == *(uint16_t*)(p2+ 8+4)) &&
+          (u_get_unalignedp16(p1+10) == *(uint16_t*)(p2+10+5)))
+         {
+         U_RETURN(true);
+         }
+
+      U_RETURN(false);
       }
 
    static UString getUrlForSendMsgToPortal(const char* service, uint32_t service_len)

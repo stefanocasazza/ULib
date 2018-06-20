@@ -414,7 +414,7 @@ int U_EXPORT main(int iArgC, char** ppcArgV)
 
       (void) paddr->setHostName(hostname);
 
-      vaddr.push(paddr);
+      vaddr.push_back(paddr);
 
       UPing sockp(2000, bUseIPv6);
 

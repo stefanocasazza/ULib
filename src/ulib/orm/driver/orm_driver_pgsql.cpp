@@ -121,30 +121,17 @@ bool UOrmDriverPgSql::checkExecution(PGresult* res)
    if (resstatus != PGRES_COMMAND_OK &&
        resstatus != PGRES_TUPLES_OK)
       {
-fail:
-      if (res) UOrmDriver::SQLSTATE = U_SYSCALL(PQresultErrorField, "%p,%d", res, PG_DIAG_SQLSTATE);
+fail: if (res) UOrmDriver::SQLSTATE = U_SYSCALL(PQresultErrorField, "%p,%d", res, PG_DIAG_SQLSTATE);
 
       UOrmDriver::printError(__PRETTY_FUNCTION__);
 
       U_SYSCALL_VOID(PQclear, "%p", res);
+                                    res = U_NULLPTR;
 
       U_RETURN(false);
       }
 
    U_RETURN(true);
-}
-
-bool UOrmDriverPgSql::handlerQuery(const char* query, uint32_t query_len)
-{
-   U_TRACE(0, "UOrmDriverPgSql::handlerQuery(%.*S,%u)", query_len, query, query_len)
-
-   U_INTERNAL_ASSERT_POINTER(UOrmDriver::connection)
-
-   PGresult* res = (PGresult*) U_SYSCALL(PQexec, "%p,%S", (PGconn*)UOrmDriver::connection, query);
-
-   if (checkExecution(res)) U_RETURN(true);
-
-   U_RETURN(false);
 }
 
 UPgSqlStatement::UPgSqlStatement(const char* s, uint32_t n) : USqlStatement(U_NULLPTR, 0, 10), stmt(U_CAPACITY)
@@ -215,8 +202,10 @@ void UPgSqlStatement::reset()
 {
    U_TRACE_NO_PARAM(0, "UPgSqlStatement::reset()")
 
-   U_ASSERT_EQUALS(num_bind_param,  vparam.size())
-   U_ASSERT_EQUALS(num_bind_result, vresult.size())
+   U_DUMP("num_bind_param = %u vparam.size() = %u num_bind_result = %u vresult.size() = %u", num_bind_param, vparam.size(), num_bind_result, vresult.size())
+
+   U_ASSERT(vresult.size() <= num_bind_result)
+   U_ASSERT_EQUALS(num_bind_param, vparam.size())
 
    if (paramValues)
       {
@@ -243,7 +232,8 @@ void UOrmDriverPgSql::handlerStatementRemove(USqlStatement* pstmt)
 {
    U_TRACE(0, "UOrmDriverPgSql::handlerStatementRemove(%p)", pstmt)
 
-   /* If you do not explicitly deallocate a prepared statement, it is deallocated when the session ends
+   /**
+    * If you do not explicitly deallocate a prepared statement, it is deallocated when the session ends
 
    char query[32];
 
@@ -255,6 +245,55 @@ void UOrmDriverPgSql::handlerStatementRemove(USqlStatement* pstmt)
    U_DELETE((UPgSqlStatement*)pstmt)
 }
 
+void UPgSqlStatement::setBindParam()
+{
+   U_TRACE_NO_PARAM(0, "UPgSqlStatement::setBindParam()")
+
+   U_INTERNAL_DUMP("num_bind_param = %u paramTypes = %p paramFormats = %p paramValues = %p", num_bind_param, paramTypes, paramFormats, paramValues)
+
+   U_INTERNAL_ASSERT_POINTER(paramTypes)
+   U_INTERNAL_ASSERT_POINTER(paramValues)
+   U_INTERNAL_ASSERT_POINTER(paramFormats)
+
+   for (uint32_t i = 0; i < num_bind_param; ++i)
+      {
+      USqlStatementBindParam* param = vparam[i];
+
+#  ifndef U_COVERITY_FALSE_POSITIVE // Dereference after null check (FORWARD_NULL)
+      paramLengths[i] = param->length;
+#  endif
+
+      char* ptr = (char*)(paramValues[i] = ((UPgSqlStatementBindParam*)param)->num2str);
+
+      switch (param->type)
+         {
+         case BOOLOID: *(bool*)ptr = *(bool*)param->buffer; return;
+         case CHAROID: *(char*)ptr = *(char*)param->buffer; return;
+         }
+
+      if (resultFormat) // is zero/one to obtain results in text/binary format
+         {
+         switch (param->type)
+            {
+            case INT2OID:     *(short*)ptr =   htons( *(uint16_t*)param->buffer); break;
+            case INT4OID:       *(int*)ptr =   htonl( *(uint32_t*)param->buffer); break;
+            case INT8OID: *(long long*)ptr = u_htonll(*(uint64_t*)param->buffer); break;
+            }
+         }
+      else
+         {
+         switch (param->type)
+            {
+            case INT2OID: ptr[u_num2str32s(    *(short*)param->buffer, ptr)-ptr] = '\0'; break;
+            case INT4OID: ptr[u_num2str32s(      *(int*)param->buffer, ptr)-ptr] = '\0'; break;
+            case INT8OID: ptr[u_num2str64s(*(long long*)param->buffer, ptr)-ptr] = '\0'; break;
+            }
+         }
+
+      U_INTERNAL_DUMP("paramValues[%u] = %u paramLengths[%u] = %u", i, paramValues[i], i, paramLengths[i])
+      }
+}
+
 bool UPgSqlStatement::setBindParam(UOrmDriver* pdrv)
 {
    U_TRACE(0, "UPgSqlStatement::setBindParam(%p)", pdrv)
@@ -263,8 +302,6 @@ bool UPgSqlStatement::setBindParam(UOrmDriver* pdrv)
 
    U_ASSERT_EQUALS(num_bind_param, vparam.size())
 
-   int i;
-
    if (paramTypes &&
        paramFormats == U_NULLPTR)
       {
@@ -272,7 +309,7 @@ bool UPgSqlStatement::setBindParam(UOrmDriver* pdrv)
 
       paramFormats = (int*)paramTypes + num_bind_param;
 
-      for (i = 0; i < (int)num_bind_param; ++i)
+      for (uint32_t i = 0; i < num_bind_param; ++i)
          {
          paramTypes[i]   = vparam[i]->type;
          paramFormats[i] = resultFormat; // 1 => binary
@@ -337,16 +374,17 @@ bool UPgSqlStatement::setBindParam(UOrmDriver* pdrv)
       num_bind_result = U_SYSCALL(PQnfields, "%p", res);
 
 #  ifdef DEBUG
+      uint32_t i;
       Oid paramtype;
 
-      for (i = 0; i < (int)num_bind_param; ++i)
+      for (i = 0; i < num_bind_param; ++i)
          {
          paramtype = PQparamtype(res, i);
 
          U_INTERNAL_DUMP("paramTypes[%u] = %u PQparamtype() = %u", i, paramTypes[i], paramtype)
          }
 
-      for (i = 0; i < (int)num_bind_result; ++i)
+      for (i = 0; i < num_bind_result; ++i)
          {
          char* fname = PQfname(res, i);
          int fformat = PQfformat(res, i),
@@ -370,43 +408,7 @@ bool UPgSqlStatement::setBindParam(UOrmDriver* pdrv)
          paramLengths = (int*)paramTypes + num_bind_param + num_bind_param;
          }
 
-      for (i = 0; i < (int)num_bind_param; ++i)
-         {
-         USqlStatementBindParam* param = vparam[i];
-
-#     ifndef U_COVERITY_FALSE_POSITIVE // Dereference after null check (FORWARD_NULL)
-         paramLengths[i] = param->length;
-#     endif
-
-         char* ptr = (char*)(paramValues[i] = ((UPgSqlStatementBindParam*)param)->num2str);
-
-         switch (param->type)
-            {
-            case BOOLOID: *(bool*)ptr = *(bool*)param->buffer; U_RETURN(true);
-            case CHAROID: *(char*)ptr = *(char*)param->buffer; U_RETURN(true);
-            }
-
-         if (resultFormat) // is zero/one to obtain results in text/binary format
-            {
-            switch (param->type)
-               {
-               case INT2OID:     *(short*)ptr =   htons( *(uint16_t*)param->buffer); break;
-               case INT4OID:       *(int*)ptr =   htonl( *(uint32_t*)param->buffer); break;
-               case INT8OID: *(long long*)ptr = u_htonll(*(uint64_t*)param->buffer); break;
-               }
-            }
-         else
-            {
-            switch (param->type)
-               {
-               case INT2OID: ptr[u_num2str32s(    *(short*)param->buffer, ptr)-ptr] = '\0'; break;
-               case INT4OID: ptr[u_num2str32s(      *(int*)param->buffer, ptr)-ptr] = '\0'; break;
-               case INT8OID: ptr[u_num2str64s(*(long long*)param->buffer, ptr)-ptr] = '\0'; break;
-               }
-            }
-
-         U_INTERNAL_DUMP("paramValues[%u] = %u paramLengths[%u] = %u", i, paramValues[i], i, paramLengths[i])
-         }
+      setBindParam();
       }
 
    U_RETURN(true);
@@ -442,7 +444,7 @@ void UPgSqlStatement::setBindResult(UOrmDriver* pdrv)
 {
    U_TRACE(0, "UPgSqlStatement::setBindResult(%p)", pdrv)
 
-   U_INTERNAL_DUMP("num_bind_result = %u vresult.size() = %u", num_bind_result, vresult.size())
+   U_DUMP("num_bind_result = %u vresult.size() = %u", num_bind_result, vresult.size())
 
    U_ASSERT_EQUALS(num_bind_result, vresult.size())
 
@@ -455,7 +457,6 @@ void UPgSqlStatement::setBindResult(UOrmDriver* pdrv)
 
       if (num_row_result == 0) return;
       }
-
 
    for (uint32_t i = 0; i < num_bind_result; ++i)
       {
@@ -662,6 +663,152 @@ unsigned int UOrmDriverPgSql::cols(USqlStatement* pstmt)
    unsigned int n = U_SYSCALL(PQnfields, "%p", ((UPgSqlStatement*)pstmt)->res);
 
    U_RETURN(n);
+}
+
+bool UOrmDriverPgSql::handlerQuery(const char* query, uint32_t query_len)
+{
+   U_TRACE(0, "UOrmDriverPgSql::handlerQuery(%.*S,%u)", query_len, query, query_len)
+
+   U_INTERNAL_ASSERT_POINTER(UOrmDriver::connection)
+
+   PGresult* res = (PGresult*) U_SYSCALL(PQexec, "%p,%S", (PGconn*)UOrmDriver::connection, query);
+
+   if (checkExecution(res) == false) U_RETURN(false);
+
+   U_RETURN(true);
+}
+
+// ASYNC with PIPELINE (PostgresSQL v3 extended query protocol)
+
+#ifndef USE_PGSQL_BATCH_API
+#define USE_PGSQL_BATCH_API
+extern "C" {
+extern U_EXPORT int PQenterBatchMode(PGconn* connection);
+extern U_EXPORT int PQexitBatchMode(PGconn* connection);
+extern U_EXPORT int PQbatchSendQueue(PGconn* connection);
+extern U_EXPORT int PQbatchProcessQueue(PGconn* connection);
+};
+#endif
+
+bool UOrmDriverPgSql::asyncPipelineMode(bool benter)
+{
+   U_TRACE(0, "UOrmDriverPgSql::asyncPipelineMode(%b)", benter)
+
+#ifdef USE_PGSQL_BATCH_API
+   if (benter)
+      {
+      if (U_SYSCALL(PQsetnonblocking, "%p,%d", (PGconn*)UOrmDriver::connection, 1) == 0 && // NB: nonblocking if arg is 1, or blocking if arg is 0...
+          U_SYSCALL(PQenterBatchMode, "%p", (PGconn*)UOrmDriver::connection) == 1)
+         {
+         U_RETURN(true);
+         }
+      }
+   else
+      {
+      if (U_SYSCALL(PQexitBatchMode, "%p", (PGconn*)UOrmDriver::connection) == 1 &&
+          U_SYSCALL(PQsetnonblocking, "%p,%d", (PGconn*)UOrmDriver::connection, 0) == 0) // NB: nonblocking if arg is 1, or blocking if arg is 0...
+         {
+         U_RETURN(true);
+         }
+      }
+
+   UOrmDriver::printError(__PRETTY_FUNCTION__);
+#endif
+
+   U_RETURN(false);
+}
+
+bool UOrmDriverPgSql::asyncPipelineSendQuery(USqlStatement* pstmt, const char* query, uint32_t query_len, uint32_t n)
+{
+   U_TRACE(0, "UOrmDriverPgSql::asyncPipelineSendQuery(%p,%.*S,%u,%u)", pstmt, query_len, query, query_len, n)
+
+#ifdef USE_PGSQL_BATCH_API
+   if (U_SYSCALL(PQsendQueryParams, "%p,%S,%d,%p,%p,%p,%d", (PGconn*)UOrmDriver::connection, query, 0, U_NULLPTR, U_NULLPTR, U_NULLPTR, U_NULLPTR, 0) == 1)
+      {
+      return asyncPipelineProcessQueue(pstmt, n);
+      }
+
+   UOrmDriver::printError(__PRETTY_FUNCTION__);
+
+   U_RETURN(false);
+#else
+   return handlerQuery(query, query_len);
+#endif
+}
+
+bool UOrmDriverPgSql::asyncPipelineSendQueryPrepared(USqlStatement* pstmt, uint32_t i)
+{
+   U_TRACE(0, "UOrmDriverPgSql::asyncPipelineSendQueryPrepared(%p,%u)", pstmt, i)
+
+#ifdef USE_PGSQL_BATCH_API
+   if ((((UPgSqlStatement*)pstmt)->setBindParam(),
+        U_SYSCALL(PQsendQueryPrepared, "%p,%S,%d,%p,%p,%p,%d",
+                    (PGconn*)UOrmDriver::connection,
+                    ((UPgSqlStatement*)pstmt)->stmtName,
+                    pstmt->num_bind_param,
+                    ((UPgSqlStatement*)pstmt)->paramValues,
+                    ((UPgSqlStatement*)pstmt)->paramLengths,
+                    ((UPgSqlStatement*)pstmt)->paramFormats,
+                    ((UPgSqlStatement*)pstmt)->resultFormat)) == 1)
+      {
+      U_RETURN(true);
+      }
+
+   UOrmDriver::printError(__PRETTY_FUNCTION__);
+
+   U_RETURN(false);
+#else
+   execute(pstmt);
+
+   pstmt->asyncPipelineHandlerResult(i);
+
+   U_RETURN(true);
+#endif
+}
+
+bool UOrmDriverPgSql::asyncPipelineProcessQueue(USqlStatement* pstmt, uint32_t n)
+{
+   U_TRACE(0, "UOrmDriverPgSql::asyncPipelineProcessQueue(%p,%u)", pstmt, n)
+
+   U_INTERNAL_ASSERT_POINTER(UOrmDriver::connection)
+
+#ifdef USE_PGSQL_BATCH_API
+   if (U_SYSCALL(PQbatchSendQueue, "%p", (PGconn*)UOrmDriver::connection) != 1)
+      {
+      UOrmDriver::printError(__PRETTY_FUNCTION__);
+
+      U_RETURN(false);
+      }
+
+   PGresult* res;
+
+   for (uint32_t i = 0; U_SYSCALL(PQbatchProcessQueue, "%p", (PGconn*)UOrmDriver::connection) == 1; ++i)
+      {
+   // (void) U_SYSCALL(PQsetSingleRowMode, "%p", (PGconn*)UOrmDriver::connection);
+
+      while ((res = (PGresult*) U_SYSCALL(PQgetResult, "%p", (PGconn*)UOrmDriver::connection)))
+         {
+         U_INTERNAL_DUMP("Result status: %d (%s) for i=%u, tuples: %d", PQresultStatus(res), PQresStatus(PQresultStatus(res)), i, PQntuples(res))
+
+         U_INTERNAL_ASSERT_POINTER(((UPgSqlStatement*)pstmt)->res)
+
+         U_SYSCALL_VOID(PQclear, "%p", ((UPgSqlStatement*)pstmt)->res);
+                                       ((UPgSqlStatement*)pstmt)->res = res;
+
+         if (i < n)
+            {
+            pstmt->current_row    =
+            pstmt->num_row_result = 0;
+
+            ((UPgSqlStatement*)pstmt)->setBindResult(this);
+
+            pstmt->asyncPipelineHandlerResult(i);
+            }
+         }
+      }
+#endif
+
+   U_RETURN(true);
 }
 
 #if defined(U_STDCPP_ENABLE) && defined(DEBUG)

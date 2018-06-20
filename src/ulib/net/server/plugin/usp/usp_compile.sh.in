@@ -56,13 +56,33 @@ fi
 libsuffix=$2
 test "$libsuffix" || libsuffix=so
 
-export UMEMPOOL="0,0,0,48,-20,-20,-20,-20,0"
-export PATH="/sbin:/usr/sbin:/usr/local/sbin:/bin:/usr/bin:/usr/local/bin"
+if [ -d .libs ]; then
+	cp -a .libs libs.orig
+fi
 
-@ULIB_PREFIXDIR@/bin/usp_translator ${local_includedir} $file.usp &&
-@ULIB_PREFIXDIR@/bin/usp_libtool.sh --silent --tag=CXX --mode=compile \
-	@CXX@ ${local_includedir} -IULIB_PREFIXDIR@/include -DHAVE_CONFIG_H @CPPFLAGS@ @CXXFLAGS@ @USP_FLAGS@ -MT $basen.lo -MD -MP -c -o $basen.lo $basen.cpp &&
-@ULIB_PREFIXDIR@/bin/usp_libtool.sh --silent --tag=CXX --mode=link \
-	@CXX@ @CPPFLAGS@ @LDFLAGS@ @USP_LDFLAGS@ -o $basen.la -rpath @ULIB_MODULEDIR@/usp \
-	-module -export-dynamic -avoid-version -no-undefined $basen.lo @USP_LIBS@ -l@ULIB@ @ULIB_LIBS@ &&
+if [ ! -d @ULIB_PREFIXDIR@/include/ulib ]; then
+	ULIB=../../../../lib@ULIB@.la
+	USP_TRANSLATOR=./usp_translator
+	USP_LIBTOOL=../../../../../../libtool
+	ULIB_INCLUDE=-I../../../../../../include
+else
+	ULIB='@ULIB_PREFIXDIR@/lib/lib@ULIB@.la'
+	ULIB_INCLUDE=-I@ULIB_PREFIXDIR@/include
+	USP_LIBTOOL=@ULIB_PREFIXDIR@/bin/usp_libtool.sh
+	USP_TRANSLATOR=@ULIB_PREFIXDIR@/bin/usp_translator
+fi
+
+export UMEMPOOL="0,0,0,48,-20,-20,-20,-20,0"
+export PATH="/sbin:/usr/sbin:/usr/local/sbin:/bin:/usr/bin:/usr/local/bin:@ULIB_PREFIXDIR@/bin"
+
+${USP_TRANSLATOR} ${local_includedir} $file.usp &&
+${USP_LIBTOOL} --silent --tag=CXX --mode=compile \
+	@CXX@ ${local_includedir} ${ULIB_INCLUDE} -DHAVE_CONFIG_H @CPPFLAGS@ @CXXFLAGS@ @USP_FLAGS@ ${USP_FLAGS} -MT $basen.lo -MD -MP -c -o $basen.lo $basen.cpp &&
+${USP_LIBTOOL} --silent --tag=CXX --mode=link \
+	@CXX@ @CPPFLAGS@ @LDFLAGS@ @USP_LDFLAGS@ ${USP_LDFLAGS} -o $basen.la -rpath @ULIB_MODULEDIR@/usp \
+	-module -export-dynamic -avoid-version -no-undefined $basen.lo @USP_LIBS@ ${USP_LIBS} ${ULIB} @ULIB_LIBS@ &&
 mv $file.usp .libs; rm -rf $basen.d $basen.la $basen.lo $basen.o $basen.cpp; mv .libs/${basen}.usp .libs/${basen}.${libsuffix} ${dirn}; rm -rf .libs
+
+if [ -d libs.orig ]; then
+	mv libs.orig .libs
+fi

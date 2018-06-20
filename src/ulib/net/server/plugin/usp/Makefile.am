@@ -2,7 +2,7 @@
 
 MAINTAINERCLEANFILES = Makefile.in
 
-EXTRA_DIST = *.usp usp2so.sh *.h *.cpp README.alldemos usp_compile.sh.in
+EXTRA_DIST = *.usp usp2so.sh *.h *.cpp *.cxx README.alldemos usp_compile.sh.in
 
 DEFAULT_INCLUDES = -I. -I$(top_srcdir)/include
 
@@ -13,6 +13,17 @@ usp_translator_SOURCES = usp_translator.cpp
 usp_translator_LDFLAGS = $(PRG_LDFLAGS)
 
 bin_PROGRAMS = usp_translator
+
+libWorld_la_SOURCES   		= libWorld.cxx
+libWorldNoSql_la_SOURCES   = libWorldNoSql.cxx
+libFortune_la_SOURCES 		= libFortune.cxx
+libFortuneNoSql_la_SOURCES = libFortuneNoSql.cxx
+
+## for convenience library
+noinst_LTLIBRARIES = libWorld.la libWorldNoSql.la libFortune.la libFortuneNoSql.la
+
+install-data-local:
+	$(MAKE) $(AM_MAKEFLAGS) usp_compile.sh; chmod 777 usp_compile.sh; ${INSTALL} -m 777 usp_compile.sh $(DESTDIR)${bindir}
 
 clean-local:
 	-rm -rf core .libs *.bb* *.da *.la *.exe trace.usp_translator* gmon.out usp_compile.sh

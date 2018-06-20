@@ -79,7 +79,7 @@ uint32_t UFlatBuffer::AsMapGetKeys(UVector<UString>& members) const
 
       U_INTERNAL_DUMP("key = %V", key.rep)
 
-      members.push(key);
+      members.push_back(key);
       }
 
    len = members.size() - len;

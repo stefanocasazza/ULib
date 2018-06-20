@@ -846,7 +846,7 @@ void UQueryNode::getDNFTermRoots(UVector<UQueryNode*>* dest)
       case AND:
       case NOT:
       case VALUE:
-         dest->push(this);
+         dest->push_back(this);
       break;
       }
 }

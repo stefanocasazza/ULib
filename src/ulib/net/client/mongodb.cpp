@@ -93,7 +93,7 @@ void UMongoDBClient::readFromCursor()
 
       U_INTERNAL_DUMP("x = %V", x.rep);
 
-      vitem.push(x);
+      vitem.push_back(x);
       }
 
    if (U_SYSCALL(mongoc_cursor_error, "%p,%p", cursor, &error)) U_WARNING("mongoc_cursor_error(): %d.%d,%S", error.domain, error.code, error.message);
@@ -292,7 +292,7 @@ bool UMongoDBClient::findAndModify(bson_t* query, bson_t* _update)
       U_INTERNAL_DUMP("x = %V", x.rep);
 
       vitem.clear();
-      vitem.push(x);
+      vitem.push_back(x);
 
       U_RETURN(true);
       }
@@ -346,7 +346,7 @@ bool UMongoDBClient::executeBulk(mongoc_bulk_operation_t* bulk)
       U_INTERNAL_DUMP("x = %V", x.rep);
 
       vitem.clear();
-      vitem.push(x);
+      vitem.push_back(x);
       }
 
    U_SYSCALL_VOID(bson_destroy, "%p", &reply);

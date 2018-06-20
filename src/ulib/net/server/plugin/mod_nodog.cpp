@@ -197,6 +197,16 @@ U_NO_EXPORT void UNoDogPlugIn::makeInfoData(UFlatBuffer* pfb, void* param)
 
          table = (*vLocalNetworkSpec)[i].data();
 
+         /**
+         * struct ipt_acc_handle_ip {
+         *    uint32_t ip;
+         *    uint32_t src_packets;
+         *    uint32_t src_bytes;
+         *    uint32_t dst_packets;
+         *    uint32_t dst_bytes;
+         * };
+         */
+
          if (ipt->readEntries(table, true))
             {
             while ((entry = ipt->getNextEntry()))
@@ -238,7 +248,7 @@ U_NO_EXPORT void UNoDogPlugIn::makeInfoData(UFlatBuffer* pfb, void* param)
          }
 #  endif
 
-      peers->setNodePointer(_ctime);
+      peers->setIndexNodePointer(_ctime);
 
       do {
          peer = peers->elem();
@@ -403,6 +413,8 @@ U_NO_EXPORT bool UNoDogPlugIn::setMAC()
       U_INTERNAL_ASSERT(peer->mac)
       U_INTERNAL_ASSERT(u_isMacAddr(U_STRING_TO_PARAM(peer->mac)))
       U_ASSERT_EQUALS(peer->mac, USocketExt::getMacAddress(peer->ip))
+
+      if (peer->mac == *UString::str_without_mac) U_RETURN(false);
       }
 
    U_RETURN(true);
@@ -501,6 +513,8 @@ U_NO_EXPORT bool UNoDogPlugIn::setLabelAndMAC()
 #endif
 
    U_INTERNAL_DUMP("peer->label = %V peer->mac = %V", peer->label.rep, peer->mac.rep)
+
+   if (peer->mac == *UString::str_without_mac) U_RETURN(false);
 
    U_RETURN(true);
 }
@@ -1191,6 +1205,7 @@ int UNoDogPlugIn::handlerRequest()
             }
          else if (U_HTTP_URI_STREQ("/logout"))
             {
+            UString mac, apId;
             uint32_t n, ip_peer;
             UFlatBuffer fb, vec;
 
@@ -1199,13 +1214,15 @@ int UNoDogPlugIn::handlerRequest()
 
             n = vec.GetSize();
 
-            U_SRV_LOG("AUTH request to logout %u users", n);
+            U_SRV_LOG("AUTH request to logout %u users", n / 3);
 
-            for (uint32_t i = 0; i < n; ++i)
+            for (int32_t i = 0; i < (int32_t)n; i += 3)
                {
-               // --------
+               // ----------
                // $1 -> ip
-               // --------
+               // $2 -> mac
+               // $3 -> apId
+               // ----------
                
                ip_peer = vec.AsVectorGetIPAddress(i);
 
@@ -1222,6 +1239,17 @@ int UNoDogPlugIn::handlerRequest()
                U_INTERNAL_ASSERT(u_isMacAddr(U_STRING_TO_PARAM(peer->mac)))
 
                U_SRV_LOG("AUTH request to logout user(%u): IP %v MAC %v", i, peer->ip.rep, peer->mac.rep);
+
+               mac  = vec.AsVectorGet<UString>(i+1);
+               apId = vec.AsVectorGet<UString>(i+2);
+
+               if (apId != peer->label ||
+                   checkMAC(mac) == false)
+                  {
+                  U_SRV_LOG("WARNING: AUTH request to logout user with different mac or label (MAC %v LABEL %v) => (MAC %v LABEL %v)", mac.rep, apId.rep, peer->mac.rep, peer->label.rep);
+
+                  continue;
+                  }
 
                if (U_peer_permit) deny(U_peer_mac_from_dhcp_data_file ? *UString::str_without_mac : peer->mac);
                else

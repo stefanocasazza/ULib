@@ -71,8 +71,9 @@ start_prg_background userver_tcp -c inp/webserver.cfg
 wait_server_ready localhost 8080
 
 #ab -k -n 2	     -c 2    "http://$ADDRESS:8080/servlet/benchmarking?name=stefano" >/dev/null 2>&1
- ab -k -n 100    -c 2    'http://127.0.0.1:8080/servlet/benchmarking?name=stefano' >/dev/null 2>&1
+ ab -k -n 100    -c 2    'http://127.0.0.1:8080/servlet/benchmarking?name=stefano' >/tmp/ab.out 2>&1
 #ab -k -n 100000 -c 1000 'http://127.0.0.1:8080/servlet/benchmarking?name=stefano' >/tmp/ab.txt 2>&1
+$SLEEP
 $SLEEP
 kill_server userver_tcp
 

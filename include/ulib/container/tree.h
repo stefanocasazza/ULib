@@ -123,7 +123,7 @@ public:
 
       U_NEW(UTree<void*>, p, UTree<void*>(__elem, this, (size_allocate ? : 64)));
 
-      UVector<void*>::push(p);
+      UVector<void*>::push_back(p);
 
       U_RETURN_POINTER(p,UTree<void*>);
       }
@@ -269,7 +269,7 @@ public:
 
       u_construct<T>(&__elem, false);
 
-      return (UTree<T*>*) UTree<void*>::push(__elem);
+      return (UTree<T*>*) UTree<void*>::push_back(__elem);
       }
 
    UTree<T*>* push_back(const T* __elem)

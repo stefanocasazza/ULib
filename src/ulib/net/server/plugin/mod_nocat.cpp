@@ -1749,7 +1749,7 @@ bool UNoCatPlugIn::checkPeerInfo(UStringRep* key, void* value)
 
          ++nfds;
 
-         vaddr[index_device]->push(peer);
+         vaddr[index_device]->push_back(peer);
          }
 
 #  ifdef USE_LIBTDB
@@ -2124,7 +2124,7 @@ int UNoCatPlugIn::handlerInit()
 
       U_NEW(Url, url, Url(ip));
 
-      vauth_url->push(url);
+      vauth_url->push_back(url);
 
       auth_ip = url->getHost();
 
@@ -2138,11 +2138,11 @@ int UNoCatPlugIn::handlerInit()
 
          U_SRV_LOG("AUTH host registered: %v", auth_ip.rep);
 
-         vauth_ip->push(auth_ip);
+         vauth_ip->push_back(auth_ip);
          }
 
-         vinfo_data->push(info);
-      vroaming_data->push(data);
+         vinfo_data->push_back(info);
+      vroaming_data->push_back(data);
       }
 
    U_ASSERT_EQUALS(vauth->size(),      vauth_ip->size())
@@ -2742,7 +2742,7 @@ next:       (void) getARPCache();
 
          U_SRV_LOG("request to validate login for uid %V from peer: IP %.*s", _uid.rep, U_CLIENT_ADDRESS_TO_TRACE);
 
-         if (vLoginValidate->find(_uid) == U_NOT_FOUND) vLoginValidate->push(_uid);
+         if (vLoginValidate->find(_uid) == U_NOT_FOUND) vLoginValidate->push_back(_uid);
 
          (void) buffer.assign(U_HTTP_QUERY_TO_PARAM); // NB: we resend the same data to portal... (as redirect field)
 

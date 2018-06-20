@@ -480,7 +480,7 @@ bool UMimeMultipart::parse(bool digest)
          (void) item->header->setHeaderIfAbsent(U_CONSTANT_TO_PARAM("Content-Type"), item->content_type);
          }
 
-      bodypart.push(item);
+      bodypart.push_back(item);
 
       pos = (bfind ? boundaryEnd : endPos);
       }

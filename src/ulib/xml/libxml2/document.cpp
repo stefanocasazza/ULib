@@ -154,7 +154,7 @@ uint32_t UXML2Document::getElement(UVector<UString>& velement, const char* tag, 
 
       if (pos == U_NOT_FOUND) break;
 
-      velement.push(element);
+      velement.push_back(element);
       }
 
    uint32_t result = velement.size() - n;

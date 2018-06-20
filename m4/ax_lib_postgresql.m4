@@ -95,9 +95,11 @@ AC_DEFUN([AX_LIB_POSTGRESQL],
             AC_MSG_CHECKING([for PostgreSQL client libraries])
 
             postgresql_libdir=`$PG_CONFIG --libdir`
+            postgresql_cincdir=`$PG_CONFIG --includedir`
+            postgresql_sincdir=`$PG_CONFIG --includedir-server`
 
             POSTGRESQL_LDFLAGS=-L"$postgresql_libdir"
-            POSTGRESQL_CPPFLAGS="-I`$PG_CONFIG --includedir` -I`$PG_CONFIG --includedir-server`"
+            POSTGRESQL_CPPFLAGS=-I"$postgresql_cincdir -I$postgresql_sincdir"
             POSTGRESQL_VERSION=`$PG_CONFIG --version | sed -e 's#PostgreSQL ##'`
 
 				if test -f "$postgresql_libdir/libpgport.so" -o -f "/usr/lib/libpgport.so"; then
@@ -106,6 +108,10 @@ AC_DEFUN([AX_LIB_POSTGRESQL],
 					POSTGRESQL_LIBS="-lpq"
 
 					AC_DEFINE([LIBPGPORT_NOT_FOUND], [1], [Define to 1 if PostgreSQL libpgport is not available])
+				fi
+
+				if test -f "$postgresql_cincdir/pg_config.h" -o -f "$postgresql_sincdir/pg_config.h"; then
+					AC_DEFINE([HAVE_PG_CONFIG_H], [1], [Define to 1 if PostgreSQL pg_config.h is available])
 				fi
 
             AC_DEFINE([HAVE_POSTGRESQL], [1], [Define to 1 if PostgreSQL libraries are available])

@@ -303,8 +303,8 @@ void UMySqlStatement::reset()
 {
    U_TRACE_NO_PARAM(0, "UMySqlStatement::reset()")
 
-   U_ASSERT_EQUALS(num_bind_param,  vparam.size())
-   U_ASSERT_EQUALS(num_bind_result, vresult.size())
+   U_ASSERT(vresult.size() <= num_bind_result)
+   U_ASSERT_EQUALS(num_bind_param, vparam.size())
 
    string_type = 0;
 

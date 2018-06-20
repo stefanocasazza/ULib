@@ -253,9 +253,7 @@ public:
 
          setDirectiveItem(directive, U_CONSTANT_SIZE("declaration"));
 
-         U_INTERNAL_ASSERT(token)
-
-         declaration = token;
+         if (token) declaration = token;
          }
       else if (strncmp(directive, U_CONSTANT_TO_PARAM("session")) == 0)
          {
@@ -380,13 +378,14 @@ public:
 
          setDirectiveItem(directive, U_CONSTANT_SIZE("code"));
 
-         U_INTERNAL_ASSERT(token)
+         if (token)
+            {
+            token = UStringExt::substitute(token, '\n', U_CONSTANT_TO_PARAM("\n\t"));
 
-         token = UStringExt::substitute(token, '\n', U_CONSTANT_TO_PARAM("\n\t"));
+            (void) output0.reserve(20U + token.size());
 
-         (void) output0.reserve(20U + token.size());
-
-         output0.snprintf_add(U_CONSTANT_TO_PARAM("\n\t%v\n\t\n"), token.rep);
+            output0.snprintf_add(U_CONSTANT_TO_PARAM("\n\t%v\n\t\n"), token.rep);
+            }
          }
       else if (strncmp(directive, U_CONSTANT_TO_PARAM("sse")) == 0) // SSE code
          {
@@ -466,7 +465,7 @@ public:
 
          // NB: we use insert because the possibility of UHTTP::callService() (see chat.usp)...
 
-         if (U_STRING_FIND(token, 0, "Content-Type") != U_NOT_FOUND) (void) output2.assign(U_CONSTANT_TO_PARAM("\n\tU_http_content_type_len = 1;\n\t\n"));
+         bool bheader = (U_STRING_FIND(token, 0, "Content-Type") != U_NOT_FOUND);
 
          http_header = UStringExt::dos2unix(token, true);
 
@@ -483,8 +482,10 @@ public:
          (void) http_header.reserve(200U + encoded.size());
 
          (void) http_header.snprintf(U_CONSTANT_TO_PARAM("\n\tU_ASSERT_EQUALS(UClientImage_Base::wbuffer->findEndHeader(),false)"
-                                                         "\n\tU_http_info.endHeader = %u;"
-                                                         "\n\t(void) UClientImage_Base::wbuffer->insert(0, U_CONSTANT_TO_PARAM(%v));\n\t\n"), n, encoded.rep);
+                                                         "\n\tU_http_info.endHeader = %u;%.*s"
+                                                         "\n\t(void) UClientImage_Base::wbuffer->insert(0, U_CONSTANT_TO_PARAM(%v));\n\t\n"), n,
+                                                         (bheader ? U_CONSTANT_SIZE("\n\tU_http_content_type_len = 1;\n\t\n") : 0), "\n\tU_http_content_type_len = 1;\n\t\n",
+                                                         encoded.rep);
          }
       else if (strncmp(directive, U_CONSTANT_TO_PARAM("number")) == 0)
          {
@@ -634,11 +635,14 @@ loop: distance = t.getDistance();
 
          processDirective();
 
-         if (usp) 
+         if (usp &&
+             t.atEnd() == false)
             {
             // no trailing \n...
 
             for (ptr = t.getPointer(); u__islterm(*ptr); ++ptr) {}
+
+            if (ptr > t.getEnd()) ptr = t.getEnd();
 
             t.setPointer(ptr);
 
@@ -829,7 +833,7 @@ loop: distance = t.getDistance();
          (void) http_header.append(U_CONSTANT_TO_PARAM("\n\tU_http_info.endHeader = 0;\n"));
          }
 
-      UString result(1024U + declaration.size() + http_header.size() + output0.size() + output1.size() + output2.size() + vars.size());
+      UString result(1024U + declaration.size() + http_header.size() + output0.size() + output1.size() + vars.size());
 
       result.snprintf(U_CONSTANT_TO_PARAM(
             "// %.*s.cpp - dynamic page translation (%.*s.usp => %.*s.cpp)\n"
@@ -861,11 +865,9 @@ loop: distance = t.getDistance();
             "\t\n"
             "%v"
             "%v"
-            "\t\n"
-            "%v"
-            "%v"
-            "%v"
             "%s"
+            "%v"
+            "%v"
             "\t\n"
             "} }\n"),
             basename_sz, basename_ptr,
@@ -886,10 +888,9 @@ loop: distance = t.getDistance();
             ptr7,
             vcode.rep,
             http_header.rep,
+            ptr8,
             output0.rep,
-            output1.rep,
-            output2.rep,
-            ptr8);
+            output1.rep);
 
       UString name(200U);
 
@@ -901,7 +902,7 @@ loop: distance = t.getDistance();
 private:
    UTokenizer t;
    UVector<UString> vdefine;
-   UString pinclude, usp, token, output0, output1, output2, declaration, vcode, http_header, sseloop, vars;
+   UString pinclude, usp, token, output0, output1, declaration, vcode, http_header, sseloop, vars;
    const char* basename_ptr;
    uint32_t basename_sz;
    bool bvar, bsession, bstorage, bfirst_pass, is_html, test_if_html, bpreprocessing_failed;

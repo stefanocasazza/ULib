@@ -1,17 +1,61 @@
+Certificate:
+    Data:
+        Version: 3 (0x2)
+        Serial Number: 1 (0x1)
+    Signature Algorithm: sha1WithRSAEncryption
+        Issuer: C=IT, ST=Some-State, O=Unirel spa
+        Validity
+            Not Before: May 27 18:07:16 2018 GMT
+            Not After : Dec  2 18:07:16 2127 GMT
+        Subject: C=IT, ST=Some-State, O=Unirel spa, CN=stefanocasazza
+        Subject Public Key Info:
+            Public Key Algorithm: rsaEncryption
+                Public-Key: (1024 bit)
+                Modulus:
+                    00:b1:1b:bd:7c:b7:f6:e5:3a:e8:02:09:5c:33:32:
+                    02:9a:25:7c:19:30:29:8f:94:9e:ef:62:7a:bd:56:
+                    a7:9b:09:da:b2:a0:6a:71:f1:37:eb:12:20:c6:bd:
+                    10:5f:47:ca:b9:a7:88:89:f9:26:32:18:c9:bb:32:
+                    a3:b1:63:65:1c:a0:3d:7a:89:f4:ba:aa:ea:cc:98:
+                    20:57:5b:df:ea:c8:3d:af:7b:e7:68:17:ae:26:f8:
+                    c4:ae:ed:7d:8d:9d:1c:06:6a:19:d0:dd:4a:f1:2d:
+                    75:1f:33:ee:b2:e1:23:a3:17:3b:15:5d:47:f2:22:
+                    03:ef:30:8e:4f:7d:47:bf:51
+                Exponent: 65537 (0x10001)
+        X509v3 extensions:
+            X509v3 Basic Constraints: 
+                CA:FALSE
+            Netscape Comment: 
+                OpenSSL Generated Certificate
+            X509v3 Subject Key Identifier: 
+                4C:25:8F:0C:0A:83:D5:E5:7E:D1:D4:8E:4E:F2:FD:A7:AB:4E:2D:AC
+            X509v3 Authority Key Identifier: 
+                keyid:6C:2B:5C:BF:91:33:C5:9E:37:24:AE:A5:62:70:2E:57:C5:01:A1:3F
+
+            X509v3 Extended Key Usage: critical
+                Time Stamping
+    Signature Algorithm: sha1WithRSAEncryption
+         2b:95:73:e7:5a:70:59:b7:91:7e:93:23:6f:2d:4d:bf:4b:2c:
+         69:51:2a:53:4f:4e:c3:0c:c8:fa:8a:db:b9:b5:94:f0:09:f8:
+         28:ec:78:1c:27:3c:85:f7:40:38:dc:f2:ef:b3:e4:e8:64:62:
+         76:69:75:fd:49:ec:70:13:4c:91:81:0d:ae:76:7c:72:85:e2:
+         77:1e:e5:c3:49:97:da:49:c2:f0:b3:6e:07:0e:81:53:10:c8:
+         12:9e:32:76:9b:dc:8a:0c:33:c7:32:19:26:3e:2a:8d:64:db:
+         16:f7:2e:3b:67:3a:99:f4:48:b6:29:fa:df:63:05:fb:4f:23:
+         c0:c4
 -----BEGIN CERTIFICATE-----
-MIICuTCCAiKgAwIBAgIBATANBgkqhkiG9w0BAQUFADBXMQswCQYDVQQGEwJBVTET
-MBEGA1UECBMKU29tZS1TdGF0ZTEhMB8GA1UEChMYSW50ZXJuZXQgV2lkZ2l0cyBQ
-dHkgTHRkMRAwDgYDVQQDEwdzdGVmYW5vMB4XDTA3MDYxNDE2MTgyNloXDTE4MDUy
-NzE2MTgyNlowVzELMAkGA1UEBhMCQVUxEzARBgNVBAgTClNvbWUtU3RhdGUxITAf
-BgNVBAoTGEludGVybmV0IFdpZGdpdHMgUHR5IEx0ZDEQMA4GA1UEAxMHc3RlZmFu
-bzCBnzANBgkqhkiG9w0BAQEFAAOBjQAwgYkCgYEAz1S7YTEnxpblEPGi93jFwvEI
-IWV5VenXaBVLR8mZh46JIMmpud8jtzFuKHwBnYIV2Rh45oBK6UtLvphkapG+P95T
-zofgHLqz5lwq4os+h4nxuVN0NTfT02YOhsdT1puWX76FNjwasmOSAk0Cj3Suzm2f
-7LBT7soPmYiHm/HiWSECAwEAAaOBlDCBkTAJBgNVHRMEAjAAMBYGA1UdJQEB/wQM
-MAoGCCsGAQUFBwMIMCwGCWCGSAGG+EIBDQQfFh1PcGVuU1NMIEdlbmVyYXRlZCBD
-ZXJ0aWZpY2F0ZTAdBgNVHQ4EFgQUjuyvcFHzOh1i0V9oY5G/h2hX1DEwHwYDVR0j
-BBgwFoAUibXVVZVN9VHryZbX8RLdlsjC1WUwDQYJKoZIhvcNAQEFBQADgYEAlXUd
-gMAlt6uPAPfQ1mXHBVXzv7rr9BA1zf2hJKYGUVyTy8lUjFKbpHGkE2XaIZxs9E2l
-WOaYYYJVJLQImBRWstvl8g7immOmKZApK+FuVpFrFBgAG4ZeiGsH3zitjRMnFmHi
-eJ8gtbmu7Xjxr2oHl2Xb5JVLf5AaRidHz9SC1SE=
+MIIClDCCAf2gAwIBAgIBATANBgkqhkiG9w0BAQUFADA3MQswCQYDVQQGEwJJVDET
+MBEGA1UECBMKU29tZS1TdGF0ZTETMBEGA1UEChMKVW5pcmVsIHNwYTAgFw0xODA1
+MjcxODA3MTZaGA8yMTI3MTIwMjE4MDcxNlowUDELMAkGA1UEBhMCSVQxEzARBgNV
+BAgTClNvbWUtU3RhdGUxEzARBgNVBAoTClVuaXJlbCBzcGExFzAVBgNVBAMTDnN0
+ZWZhbm9jYXNhenphMIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCxG718t/bl
+OugCCVwzMgKaJXwZMCmPlJ7vYnq9VqebCdqyoGpx8TfrEiDGvRBfR8q5p4iJ+SYy
+GMm7MqOxY2UcoD16ifS6qurMmCBXW9/qyD2ve+doF64m+MSu7X2NnRwGahnQ3Urx
+LXUfM+6y4SOjFzsVXUfyIgPvMI5PfUe/UQIDAQABo4GUMIGRMAkGA1UdEwQCMAAw
+LAYJYIZIAYb4QgENBB8WHU9wZW5TU0wgR2VuZXJhdGVkIENlcnRpZmljYXRlMB0G
+A1UdDgQWBBRMJY8MCoPV5X7R1I5O8v2nq04trDAfBgNVHSMEGDAWgBRsK1y/kTPF
+njckrqVicC5XxQGhPzAWBgNVHSUBAf8EDDAKBggrBgEFBQcDCDANBgkqhkiG9w0B
+AQUFAAOBgQArlXPnWnBZt5F+kyNvLU2/SyxpUSpTT07DDMj6itu5tZTwCfgo7Hgc
+JzyF90A43PLvs+ToZGJ2aXX9SexwE0yRgQ2udnxyheJ3HuXDSZfaScLws24HDoFT
+EMgSnjJ2m9yKDDPHMhkmPiqNZNsW9y47ZzqZ9Ei2KfrfYwX7TyPAxA==
 -----END CERTIFICATE-----

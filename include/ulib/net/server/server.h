@@ -403,7 +403,10 @@ public:
    // ---------------------------------
       long last_time_email_dos;
    // ---------------------------------
+      sem_t lock_user1;
+      sem_t lock_user2;
       sem_t lock_evasive;
+      sem_t lock_websock;
       sem_t lock_db_not_found;
    // ---------------------------------
       sem_t lock_base[U_SHM_LOCK_NENTRY];
@@ -416,7 +419,10 @@ public:
    static shm_data* ptr_shm_data;
    static uint32_t shm_data_add, shm_size;
 
+#define U_SHM_LOCK_USER1          &(UServer_Base::ptr_shm_data->lock_user1)
+#define U_SHM_LOCK_USER2          &(UServer_Base::ptr_shm_data->lock_user2)
 #define U_SHM_LOCK_EVASIVE        &(UServer_Base::ptr_shm_data->lock_evasive)
+#define U_SHM_LOCK_WEBSOCK        &(UServer_Base::ptr_shm_data->lock_websock)
 #define U_SHM_LOCK_DB_NOT_FOUND   &(UServer_Base::ptr_shm_data->lock_db_not_found)
 #define U_SHM_LOCK_BASE           &(UServer_Base::ptr_shm_data->lock_base)
 #define U_SHM_LAST_TIME_EMAIL_DOS   UServer_Base::ptr_shm_data->last_time_email_dos

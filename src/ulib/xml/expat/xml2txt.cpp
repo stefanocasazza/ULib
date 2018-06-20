@@ -51,9 +51,9 @@ void UXml2Txt::startElement(const XML_Char* name, const XML_Char** attrs)
 
    if (tag_output_also)
       {
-      (void) output.push('<');
+      (void) output.push_back('<');
       (void) output.append(name);
-      (void) output.push('>');
+      (void) output.push_back('>');
       }
    else if (attrs)
       {
@@ -61,7 +61,7 @@ void UXml2Txt::startElement(const XML_Char* name, const XML_Char** attrs)
 
       for (int i = 0; attrs[i]; ++i)
          {
-         (void) output.push(' ');
+         (void) output.push_back(' ');
          (void) output.append(attrs[i]);
          }
       }
@@ -99,7 +99,7 @@ void UXml2Txt::endElement(const XML_Char* name)
       {
       (void) output.append(U_CONSTANT_TO_PARAM("</"));
       (void) output.append(name);
-      (void) output.push('>');
+      (void) output.push_back('>');
       }
 
    if (tag_match              &&

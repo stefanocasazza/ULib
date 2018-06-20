@@ -140,6 +140,30 @@ bool UFile::stat()
    U_RETURN(false);
 }
 
+bool UFile::isRunningInChroot()
+{
+   U_TRACE_NO_PARAM(1, "UFile::isRunningInChroot()")
+
+#ifdef U_LINUX
+   struct stat st;
+
+   if (U_SYSCALL(stat, "%S,%p", "/proc/1/root", &st) == 0)
+      {
+      dev_t st_dev = st.st_dev;
+      ino_t st_ino = st.st_ino;
+
+      if (U_SYSCALL(stat, "%S,%p", "/", &st) == 0 &&
+          (st_dev != st.st_dev                    ||
+           st_ino != st.st_ino))
+         {
+         U_RETURN(true);
+         }
+      }
+#endif
+
+   U_RETURN(false);
+}
+
 bool UFile::chdir(const char* path, bool flag_save)
 {
    U_TRACE(1, "UFile::chdir(%S,%b)", path, flag_save)

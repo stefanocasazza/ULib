@@ -139,12 +139,14 @@ public:
 
    USqlStatement(void* pstmt, uint32_t nbind, uint32_t nresult) : vparam(nbind), vresult(nresult)
       {
-      U_TRACE_CTOR(0, USqlStatement, "%p,%u,%u", nbind, nresult)
+      U_TRACE_CTOR(0, USqlStatement, "%p,%u,%u", pstmt, nbind, nresult)
 
       pHandle         = pstmt;
       num_bind_param  = nbind;
       num_bind_result = nresult;
       num_row_result  = current_row = 0;
+
+      asyncPipelineHandlerResult = U_NULLPTR;
       }
 
    virtual ~USqlStatement()
@@ -184,6 +186,8 @@ public:
       U_ASSERT(vresult.size() <= num_bind_result)
       }
 
+   void setAsyncPipelineHandlerResult(vPFu function) { asyncPipelineHandlerResult = function; }
+
    // DEBUG
 
 #if defined(U_STDCPP_ENABLE) && defined(DEBUG)
@@ -191,6 +195,7 @@ public:
 #endif
 
    void* pHandle;
+   vPFu asyncPipelineHandlerResult;
    UVector<USqlStatementBindParam*> vparam;
    UVector<USqlStatementBindResult*> vresult;
    uint32_t num_bind_param, num_bind_result, num_row_result, current_row;
@@ -295,6 +300,19 @@ public:
       U_INTERNAL_ASSERT_POINTER(pstmt)
 
       handlerStatementRemove(pstmt);
+      }
+
+   // ASYNC with PIPELINE
+
+   static bool isAsyncPipelineModeAvaliable()
+      {
+      U_TRACE_NO_PARAM(0, "UOrmDriver::isAsyncPipelineModeAvaliable()")
+
+#  if defined(USE_PGSQL) && defined(U_STATIC_ORM_DRIVER_PGSQL)
+      U_RETURN(basync_pipeline_mode_avaliable);
+#  endif
+
+      U_RETURN(false);
       }
 
    // BIND
@@ -513,7 +531,7 @@ public:
    int errcode;
 
 protected:
-   static bool                  bexit;
+   static bool                  bexit, basync_pipeline_mode_avaliable;
    static uint32_t              vdriver_size, env_driver_len;
    static const char*           env_driver;
    static const char*           env_option;

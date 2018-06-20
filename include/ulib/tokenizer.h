@@ -76,6 +76,8 @@ public:
 
       str = data;
       end = (s = data.data()) + data.size();
+
+      U_INTERNAL_DUMP("size = %u end = %10S", data.size(), end)
       }
 
    void skipSpaces()

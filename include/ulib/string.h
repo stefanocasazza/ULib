@@ -535,6 +535,8 @@ public:
    void size_adjust(      const char* ptr) { size_adjust(      distance(ptr)); }
    void size_adjust_force(const char* ptr) { size_adjust_force(distance(ptr)); }
 
+   void size_adjust_constant(uint32_t sz)  { _length = sz; }
+
    void replace(const char* s, uint32_t n)
       {
       U_TRACE(0, "UStringRep::replace(%S,%u)", s, n)
@@ -669,6 +671,28 @@ public:
       U_INTERNAL_ASSERT_MINOR(pos, _length)
 
       if (u_isUTF16((const unsigned char*)(str + pos), _length - pos)) U_RETURN(true);
+
+      U_RETURN(false);
+      }
+
+   bool isIPv4Addr() const
+      {
+      U_TRACE_NO_PARAM(0, "UStringRep::isIPv4Addr()")
+
+      U_CHECK_MEMORY
+
+      if (u_isIPv4Addr(str, _length)) U_RETURN(true);
+
+      U_RETURN(false);
+      }
+
+   bool isMacAddr() const
+      {
+      U_TRACE_NO_PARAM(0, "UStringRep::isMacAddr()")
+
+      U_CHECK_MEMORY
+
+      if (u_isMacAddr(str, _length)) U_RETURN(true);
 
       U_RETURN(false);
       }
@@ -1278,8 +1302,8 @@ protected:
 
    // NB: for UStringExt::deflate()...
 
-   void setConstant(uint32_t sz);
-   void size_adjust_constant(uint32_t sz);
+   void   setConstant(uint32_t sz);
+   void checkConstant(uint32_t sz);
 
 public:
    // mutable
@@ -1720,7 +1744,6 @@ public:
 
    // Modifiers
 
-   void push(unsigned      char c) { (void) append(1U, c); }
    void push_back(unsigned char c) { (void) append(1U, c); }
 
    UString& append(uint32_t n, char c); // NB: unsigned char conflict with a uint32_t at the same parameter position...
@@ -2011,6 +2034,8 @@ public:
 
    bool isNull() const                                          { return (rep == UStringRep::string_rep_null); }
    bool isNullTerminated() const                                { return rep->isNullTerminated(); }
+   bool isMacAddr() const                                       { return rep->isMacAddr(); }
+   bool isIPv4Addr() const                                      { return rep->isIPv4Addr(); }
    bool isXMacAddr() const                                      { return rep->isXMacAddr(); }
    bool isText(uint32_t pos = 0) const                          { return rep->isText(pos); }
    bool isUTF8(uint32_t pos = 0) const                          { return rep->isUTF8(pos); }
@@ -2239,6 +2264,8 @@ public:
    void size_adjust_force()                { rep->size_adjust_force(); }
    void size_adjust_force(uint32_t value)  { rep->size_adjust_force(value); }
    void size_adjust_force(const char* ptr) { rep->size_adjust_force(ptr); }
+
+   void size_adjust_constant(uint32_t sz)  { rep->size_adjust_constant(sz); }
 
    void setUpTime()
       {

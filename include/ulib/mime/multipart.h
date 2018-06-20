@@ -101,7 +101,7 @@ public:
       U_INTERNAL_ASSERT_MAJOR(U_line_terminator_len, 0)
       U_ASSERT_EQUALS(_section.find(boundary, U_line_terminator_len, boundary_len), U_NOT_FOUND)
 
-      vec_part.push(_section);
+      vec_part.push_back(_section);
       }
 
    uint32_t getNumPart() const            { return vec_part.size(); }

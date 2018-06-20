@@ -93,8 +93,8 @@
 
             static const char* labels[] = { "name CA:", "certificate validity period (number of days):", U_NULLPTR };
 
-            vec.push(ca);
-            vec.push(U_STRING_FROM_CONSTANT("365"));
+            vec.push_back(ca);
+            vec.push_back(U_STRING_FROM_CONSTANT("365"));
 
             if (x.inputsbox2("CA creation", labels, vec, U_NULLPTR) == false) goto end;
 
@@ -260,7 +260,7 @@
 
                   tmp.snprintf(U_CONSTANT_TO_PARAM("%#04X %v"), lserial, subject.rep);
 
-                  vec.push(tmp.copy());
+                  vec.push_back(tmp.copy());
                   }
                }
 

@@ -53,6 +53,7 @@ struct pollfd UNotifier::fds[1];
  */
 
 int        UNotifier::nfd_ready; // the number of file descriptors ready for the requested I/O
+bool       UNotifier::flag_sigterm;
 long       UNotifier::last_event;
 uint32_t   UNotifier::min_connection;
 uint32_t   UNotifier::num_connection;
@@ -131,7 +132,6 @@ fd_set         UNotifier::fd_set_read;
 fd_set         UNotifier::fd_set_write;
 # endif
 bool           UNotifier::bread;
-bool           UNotifier::flag_sigterm;
 
 U_NO_EXPORT void UNotifier::notifyHandlerEvent()
 {

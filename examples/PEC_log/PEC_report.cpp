@@ -502,7 +502,7 @@ bool PEC_report::setLineID()
 
       id->duplicate(); // NB: need duplicate string because depends on mmap()'s content of document...
 
-      vid->push(*id);
+      vid->push_back(*id);
       }
 
    *id = vid->at(id_index);  

@@ -170,7 +170,7 @@ error:   U_INTERNAL_DUMP("errno = %d", errno)
 
    byte_read += value;
 
-   U_INTERNAL_DUMP("byte_read = %d", byte_read)
+   U_INTERNAL_DUMP("byte_read = %d count = %u", byte_read, count)
 
    U_INTERNAL_ASSERT_MAJOR(byte_read, 0)
 

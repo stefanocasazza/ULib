@@ -14,7 +14,8 @@
 #ifndef ULIB_WEBSOCKET_H
 #define ULIB_WEBSOCKET_H 1
 
-#include <ulib/string.h>
+#include <ulib/db/rdb.h>
+#include <ulib/net/server/server.h>
 
 #define U_WS_MESSAGE_TYPE_INVALID  -1
 #define U_WS_MESSAGE_TYPE_TEXT      0
@@ -44,7 +45,15 @@
 #define U_WS_STATUS_CODE_INTERNAL_ERROR    1011
 #define U_WS_STATUS_CODE_RESERVED4         1015
 
+class UHTTP;
 class USocket;
+class UCommand;
+class UDataStorage;
+class UProxyPlugIn;
+class UWebSocketClient;
+class UWebSocketPlugIn;
+
+template <class T> class URDBObjectHandler;
 
 class U_EXPORT UWebSocket {
 public:
@@ -59,17 +68,7 @@ public:
       unsigned int   utf8_state;
    } WebSocketFrameData;
 
-   static UString* rbuffer;
-   static UString* message;
-   static uint32_t max_message_size;
-   static const char* upgrade_settings;
-   static int message_type, status_code;
-   static WebSocketFrameData control_frame;
-   static WebSocketFrameData message_frame;
-
    static void checkForInitialData();
-   static bool sendAccept(USocket* socket);
-   static int  handleDataFraming(USocket* socket);
    static bool sendData(USocket* socket, int type, const char* data, uint32_t len);
 
    static bool sendData(USocket* socket, int type, const UString& data) { return sendData(socket, type, U_STRING_TO_PARAM(data)); }
@@ -90,10 +89,114 @@ public:
       U_RETURN(false);
       }
 
+   // DB
+
+   typedef struct uwrec {
+      uint32_t csocket;
+      uint32_t user_id;
+   // .................
+   } uwrec;
+
+   static bool insertOnDb(in_addr_t client, uint32_t csocket, uint32_t user_id)
+      {
+      U_TRACE(0, "UWebSocket::insertOnDb(%u,%u,%u)", client, csocket, user_id)
+
+      U_INTERNAL_ASSERT_POINTER(db)
+
+      uwrec new_rec = { csocket, user_id };
+
+      return db->insertDataStorage(&new_rec, sizeof(uwrec), client, RDB_INSERT);
+      }
+
+   static bool insertOnDb(uint32_t user_id) { return insertOnDb(UServer_Base::getClientAddress(), UServer_Base::csocket->getFd(), user_id); }
+
+   static bool removeFromDb(in_addr_t client)
+      {
+      U_TRACE(0, "UWebSocket::removeFromDb(%u)", client)
+
+      U_INTERNAL_ASSERT_POINTER(db)
+
+      return db->remove((const char*)&client, sizeof(in_addr_t));
+      }
+
+   static bool setCloseOnDb(in_addr_t client)
+      {
+      U_TRACE(0, "UWebSocket::setCloseOnDb(%u)", client)
+
+      U_INTERNAL_ASSERT_POINTER(db)
+
+      if (db->getDataStorage(client))
+         {
+         db->lockRecord();
+
+         rec->csocket = U_NOT_FOUND;
+
+         db->unlockRecord();
+
+         U_RETURN(true);
+         }
+
+      U_RETURN(false);
+      }
+
+   static void getWebSocketRecFromBuffer(const char* data, uint32_t datalen)
+      {
+      U_TRACE(0, "UWebSocket::getWebSocketRecFromBuffer(%.*S,%u)", datalen, data, datalen)
+
+      rec = (uwrec*)u_buffer;
+
+      u_buffer_len = sizeof(uwrec);
+
+      const char* ptr = data;
+
+      rec->csocket = u_strtoulp(&ptr);
+      rec->user_id = u_strtoulp(&ptr);
+
+      U_INTERNAL_DUMP("rec->csocket = %u rec->user_id = %u", rec->csocket, rec->user_id)
+
+      U_INTERNAL_ASSERT_EQUALS(ptr, data+datalen+1)
+      }
+
+   static void printWebSocketRecToBuffer(const char* data, uint32_t datalen)
+      {
+      U_TRACE(0, "UWebSocket::printWebSocketRecToBuffer(%.*S,%u)", datalen, data, datalen)
+
+      U_INTERNAL_ASSERT_EQUALS(datalen, sizeof(uwrec))
+
+      rec = (uwrec*)data;
+
+      u_buffer_len = u__snprintf(u_buffer, U_BUFFER_SIZE, U_CONSTANT_TO_PARAM("%u %u"), rec->csocket, rec->user_id);
+      }
+
 private:
+   static uwrec* rec;
+   static int fd_stderr;
+   static vPFi on_message;
+   static UCommand* command;
+   static UString* penvironment;
+   static uint32_t max_message_size;
+   static URDBObjectHandler<UDataStorage*>* db;
+
+   static UString* rbuffer;
+   static UString* message;
+   static const char* upgrade_settings;
+   static int message_type, status_code;
+   static WebSocketFrameData control_frame;
+   static WebSocketFrameData message_frame;
+
+   static void initDb();
+   static void handlerRequest();
+   static bool sendAccept(USocket* socket);
+   static int handleDataFraming(USocket* socket);
+   static RETSIGTYPE handlerForSigTERM(int signo);
    static bool sendControlFrame(USocket* socket, int opcode, const unsigned char* payload, uint32_t payload_length);
 
    U_DISALLOW_COPY_AND_ASSIGN(UWebSocket)
-};
 
+   friend class UHTTP;
+   friend class UProxyPlugIn;
+   friend class UWebSocketClient;
+   friend class UWebSocketPlugIn;
+   friend class UClientImage_Base;
+};
 #endif

@@ -388,7 +388,7 @@ static void usp_init_businesses()
 
    UTimer::insert(push);
 
-   mongoResults.push(U_STRING_FROM_CONSTANT("{ \"fbPermissions\" : [ \"public_profile\", \"user_friends\", \"email\" ] }"));
+   mongoResults.push_back(U_STRING_FROM_CONSTANT("{ \"fbPermissions\" : [ \"public_profile\", \"user_friends\", \"email\" ] }"));
 }
 
 static void usp_fork_businesses()

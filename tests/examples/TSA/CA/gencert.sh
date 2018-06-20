@@ -7,8 +7,8 @@ if [ ! -f serial ]; then
 	echo 01 > serial
 fi
 
-openssl_ca="../../bin/openssl   ca -config openssl.cnf -days 4000"
-openssl_req="../../bin/openssl req -config openssl.cnf -days 4000"
+openssl_ca="openssl   ca -config openssl.cnf -days 40000"
+openssl_req="openssl req -config openssl.cnf -days 40000"
 
 # Generate DH params
 #$openssl dhparam -out dh1024.pem 1024
@@ -23,7 +23,7 @@ $openssl_req -new -nodes -keyout server.key -out server.csr
 # $openssl_req -newkey rsa:1024 -keyout username.key -out username.csr
 
 # Sign keys
-$openssl_ca -in   server.csr -out   server.crt
+$openssl_ca -in server.csr -out server.crt
 # $openssl_ca -in username.csr -out username.crt
 
 # emit CRL

@@ -345,7 +345,7 @@ int UPop3Client::getUIDL(UVector<UString>& vec)
 
          r = UString((void*)p, s - p);
 
-         vec.push(r);
+         vec.push_back(r);
 
          ++s;
          }
@@ -486,7 +486,7 @@ int UPop3Client::getAllHeader(UVector<UString>& vec)
             {
             str = UString((void*)buffer.c_pointer(vpos[i]), vend[i] - vpos[i]);
 
-            vec.push(str);
+            vec.push_back(str);
             }
 
          U_RETURN(num_msg);
@@ -525,7 +525,7 @@ int UPop3Client::getAllMessage(UVector<UString>& vec)
             {
             str = UString((void*)buffer.c_pointer(vpos[i]), vend[i] - vpos[i]);
 
-            vec.push(str);
+            vec.push_back(str);
             }
 
          U_RETURN(num_msg);

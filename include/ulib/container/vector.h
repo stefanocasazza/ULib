@@ -97,6 +97,13 @@ public:
       U_RETURN(_length == 0);
       }
 
+   void setEmpty()
+      {
+      U_TRACE_NO_PARAM(0, "UVector<void*>::setEmpty()")
+
+      _length = 0;
+      }
+
    // Make room for a total of n element
 
    void reserve(uint32_t n);
@@ -143,8 +150,8 @@ public:
 
    // STACK OPERATIONS
 
-   void push(     const void* elem);
-   void push_back(const void* elem) { push(elem); } // add to end
+   void push(     const void* elem) { vec[_length++] = elem; } // add to end
+   void push_back(const void* elem);
 
    const void* last() // return last element
       {
@@ -491,16 +498,14 @@ public:
 
    // STACK OPERATIONS
 
-   void push(const T* elem) // add to end
+   void push_back(const T* elem) // add to end
       {
-      U_TRACE(0, "UVector<T*>::push(%p)", elem)
+      U_TRACE(0, "UVector<T*>::push_back(%p)", elem)
 
       u_construct<T>(&elem, istream_loading);
 
-      UVector<void*>::push(elem);
+      UVector<void*>::push_back(elem);
       }
-
-   void push_back(const T* elem) { push(elem); } 
 
    T* last() // return last element
       {
@@ -858,7 +863,7 @@ public:
             is >> *_elem;
 
             if (is.bad()) is.clear();
-            else          v.push(_elem);
+            else          v.push_back(_elem);
             }
 
          u_destroy<T>((const T*)_elem);
@@ -1025,24 +1030,20 @@ public:
 
    // STACK OPERATIONS
 
-   void push(const UString& str) // add to end
+   void push_back(const UString& str) // add to end
       {
-      U_TRACE(0, "UVector<UString>::push(%V)", str.rep)
+      U_TRACE(0, "UVector<UString>::push_back(%V)", str.rep)
 
-      UVector<UStringRep*>::push(str.rep);
+      UVector<UStringRep*>::push_back(str.rep);
 
       U_INTERNAL_DUMP("str.rep = %p at(%u) = %p", str.rep, _length-1, UVector<UStringRep*>::at(_length-1))
 
       U_ASSERT_EQUALS(str.rep, UVector<UStringRep*>::at(_length-1))
       }
 
-   void push_back(const UString& str) { push(str); } // add to end
+   void push_back(const UStringRep* rep) { UVector<UStringRep*>::push_back(rep); }
 
-   void push(     const UStringRep* rep) { UVector<UStringRep*>::push(rep); }
-   void push_back(const UStringRep* rep) { UVector<UStringRep*>::push(rep); }
-
-   void push(     const char* t, uint32_t tlen) { UString str(t, tlen); push(str); }
-   void push_back(const char* t, uint32_t tlen) { push(t, tlen); }
+   void push_back(const char* t, uint32_t tlen) { UString str(t, tlen); push_back(str); }
 
    UString last() // return last element
       {
@@ -1286,7 +1287,7 @@ public:
       {
       U_TRACE(0, "UVector<UString>::insertAsSet(%V)", str.rep)
 
-      if (empty() || find(str) == U_NOT_FOUND) push(str);
+      if (empty() || find(str) == U_NOT_FOUND) push_back(str);
       }
 
    uint32_t intersection(UVector<UString>& set1, UVector<UString>& set2);

@@ -82,7 +82,7 @@ bool UModProxyService::loadConfig(UFileConfig& cfg)
             {
             UStringRep* r = tmp.UVector<UStringRep*>::at(i);
 
-            UHTTP::vmsg_error->UVector<UStringRep*>::push(r);
+            UHTTP::vmsg_error->UVector<UStringRep*>::push_back(r);
             }
 
          tmp.clear();

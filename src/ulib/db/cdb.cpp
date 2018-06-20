@@ -561,13 +561,13 @@ void UCDB::call1()
          {
          U_INTERNAL_ASSERT_POINTER(ptr_vector)
 
-         ptr_vector->UVector<void*>::push(skey);
+         ptr_vector->UVector<void*>::push_back(skey);
 
          if (U_cdb_add_entry_to_vector(this) == false) goto next;
 
          U_cdb_add_entry_to_vector(this) = false;
 
-         ptr_vector->UVector<void*>::push(sdata);
+         ptr_vector->UVector<void*>::push_back(sdata);
 
          return;
          }
@@ -625,7 +625,7 @@ void UCDB::getKeys2(UCDB* pcdb, char* src)
    U_NEW(UStringRep, skey, UStringRep(src, klen));
 
    if (pcdb->filter_function_to_call(skey, U_NULLPTR) == 0) skey->release();
-   else                                                     pcdb->ptr_vector->UVector<void*>::push(skey);
+   else                                                     pcdb->ptr_vector->UVector<void*>::push_back(skey);
 }
 
 void UCDB::print2(UCDB* pcdb, char* src)
@@ -701,7 +701,7 @@ uint32_t UCDB::getValuesWithKeyNask(UVector<UString>& vec_values, const UString&
 
          U_NEW(UStringRep, rep, UStringRep(tmp - dlen, dlen));
 
-         vec_values.UVector<void*>::push(rep);
+         vec_values.UVector<void*>::push_back(rep);
 
          if (_size) *_size += dlen;
          }

@@ -754,6 +754,7 @@ public:
       U_RETURN(false);
       }
 
+   static bool isRunningInChroot();
    static bool fallocate(int fd, uint32_t n);
    static bool chdir(const char* path, bool flag_save = false);
 

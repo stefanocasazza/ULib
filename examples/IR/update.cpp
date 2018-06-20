@@ -47,7 +47,7 @@ public:
 
       while (lt.next(filename, ','))
          {
-         if (filename.find_first_of("?*", 0, 2) == U_NOT_FOUND) vec.push(filename);
+         if (filename.find_first_of("?*", 0, 2) == U_NOT_FOUND) vec.push_back(filename);
          else
             {
             pos = filename.find_last_of('/');

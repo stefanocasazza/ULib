@@ -1068,7 +1068,7 @@ U_NO_EXPORT void URDB::getKeys1(UCDB* pcdb, uint32_t _offset) // entry present i
       U_NEW(UStringRep, skey, UStringRep((const char*)((ptrdiff_t)journal.map+(ptrdiff_t)RDB_cache_node(n,key.dptr)), RDB_cache_node(n,key.dsize)));
 
       if (UCDB::filter_function_to_call(skey, U_NULLPTR) == 0) skey->release();
-      else                                                     pcdb->UCDB::ptr_vector->UVector<void*>::push(skey);
+      else                                                     pcdb->UCDB::ptr_vector->UVector<void*>::push_back(skey);
       }
    else if (RDB_cache_node(n,data.dsize) != U_NOT_FOUND)
       {

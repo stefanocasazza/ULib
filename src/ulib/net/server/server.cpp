@@ -185,6 +185,11 @@ bool                UServer_Base::enable_rfc1918_filter;
 UVector<UIPAllow*>* UServer_Base::vallow_IP_prv;
 #endif
 
+//#define U_MAX_CONNECTIONS_ACCEPTED_SIMULTANEOUSLY 1
+#ifdef  U_MAX_CONNECTIONS_ACCEPTED_SIMULTANEOUSLY
+static uint32_t max_accepted;
+#endif
+
 #ifdef DEBUG
 #  ifdef USE_LIBEVENT
 #     define U_WHICH "libevent" 
@@ -1525,7 +1530,7 @@ public:
                               }
                            }
 
-                        output.push('\n');
+                        output.push_back('\n');
 
                         (void) U_SYSCALL(write, "%u,%S,%u", UServer_Base::sse_event_fd, U_STRING_TO_PARAM(output));
 
@@ -1555,7 +1560,7 @@ public:
 
                      U_NEW(USSEClient, client, USSEClient(_id.copy(), token, fd, bprocess));
 
-                     UServer_Base::sse_vclient->push(client);
+                     UServer_Base::sse_vclient->push_back(client);
 
                      k += 4;
                      }
@@ -2169,7 +2174,7 @@ void UServer_Base::loadConfigParam()
       }
 #endif
 
-   UString x  = cfg->at(U_CONSTANT_TO_PARAM("SERVER"));
+   UString x = cfg->at(U_CONSTANT_TO_PARAM("SERVER"));
 
    if (x) U_NEW_STRING(server, UString(x));
 
@@ -2207,6 +2212,10 @@ void UServer_Base::loadConfigParam()
    num_client_threshold       = cfg->readLong(U_CONSTANT_TO_PARAM("CLIENT_THRESHOLD"));
    UNotifier::max_connection  = cfg->readLong(U_CONSTANT_TO_PARAM("MAX_KEEP_ALIVE"));
    u_printf_string_max_length = cfg->readLong(U_CONSTANT_TO_PARAM("LOG_MSG_SIZE"));
+
+#ifdef U_MAX_CONNECTIONS_ACCEPTED_SIMULTANEOUSLY
+   max_accepted = USocket::iBackLog;
+#endif
 
 #ifdef USERVER_UDP
    if (budp &&
@@ -2742,7 +2751,7 @@ int UServer_Base::loadPlugins(UString& plugin_dir, const UString& plugin_list)
 
          _plugin = vplugin_static->remove(pos);
 
-         vplugin->push(_plugin);
+         vplugin->push_back(_plugin);
          }
       else
          {
@@ -2754,7 +2763,7 @@ int UServer_Base::loadPlugins(UString& plugin_dir, const UString& plugin_list)
 
          if (_plugin)
             {
-            vplugin->push(_plugin);
+            vplugin->push_back(_plugin);
 
             U_SRV_LOG("Load phase of plugin %V success", item.rep);
             }
@@ -3157,7 +3166,7 @@ next:
 
       socket->cLocalAddress.setLocalHost(UClientImage_Base::bIPv6);
 
-      U_WARNING("getting IP_ADDRESS from system interface fail, we try using localhost");
+      U_WARNING("Getting IP_ADDRESS from system interface fail, we try using localhost");
       }
    else
       {
@@ -3681,7 +3690,7 @@ U_NO_EXPORT void UServer_Base::manageCommand(const char* format, uint32_t fmt_si
    UServer_Base::logCommandMsgError(cmd.data(), true);
 #endif
 
-   if (UCommand::exit_value) U_WARNING("command failed: EXIT_VALUE=%d OUTPUT=%V", UCommand::exit_value, output.rep);
+   if (UCommand::exit_value) U_WARNING("Command failed: EXIT_VALUE=%d OUTPUT=%V", UCommand::exit_value, output.rep);
 
    (void) proc->waitAll();
 }
@@ -3728,6 +3737,10 @@ RETSIGTYPE UServer_Base::handlerForSigTERM(int signo)
 
 #     ifndef U_LOG_DISABLE
          if (isLog()) logMemUsage("SIGTERM");
+#     endif
+
+#     ifdef U_MAX_CONNECTIONS_ACCEPTED_SIMULTANEOUSLY
+         U_WARNING("Max connections accepted simultaneously = %u", USocket::iBackLog - max_accepted);
 #     endif
 
          U_EXIT(0);
@@ -3813,6 +3826,12 @@ int UServer_Base::handlerRead()
    U_INTERNAL_DUMP("nClientIndex = %u", nClientIndex)
 
    U_INTERNAL_ASSERT_MINOR(nClientIndex, UNotifier::max_connection)
+
+#ifndef U_MAX_CONNECTIONS_ACCEPTED_SIMULTANEOUSLY
+   uint32_t accepted = 10;
+#else
+   uint32_t accepted = USocket::iBackLog;
+#endif
 
    // This loops until the accept() fails, trying to start new connections as fast as possible so we don't overrun the listen queue
 
@@ -3963,6 +3982,14 @@ try_accept:
 
 #  if defined(U_EPOLLET_POSTPONE_STRATEGY)
       if (CSOCKET->iState == -EAGAIN) U_ClientImage_state = U_PLUGIN_HANDLER_AGAIN;
+#  endif
+
+#  ifdef U_MAX_CONNECTIONS_ACCEPTED_SIMULTANEOUSLY
+      if (accepted < max_accepted &&
+          CSOCKET->iState == -EAGAIN)
+         {
+         max_accepted = accepted;
+         }
 #  endif
 
       goto end;
@@ -4201,27 +4228,32 @@ next:
    goto end;
 #endif
 
-#if defined(ENABLE_THREAD) && defined(U_SERVER_THREAD_APPROACH_SUPPORT)
-   if (preforked_num_kids != -1)
-#endif
-   {
-   U_INTERNAL_ASSERT_DIFFERS(socket_flags & O_NONBLOCK, 0)
+   U_INTERNAL_DUMP("accepted = %u", accepted)
 
-   U_INTERNAL_DUMP("cround = %u UNotifier::num_connection = %u num_client_threshold = %u", cround, UNotifier::num_connection, num_client_threshold)
-
-   if (num_client_threshold > UNotifier::num_connection) cround = 0;
-   else
+   if (--accepted > 0)
       {
-      cround = 2;
+#  if defined(ENABLE_THREAD) && defined(U_SERVER_THREAD_APPROACH_SUPPORT)
+      if (preforked_num_kids != -1)
+#  endif
+      {
+      U_INTERNAL_ASSERT_DIFFERS(socket_flags & O_NONBLOCK, 0)
 
-      CLIENT_IMAGE = vClientImage;
+      U_INTERNAL_DUMP("cround = %u UNotifier::num_connection = %u num_client_threshold = %u", cround, UNotifier::num_connection, num_client_threshold)
 
-      U_DEBUG("It has passed the client threshold(%u): preallocation(%u) num_connection(%u)",
+      if (num_client_threshold > UNotifier::num_connection) cround = 0;
+      else
+         {
+         cround = 2;
+
+         CLIENT_IMAGE = vClientImage;
+
+         U_DEBUG("It has passed the client threshold(%u): preallocation(%u) num_connection(%u)",
                   num_client_threshold, UNotifier::max_connection, UNotifier::num_connection - UNotifier::min_connection)
-      }
+         }
 
-   goto loop;
-   }
+      goto loop;
+      }
+      }
 
 end:
 #if defined(HAVE_EPOLL_CTL_BATCH) && !defined(USE_LIBEVENT)
@@ -4492,7 +4524,7 @@ void UServer_Base::runLoop(const char* user)
          if ((handle = UDynamic::dload(buffer)) == U_NULLPTR ||
              (runDynamicPage_udp = (vPFi)UDynamic::lookup(handle, "runDynamicPage_udp")) == U_NULLPTR)
             {
-            U_WARNING("load failed of usp page: %.*S", len, buffer);
+            U_WARNING("Load failed of usp page: %.*S", len, buffer);
             }
          else
             {
@@ -4591,6 +4623,11 @@ void UServer_Base::runLoop(const char* user)
 void UServer_Base::run()
 {
    U_TRACE_NO_PARAM(1, "UServer_Base::run()")
+
+   if (UFile::isRunningInChroot())
+      {
+      U_WARNING("We are running inside a chroot");
+      }
 
    init();
 
@@ -4971,7 +5008,7 @@ bool UServer_Base::startParallelization(uint32_t nclient)
 #  ifdef DEBUG
       if (UClient_Base::csocket)
          {
-         U_WARNING("after forking you can have problem with the shared db connection...");
+         U_WARNING("After forking you can have problem with the shared db connection...");
          }
 #  endif
 

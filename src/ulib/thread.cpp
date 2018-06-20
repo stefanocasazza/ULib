@@ -636,7 +636,7 @@ UThreadPool::UThreadPool(uint32_t size) : UThread(PTHREAD_CREATE_DETACHED), pool
          continue;
          }
 
-      pool.push(th);
+      pool.push_back(th);
       }
 
    (void) pthread_attr_destroy(&attr);

@@ -11,11 +11,11 @@ tsa_policy3 = 1.2.3.4.5.7
 default_ca = CA_default
 
 [ CA_default ]
-dir = CA
+dir = .
 certs	= $dir/certs
 crl_dir = $dir/crl
 database	= $dir/index.txt
-new_certs_dir = $dir/newcerts
+new_certs_dir = $dir
 certificate	= $dir/cacert.pem
 serial = $dir/serial
 crlnumber = $dir/crlnumber
@@ -108,7 +108,7 @@ proxyCertInfo = critical,language:id-ppl-anyLanguage,pathlen:3,policy:foo
 default_tsa = tsa_config1
 
 [ tsa_config1 ]
-dir = CA
+dir = .
 serial = $dir/tsaserial
 crypto_device = builtin
 signer_cert = $dir/tsacert.pem

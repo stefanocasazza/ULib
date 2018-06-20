@@ -14,6 +14,7 @@
 
 @SET_MAKE@
 
+
 VPATH = @srcdir@
 am__is_gnu_make = test -n '$(MAKEFILE_LIST)' && test -n '$(MAKELEVEL)'
 am__make_running_with_option = \
@@ -108,16 +109,29 @@ mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = $(top_builddir)/include/ulib/internal/config.h
 CONFIG_CLEAN_FILES = usp_compile.sh
 CONFIG_CLEAN_VPATH_FILES =
+LTLIBRARIES = $(noinst_LTLIBRARIES)
+libFortune_la_LIBADD =
+am_libFortune_la_OBJECTS = libFortune.lo
+libFortune_la_OBJECTS = $(am_libFortune_la_OBJECTS)
+AM_V_lt = $(am__v_lt_@AM_V@)
+am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
+am__v_lt_0 = --silent
+am__v_lt_1 = 
+libFortuneNoSql_la_LIBADD =
+am_libFortuneNoSql_la_OBJECTS = libFortuneNoSql.lo
+libFortuneNoSql_la_OBJECTS = $(am_libFortuneNoSql_la_OBJECTS)
+libWorld_la_LIBADD =
+am_libWorld_la_OBJECTS = libWorld.lo
+libWorld_la_OBJECTS = $(am_libWorld_la_OBJECTS)
+libWorldNoSql_la_LIBADD =
+am_libWorldNoSql_la_OBJECTS = libWorldNoSql.lo
+libWorldNoSql_la_OBJECTS = $(am_libWorldNoSql_la_OBJECTS)
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
 am_usp_translator_OBJECTS = usp_translator.$(OBJEXT)
 usp_translator_OBJECTS = $(am_usp_translator_OBJECTS)
 am__DEPENDENCIES_1 = $(top_builddir)/src/ulib/lib@ULIB@.la
 usp_translator_DEPENDENCIES = $(am__DEPENDENCIES_1)
-AM_V_lt = $(am__v_lt_@AM_V@)
-am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
-am__v_lt_0 = --silent
-am__v_lt_1 = 
 usp_translator_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) $(usp_translator_LDFLAGS) \
@@ -155,8 +169,12 @@ AM_V_CXXLD = $(am__v_CXXLD_@AM_V@)
 am__v_CXXLD_ = $(am__v_CXXLD_@AM_DEFAULT_V@)
 am__v_CXXLD_0 = @echo "  CXXLD   " $@;
 am__v_CXXLD_1 = 
-SOURCES = $(usp_translator_SOURCES)
-DIST_SOURCES = $(usp_translator_SOURCES)
+SOURCES = $(libFortune_la_SOURCES) $(libFortuneNoSql_la_SOURCES) \
+	$(libWorld_la_SOURCES) $(libWorldNoSql_la_SOURCES) \
+	$(usp_translator_SOURCES)
+DIST_SOURCES = $(libFortune_la_SOURCES) $(libFortuneNoSql_la_SOURCES) \
+	$(libWorld_la_SOURCES) $(libWorldNoSql_la_SOURCES) \
+	$(usp_translator_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -375,18 +393,23 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 MAINTAINERCLEANFILES = Makefile.in
-EXTRA_DIST = *.usp usp2so.sh *.h *.cpp README.alldemos usp_compile.sh.in
+EXTRA_DIST = *.usp usp2so.sh *.h *.cpp *.cxx README.alldemos usp_compile.sh.in
 DEFAULT_INCLUDES = -I. -I$(top_srcdir)/include
 ulib_la = @ULIBS@ $(top_builddir)/src/ulib/lib@ULIB@.la
 usp_translator_LDADD = $(ulib_la) @ULIB_LIBS@
 usp_translator_SOURCES = usp_translator.cpp
 usp_translator_LDFLAGS = $(PRG_LDFLAGS)
+libWorld_la_SOURCES = libWorld.cxx
+libWorldNoSql_la_SOURCES = libWorldNoSql.cxx
+libFortune_la_SOURCES = libFortune.cxx
+libFortuneNoSql_la_SOURCES = libFortuneNoSql.cxx
+noinst_LTLIBRARIES = libWorld.la libWorldNoSql.la libFortune.la libFortuneNoSql.la
 @CROSS_COMPILING_FALSE@moduledir = @ULIB_MODULEDIR@/usp
 @CROSS_COMPILING_FALSE@AM_CPPFLAGS = @USP_FLAGS@
 all: all-am
 
 .SUFFIXES:
-.SUFFIXES: .cpp .la .lo .o .obj .usp
+.SUFFIXES: .cpp .cxx .la .lo .o .obj .usp
 $(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am  $(am__configure_deps)
 	@for dep in $?; do \
 	  case '$(am__configure_deps)' in \
@@ -419,6 +442,29 @@ $(ACLOCAL_M4): @MAINTAINER_MODE_TRUE@ $(am__aclocal_m4_deps)
 $(am__aclocal_m4_deps):
 usp_compile.sh: $(top_builddir)/config.status $(srcdir)/usp_compile.sh.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
+
+clean-noinstLTLIBRARIES:
+	-test -z "$(noinst_LTLIBRARIES)" || rm -f $(noinst_LTLIBRARIES)
+	@list='$(noinst_LTLIBRARIES)'; \
+	locs=`for p in $$list; do echo $$p; done | \
+	      sed 's|^[^/]*$$|.|; s|/[^/]*$$||; s|$$|/so_locations|' | \
+	      sort -u`; \
+	test -z "$$locs" || { \
+	  echo rm -f $${locs}; \
+	  rm -f $${locs}; \
+	}
+
+libFortune.la: $(libFortune_la_OBJECTS) $(libFortune_la_DEPENDENCIES) $(EXTRA_libFortune_la_DEPENDENCIES) 
+	$(AM_V_CXXLD)$(CXXLINK)  $(libFortune_la_OBJECTS) $(libFortune_la_LIBADD) $(LIBS)
+
+libFortuneNoSql.la: $(libFortuneNoSql_la_OBJECTS) $(libFortuneNoSql_la_DEPENDENCIES) $(EXTRA_libFortuneNoSql_la_DEPENDENCIES) 
+	$(AM_V_CXXLD)$(CXXLINK)  $(libFortuneNoSql_la_OBJECTS) $(libFortuneNoSql_la_LIBADD) $(LIBS)
+
+libWorld.la: $(libWorld_la_OBJECTS) $(libWorld_la_DEPENDENCIES) $(EXTRA_libWorld_la_DEPENDENCIES) 
+	$(AM_V_CXXLD)$(CXXLINK)  $(libWorld_la_OBJECTS) $(libWorld_la_LIBADD) $(LIBS)
+
+libWorldNoSql.la: $(libWorldNoSql_la_OBJECTS) $(libWorldNoSql_la_DEPENDENCIES) $(EXTRA_libWorldNoSql_la_DEPENDENCIES) 
+	$(AM_V_CXXLD)$(CXXLINK)  $(libWorldNoSql_la_OBJECTS) $(libWorldNoSql_la_LIBADD) $(LIBS)
 install-binPROGRAMS: $(bin_PROGRAMS)
 	@$(NORMAL_INSTALL)
 	@list='$(bin_PROGRAMS)'; test -n "$(bindir)" || list=; \
@@ -479,6 +525,10 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libFortune.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libFortuneNoSql.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libWorld.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libWorldNoSql.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/usp_translator.Po@am__quote@
 
 .cpp.o:
@@ -498,6 +548,30 @@ distclean-compile:
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXXCOMPILE) -c -o $@ `$(CYGPATH_W) '$<'`
 
 .cpp.lo:
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.lo$$||'`;\
+@am__fastdepCXX_TRUE@	$(LTCXXCOMPILE) -MT $@ -MD -MP -MF $$depbase.Tpo -c -o $@ $< &&\
+@am__fastdepCXX_TRUE@	$(am__mv) $$depbase.Tpo $$depbase.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='$<' object='$@' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LTCXXCOMPILE) -c -o $@ $<
+
+.cxx.o:
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.o$$||'`;\
+@am__fastdepCXX_TRUE@	$(CXXCOMPILE) -MT $@ -MD -MP -MF $$depbase.Tpo -c -o $@ $< &&\
+@am__fastdepCXX_TRUE@	$(am__mv) $$depbase.Tpo $$depbase.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXXCOMPILE) -c -o $@ $<
+
+.cxx.obj:
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.obj$$||'`;\
+@am__fastdepCXX_TRUE@	$(CXXCOMPILE) -MT $@ -MD -MP -MF $$depbase.Tpo -c -o $@ `$(CYGPATH_W) '$<'` &&\
+@am__fastdepCXX_TRUE@	$(am__mv) $$depbase.Tpo $$depbase.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXXCOMPILE) -c -o $@ `$(CYGPATH_W) '$<'`
+
+.cxx.lo:
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.lo$$||'`;\
 @am__fastdepCXX_TRUE@	$(LTCXXCOMPILE) -MT $@ -MD -MP -MF $$depbase.Tpo -c -o $@ $< &&\
 @am__fastdepCXX_TRUE@	$(am__mv) $$depbase.Tpo $$depbase.Plo
@@ -595,7 +669,7 @@ distdir: $(DISTFILES)
 	done
 check-am: all-am
 check: check-am
-all-am: Makefile $(PROGRAMS)
+all-am: Makefile $(LTLIBRARIES) $(PROGRAMS)
 installdirs:
 	for dir in "$(DESTDIR)$(bindir)"; do \
 	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
@@ -634,7 +708,7 @@ maintainer-clean-generic:
 clean: clean-am
 
 clean-am: clean-binPROGRAMS clean-generic clean-libtool clean-local \
-	mostlyclean-am
+	clean-noinstLTLIBRARIES mostlyclean-am
 
 distclean: distclean-am
 	-rm -rf ./$(DEPDIR)
@@ -654,7 +728,7 @@ info: info-am
 
 info-am:
 
-install-data-am:
+install-data-am: install-data-local
 
 install-dvi: install-dvi-am
 
@@ -706,19 +780,22 @@ uninstall-am: uninstall-binPROGRAMS
 
 .PHONY: CTAGS GTAGS TAGS all all-am check check-am clean \
 	clean-binPROGRAMS clean-generic clean-libtool clean-local \
-	cscopelist-am ctags ctags-am distclean distclean-compile \
-	distclean-generic distclean-libtool distclean-tags distdir dvi \
-	dvi-am html html-am info info-am install install-am \
-	install-binPROGRAMS install-data install-data-am install-dvi \
-	install-dvi-am install-exec install-exec-am install-html \
-	install-html-am install-info install-info-am install-man \
-	install-pdf install-pdf-am install-ps install-ps-am \
-	install-strip installcheck installcheck-am installdirs \
-	maintainer-clean maintainer-clean-generic mostlyclean \
-	mostlyclean-compile mostlyclean-generic mostlyclean-libtool \
-	pdf pdf-am ps ps-am tags tags-am uninstall uninstall-am \
-	uninstall-binPROGRAMS
+	clean-noinstLTLIBRARIES cscopelist-am ctags ctags-am distclean \
+	distclean-compile distclean-generic distclean-libtool \
+	distclean-tags distdir dvi dvi-am html html-am info info-am \
+	install install-am install-binPROGRAMS install-data \
+	install-data-am install-data-local install-dvi install-dvi-am \
+	install-exec install-exec-am install-html install-html-am \
+	install-info install-info-am install-man install-pdf \
+	install-pdf-am install-ps install-ps-am install-strip \
+	installcheck installcheck-am installdirs maintainer-clean \
+	maintainer-clean-generic mostlyclean mostlyclean-compile \
+	mostlyclean-generic mostlyclean-libtool pdf pdf-am ps ps-am \
+	tags tags-am uninstall uninstall-am uninstall-binPROGRAMS
 
+
+install-data-local:
+	$(MAKE) $(AM_MAKEFLAGS) usp_compile.sh; chmod 777 usp_compile.sh; ${INSTALL} -m 777 usp_compile.sh $(DESTDIR)${bindir}
 
 clean-local:
 	-rm -rf core .libs *.bb* *.da *.la *.exe trace.usp_translator* gmon.out usp_compile.sh

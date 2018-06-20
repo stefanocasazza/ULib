@@ -156,6 +156,7 @@ initialize_fw() {
 
 	$IPTABLES -t filter -N NoCat 2>/dev/null
 	$IPTABLES -t filter -F NoCat
+	$IPTABLES -t filter -A NoCat -p tcp -m state --state INVALID -j DROP
 	for ifacein in $InternalDevice; do
 		for ifaceout in $ExternalDevice; do
 			$IPTABLES -t filter -D FORWARD -i $ifacein  -o $ifaceout -j NoCat 2>/dev/null

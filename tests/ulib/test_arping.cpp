@@ -34,7 +34,7 @@ int U_EXPORT main(int argc, char** argv)
 
       (void) x.assign(device);
 
-      vInternalDevice.push(x);
+      vInternalDevice.push_back(x);
 
       U_NEW(UPing, sockp[i], UPing(3000, false));
 
@@ -52,7 +52,7 @@ int U_EXPORT main(int argc, char** argv)
 
          item->setHostName(x);
 
-         vaddr[i]->push(item);
+         vaddr[i]->push_back(item);
          }
       }
 

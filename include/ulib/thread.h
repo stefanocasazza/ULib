@@ -445,7 +445,7 @@ public:
 
       lock(&tasks_mutex);
 
-      queue.push(task);
+      queue.push_back(task);
 
       unlock(&tasks_mutex);
 

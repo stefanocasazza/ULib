@@ -806,11 +806,11 @@ U_NO_EXPORT void UHTTP::loadStaticLinkedServlet(const char* name, uint32_t len, 
 
    file_data->mime_index = U_usp;
 
-   U_NEW(UHTTP::UServletPage, file_data->ptr, UHTTP::UServletPage(name, len, U_NULL_PTR, 0, runDynamicPage));
+   U_NEW(UHTTP::UServletPage, file_data->ptr, UHTTP::UServletPage(name, len, U_NULLPTR, 0, runDynamicPage));
 
    U_INTERNAL_ASSERT_POINTER(vusp)
 
-   vusp->push_back(file_data->ptr);
+   vusp->push_back((const UHTTP::UServletPage*)file_data->ptr);
 
    UString path(name, len);
 
@@ -4629,16 +4629,21 @@ from_cache:
 
    if (U_http_websocket_len)
       {
-      if (UWebSocket::sendAccept(UServer_Base::csocket) == false)
+      U_INTERNAL_DUMP("UWebSocket::rbuffer = %p", UWebSocket::rbuffer)
+
+      if (UWebSocket::rbuffer == U_NULLPTR ||
+          UWebSocket::sendAccept(UServer_Base::csocket) == false)
          {
          setBadRequest();
+         }
+      else
+         {
+         UClientImage_Base::setRequestNoCache();
 
-         U_RETURN(U_PLUGIN_HANDLER_OK);
+         if (UServer_Base::startParallelization() == false) UWebSocket::handlerRequest(); // child
          }
 
-      UClientImage_Base::setRequestNoCache();
-
-      if (UServer_Base::startParallelization()) U_RETURN(U_PLUGIN_HANDLER_OK); // parent
+      U_RETURN(U_PLUGIN_HANDLER_OK);
       }
 #endif
 
@@ -6982,7 +6987,9 @@ void UHTTP::setRedirectResponse(int mode, const char* ptr_location, uint32_t len
       {
       sz = tmp.size();
 
-      ext->setBuffer(sz + U_CONSTANT_SIZE("Content-Length: 0\r\n\r\n"));
+      uint32_t sz1 = sz + U_CONSTANT_SIZE("Content-Length: 0\r\n\r\n");
+
+      ext->setBuffer(sz1);
 
       char* ptr = ext->data();
 
@@ -6993,7 +7000,7 @@ void UHTTP::setRedirectResponse(int mode, const char* ptr_location, uint32_t len
       u_put_unalignedp64(ptr+8,  U_MULTICHAR_CONSTANT64('L','e','n','g','t','h',':',' '));
       u_put_unalignedp64(ptr+16, U_MULTICHAR_CONSTANT64('0','\r','\n','\r','\n','\0','\0','\0'));
 
-      ext->size_adjust(sz);
+      ext->size_adjust_constant(sz1);
 
       UClientImage_Base::body->clear(); // clean body to avoid writev() in response...
 
@@ -9946,7 +9953,7 @@ bool UHTTP::getCGIEnvironment(UString& environment, int type)
          if (file_data &&
              u_is_cgi(file_data->mime_index))
             {
-            (void) buffer.push('/');
+            (void) buffer.push_back('/');
 
             (void) buffer.append(((UHTTP::ucgi*)file_data->ptr)->dir);
             }
@@ -10907,7 +10914,7 @@ U_NO_EXPORT int UHTTP::checkGetRequestForRange(const char* pdata)
          cur->end   = cur_end;
          cur->start = cur_start;
 
-         array.push(cur);
+         array.push_back(cur);
          }
       }
 

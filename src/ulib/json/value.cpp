@@ -250,7 +250,7 @@ uint32_t UValue::getMemberNames(UVector<UString>& members) const
 
          U_INTERNAL_DUMP("element->pkey(%p) = %V", rep, rep)
 
-         members.push(rep);
+         members.push_back(rep);
 
          element = element->next;
          }

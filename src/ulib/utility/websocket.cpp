@@ -11,6 +11,7 @@
 //
 // ============================================================================
 
+#include <ulib/command.h>
 #include <ulib/utility/uhttp.h>
 #include <ulib/utility/services.h>
 #include <ulib/utility/websocket.h>
@@ -41,14 +42,28 @@
 #define U_WS_GUID_LEN 36
 
 int         UWebSocket::status_code;
+int         UWebSocket::fd_stderr;
 int         UWebSocket::message_type;
+vPFi        UWebSocket::on_message;
 UString*    UWebSocket::rbuffer;
 UString*    UWebSocket::message;
+UString*    UWebSocket::penvironment;
 uint32_t    UWebSocket::max_message_size;
+UCommand*   UWebSocket::command;
 const char* UWebSocket::upgrade_settings;
+
+UWebSocket::uwrec*                UWebSocket::rec;
+URDBObjectHandler<UDataStorage*>* UWebSocket::db;
 
 UWebSocket::WebSocketFrameData UWebSocket::control_frame = { U_NULLPTR, 0, 1, 8, 0 };
 UWebSocket::WebSocketFrameData UWebSocket::message_frame = { U_NULLPTR, 0, 1, 0, 0 };
+
+RETSIGTYPE UWebSocket::handlerForSigTERM(int signo)
+{
+   U_TRACE(0, "[SIGTERM] UWebSocket::handlerForSigTERM(%d)", signo)
+
+   UInterrupt::sendOurselves(SIGTERM);
+}
 
 void UWebSocket::checkForInitialData()
 {
@@ -667,4 +682,133 @@ bool UWebSocket::sendControlFrame(USocket* socket, int opcode, const unsigned ch
    if (USocketExt::write(socket, (const char*)header, ncount, UServer_Base::timeoutMS) == ncount) U_RETURN(true);
 
    U_RETURN(false);
+}
+
+void UWebSocket::handlerRequest()
+{
+   U_TRACE_NO_PARAM(0, "UWebSocket::handlerRequest()")
+
+   U_INTERNAL_ASSERT_POINTER(rbuffer)
+   U_INTERNAL_ASSERT_MAJOR(U_http_websocket_len, 0)
+
+   int fdmax = 0; // NB: to avoid 'warning: fdmax may be used uninitialized in this function'...
+   fd_set fd_set_read, read_set;
+
+   checkForInitialData(); // check if we have read more data than necessary...
+
+   if (command == U_NULLPTR)
+      {
+      on_message(U_DPAGE_OPEN);
+
+      goto data;
+      }
+
+   // Set environment for the command application server
+
+   penvironment->setBuffer(U_CAPACITY);
+
+   (void) penvironment->append(command->getStringEnvironment());
+
+   if (UHTTP::getCGIEnvironment(*penvironment, U_GENERIC) == false) return;
+
+   command->setEnvironment(penvironment);
+
+   if (command->execute((UString*)-1, (UString*)-1, -1, fd_stderr))
+      {
+      U_SRV_LOG_CMD_MSG_ERR(*command, true);
+
+      UInterrupt::setHandlerForSignal(SIGTERM, (sighandler_t)handlerForSigTERM); // sync signal
+      }
+
+   FD_ZERO(&fd_set_read);
+   FD_SET(UProcess::filedes[2], &fd_set_read);
+   FD_SET(UServer_Base::csocket->iSockDesc, &fd_set_read);
+
+   fdmax = U_max(UServer_Base::csocket->iSockDesc, UProcess::filedes[2]) + 1;
+
+loop:
+   read_set = fd_set_read;
+
+   if (U_SYSCALL(select, "%d,%p,%p,%p,%p", fdmax, &read_set, U_NULLPTR, U_NULLPTR, U_NULLPTR) > 0)
+      {
+      if (FD_ISSET(UProcess::filedes[2], &read_set))
+         {
+         rbuffer->setEmpty();
+
+         if (UServices::read(UProcess::filedes[2], *rbuffer) &&
+             sendData(UServer_Base::csocket, message_type, *rbuffer))
+            {
+            rbuffer->setEmpty();
+
+            goto loop;
+            }
+         }
+      else if (FD_ISSET(UServer_Base::csocket->iSockDesc, &read_set))
+         {
+data:    if (handleDataFraming(UServer_Base::csocket) == U_WS_STATUS_CODE_OK)
+            {
+            if (command == U_NULLPTR)
+               {
+               on_message(0);
+
+               if (U_http_info.nResponseCode != HTTP_INTERNAL_ERROR)
+                  {
+                  rbuffer->setEmpty();
+
+                  goto data;
+                  }
+               }
+            else if (UNotifier::write(UProcess::filedes[1], U_STRING_TO_PARAM(*UClientImage_Base::wbuffer)))
+               {
+               rbuffer->setEmpty();
+
+               goto loop;
+               }
+            }
+         }
+      }
+
+   // Send server-side closing handshake
+
+   if (UServer_Base::csocket->isOpen() &&
+       sendClose(UServer_Base::csocket))
+      {
+      UClientImage_Base::close();
+      }
+   else
+      {
+      UClientImage_Base::setRequestProcessed();
+      }
+
+   if (command == U_NULLPTR) on_message(U_DPAGE_CLOSE);
+}
+
+// DB
+
+void UWebSocket::initDb()
+{
+   U_TRACE_NO_PARAM(0, "UWebSocket::initDb()")
+
+   U_INTERNAL_ASSERT_EQUALS(db, U_NULLPTR)
+
+   U_NEW(URDBObjectHandler<UDataStorage*>, db, URDBObjectHandler<UDataStorage*>(U_STRING_FROM_CONSTANT("../db/WebSocket"), -1, &rec, true));
+
+   // POSIX shared memory object: interprocess - can be used by unrelated processes (userver_tcp and userver_ssl)
+
+   if (db->open(128 * U_1M, false, true, true, U_SHM_LOCK_WEBSOCK)) // NB: we don't want truncate (we have only the journal)...
+      {
+      U_SRV_LOG("db WebSocket initialization success: size(%u)", db->size());
+
+      URDB::initRecordLock();
+
+      db->reset(); // Initialize the db to contain no entries
+      }
+   else
+      {
+      U_SRV_LOG("WARNING: db WebSocket initialization failed");
+
+      U_DELETE(db)
+
+      db = U_NULLPTR;
+      }
 }

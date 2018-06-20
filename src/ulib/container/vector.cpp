@@ -19,9 +19,9 @@
 
 bool UVector<void*>::istream_loading;
 
-void UVector<void*>::push(const void* elem) // add to end
+void UVector<void*>::push_back(const void* elem) // add to end
 {
-   U_TRACE(0, "UVector<void*>::push(%p)", elem)
+   U_TRACE(0, "UVector<void*>::push_back(%p)", elem)
 
    U_CHECK_MEMORY
 
@@ -44,7 +44,7 @@ void UVector<void*>::push(const void* elem) // add to end
       UMemoryPool::_free(old_vec, old_capacity, sizeof(void*));
       }
 
-   vec[_length++] = elem;
+   push(elem);
 }
 
 void UVector<void*>::move(UVector<void*>& source) // add to end and reset source
@@ -521,7 +521,7 @@ uint32_t UVector<UString>::split(const UString& str, const char* delim)
 
          U_INTERNAL_DUMP("r = %V", r)
 
-         UVector<void*>::push(r);
+         UVector<void*>::push_back(r);
          }
       }
 
@@ -564,7 +564,7 @@ uint32_t UVector<UString>::split(const char* s, uint32_t len, const char* delim)
 
          U_INTERNAL_DUMP("r = %V", r)
 
-         UVector<void*>::push(r);
+         UVector<void*>::push_back(r);
          }
       }
 
@@ -615,7 +615,7 @@ uint32_t UVector<UString>::split(const UString& str, char delim)
 
       r = str.rep->substr(p, s - p);
 
-      UVector<void*>::push(r);
+      UVector<void*>::push_back(r);
 
       ++s;
       }
@@ -667,7 +667,7 @@ uint32_t UVector<UString>::split(const char* s, uint32_t len, char delim)
       len = s++ - p;
       r   = UStringRep::create(len, len, p);
 
-      UVector<void*>::push(r);
+      UVector<void*>::push_back(r);
       }
 
    U_RETURN(_length - n);
@@ -696,7 +696,7 @@ uint32_t UVector<UString>::intersection(UVector<UString>& set1, UVector<UString>
       {
       elem = set1.at(i);
 
-      if (set2.find(elem) != U_NOT_FOUND) push(elem);
+      if (set2.find(elem) != U_NOT_FOUND) push_back(elem);
       }
 
    U_RETURN(_length - n);
@@ -954,7 +954,7 @@ uint32_t UVector<UString>::loadFromData(const char* ptr, uint32_t sz)
          str.setFromData(&ptr, _end - ptr, terminator);
          }
 
-      push(str);
+      push_back(str);
       }
 
    U_INTERNAL_ASSERT((uint32_t)(ptr-lstart) <= sz)
@@ -1014,7 +1014,7 @@ U_EXPORT istream& operator>>(istream& is, UVector<UString>& v)
 
             str.get(is);
 
-            v.push(str);
+            v.push_back(str);
             }
 
          if (c == EOF) is.setstate(ios::eofbit);

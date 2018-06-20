@@ -25,6 +25,7 @@
 #endif
 
 bool                  UOrmDriver::bexit;
+bool                  UOrmDriver::basync_pipeline_mode_avaliable;
 uint32_t              UOrmDriver::vdriver_size;
 uint32_t              UOrmDriver::env_driver_len;
 UString*              UOrmDriver::driver_dir;
@@ -190,7 +191,14 @@ bool UOrmDriver::loadDriver(const UString& dir, const UString& driver_list)
       env_driver = (const char*) U_SYSCALL(getenv, "%S", "ORM_DRIVER");
       env_option = (const char*) U_SYSCALL(getenv, "%S", "ORM_OPTION");
 
-      if (env_driver) env_driver_len = u__strlen(env_driver, __PRETTY_FUNCTION__);
+      if (env_driver)
+         {
+         env_driver_len = u__strlen(env_driver, __PRETTY_FUNCTION__);
+
+#     if defined(USE_PGSQL) && defined(U_STATIC_ORM_DRIVER_PGSQL)
+         if (isPGSQL()) basync_pipeline_mode_avaliable = true; // PostgresSQL v3 extended query protocol
+#     endif
+         }
       }
 #  endif
 
@@ -669,6 +677,7 @@ const char* USqlStatement::dump(bool _reset) const
                   << "num_row_result                             " << num_row_result  << '\n'
                   << "num_bind_param                             " << num_bind_param  << '\n'
                   << "num_bind_result                            " << num_bind_result << '\n'
+                  << "asyncPipelineHandlerResult                 " << (void*)asyncPipelineHandlerResult << '\n'
                   << "vparam  (UVector<USqlStatementBindParam*>  " << (void*)&vparam  << ")\n"
                   << "vresult (UVector<USqlStatementBindResult*> " << (void*)&vresult << ')';
 

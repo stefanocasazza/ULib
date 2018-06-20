@@ -419,7 +419,8 @@ http {
 # COMMAND                     command (alternative to USP modsocket) to execute
 # ENVIRONMENT environment for command (alternative to USP modsocket) to execute
 #
-# MAX_MESSAGE_SIZE Maximum size (in bytes) of a message to accept; default is approximately 4GB
+# ENABLE_DB		    enable db management for web socket
+# MAX_MESSAGE_SIZE maximum size (in bytes) of a message to accept; default is approximately 4GB
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 #
 # socket {
@@ -427,6 +428,7 @@ http {
 #  ENVIRONMENT "UTRACE=0 5M 0"
 #  COMMAND my_websocket.sh
  
+#  ENABLE_DB yes
 #  MAX_MESSAGE_SIZE 100K
 # }
 

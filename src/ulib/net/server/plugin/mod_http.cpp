@@ -554,17 +554,35 @@ int UHttpPlugIn::handlerRun() // NB: we use this method instead of handlerInit()
 
    if (UServer_Base::vplugin_name->last() == *UString::str_http) // NB: we can shortcut the http request processing...
       {
+      uint32_t vplugin_size = UServer_Base::vplugin_size;
+
+      U_INTERNAL_ASSERT_EQUALS(UServer_Base::vplugin_name->size(), vplugin_size)
+
+      for (uint32_t i = 0; i < vplugin_size-1; ++i)
+         {
+         UStringRep* r = UServer_Base::vplugin_name->UVector<UStringRep*>::at(i);
+
+         if (r->equal(U_CONSTANT_TO_PARAM("socket")))
+            {
+            --vplugin_size;
+
+            break;
+            }
+         }
+
+      U_INTERNAL_DUMP("vplugin_size = %u", vplugin_size)
+
 #  ifndef U_LOG_DISABLE
       if (UServer_Base::isLog())
          {
-                                              UClientImage_Base::callerHandlerRead    = UHTTP::handlerREADWithLog;
-         if (UServer_Base::vplugin_size == 1) UClientImage_Base::callerHandlerRequest = UHTTP::processRequestWithLog;
+                                UClientImage_Base::callerHandlerRead    = UHTTP::handlerREADWithLog;
+         if (vplugin_size == 1) UClientImage_Base::callerHandlerRequest = UHTTP::processRequestWithLog;
          }
       else
 #  endif
       {
-                                           UClientImage_Base::callerHandlerRead    = UHTTP::handlerREAD;
-      if (UServer_Base::vplugin_size == 1) UClientImage_Base::callerHandlerRequest = UHTTP::processRequest;
+                             UClientImage_Base::callerHandlerRead    = UHTTP::handlerREAD;
+      if (vplugin_size == 1) UClientImage_Base::callerHandlerRequest = UHTTP::processRequest;
       }
       }
 

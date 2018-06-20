@@ -18,6 +18,9 @@ static UString* allowed_web_hosts;
 static UFile* file_LOG;
 static UFile* file_WARNING;
 
+static UVector<UString>* vmac;
+static UVector<UString>* vapID;
+
 static UREDISClient_Base* rc;
 static UHttpClient<UTCPSocket>* client;
 
@@ -225,6 +228,9 @@ static void usp_init_wi_auth2()
    U_NEW_STRING(key_session, UString);
    U_NEW_STRING(policySessionId, UString);
 
+   U_NEW(UVector<UString>, vmac,  UVector<UString>);
+   U_NEW(UVector<UString>, vapID, UVector<UString>);
+
    U_NEW(UFile, file_LOG,     UFile(U_STRING_FROM_CONSTANT("../log/wifi-log")));
    U_NEW(UFile, file_WARNING, UFile(U_STRING_FROM_CONSTANT("../log/wifi-warning")));
 
@@ -298,6 +304,9 @@ static void usp_end_wi_auth2()
    U_DELETE(key_session)
    U_DELETE(policySessionId)
    U_DELETE(allowed_web_hosts)
+
+   U_DELETE(vmac);
+   U_DELETE(vapID);
 
    U_DELETE(db_anagrafica)
 
@@ -463,13 +472,13 @@ static bool setAccessPoint()
    U_RETURN(true);
 }
 
-static inline void setSessionkey(const UString& lmac)
+static inline void setSessionKey(const UString& lmac, const UString& label)
 {
-   U_TRACE(5, "::setSessionkey(%V)", lmac.rep)
+   U_TRACE(5, "::setSessionKey(%V,%V)", lmac.rep, label.rep)
 
-   U_INTERNAL_ASSERT(u_isXMacAddr(U_STRING_TO_PARAM(lmac)))
+   U_ASSERT(lmac.isXMacAddr())
 
-   key_session->setBuffer(200U); key_session->snprintf(U_CONSTANT_TO_PARAM("captiveId:%u;apId:%v;deviceId:%v;ip:%v"), addr, ap_label->rep, lmac.rep, ip->rep);
+   key_session->setBuffer(200U); key_session->snprintf(U_CONSTANT_TO_PARAM("captiveId:%u;apId:%v;deviceId:%v;ip:%v"), addr, label.rep, lmac.rep, ip->rep);
 }
 
 static void setSessionPolicy()
@@ -569,16 +578,36 @@ static bool getSession(const char* op, uint32_t op_len)
    U_RETURN(false);
 }
 
-static uint32_t getApInfo(char* buffer)
+static bool getSession(const UString& lmac, const UString& label, const char* op, uint32_t op_len)
 {
-   U_TRACE(5, "::getApInfo(%p)", buffer)
+   U_TRACE(5, "::getSession((%V,%V,%.*S,%u)", lmac.rep, label.rep, op_len, op, op_len)
 
-   return u__snprintf(buffer, 1024, U_CONSTANT_TO_PARAM("%v@%v/%v"), ap_label->rep, ap_address->rep, ap_hostname->rep);
+   U_INTERNAL_ASSERT(label)
+
+   if (u_isXMacAddr(U_STRING_TO_PARAM(lmac)) == false)
+      {
+      U_LOGGER("*** we have a wrong old MAC(%V) ***", lmac.rep);
+      }
+   else
+      {
+      setSessionKey(lmac, label);
+
+      if (getSession(op, op_len)) U_RETURN(true);
+      }
+
+   U_RETURN(false);
 }
 
-static void writeToLOG(const char* op, uint32_t op_len, const UString& opt)
+static uint32_t getApInfo(const UString& label, char* buffer)
 {
-   U_TRACE(5, "::writeToLOG(%.*S,%u,%V)", op_len, op, op_len, opt.rep)
+   U_TRACE(5, "::getApInfo(%V,%p)", label.rep, buffer)
+
+   return u__snprintf(buffer, 1024, U_CONSTANT_TO_PARAM("%v@%v/%v"), label.rep, ap_address->rep, ap_hostname->rep);
+}
+
+static void writeToLOG(const UString& label, const char* op, uint32_t op_len, const UString& opt)
+{
+   U_TRACE(5, "::writeToLOG(%V,%.*S,%u,%V)", label.rep, op_len, op, op_len, opt.rep)
 
    U_INTERNAL_ASSERT_POINTER(op)
    U_INTERNAL_ASSERT_MAJOR(op_len, 0)
@@ -587,24 +616,24 @@ static void writeToLOG(const char* op, uint32_t op_len, const UString& opt)
 
    // 11/02/18 04:14:21 op: PERMIT, mac: 20:ee:28:d0:38:93, ip: 172.22.155.28, ap: 61@151.11.47.8/CareggiConc-x86_64, policy: FLAT|no_consume|notify
    // 11/02/18 04:14:21 op: NOTIFIED, mac: 20:ee:28:d0:38:93, ip: 172.22.155.28, ap: 61@151.11.47.8/CareggiConc-x86_64, policy: FLAT|no_consume|notify
-   // 11/02/18 04:14:21 op: RST_POLICY, mac: 20:ee:28:d0:38:93, ip: 172.22.155.28, ap: 61@151.11.47.8/CareggiConc-x86_64, policy: DAILY|consume|notify, traffic: 100
+   // 11/02/18 04:14:21 op: RST_SESSION, mac: 20:ee:28:d0:38:93, ip: 172.22.155.28, ap: 61@151.11.47.8/CareggiConc-x86_64, policy: DAILY|consume|notify, traffic: 100
    // 11/02/18 04:14:21 op: DENY_NO_TRAFFIC, mac: 20:ee:28:d0:38:93, ip: 172.22.155.28, ap: 61@151.11.47.8/CareggiConc-x86_64, policy: FLAT|consume|notify, traffic: 100, elapsed: 10
 
    ULog::log(file_LOG->getFd(),
              U_CONSTANT_TO_PARAM("op: %.*s, mac: %v, ip: %v, ap: %.*s, policy: %v|%.*sconsume|%snotify%v"),
-             op_len, op, mac->rep, ip->rep, getApInfo(buffer), buffer, policySessionId->rep, (ap_consume ? 0 : 3), "no_", (policySessionNotify == 0 ? ""   :
-                                                                                                                 policySessionNotify == 1 ? "no_" : "strict_"), opt.rep);
+             op_len, op, mac->rep, ip->rep, getApInfo(label, buffer), buffer, policySessionId->rep, (ap_consume ? 0 : 3), "no_", (policySessionNotify == 0 ? ""     :
+                                                                                                                           policySessionNotify == 1 ? "no_" : "strict_"), opt.rep);
 }
 
-static void writeSessionToLOG(const char* op, uint32_t op_len)
+static void writeSessionToLOG(const UString& label, const char* op, uint32_t op_len)
 {
-   U_TRACE(5, "::writeSessionToLOG(%.*S,%u)", op_len, op, op_len)
+   U_TRACE(5, "::writeSessionToLOG(%V,%.*S,%u)", label.rep, op_len, op, op_len)
 
    UString opt(200U);
 
    opt.snprintf(U_CONSTANT_TO_PARAM(", traffic: %llu, elapsed: %u"), counter/1024, (u_now->tv_sec-created)/60);
 
-   writeToLOG(op, op_len, opt);
+   writeToLOG(label, op, op_len, opt);
 }
 
 static void deleteSession()
@@ -671,6 +700,8 @@ static bool getDataFromPOST(bool bpeer)
    // $2 -> mac
    // $3 -> ip
    // $4 -> peer
+   // $5 -> old_label
+   // $6 -> old_mac
 
     ip->clear();
    mac->clear();
@@ -691,53 +722,105 @@ static bool getDataFromPOST(bool bpeer)
       *mac = vec.AsVectorGet<UString>(1);
       *ip  = vec.AsVectorGet<UString>(2);
 
-      U_INTERNAL_ASSERT(u_isIPv4Addr(U_STRING_TO_PARAM(*ip)))
-      U_INTERNAL_ASSERT(u_isXMacAddr(U_STRING_TO_PARAM(*mac)))
+      U_ASSERT(ip->isIPv4Addr())
+      U_ASSERT(mac->isXMacAddr())
 
-      if (bpeer == false) setSessionPolicy();
-      else
+      if (bpeer)
          {
          peer = (void*) vec.AsVectorGet<uint64_t>(3);
 
-         UString   mac_old = vec.AsVectorGet<UString>(4),
-                 label_old = vec.AsVectorGet<UString>(5);
+         UString mac_old = vec.AsVectorGet<UString>(5);
 
          if (mac_old)
             {
-            setSessionkey(mac_old);
+            if (u_isXMacAddr(U_STRING_TO_PARAM(mac_old)) == false)
+               {
+               U_LOGGER("*** we have a change with a wrong old MAC(%V) ***", mac_old.rep);
 
-            if (getSession(U_CONSTANT_TO_PARAM("getDataFromPOST(true)")))
+               U_RETURN(false);
+               }
+
+            UString label_old = vec.AsVectorGet<UString>(4);
+
+         // U_LOGGER("*** we have a change: MAC(%V) LABEL(%V) ***", mac_old.rep, label_old.rep);
+
+            if (getSession(mac_old, label_old, U_CONSTANT_TO_PARAM("getDataFromPOST(true)")))
                {
                deleteSession();
 
-               writeSessionToLOG(U_CONSTANT_TO_PARAM("DENY_NO_TRAFFIC"));
+               writeSessionToLOG(label_old, U_CONSTANT_TO_PARAM("DENY_NO_TRAFFIC"));
                }
             }
-
-         setSessionPolicy();
-
-         ok = checkDevice();
          }
+
+      setSessionPolicy();
+
+      ok = checkDevice();
       }
 
    U_RETURN(ok);
+}
+
+static void addToLogout(const UString& label)
+{
+   U_TRACE(5, "::addToLogout(%V)", label.rep)
+
+   // $1 -> ip
+   // $2 -> mac
+   // $3 -> apId
+
+   U_INTERNAL_DUMP("idx = %u", idx)
+
+   U_INTERNAL_ASSERT(*mac)
+   U_INTERNAL_ASSERT(label)
+   U_ASSERT(mac->isXMacAddr())
+
+   vec_logout[idx++] = ip_peer;
+
+    vmac->push_back(*mac);
+   vapID->push_back(label);
+
+   U_ASSERT_EQUALS( vmac->size(), idx)
+   U_ASSERT_EQUALS(vapID->size(), idx)
 }
 
 static void sendLogoutToNodog()
 {
    U_TRACE_NO_PARAM(5, "::sendLogoutToNodog()")
 
+   U_ASSERT_EQUALS( vmac->size(), idx)
+   U_ASSERT_EQUALS(vapID->size(), idx)
    U_INTERNAL_ASSERT_RANGE(1,idx,sizeof(vec_logout))
 
-   vec_logout[idx] = 0; // sentinel
-
    UFlatBufferSpaceMedium space;
+   UFlatBuffer fb;
+
+   // $1 -> ip
+   // $2 -> mac
+   // $3 -> apId
+
+   fb.StartBuild();
+   (void) fb.StartVector();
+
+   for (uint32_t i = 0; i < idx; ++i)
+      {
+      fb.IPAddress(vec_logout[i]);
+
+      fb.String( vmac->at(i));
+      fb.String(vapID->at(i));
+      }
+
+   fb.EndVector(0, false);
+   (void) fb.EndBuild();
 
    U_SRV_LOG("send request to nodog to logout %u users", idx);
 
-   (void) sendRequestToNodog(U_CONSTANT_TO_PARAM("logout"), UFlatBuffer::fromVectorInt(vec_logout));
+   (void) sendRequestToNodog(U_CONSTANT_TO_PARAM("logout"), fb.getResult());
 
    idx = 0;
+
+    vmac->clear();
+   vapID->clear();
 }
 
 static void lostSession(int bclean)
@@ -746,21 +829,19 @@ static void lostSession(int bclean)
 
    if (getSession(U_CONSTANT_TO_PARAM("lostSession")))
       {
-      *ip = rc->getString(9);
+       *ip = rc->getString(9);
+      *mac = rc->getString(8);
 
-      if (u_isIPv4Addr(U_STRING_TO_PARAM(*ip)) == false)
+      if (u_isIPv4Addr(U_STRING_TO_PARAM(*ip))  == false ||
+          u_isXMacAddr(U_STRING_TO_PARAM(*mac)) == false)
          {
          (void) rc->del(U_CONSTANT_TO_PARAM("SESSION:%v"), key_session->rep);
          (void) rc->zrem(U_CONSTANT_TO_PARAM("SESSION:byLastUpdate %v"), key_session->rep);
 
-         U_LOGGER("*** SESSION(%V) have a wrong ip: %V ***", key_session->rep, ip->rep);
+         U_LOGGER("*** SESSION(%V) have a wrong IP(%V) or MAC(%V) ***", key_session->rep, ip->rep, mac->rep);
 
          return;
          }
-
-      *mac = rc->getString(8);
-
-      U_INTERNAL_ASSERT(u_isXMacAddr(U_STRING_TO_PARAM(*mac)))
 
       if (bclean)
          {
@@ -775,7 +856,7 @@ static void lostSession(int bclean)
 
          (void) rc->hmget(U_CONSTANT_TO_PARAM("CAPTIVE:id:%u ip name"), addr);
 
-         U_INTERNAL_DUMP("idx = %u old_addr = %u", idx, old_addr)
+         U_INTERNAL_DUMP("idx = %u addr = %u old_addr = %u", idx, addr, old_addr)
 
          if (old_addr != addr)
             {
@@ -787,12 +868,12 @@ static void lostSession(int bclean)
          *ap_address  = rc->getString(0);
          *ap_hostname = rc->getString(1);
 
-         (void) UIPAddress::getBinaryForm(ip->c_str(), ip_peer, true);
+         (void) UIPAddress::getBinaryForm(ip->c_str(), ip_peer);
 
-         vec_logout[idx++] = ntohl(ip_peer);
+         addToLogout(*ap_label);
          }
 
-      writeSessionToLOG(U_CONSTANT_TO_PARAM("DENY_LOST"));
+      writeSessionToLOG(*ap_label, U_CONSTANT_TO_PARAM("DENY_LOST"));
 
       deleteSession();
       }
@@ -833,44 +914,16 @@ static void GET_anagrafica()
       }
 }
 
-static void GET_clean()
+static void GET_checkCaptive()
 {
-   U_TRACE_NO_PARAM(5, "::GET_clean()")
+   U_TRACE_NO_PARAM(5, "::GET_checkCaptive()")
 
    if (UServer_Base::isLocalHost() == false) UHTTP::setBadRequest();
    else
       {
-      uint32_t i, n, last_update = u_now->tv_sec - U_CLEAN_INTERVAL;
+      (void) rc->zrangebyscore(U_CONSTANT_TO_PARAM("CAPTIVE:byLastUpdate 0 %u"), u_now->tv_sec - U_CLEAN_INTERVAL);
 
-      old_addr = 0;
-
-      (void) rc->zrangebyscore(U_CONSTANT_TO_PARAM("SESSION:byLastUpdate 0 %u"), last_update);
-
-      n = rc->vitem.size();
-
-      if (n)
-         {
-         UVector<UString> vec(n);
-
-         vec.copy(rc->vitem);
-
-         for (i = 0; i < n; ++i)
-            {
-            *key_session = vec[i];
-
-            lostSession(1);
-            }
-         }
-
-      (void) rc->scan(sessionClean, U_CONSTANT_TO_PARAM("SESSION:captiveId:*"));
-
-      U_INTERNAL_DUMP("idx = %u", idx)
-
-      if (idx) sendLogoutToNodog();
-
-      (void) rc->zrangebyscore(U_CONSTANT_TO_PARAM("CAPTIVE:byLastUpdate 0 %u"), last_update);
-
-      n = rc->vitem.size();
+      uint32_t n = rc->vitem.size();
 
       if (n)
          {
@@ -880,7 +933,7 @@ static void GET_clean()
 
          vec.copy(rc->vitem);
 
-         for (i = 0; i < n; ++i)
+         for (uint32_t i = 0; i < n; ++i)
             {
             *ap_address = vec[i];
 
@@ -918,6 +971,56 @@ static void GET_clean()
             (void) rc->hmset(U_CONSTANT_TO_PARAM("CAPTIVE:id:%u status %c"), addr, status);
             }
          }
+      }
+}
+
+static void GET_clean()
+{
+   U_TRACE_NO_PARAM(5, "::GET_clean()")
+
+   if (UServer_Base::isLocalHost() == false) UHTTP::setBadRequest();
+   else
+      {
+      old_addr = 0;
+
+      (void) rc->zrangebyscore(U_CONSTANT_TO_PARAM("SESSION:byLastUpdate 0 %u"), u_now->tv_sec - U_CLEAN_INTERVAL);
+
+      uint32_t n = rc->vitem.size();
+
+      if (n)
+         {
+         UVector<UString> vec(n);
+
+         vec.copy(rc->vitem);
+
+         for (uint32_t i = 0; i < n; ++i)
+            {
+            *key_session = vec[i];
+
+            lostSession(1);
+            }
+         }
+
+      U_INTERNAL_DUMP("idx = %u", idx)
+
+      if (idx) sendLogoutToNodog();
+      }
+}
+
+static void GET_cleanSession()
+{
+   U_TRACE_NO_PARAM(5, "::GET_cleanSession()")
+
+   if (UServer_Base::isLocalHost() == false) UHTTP::setBadRequest();
+   else
+      {
+      old_addr = 0;
+
+      (void) rc->scan(sessionClean, U_CONSTANT_TO_PARAM("SESSION:captiveId:*"));
+
+      U_INTERNAL_DUMP("idx = %u", idx)
+
+      if (idx) sendLogoutToNodog();
       }
 }
 
@@ -1012,6 +1115,64 @@ static void GET_get_config()
    UHTTP::setResponseBody(body);
 }
 
+static void GET_logout()
+{
+   U_TRACE_NO_PARAM(5, "::GET_logout()")
+
+   if (UServer_Base::isLocalHost() == false) UHTTP::setBadRequest();
+   else
+      {
+      // $1 -> ap (with localization => '@')
+      // $2 -> ip
+      // $3 -> mac
+
+      if (UHTTP::processForm() == 3*2)
+         {
+          ip->clear();
+          ap->clear();
+         mac->clear();
+
+         UHTTP::getFormValue(*ap, U_CONSTANT_TO_PARAM("ap"), 0, 1, 6);
+
+         if (setAccessPoint())
+            {
+            UHTTP::getFormValue(*ip, U_CONSTANT_TO_PARAM("ip"), 0, 3, 6);
+
+            if (ip->isIPv4Addr())
+               {
+               UHTTP::getFormValue(*mac, U_CONSTANT_TO_PARAM("mac"), 0, 5, 6);
+
+               if (mac->isMacAddr())
+                  {
+                  char buffer[16];
+
+                  u_getXMAC(mac->data(), buffer);
+
+                  (void) mac->replace(buffer, 12);
+                  }
+
+               U_ASSERT(mac->isXMacAddr())
+
+               if (getSession(*mac, *ap_label, U_CONSTANT_TO_PARAM("GET_logout")))
+                  {
+                  (void) UIPAddress::getBinaryForm(ip->c_str(), ip_peer);
+
+                  idx = 0;
+
+                  addToLogout(*ap_label);
+
+                  sendLogoutToNodog();
+
+                  writeSessionToLOG(*ap_label, U_CONSTANT_TO_PARAM("DENY_NO_TRAFFIC"));
+
+                  deleteSession();
+                  }
+               }
+            }
+         }
+      }
+}
+
 static void GET_start_ap()
 {
    U_TRACE_NO_PARAM(5, "::GET_start_ap()")
@@ -1096,7 +1257,7 @@ static void GET_start_ap()
          UHTTP::getFormValue(pid,    U_CONSTANT_TO_PARAM("pid"),    0, 5, 8);
          UHTTP::getFormValue(uptime, U_CONSTANT_TO_PARAM("uptime"), 0, 7, 8);
 
-         U_LOGGER("%.*s %s", getApInfo(buffer), buffer, pid.strtol() == -1 ? "started" : "*** NODOG CRASHED ***");
+         U_LOGGER("%.*s %s", getApInfo(*ap_label, buffer), buffer, pid.strtol() == -1 ? "started" : "*** NODOG CRASHED ***");
 
          (void) rc->hmset(U_CONSTANT_TO_PARAM("CAPTIVE:id:%u name %v status 1 uptime %v since %u lastUpdate %u"), addr, ap_hostname->rep, uptime.rep, u_now->tv_sec, u_now->tv_sec);
          (void) rc->zadd(U_CONSTANT_TO_PARAM("CAPTIVE:byLastUpdate %u %v"), u_now->tv_sec, ap_address->rep);
@@ -1161,7 +1322,7 @@ static void GET_welcome()
       UHTTP::getFormValue(*mac,      U_CONSTANT_TO_PARAM("mac"),  0, 3, 8);
       UHTTP::getFormValue(*ap_label, U_CONSTANT_TO_PARAM("apid"), 0, 5, 8);
 
-      U_INTERNAL_ASSERT(u_isXMacAddr(U_STRING_TO_PARAM(*mac)))
+      U_ASSERT(mac->isXMacAddr())
 
       setSessionPolicy();
 
@@ -1181,6 +1342,8 @@ static void POST_login()
    // $2 -> mac
    // $3 -> ip
    // $4 -> peer
+   // $5 -> old_label
+   // $6 -> old_mac
 
    bool ko = (getDataFromPOST(true) == false);
 
@@ -1189,15 +1352,17 @@ static void POST_login()
       UFlatBuffer fb;
       char buffer[2] = { '1'-ko, '0'+policySessionNotify }; // deny|permit: ('0'|'1') policy: notify|no_notify|strict_notify ('0'|'1'|'2')
 
-      writeToLOG(U_CONSTANT_TO_PARAM("PERMIT"), UString::getStringNull());
+      writeToLOG(*ap_label, U_CONSTANT_TO_PARAM("PERMIT"), UString::getStringNull());
 
       (void) rc->hmset(U_CONSTANT_TO_PARAM("DEVICE:id:%v lastAccess %u"), mac->rep, u_now->tv_sec);
       (void) rc->zadd(U_CONSTANT_TO_PARAM("DEVICE:bylastAccess %u id:%v"), u_now->tv_sec, mac->rep);
 
-      if (ko) writeSessionToLOG(U_CONSTANT_TO_PARAM("DENY_POLICY"));
+      if (ko) writeSessionToLOG(*ap_label, U_CONSTANT_TO_PARAM("DENY_POLICY"));
       else
          {
-         setSessionkey(*mac);
+         U_ASSERT(mac->isXMacAddr())
+
+         setSessionKey(*mac, *ap_label);
 
          (void) rc->hmset(U_CONSTANT_TO_PARAM("SESSION:%v captiveId %u apId %v deviceId %v ip %v created %u pId %v notify %c consume %c counter 0 lastUpdate %u"), key_session->rep,
                           addr, ap_label->rep, mac->rep, ip->rep, u_now->tv_sec, policySessionId->rep, buffer[1], '0'+ap_consume, u_now->tv_sec);
@@ -1248,7 +1413,7 @@ static void POST_notify()
    // $2 -> mac
    // $3 -> ip
 
-   if (getDataFromPOST(false)) writeToLOG(U_CONSTANT_TO_PARAM("NOTIFIED"), UString::getStringNull());
+   if (getDataFromPOST(false)) writeToLOG(*ap_label, U_CONSTANT_TO_PARAM("NOTIFIED"), UString::getStringNull());
 
    ap->clear();
 
@@ -1278,7 +1443,7 @@ static void POST_strict_notify()
          (void) rc->hmset(x);
          }
 
-      writeToLOG(U_CONSTANT_TO_PARAM("STRICT_NOTIFIED"), UString::getStringNull());
+      writeToLOG(*ap_label, U_CONSTANT_TO_PARAM("STRICT_NOTIFIED"), UString::getStringNull());
       }
 
    ap->clear();
@@ -1296,16 +1461,16 @@ $6 -> time_no_traffic
 
 struct PostInfo {
 
-   UString ip, mac, ap_label;
+   UString ip, mac, label;
    uint32_t _ctime, ctraffic, time_no_traffic;
 
    void clear()
       {
       U_TRACE_NO_PARAM(5, "PostInfo::clear()")
 
-            ip.clear();
-           mac.clear();
-      ap_label.clear();
+         ip.clear();
+        mac.clear();
+      label.clear();
 
       _ctime = ctraffic = time_no_traffic = 0;
       }
@@ -1316,7 +1481,7 @@ struct PostInfo {
 
       fb.fromFlatBuffer(0, FLATBUFFER(ip,              UString));
       fb.fromFlatBuffer(1, FLATBUFFER(mac,             UString));
-      fb.fromFlatBuffer(2, FLATBUFFER(ap_label,        UString));
+      fb.fromFlatBuffer(2, FLATBUFFER(label,           UString));
       fb.fromFlatBuffer(3, FLATBUFFER(_ctime,          uint32_t));
       fb.fromFlatBuffer(4, FLATBUFFER(ctraffic,        uint32_t));
       fb.fromFlatBuffer(5, FLATBUFFER(time_no_traffic, uint32_t));
@@ -1340,7 +1505,7 @@ static void POST_info()
    if (setAccessPoint())
       {
       const char* op;
-      UString x(200U);
+      UString x(200U), label;
       uint32_t ctraffic, ctime_no_traffic, op_len, midnigth = u_getLocalTime() / U_ONE_DAY_IN_SECOND; // _ctime, time_no_traffic
 
       (void) rc->hmset(U_CONSTANT_TO_PARAM("CAPTIVE:id:%u status 1 lastUpdate %u"), addr, u_now->tv_sec);
@@ -1358,10 +1523,10 @@ static void POST_info()
          // $6 -> time_no_traffic
          // -----------------------------------------------------------------------------------------------------------------------------------------
 
-         *mac      = vec.AsVectorGet<UString>(i);
-         ip_peer   = vec.AsVectorGetIPAddress(i+1);
-         *ap_label = vec.AsVectorGet<UString>(i+2);
-         ctraffic  = vec.AsVectorGet<uint32_t>(i+3);
+         *mac     = vec.AsVectorGet<UString>(i);
+         ip_peer  = vec.AsVectorGetIPAddress(i+1);
+         label    = vec.AsVectorGet<UString>(i+2);
+         ctraffic = vec.AsVectorGet<uint32_t>(i+3);
 
          /*
          _ctime          = vec.AsVectorGet<uint32_t>(i+4);
@@ -1370,26 +1535,22 @@ static void POST_info()
 
          *ip = UIPAddress::toString(ip_peer);
 
-         U_INTERNAL_DUMP("ap_label = %V mac = %V ip = %V ctraffic = %u", ap_label->rep, mac->rep, ip->rep, ctraffic)
+         U_INTERNAL_DUMP("apId = %V mac = %V ip = %V ctraffic = %u", label.rep, mac->rep, ip->rep, ctraffic)
 
          if (mac->empty())
             {
-            U_LOGGER("*** INFO (ap_label = %V mac = \"\" ip = %V ctraffic = %u) NOT VALID ***", ap_label->rep, ip->rep, ctraffic);
+            U_LOGGER("*** INFO (apId = %V mac = \"\" ip = %V ctraffic = %u) NOT VALID ***", label.rep, ip->rep, ctraffic);
 
             continue;
             }
 
-         U_INTERNAL_ASSERT(u_isXMacAddr(U_STRING_TO_PARAM(*mac)))
+         if (getSession(*mac, label, U_CONSTANT_TO_PARAM("POST_info")) == false) goto del_login;
 
-         setSessionkey(*mac);
+         U_INTERNAL_DUMP("apId = %V mac = %V ip = %V", rc->getString(7).rep, rc->getString(8).rep, rc->getString(9).rep)
 
-         if (getSession(U_CONSTANT_TO_PARAM("POST_info")) == false) goto del_login;
-
-         U_INTERNAL_DUMP("ap_label = %V mac = %V ip = %V", rc->getString(7).rep, rc->getString(8).rep, rc->getString(9).rep)
-
-         U_ASSERT_EQUALS(*ap_label, rc->getString(7))
-         U_ASSERT_EQUALS(*mac,      rc->getString(8))
-         U_ASSERT_EQUALS(*ip,       rc->getString(9))
+         U_ASSERT_EQUALS(label, rc->getString(7))
+         U_ASSERT_EQUALS(*mac,  rc->getString(8))
+         U_ASSERT_EQUALS(*ip,   rc->getString(9))
 
          if (addr != rc->getULong(6))
             {
@@ -1409,11 +1570,11 @@ static void POST_info()
 
                created += ctime_no_traffic;
 
-del_sess:      writeSessionToLOG(op, op_len);
+del_sess:      writeSessionToLOG(label, op, op_len);
 
                deleteSession();
 
-del_login:     vec_logout[idx++] = ntohl(ip_peer);
+del_login:     addToLogout(label);
 
                continue;
                }
@@ -1427,7 +1588,7 @@ del_login:     vec_logout[idx++] = ntohl(ip_peer);
                {
                x.snprintf(U_CONSTANT_TO_PARAM(", traffic: %llu"), counter/1024);
 
-               writeToLOG(U_CONSTANT_TO_PARAM("RST_SESSION"), x);
+               writeToLOG(*ap_label, U_CONSTANT_TO_PARAM("RST_SESSION"), x);
 
                counter = 0;
 

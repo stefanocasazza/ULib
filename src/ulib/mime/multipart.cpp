@@ -89,7 +89,7 @@ UMimeMultipartMsg::UMimeMultipartMsg(const char* type, uint32_t type_len, Encodi
                                             U_line_terminator_len,  line_terminator,
                    (bRFC2045MIMEMSG ? RFC2045MIMEMSG : ""));
 
-   vec_part.push(buffer);
+   vec_part.push_back(buffer);
 }
 
 uint32_t UMimeMultipartMsg::message(UString& body, bool bterminator)

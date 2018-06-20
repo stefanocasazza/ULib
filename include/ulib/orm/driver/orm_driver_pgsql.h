@@ -363,6 +363,7 @@ public:
 
    void reset();
 
+   void setBindParam();
    bool setBindParam( UOrmDriver* pdrv);
    void setBindResult(UOrmDriver* pdrv);
 
@@ -504,6 +505,13 @@ public:
       { UPgSqlStatementBindResult* r; U_NEW(UPgSqlStatementBindResult, r, UPgSqlStatementBindResult(v)); return r; }
    virtual USqlStatementBindResult* creatSqlStatementBindResult(unsigned long long* v)
       { UPgSqlStatementBindResult* r; U_NEW(UPgSqlStatementBindResult, r, UPgSqlStatementBindResult(v)); return r; }
+
+   // ASYNC with PIPELINE (PostgresSQL v3 extended query protocol)
+
+   bool asyncPipelineMode(bool benter);
+   bool asyncPipelineProcessQueue(USqlStatement* pstmt, uint32_t n);
+   bool asyncPipelineSendQueryPrepared(USqlStatement* pstmt, uint32_t i);
+   bool asyncPipelineSendQuery(USqlStatement* pstmt, const char* stmt, uint32_t len, uint32_t n);
 
    // DEBUG
 

@@ -64,9 +64,7 @@ coverage_html:
 	@genhtml --ignore-errors source -o html coverage.info
 
 install-data-local:
-	@cd $(top_builddir)/src/ulib/net/server/plugin/usp; $(MAKE) $(AM_MAKEFLAGS) usp_compile.sh
-	@${INSTALL} -m 777 $(top_builddir)/libtool $(DESTDIR)${bindir}/usp_libtool.sh; \
-	 ${INSTALL} -m 777 $(top_builddir)/src/ulib/net/server/plugin/usp/usp_compile.sh $(DESTDIR)${bindir}
+	@${INSTALL} -m 777 $(top_builddir)/libtool $(DESTDIR)${bindir}/usp_libtool.sh
 
 dist-hook: cleandist
 

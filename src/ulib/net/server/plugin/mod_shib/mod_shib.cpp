@@ -108,8 +108,8 @@ void UShibTarget::setCookie(const string& name, const string& value)
 
    if (!setcookie) setcookie = new UVector<UString>();
 
-   setcookie->push(UString((void*)name.c_str()));
-   setcookie->push(UString((void*)value.c_str()));
+   setcookie->push_back(UString((void*) name.c_str()));
+   setcookie->push_back(UString((void*)value.c_str()));
 }
 
 string UShibTarget::getArgs()
@@ -173,8 +173,8 @@ void* UShibTarget::sendPage(const std::string& msg, int code, const std::string&
       {
       const header_t& h = headers.next();
 
-      sendpage->push(UString((void*)h.first.c_str()));
-      sendpage->push(UString((void*)h.second.c_str()));
+      sendpage->push_back(UString((void*) h.first.c_str()));
+      sendpage->push_back(UString((void*)h.second.c_str()));
       }
 
    codepage = code;

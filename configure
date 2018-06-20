@@ -773,6 +773,10 @@ ZIP_TRUE
 TCC_FALSE
 TCC_TRUE
 PRG_LDFLAGS
+POSTGRESQL_USE_OPENSSL_FALSE
+POSTGRESQL_USE_OPENSSL_TRUE
+HAVE_PGSQL_BATCH_API_FALSE
+HAVE_PGSQL_BATCH_API_TRUE
 HAVE_PGSQL_FALSE
 HAVE_PGSQL_TRUE
 POSTGRESQL_LIBS
@@ -1852,7 +1856,7 @@ Optional Packages:
   --with-ssh              use system      SSH library - [will check /usr /usr/local]
   --with-ldap             use system openLDAP library - [will check /usr /usr/local]
   --with-dbi              use system      DBI library - [will check /usr /usr/local]
-  --with-libevent         use system libevent library - [will check /usr /usr/local]
+  --with-libevent         use system libevent library (deprecated) - [will check /usr /usr/local]
   --with-libxml2          use system  libxml2 library - [will check /usr /usr/local]
   --with-page-speed       use google page-speed SDK   - [will check /usr /usr/local]
   --with-v8-javascript    use V8 JavaScript Engine    - [will check /usr /usr/local]
@@ -7620,7 +7624,6 @@ fi
 
 gcc_version=`clang -dumpversion`
 fi
-
 
 ULIB_LIBS=
 MODULE_LIBTOOL_OPTIONS="-shared -export-dynamic -avoid-version"
@@ -29724,8 +29727,8 @@ $as_echo "no" >&6; }
 fi
 
 
-	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if libevent library is wanted" >&5
-$as_echo_n "checking if libevent library is wanted... " >&6; }
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if libevent library is wanted (deprecated)" >&5
+$as_echo_n "checking if libevent library is wanted (deprecated)... " >&6; }
 	wanted=1;
 	if test -z "$with_libevent" ; then
 		wanted=0;
@@ -29910,6 +29913,8 @@ else
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
 fi
+
+
 
 
 
@@ -30317,9 +30322,11 @@ fi
 $as_echo_n "checking for PostgreSQL client libraries... " >&6; }
 
             postgresql_libdir=`$PG_CONFIG --libdir`
+            postgresql_cincdir=`$PG_CONFIG --includedir`
+            postgresql_sincdir=`$PG_CONFIG --includedir-server`
 
             POSTGRESQL_LDFLAGS=-L"$postgresql_libdir"
-            POSTGRESQL_CPPFLAGS="-I`$PG_CONFIG --includedir` -I`$PG_CONFIG --includedir-server`"
+            POSTGRESQL_CPPFLAGS=-I"$postgresql_cincdir -I$postgresql_sincdir"
             POSTGRESQL_VERSION=`$PG_CONFIG --version | sed -e 's#PostgreSQL ##'`
 
 				if test -f "$postgresql_libdir/libpgport.so" -o -f "/usr/lib/libpgport.so"; then
@@ -30329,6 +30336,12 @@ $as_echo_n "checking for PostgreSQL client libraries... " >&6; }
 
 
 $as_echo "#define LIBPGPORT_NOT_FOUND 1" >>confdefs.h
+
+				fi
+
+				if test -f "$postgresql_cincdir/pg_config.h" -o -f "$postgresql_sincdir/pg_config.h"; then
+
+$as_echo "#define HAVE_PG_CONFIG_H 1" >>confdefs.h
 
 				fi
 
@@ -30393,6 +30406,31 @@ $as_echo "#define HAVE_POSTGRESQL 0" >>confdefs.h
 
 
 
+ if false; then
+  HAVE_PGSQL_TRUE=
+  HAVE_PGSQL_FALSE='#'
+else
+  HAVE_PGSQL_TRUE='#'
+  HAVE_PGSQL_FALSE=
+fi
+
+ if false; then
+  HAVE_PGSQL_BATCH_API_TRUE=
+  HAVE_PGSQL_BATCH_API_FALSE='#'
+else
+  HAVE_PGSQL_BATCH_API_TRUE='#'
+  HAVE_PGSQL_BATCH_API_FALSE=
+fi
+
+ if false; then
+  POSTGRESQL_USE_OPENSSL_TRUE=
+  POSTGRESQL_USE_OPENSSL_FALSE='#'
+else
+  POSTGRESQL_USE_OPENSSL_TRUE='#'
+  POSTGRESQL_USE_OPENSSL_FALSE=
+fi
+
+
 if test "$found_postgresql" = "yes"; then
     if true; then
   HAVE_PGSQL_TRUE=
@@ -30405,15 +30443,104 @@ fi
 
 $as_echo "#define USE_PGSQL 1" >>confdefs.h
 
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing PQenterBatchMode" >&5
+$as_echo_n "checking for library containing PQenterBatchMode... " >&6; }
+if ${ac_cv_search_PQenterBatchMode+:} false; then :
+  $as_echo_n "(cached) " >&6
 else
-    if false; then
-  HAVE_PGSQL_TRUE=
-  HAVE_PGSQL_FALSE='#'
+  ac_func_search_save_LIBS="$LIBS"
+ac_cv_search_PQenterBatchMode="no"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char PQenterBatchMode ();
+int
+main ()
+{
+return PQenterBatchMode ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_cxx_try_link "$LINENO"; then :
+  ac_cv_search_PQenterBatchMode="none required"
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+test "$ac_cv_search_PQenterBatchMode" = "no" && for i in pq; do
+LIBS="-l$i  $ac_func_search_save_LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char PQenterBatchMode ();
+int
+main ()
+{
+return PQenterBatchMode ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_cxx_try_link "$LINENO"; then :
+  ac_cv_search_PQenterBatchMode="-l$i"
+break
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+done
+LIBS="$ac_func_search_save_LIBS"
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_PQenterBatchMode" >&5
+$as_echo "$ac_cv_search_PQenterBatchMode" >&6; }
+if test "$ac_cv_search_PQenterBatchMode" != "no"; then
+  test "$ac_cv_search_PQenterBatchMode" = "none required" || POSTGRESQL_LIBS="$POSTGRESQL_LIBS $ac_cv_search_PQenterBatchMode"
+
+else :
+
+fi
+	if test "$ac_cv_search_PQenterBatchMode" = "yes"; then
+		 if true; then
+  HAVE_PGSQL_BATCH_API_TRUE=
+  HAVE_PGSQL_BATCH_API_FALSE='#'
 else
-  HAVE_PGSQL_TRUE='#'
-  HAVE_PGSQL_FALSE=
+  HAVE_PGSQL_BATCH_API_TRUE='#'
+  HAVE_PGSQL_BATCH_API_FALSE=
 fi
 
+
+$as_echo "#define USE_PGSQL_BATCH_API 1" >>confdefs.h
+
+	fi
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether PostgreSQL use openssl" >&5
+$as_echo_n "checking whether PostgreSQL use openssl... " >&6; }
+	if test -n "`pg_config --configure | grep openssl`"; then
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+		 if true; then
+  POSTGRESQL_USE_OPENSSL_TRUE=
+  POSTGRESQL_USE_OPENSSL_FALSE='#'
+else
+  POSTGRESQL_USE_OPENSSL_TRUE='#'
+  POSTGRESQL_USE_OPENSSL_FALSE=
+fi
+
+	else
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+   fi
 fi
 
 
@@ -33671,7 +33798,7 @@ $as_echo "#define U_STATIC_ORM_DRIVER_SQLITE /**/" >>confdefs.h
 			static_handler_pgsql="yes"
          ULIB_LIBS="$ULIB_LIBS $POSTGRESQL_LIBS"
 			LDFLAGS="$POSTGRESQL_LDFLAGS $LDFLAGS"
-			CXXFLAGS="$POSTGRESQL_CPPFLAGS $CXXFLAGS"
+			CPPFLAGS="$POSTGRESQL_CPPFLAGS $CPPFLAGS"
 
 $as_echo "#define U_STATIC_ORM_DRIVER_PGSQL /**/" >>confdefs.h
 
@@ -34004,12 +34131,25 @@ fi
 		# -Wcast-qual
 		# -------------------------------------------------------------------------------------
 
-		 CC_MAYBE_FLAGS="-Werror-implicit-function-declaration -Wstrict-prototypes -Wc++-compat \
-							  -Wmissing-prototypes -Wnested-externs -Wdeclaration-after-statement -Wold-style-definition -Wsizeof-pointer-memaccess"
+		 CC_MAYBE_FLAGS="-Werror-implicit-function-declaration -Wstrict-prototypes \
+							  -Wmissing-prototypes -Wnested-externs -Wdeclaration-after-statement -Wsizeof-pointer-memaccess"
+
+
+
 		CXX_MAYBE_FLAGS="-fno-check-new -fno-enforce-eh-specs -Wno-deprecated -Wdelete-non-virtual-dtor -Wodr"
 
 			 MAYBE_FLAGS_MODERN=""
 		CXX_MAYBE_FLAGS_MODERN=""
+
+		if test "$found_postgresql" = "yes"; then
+			if test "$ac_cv_search_PQenterBatchMode" = "yes"; then
+				CC_MAYBE_FLAGS="$CC_MAYBE_FLAGS -Wc++-compat -Wold-style-definition"
+			else
+				CC_MAYBE_FLAGS="$CC_MAYBE_FLAGS -Wno-discarded-qualifiers -Wno-switch-enum -Wno-missing-field-initializers -Wno-sign-compare -Wno-strict-aliasing \
+									 -Wno-packed -Wno-shadow -Wno-suggest-attribute=pure -Wno-strict-prototypes -Wno-stringop-truncation -Wno-format-truncation \
+									 -Wno-implicit-fallthrough -Wno-null-dereference"
+			fi
+		fi
 
 		case "$gcc_version" in
 			2*|3*|4.0*|4.1*|4.2*)
@@ -35133,7 +35273,7 @@ ULIB_SYSCONFDIR="$u_sysconfdir"
           PgSQL support: ${ulib_pgsql_msg}
             DBI support: ${ulib_dbi_msg}
         libuuid support: ${ulib_libuuid_msg}
-       libevent support: ${ulib_libevent_msg}
+       libevent support: ${ulib_libevent_msg} (deprecated)
         libxml2 support: ${ulib_libxml2_msg}
          c-ares support: ${ulib_cares_msg}
      Page-Speed support: ${ulib_pagespeed_msg}
@@ -35196,7 +35336,7 @@ $as_echo "$as_me: Configured to build src/ulib/lib${ULIB}:
           PgSQL support: ${ulib_pgsql_msg}
             DBI support: ${ulib_dbi_msg}
         libuuid support: ${ulib_libuuid_msg}
-       libevent support: ${ulib_libevent_msg}
+       libevent support: ${ulib_libevent_msg} (deprecated)
         libxml2 support: ${ulib_libxml2_msg}
          c-ares support: ${ulib_cares_msg}
      Page-Speed support: ${ulib_pagespeed_msg}
@@ -35217,7 +35357,7 @@ See include/ulib/internal/config.h for further configuration information
 
 # SECTION 16: `AC_CONFIG_FILES([FILE...])
 
-ac_config_files="$ac_config_files Makefile rpm.sh ULib.spec userver.service m4/Makefile doc/Makefile include/Makefile contrib/Makefile include/ulib/Makefile contrib/HCSP/Makefile contrib/RSIGN/Makefile contrib/signer/Makefile fuzz/Makefile src/ulib/Makefile src/ulib/ULib.rc src/ulib/ULib.pc src/ulib/orm/driver/Makefile src/ulib/net/server/plugin/Makefile src/ulib/net/server/plugin/v8/Makefile src/ulib/net/server/plugin/php/Makefile src/ulib/net/server/plugin/usp/Makefile src/ulib/net/server/plugin/ruby/Makefile src/ulib/net/server/plugin/mod_shib/Makefile src/ulib/net/server/plugin/mod_geoip/Makefile src/ulib/net/server/plugin/usp/usp_compile.sh src/ulib/net/server/plugin/page_speed/Makefile src/ulib/net/server/plugin/python/Makefile examples/Makefile examples/IR/Makefile examples/csp/Makefile examples/lcsp/Makefile examples/rsign/Makefile examples/hello/Makefile examples/serialize/Makefile examples/WiAuth/Makefile examples/WiAuth/v2/Makefile examples/xml2txt/Makefile examples/uclient/Makefile examples/userver/Makefile examples/PEC_log/Makefile examples/workflow/Makefile examples/doc_parse/Makefile examples/lrp_session/Makefile examples/http_header/Makefile examples/test_manager/Makefile examples/doc_classifier/Makefile examples/form_completion/Makefile examples/simple_client_server/Makefile examples/download_accelerator/Makefile examples/XAdES/Makefile examples/XAdES/XAdES.spec examples/xml2txt/xml2txt.spec examples/IR/searchengine-bin.spec examples/lcsp/lcsp.spec examples/lcsp/lcsp_rpc.spec examples/csp/cspclient.spec examples/csp/cspclient_rpc.spec examples/rsign/rsignclient.spec examples/rsign/rsignclient_rpc.spec examples/userver/web_server.spec examples/userver/wagsmserver.spec examples/workflow/workflow.spec examples/PEC_log/PEC_log.spec examples/userver/tsaserver.spec examples/userver/cspserver.spec examples/userver/rsignserver.spec examples/doc_parse/doc_parse.spec tests/Makefile tests/base/Makefile tests/debug/Makefile tests/ulib/Makefile tests/ulib/http2/Makefile tests/examples/Makefile tests/contrib/Makefile"
+ac_config_files="$ac_config_files Makefile rpm.sh ULib.spec userver.service m4/Makefile doc/Makefile include/Makefile contrib/Makefile include/ulib/Makefile contrib/HCSP/Makefile contrib/RSIGN/Makefile contrib/signer/Makefile fuzz/Makefile src/ulib/net/server/plugin/v8/Makefile src/ulib/net/server/plugin/php/Makefile src/ulib/net/server/plugin/usp/Makefile src/ulib/net/server/plugin/ruby/Makefile src/ulib/net/server/plugin/mod_shib/Makefile src/ulib/net/server/plugin/mod_geoip/Makefile src/ulib/net/server/plugin/usp/usp_compile.sh src/ulib/net/server/plugin/page_speed/Makefile src/ulib/net/server/plugin/python/Makefile src/ulib/Makefile src/ulib/ULib.rc src/ulib/ULib.pc src/ulib/orm/driver/Makefile src/ulib/net/server/plugin/Makefile src/ulib/orm/driver/libpq/Makefile examples/Makefile examples/IR/Makefile examples/csp/Makefile examples/lcsp/Makefile examples/rsign/Makefile examples/hello/Makefile examples/serialize/Makefile examples/WiAuth/Makefile examples/WiAuth/v2/Makefile examples/xml2txt/Makefile examples/uclient/Makefile examples/userver/Makefile examples/PEC_log/Makefile examples/workflow/Makefile examples/doc_parse/Makefile examples/lrp_session/Makefile examples/http_header/Makefile examples/test_manager/Makefile examples/doc_classifier/Makefile examples/form_completion/Makefile examples/simple_client_server/Makefile examples/download_accelerator/Makefile examples/XAdES/Makefile examples/XAdES/XAdES.spec examples/xml2txt/xml2txt.spec examples/IR/searchengine-bin.spec examples/lcsp/lcsp.spec examples/lcsp/lcsp_rpc.spec examples/csp/cspclient.spec examples/csp/cspclient_rpc.spec examples/rsign/rsignclient.spec examples/rsign/rsignclient_rpc.spec examples/userver/web_server.spec examples/userver/wagsmserver.spec examples/workflow/workflow.spec examples/PEC_log/PEC_log.spec examples/userver/tsaserver.spec examples/userver/cspserver.spec examples/userver/rsignserver.spec examples/doc_parse/doc_parse.spec tests/Makefile tests/base/Makefile tests/debug/Makefile tests/ulib/Makefile tests/ulib/http2/Makefile tests/examples/Makefile tests/contrib/Makefile"
 
 
 #	examples/parser/Makefile \
@@ -35881,8 +36021,24 @@ if test -z "${HAVE_PGSQL_TRUE}" && test -z "${HAVE_PGSQL_FALSE}"; then
   as_fn_error $? "conditional \"HAVE_PGSQL\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
+if test -z "${HAVE_PGSQL_BATCH_API_TRUE}" && test -z "${HAVE_PGSQL_BATCH_API_FALSE}"; then
+  as_fn_error $? "conditional \"HAVE_PGSQL_BATCH_API\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${POSTGRESQL_USE_OPENSSL_TRUE}" && test -z "${POSTGRESQL_USE_OPENSSL_FALSE}"; then
+  as_fn_error $? "conditional \"POSTGRESQL_USE_OPENSSL\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
 if test -z "${HAVE_PGSQL_TRUE}" && test -z "${HAVE_PGSQL_FALSE}"; then
   as_fn_error $? "conditional \"HAVE_PGSQL\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${HAVE_PGSQL_BATCH_API_TRUE}" && test -z "${HAVE_PGSQL_BATCH_API_FALSE}"; then
+  as_fn_error $? "conditional \"HAVE_PGSQL_BATCH_API\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${POSTGRESQL_USE_OPENSSL_TRUE}" && test -z "${POSTGRESQL_USE_OPENSSL_FALSE}"; then
+  as_fn_error $? "conditional \"POSTGRESQL_USE_OPENSSL\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${TCC_TRUE}" && test -z "${TCC_FALSE}"; then
@@ -37117,11 +37273,6 @@ do
     "contrib/RSIGN/Makefile") CONFIG_FILES="$CONFIG_FILES contrib/RSIGN/Makefile" ;;
     "contrib/signer/Makefile") CONFIG_FILES="$CONFIG_FILES contrib/signer/Makefile" ;;
     "fuzz/Makefile") CONFIG_FILES="$CONFIG_FILES fuzz/Makefile" ;;
-    "src/ulib/Makefile") CONFIG_FILES="$CONFIG_FILES src/ulib/Makefile" ;;
-    "src/ulib/ULib.rc") CONFIG_FILES="$CONFIG_FILES src/ulib/ULib.rc" ;;
-    "src/ulib/ULib.pc") CONFIG_FILES="$CONFIG_FILES src/ulib/ULib.pc" ;;
-    "src/ulib/orm/driver/Makefile") CONFIG_FILES="$CONFIG_FILES src/ulib/orm/driver/Makefile" ;;
-    "src/ulib/net/server/plugin/Makefile") CONFIG_FILES="$CONFIG_FILES src/ulib/net/server/plugin/Makefile" ;;
     "src/ulib/net/server/plugin/v8/Makefile") CONFIG_FILES="$CONFIG_FILES src/ulib/net/server/plugin/v8/Makefile" ;;
     "src/ulib/net/server/plugin/php/Makefile") CONFIG_FILES="$CONFIG_FILES src/ulib/net/server/plugin/php/Makefile" ;;
     "src/ulib/net/server/plugin/usp/Makefile") CONFIG_FILES="$CONFIG_FILES src/ulib/net/server/plugin/usp/Makefile" ;;
@@ -37131,6 +37282,12 @@ do
     "src/ulib/net/server/plugin/usp/usp_compile.sh") CONFIG_FILES="$CONFIG_FILES src/ulib/net/server/plugin/usp/usp_compile.sh" ;;
     "src/ulib/net/server/plugin/page_speed/Makefile") CONFIG_FILES="$CONFIG_FILES src/ulib/net/server/plugin/page_speed/Makefile" ;;
     "src/ulib/net/server/plugin/python/Makefile") CONFIG_FILES="$CONFIG_FILES src/ulib/net/server/plugin/python/Makefile" ;;
+    "src/ulib/Makefile") CONFIG_FILES="$CONFIG_FILES src/ulib/Makefile" ;;
+    "src/ulib/ULib.rc") CONFIG_FILES="$CONFIG_FILES src/ulib/ULib.rc" ;;
+    "src/ulib/ULib.pc") CONFIG_FILES="$CONFIG_FILES src/ulib/ULib.pc" ;;
+    "src/ulib/orm/driver/Makefile") CONFIG_FILES="$CONFIG_FILES src/ulib/orm/driver/Makefile" ;;
+    "src/ulib/net/server/plugin/Makefile") CONFIG_FILES="$CONFIG_FILES src/ulib/net/server/plugin/Makefile" ;;
+    "src/ulib/orm/driver/libpq/Makefile") CONFIG_FILES="$CONFIG_FILES src/ulib/orm/driver/libpq/Makefile" ;;
     "examples/Makefile") CONFIG_FILES="$CONFIG_FILES examples/Makefile" ;;
     "examples/IR/Makefile") CONFIG_FILES="$CONFIG_FILES examples/IR/Makefile" ;;
     "examples/csp/Makefile") CONFIG_FILES="$CONFIG_FILES examples/csp/Makefile" ;;

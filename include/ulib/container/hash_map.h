@@ -285,6 +285,8 @@ public:
    void setNodePointer()                   { setNodePointer(table, index); }
    void setNodePointer(uint32_t idx) const { setNodePointer(table,   idx); }
 
+   void setIndexNodePointer(uint32_t idx) { setNodePointer(table, (index = idx)); }
+
    static void setNodePointer(char* table, uint32_t idx) { node = (UHashMapNode*)(table + (idx * UHashMapNode::size())); }
 
    static void nextNodePointer() { node = (UHashMapNode*)((char*)node + UHashMapNode::size()); }
@@ -596,7 +598,7 @@ protected:
       {
       U_TRACE(0, "UHashMap<void*>::geyKey(%V,%p)", k, value)
 
-      pvec->UVector<UStringRep*>::push(node->key);
+      pvec->UVector<UStringRep*>::push_back(node->key);
       }
 
    void getKeysSort(UVector<UString>& vec)
@@ -1242,7 +1244,7 @@ public:
          UHashMap<UVectorUString*>::insertAfterFind(pvec);
          }
 
-      pvec->push(str);
+      pvec->push_back(str);
       }
 
 private:

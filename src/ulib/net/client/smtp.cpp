@@ -172,8 +172,10 @@ U_NO_EXPORT void USmtpClient::setStateFromResponse()
       {
       case -1:              state = CERROR; break;
       case GREET:           state = LOG_IN; break;
+      case CHALLENGE:       state = LOG_IN; break;
       case GOODBYE:         state = QUIT;   break;
       case READYDATA:       state = DATA;   break;
+      case AUTHENTICATED:   response = SUCCESSFUL;  break;
 
       case SUCCESSFUL:
          {
@@ -237,9 +239,31 @@ bool USmtpClient::startTLS()
    U_RETURN(false);
 }
 
+bool USmtpClient::authLogin(const UString* username, const UString* password)
+{
+  U_TRACE_NO_PARAM(0, "USmtpClient::auth_login()")
+  syncCommand(U_CONSTANT_TO_PARAM("HELO"));
+
+#ifdef USE_LIBSSL
+    if (((USSLSocket*)this)->isSSLActive()
+        && username->isBase64() && password->isBase64()){
+
+      if (syncCommand(U_CONSTANT_TO_PARAM("auth login"))
+          && syncCommand(username->c_str(),username->size())
+          && syncCommand(password->c_str(),password->size())
+          && response == SUCCESSFUL){
+            U_RETURN(true);
+         }
+         }
+#endif
+
+  U_RETURN(false);
+}
+
+
 // Execute an smtp transaction
 
-bool USmtpClient::sendMessage(bool secure)
+bool USmtpClient::sendMessage(bool secure, const UString* username, const UString* password)
 {
    U_TRACE(0, "USmtpClient::sendMessage(%b)", secure)
 
@@ -267,8 +291,17 @@ bool USmtpClient::sendMessage(bool secure)
          {
          U_RETURN(false);
          }
+      else
+         {
+          if(username && password)
+          {
+            if(!authLogin(username,password)){
+              U_RETURN(false);
+            }
+          }
 
       (void) syncCommand(U_CONSTANT_TO_PARAM("ehlo %v"), domainName.rep);
+      }
       }
 
    if (response != SUCCESSFUL) U_RETURN(false);
