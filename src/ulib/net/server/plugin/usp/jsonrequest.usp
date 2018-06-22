@@ -109,9 +109,7 @@ private:
 Content-Type: application/jsonrequest
 -->
 <!--#code
-U_INTERNAL_DUMP("U_HTTP_CTYPE = %.*S", U_HTTP_CTYPE_TO_TRACE)
-
-if (U_HTTP_CTYPE_STREQ("application/jsonrequest"))
+if (U_HTTP_CTYPE_MEMEQ("application/jsonrequest"))
    {
    Request request;
 

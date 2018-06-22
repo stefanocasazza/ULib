@@ -132,7 +132,14 @@ public:
       type = U_REAL_VALUE;
       }
 
-   explicit USqliteStatementBindParam(const char* s, int n, bool bstatic) : USqlStatementBindParam(s, n, bstatic)
+   explicit USqliteStatementBindParam(UString& s) : USqlStatementBindParam(s)
+      {
+      U_TRACE_CTOR(0, USqliteStatementBindParam, "%V", s.rep)
+
+      type = U_UTF_VALUE;
+      }
+
+   explicit USqliteStatementBindParam(const char* s, uint32_t n, bool bstatic) : USqlStatementBindParam(s, n, bstatic)
       {
       U_TRACE_CTOR(0, USqliteStatementBindParam, "%.*S,%u,%b", n, s, n, bstatic)
 
@@ -398,7 +405,10 @@ public:
    virtual USqlStatementBindParam* creatSqlStatementBindParam(unsigned long long* v)
       { USqliteStatementBindParam* r; U_NEW(USqliteStatementBindParam, r, USqliteStatementBindParam(v)); return r; }
 
-   virtual USqlStatementBindParam* creatSqlStatementBindParam(USqlStatement* pstmt, const char* s, int n, bool bstatic, int rebind);
+   virtual USqlStatementBindParam* creatSqlStatementBindParam(UString& s)
+      { USqliteStatementBindParam* r; U_NEW(USqliteStatementBindParam, r, USqliteStatementBindParam(s)); return r; }
+
+   virtual USqlStatementBindParam* creatSqlStatementBindParam(USqlStatement* pstmt, const char* s, uint32_t n, bool bstatic, int rebind);
 
    // CREATE BIND RESULT
 

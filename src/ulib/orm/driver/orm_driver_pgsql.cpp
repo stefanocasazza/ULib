@@ -414,7 +414,7 @@ bool UPgSqlStatement::setBindParam(UOrmDriver* pdrv)
    U_RETURN(true);
 }
 
-USqlStatementBindParam* UOrmDriverPgSql::creatSqlStatementBindParam(USqlStatement* pstmt, const char* s, int n, bool bstatic, int rebind)
+USqlStatementBindParam* UOrmDriverPgSql::creatSqlStatementBindParam(USqlStatement* pstmt, const char* s, uint32_t n, bool bstatic, int rebind)
 {
    U_TRACE(0, "UOrmDriverPgSql::creatSqlStatementBindParam(%p,%.*S,%u,%b,%d)", pstmt, n, s, n, bstatic, rebind)
 

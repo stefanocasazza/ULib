@@ -51,13 +51,29 @@ public:
       is_unsigned = false;
       }
 
-   explicit USqlStatementBindParam(const char* s, int n, bool bstatic);
+   explicit USqlStatementBindParam(UString& s)
+      {
+      U_TRACE_CTOR(0, USqlStatementBindParam, "%V", s.rep)
+
+      buffer = s.data();
+      length = s.capacity();
+      pstr   = &s;
+      type   = 0;
+
+      is_unsigned = false;
+      }
+
+   explicit USqlStatementBindParam(const char* s, uint32_t n, bool bstatic);
 
    virtual ~USqlStatementBindParam()
       {
       U_TRACE_DTOR(0, USqlStatementBindParam)
 
-      if (pstr) U_DELETE(pstr)
+      if (pstr &&
+          type != U_UTF_VALUE) 
+         {
+         U_DELETE(pstr)
+         }
       }
 
    // DEBUG
@@ -323,12 +339,17 @@ public:
 
       U_INTERNAL_ASSERT_POINTER(pstmt)
 
-      USqlStatementBindParam* ptr = creatSqlStatementBindParam();
-
-      pstmt->bindParam(ptr);
+      pstmt->bindParam(creatSqlStatementBindParam());
       }
 
-   void bindParam(USqlStatement* pstmt, const char* s, int n, bool bstatic, int rebind)
+   void bindParam(USqlStatement* pstmt, UString& s)
+      {
+      U_TRACE(0, "UOrmDriver::bindParam(%p,%V)", pstmt, s.rep)
+
+      pstmt->bindParam(creatSqlStatementBindParam(s));
+      }
+
+   void bindParam(USqlStatement* pstmt, const char* s, uint32_t n, bool bstatic, int rebind)
       {
       U_TRACE(0, "UOrmDriver::bindParam(%p,%.*S,%u,%b,%d)", pstmt, n, s, n, bstatic, rebind)
 
@@ -345,9 +366,7 @@ public:
 
       U_INTERNAL_ASSERT_POINTER(pstmt)
 
-      USqlStatementBindParam* ptr = creatSqlStatementBindParam(v);
-
-      pstmt->bindParam(ptr);
+      pstmt->bindParam(creatSqlStatementBindParam(v));
       }
 
    template <typename T> void bindParam(USqlStatement* pstmt, T& v)
@@ -356,9 +375,7 @@ public:
 
       U_INTERNAL_ASSERT_POINTER(pstmt)
 
-      USqlStatementBindParam* ptr = creatSqlStatementBindParam(&v);
-
-      pstmt->bindParam(ptr);
+      pstmt->bindParam(creatSqlStatementBindParam(&v));
       }
 
    template <typename T> void bindResult(USqlStatement* pstmt, T* v)
@@ -487,6 +504,7 @@ public:
    virtual USqlStatementBindParam* creatSqlStatementBindParam(short* v)              { return U_NULLPTR; }
    virtual USqlStatementBindParam* creatSqlStatementBindParam(float* v)              { return U_NULLPTR; }
    virtual USqlStatementBindParam* creatSqlStatementBindParam(double* v)             { return U_NULLPTR; }
+   virtual USqlStatementBindParam* creatSqlStatementBindParam(UString& s)            { return U_NULLPTR; }
    virtual USqlStatementBindParam* creatSqlStatementBindParam(long long* v)          { return U_NULLPTR; }
    virtual USqlStatementBindParam* creatSqlStatementBindParam(long double* v)        { return U_NULLPTR; }
    virtual USqlStatementBindParam* creatSqlStatementBindParam(unsigned int* v)       { return U_NULLPTR; }
@@ -495,7 +513,7 @@ public:
    virtual USqlStatementBindParam* creatSqlStatementBindParam(unsigned short* v)     { return U_NULLPTR; }
    virtual USqlStatementBindParam* creatSqlStatementBindParam(unsigned long long* v) { return U_NULLPTR; }
 
-   virtual USqlStatementBindParam* creatSqlStatementBindParam(USqlStatement* pstmt, const char* s, int n, bool bstatic, int rebind);
+   virtual USqlStatementBindParam* creatSqlStatementBindParam(USqlStatement* pstmt, const char* s, uint32_t n, bool bstatic, int rebind);
 
    // CREATE BIND RESULT
 

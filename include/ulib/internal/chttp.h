@@ -242,10 +242,10 @@ extern U_EXPORT uclientimage_info u_clientimage_info;
 #define U_http_content_type_len    u_clientimage_info.http_info.flag[10]
 #define U_http_accept_language_len u_clientimage_info.http_info.flag[11]
 #define U_http_flag                u_clientimage_info.http_info.flag[12]
+#define U_http_usp_flag            u_clientimage_info.http_info.flag[13]
 
-#define U_http_len_user1           u_clientimage_info.http_info.flag[13]
-#define U_http_len_user2           u_clientimage_info.http_info.flag[14]
-#define U_http_len_user3           u_clientimage_info.http_info.flag[15]
+#define U_http_len_user1           u_clientimage_info.http_info.flag[14]
+#define U_http_len_user2           u_clientimage_info.http_info.flag[15]
 
 enum HttpRequestType {
    HTTP_IS_KEEP_ALIVE          = 0x01,

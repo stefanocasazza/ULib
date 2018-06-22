@@ -641,10 +641,11 @@ void UOrmStatement::bindParam(long double& v)
 #endif
 }
 
-void UOrmStatement::bindParam(const char* s, int n, bool bstatic, int rebind)
+void UOrmStatement::bindParam(const char* s, uint32_t n, bool bstatic, int rebind)
 {
    U_TRACE(0, "UOrmStatement::bindParam(%.*S,%u,%b,%d)", n, s, n, bstatic, rebind)
 
+   U_INTERNAL_ASSERT_MAJOR(n, 0)
    U_INTERNAL_ASSERT_POINTER(pstmt)
    U_INTERNAL_ASSERT_POINTER(psession->pdrv)
    U_INTERNAL_ASSERT_EQUALS(pdrv, psession->pdrv)
@@ -689,7 +690,22 @@ void UOrmStatement::bindParam(UStringRep& v)
    U_INTERNAL_ASSERT_EQUALS(pdrv, psession->pdrv)
 
 #if defined(USE_SQLITE) || defined(USE_MYSQL) || defined(USE_PGSQL)
-   pdrv->bindParam(pstmt, U_STRING_TO_PARAM(v), true, -1);
+   uint32_t sz = v.size();
+
+   pdrv->bindParam(pstmt, v.data(), sz, sz, -1);
+#endif
+}
+
+void UOrmStatement::bindParam(UString& v)
+{
+   U_TRACE(0, "UOrmStatement::bindParam(%V)", v.rep)
+
+   U_INTERNAL_ASSERT_POINTER(pstmt)
+   U_INTERNAL_ASSERT_POINTER(psession->pdrv)
+   U_INTERNAL_ASSERT_EQUALS(pdrv, psession->pdrv)
+
+#if defined(USE_SQLITE) || defined(USE_MYSQL) || defined(USE_PGSQL)
+   pdrv->bindParam(pstmt, v);
 #endif
 }
 

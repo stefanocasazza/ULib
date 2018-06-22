@@ -190,6 +190,13 @@ public:
       length = sizeof(double);
       }
 
+   explicit UPgSqlStatementBindParam(UString& s) : USqlStatementBindParam(s)
+      {
+      U_TRACE_CTOR(0, UPgSqlStatementBindParam, "%V", s.rep)
+
+      type = U_UTF_VALUE;
+      }
+
    explicit UPgSqlStatementBindParam(const char* s, int n, bool bstatic) : USqlStatementBindParam(s, n, bstatic)
       {
       U_TRACE_CTOR(0, UPgSqlStatementBindParam, "%.*S,%u,%b", n, s, n, bstatic)
@@ -471,7 +478,10 @@ public:
    virtual USqlStatementBindParam* creatSqlStatementBindParam(unsigned long long* v)
       { UPgSqlStatementBindParam* r; U_NEW(UPgSqlStatementBindParam, r, UPgSqlStatementBindParam(v)); return r; }
 
-   virtual USqlStatementBindParam* creatSqlStatementBindParam(USqlStatement* pstmt, const char* s, int n, bool bstatic, int rebind);
+   virtual USqlStatementBindParam* creatSqlStatementBindParam(UString& s)
+      { UPgSqlStatementBindParam* r; U_NEW(UPgSqlStatementBindParam, r, UPgSqlStatementBindParam(s)); return r; }
+
+   virtual USqlStatementBindParam* creatSqlStatementBindParam(USqlStatement* pstmt, const char* s, uint32_t n, bool bstatic, int rebind);
 
    // CREATE BIND RESULT
 

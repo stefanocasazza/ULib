@@ -7363,7 +7363,7 @@ void UHTTP::setDynamicResponse()
 
 #  if defined(DEBUG) && defined(USE_LIBMAGIC)
       if (clength > 4 &&
-          U_http_content_type_len != 1) // NB: we assume that we don't have a HTTP content-type header...
+          U_http_usp_flag == 0) // NB: we assume that we don't have a HTTP content-type header...
          {
          const char* p = pEndHeader + U_http_info.endHeader;
 
@@ -7421,7 +7421,7 @@ no_response:
 next:
    ptr = ext->pend();
 
-   if (U_http_content_type_len != 1)
+   if (U_http_usp_flag == 0)
       {
       // NB: we assume that we don't have a HTTP content-type header...
 
@@ -10504,7 +10504,7 @@ loop:
 
             if (u_get_unalignedp64(ptr) == U_MULTICHAR_CONSTANT64('e','n','t','-','T','y','p','e'))
                {
-               U_http_content_type_len = 1;
+               U_http_usp_flag = 1;
 
                ptr += U_CONSTANT_SIZE("ent-Type: ");
 

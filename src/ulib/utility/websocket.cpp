@@ -262,7 +262,7 @@ loop:
             U_INTERNAL_DUMP("framing_state = %d", framing_state)
             }
 
-         /* FALLTHRU */
+         /* FALL THRU */
 
          case U_WS_DATA_FRAMING_PAYLOAD_LENGTH: // 2
             {
@@ -304,7 +304,7 @@ loop:
             U_INTERNAL_DUMP("framing_state = %d", framing_state)
             }
 
-         /* FALLTHRU */
+         /* FALL THRU */
 
          case U_WS_DATA_FRAMING_PAYLOAD_LENGTH_EXT: // 3
             {
@@ -346,7 +346,7 @@ loop:
             U_INTERNAL_DUMP("framing_state = %d", framing_state)
             }
 
-         /* FALLTHRU */
+         /* FALL THRU */
 
          case U_WS_DATA_FRAMING_MASK: // 0
             {
@@ -373,7 +373,7 @@ loop:
             U_INTERNAL_DUMP("masking = %d framing_state = %d", masking, framing_state)
             }
 
-         /* FALLTHRU */
+         /* FALL THRU */
 
          case U_WS_DATA_FRAMING_EXTENSION_DATA: // 4
             {
@@ -396,7 +396,7 @@ loop:
             U_INTERNAL_DUMP("framing_state = %d", framing_state)
             }
 
-         /* FALLTHRU */
+         /* FALL THRU */
 
          case U_WS_DATA_FRAMING_APPLICATION_DATA: // 5
             {

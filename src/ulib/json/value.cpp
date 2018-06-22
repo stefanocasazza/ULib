@@ -913,17 +913,17 @@ void UValue::fromFlatBufferToJSON(UFlatBuffer& fb)
 
                switch (type)
                   {
-                  case UFlatBufferValue::TYPE_VECTOR_INT4:   setInt64( vec.AsTypedOrFixedVectorGet< int64_t>(i++)); sd[pos].tails = insertAfter(sd[pos].tails, o.ival); /* FALLTHRU */
-                  case UFlatBufferValue::TYPE_VECTOR_INT3:   setInt64( vec.AsTypedOrFixedVectorGet< int64_t>(i++)); sd[pos].tails = insertAfter(sd[pos].tails, o.ival); /* FALLTHRU */
-                  case UFlatBufferValue::TYPE_VECTOR_INT2:   setInt64( vec.AsTypedOrFixedVectorGet< int64_t>(i++)); sd[pos].tails = insertAfter(sd[pos].tails, o.ival); /* FALLTHRU */
+                  case UFlatBufferValue::TYPE_VECTOR_INT4:   setInt64( vec.AsTypedOrFixedVectorGet< int64_t>(i++)); sd[pos].tails = insertAfter(sd[pos].tails, o.ival); /* FALL THRU */
+                  case UFlatBufferValue::TYPE_VECTOR_INT3:   setInt64( vec.AsTypedOrFixedVectorGet< int64_t>(i++)); sd[pos].tails = insertAfter(sd[pos].tails, o.ival); /* FALL THRU */
+                  case UFlatBufferValue::TYPE_VECTOR_INT2:   setInt64( vec.AsTypedOrFixedVectorGet< int64_t>(i++)); sd[pos].tails = insertAfter(sd[pos].tails, o.ival); /* FALL THRU */
                   case UFlatBufferValue::TYPE_VECTOR_INT:    setInt64( vec.AsTypedOrFixedVectorGet< int64_t>(i++)); sd[pos].tails = insertAfter(sd[pos].tails, o.ival); break;
-                  case UFlatBufferValue::TYPE_VECTOR_UINT4:  setUInt64(vec.AsTypedOrFixedVectorGet<uint64_t>(i++)); sd[pos].tails = insertAfter(sd[pos].tails, o.ival); /* FALLTHRU */
-                  case UFlatBufferValue::TYPE_VECTOR_UINT3:  setUInt64(vec.AsTypedOrFixedVectorGet<uint64_t>(i++)); sd[pos].tails = insertAfter(sd[pos].tails, o.ival); /* FALLTHRU */
-                  case UFlatBufferValue::TYPE_VECTOR_UINT2:  setUInt64(vec.AsTypedOrFixedVectorGet<uint64_t>(i++)); sd[pos].tails = insertAfter(sd[pos].tails, o.ival); /* FALLTHRU */
+                  case UFlatBufferValue::TYPE_VECTOR_UINT4:  setUInt64(vec.AsTypedOrFixedVectorGet<uint64_t>(i++)); sd[pos].tails = insertAfter(sd[pos].tails, o.ival); /* FALL THRU */
+                  case UFlatBufferValue::TYPE_VECTOR_UINT3:  setUInt64(vec.AsTypedOrFixedVectorGet<uint64_t>(i++)); sd[pos].tails = insertAfter(sd[pos].tails, o.ival); /* FALL THRU */
+                  case UFlatBufferValue::TYPE_VECTOR_UINT2:  setUInt64(vec.AsTypedOrFixedVectorGet<uint64_t>(i++)); sd[pos].tails = insertAfter(sd[pos].tails, o.ival); /* FALL THRU */
                   case UFlatBufferValue::TYPE_VECTOR_UINT:   setUInt64(vec.AsTypedOrFixedVectorGet<uint64_t>(i++)); sd[pos].tails = insertAfter(sd[pos].tails, o.ival); break;
-                  case UFlatBufferValue::TYPE_VECTOR_FLOAT4: setDouble(vec.AsTypedOrFixedVectorGet<double>(  i++)); sd[pos].tails = insertAfter(sd[pos].tails, o.ival); /* FALLTHRU */
-                  case UFlatBufferValue::TYPE_VECTOR_FLOAT3: setDouble(vec.AsTypedOrFixedVectorGet<double>(  i++)); sd[pos].tails = insertAfter(sd[pos].tails, o.ival); /* FALLTHRU */
-                  case UFlatBufferValue::TYPE_VECTOR_FLOAT2: setDouble(vec.AsTypedOrFixedVectorGet<double>(  i++)); sd[pos].tails = insertAfter(sd[pos].tails, o.ival); /* FALLTHRU */
+                  case UFlatBufferValue::TYPE_VECTOR_FLOAT4: setDouble(vec.AsTypedOrFixedVectorGet<double>(  i++)); sd[pos].tails = insertAfter(sd[pos].tails, o.ival); /* FALL THRU */
+                  case UFlatBufferValue::TYPE_VECTOR_FLOAT3: setDouble(vec.AsTypedOrFixedVectorGet<double>(  i++)); sd[pos].tails = insertAfter(sd[pos].tails, o.ival); /* FALL THRU */
+                  case UFlatBufferValue::TYPE_VECTOR_FLOAT2: setDouble(vec.AsTypedOrFixedVectorGet<double>(  i++)); sd[pos].tails = insertAfter(sd[pos].tails, o.ival); /* FALL THRU */
                   case UFlatBufferValue::TYPE_VECTOR_FLOAT:  setDouble(vec.AsTypedOrFixedVectorGet<double>(  i++)); sd[pos].tails = insertAfter(sd[pos].tails, o.ival);
                   break;
                   }
@@ -1461,21 +1461,21 @@ case_number:
 #     ifndef U_COVERITY_FALSE_POSITIVE // Control flow issues (MISSING_BREAK)
          switch (decimalDigit)
             {
-            case 15: integerPart = (integerPart << 3) + (integerPart << 1) + (p[decimalDigit-15] - '0'); /* FALLTHRU */
-            case 14: integerPart = (integerPart << 3) + (integerPart << 1) + (p[decimalDigit-14] - '0'); /* FALLTHRU */
-            case 13: integerPart = (integerPart << 3) + (integerPart << 1) + (p[decimalDigit-13] - '0'); /* FALLTHRU */
-            case 12: integerPart = (integerPart << 3) + (integerPart << 1) + (p[decimalDigit-12] - '0'); /* FALLTHRU */
-            case 11: integerPart = (integerPart << 3) + (integerPart << 1) + (p[decimalDigit-11] - '0'); /* FALLTHRU */
-            case 10: integerPart = (integerPart << 3) + (integerPart << 1) + (p[decimalDigit-10] - '0'); /* FALLTHRU */
-            case  9: integerPart = (integerPart << 3) + (integerPart << 1) + (p[decimalDigit- 9] - '0'); /* FALLTHRU */
-            case  8: integerPart = (integerPart << 3) + (integerPart << 1) + (p[decimalDigit- 8] - '0'); /* FALLTHRU */
-            case  7: integerPart = (integerPart << 3) + (integerPart << 1) + (p[decimalDigit- 7] - '0'); /* FALLTHRU */
-            case  6: integerPart = (integerPart << 3) + (integerPart << 1) + (p[decimalDigit- 6] - '0'); /* FALLTHRU */
-            case  5: integerPart = (integerPart << 3) + (integerPart << 1) + (p[decimalDigit- 5] - '0'); /* FALLTHRU */
-            case  4: integerPart = (integerPart << 3) + (integerPart << 1) + (p[decimalDigit- 4] - '0'); /* FALLTHRU */
-            case  3: integerPart = (integerPart << 3) + (integerPart << 1) + (p[decimalDigit- 3] - '0'); /* FALLTHRU */
-            case  2: integerPart = (integerPart << 3) + (integerPart << 1) + (p[decimalDigit- 2] - '0'); /* FALLTHRU */
-            case  1: integerPart = (integerPart << 3) + (integerPart << 1) + (p[decimalDigit- 1] - '0'); /* FALLTHRU */
+            case 15: integerPart = (integerPart << 3) + (integerPart << 1) + (p[decimalDigit-15] - '0'); /* FALL THRU */
+            case 14: integerPart = (integerPart << 3) + (integerPart << 1) + (p[decimalDigit-14] - '0'); /* FALL THRU */
+            case 13: integerPart = (integerPart << 3) + (integerPart << 1) + (p[decimalDigit-13] - '0'); /* FALL THRU */
+            case 12: integerPart = (integerPart << 3) + (integerPart << 1) + (p[decimalDigit-12] - '0'); /* FALL THRU */
+            case 11: integerPart = (integerPart << 3) + (integerPart << 1) + (p[decimalDigit-11] - '0'); /* FALL THRU */
+            case 10: integerPart = (integerPart << 3) + (integerPart << 1) + (p[decimalDigit-10] - '0'); /* FALL THRU */
+            case  9: integerPart = (integerPart << 3) + (integerPart << 1) + (p[decimalDigit- 9] - '0'); /* FALL THRU */
+            case  8: integerPart = (integerPart << 3) + (integerPart << 1) + (p[decimalDigit- 8] - '0'); /* FALL THRU */
+            case  7: integerPart = (integerPart << 3) + (integerPart << 1) + (p[decimalDigit- 7] - '0'); /* FALL THRU */
+            case  6: integerPart = (integerPart << 3) + (integerPart << 1) + (p[decimalDigit- 6] - '0'); /* FALL THRU */
+            case  5: integerPart = (integerPart << 3) + (integerPart << 1) + (p[decimalDigit- 5] - '0'); /* FALL THRU */
+            case  4: integerPart = (integerPart << 3) + (integerPart << 1) + (p[decimalDigit- 4] - '0'); /* FALL THRU */
+            case  3: integerPart = (integerPart << 3) + (integerPart << 1) + (p[decimalDigit- 3] - '0'); /* FALL THRU */
+            case  2: integerPart = (integerPart << 3) + (integerPart << 1) + (p[decimalDigit- 2] - '0'); /* FALL THRU */
+            case  1: integerPart = (integerPart << 3) + (integerPart << 1) + (p[decimalDigit- 1] - '0'); /* FALL THRU */
             }
 #     endif
 

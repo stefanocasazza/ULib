@@ -395,6 +395,16 @@ bool USqliteStatement::setBindParam(UOrmDriver* pdrv)
             }
          break;
 
+         case U_UTF_VALUE:
+            {
+            U_INTERNAL_ASSERT_POINTER(param->pstr)
+
+            param->buffer = param->pstr->data();
+            param->length = param->pstr->size();
+            }
+
+         /* FALL THRU */
+
          case U_STRING_VALUE:
             {
             /**
@@ -423,7 +433,7 @@ bool USqliteStatement::setBindParam(UOrmDriver* pdrv)
    U_RETURN(true);
 }
 
-USqlStatementBindParam* UOrmDriverSqlite::creatSqlStatementBindParam(USqlStatement* pstmt, const char* s, int n, bool bstatic, int rebind)
+USqlStatementBindParam* UOrmDriverSqlite::creatSqlStatementBindParam(USqlStatement* pstmt, const char* s, uint32_t n, bool bstatic, int rebind)
 {
    U_TRACE(0, "UOrmDriverSqlite::creatSqlStatementBindParam(%p,%.*S,%u,%b,%d)", pstmt, n, s, n, bstatic, rebind)
 
@@ -499,6 +509,7 @@ bool USqliteStatement::setBindResult(UOrmDriver* pdrv)
                }
 
             if (sz > 0) (void) result->pstr->replace(ptr, sz);
+            else               result->pstr->size_adjust(0);
             }
          break;
          }

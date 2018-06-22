@@ -484,7 +484,7 @@ public:
          (void) http_header.snprintf(U_CONSTANT_TO_PARAM("\n\tU_ASSERT_EQUALS(UClientImage_Base::wbuffer->findEndHeader(),false)"
                                                          "\n\tU_http_info.endHeader = %u;%.*s"
                                                          "\n\t(void) UClientImage_Base::wbuffer->insert(0, U_CONSTANT_TO_PARAM(%v));\n\t\n"), n,
-                                                         (bheader ? U_CONSTANT_SIZE("\n\tU_http_content_type_len = 1;\n\t\n") : 0), "\n\tU_http_content_type_len = 1;\n\t\n",
+                                                         (bheader ? U_CONSTANT_SIZE("\n\tU_http_usp_flag = 1;\n\t\n") : 0), "\n\tU_http_usp_flag = 1;\n\t\n",
                                                          encoded.rep);
          }
       else if (strncmp(directive, U_CONSTANT_TO_PARAM("number")) == 0)

@@ -195,15 +195,15 @@ static inline char* u_itoa(uint32_t u, char* restrict p, uint32_t d, uint32_t n)
 {
    switch (n)
       {
-      case 10: d  = u / 100000000; p = out(d, p); /* FALLTHRU */
-      case  9: u -= d * 100000000;                /* FALLTHRU */
-      case  8: d  = u /   1000000; p = out(d, p); /* FALLTHRU */
-      case  7: u -= d *   1000000;                /* FALLTHRU */
-      case  6: d  = u /     10000; p = out(d, p); /* FALLTHRU */
-      case  5: u -= d *     10000;                /* FALLTHRU */
-      case  4: d  = u /       100; p = out(d, p); /* FALLTHRU */
-      case  3: u -= d *       100;                /* FALLTHRU */
-      case  2: d  = u /         1; p = out(d, p); /* FALLTHRU */
+      case 10: d  = u / 100000000; p = out(d, p); /* FALL THRU */
+      case  9: u -= d * 100000000;                /* FALL THRU */
+      case  8: d  = u /   1000000; p = out(d, p); /* FALL THRU */
+      case  7: u -= d *   1000000;                /* FALL THRU */
+      case  6: d  = u /     10000; p = out(d, p); /* FALL THRU */
+      case  5: u -= d *     10000;                /* FALL THRU */
+      case  4: d  = u /       100; p = out(d, p); /* FALL THRU */
+      case  3: u -= d *       100;                /* FALL THRU */
+      case  2: d  = u /         1; p = out(d, p); /* FALL THRU */
       case  1: ;
       }
 

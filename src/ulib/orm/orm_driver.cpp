@@ -306,7 +306,7 @@ UString UOrmDriver::getOptionValue(const char* _name, uint32_t len)
    return UString::getStringNull();
 }
 
-USqlStatementBindParam::USqlStatementBindParam(const char* s, int n, bool bstatic)
+USqlStatementBindParam::USqlStatementBindParam(const char* s, uint32_t n, bool bstatic)
 {
    U_TRACE_CTOR(0, USqlStatementBindParam, "%.*S,%u,%b", n, s, n, bstatic)
 
@@ -327,7 +327,7 @@ USqlStatementBindParam::USqlStatementBindParam(const char* s, int n, bool bstati
       }
 }
 
-USqlStatementBindParam* UOrmDriver::creatSqlStatementBindParam(USqlStatement* pstmt, const char* s, int n, bool bstatic, int rebind)
+USqlStatementBindParam* UOrmDriver::creatSqlStatementBindParam(USqlStatement* pstmt, const char* s, uint32_t n, bool bstatic, int rebind)
 {
    U_TRACE(0, "UOrmDriver::creatSqlStatementBindParam(%p,%.*S,%u,%b,%d)", pstmt, n, s, n, bstatic, rebind)
 
@@ -623,13 +623,11 @@ template <> void UOrmDriver::bindResult<unsigned long long>(USqlStatement* pstmt
 
 template <> void UOrmDriver::bindResult<UStringRep>(USqlStatement* pstmt, UStringRep& v)
 {
-   U_TRACE(0, "UOrmDriver::bindResult<UString>(%p,%V)", pstmt, &v)
+   U_TRACE(0, "UOrmDriver::bindResult<UStringRep>(%p,%V)", pstmt, &v)
 
    U_INTERNAL_ASSERT_POINTER(pstmt)
 
-   USqlStatementBindResult* ptr = creatSqlStatementBindResult(v);
-
-   pstmt->bindResult(ptr);
+   pstmt->bindResult(creatSqlStatementBindResult(v));
 }
 
 #if defined(U_STDCPP_ENABLE) && defined(DEBUG)

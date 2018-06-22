@@ -204,7 +204,8 @@ UOrmDriver* UOrmDriverMySql::handlerConnect(const UString& option)
 
    U_INTERNAL_ASSERT(pdrv->dbname.isNullTerminated())
 
-   if (U_SYSCALL(mysql_real_connect,"%p,%S,%S,%S,%S,%u,%S,%lu",(MYSQL*)pdrv->connection,host.data(),user.data(),password.data(),pdrv->dbname.data(),(unsigned int)port,U_NULLPTR,0L) == U_NULLPTR)
+   if (U_SYSCALL(mysql_real_connect,"%p,%S,%S,%S,%S,%u,%S,%lu", (MYSQL*)pdrv->connection, host.data(), user.data(),
+                                                                password.data(), pdrv->dbname.data(), (unsigned int)port, U_NULLPTR, 0L) == U_NULLPTR)
       {
       pdrv->printError(__PRETTY_FUNCTION__);
 
@@ -384,7 +385,7 @@ bool UMySqlStatement::setBindParam(UOrmDriver* pdrv)
    U_RETURN(true);
 }
 
-USqlStatementBindParam* UOrmDriverMySql::creatSqlStatementBindParam(USqlStatement* pstmt, const char* s, int n, bool bstatic, int rebind)
+USqlStatementBindParam* UOrmDriverMySql::creatSqlStatementBindParam(USqlStatement* pstmt, const char* s, uint32_t n, bool bstatic, int rebind)
 {
    U_TRACE(0, "UOrmDriverMySql::creatSqlStatementBindParam(%p,%.*S,%u,%b,%d)", pstmt, n, s, n, bstatic, rebind)
 

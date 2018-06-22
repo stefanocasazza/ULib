@@ -457,7 +457,7 @@ int UFCGIPlugIn::handlerRequest()
                   }
                }
 
-            /* FALLTHRU */
+            /* FALL THRU */
 
             case FCGI_UNKNOWN_TYPE:
             case FCGI_GET_VALUES_RESULT:

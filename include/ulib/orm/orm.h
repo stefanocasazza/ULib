@@ -270,7 +270,6 @@ public:
 #endif
    void bindParam(long long& v);
    void bindParam(struct tm& v);
-   void bindParam(UStringRep& v);
    void bindParam(const char* s);
    void bindParam(long double& v);
    void bindParam(unsigned int& v);
@@ -279,7 +278,10 @@ public:
    void bindParam(unsigned short& v);
    void bindParam(unsigned long long& v);
    void bindParam(const char* b, const char* e);
-   void bindParam(const char* s, int n, bool bstatic, int rebind = -1);
+   void bindParam(const char* s, uint32_t n, bool bstatic, int rebind = -1);
+
+   void bindParam(UString& v);
+   void bindParam(UStringRep& v);
 
    template <typename T> void bindParam(UOrmTypeHandler<T> t)
       {
@@ -855,7 +857,7 @@ public:
       {
       U_TRACE(0, "UOrmTypeHandler<UString>::bindParam(%p)", stmt)
 
-      stmt->bindParam(*((UString*)pval)->rep);
+      stmt->bindParam(*(UString*)pval);
       }
 
    void bindResult(UOrmStatement* stmt)

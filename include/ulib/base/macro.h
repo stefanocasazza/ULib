@@ -488,10 +488,10 @@ static inline void     u_put_unalignedp64(      void* p, uint64_t val) {       s
 
 #define U_NUMBER_SUFFIX(num,suffix) \
    switch (suffix) { \
-      case 'G': num <<= 10; /* FALLTHRU */ \
-      case 'M': num <<= 10; /* FALLTHRU */ \
-      case 'K':             /* FALLTHRU */ \
-      case 'k': num <<= 10; /* FALLTHRU */ }
+      case 'G': num <<= 10; /* FALL THRU */ \
+      case 'M': num <<= 10; /* FALL THRU */ \
+      case 'K':             /* FALL THRU */ \
+      case 'k': num <<= 10; /* FALL THRU */ }
 #endif
 
 /* Optimization if it is enough a resolution of one second */
