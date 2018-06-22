@@ -509,7 +509,7 @@ bool USqliteStatement::setBindResult(UOrmDriver* pdrv)
                }
 
             if (sz > 0) (void) result->pstr->replace(ptr, sz);
-            else               result->pstr->size_adjust(0);
+            else               result->pstr->size_adjust(0U);
             }
          break;
          }

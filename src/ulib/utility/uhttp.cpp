@@ -7334,14 +7334,15 @@ void UHTTP::setDynamicResponse()
 {
    U_TRACE_NO_PARAM(1, "UHTTP::setDynamicResponse()")
 
-   U_INTERNAL_DUMP("U_http_info.endHeader = %u U_http_content_type_len = %u mime_index(%d) = %C UClientImage_Base::wbuffer(%u) = %V",
-                    U_http_info.endHeader,     U_http_content_type_len,     mime_index, mime_index, UClientImage_Base::wbuffer->size(), UClientImage_Base::wbuffer->rep)
+   U_INTERNAL_DUMP("U_http_info.endHeader = %u U_http_content_type_len = %u mime_index(%d) = %C U_http_usp_flag = %u UClientImage_Base::wbuffer(%u) = %V",
+                    U_http_info.endHeader,     U_http_content_type_len,     mime_index, mime_index, U_http_usp_flag, UClientImage_Base::wbuffer->size(), UClientImage_Base::wbuffer->rep)
 
    U_INTERNAL_ASSERT_MAJOR(U_http_info.nResponseCode, 0)
 
    char* ptr;
    const char* pEndHeader;
    uint32_t clength = UClientImage_Base::wbuffer->size();
+   bool bcontent_type = ((int32_t)U_http_info.endHeader < 0); // NB: if false we assume that we don't have a HTTP content-type header...
 
 #if !defined(USE_LIBZ) && !defined(USE_LIBBROTLI)
    bool bcompress = false;
@@ -7353,6 +7354,8 @@ void UHTTP::setDynamicResponse()
 
    if (U_http_info.endHeader)
       {
+      if (bcontent_type) U_http_info.endHeader = -U_http_info.endHeader;
+
       U_INTERNAL_ASSERT(clength >= U_http_info.endHeader)
 
       clength -= U_http_info.endHeader;
@@ -7363,7 +7366,7 @@ void UHTTP::setDynamicResponse()
 
 #  if defined(DEBUG) && defined(USE_LIBMAGIC)
       if (clength > 4 &&
-          U_http_usp_flag == 0) // NB: we assume that we don't have a HTTP content-type header...
+          bcontent_type == false) // NB: we assume that we don't have a HTTP content-type header...
          {
          const char* p = pEndHeader + U_http_info.endHeader;
 
@@ -7421,7 +7424,7 @@ no_response:
 next:
    ptr = ext->pend();
 
-   if (U_http_usp_flag == 0)
+   if (bcontent_type == false)
       {
       // NB: we assume that we don't have a HTTP content-type header...
 
@@ -10173,9 +10176,9 @@ bool UHTTP::processCGIOutput(bool cgi_sh_script, bool bheaders)
    const char* ptr;
    const char* ptr1;
    const char* base;
-   bool http_response;
    const char* endptr;
    uint32_t pos, sz, diff;
+   bool http_response, bcontent_type = false; // NB: if false we assume that we don't have a HTTP content-type header...
 
    if (UClientImage_Base::wbuffer->empty() ||
        UClientImage_Base::wbuffer->isWhiteSpace())
@@ -10504,7 +10507,7 @@ loop:
 
             if (u_get_unalignedp64(ptr) == U_MULTICHAR_CONSTANT64('e','n','t','-','T','y','p','e'))
                {
-               U_http_usp_flag = 1;
+               bcontent_type = true;
 
                ptr += U_CONSTANT_SIZE("ent-Type: ");
 
@@ -10600,6 +10603,8 @@ noparse:
    if (u_isHTML(endptr)) mime_index = U_html;
 
 end:
+   if (bcontent_type) U_http_info.endHeader = -U_http_info.endHeader;
+
    setDynamicResponse();
 
    U_RETURN(true);

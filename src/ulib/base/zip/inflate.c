@@ -9,6 +9,8 @@
 #include <ulib/base/zip/pushback.h>
 #include <ulib/base/zip/compress.h>
 
+#include <zlib.h>
+
 static z_stream zs;
 
 int init_compression(void)
