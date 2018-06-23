@@ -371,10 +371,21 @@ bool UMySqlStatement::setBindParam(UOrmDriver* pdrv)
 
          MYSQL_BIND* mysql_param = mysql_vparam+i;
 
-         mysql_param->buffer        = param->buffer;
-         mysql_param->buffer_length = param->length;
-         mysql_param->buffer_type   = (enum_field_types)param->type;
-         mysql_param->is_unsigned   = param->is_unsigned;
+         if ((mysql_param->buffer_type = (enum_field_types)param->type) == U_UTF_VALUE)
+            {
+            U_INTERNAL_ASSERT_POINTER(param->pstr)
+            U_INTERNAL_ASSERT(param->pstr->invariant())
+
+            mysql_param->buffer        = param->pstr->data();
+            mysql_param->buffer_length = param->pstr->size();
+            }
+         else
+            {
+            mysql_param->buffer        = param->buffer;
+            mysql_param->buffer_length = param->length;
+            }
+
+         mysql_param->is_unsigned = param->is_unsigned;
          }
 
       pdrv->errcode = U_SYSCALL(mysql_stmt_bind_param, "%p,%p", (MYSQL_STMT*)pHandle, mysql_vparam);
@@ -431,14 +442,7 @@ void UMySqlStatement::setStringBindedAsResult()
       {
       result = vresult[i];
 
-      if (result->type == string_type)
-         {
-         U_INTERNAL_ASSERT_POINTER(result->pstr)
-
-         result->pstr->size_adjust_force(result->length); // output length
-
-         U_INTERNAL_DUMP("result->pstr = %V", result->pstr)
-         }
+      if (result->type == string_type) ((UMySqlStatementBindResult*)result)->setString();
       }
 }
 

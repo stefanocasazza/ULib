@@ -259,34 +259,42 @@ void UPgSqlStatement::setBindParam()
       {
       USqlStatementBindParam* param = vparam[i];
 
-#  ifndef U_COVERITY_FALSE_POSITIVE // Dereference after null check (FORWARD_NULL)
-      paramLengths[i] = param->length;
-#  endif
-
-      char* ptr = (char*)(paramValues[i] = ((UPgSqlStatementBindParam*)param)->num2str);
-
-      switch (param->type)
+      if (param->type == VARCHAROID)
          {
-         case BOOLOID: *(bool*)ptr = *(bool*)param->buffer; return;
-         case CHAROID: *(char*)ptr = *(char*)param->buffer; return;
-         }
+         U_INTERNAL_ASSERT_POINTER(param->pstr)
+         U_INTERNAL_ASSERT(param->pstr->invariant())
 
-      if (resultFormat) // is zero/one to obtain results in text/binary format
-         {
-         switch (param->type)
-            {
-            case INT2OID:     *(short*)ptr =   htons( *(uint16_t*)param->buffer); break;
-            case INT4OID:       *(int*)ptr =   htonl( *(uint32_t*)param->buffer); break;
-            case INT8OID: *(long long*)ptr = u_htonll(*(uint64_t*)param->buffer); break;
-            }
+         paramValues[i]  = param->pstr->data();
+         paramLengths[i] = param->pstr->size();
          }
       else
          {
+         char* ptr = (char*)(paramValues[i]  = ((UPgSqlStatementBindParam*)param)->num2str);
+                             paramLengths[i] = param->length;
+
          switch (param->type)
             {
-            case INT2OID: ptr[u_num2str32s(    *(short*)param->buffer, ptr)-ptr] = '\0'; break;
-            case INT4OID: ptr[u_num2str32s(      *(int*)param->buffer, ptr)-ptr] = '\0'; break;
-            case INT8OID: ptr[u_num2str64s(*(long long*)param->buffer, ptr)-ptr] = '\0'; break;
+            case BOOLOID: *(bool*)ptr = *(bool*)param->buffer; break;
+            case CHAROID: *(char*)ptr = *(char*)param->buffer; break;
+            }
+
+         if (resultFormat) // is zero/one to obtain results in text/binary format
+            {
+            switch (param->type)
+               {
+               case INT2OID:     *(short*)ptr =   htons( *(uint16_t*)param->buffer); break;
+               case INT4OID:       *(int*)ptr =   htonl( *(uint32_t*)param->buffer); break;
+               case INT8OID: *(long long*)ptr = u_htonll(*(uint64_t*)param->buffer); break;
+               }
+            }
+         else
+            {
+            switch (param->type)
+               {
+               case INT2OID: ptr[u_num2str32s(    *(short*)param->buffer, ptr)-ptr] = '\0'; break;
+               case INT4OID: ptr[u_num2str32s(      *(int*)param->buffer, ptr)-ptr] = '\0'; break;
+               case INT8OID: ptr[u_num2str64s(*(long long*)param->buffer, ptr)-ptr] = '\0'; break;
+               }
             }
          }
 
@@ -489,21 +497,8 @@ void UPgSqlStatement::setBindResult(UOrmDriver* pdrv)
          {
          case CHAROID: *(char*)result->buffer = *(char*)ptr;                                        return;
          case BOOLOID: *(bool*)result->buffer = *(char*)ptr == 'f' ? false : (*(char*)ptr != '\0'); return; // booleans are mapped to int values
-         case TEXTOID:
-         case BYTEAOID:
-         case VARCHAROID:
-            {
-            U_INTERNAL_ASSERT_POINTER(result->pstr)
 
-            if (sz > 0)
-               {
-               (void) result->pstr->replace(ptr, sz);
-
-               U_INTERNAL_DUMP("result->pstr(%u) = %V", sz, result->pstr)
-               }
-
-            return;
-            }
+         case VARCHAROID: result->setString(ptr, sz); return;
          }
 
       if (resultFormat) // is zero/one to obtain results in text/binary format

@@ -681,21 +681,6 @@ void UOrmStatement::bindParam(const char* b, const char* e)
 #endif
 }
 
-void UOrmStatement::bindParam(UStringRep& v)
-{
-   U_TRACE(0, "UOrmStatement::bindParam(%V)", &v)
-
-   U_INTERNAL_ASSERT_POINTER(pstmt)
-   U_INTERNAL_ASSERT_POINTER(psession->pdrv)
-   U_INTERNAL_ASSERT_EQUALS(pdrv, psession->pdrv)
-
-#if defined(USE_SQLITE) || defined(USE_MYSQL) || defined(USE_PGSQL)
-   uint32_t sz = v.size();
-
-   pdrv->bindParam(pstmt, v.data(), sz, sz, -1);
-#endif
-}
-
 void UOrmStatement::bindParam(UString& v)
 {
    U_TRACE(0, "UOrmStatement::bindParam(%V)", v.rep)
@@ -934,9 +919,24 @@ void UOrmStatement::bindResult(long double& v)
 #endif
 }
 
-void UOrmStatement::bindResult(UStringRep& v)
+void UOrmStatement::bindParam(UStringRep& v)
 {
-   U_TRACE(0, "UOrmStatement::bindResult(%V)", &v)
+   U_TRACE(0, "UOrmStatement::bindParam(%V)", &v)
+
+   U_INTERNAL_ASSERT_POINTER(pstmt)
+   U_INTERNAL_ASSERT_POINTER(psession->pdrv)
+   U_INTERNAL_ASSERT_EQUALS(pdrv, psession->pdrv)
+
+#if defined(USE_SQLITE) || defined(USE_MYSQL) || defined(USE_PGSQL)
+   uint32_t sz = v.size();
+
+   pdrv->bindParam(pstmt, v.data(), sz, sz, -1);
+#endif
+}
+
+void UOrmStatement::bindResult(UString& v)
+{
+   U_TRACE(0, "UOrmStatement::bindResult(%V)", v.rep)
 
    U_INTERNAL_ASSERT_POINTER(pstmt)
    U_INTERNAL_ASSERT_POINTER(psession->pdrv)

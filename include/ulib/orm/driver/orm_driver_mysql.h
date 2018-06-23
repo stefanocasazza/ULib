@@ -20,6 +20,10 @@ extern "C" {
 #include <mysql/mysql.h>
 }
 
+#ifndef U_MYSQL_STRING_SIZE
+#define U_MYSQL_STRING_SIZE 8192
+#endif
+
 class U_EXPORT UMySqlStatementBindParam : public USqlStatementBindParam {
 public:
 
@@ -300,11 +304,16 @@ public:
       is_unsigned = false;
       }
 
-   explicit UMySqlStatementBindResult(UStringRep& s) : USqlStatementBindResult(s)
+   explicit UMySqlStatementBindResult(UString& s) : USqlStatementBindResult()
       {
-      U_TRACE_CTOR(0, UMySqlStatementBindResult, "%V", &s)
+      U_TRACE_CTOR(0, UMySqlStatementBindResult, "%V", s.rep)
 
-      type = MYSQL_TYPE_STRING;
+      buffer = str_data;
+      length = U_MYSQL_STRING_SIZE; // NB: after fetch become the length of the actual data value...
+      pstr   = &s;
+      type   = MYSQL_TYPE_STRING;
+
+      is_unsigned = is_null = false;
       }
 
    virtual ~UMySqlStatementBindResult()
@@ -312,11 +321,28 @@ public:
       U_TRACE_DTOR(0, UMySqlStatementBindResult)
       }
 
+   // SERVICES
+
+   void setString()
+      {
+      U_TRACE_NO_PARAM(0, "UMySqlStatementBindResult::setString()")
+
+      U_INTERNAL_ASSERT_POINTER(pstr)
+      U_INTERNAL_ASSERT(pstr->invariant())
+
+      if (length > 0) pstr->setConstant(str_data, length);
+      else            pstr->setEmpty();
+
+      U_INTERNAL_DUMP("pstr(%u) = %V", length, pstr->rep)
+      }
+
    // DEBUG
 
 #if defined(U_STDCPP_ENABLE) && defined(DEBUG)
    const char* dump(bool reset) const { return USqlStatementBindResult::dump(reset); }
 #endif
+
+   char str_data[U_MYSQL_STRING_SIZE]; // buffer to handle TEXT field result
 };
 
 class U_EXPORT UMySqlStatement : public USqlStatement {
@@ -434,8 +460,6 @@ public:
       { UMySqlStatementBindResult* r; U_NEW(UMySqlStatementBindResult, r, UMySqlStatementBindResult(v)); return r; }
    virtual USqlStatementBindResult* creatSqlStatementBindResult(double* v)
       { UMySqlStatementBindResult* r; U_NEW(UMySqlStatementBindResult, r, UMySqlStatementBindResult(v)); return r; }
-   virtual USqlStatementBindResult* creatSqlStatementBindResult(UStringRep& v)
-      { UMySqlStatementBindResult* r; U_NEW(UMySqlStatementBindResult, r, UMySqlStatementBindResult(v)); return r; }
    virtual USqlStatementBindResult* creatSqlStatementBindResult(long long* v)
       { UMySqlStatementBindResult* r; U_NEW(UMySqlStatementBindResult, r, UMySqlStatementBindResult(v)); return r; }
    virtual USqlStatementBindResult* creatSqlStatementBindResult(long double* v)
@@ -450,6 +474,9 @@ public:
       { UMySqlStatementBindResult* r; U_NEW(UMySqlStatementBindResult, r, UMySqlStatementBindResult(v)); return r; }
    virtual USqlStatementBindResult* creatSqlStatementBindResult(unsigned long long* v)
       { UMySqlStatementBindResult* r; U_NEW(UMySqlStatementBindResult, r, UMySqlStatementBindResult(v)); return r; }
+
+   virtual USqlStatementBindResult* creatSqlStatementBindResult(UString& s)
+      { UMySqlStatementBindResult* r; U_NEW(UMySqlStatementBindResult, r, UMySqlStatementBindResult(s)); return r; }
 
    // DEBUG
 

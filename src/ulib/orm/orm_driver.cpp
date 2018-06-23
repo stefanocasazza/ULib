@@ -621,9 +621,9 @@ template <> void UOrmDriver::bindResult<unsigned long long>(USqlStatement* pstmt
    pstmt->bindResult(creatSqlStatementBindResult(&v));
 }
 
-template <> void UOrmDriver::bindResult<UStringRep>(USqlStatement* pstmt, UStringRep& v)
+template <> void UOrmDriver::bindResult<UString>(USqlStatement* pstmt, UString& v)
 {
-   U_TRACE(0, "UOrmDriver::bindResult<UStringRep>(%p,%V)", pstmt, &v)
+   U_TRACE(0, "UOrmDriver::bindResult<UString>(%p,%V)", pstmt, v.rep)
 
    U_INTERNAL_ASSERT_POINTER(pstmt)
 
@@ -651,12 +651,12 @@ const char* USqlStatementBindParam::dump(bool _reset) const
 
 const char* USqlStatementBindResult::dump(bool _reset) const
 {
-   *UObjectIO::os << "type             " << type        << '\n'
-                  << "buffer           " << buffer      << '\n'
-                  << "length           " << length      << '\n'
-                  << "is_null          " << is_null     << '\n'
-                  << "is_unsigned      " << is_unsigned << '\n'
-                  << "pstr (UStringRep " << (void*)pstr << ')';
+   *UObjectIO::os << "type          " << type        << '\n'
+                  << "buffer        " << buffer      << '\n'
+                  << "length        " << length      << '\n'
+                  << "is_null       " << is_null     << '\n'
+                  << "is_unsigned   " << is_unsigned << '\n'
+                  << "pstr (UString " << (void*)pstr << ')';
 
    if (_reset)
       {

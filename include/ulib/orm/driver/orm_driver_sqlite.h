@@ -267,9 +267,9 @@ public:
       type = U_REAL_VALUE;
       }
 
-   explicit USqliteStatementBindResult(UStringRep& s) : USqlStatementBindResult(s)
+   explicit USqliteStatementBindResult(UString& s) : USqlStatementBindResult(s)
       {
-      U_TRACE_CTOR(0, USqliteStatementBindResult, "%V", &s)
+      U_TRACE_CTOR(0, USqliteStatementBindResult, "%V", s.rep)
 
       type = U_STRING_VALUE;
       }
@@ -426,8 +426,6 @@ public:
       { USqliteStatementBindResult* r; U_NEW(USqliteStatementBindResult, r, USqliteStatementBindResult(v)); return r; }
    virtual USqlStatementBindResult* creatSqlStatementBindResult(double* v)
       { USqliteStatementBindResult* r; U_NEW(USqliteStatementBindResult, r, USqliteStatementBindResult(v)); return r; }
-   virtual USqlStatementBindResult* creatSqlStatementBindResult(UStringRep& v)
-      { USqliteStatementBindResult* r; U_NEW(USqliteStatementBindResult, r, USqliteStatementBindResult(v)); return r; }
    virtual USqlStatementBindResult* creatSqlStatementBindResult(long long* v)
       { USqliteStatementBindResult* r; U_NEW(USqliteStatementBindResult, r, USqliteStatementBindResult(v)); return r; }
    virtual USqlStatementBindResult* creatSqlStatementBindResult(long double* v)
@@ -441,6 +439,9 @@ public:
    virtual USqlStatementBindResult* creatSqlStatementBindResult(unsigned long* v)
       { USqliteStatementBindResult* r; U_NEW(USqliteStatementBindResult, r, USqliteStatementBindResult(v)); return r; }
    virtual USqlStatementBindResult* creatSqlStatementBindResult(unsigned long long* v)
+      { USqliteStatementBindResult* r; U_NEW(USqliteStatementBindResult, r, USqliteStatementBindResult(v)); return r; }
+
+   virtual USqlStatementBindResult* creatSqlStatementBindResult(UString& v)
       { USqliteStatementBindResult* r; U_NEW(USqliteStatementBindResult, r, USqliteStatementBindResult(v)); return r; }
 
    // DEBUG

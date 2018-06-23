@@ -99,6 +99,11 @@ public:
    U_MEMORY_ALLOCATOR
    U_MEMORY_DEALLOCATOR
 
+   USqlStatementBindResult()
+      {
+      U_TRACE_CTOR(0, USqlStatementBindResult, "")
+      }
+
    USqlStatementBindResult(void* v)
       {
       U_TRACE_CTOR(0, USqlStatementBindResult, "%p", v)
@@ -111,9 +116,9 @@ public:
       is_unsigned = is_null = false;
       }
 
-   explicit USqlStatementBindResult(UStringRep& s)
+   explicit USqlStatementBindResult(UString& s)
       {
-      U_TRACE_CTOR(0, USqlStatementBindResult, "%V", &s)
+      U_TRACE_CTOR(0, USqlStatementBindResult, "%V", s.rep)
 
       buffer = s.data();
       length = s.capacity(); // NB: after fetch become the length of the actual data value...
@@ -128,6 +133,21 @@ public:
       U_TRACE_DTOR(0, USqlStatementBindResult)
       }
 
+   // SERVICES
+
+   void setString(const char* ptr, int sz)
+      {
+      U_TRACE(0, "USqlStatementBindResult::setString(%.*S,%d)", sz, ptr, sz)
+
+      U_INTERNAL_ASSERT_POINTER(pstr)
+      U_INTERNAL_ASSERT(pstr->invariant())
+
+      if (sz > 0) pstr->setConstant(ptr, sz);
+      else        pstr->setEmpty();
+
+      U_INTERNAL_DUMP("pstr(%u) = %V", sz, pstr->rep)
+      }
+
    // DEBUG
 
 #if defined(U_STDCPP_ENABLE) && defined(DEBUG)
@@ -136,7 +156,7 @@ public:
 
    void* buffer;         // buffer to put data
    unsigned long length; // output length
-   UStringRep* pstr;
+   UString* pstr;
    int type;
    bool is_unsigned, is_null;
 };
@@ -525,8 +545,8 @@ public:
    virtual USqlStatementBindResult* creatSqlStatementBindResult(float* v)              { return U_NULLPTR; }
    virtual USqlStatementBindResult* creatSqlStatementBindResult(double* v)             { return U_NULLPTR; }
    virtual USqlStatementBindResult* creatSqlStatementBindResult(long long* v)          { return U_NULLPTR; }
+   virtual USqlStatementBindResult* creatSqlStatementBindResult(UString& str)          { return U_NULLPTR; }
    virtual USqlStatementBindResult* creatSqlStatementBindResult(long double* v)        { return U_NULLPTR; }
-   virtual USqlStatementBindResult* creatSqlStatementBindResult(UStringRep& str)       { return U_NULLPTR; }
    virtual USqlStatementBindResult* creatSqlStatementBindResult(unsigned char* v)      { return U_NULLPTR; }
    virtual USqlStatementBindResult* creatSqlStatementBindResult(unsigned short* v)     { return U_NULLPTR; }
    virtual USqlStatementBindResult* creatSqlStatementBindResult(unsigned int* v)       { return U_NULLPTR; }
@@ -592,8 +612,8 @@ template <> void UOrmDriver::bindResult<long>(USqlStatement* pstmt, long& v);
 template <> void UOrmDriver::bindResult<short>(USqlStatement* pstmt, short& v);
 template <> void UOrmDriver::bindResult<float>(USqlStatement* pstmt, float& v);
 template <> void UOrmDriver::bindResult<double>(USqlStatement* pstmt, double& v);
+template <> void UOrmDriver::bindResult<UString>(USqlStatement* pstmt, UString& v);
 template <> void UOrmDriver::bindResult<long long>(USqlStatement* pstmt, long long& v);
-template <> void UOrmDriver::bindResult<UStringRep>(USqlStatement* pstmt, UStringRep& v);
 template <> void UOrmDriver::bindResult<long double>(USqlStatement* pstmt, long double& v);
 template <> void UOrmDriver::bindResult<unsigned int>(USqlStatement* pstmt, unsigned int& v);
 template <> void UOrmDriver::bindResult<unsigned char>(USqlStatement* pstmt, unsigned char& v);

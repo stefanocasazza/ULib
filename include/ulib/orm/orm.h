@@ -317,13 +317,14 @@ public:
    void bindResult(float& v);
    void bindResult(double& v);
    void bindResult(long long& v);
-   void bindResult(UStringRep& v);
    void bindResult(long double& v);
    void bindResult(unsigned int& v);
    void bindResult(unsigned long& v);
    void bindResult(unsigned char& v);
    void bindResult(unsigned short& v);
    void bindResult(unsigned long long& v);
+
+   void bindResult(UString& v);
 
    template <typename T> void bindResult(UOrmTypeHandler<T> t)
       {
@@ -836,16 +837,16 @@ public:
 
    void bindParam(UOrmStatement* stmt)
       {
-      U_TRACE(0, "UOrmTypeHandler<UString>::bindParam(%p)", stmt)
+      U_TRACE(0, "UOrmTypeHandler<UStringRep>::bindParam(%p)", stmt)
 
       stmt->bindParam(*(UStringRep*)pval);
       }
 
    void bindResult(UOrmStatement* stmt)
       {
-      U_TRACE(0, "UOrmTypeHandler<UString>::bindResult(%p)", stmt)
+      U_TRACE(0, "UOrmTypeHandler<UStringRep>::bindResult(%p)", stmt)
 
-      stmt->bindResult(*(UStringRep*)pval);
+      U_ERROR("UOrmTypeHandler<UStringRep>::bindResult(): sorry, we cannot use UStringRep type to bind ORM type handler...");
       }
 };
 
@@ -864,9 +865,7 @@ public:
       {
       U_TRACE(0, "UOrmTypeHandler<UString>::bindResult(%p)", stmt)
 
-      if (((UString*)pval)->isNull()) ((UString*)pval)->setBuffer(U_CAPACITY);
-
-      stmt->bindResult(*((UString*)pval)->rep);
+      stmt->bindResult(*(UString*)pval);
       }
 };
 
@@ -945,8 +944,13 @@ public:
 
    explicit UOrmTypeHandler(UVector<UString>& val) : UOrmTypeHandler<uvectorbase>(*((uvector*)&val)) {}
 
-   void bindParam( UOrmStatement* stmt) { ((UOrmTypeHandler<uvectorbase>*)this)->bindParam( stmt); }
-   void bindResult(UOrmStatement* stmt) { ((UOrmTypeHandler<uvectorbase>*)this)->bindResult(stmt); }
-};
+   void bindParam(UOrmStatement* stmt) { ((UOrmTypeHandler<uvectorbase>*)this)->bindParam( stmt); }
 
+   void bindResult(UOrmStatement* stmt)
+      {
+      U_TRACE(0, "UOrmTypeHandler<UVector<UString>>::bindResult(%p)", stmt)
+
+      U_ERROR("UOrmTypeHandler<UVector<UString>>::bindResult(): sorry, we cannot use UVector<UString> type to bind ORM type handler...");
+      }
+};
 #endif

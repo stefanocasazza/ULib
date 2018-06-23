@@ -194,7 +194,7 @@ public:
       {
       U_TRACE_CTOR(0, UPgSqlStatementBindParam, "%V", s.rep)
 
-      type = U_UTF_VALUE;
+      type = VARCHAROID;
       }
 
    explicit UPgSqlStatementBindParam(const char* s, int n, bool bstatic) : USqlStatementBindParam(s, n, bstatic)
@@ -341,9 +341,9 @@ public:
       length = sizeof(double);
       }
 
-   explicit UPgSqlStatementBindResult(UStringRep& s) : USqlStatementBindResult(s)
+   explicit UPgSqlStatementBindResult(UString& s) : USqlStatementBindResult(s)
       {
-      U_TRACE_CTOR(0, UPgSqlStatementBindResult, "%V", &s)
+      U_TRACE_CTOR(0, UPgSqlStatementBindResult, "%V", s.rep)
 
       type = VARCHAROID;
       }
@@ -499,8 +499,6 @@ public:
       { UPgSqlStatementBindResult* r; U_NEW(UPgSqlStatementBindResult, r, UPgSqlStatementBindResult(v)); return r; }
    virtual USqlStatementBindResult* creatSqlStatementBindResult(double* v)
       { UPgSqlStatementBindResult* r; U_NEW(UPgSqlStatementBindResult, r, UPgSqlStatementBindResult(v)); return r; }
-   virtual USqlStatementBindResult* creatSqlStatementBindResult(UStringRep& v)
-      { UPgSqlStatementBindResult* r; U_NEW(UPgSqlStatementBindResult, r, UPgSqlStatementBindResult(v)); return r; }
    virtual USqlStatementBindResult* creatSqlStatementBindResult(long long* v)
       { UPgSqlStatementBindResult* r; U_NEW(UPgSqlStatementBindResult, r, UPgSqlStatementBindResult(v)); return r; }
    virtual USqlStatementBindResult* creatSqlStatementBindResult(long double* v)
@@ -515,6 +513,9 @@ public:
       { UPgSqlStatementBindResult* r; U_NEW(UPgSqlStatementBindResult, r, UPgSqlStatementBindResult(v)); return r; }
    virtual USqlStatementBindResult* creatSqlStatementBindResult(unsigned long long* v)
       { UPgSqlStatementBindResult* r; U_NEW(UPgSqlStatementBindResult, r, UPgSqlStatementBindResult(v)); return r; }
+
+   virtual USqlStatementBindResult* creatSqlStatementBindResult(UString& s)
+      { UPgSqlStatementBindResult* r; U_NEW(UPgSqlStatementBindResult, r, UPgSqlStatementBindResult(s)); return r; }
 
    // ASYNC with PIPELINE (PostgresSQL v3 extended query protocol)
 

@@ -315,16 +315,19 @@ static void testSimpleAccessVector(UOrmSession* sql)
 
 // U_INTERNAL_ASSERT(count == 1)
 
-   UVector<UString> vecR;
-   vecR.push_back(UString(100U));
-   vecR.push_back(UString(100U));
-   vecR.push_back(UString(100U));
-
    UOrmStatement select2(*sql, U_CONSTANT_TO_PARAM("SELECT * FROM PersonVec"));
 
-   select2.into(vecR);
+   UVector<UString> vecR;
+   UString str1,str2,str3;
+
+// select2.into(vecR);
+   select2.into(str1,str2,str3);
 
    select2.execute();
+
+   vecR.push_back(str1);
+   vecR.push_back(str2);
+   vecR.push_back(str3);
 
    U_ASSERT(vec == vecR)
 }

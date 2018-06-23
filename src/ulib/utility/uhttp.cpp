@@ -7341,8 +7341,8 @@ void UHTTP::setDynamicResponse()
 
    char* ptr;
    const char* pEndHeader;
+   bool bcontent_type = false; // NB: if false we assume that we don't have a HTTP content-type header...
    uint32_t clength = UClientImage_Base::wbuffer->size();
-   bool bcontent_type = ((int32_t)U_http_info.endHeader < 0); // NB: if false we assume that we don't have a HTTP content-type header...
 
 #if !defined(USE_LIBZ) && !defined(USE_LIBBROTLI)
    bool bcompress = false;
@@ -7354,7 +7354,12 @@ void UHTTP::setDynamicResponse()
 
    if (U_http_info.endHeader)
       {
-      if (bcontent_type) U_http_info.endHeader = -U_http_info.endHeader;
+      if ((int32_t)U_http_info.endHeader < 0)
+         {
+         bcontent_type = true;
+
+         U_http_info.endHeader = -U_http_info.endHeader;
+         }
 
       U_INTERNAL_ASSERT(clength >= U_http_info.endHeader)
 

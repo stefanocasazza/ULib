@@ -1232,27 +1232,21 @@ UString& UString::assign(const char* s, uint32_t n)
 {
    U_TRACE(0, "UString::assign(%.*S,%u)", n, s, n)
 
+   U_INTERNAL_ASSERT_MAJOR(n, 0)
+
    if (rep->references ||
        rep->_capacity < n)
       {
-      if (n)
-         {
-         UStringRep* r;
+      UStringRep* r;
 
-         U_NEW(UStringRep, r, UStringRep(s, n));
+      U_NEW(UStringRep, r, UStringRep(s, n));
 
-         _set(r);
-         }
-      else
-         {
-         _assign(UStringRep::string_rep_null);
-         }
+      _set(r);
       }
    else
       {
       char* ptr = (char*)rep->str;
 
-      U_INTERNAL_ASSERT_MAJOR(n, 0)
       U_INTERNAL_ASSERT_DIFFERS(ptr, s)
 
       U_MEMCPY(ptr, s, n);

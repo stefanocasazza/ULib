@@ -38,7 +38,7 @@ public:
 		U_TRACE_CTOR(5, Fortune, "%u,%V", _id, _message.rep)
 		}
 
-	Fortune(const Fortune& f) : id(f.id), message((void*)U_STRING_TO_PARAM(f.message))
+	Fortune(const Fortune& f) : id(f.id), message(f.message)
 		{
 		U_TRACE_CTOR(5, Fortune, "%p", &f)
 
