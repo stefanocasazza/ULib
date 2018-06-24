@@ -326,9 +326,11 @@ public:
 
       U_CHECK_MEMORY
 
-      int r = memcmp(str, s, U_min(_length, n));
-
       U_INTERNAL_DUMP("str = %.*S", U_min(_length, n), str)
+
+      if (*str != *s) U_RETURN(*(const unsigned char*)str - *(const unsigned char*)s);
+
+      int r = memcmp(str+1, s+1, U_min(_length, n)-1);
 
       if (r == 0) r = (_length - n);
 

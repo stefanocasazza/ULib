@@ -22,7 +22,6 @@ extern U_EXPORT void runDynamicPage_wi_auth2(int param);
       return;
       }
    
-   U_http_info.endHeader = 0;
    static UHTTP::service_info GET_table[] = { // NB: the table must be ordered alphabetically for binary search...
       GET_ENTRY(anagrafica),
       GET_ENTRY(checkCaptive),
@@ -43,5 +42,6 @@ extern U_EXPORT void runDynamicPage_wi_auth2(int param);
    
    UHTTP::manageRequest(GET_table, U_NUM_ELEMENTS(GET_table), POST_table, U_NUM_ELEMENTS(POST_table));
    
+   U_http_info.endHeader = 0;
    
 } }

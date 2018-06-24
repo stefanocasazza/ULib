@@ -228,16 +228,16 @@ if (envp) \
 #  define U_DUMP_CONTAINER(obj) { if (utr.active[0] && (obj).getSpaceToDump() < U_MAX_SIZE_PREALLOCATE) u_trace_dump(U_CONSTANT_TO_PARAM(#obj" = %O"), U_OBJECT_TO_TRACE((obj))); }
 
 #  define U_DUMP_OBJECT_TO_TMP(obj,fname) \
-            { char _buffer[2 * 1024 * 1024]; \
-               uint32_t _n = UObject2String((obj), _buffer, sizeof(_buffer)); \
-               U_INTERNAL_ASSERT_MINOR(_n, sizeof(_buffer)) \
-               (void) UFile::writeToTmp(_buffer, _n, O_RDWR | O_TRUNC, U_CONSTANT_TO_PARAM(#fname".%P"), 0); }
+            { char _lbuffer[2 * 1024 * 1024]; \
+               uint32_t _n = UObject2String((obj), _lbuffer, sizeof(_lbuffer)); \
+               U_INTERNAL_ASSERT_MINOR(_n, sizeof(_lbuffer)) \
+               (void) UFile::writeToTmp(_lbuffer, _n, O_RDWR | O_TRUNC, U_CONSTANT_TO_PARAM(#fname".%P"), 0); }
 
 #  define U_DUMP_OBJECT_WITH_CHECK(msg,check_object) \
             if (UObjectDB::fd > 0) { \
-               char _buffer[4096]; \
-               uint32_t _n = UObjectDB::dumpObject(_buffer, sizeof(_buffer), (check_object)); \
-               if (utr.active[0]) u_trace_dump(U_CONSTANT_TO_PARAM(msg " = \n%.*s\n"), U_min(_n,4000), _buffer); }
+               char _lbuffer[4096]; \
+               uint32_t _n = UObjectDB::dumpObject(_lbuffer, sizeof(_lbuffer), (check_object)); \
+               if (utr.active[0]) u_trace_dump(U_CONSTANT_TO_PARAM(msg " = \n%.*s\n"), U_min(_n,4000), _lbuffer); }
 
 # else /* U_STDCPP_ENABLE */
 #  define U_REGISTER_OBJECT(CLASS)

@@ -40,10 +40,10 @@ public:
       char buffer[4096];
       unsigned char* dst;
       UString token, name, value;
-      uint8_t prefix_max, pattern;
+      uint8_t prefix_max = 0x00, pattern = 0x00;
       UVector<UString> vline(content,'\n'), vtoken;
       uint32_t i, l, n = vline.size(), num, cnt = 0, idx, index;
-      bool cut = false, bvalue_is_indexed = false, binsert_dynamic_table = false;
+      bool bvalue_is_indexed = false, binsert_dynamic_table = false;
 
       UHTTP2::HpackHeaderTableEntry* entry;
       UHTTP2::HpackDynamicTable* dyntbl = &(UHTTP2::pConnection->odyntbl);
@@ -79,7 +79,6 @@ start:   token = vtoken[0];
                U_INTERNAL_ASSERT_MAJOR(cnt, 0)
 
                cnt = 0;
-               cut = true;
                }
             else if (token.equal(U_CONSTANT_TO_PARAM("trim")))
                {
@@ -204,7 +203,7 @@ start:   token = vtoken[0];
 
          for (l = 5; l < num; ++l) value += ' ' + vtoken[l];
 
-check1:  if (vtoken[1].equal(U_CONSTANT_TO_PARAM("idx")) == false)
+         if (vtoken[1].equal(U_CONSTANT_TO_PARAM("idx")) == false)
             {
             // not-existing name
 

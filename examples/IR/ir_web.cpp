@@ -57,7 +57,6 @@ extern U_EXPORT void runDynamicPage_ir_web(int param);
       }
    
    UHTTP::mime_index = U_html;
-   U_http_info.endHeader = 0;
    if (UHTTP::getDataSession() == false) UHTTP::setSessionCookie();
    const char* ref     = "?ext=help";
    uint32_t num_args   = UHTTP::processForm() / 2;
@@ -192,5 +191,6 @@ extern U_EXPORT void runDynamicPage_ir_web(int param);
       U_CONSTANT_TO_PARAM("  </div>\n</body>\n</html>")
    );
    UHTTP::putDataSession();
+   U_http_info.endHeader = 0;
    
 } }

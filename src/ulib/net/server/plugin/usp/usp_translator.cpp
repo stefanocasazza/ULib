@@ -328,13 +328,14 @@ public:
 
          setDirectiveItem(directive, U_CONSTANT_SIZE("vcode"));
 
-         U_INTERNAL_ASSERT(token)
+         if (token)
+            {
+            token = UStringExt::substitute(token, '\n', U_CONSTANT_TO_PARAM("\n\t"));
 
-         token = UStringExt::substitute(token, '\n', U_CONSTANT_TO_PARAM("\n\t"));
+            vcode.setBuffer(20U + token.size());
 
-         vcode.setBuffer(20U + token.size());
-
-         vcode.snprintf(U_CONSTANT_TO_PARAM("\n\t%v\n\t\n"), token.rep);
+            vcode.snprintf(U_CONSTANT_TO_PARAM("\n\t%v\n\t\n"), token.rep);
+            }
          }
       else if (strncmp(directive, U_CONSTANT_TO_PARAM("pcode")) == 0) // parallelization code (long running task)
          {
@@ -342,15 +343,18 @@ public:
 
          setDirectiveItem(directive, U_CONSTANT_SIZE("pcode"));
 
-         U_INTERNAL_ASSERT(token)
+         if (token)
+            {
+            if (U_STRING_FIND(token, 0, "return") != U_NOT_FOUND) U_WARNING("use of 'return' inside usp can cause problem, please avoid it");
 
-         token = UStringExt::substitute(token, '\n', U_CONSTANT_TO_PARAM("\n\t"));
+            token = UStringExt::substitute(token, '\n', U_CONSTANT_TO_PARAM("\n\t"));
 
-         (void) output0.reserve(20U + token.size());
+            (void) output0.reserve(20U + token.size());
 
-         output0.snprintf_add(U_CONSTANT_TO_PARAM("\n\t%v\n\t\n"), token.rep);
+            output0.snprintf_add(U_CONSTANT_TO_PARAM("\n\t%v\n\t\n"), token.rep);
 
-         (void) vcode.append(U_CONSTANT_TO_PARAM("\tif (UServer_Base::startParallelization()) { U_http_info.nResponseCode = HTTP_CONTINUE; return; }\n\t\n"));
+            (void) vcode.append(U_CONSTANT_TO_PARAM("\tif (UServer_Base::startParallelization()) { U_http_info.nResponseCode = HTTP_CONTINUE; return; }\n\t\n"));
+            }
          }
       else if (strncmp(directive, U_CONSTANT_TO_PARAM("lcode")) == 0) // load balance code
          {
@@ -358,19 +362,22 @@ public:
 
          setDirectiveItem(directive, U_CONSTANT_SIZE("lcode"));
 
-         U_INTERNAL_ASSERT(token)
+         if (token)
+            {
+            if (U_STRING_FIND(token, 0, "return") != U_NOT_FOUND) U_WARNING("use of 'return' inside usp can cause problem, please avoid it");
 
-         token = UStringExt::substitute(token, '\n', U_CONSTANT_TO_PARAM("\n\t"));
+            token = UStringExt::substitute(token, '\n', U_CONSTANT_TO_PARAM("\n\t"));
 
-         (void) output0.reserve(20U + token.size());
+            (void) output0.reserve(20U + token.size());
 
-         output0.snprintf_add(U_CONSTANT_TO_PARAM("\n\t%v\n\t\n"), token.rep);
+            output0.snprintf_add(U_CONSTANT_TO_PARAM("\n\t%v\n\t\n"), token.rep);
 
-         (void) vcode.append(U_CONSTANT_TO_PARAM("\tif (UServer_Base::startParallelization()) { U_http_info.nResponseCode = HTTP_CONTINUE; return; }\n\t\n"));
+            (void) vcode.append(U_CONSTANT_TO_PARAM("\tif (UServer_Base::startParallelization()) { U_http_info.nResponseCode = HTTP_CONTINUE; return; }\n\t\n"));
 
-#     ifdef USE_LOAD_BALANCE
-         (void) vcode.append(U_CONSTANT_TO_PARAM("\tif (UHTTP::manageRequestOnRemoteServer()) return;\n\t\n"));
-#     endif
+#        ifdef USE_LOAD_BALANCE
+            (void) vcode.append(U_CONSTANT_TO_PARAM("\tif (UHTTP::manageRequestOnRemoteServer()) return;\n\t\n"));
+#        endif
+            }
          }
       else if (strncmp(directive, U_CONSTANT_TO_PARAM("code")) == 0) // generic code
          {
@@ -380,6 +387,8 @@ public:
 
          if (token)
             {
+            if (U_STRING_FIND(token, 0, "return") != U_NOT_FOUND) U_WARNING("use of 'return' inside usp can cause problem, please avoid it");
+
             token = UStringExt::substitute(token, '\n', U_CONSTANT_TO_PARAM("\n\t"));
 
             (void) output0.reserve(20U + token.size());
@@ -479,12 +488,13 @@ public:
 
          U_ASSERT(encoded.isQuoted())
 
+         (void)     output2.reserve(200U);
          (void) http_header.reserve(200U + encoded.size());
 
          (void) http_header.snprintf(U_CONSTANT_TO_PARAM("\n\tU_ASSERT_EQUALS(UClientImage_Base::wbuffer->findEndHeader(),false)"
-                                                         "\n\tU_http_info.endHeader = %.*s%u;"
-                                                         "\n\t(void) UClientImage_Base::wbuffer->insert(0, U_CONSTANT_TO_PARAM(%v));\n\t\n"),
-                                                         bheader ? U_CONSTANT_SIZE("(uint32_t)-") : 0, "(uint32_t)-", n, encoded.rep);
+                                                         "\n\t(void) UClientImage_Base::wbuffer->insert(0, U_CONSTANT_TO_PARAM(%v));\n\t\n"), encoded.rep);
+
+         (void) output2.snprintf_add(U_CONSTANT_TO_PARAM("\n\tU_http_info.endHeader = %.*s%u;\n"), bheader ? U_CONSTANT_SIZE("(uint32_t)-") : 0, "(uint32_t)-", n);
          }
       else if (strncmp(directive, U_CONSTANT_TO_PARAM("number")) == 0)
          {
@@ -504,11 +514,12 @@ public:
 
          setDirectiveItem(directive, U_CONSTANT_SIZE("puts"));
 
-         U_INTERNAL_ASSERT(token)
+         if (token)
+            {
+            (void) output0.reserve(100U + token.size());
 
-         (void) output0.reserve(100U + token.size());
-
-         output0.snprintf_add(U_CONSTANT_TO_PARAM("\n\t(void) UClientImage_Base::wbuffer->append((%v));\n"), token.rep);
+            output0.snprintf_add(U_CONSTANT_TO_PARAM("\n\t(void) UClientImage_Base::wbuffer->append((%v));\n"), token.rep);
+            }
          }
       else if (strncmp(directive, U_CONSTANT_TO_PARAM("xmlputs")) == 0)
          {
@@ -516,11 +527,12 @@ public:
 
          setDirectiveItem(directive, U_CONSTANT_SIZE("xmlputs"));
 
-         U_INTERNAL_ASSERT(token)
+         if (token)
+            {
+            (void) output0.reserve(100U + token.size());
 
-         (void) output0.reserve(100U + token.size());
-
-         output0.snprintf_add(U_CONSTANT_TO_PARAM("\n\tUSP_XML_PUTS((%v));\n"), token.rep);
+            output0.snprintf_add(U_CONSTANT_TO_PARAM("\n\tUSP_XML_PUTS((%v));\n"), token.rep);
+            }
          }
       else if (strncmp(directive, U_CONSTANT_TO_PARAM("cout")) == 0)
          {
@@ -530,12 +542,13 @@ public:
 
          setDirectiveItem(directive, U_CONSTANT_SIZE("cout"));
 
-         U_INTERNAL_ASSERT(token)
+         if (token)
+            {
+            (void) output0.reserve(200U + token.size());
 
-         (void) output0.reserve(200U + token.size());
-
-         output0.snprintf_add(U_CONSTANT_TO_PARAM("\n\tusp_sz = UObject2String((%v), usp_buffer, sizeof(usp_buffer));"
-                                                  "\n\t(void) UClientImage_Base::wbuffer->append(usp_buffer, usp_sz);\n"), token.rep);
+            output0.snprintf_add(U_CONSTANT_TO_PARAM("\n\tusp_sz = UObject2String((%v), usp_buffer, sizeof(usp_buffer));"
+                                                     "\n\t(void) UClientImage_Base::wbuffer->append(usp_buffer, usp_sz);\n"), token.rep);
+            }
          }
       else if (strncmp(directive, U_CONSTANT_TO_PARAM("print")) == 0)
          {
@@ -547,26 +560,27 @@ public:
 
          setDirectiveItem(directive, (bfor ? U_CONSTANT_SIZE("printfor") : U_CONSTANT_SIZE("print")));
 
-         U_INTERNAL_ASSERT(token)
-
-         (void) output0.reserve(200U + token.size());
-
-         UVector<UString> vec(token, ';');
-
-         if (bfor)
+         if (token)
             {
-            U_ASSERT_EQUALS(vec.size(), 5)
+            (void) output0.reserve(200U + token.size());
 
-            output0.snprintf_add(U_CONSTANT_TO_PARAM("\n\tfor (%v; %v; %v) { usp_sz = u__snprintf(usp_buffer, sizeof(usp_buffer), %v, %v);"
-                                                     "(void) UClientImage_Base::wbuffer->append(usp_buffer, usp_sz); }\n"),
-                                                     vec[0].rep, vec[1].rep, vec[2].rep, vec[3].rep, vec[4].rep);
-            }
-         else
-            {
-            U_ASSERT_EQUALS(vec.size(), 2)
+            UVector<UString> vec(token, ';');
 
-            output0.snprintf_add(U_CONSTANT_TO_PARAM("\n\tusp_sz = u__snprintf(usp_buffer, sizeof(usp_buffer), %v, %v);"
-                                                     "(void) UClientImage_Base::wbuffer->append(usp_buffer, usp_sz);\n"), vec[0].rep, vec[1].rep);
+            if (bfor)
+               {
+               U_ASSERT_EQUALS(vec.size(), 5)
+
+               output0.snprintf_add(U_CONSTANT_TO_PARAM("\n\tfor (%v; %v; %v) { usp_sz = u__snprintf(usp_buffer, sizeof(usp_buffer), %v, %v);"
+                                                        "(void) UClientImage_Base::wbuffer->append(usp_buffer, usp_sz); }\n"),
+                                                        vec[0].rep, vec[1].rep, vec[2].rep, vec[3].rep, vec[4].rep);
+               }
+            else
+               {
+               U_ASSERT_EQUALS(vec.size(), 2)
+
+               output0.snprintf_add(U_CONSTANT_TO_PARAM("\n\tusp_sz = u__snprintf(usp_buffer, sizeof(usp_buffer), %v, %v);"
+                                                        "(void) UClientImage_Base::wbuffer->append(usp_buffer, usp_sz);\n"), vec[0].rep, vec[1].rep);
+               }
             }
          }
       }
@@ -829,10 +843,10 @@ loop: distance = t.getDistance();
          {
          if (is_html) (void) http_header.append(U_CONSTANT_TO_PARAM("\n\tUHTTP::mime_index = U_html;\n"));
 
-         (void) http_header.append(U_CONSTANT_TO_PARAM("\n\tU_http_info.endHeader = 0;\n"));
+         (void) output2.append(U_CONSTANT_TO_PARAM("\n\tU_http_info.endHeader = 0;\n"));
          }
 
-      UString result(1024U + declaration.size() + http_header.size() + output0.size() + output1.size() + vars.size());
+      UString result(1024U + declaration.size() + http_header.size() + output0.size() + output1.size() + output2.size() + vars.size());
 
       result.snprintf(U_CONSTANT_TO_PARAM(
             "// %.*s.cpp - dynamic page translation (%.*s.usp => %.*s.cpp)\n"
@@ -867,6 +881,7 @@ loop: distance = t.getDistance();
             "%s"
             "%v"
             "%v"
+            "%v"
             "\t\n"
             "} }\n"),
             basename_sz, basename_ptr,
@@ -889,7 +904,8 @@ loop: distance = t.getDistance();
             http_header.rep,
             ptr8,
             output0.rep,
-            output1.rep);
+            output1.rep,
+            output2.rep);
 
       UString name(200U);
 
@@ -901,7 +917,7 @@ loop: distance = t.getDistance();
 private:
    UTokenizer t;
    UVector<UString> vdefine;
-   UString pinclude, usp, token, output0, output1, declaration, vcode, http_header, sseloop, vars;
+   UString pinclude, usp, token, output0, output1, output2, declaration, vcode, http_header, sseloop, vars;
    const char* basename_ptr;
    uint32_t basename_sz;
    bool bvar, bsession, bstorage, bfirst_pass, is_html, test_if_html, bpreprocessing_failed;

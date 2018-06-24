@@ -327,13 +327,7 @@ public:
       {
       U_TRACE_NO_PARAM(0, "UMySqlStatementBindResult::setString()")
 
-      U_INTERNAL_ASSERT_POINTER(pstr)
-      U_INTERNAL_ASSERT(pstr->invariant())
-
-      if (length > 0) pstr->setConstant(str_data, length);
-      else            pstr->setEmpty();
-
-      U_INTERNAL_DUMP("pstr(%u) = %V", length, pstr->rep)
+      USqlStatementBindResult::setString(str_data, length);
       }
 
    // DEBUG

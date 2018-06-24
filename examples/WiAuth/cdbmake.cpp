@@ -96,16 +96,18 @@ public:
                records = output;
                }
 
+#        if defined(U_EVASIVE_SUPPORT) || defined(U_THROTTLING_SUPPORT)
             UString basename = UStringExt::basename(filename);
 
             const char* p = basename.data();
 
-#           ifdef U_EVASIVE_SUPPORT
-               if (memcmp(p, U_CONSTANT_TO_PARAM("Evasive")) == 0) UCDB::getValueFromBuffer = UServer_Base::getEvasiveRecFromBuffer;
-#           endif
-#           ifdef U_THROTTLING_SUPPORT
-               if (memcmp(p, U_CONSTANT_TO_PARAM("BandWidthThrottling")) == 0) UCDB::getValueFromBuffer = UServer_Base::getThrottlingRecFromBuffer;
-#           endif
+#          ifdef U_EVASIVE_SUPPORT
+            if (memcmp(p, U_CONSTANT_TO_PARAM("Evasive")) == 0) UCDB::getValueFromBuffer = UServer_Base::getEvasiveRecFromBuffer;
+#          endif
+#          ifdef U_THROTTLING_SUPPORT
+            if (memcmp(p, U_CONSTANT_TO_PARAM("BandWidthThrottling")) == 0) UCDB::getValueFromBuffer = UServer_Base::getThrottlingRecFromBuffer;
+#          endif
+#        endif
 
             istrstream is(U_STRING_TO_PARAM(records));
 

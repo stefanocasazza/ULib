@@ -3,12 +3,11 @@
 #ifndef FORTUNE_H
 #define FORTUNE_H 1
 
-#include <ulib/base/coder/xml.h>
-
 #include <ulib/orm/orm.h>
 #include <ulib/json/value.h>
 #include <ulib/utility/uhttp.h>
 #include <ulib/orm/orm_driver.h>
+#include <ulib/utility/xml_escape.h>
 #include <ulib/net/server/client_image.h>
 
 class Fortune {
@@ -33,16 +32,20 @@ public:
 #  endif
       }
 
-   Fortune(uint32_t _id, const UString& _message) : id(_id), message(_message)
+   Fortune(uint32_t _id, const UString& _message) : id(_id), message(100U)
       {
       U_TRACE_CTOR(5, Fortune, "%u,%V", _id, _message.rep)
+
+      UXMLEscape::encode(_message, message);
       }
 
-   Fortune(const Fortune& f) : id(f.id), message((void*)U_STRING_TO_PARAM(f.message))
+   Fortune(const Fortune& f) : id(f.id), message(100U)
       {
       U_TRACE_CTOR(5, Fortune, "%p", &f)
 
       U_MEMORY_TEST_COPY(f)
+
+      UXMLEscape::encode(f.message, message);
       }
 
    ~Fortune()
@@ -137,7 +140,7 @@ public:
 
       Fortune* elem;
 
-      for (uint32_t i = 0, n = pvfortune->size(); i < n; ++i)
+      for (uint32_t sz, i = 0, n = pvfortune->size(); i < n; ++i)
          {
          elem = pvfortune->at(i);
 
@@ -150,7 +153,8 @@ public:
 
          *pwbuffer++ = '>';
 
-         pwbuffer += u_xml_encode((const unsigned char*)U_STRING_TO_PARAM(elem->message), (unsigned char*)pwbuffer);
+         (void) memcpy(pwbuffer, elem->message.data(), sz = elem->message.size());
+                       pwbuffer += sz;
 
          u_put_unalignedp64(pwbuffer,   U_MULTICHAR_CONSTANT64('<','/','t','d','>','<','/','t'));
          u_put_unalignedp16(pwbuffer+8, U_MULTICHAR_CONSTANT16('r','>'));

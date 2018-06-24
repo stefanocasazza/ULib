@@ -371,7 +371,7 @@ bool UMySqlStatement::setBindParam(UOrmDriver* pdrv)
 
          MYSQL_BIND* mysql_param = mysql_vparam+i;
 
-         if ((mysql_param->buffer_type = (enum_field_types)param->type) == U_UTF_VALUE)
+         if ((mysql_param->buffer_type = (enum_field_types)param->type) == (enum_field_types)U_UTF_VALUE)
             {
             U_INTERNAL_ASSERT_POINTER(param->pstr)
             U_INTERNAL_ASSERT(param->pstr->invariant())
