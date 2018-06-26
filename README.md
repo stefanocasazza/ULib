@@ -75,7 +75,7 @@ The current version offers the following features :
 
 ## Who is Using ULib
 
-It is the main software component of [city of Florence wireless network](http://wifi-aaa2.comune.fi.it/login?mac=00%3A00%3A00%3A00%3A00%3A00&ip=172.22.11.124&redirect=http%3A//pasta.dianxinos.com/api/data&gateway=159.213.248.230%3A5280&timeout=0&token=1810300063&ap=90@151.11.47.5&ts=2467819142)
+It is the main software component of [city of Florence wireless network](http://wifi-aaa.comune.fi.it/welcome?url=http%3A//captive.apple.com/hotspot-detect.html&mac=4400101a2174&apid=64&gateway=172.20.63.254%3A5280)
 
 ## Benchmark
 
