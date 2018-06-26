@@ -403,7 +403,12 @@ U_EXPORT main (int argc, char* argv[])
    uint32_t i = y.findSorted(U_STRING_FROM_CONSTANT("NULL"));
    U_INTERNAL_ASSERT( i == U_NOT_FOUND )
 
-   for (i = 0, n = y.size(); i < n; ++i) { U_ASSERT( i == y.findSorted(y[i]) ) }
+   for (i = 0, n = y.size(); i < n; ++i)
+      {
+      uint32_t j = y.findSorted(y[i]);
+
+      U_INTERNAL_ASSERT( j == i )
+      }
 
    ofstream outf("vector.sort");
 

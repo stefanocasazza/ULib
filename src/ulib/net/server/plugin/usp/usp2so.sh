@@ -11,7 +11,7 @@ do
 	OBJ="$OBJ $(basename $i .usp).la"
 done
 
-UMEMPOOL="0,0,0,48,-20,-20,-20,-20,0" make -j6 $OBJ
+UMEMPOOL="0,0,0,48,-20,-20,-20,-20,0" make -i -j6 $OBJ
 
 rm -f .libs/lib*.so
 

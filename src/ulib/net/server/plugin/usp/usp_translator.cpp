@@ -345,8 +345,6 @@ public:
 
          if (token)
             {
-            if (U_STRING_FIND(token, 0, "return") != U_NOT_FOUND) U_WARNING("use of 'return' inside usp can cause problem, please avoid it");
-
             token = UStringExt::substitute(token, '\n', U_CONSTANT_TO_PARAM("\n\t"));
 
             (void) output0.reserve(20U + token.size());
@@ -364,8 +362,6 @@ public:
 
          if (token)
             {
-            if (U_STRING_FIND(token, 0, "return") != U_NOT_FOUND) U_WARNING("use of 'return' inside usp can cause problem, please avoid it");
-
             token = UStringExt::substitute(token, '\n', U_CONSTANT_TO_PARAM("\n\t"));
 
             (void) output0.reserve(20U + token.size());
@@ -387,8 +383,6 @@ public:
 
          if (token)
             {
-            if (U_STRING_FIND(token, 0, "return") != U_NOT_FOUND) U_WARNING("use of 'return' inside usp can cause problem, please avoid it");
-
             token = UStringExt::substitute(token, '\n', U_CONSTANT_TO_PARAM("\n\t"));
 
             (void) output0.reserve(20U + token.size());
@@ -488,13 +482,13 @@ public:
 
          U_ASSERT(encoded.isQuoted())
 
-         (void)     output2.reserve(200U);
+         (void)     output1.reserve(200U);
          (void) http_header.reserve(200U + encoded.size());
 
          (void) http_header.snprintf(U_CONSTANT_TO_PARAM("\n\tU_ASSERT_EQUALS(UClientImage_Base::wbuffer->findEndHeader(),false)"
                                                          "\n\t(void) UClientImage_Base::wbuffer->insert(0, U_CONSTANT_TO_PARAM(%v));\n\t\n"), encoded.rep);
 
-         (void) output2.snprintf_add(U_CONSTANT_TO_PARAM("\n\tU_http_info.endHeader = %.*s%u;\n"), bheader ? U_CONSTANT_SIZE("(uint32_t)-") : 0, "(uint32_t)-", n);
+         (void) output1.snprintf_add(U_CONSTANT_TO_PARAM("\n\tU_http_info.endHeader = %.*s%u;\n"), bheader ? U_CONSTANT_SIZE("(uint32_t)-") : 0, "(uint32_t)-", n);
          }
       else if (strncmp(directive, U_CONSTANT_TO_PARAM("number")) == 0)
          {
@@ -750,21 +744,20 @@ loop: distance = t.getDistance();
            bopen,   // usp_open
            bclose;  // usp_close
 
-            char  ptr1[100] = { '\0' };
-            char  ptr2[100] = { '\0' };
-            char  ptr3[100] = { '\0' };
-            char  ptr4[100] = { '\0' };
-            char  ptr5[100] = { '\0' };
-            char  ptr6[100] = { '\0' };
-            char  ptr7[100] = { '\0' };
-      const char* ptr8      = "";
+      char ptr1[100] = { '\0' };
+      char ptr2[100] = { '\0' };
+      char ptr3[100] = { '\0' };
+      char ptr4[100] = { '\0' };
+      char ptr5[100] = { '\0' };
+      char ptr6[100] = { '\0' };
+      char ptr7[100] = { '\0' };
 
 #  ifndef U_CACHE_REQUEST_DISABLE
       if (usp.c_char(4) == '#'      &&
           u__isspace(usp.c_char(5)) &&
           u_get_unalignedp32(usp.data()) == U_MULTICHAR_CONSTANT32('<','!','-','-')) // <!--# --> (comment)
          {
-         ptr8 = "\n\tUClientImage_Base::setRequestNoCache();\n\t\n";
+         (void) output1.append(U_CONSTANT_TO_PARAM("\n\tUClientImage_Base::setRequestNoCache();\n\t\n"));
          }
 #  endif
 
@@ -841,12 +834,35 @@ loop: distance = t.getDistance();
 
       if (http_header.empty())
          {
-         if (is_html) (void) http_header.append(U_CONSTANT_TO_PARAM("\n\tUHTTP::mime_index = U_html;\n"));
-
-         (void) output2.append(U_CONSTANT_TO_PARAM("\n\tU_http_info.endHeader = 0;\n"));
+                      (void) output1.append(U_CONSTANT_TO_PARAM("\n\tU_http_info.endHeader = 0;\n"));
+         if (is_html) (void) output1.append(U_CONSTANT_TO_PARAM("\n\tUHTTP::mime_index = U_html;\n"));
          }
 
-      UString result(1024U + declaration.size() + http_header.size() + output0.size() + output1.size() + output2.size() + vars.size());
+      // NB: we check for presence of 'return' inside the code...
+
+      if (U_STRING_FIND(output0, 0, "return") != U_NOT_FOUND)
+         {
+         (void) declaration.reserve(200U + vars.size() + output0.size());
+
+         declaration.snprintf_add(U_CONSTANT_TO_PARAM(
+               "\n\t\nstatic void usp_body_%.*s()\n"
+               "{\n"
+               "\tU_TRACE(5, \"::usp_body_%.*s()\")\n"
+               "\t\n"
+               "%v"
+               "%v"
+               "\n}"),
+               basename_sz, basename_ptr,
+               basename_sz, basename_ptr,
+               vars.rep,
+               output0.rep);
+
+         vars.clear();
+
+         output0.snprintf(U_CONSTANT_TO_PARAM("\n\tusp_body_%.*s();\n"), basename_sz, basename_ptr);
+         }
+
+      UString result(1024U + declaration.size() + http_header.size() + vars.size() + output0.size() + output1.size());
 
       result.snprintf(U_CONSTANT_TO_PARAM(
             "// %.*s.cpp - dynamic page translation (%.*s.usp => %.*s.cpp)\n"
@@ -878,8 +894,6 @@ loop: distance = t.getDistance();
             "\t\n"
             "%v"
             "%v"
-            "%s"
-            "%v"
             "%v"
             "%v"
             "\t\n"
@@ -902,10 +916,8 @@ loop: distance = t.getDistance();
             ptr7,
             vcode.rep,
             http_header.rep,
-            ptr8,
             output0.rep,
-            output1.rep,
-            output2.rep);
+            output1.rep);
 
       UString name(200U);
 
@@ -917,7 +929,7 @@ loop: distance = t.getDistance();
 private:
    UTokenizer t;
    UVector<UString> vdefine;
-   UString pinclude, usp, token, output0, output1, output2, declaration, vcode, http_header, sseloop, vars;
+   UString pinclude, usp, token, output0, output1, declaration, vcode, http_header, sseloop, vars;
    const char* basename_ptr;
    uint32_t basename_sz;
    bool bvar, bsession, bstorage, bfirst_pass, is_html, test_if_html, bpreprocessing_failed;

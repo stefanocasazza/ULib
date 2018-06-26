@@ -326,13 +326,25 @@ public:
 
       U_CHECK_MEMORY
 
-      U_INTERNAL_DUMP("str = %.*S", U_min(_length, n), str)
+      U_INTERNAL_DUMP("str(%u) = %.*S", _length, U_min(_length, n), str)
 
-      if (*str != *s) U_RETURN(*(const unsigned char*)str - *(const unsigned char*)s);
+      U_INTERNAL_ASSERT_MAJOR(n, 0)
 
-      int r = memcmp(str+1, s+1, U_min(_length, n)-1);
+      int r = *(const unsigned char*)str - *(const unsigned char*)s;
 
-      if (r == 0) r = (_length - n);
+      if (r == 0)
+         {
+         uint32_t len = U_min(_length, n);
+
+         if (len > 1)
+            {
+            r = memcmp(str+1, s+1, len-1);
+
+            if (r) U_RETURN(r);
+            }
+
+         r = _length < n ? -1 : _length > n; // _length - n;
+         }
 
       U_RETURN(r);
       }
@@ -546,9 +558,7 @@ public:
       U_INTERNAL_ASSERT_MAJOR(n, 0)
       U_INTERNAL_ASSERT(_capacity >= n)
 
-      U_MEMCPY((char*)str, s, n);
-
-      ((char*)str)[(_length = n)] = '\0';
+      (void) memcpy((char*)str, s, _length = n);
       }
 
 #ifdef DEBUG

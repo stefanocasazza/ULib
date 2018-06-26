@@ -97,13 +97,6 @@ public:
       U_RETURN(_length == 0);
       }
 
-   void setEmpty()
-      {
-      U_TRACE_NO_PARAM(0, "UVector<void*>::setEmpty()")
-
-      _length = 0;
-      }
-
    // Make room for a total of n element
 
    void reserve(uint32_t n);

@@ -42,21 +42,10 @@ static void usp_end_ir_web()
    U_DELETE(footer)
 }
    
-extern "C" {
-extern U_EXPORT void runDynamicPage_ir_web(int param);
-       U_EXPORT void runDynamicPage_ir_web(int param)
+static void usp_body_ir_web()
 {
-   U_TRACE(0, "::runDynamicPage_ir_web(%d)", param)
+   U_TRACE(5, "::usp_body_ir_web()")
    
-   
-   if (param)
-      {
-      if (param == U_DPAGE_INIT) { usp_init_ir_web(); return; }
-      if (param == U_DPAGE_DESTROY) { usp_end_ir_web(); return; }
-      return;
-      }
-   
-   UHTTP::mime_index = U_html;
    if (UHTTP::getDataSession() == false) UHTTP::setSessionCookie();
    const char* ref     = "?ext=help";
    uint32_t num_args   = UHTTP::processForm() / 2;
@@ -190,7 +179,25 @@ extern U_EXPORT void runDynamicPage_ir_web(int param);
    (void) UClientImage_Base::wbuffer->append(
       U_CONSTANT_TO_PARAM("  </div>\n</body>\n</html>")
    );
+}
+   
+extern "C" {
+extern U_EXPORT void runDynamicPage_ir_web(int param);
+       U_EXPORT void runDynamicPage_ir_web(int param)
+{
+   U_TRACE(0, "::runDynamicPage_ir_web(%d)", param)
+   
+   
+   if (param)
+      {
+      if (param == U_DPAGE_INIT) { usp_init_ir_web(); return; }
+      if (param == U_DPAGE_DESTROY) { usp_end_ir_web(); return; }
+      return;
+      }
+   
+   usp_body_ir_web();
    UHTTP::putDataSession();
    U_http_info.endHeader = 0;
+   UHTTP::mime_index = U_html;
    
 } }

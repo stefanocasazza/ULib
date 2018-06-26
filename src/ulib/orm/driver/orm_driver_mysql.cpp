@@ -442,7 +442,12 @@ void UMySqlStatement::setStringBindedAsResult()
       {
       result = vresult[i];
 
-      if (result->type == string_type) ((UMySqlStatementBindResult*)result)->setString();
+      if (result->type == string_type)
+         {
+         U_INTERNAL_ASSERT_MINOR(result->length, U_MYSQL_STRING_SIZE)
+
+         ((UMySqlStatementBindResult*)result)->setString();
+         }
       }
 }
 

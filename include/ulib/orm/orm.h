@@ -52,6 +52,8 @@ public:
    void* getConnection() __pure;
    bool  connect(const UString& option);
 
+   UOrmDriver* getDriver() const { return pdrv; }
+
    // statement that should only be executed once and immediately
 
    bool query(const char* query, uint32_t query_len);
@@ -211,6 +213,10 @@ public:
 
     UOrmStatement(UOrmSession& session, const char* query, uint32_t query_len);
    ~UOrmStatement();
+
+   // will be typecast into conn-specific type
+
+   USqlStatement* getStatement() const { return pstmt; }
 
    // Execute the statement
 

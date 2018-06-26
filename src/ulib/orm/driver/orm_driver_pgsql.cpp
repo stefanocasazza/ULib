@@ -337,9 +337,7 @@ bool UPgSqlStatement::setBindParam(UOrmDriver* pdrv)
        * numbers higher than nParams; data types will be inferred for these symbols as well
        */
 
-      pHandle = (PGresult*) U_SYSCALL(PQprepare, "%p,%S,%S,%d,%p",
-                                      (PGconn*)pdrv->UOrmDriver::connection,
-                                      stmtName, stmt.data(), num_bind_param, paramTypes);
+      prepareStatement(pdrv);
 
       if (pHandle == U_NULLPTR ||
           U_SYSCALL(PQresultStatus, "%p", (PGresult*)pHandle) != PGRES_COMMAND_OK)
@@ -381,7 +379,7 @@ bool UPgSqlStatement::setBindParam(UOrmDriver* pdrv)
 
       num_bind_result = U_SYSCALL(PQnfields, "%p", res);
 
-#  ifdef DEBUG
+   #  ifdef DEBUG
       uint32_t i;
       Oid paramtype;
 
@@ -402,7 +400,7 @@ bool UPgSqlStatement::setBindParam(UOrmDriver* pdrv)
 
          U_INTERNAL_DUMP("result[%u] (%s): size = %d type = %d format = %d", i, fname, fsize, paramtype, fformat)
          }
-#  endif
+   #  endif
       }
 
    if (num_bind_param)
@@ -535,14 +533,7 @@ void UOrmDriverPgSql::execute(USqlStatement* pstmt)
 
    if (((UPgSqlStatement*)pstmt)->setBindParam(this))
       {
-      PGresult* res = (PGresult*) U_SYSCALL(PQexecPrepared, "%p,%S,%d,%p,%p,%p,%d",
-                                    (PGconn*)UOrmDriver::connection,
-                                    ((UPgSqlStatement*)pstmt)->stmtName,
-                                    pstmt->num_bind_param,
-                                    ((UPgSqlStatement*)pstmt)->paramValues,
-                                    ((UPgSqlStatement*)pstmt)->paramLengths,
-                                    ((UPgSqlStatement*)pstmt)->paramFormats,
-                                    ((UPgSqlStatement*)pstmt)->resultFormat); // is zero/one to obtain results in text/binary format
+      PGresult* res = execPrepared(pstmt);
 
       if (checkExecution(res) == false) return;
 

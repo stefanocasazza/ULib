@@ -374,6 +374,18 @@ public:
    bool setBindParam( UOrmDriver* pdrv);
    void setBindResult(UOrmDriver* pdrv);
 
+   void prepareStatement(UOrmDriver* pdrv)
+      {
+      U_TRACE(0, "UPgSqlStatement::prepareStatement(%p)", pdrv)
+
+      U_INTERNAL_ASSERT_POINTER(pdrv)
+      U_INTERNAL_ASSERT_EQUALS(pHandle, U_NULLPTR)
+
+      pHandle = (PGresult*) U_SYSCALL(PQprepare, "%p,%S,%S,%d,%p",
+                                      (PGconn*)pdrv->UOrmDriver::connection,
+                                      stmtName, stmt.data(), num_bind_param, paramTypes);
+      }
+
    // DEBUG
 
 #if defined(U_STDCPP_ENABLE) && defined(DEBUG)
@@ -523,6 +535,27 @@ public:
    bool asyncPipelineProcessQueue(USqlStatement* pstmt, uint32_t n);
    bool asyncPipelineSendQueryPrepared(USqlStatement* pstmt, uint32_t i);
    bool asyncPipelineSendQuery(USqlStatement* pstmt, const char* stmt, uint32_t len, uint32_t n);
+
+   // SERVICES
+
+   PGresult* execPrepared(USqlStatement* pstmt)
+      {
+      U_TRACE(0, "UOrmDriverPgSql::execPrepared(%p)", pstmt)
+
+      U_INTERNAL_ASSERT_POINTER(pstmt)
+      U_INTERNAL_ASSERT_POINTER(UOrmDriver::connection)
+
+      PGresult* res = (PGresult*) U_SYSCALL(PQexecPrepared, "%p,%S,%d,%p,%p,%p,%d",
+                                       (PGconn*)UOrmDriver::connection,
+                                       ((UPgSqlStatement*)pstmt)->stmtName,
+                                       pstmt->num_bind_param,
+                                       ((UPgSqlStatement*)pstmt)->paramValues,
+                                       ((UPgSqlStatement*)pstmt)->paramLengths,
+                                       ((UPgSqlStatement*)pstmt)->paramFormats,
+                                       ((UPgSqlStatement*)pstmt)->resultFormat); // is zero/one to obtain results in text/binary format
+
+      U_RETURN_POINTER(res, PGresult);
+      }
 
    // DEBUG
 
