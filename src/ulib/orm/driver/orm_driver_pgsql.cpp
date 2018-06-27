@@ -379,7 +379,7 @@ bool UPgSqlStatement::setBindParam(UOrmDriver* pdrv)
 
       num_bind_result = U_SYSCALL(PQnfields, "%p", res);
 
-   #  ifdef DEBUG
+#  ifdef DEBUG
       uint32_t i;
       Oid paramtype;
 
@@ -400,7 +400,7 @@ bool UPgSqlStatement::setBindParam(UOrmDriver* pdrv)
 
          U_INTERNAL_DUMP("result[%u] (%s): size = %d type = %d format = %d", i, fname, fsize, paramtype, fformat)
          }
-   #  endif
+#  endif
       }
 
    if (num_bind_param)

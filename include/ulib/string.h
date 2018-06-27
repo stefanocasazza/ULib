@@ -332,19 +332,18 @@ public:
 
       int r = *(const unsigned char*)str - *(const unsigned char*)s;
 
-      if (r == 0)
+      if (r) U_RETURN(r);
+
+      uint32_t len = U_min(_length, n);
+
+      if (len > 1)
          {
-         uint32_t len = U_min(_length, n);
+         r = memcmp(str+1, s+1, len-1);
 
-         if (len > 1)
-            {
-            r = memcmp(str+1, s+1, len-1);
-
-            if (r) U_RETURN(r);
-            }
-
-         r = _length < n ? -1 : _length > n; // _length - n;
+         if (r) U_RETURN(r);
          }
+
+      r = _length < n ? -1 : _length > n; // _length - n;
 
       U_RETURN(r);
       }
