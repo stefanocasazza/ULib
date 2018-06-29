@@ -2403,9 +2403,9 @@ public:
 
  #define PRINT_U_STRING_UNORDERED_MAP_JSON_HANDLER_FOR_TYPE(type, template) \
                                                                                                                                \
-   template <#template> class U_EXPORT UJsonTypeHandler<std::unordered_map<UString, #type> > : public UJsonTypeHandler_Base {    \
+   template <template> class U_EXPORT UJsonTypeHandler<std::unordered_map<UString, type> > : public UJsonTypeHandler_Base {    \
    public:                                                                                                                     \
-      typedef std::unordered_map<UString, #type> ustringmap;                                                                   \
+      typedef std::unordered_map<UString, type> ustringmap;                                                                   \
                                                                                                                                \
       explicit UJsonTypeHandler(ustringmap& map) : UJsonTypeHandler_Base(&map) {}                                              \
                                                                                                                                \
@@ -2434,7 +2434,7 @@ public:
             {                                                                                                                  \
             json.__push('{');                                                                                                  \
    			                                                                                                                   \
-            for (const auto & [ key, value ] : *pmap) json.toJSON<#type>(key, UJsonTypeHandler<#type>(value));                 \
+            for (const auto & [ key, value ] : *pmap) json.toJSON<type>(key, UJsonTypeHandler<type>(value));                 \
                                                                                                                                \
             json.setLastChar('}');                                                                                             \
             }                                                                                                                  \
@@ -2454,7 +2454,7 @@ public:
             {                                                                                                                  \
             #type pitem;                                                                                                       \
                                                                                                                                \
-            UJsonTypeHandler<#type>(pitem).fromJSON(*pelement);                                                                \
+            UJsonTypeHandler<type>(pitem).fromJSON(*pelement);                                                                \
                                                                                                                                \
             UStringRep* rep = (UStringRep*)u_getPayload(pelement->pkey.ival);                                                  \
                                                                                                                                \
