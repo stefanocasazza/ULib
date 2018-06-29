@@ -2452,7 +2452,7 @@ public:
                                                                                                                                \
          while (pelement)                                                                                                      \
             {                                                                                                                  \
-            #type pitem;                                                                                                       \
+            type pitem;                                                                                                       \
                                                                                                                                \
             UJsonTypeHandler<type>(pitem).fromJSON(*pelement);                                                                \
                                                                                                                                \
