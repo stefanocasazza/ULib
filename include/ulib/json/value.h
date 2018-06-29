@@ -2401,24 +2401,24 @@ public:
 # if defined(HAVE_CXX17) && !defined(__clang__)
 #  include <unordered_map>
 
- #define PRINT_U_STRING_UNORDERED_MAP_JSON_HANDLER_FOR_TYPE(type, templateParameter) \
-                                                                                                                               \
-   template <templateParameter> class U_EXPORT UJsonTypeHandler<std::unordered_map<UString, type> > : public UJsonTypeHandler_Base {    \
+ #define PRINT_U_STRING_UNORDERED_MAP_JSON_HANDLER_FOR_TYPE(type, templateParameter, accessQualifier)                                              \
+                                                                                                                                                   \
+   template <templateParameter> class U_EXPORT UJsonTypeHandler<std::unordered_map<UString, type> > : public UJsonTypeHandler_Base {   \
    public:                                                                                                                     \
-      typedef std::unordered_map<UString, type> ustringmap;                                                                   \
+      typedef std::unordered_map<UString, type> ustringmap;                                                        \
                                                                                                                                \
       explicit UJsonTypeHandler(ustringmap& map) : UJsonTypeHandler_Base(&map) {}                                              \
                                                                                                                                \
       void clear()                                                                                                             \
          {                                                                                                                     \
-         U_TRACE_NO_PARAM(0, "\"UJsonTypeHandler<ustring" #type "map>::clear()\"")                                             \
+         U_TRACE_NO_PARAM(0, "UJsonTypeHandler<ustring" #type "map>::clear()")                                    \
                                                                                                                                \
          ((ustringmap*)pval)->clear();                                                                                         \
          }                                                                                                                     \
                                                                                                                                \
       void toJSON(UString& json)                                                                                               \
          {                                                                                                                     \
-         U_TRACE(0, "\"UJsonTypeHandler<ustring" #type "map>::toJSON(%p)\"", &json)                                            \
+         U_TRACE(0, "UJsonTypeHandler<ustring" #type "map>::toJSON(%p)", &json)                                   \
                                                                                                                                \
          ustringmap* pmap = (ustringmap*)pval;                                                                                 \
                                                                                                                                \
@@ -2434,7 +2434,7 @@ public:
             {                                                                                                                  \
             json.__push('{');                                                                                                  \
    			                                                                                                                   \
-            for (const auto & [ key, value ] : *pmap) json.toJSON<type>(key, UJsonTypeHandler<type>(value));                 \
+            for (auto & [ key, value ] : *pmap) json.toJSON<type>(key, UJsonTypeHandler<type>(value)); \
                                                                                                                                \
             json.setLastChar('}');                                                                                             \
             }                                                                                                                  \
@@ -2444,7 +2444,7 @@ public:
                                                                                                                                \
       void fromJSON(UValue& json)                                                                                              \
          {                                                                                                                     \
-         U_TRACE(0, "\"UJsonTypeHandler<ustring" #type "map>::fromJSON(%p)\"", &json)                                          \
+         U_TRACE(0, "UJsonTypeHandler<ustring" #type "map>::fromJSON(%p)", &json)                                 \
                                                                                                                                \
          U_ASSERT(((ustringmap*)pval)->empty())                                                                                \
                                                                                                                                \
@@ -2452,15 +2452,16 @@ public:
                                                                                                                                \
          while (pelement)                                                                                                      \
             {                                                                                                                  \
-            type pitem;                                                                                                       \
                                                                                                                                \
-            UJsonTypeHandler<type>(pitem).fromJSON(*pelement);                                                                \
+            type pitem;                                                                                                        \
                                                                                                                                \
-            UStringRep* rep = (UStringRep*)u_getPayload(pelement->pkey.ival);                                                  \
+            UJsonTypeHandler<type>(accessQualifier pitem).fromJSON(*pelement);                                                 \
                                                                                                                                \
-            U_INTERNAL_DUMP("pelement->pkey(%p) = %V", rep, rep)                                                               \
+            UString key = UString((UStringRep*)u_getPayload(pelement->pkey.ival));                                             \
                                                                                                                                \
-            ((ustringmap*)pval)->insert_or_assign(rep, pitem);                                                                 \
+            U_INTERNAL_DUMP("pelement->pkey(%p) = %V", key, key.rep)                                                           \
+                                                                                                                               \
+            ((ustringmap*)pval)->insert_or_assign(key, pitem);                                                                 \
                                                                                                                                \
             pelement = pelement->next;                                                                                         \
             }                                                                                                                  \
@@ -2468,10 +2469,15 @@ public:
    };                                                                                                                          \
 	
 
-PRINT_U_STRING_UNORDERED_MAP_JSON_HANDLER_FOR_TYPE(int64_t, )
-PRINT_U_STRING_UNORDERED_MAP_JSON_HANDLER_FOR_TYPE(uint64_t, )
-PRINT_U_STRING_UNORDERED_MAP_JSON_HANDLER_FOR_TYPE(T, class T)
-PRINT_U_STRING_UNORDERED_MAP_JSON_HANDLER_FOR_TYPE(T*, class T)
+#define yesPointer *
+#define noPointer  
+
+PRINT_U_STRING_UNORDERED_MAP_JSON_HANDLER_FOR_TYPE(int64_t, , noPointer)
+PRINT_U_STRING_UNORDERED_MAP_JSON_HANDLER_FOR_TYPE(uint64_t, , noPointer)
+PRINT_U_STRING_UNORDERED_MAP_JSON_HANDLER_FOR_TYPE(T, class T, noPointer)
+PRINT_U_STRING_UNORDERED_MAP_JSON_HANDLER_FOR_TYPE(T*, class T, yesPointer)
+#undef yesPointer
+#undef noPointer
 
 # endif
 #endif
