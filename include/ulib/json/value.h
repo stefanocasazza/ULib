@@ -2401,9 +2401,9 @@ public:
 # if defined(HAVE_CXX17) && !defined(__clang__)
 #  include <unordered_map>
 
- #define PRINT_U_STRING_UNORDERED_MAP_JSON_HANDLER_FOR_TYPE(type, template) \
+ #define PRINT_U_STRING_UNORDERED_MAP_JSON_HANDLER_FOR_TYPE(type, templateParameter) \
                                                                                                                                \
-   template <template> class U_EXPORT UJsonTypeHandler<std::unordered_map<UString, type> > : public UJsonTypeHandler_Base {    \
+   template <templateParameter> class U_EXPORT UJsonTypeHandler<std::unordered_map<UString, type> > : public UJsonTypeHandler_Base {    \
    public:                                                                                                                     \
       typedef std::unordered_map<UString, type> ustringmap;                                                                   \
                                                                                                                                \
