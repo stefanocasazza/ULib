@@ -2401,9 +2401,9 @@ public:
 # if defined(HAVE_CXX17) && !defined(__clang__)
 #  include <unordered_map>
 
- #define PRINT_U_STRING_UNORDERED_MAP_JSON_HANDLER_FOR_TYPE(type) \
+ #define PRINT_U_STRING_UNORDERED_MAP_JSON_HANDLER_FOR_TYPE(type, template) \
                                                                                                                                \
-   template <class T> class U_EXPORT UJsonTypeHandler<std::unordered_map<UString, #type> > : public UJsonTypeHandler_Base {    \
+   template <#template> class U_EXPORT UJsonTypeHandler<std::unordered_map<UString, #type> > : public UJsonTypeHandler_Base {    \
    public:                                                                                                                     \
       typedef std::unordered_map<UString, #type> ustringmap;                                                                   \
                                                                                                                                \
@@ -2468,10 +2468,10 @@ public:
    };                                                                                                                          \
 	
 
-PRINT_U_STRING_UNORDERED_MAP_JSON_HANDLER_FOR_TYPE(int64_t)
-PRINT_U_STRING_UNORDERED_MAP_JSON_HANDLER_FOR_TYPE(uint64_t)
-PRINT_U_STRING_UNORDERED_MAP_JSON_HANDLER_FOR_TYPE(T)
-PRINT_U_STRING_UNORDERED_MAP_JSON_HANDLER_FOR_TYPE(T*)
+PRINT_U_STRING_UNORDERED_MAP_JSON_HANDLER_FOR_TYPE(int64_t, )
+PRINT_U_STRING_UNORDERED_MAP_JSON_HANDLER_FOR_TYPE(uint64_t, )
+PRINT_U_STRING_UNORDERED_MAP_JSON_HANDLER_FOR_TYPE(T, class T)
+PRINT_U_STRING_UNORDERED_MAP_JSON_HANDLER_FOR_TYPE(T*, class T)
 
 # endif
 #endif
