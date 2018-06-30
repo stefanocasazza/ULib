@@ -21,7 +21,7 @@ extern "C" {
 }
 
 #ifndef U_MYSQL_STRING_SIZE
-#define U_MYSQL_STRING_SIZE (8192-sizeof(USqlStatementBindResult))
+#define U_MYSQL_STRING_SIZE (4096-sizeof(USqlStatementBindResult))
 #endif
 
 class U_EXPORT UMySqlStatementBindParam : public USqlStatementBindParam {

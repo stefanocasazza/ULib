@@ -43,6 +43,7 @@ public:
       bfirst_pass           =
            is_html          =
       test_if_html          =
+      bhttp_header_empty    =
       bpreprocessing_failed = false;
       }
 
@@ -466,29 +467,33 @@ public:
 
          setDirectiveItem(directive, U_CONSTANT_SIZE("header"));
 
-         // NB: we use insert because the possibility of UHTTP::callService() (see chat.usp)...
+         if (token.empty()) bhttp_header_empty = true;
+         else
+            {
+            // NB: we use insert because the possibility of UHTTP::callService() (see chat.usp)...
 
-         bool bheader = (U_STRING_FIND(token, 0, "Content-Type") != U_NOT_FOUND);
+            bool bheader = (U_STRING_FIND(token, 0, "Content-Type") != U_NOT_FOUND);
 
-         http_header = UStringExt::dos2unix(token, true);
+            http_header = UStringExt::dos2unix(token, true);
 
-         (void) http_header.append(U_CONSTANT_TO_PARAM("\r\n\r\n"));
+            (void) http_header.append(U_CONSTANT_TO_PARAM("\r\n\r\n"));
 
-         uint32_t n = http_header.size();
+            uint32_t n = http_header.size();
 
-         UString encoded(n * 4);
+            UString encoded(n * 4);
 
-         UEscape::encode(http_header, encoded);
+            UEscape::encode(http_header, encoded);
 
-         U_ASSERT(encoded.isQuoted())
+            U_ASSERT(encoded.isQuoted())
 
-         (void)     output1.reserve(200U);
-         (void) http_header.reserve(200U + encoded.size());
+            (void)     output1.reserve(200U);
+            (void) http_header.reserve(200U + encoded.size());
 
-         (void) http_header.snprintf(U_CONSTANT_TO_PARAM("\n\tU_ASSERT_EQUALS(UClientImage_Base::wbuffer->findEndHeader(),false)"
-                                                         "\n\t(void) UClientImage_Base::wbuffer->insert(0, U_CONSTANT_TO_PARAM(%v));\n\t\n"), encoded.rep);
+            (void) http_header.snprintf(U_CONSTANT_TO_PARAM("\n\tU_ASSERT_EQUALS(UClientImage_Base::wbuffer->findEndHeader(),false)"
+                                                            "\n\t(void) UClientImage_Base::wbuffer->insert(0, U_CONSTANT_TO_PARAM(%v));\n\t\n"), encoded.rep);
 
-         (void) output1.snprintf_add(U_CONSTANT_TO_PARAM("\n\tU_http_info.endHeader = %.*s%u;\n"), bheader ? U_CONSTANT_SIZE("(uint32_t)-") : 0, "(uint32_t)-", n);
+            (void) output1.snprintf_add(U_CONSTANT_TO_PARAM("\n\tU_http_info.endHeader = %.*s%u;\n"), bheader ? U_CONSTANT_SIZE("(uint32_t)-") : 0, "(uint32_t)-", n);
+            }
          }
       else if (strncmp(directive, U_CONSTANT_TO_PARAM("number")) == 0)
          {
@@ -834,8 +839,9 @@ loop: distance = t.getDistance();
 
       if (http_header.empty())
          {
-                      (void) output1.append(U_CONSTANT_TO_PARAM("\n\tU_http_info.endHeader = 0;\n"));
          if (is_html) (void) output1.append(U_CONSTANT_TO_PARAM("\n\tUHTTP::mime_index = U_html;\n"));
+
+         if (bhttp_header_empty == false) (void) output1.append(U_CONSTANT_TO_PARAM("\n\tU_http_info.endHeader = 0;\n"));
          }
 
       // NB: we check for presence of 'return' inside the code...
@@ -932,7 +938,7 @@ private:
    UString pinclude, usp, token, output0, output1, declaration, vcode, http_header, sseloop, vars;
    const char* basename_ptr;
    uint32_t basename_sz;
-   bool bvar, bsession, bstorage, bfirst_pass, is_html, test_if_html, bpreprocessing_failed;
+   bool bvar, bsession, bstorage, bfirst_pass, is_html, test_if_html, bhttp_header_empty, bpreprocessing_failed;
 
    U_DISALLOW_COPY_AND_ASSIGN(Application)
 };

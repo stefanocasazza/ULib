@@ -11727,11 +11727,16 @@ next:    if (*ptr1 == '?')
 
          usp->runDynamicPage(0);
 
-         setDynamicResponse();
+         if (U_ClientImage_parallelization < U_PARALLELIZATION_PARENT)
+            {
+            setDynamicResponse();
 
-         (void) UServer_Base::pClientImage->writeResponse();
+            (void) UServer_Base::pClientImage->writeResponse();
 
-         U_RETURN(true);
+            if (U_ClientImage_parallelization == U_PARALLELIZATION_CHILD) UServer_Base::endNewChild(); // no return
+
+            U_RETURN(true);
+            }
          }
       }
 

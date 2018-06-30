@@ -197,7 +197,7 @@ extern U_EXPORT void runDynamicPage_ir_web(int param);
    
    usp_body_ir_web();
    UHTTP::putDataSession();
-   U_http_info.endHeader = 0;
    UHTTP::mime_index = U_html;
+   U_http_info.endHeader = 0;
    
 } }

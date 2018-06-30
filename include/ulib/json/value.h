@@ -358,6 +358,9 @@ public:
     */
 
    static uint32_t size_output;
+   static char* pstringify; // buffer to stringify json
+
+   void stringify() const;
 
    UString output() const
       {
@@ -606,7 +609,6 @@ protected:
               value;
 
    static UFlatBuffer* pfb;
-   static char* pstringify; // buffer to stringify json
 
    typedef struct parser_stack_data {
       uint64_t keys;
@@ -776,7 +778,6 @@ protected:
          }
       }
 
-   void stringify() const;
    void prettify(uint32_t indent) const;
 
    void toFlatBufferFromJSON() const;
@@ -2400,71 +2401,80 @@ public:
 
 # if defined(HAVE_CXX17) && !defined(__clang__)
 #  include <unordered_map>
-
-template <class T> class U_EXPORT UJsonTypeHandler<std::unordered_map<UString, T> > : public UJsonTypeHandler_Base {
-public:
-   typedef std::unordered_map<UString, T> stringtobitmaskmap;
-
-   explicit UJsonTypeHandler(stringtobitmaskmap& map) : UJsonTypeHandler_Base(&map) {}
-
-   void clear()
-      {
-      U_TRACE_NO_PARAM(0, "UJsonTypeHandler<stringtobitmaskmap>::clear()")
-
-      ((stringtobitmaskmap*)pval)->clear();   
-      }
-
-   void toJSON(UString& json)
-      {
-      U_TRACE(0, "UJsonTypeHandler<stringtobitmaskmap>::toJSON(%V)", json.rep)
-
-      stringtobitmaskmap* pmap = (stringtobitmaskmap*)pval;
-
-      if (pmap->empty())
-         {
-         char* ptr = json.pend();
-
-         u_put_unalignedp16(ptr, U_MULTICHAR_CONSTANT16('{','}'));
-
-         json.rep->_length += 2;
-         }
-      else
-         {
-         json.__push('{');
-
-         // this is is C++17 vvv
-         for (const auto & [ key, value ] : *pmap) json.toJSON<T>(key, UJsonTypeHandler<T>(value)); 
-
-         json.setLastChar('}');
-         }
-
-      U_INTERNAL_DUMP("json(%u) = %V", json.size(), json.rep)
-      }
-
-   void fromJSON(UValue& json)
-      {
-      U_TRACE(0, "UJsonTypeHandler<stringtobitmaskmap>::fromJSON(%p)", &json)
-
-      U_ASSERT(((stringtobitmaskmap*)pval)->empty())
-
-      UValue* pelement = json.toNode();
-
-      while (pelement)
-         {
-         uint64_t pitem;
-
-         UJsonTypeHandler<uint64_t>(pitem).fromJSON(*pelement);
-
-         UStringRep* rep = (UStringRep*)u_getPayload(pelement->pkey.ival);
-
-         U_INTERNAL_DUMP("pelement->pkey(%p) = %V", rep, rep)
-
-         ((stringtobitmaskmap*)pval)->insert_or_assign(rep, pitem); // insert_or_assign is C++17 
-
-         pelement = pelement->next;
-         }
-      }
-};
+#  define PRINT_U_STRING_UNORDERED_MAP_JSON_HANDLER_FOR_TYPE(type, templateParameter, accessQualifier) \
+                                                                                                       \
+   template <templateParameter> class U_EXPORT UJsonTypeHandler<std::unordered_map<UString, type> > : public UJsonTypeHandler_Base { \
+   public:                                                                                                                     \
+      typedef std::unordered_map<UString, type> ustringmap;                                                                    \
+                                                                                                                               \
+      explicit UJsonTypeHandler(ustringmap& map) : UJsonTypeHandler_Base(&map) {}                                              \
+                                                                                                                               \
+      void clear()                                                                                                             \
+         {                                                                                                                     \
+         U_TRACE_NO_PARAM(0, "UJsonTypeHandler<ustring" #type "map>::clear()")                                                 \
+                                                                                                                               \
+         ((ustringmap*)pval)->clear();                                                                                         \
+         }                                                                                                                     \
+                                                                                                                               \
+      void toJSON(UString& json)                                                                                               \
+         {                                                                                                                     \
+         U_TRACE(0, "UJsonTypeHandler<ustring" #type "map>::toJSON(%p)", &json)                                                \
+                                                                                                                               \
+         ustringmap* pmap = (ustringmap*)pval;                                                                                 \
+                                                                                                                               \
+         if (pmap->empty())                                                                                                    \
+            {                                                                                                                  \
+            char* ptr = json.pend();                                                                                           \
+                                                                                                                               \
+            u_put_unalignedp16(ptr, U_MULTICHAR_CONSTANT16('{','}'));                                                          \
+                                                                                                                               \
+            json.rep->_length += 2;                                                                                            \
+            }                                                                                                                  \
+         else                                                                                                                  \
+            {                                                                                                                  \
+            json.__push('{');                                                                                                  \
+                                                                                                                               \
+            for (auto & [ key, value ] : *pmap) json.toJSON<type>(key, UJsonTypeHandler<type>(value));                         \
+                                                                                                                               \
+            json.setLastChar('}');                                                                                             \
+            }                                                                                                                  \
+                                                                                                                               \
+         U_INTERNAL_DUMP("json(%u) = %V", json.size(), json.rep)                                                               \
+         }                                                                                                                     \
+                                                                                                                               \
+      void fromJSON(UValue& json)                                                                                              \
+         {                                                                                                                     \
+         U_TRACE(0, "UJsonTypeHandler<ustring" #type "map>::fromJSON(%p)", &json)                                              \
+                                                                                                                               \
+         U_ASSERT(((ustringmap*)pval)->empty())                                                                                \
+                                                                                                                               \
+         UValue* pelement = json.toNode();                                                                                     \
+                                                                                                                               \
+         while (pelement)                                                                                                      \
+            {                                                                                                                  \
+            type pitem;                                                                                                        \
+                                                                                                                               \
+            UJsonTypeHandler<type>(accessQualifier pitem).fromJSON(*pelement);                                                 \
+                                                                                                                               \
+            UString key = UString((UStringRep*)u_getPayload(pelement->pkey.ival));                                             \
+                                                                                                                               \
+            U_INTERNAL_DUMP("pelement->pkey(%p) = %V", key, key.rep)                                                           \
+                                                                                                                               \
+            ((ustringmap*)pval)->insert_or_assign(key, pitem);                                                                 \
+                                                                                                                               \
+            pelement = pelement->next;                                                                                         \
+            }                                                                                                                  \
+         }                                                                                                                     \
+   };                                                                                                                          \
+   
+#define  noPointer 
+#define yesPointer *
+PRINT_U_STRING_UNORDERED_MAP_JSON_HANDLER_FOR_TYPE( int64_t, , noPointer)
+PRINT_U_STRING_UNORDERED_MAP_JSON_HANDLER_FOR_TYPE(uint64_t, , noPointer)
+PRINT_U_STRING_UNORDERED_MAP_JSON_HANDLER_FOR_TYPE(T,  class T,  noPointer)
+PRINT_U_STRING_UNORDERED_MAP_JSON_HANDLER_FOR_TYPE(T*, class T, yesPointer)
+#undef  noPointer
+#undef yesPointer
 # endif
 #endif
 #endif
