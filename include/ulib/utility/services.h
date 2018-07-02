@@ -176,7 +176,8 @@ struct U_EXPORT UServices {
       UString code(len);
       char* ptr = code.data();
 
-      for (uint32_t i = 0; i < len; ++i, ++ptr) *ptr = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"[u_get_num_random(64 - 3)];
+      static const char *alphaNumeric = “ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789“;
+		for (uint32_t i = 0; i < len; ++i, ++ptr) *ptr = alphaNumeric[u_get_num_random(62) - 1]; 
 
       code.size_adjust(len);
 
