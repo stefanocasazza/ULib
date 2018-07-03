@@ -2672,53 +2672,6 @@ int u_splitCommand(char* restrict s, uint32_t n, char** restrict argv, char* res
 }
 
 /**
- * We use George Marsaglia's MWC algorithm to produce an unsigned integer.
- *
- * see http://www.bobwheeler.com/statistics/Password/MarsagliaPost.txt
- */
-
-uint32_t u_get_num_random(uint32_t range)
-{
-   uint32_t result;
-
-   U_INTERNAL_TRACE("u_get_num_random(%u)", range)
-
-   U_INTERNAL_ASSERT_MAJOR(u_m_w, 0)
-   U_INTERNAL_ASSERT_MAJOR(u_m_z, 0)
-
-   u_m_z = 36969 * (u_m_z & 65535) + (u_m_z >> 16);
-   u_m_w = 18000 * (u_m_w & 65535) + (u_m_w >> 16);
-
-   result = (u_m_z << 16) + u_m_w;
-
-   if (range)
-      {
-      result = (result % range)+1;
-
-      U_INTERNAL_ASSERT(result <= range)
-      }
-
-   return result;
-}
-
-/* Produce a uniform random sample from the open interval (0, 1). The method will not return either end point */
-
-double u_get_uniform(void)
-{
-   uint32_t u;
-
-   U_INTERNAL_TRACE("u_get_uniform()")
-
-   /* 0 <= u < 2^32 */
-
-   u = u_get_num_random(0);
-
-   /* The magic number below is 1/(2^32 + 2). The result is strictly between 0 and 1 */
-
-   return (u + 1.0) * 2.328306435454494e-10;
-}
-
-/**
  * Function fnmatch() as specified in POSIX 1003.2-1992, section B.6. Compares a filename or pathname to a pattern
  */
 

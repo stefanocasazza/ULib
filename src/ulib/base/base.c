@@ -514,7 +514,7 @@ void u_initRandom(void)
 
    /* seed the random generator */
 
-   u_set_seed_random(u_seed_hash >> 16, u_seed_hash % 4294967296);
+   u_set_seed_random(1+(u_seed_hash >> 16), 1+(u_seed_hash % 4294967296));
 }
 
 time_t u_getLocalNow(time_t sec)

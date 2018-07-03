@@ -126,7 +126,7 @@ void* USimulationError::checkForMatch(const char* call_name)
 
                   uint32_t range = (uint32_t) strtol(file_ptr, &file_ptr, 10);
 
-                  if (range > 0) match = (u_get_num_random(range) == (range / 2));
+                  if (range > 0) match = (u_get_num_random_range1(range) == (range / 2));
 
                   break;
                   }

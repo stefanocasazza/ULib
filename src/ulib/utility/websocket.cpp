@@ -593,7 +593,7 @@ bool UWebSocket::sendData(USocket* socket, int type, const char* data, uint32_t 
    UString tmp(ncount);
    unsigned char* header = (unsigned char*)tmp.data();
 
-   *((uint32_t*)masking_key) = u_get_num_random(0);
+   *((uint32_t*)masking_key) = u_get_num_random();
 
    switch (type)
       {
@@ -665,7 +665,7 @@ bool UWebSocket::sendControlFrame(USocket* socket, int opcode, const unsigned ch
    UString tmp(ncount);
    unsigned char* header = (unsigned char*)tmp.data();
 
-   *((uint32_t*)masking_key) = u_get_num_random(0);
+   *((uint32_t*)masking_key) = u_get_num_random();
 
    header[0] = (        opcode | 0x80);
    header[1] = (payload_length | 0x80);

@@ -701,7 +701,7 @@ UString UServices::createToken(int alg)
    U_TRACE(0, "UServices::createToken(%d)", alg)
 
    UString output(80U);
-   uint32_t u = u_get_num_random(0);
+   uint32_t u = u_get_num_random();
 
    u_dgst_init(alg, U_NULLPTR, 0);
 

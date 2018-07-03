@@ -182,20 +182,77 @@ static inline uint32_t u_nextPowerOfTwo(uint32_t n)
 #endif
 }
 
-/* Random number generator */ 
-
-U_EXPORT double   u_get_uniform(void);
-U_EXPORT uint32_t u_get_num_random(uint32_t range);
+/**
+ * Random number generator
+ *
+ * We use George Marsaglia's MWC algorithm to produce an unsigned integer
+ *
+ * see http://www.bobwheeler.com/statistics/Password/MarsagliaPost.txt
+ */
 
 static inline void u_set_seed_random(uint32_t u, uint32_t v)
 {
    U_INTERNAL_TRACE("u_set_seed_random(%u,%u)", u, v)
 
-   if (u != 0) u_m_w = u;
-   if (v != 0) u_m_z = v;
+   U_INTERNAL_ASSERT_MAJOR(u, 0)
+   U_INTERNAL_ASSERT_MAJOR(v, 0)
+
+   u_m_w = u;
+   u_m_z = v;
+}
+
+static inline uint32_t u_get_num_random(void)
+{
+   U_INTERNAL_TRACE("u_get_num_random()")
 
    U_INTERNAL_ASSERT_MAJOR(u_m_w, 0)
    U_INTERNAL_ASSERT_MAJOR(u_m_z, 0)
+
+   u_m_z = 36969 * (u_m_z & 65535) + (u_m_z >> 16);
+   u_m_w = 18000 * (u_m_w & 65535) + (u_m_w >> 16);
+
+   return (u_m_z << 16) + u_m_w; /* 0 <= u < 2^32 */
+}
+
+static inline uint32_t u_get_num_random_range0(uint32_t range)
+{
+   uint32_t result;
+
+   U_INTERNAL_TRACE("u_get_num_random_range0(%u)", range)
+
+   U_INTERNAL_ASSERT_MAJOR(range, 1)
+
+   result = u_get_num_random() % range;
+
+   U_INTERNAL_ASSERT_MINOR(result,range)
+
+   return result;
+}
+
+static inline uint32_t u_get_num_random_range1(uint32_t range)
+{
+   uint32_t result;
+
+   U_INTERNAL_TRACE("u_get_num_random_range1(%u)", range)
+
+   U_INTERNAL_ASSERT_MAJOR(range, 2)
+
+   result = (u_get_num_random() % (range-1))+1;
+
+   U_INTERNAL_ASSERT_RANGE(1,result,range-1)
+
+   return result;
+}
+
+/* Produce a uniform random sample from the open interval (0, 1). The method will not return either end point */
+
+static inline double u_get_uniform(void)
+{
+   U_INTERNAL_TRACE("u_get_uniform()")
+
+   /* The magic number below is 1/(2^32 + 2). The result is strictly between 0 and 1 */
+
+   return (u_get_num_random() + 1.0) * 2.328306435454494e-10;
 }
 
 U_EXPORT const char* u_get_mimetype(const char* restrict suffix, int* pmime_index);

@@ -176,7 +176,10 @@ struct U_EXPORT UServices {
       UString code(len);
       char* ptr = code.data();
 
-      for (uint32_t i = 0; i < len; ++i, ++ptr) *ptr = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"[u_get_num_random(64 - 3)];
+      for (uint32_t i = 0; i < len; ++i, ++ptr)
+         {
+         *ptr = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"[u_get_num_random_range0(U_CONSTANT_SIZE("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"))];
+         }
 
       code.size_adjust(len);
 
