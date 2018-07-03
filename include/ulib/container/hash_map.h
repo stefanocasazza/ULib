@@ -1077,6 +1077,25 @@ public:
       U_TRACE_CTOR(0, UHashMap<UString>, "%u,%p", n, fset_index)
       }
 
+   UHashMap(const UHashMap<UString>& t) : UHashMap<UStringRep*>(t._capacity, t.set_index)
+      {
+      U_TRACE_CTOR(0, UHashMap<UString>, "%p", &t)
+
+      for (uint32_t idx = 0; idx < t._capacity; ++idx)
+         {
+         if ((t.info[idx] & U_IS_BUCKET_TAKEN_MASK) != 0)
+            {
+            t.setNodePointer(idx);
+
+            insert((UStringRep*)node->key, (UStringRep*)node->elem);
+            }
+         }
+
+      U_INTERNAL_DUMP("_length = %u", _length)
+
+      U_INTERNAL_ASSERT_EQUALS(*this, t)
+      }
+
    ~UHashMap()
       {
       U_TRACE_DTOR(0, UHashMap<UString>)
@@ -1171,7 +1190,6 @@ public:
    void loadFromData(const UString& str) { (void) loadFromData(U_STRING_TO_PARAM(str)); }
 
 protected:
-
    UString at()
       {
       U_TRACE_NO_PARAM(0, "UHashMap<UString>::at()")
@@ -1187,7 +1205,7 @@ protected:
       }
 
 private:
-   U_DISALLOW_COPY_AND_ASSIGN(UHashMap<UString>)
+   U_DISALLOW_ASSIGN(UHashMap<UString>)
 };
 
 template <> class U_EXPORT UHashMap<UVectorUString> : public UHashMap<UVectorUString*> {
