@@ -1548,6 +1548,15 @@ error:
       U_INTERNAL_ASSERT_DIFFERS(UEventFd::fd, -1)
 
       U_ClientImage_close = true;
+
+      if (         UHTTP::file_data &&
+          u_is_usp(UHTTP::file_data->mime_index))
+         {
+         U_INTERNAL_ASSERT_POINTER(UHTTP::usp)
+         U_INTERNAL_ASSERT_POINTER(UHTTP::usp->runDynamicPage)
+
+         UHTTP::usp->runDynamicPage(U_DPAGE_ERROR);
+         }
       }
 
 #ifdef U_THROTTLING_SUPPORT

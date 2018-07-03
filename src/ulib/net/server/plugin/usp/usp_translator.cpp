@@ -738,7 +738,8 @@ loop: distance = t.getDistance();
        * U_DPAGE_SIGHUP  = -4,
        * U_DPAGE_FORK    = -5,
        * U_DPAGE_OPEN    = -6,
-       * U_DPAGE_CLOSE   = -7 };
+       * U_DPAGE_CLOSE   = -7,
+       * U_DPAGE_ERROR   = -8 };
        */
 
       bool binit,   // usp_init
@@ -747,7 +748,8 @@ loop: distance = t.getDistance();
            bsighup, // usp_sighup
            bfork,   // usp_fork
            bopen,   // usp_open
-           bclose;  // usp_close
+           bclose,  // usp_close
+           berror;  // usp_error
 
       char ptr1[100] = { '\0' };
       char ptr2[100] = { '\0' };
@@ -756,6 +758,7 @@ loop: distance = t.getDistance();
       char ptr5[100] = { '\0' };
       char ptr6[100] = { '\0' };
       char ptr7[100] = { '\0' };
+      char ptr8[100] = { '\0' };
 
 #  ifndef U_CACHE_REQUEST_DISABLE
       if (usp.c_char(4) == '#'      &&
@@ -775,6 +778,7 @@ loop: distance = t.getDistance();
          bfork   = (U_STRING_FIND(declaration, 0, "static void usp_fork_")   != U_NOT_FOUND);
          bopen   = (U_STRING_FIND(declaration, 0, "static void usp_open_")   != U_NOT_FOUND);
          bclose  = (U_STRING_FIND(declaration, 0, "static void usp_close_")  != U_NOT_FOUND);
+         berror  = (U_STRING_FIND(declaration, 0, "static void usp_error_")  != U_NOT_FOUND);
 
          if (breset) (void) u__snprintf(ptr2, 100, U_CONSTANT_TO_PARAM("\n\t\tif (param == U_DPAGE_RESET) { usp_reset_%.*s(); return; }\n"), basename_sz, basename_ptr);
 
@@ -791,6 +795,7 @@ loop: distance = t.getDistance();
          if (bfork)   (void) u__snprintf(ptr5, 100, U_CONSTANT_TO_PARAM("\n\t\tif (param == U_DPAGE_FORK) { usp_fork_%.*s(); return; }\n"),     basename_sz, basename_ptr);
          if (bopen)   (void) u__snprintf(ptr6, 100, U_CONSTANT_TO_PARAM("\n\t\tif (param == U_DPAGE_OPEN) { usp_open_%.*s(); return; }\n"),     basename_sz, basename_ptr);
          if (bclose)  (void) u__snprintf(ptr7, 100, U_CONSTANT_TO_PARAM("\n\t\tif (param == U_DPAGE_CLOSE) { usp_close_%.*s(); return; }\n"),   basename_sz, basename_ptr);
+         if (berror)  (void) u__snprintf(ptr8, 100, U_CONSTANT_TO_PARAM("\n\t\tif (param == U_DPAGE_ERROR) { usp_error_%.*s(); return; }\n"),   basename_sz, basename_ptr);
          }
       else
          {
@@ -895,6 +900,7 @@ loop: distance = t.getDistance();
             "%s"
             "%s"
             "%s"
+            "%s"
             "\t\treturn;\n"
             "\t\t}\n"
             "\t\n"
@@ -920,6 +926,7 @@ loop: distance = t.getDistance();
             ptr5,
             ptr6,
             ptr7,
+            ptr8,
             vcode.rep,
             http_header.rep,
             output0.rep,

@@ -43,7 +43,8 @@ enum DynamicPageType {
    U_DPAGE_SIGHUP  = -4,
    U_DPAGE_FORK    = -5,
    U_DPAGE_OPEN    = -6,
-   U_DPAGE_CLOSE   = -7
+   U_DPAGE_CLOSE   = -7,
+   U_DPAGE_ERROR   = -8
 };
 
 /**
