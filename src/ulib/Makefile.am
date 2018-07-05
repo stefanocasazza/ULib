@@ -8,13 +8,13 @@ EXTRA_DIST = base/* container/* db/* debug/* dynamic/* flex/* internal/* ldap/* 
              net/server/plugin/*.cpp net/server/plugin/Makefile.* \
 				 *.cpp all_c.c ULib.pc.in ULib.rc.in utility/bin
 
-if HAVE_PGSQL
-if STATIC_ORM_DRIVER_PGSQL
-if !HAVE_PGSQL_BATCH_API
-SUBDIRS = orm/driver/libpq
-endif
-endif
-endif
+##if HAVE_PGSQL
+##if STATIC_ORM_DRIVER_PGSQL
+##if !HAVE_PGSQL_BATCH_API
+##SUBDIRS = orm/driver/libpq
+##endif
+##endif
+##endif
 
 DEFAULT_INCLUDES = -I. -I$(top_builddir)/include
 
@@ -311,9 +311,9 @@ lib@ULIB@_la_LDFLAGS = @ULIB_LIBS@
 
 if STATIC_ORM_DRIVER_PGSQL
 SRC_CPP += orm/driver/orm_driver_pgsql.cpp
-if !HAVE_PGSQL_BATCH_API
-lib@ULIB@_la_LDFLAGS += $(top_builddir)/src/ulib/orm/driver/libpq/libpq.la @POSTGRESQL_LDFLAGS@ @POSTGRESQL_LIBS@
-endif
+##if !HAVE_PGSQL_BATCH_API
+##lib@ULIB@_la_LDFLAGS += $(top_builddir)/src/ulib/orm/driver/libpq/libpq.la @POSTGRESQL_LDFLAGS@ @POSTGRESQL_LIBS@
+##endif
 endif
 
 lib@ULIB@_la_LDFLAGS += -version-info 1:0:0 -release @ULIB_VERSION@

@@ -76,7 +76,7 @@ bool     UHTTP::digest_authentication;
 bool     UHTTP::skip_check_cookie_ip_address;
 bool     UHTTP::enable_caching_by_proxy_servers;
 char     UHTTP::response_buffer[64];
-vPFi     UHTTP::on_upload;
+vPF      UHTTP::on_upload;
 URDB*    UHTTP::db_not_found;
 off_t    UHTTP::range_size;
 off_t    UHTTP::range_start;
@@ -798,15 +798,15 @@ extern "C" void __cxa_pure_virtual() { U_ERROR("__cxa_pure_virtual"); }
 #  endif
 #  include "../net/server/plugin/usp/loader.autoconf.ext" // NB: the extern "C" must be in a place NOT inside a class definition or implementation...
 
-U_NO_EXPORT void UHTTP::loadStaticLinkedServlet(const char* name, uint32_t len, vPFi runDynamicPage)
+U_NO_EXPORT void UHTTP::loadStaticLinkedServlet(const char* name, uint32_t len, vPF runDynamicPage, vPFu runDynamicPageParam)
 {
-   U_TRACE(0, "UHTTP::loadStaticLinkedServlet(%.*S,%u,%p)", len, name, len, runDynamicPage)
+   U_TRACE(0, "UHTTP::loadStaticLinkedServlet(%.*S,%u,%p,%p)", len, name, len, runDynamicPage, runDynamicPageParam)
 
    U_NEW(UHTTP::UFileCacheData, file_data, UHTTP::UFileCacheData);
 
    file_data->mime_index = U_usp;
 
-   U_NEW(UHTTP::UServletPage, file_data->ptr, UHTTP::UServletPage(name, len, U_NULLPTR, 0, runDynamicPage));
+   U_NEW(UHTTP::UServletPage, file_data->ptr, UHTTP::UServletPage(name, len, U_NULLPTR, 0, runDynamicPage, runDynamicPageParam));
 
    U_INTERNAL_ASSERT_POINTER(vusp)
 
@@ -3680,7 +3680,7 @@ bool UHTTP::callService(const UString& path) // NB: it is used also by server_pl
       {
       int mime_index_save = mime_index;
 
-      ((UServletPage*)(file_data->ptr))->runDynamicPage(0);
+      ((UServletPage*)(file_data->ptr))->runDynamicPage();
 
       mime_index = mime_index_save;
       }
@@ -4481,12 +4481,13 @@ file_in_cache:
 
          U_INTERNAL_ASSERT_POINTER(usp)
          U_INTERNAL_ASSERT_POINTER(usp->runDynamicPage)
+         U_INTERNAL_ASSERT_POINTER(usp->runDynamicPageParam)
 
          U_SET_MODULE_NAME(usp);
 
          U_INTERNAL_DUMP("U_http_info.nResponseCode = %u", U_http_info.nResponseCode)
 
-         usp->runDynamicPage(0);
+         usp->runDynamicPage();
 #     endif
 
          U_DUMP("U_http_info.nResponseCode = %u U_ClientImage_parallelization = %d UClientImage_Base::isNoHeaderForResponse() = %b",
@@ -4955,7 +4956,7 @@ void UHTTP::processRequest()
 
             U_INTERNAL_DUMP("on_upload = %p", on_upload)
 
-            if (on_upload) on_upload(0);
+            if (on_upload) on_upload();
             else
                {
                U_INTERNAL_DUMP("U_http_info.clength = %u", U_http_info.clength)
@@ -5391,9 +5392,9 @@ loop: sse_pipe_fd = UFile::open(UServer_Base::sse_fifo_name, O_RDONLY, 0);
 
       if (usp == U_NULLPTR) readSSE(-1);
 
-      U_INTERNAL_ASSERT_POINTER(usp->runDynamicPage)
+      U_INTERNAL_ASSERT_POINTER(usp->runDynamicPageParam)
 
-      usp->runDynamicPage(1);
+      usp->runDynamicPageParam(U_DPAGE_SSE);
       }
 #endif
 
@@ -11525,9 +11526,15 @@ fail: U_SRV_LOG("WARNING: USP load failed: %.*S", sz, buffer);
 
    (void) u__snprintf(buffer, U_CONSTANT_SIZE(buffer), U_CONSTANT_TO_PARAM("runDynamicPage_%v"), basename.rep);
 
-   runDynamicPage = (vPFi)(*this)[buffer];
+   runDynamicPage = (vPF)(*this)[buffer];
 
    if (runDynamicPage == U_NULLPTR) goto fail;
+
+   (void) u__snprintf(buffer, U_CONSTANT_SIZE(buffer), U_CONSTANT_TO_PARAM("runDynamicPageParam_%v"), basename.rep);
+
+   runDynamicPageParam = (vPFu)(*this)[buffer];
+
+   if (runDynamicPageParam == U_NULLPTR) goto fail;
 
    if (bexist == false) vusp->push_back(this);
 
@@ -11537,8 +11544,8 @@ fail: U_SRV_LOG("WARNING: USP load failed: %.*S", sz, buffer);
       {
       if (vusp->size() >= 2) vusp->sort(UServletPage::cmp_obj);
 
-      runDynamicPage(U_DPAGE_INIT);
-      runDynamicPage(U_DPAGE_FORK);
+      runDynamicPageParam(U_DPAGE_INIT);
+      runDynamicPageParam(U_DPAGE_FORK);
       }
 
    U_RETURN(true);
@@ -11725,7 +11732,7 @@ next:    if (*ptr1 == '?')
 
          U_http_info.nResponseCode = HTTP_OK;
 
-         usp->runDynamicPage(0);
+         usp->runDynamicPage();
 
          if (U_ClientImage_parallelization < U_PARALLELIZATION_PARENT)
             {
@@ -11753,11 +11760,11 @@ void UHTTP::callInitForAllUSP()
       {
       usp = vusp->at(i);
 
-      U_INTERNAL_DUMP("usp->basename = %V usp->runDynamicPage = %p", usp->basename.rep, usp->runDynamicPage)
+      U_INTERNAL_DUMP("usp->basename = %V usp->runDynamicPageParam = %p", usp->basename.rep, usp->runDynamicPageParam)
 
-      U_INTERNAL_ASSERT_POINTER(usp->runDynamicPage)
+      U_INTERNAL_ASSERT_POINTER(usp->runDynamicPageParam)
 
-      usp->runDynamicPage(U_DPAGE_INIT);
+      usp->runDynamicPageParam(U_DPAGE_INIT);
       }
 }
 
@@ -11772,11 +11779,11 @@ void UHTTP::callEndForAllUSP()
       {
       usp = vusp->at(i);
 
-      U_INTERNAL_DUMP("usp->basename = %V usp->runDynamicPage = %p", usp->basename.rep, usp->runDynamicPage)
+      U_INTERNAL_DUMP("usp->basename = %V usp->runDynamicPageParam = %p", usp->basename.rep, usp->runDynamicPageParam)
 
-      U_INTERNAL_ASSERT_POINTER(usp->runDynamicPage)
+      U_INTERNAL_ASSERT_POINTER(usp->runDynamicPageParam)
 
-      usp->runDynamicPage(U_DPAGE_DESTROY);
+      usp->runDynamicPageParam(U_DPAGE_DESTROY);
       }
 }
 
@@ -11791,11 +11798,11 @@ void UHTTP::callSigHUPForAllUSP()
       {
       usp = vusp->at(i);
 
-      U_INTERNAL_DUMP("usp->basename = %V usp->runDynamicPage = %p", usp->basename.rep, usp->runDynamicPage)
+      U_INTERNAL_DUMP("usp->basename = %V usp->runDynamicPageParam = %p", usp->basename.rep, usp->runDynamicPageParam)
 
-      U_INTERNAL_ASSERT_POINTER(usp->runDynamicPage)
+      U_INTERNAL_ASSERT_POINTER(usp->runDynamicPageParam)
 
-      usp->runDynamicPage(U_DPAGE_SIGHUP);
+      usp->runDynamicPageParam(U_DPAGE_SIGHUP);
       }
 }
 
@@ -11810,11 +11817,11 @@ void UHTTP::callAfterForkForAllUSP()
       {
       usp = vusp->at(i);
 
-      U_INTERNAL_DUMP("usp->basename = %V usp->runDynamicPage = %p", usp->basename.rep, usp->runDynamicPage)
+      U_INTERNAL_DUMP("usp->basename = %V usp->runDynamicPageParam = %p", usp->basename.rep, usp->runDynamicPageParam)
 
-      U_INTERNAL_ASSERT_POINTER(usp->runDynamicPage)
+      U_INTERNAL_ASSERT_POINTER(usp->runDynamicPageParam)
 
-      usp->runDynamicPage(U_DPAGE_FORK);
+      usp->runDynamicPageParam(U_DPAGE_FORK);
       }
 }
 
@@ -12105,9 +12112,10 @@ U_EXPORT const char* UHTTP::UServletPage::dump(bool reset) const
    UDynamic::dump(false);
 
    *UObjectIO::os << '\n'
-                  << "runDynamicPage              " << (void*)runDynamicPage << '\n'
-                  << "path     (UString           " << (void*)&path          << ")\n"
-                  << "basename (UString           " << (void*)&basename      << ')';
+                  << "runDynamicPage              " << (void*)runDynamicPage      << '\n'
+                  << "runDynamicPageParam         " << (void*)runDynamicPageParam << '\n'
+                  << "path     (UString           " << (void*)&path               << ")\n"
+                  << "basename (UString           " << (void*)&basename           << ')';
 
    if (reset)
       {

@@ -118,8 +118,8 @@ bool UOrmDriverPgSql::checkExecution(PGresult* res)
 
    resstatus = U_SYSCALL(PQresultStatus, "%p", res);
 
-   if (resstatus != PGRES_COMMAND_OK &&
-       resstatus != PGRES_TUPLES_OK)
+   if (resstatus != PGRES_TUPLES_OK &&
+       resstatus != PGRES_COMMAND_OK)
       {
 fail: if (res) UOrmDriver::SQLSTATE = U_SYSCALL(PQresultErrorField, "%p,%d", res, PG_DIAG_SQLSTATE);
 
@@ -667,12 +667,17 @@ bool UOrmDriverPgSql::handlerQuery(const char* query, uint32_t query_len)
 // ASYNC with PIPELINE (PostgresSQL v3 extended query protocol)
 
 #ifndef USE_PGSQL_BATCH_API
-#define USE_PGSQL_BATCH_API
+//#define USE_PGSQL_BATCH_API
 extern "C" {
-extern U_EXPORT int PQenterBatchMode(PGconn* connection);
 extern U_EXPORT int PQexitBatchMode(PGconn* connection);
+extern U_EXPORT int PQenterBatchMode(PGconn* connection);
 extern U_EXPORT int PQbatchSendQueue(PGconn* connection);
 extern U_EXPORT int PQbatchProcessQueue(PGconn* connection);
+
+extern U_EXPORT int PQexitBatchMode(PGconn* connection) {}
+extern U_EXPORT int PQenterBatchMode(PGconn* connection) {}
+extern U_EXPORT int PQbatchSendQueue(PGconn* connection) {}
+extern U_EXPORT int PQbatchProcessQueue(PGconn* connection) {}
 };
 #endif
 

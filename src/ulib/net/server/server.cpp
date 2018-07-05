@@ -167,7 +167,8 @@ UVector<UServerPlugIn*>*          UServer_Base::vplugin_static;
 UVector<UServer_Base::file_LOG*>* UServer_Base::vlog;
 
 #ifdef USERVER_UDP
-vPFi UServer_Base::runDynamicPage_udp;
+vPF  UServer_Base::runDynamicPage_udp;
+vPFu UServer_Base::runDynamicPageParam_udp;
 #endif
 #ifdef U_WELCOME_SUPPORT
 UString* UServer_Base::msg_welcome;
@@ -4521,15 +4522,16 @@ void UServer_Base::runLoop(const char* user)
          }
       else
          {
-         if ((handle = UDynamic::dload(buffer)) == U_NULLPTR ||
-             (runDynamicPage_udp = (vPFi)UDynamic::lookup(handle, "runDynamicPage_udp")) == U_NULLPTR)
+         if ((handle = UDynamic::dload(buffer)) == U_NULLPTR                                                    ||
+             (runDynamicPage_udp      = (vPF) UDynamic::lookup(handle, "runDynamicPage_udp"))      == U_NULLPTR ||
+             (runDynamicPageParam_udp = (vPFu)UDynamic::lookup(handle, "runDynamicPageParam_udp")) == U_NULLPTR)
             {
             U_WARNING("Load failed of usp page: %.*S", len, buffer);
             }
          else
             {
-            runDynamicPage_udp(U_DPAGE_INIT);
-            runDynamicPage_udp(U_DPAGE_FORK);
+            runDynamicPageParam_udp(U_DPAGE_INIT);
+            runDynamicPageParam_udp(U_DPAGE_FORK);
             }
          }
 
@@ -4560,9 +4562,9 @@ void UServer_Base::runLoop(const char* user)
 #     endif
          }
 
-      if (runDynamicPage_udp)
+      if (runDynamicPageParam_udp)
          {
-         runDynamicPage_udp(U_DPAGE_DESTROY);
+         runDynamicPageParam_udp(U_DPAGE_DESTROY);
 
          UDynamic::dclose(handle);
          }

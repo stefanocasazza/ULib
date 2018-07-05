@@ -8,19 +8,22 @@ static void usp_fork_wi_auth2();
 #include "wi_auth_declaration2.h"
    
 extern "C" {
-extern U_EXPORT void runDynamicPage_wi_auth2(int param);
-       U_EXPORT void runDynamicPage_wi_auth2(int param)
+extern U_EXPORT void runDynamicPageParam_wi_auth2(uint32_t param);
+       U_EXPORT void runDynamicPageParam_wi_auth2(uint32_t param)
 {
-   U_TRACE(0, "::runDynamicPage_wi_auth2(%d)", param)
+   U_TRACE(0, "::runDynamicPageParam_wi_auth2(%u)", param)
    
+   if (param == U_DPAGE_INIT) { usp_init_wi_auth2(); return; }
+   if (param == U_DPAGE_DESTROY) { usp_end_wi_auth2(); return; }
+   if (param == U_DPAGE_FORK) { usp_fork_wi_auth2(); return; }
+   return;
+} }
    
-   if (param)
-      {
-      if (param == U_DPAGE_INIT) { usp_init_wi_auth2(); return; }
-      if (param == U_DPAGE_DESTROY) { usp_end_wi_auth2(); return; }
-      if (param == U_DPAGE_FORK) { usp_fork_wi_auth2(); return; }
-      return;
-      }
+extern "C" {
+extern U_EXPORT void runDynamicPage_wi_auth2();
+       U_EXPORT void runDynamicPage_wi_auth2()
+{
+   U_TRACE_NO_PARAM(0, "::runDynamicPage_wi_auth2()")
    
    static UHTTP::service_info GET_table[] = { // NB: the table must be ordered alphabetically for binary search...
       GET_ENTRY(anagrafica),
@@ -43,5 +46,4 @@ extern U_EXPORT void runDynamicPage_wi_auth2(int param);
    UHTTP::manageRequest(GET_table, U_NUM_ELEMENTS(GET_table), POST_table, U_NUM_ELEMENTS(POST_table));
    
    U_http_info.endHeader = 0;
-   
 } }

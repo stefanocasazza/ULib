@@ -44,7 +44,8 @@
 int         UWebSocket::status_code;
 int         UWebSocket::fd_stderr;
 int         UWebSocket::message_type;
-vPFi        UWebSocket::on_message;
+vPF         UWebSocket::on_message;
+vPFu        UWebSocket::on_message_param;
 UString*    UWebSocket::rbuffer;
 UString*    UWebSocket::message;
 UString*    UWebSocket::penvironment;
@@ -698,7 +699,7 @@ void UWebSocket::handlerRequest()
 
    if (command == U_NULLPTR)
       {
-      on_message(U_DPAGE_OPEN);
+      on_message_param(U_DPAGE_OPEN);
 
       goto data;
       }
@@ -749,7 +750,7 @@ data:    if (handleDataFraming(UServer_Base::csocket) == U_WS_STATUS_CODE_OK)
             {
             if (command == U_NULLPTR)
                {
-               on_message(0);
+               on_message();
 
                if (U_http_info.nResponseCode != HTTP_INTERNAL_ERROR)
                   {
@@ -780,7 +781,7 @@ data:    if (handleDataFraming(UServer_Base::csocket) == U_WS_STATUS_CODE_OK)
       UClientImage_Base::setRequestProcessed();
       }
 
-   if (command == U_NULLPTR) on_message(U_DPAGE_CLOSE);
+   if (command == U_NULLPTR) on_message_param(U_DPAGE_CLOSE);
 }
 
 // DB

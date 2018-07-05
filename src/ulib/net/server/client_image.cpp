@@ -1553,9 +1553,9 @@ error:
           u_is_usp(UHTTP::file_data->mime_index))
          {
          U_INTERNAL_ASSERT_POINTER(UHTTP::usp)
-         U_INTERNAL_ASSERT_POINTER(UHTTP::usp->runDynamicPage)
+         U_INTERNAL_ASSERT_POINTER(UHTTP::usp->runDynamicPageParam)
 
-         UHTTP::usp->runDynamicPage(U_DPAGE_ERROR);
+         UHTTP::usp->runDynamicPageParam(U_DPAGE_ERROR);
          }
       }
 

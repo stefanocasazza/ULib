@@ -1,0 +1,38 @@
+<!--#
+Test type 3: Multiple database queries
+TechEmpower Web Framework Benchmarks
+-->
+<!--#declaration
+#include "world.h"
+
+static void usp_fork_query() { World::handlerForkSql(); }
+-->
+<!--#header
+-->
+<!--#vcode
+uint32_t num_queries = UHTTP::getFormFirstNumericValue(1, 500);
+
+/*
+if (num_queries >= 20 &&
+    UServer_Base::startParallelization())
+   {
+   return;
+   }
+*/
+-->
+<!--#code
+World::initResult();
+
+(void) World::pstmt_query->asyncPipelineMode(World::handlerResultSql);
+
+for (uint32_t i = 0; i < num_queries; ++i)
+   {
+   World::pworld_query->id = World::rnumber[i];
+
+   (void) World::pstmt_query->asyncPipelineSendQueryPrepared(i);
+   }
+
+(void) World::pstmt_query->asyncPipelineProcessQueue(num_queries);
+
+World::endResult();
+-->

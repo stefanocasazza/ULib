@@ -887,7 +887,8 @@ protected:
 #endif
 
 #ifdef USERVER_UDP
-   static vPFi runDynamicPage_udp;
+   static vPF  runDynamicPage_udp;
+   static vPFu runDynamicPageParam_udp;
 
    static int handlerUDP()
       {
@@ -895,7 +896,7 @@ protected:
 
       U_INTERNAL_DUMP("runDynamicPage_udp = %p", runDynamicPage_udp) 
 
-      if (runDynamicPage_udp) runDynamicPage_udp(0);
+      if (runDynamicPage_udp) runDynamicPage_udp();
       else
          {
          *UClientImage_Base::wbuffer = *UClientImage_Base::rbuffer; // echo server

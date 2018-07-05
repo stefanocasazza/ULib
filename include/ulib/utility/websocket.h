@@ -171,9 +171,10 @@ public:
 private:
    static uwrec* rec;
    static int fd_stderr;
-   static vPFi on_message;
+   static vPF on_message;
    static UCommand* command;
    static UString* penvironment;
+   static vPFu on_message_param;
    static uint32_t max_message_size;
    static URDBObjectHandler<UDataStorage*>* db;
 

@@ -8,19 +8,22 @@ static void usp_sighup_wi_auth();
 #include <ulib/examples/wi_auth_declaration.h>
    
 extern "C" {
-extern U_EXPORT void runDynamicPage_wi_auth(int param);
-       U_EXPORT void runDynamicPage_wi_auth(int param)
+extern U_EXPORT void runDynamicPageParam_wi_auth(uint32_t param);
+       U_EXPORT void runDynamicPageParam_wi_auth(uint32_t param)
 {
-   U_TRACE(0, "::runDynamicPage_wi_auth(%d)", param)
+   U_TRACE(0, "::runDynamicPageParam_wi_auth(%u)", param)
    
+   if (param == U_DPAGE_INIT) { usp_init_wi_auth(); return; }
+   if (param == U_DPAGE_DESTROY) { usp_end_wi_auth(); return; }
+   if (param == U_DPAGE_SIGHUP) { usp_sighup_wi_auth(); return; }
+   return;
+} }
    
-   if (param)
-      {
-      if (param == U_DPAGE_INIT) { usp_init_wi_auth(); return; }
-      if (param == U_DPAGE_DESTROY) { usp_end_wi_auth(); return; }
-      if (param == U_DPAGE_SIGHUP) { usp_sighup_wi_auth(); return; }
-      return;
-      }
+extern "C" {
+extern U_EXPORT void runDynamicPage_wi_auth();
+       U_EXPORT void runDynamicPage_wi_auth()
+{
+   U_TRACE_NO_PARAM(0, "::runDynamicPage_wi_auth()")
    
    static UHTTP::service_info GET_table[] = { // NB: the table must be ordered alphabetically for binary search...
       GET_ENTRY(admin),
@@ -104,5 +107,4 @@ extern U_EXPORT void runDynamicPage_wi_auth(int param);
    if (U_http_info.nResponseCode == 0) (void) UClientImage_Base::environment->append(U_CONSTANT_TO_PARAM("HTTP_RESPONSE_CODE=0\n"));
    
    U_http_info.endHeader = 0;
-   
 } }

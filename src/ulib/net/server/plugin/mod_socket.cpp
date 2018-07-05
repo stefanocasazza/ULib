@@ -105,8 +105,10 @@ int UWebSocketPlugIn::handlerRun()
       U_INTERNAL_DUMP("modsocket->runDynamicPage = %p", UHTTP::usp->runDynamicPage)
 
       U_INTERNAL_ASSERT_POINTER(UHTTP::usp->runDynamicPage)
+      U_INTERNAL_ASSERT_POINTER(UHTTP::usp->runDynamicPageParam)
 
-      UWebSocket::on_message = UHTTP::usp->runDynamicPage;
+      UWebSocket::on_message       = UHTTP::usp->runDynamicPage;
+      UWebSocket::on_message_param = UHTTP::usp->runDynamicPageParam;
       }
 
    if (enable_db) UWebSocket::initDb();

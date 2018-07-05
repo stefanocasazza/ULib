@@ -416,7 +416,7 @@ public:
 
             declaration.snprintf(U_CONSTANT_TO_PARAM("\n#ifdef USE_LIBSSL\nstatic UString sse_%.*s() { return UString::getStringNull(); }\n#endif"), basename_sz, basename_ptr);
 
-            (void) sseloop.append(U_CONSTANT_TO_PARAM("\n\t\tif (UHTTP::sse_func) UHTTP::readSSE(-1);"));
+            (void) sseloop.append(U_CONSTANT_TO_PARAM("\n\tif (param == U_DPAGE_SSE) { UHTTP::readSSE(-1); return; }\n"));
 
             http_header.snprintf(U_CONSTANT_TO_PARAM(
                   "\n#ifdef USE_LIBSSL"
@@ -454,9 +454,9 @@ public:
                   basename_sz, basename_ptr,
                   basename_sz, basename_ptr, sse_code.rep);
 
-            sseloop.snprintf(U_CONSTANT_TO_PARAM("\n\t\tif (UHTTP::sse_func) UHTTP::readSSE(%u);"), sse_timeout);
+            sseloop.snprintf(U_CONSTANT_TO_PARAM("\n\tif (param == U_DPAGE_SSE) { UHTTP::readSSE(%u); return; }\n"), sse_timeout);
 
-            http_header.snprintf_add(U_CONSTANT_TO_PARAM("\n\tUHTTP::sse_func = sse_%.*s;"), basename_sz, basename_ptr);
+            http_header.snprintf_add(U_CONSTANT_TO_PARAM("\n\tUHTTP::sse_func = sse_%.*s;\n"), basename_sz, basename_ptr);
             }
          }
       else if (strncmp(directive, U_CONSTANT_TO_PARAM("header")) == 0)
@@ -732,14 +732,14 @@ loop: distance = t.getDistance();
        * Server-wide hooks
        *
        * enum DynamicPageType {
-       * U_DPAGE_INIT    = -1,
-       * U_DPAGE_RESET   = -2,
-       * U_DPAGE_DESTROY = -3,
-       * U_DPAGE_SIGHUP  = -4,
-       * U_DPAGE_FORK    = -5,
-       * U_DPAGE_OPEN    = -6,
-       * U_DPAGE_CLOSE   = -7,
-       * U_DPAGE_ERROR   = -8 };
+       * U_DPAGE_INIT    = 0,
+       * U_DPAGE_RESET   = 1,
+       * U_DPAGE_DESTROY = 2,
+       * U_DPAGE_SIGHUP  = 3,
+       * U_DPAGE_FORK    = 4,
+       * U_DPAGE_OPEN    = 5,
+       * U_DPAGE_CLOSE   = 6,
+       * U_DPAGE_ERROR   = 7 };
        */
 
       bool binit,   // usp_init
@@ -780,7 +780,7 @@ loop: distance = t.getDistance();
          bclose  = (U_STRING_FIND(declaration, 0, "static void usp_close_")  != U_NOT_FOUND);
          berror  = (U_STRING_FIND(declaration, 0, "static void usp_error_")  != U_NOT_FOUND);
 
-         if (breset) (void) u__snprintf(ptr2, 100, U_CONSTANT_TO_PARAM("\n\t\tif (param == U_DPAGE_RESET) { usp_reset_%.*s(); return; }\n"), basename_sz, basename_ptr);
+         if (breset) (void) u__snprintf(ptr2, 100, U_CONSTANT_TO_PARAM("\n\tif (param == U_DPAGE_RESET) { usp_reset_%.*s(); return; }\n"), basename_sz, basename_ptr);
 
          if (bend)
             {
@@ -788,14 +788,14 @@ loop: distance = t.getDistance();
             if (bpreprocessing_failed) bend = false;
             else
 #        endif
-            (void) u__snprintf(ptr3, 100, U_CONSTANT_TO_PARAM("\n\t\tif (param == U_DPAGE_DESTROY) { usp_end_%.*s(); return; }\n"), basename_sz, basename_ptr);
+            (void) u__snprintf(ptr3, 100, U_CONSTANT_TO_PARAM("\n\tif (param == U_DPAGE_DESTROY) { usp_end_%.*s(); return; }\n"), basename_sz, basename_ptr);
             }
 
-         if (bsighup) (void) u__snprintf(ptr4, 100, U_CONSTANT_TO_PARAM("\n\t\tif (param == U_DPAGE_SIGHUP) { usp_sighup_%.*s(); return; }\n"), basename_sz, basename_ptr);
-         if (bfork)   (void) u__snprintf(ptr5, 100, U_CONSTANT_TO_PARAM("\n\t\tif (param == U_DPAGE_FORK) { usp_fork_%.*s(); return; }\n"),     basename_sz, basename_ptr);
-         if (bopen)   (void) u__snprintf(ptr6, 100, U_CONSTANT_TO_PARAM("\n\t\tif (param == U_DPAGE_OPEN) { usp_open_%.*s(); return; }\n"),     basename_sz, basename_ptr);
-         if (bclose)  (void) u__snprintf(ptr7, 100, U_CONSTANT_TO_PARAM("\n\t\tif (param == U_DPAGE_CLOSE) { usp_close_%.*s(); return; }\n"),   basename_sz, basename_ptr);
-         if (berror)  (void) u__snprintf(ptr8, 100, U_CONSTANT_TO_PARAM("\n\t\tif (param == U_DPAGE_ERROR) { usp_error_%.*s(); return; }\n"),   basename_sz, basename_ptr);
+         if (bsighup) (void) u__snprintf(ptr4, 100, U_CONSTANT_TO_PARAM("\n\tif (param == U_DPAGE_SIGHUP) { usp_sighup_%.*s(); return; }\n"), basename_sz, basename_ptr);
+         if (bfork)   (void) u__snprintf(ptr5, 100, U_CONSTANT_TO_PARAM("\n\tif (param == U_DPAGE_FORK) { usp_fork_%.*s(); return; }\n"),     basename_sz, basename_ptr);
+         if (bopen)   (void) u__snprintf(ptr6, 100, U_CONSTANT_TO_PARAM("\n\tif (param == U_DPAGE_OPEN) { usp_open_%.*s(); return; }\n"),     basename_sz, basename_ptr);
+         if (bclose)  (void) u__snprintf(ptr7, 100, U_CONSTANT_TO_PARAM("\n\tif (param == U_DPAGE_CLOSE) { usp_close_%.*s(); return; }\n"),   basename_sz, basename_ptr);
+         if (berror)  (void) u__snprintf(ptr8, 100, U_CONSTANT_TO_PARAM("\n\tif (param == U_DPAGE_ERROR) { usp_error_%.*s(); return; }\n"),   basename_sz, basename_ptr);
          }
       else
          {
@@ -832,7 +832,7 @@ loop: distance = t.getDistance();
                (bstorage ? "\n\tif (UHTTP::data_storage == U_NULLPTR) { U_NEW(UDataSession, UHTTP::data_storage, UDataSession(*UString::str_storage_keyid)) }\n" : ""));
          }
 
-      if (binit) (void) u__snprintf(ptr1, 100, U_CONSTANT_TO_PARAM("\n\t\tif (param == U_DPAGE_INIT) { usp_init_%.*s(); return; }\n"), basename_sz, basename_ptr);
+      if (binit) (void) u__snprintf(ptr1, 100, U_CONSTANT_TO_PARAM("\n\tif (param == U_DPAGE_INIT) { usp_init_%.*s(); return; }\n"), basename_sz, basename_ptr);
 
       if (bvar)
          {
@@ -883,32 +883,34 @@ loop: distance = t.getDistance();
             "%v"
             "\n\t\n"
             "extern \"C\" {\n"
-            "extern U_EXPORT void runDynamicPage_%.*s(int param);\n"
-            "       U_EXPORT void runDynamicPage_%.*s(int param)\n"
+            "extern U_EXPORT void runDynamicPageParam_%.*s(uint32_t param);\n"
+            "       U_EXPORT void runDynamicPageParam_%.*s(uint32_t param)\n"
             "{\n"
-            "\tU_TRACE(0, \"::runDynamicPage_%.*s(%%d)\", param)\n"
+            "\tU_TRACE(0, \"::runDynamicPageParam_%.*s(%%u)\", param)\n"
             "\t\n"
             "%v"
+            "%s"
+            "%s"
+            "%s"
+            "%s"
+            "%s"
+            "%s"
+            "%s"
+            "%s"
+            "\treturn;\n"
+            "} }\n"
             "\t\n"
-            "\tif (param)\n"
-            "\t\t{\n"
-            "%v"
-            "%s"
-            "%s"
-            "%s"
-            "%s"
-            "%s"
-            "%s"
-            "%s"
-            "%s"
-            "\t\treturn;\n"
-            "\t\t}\n"
+            "extern \"C\" {\n"
+            "extern U_EXPORT void runDynamicPage_%.*s();\n"
+            "       U_EXPORT void runDynamicPage_%.*s()\n"
+            "{\n"
+            "\tU_TRACE_NO_PARAM(0, \"::runDynamicPage_%.*s()\")\n"
             "\t\n"
             "%v"
             "%v"
             "%v"
             "%v"
-            "\t\n"
+            "%v"
             "} }\n"),
             basename_sz, basename_ptr,
             basename_sz, basename_ptr,
@@ -917,7 +919,6 @@ loop: distance = t.getDistance();
             basename_sz, basename_ptr,
             basename_sz, basename_ptr,
             basename_sz, basename_ptr,
-            vars.rep,
             sseloop.rep,
             ptr1,
             ptr2,
@@ -927,6 +928,10 @@ loop: distance = t.getDistance();
             ptr6,
             ptr7,
             ptr8,
+            basename_sz, basename_ptr,
+            basename_sz, basename_ptr,
+            basename_sz, basename_ptr,
+            vars.rep,
             vcode.rep,
             http_header.rep,
             output0.rep,

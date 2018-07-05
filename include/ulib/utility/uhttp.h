@@ -371,7 +371,7 @@ public:
 
    // UPLOAD
 
-   static vPFi on_upload;
+   static vPF on_upload;
 
    static void setUploadDir(const UString& dir)
       {
@@ -887,12 +887,14 @@ public:
    class UServletPage : public UDynamic {
    public:
 
-   vPFi runDynamicPage;
+   vPF  runDynamicPage;
+   vPFu runDynamicPageParam;
    UString path, basename;
 
-   UServletPage(const void* name, uint32_t nlen, const char* base = U_NULLPTR, uint32_t blen = 0, vPFi _runDynamicPage = U_NULLPTR) : runDynamicPage(_runDynamicPage), path(name, nlen)
+   UServletPage(const void* name, uint32_t nlen, const char* base = U_NULLPTR, uint32_t blen = 0, vPF _runDynamicPage = U_NULLPTR, vPFu _runDynamicPageParam = U_NULLPTR)
+         : runDynamicPage(_runDynamicPage), runDynamicPageParam(_runDynamicPageParam), path(name, nlen)
       {
-      U_TRACE_CTOR(0, UServletPage, "%.*S,%u,%.*S,%u,%p", nlen, name, nlen, blen, base, blen, _runDynamicPage)
+      U_TRACE_CTOR(0, UServletPage, "%.*S,%u,%.*S,%u,%p,%p", nlen, name, nlen, blen, base, blen, _runDynamicPage, _runDynamicPageParam)
 
       if (blen) (void) basename.replace(base, blen);
       }
@@ -1480,7 +1482,7 @@ private:
 #endif
 
 #ifdef U_STATIC_ONLY
-   static void loadStaticLinkedServlet(const char* name, uint32_t len, vPFi runDynamicPage) U_NO_EXPORT;
+   static void loadStaticLinkedServlet(const char* name, uint32_t len, vPF runDynamicPage, vPFu runDynamicPageParam) U_NO_EXPORT;
 #endif      
 
    static bool callService() U_NO_EXPORT;

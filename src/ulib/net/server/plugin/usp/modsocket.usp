@@ -4,7 +4,7 @@ prototype for Victor Stewart
 <!--#declaration
 #ifdef USE_LIBSSL
 static UWebSocketClient* wsclient;
-static vPFi message_for_another_usp;
+static vPF message_for_another_usp;
 
 static void usp_init_modsocket()
 {
@@ -70,7 +70,7 @@ if (isMessageForAnotherUSP(*UWebSocket::message))
       message_for_another_usp = UHTTP::usp->runDynamicPage;
       }
 
-   message_for_another_usp(0);
+   message_for_another_usp();
 
    // ...
    }

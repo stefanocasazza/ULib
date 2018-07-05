@@ -182,22 +182,24 @@ static void usp_body_ir_web()
 }
    
 extern "C" {
-extern U_EXPORT void runDynamicPage_ir_web(int param);
-       U_EXPORT void runDynamicPage_ir_web(int param)
+extern U_EXPORT void runDynamicPageParam_ir_web(uint32_t param);
+       U_EXPORT void runDynamicPageParam_ir_web(uint32_t param)
 {
-   U_TRACE(0, "::runDynamicPage_ir_web(%d)", param)
+   U_TRACE(0, "::runDynamicPageParam_ir_web(%u)", param)
    
+   if (param == U_DPAGE_INIT) { usp_init_ir_web(); return; }
+   if (param == U_DPAGE_DESTROY) { usp_end_ir_web(); return; }
+   return;
+} }
    
-   if (param)
-      {
-      if (param == U_DPAGE_INIT) { usp_init_ir_web(); return; }
-      if (param == U_DPAGE_DESTROY) { usp_end_ir_web(); return; }
-      return;
-      }
+extern "C" {
+extern U_EXPORT void runDynamicPage_ir_web();
+       U_EXPORT void runDynamicPage_ir_web()
+{
+   U_TRACE_NO_PARAM(0, "::runDynamicPage_ir_web()")
    
    usp_body_ir_web();
    UHTTP::putDataSession();
    UHTTP::mime_index = U_html;
    U_http_info.endHeader = 0;
-   
 } }

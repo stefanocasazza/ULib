@@ -2301,8 +2301,8 @@ if test "$enable_static" = "yes" -a "$enable_shared" = "no"; then
 
 			AC_MSG_CHECKING([servlet "$srv"])
 
-			add_calls3="$add_calls3 \n extern \"C\" { int runDynamicPage_${srv}(UClientImage_Base*); }"
-			add_calls4="$add_calls4 \n loadStaticLinkedServlet(\"${srv}\",U_CONSTANT_SIZE(\"${srv}\"),(vPFi)::runDynamicPage_${srv});"
+			add_calls3="$add_calls3 \n extern \"C\" { void runDynamicPage_${srv}(); } \n extern \"C\" { void runDynamicPageParam_${srv}(uint32_t); }"
+			add_calls4="$add_calls4 \n loadStaticLinkedServlet(\"${srv}\",U_CONSTANT_SIZE(\"${srv}\"),(vPF)::runDynamicPage_${srv},(vPFu)::runDynamicPageParam_${srv});"
 
 			if test "$srv" = "wi_auth"; then
 				static_servlet_wi_auth="yes"
