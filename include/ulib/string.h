@@ -242,8 +242,6 @@ public:
 
       U_CHECK_MEMORY
 
-      U_INTERNAL_ASSERT((str + ((int32_t)_capacity > 0 ? _capacity : _length)) >= ptr)
-
       U_RETURN((str + _length) - ptr);
       }
 
@@ -252,8 +250,6 @@ public:
       U_TRACE(0, "UStringRep::distance(%p)", ptr)
 
       U_CHECK_MEMORY
-
-      U_INTERNAL_ASSERT((str + ((int32_t)_capacity > 0 ? _capacity : _length)) >= ptr)
 
       U_RETURN(ptr - str);
       }
@@ -548,7 +544,8 @@ public:
    void size_adjust(      const char* ptr) { size_adjust(      distance(ptr)); }
    void size_adjust_force(const char* ptr) { size_adjust_force(distance(ptr)); }
 
-   void size_adjust_constant(uint32_t sz)  { _length = sz; }
+   void size_adjust_constant(uint32_t sz)     { _length = sz; }
+   void size_adjust_constant(const char* ptr) { size_adjust_constant(distance(ptr)); }
 
    void replace(const char* s, uint32_t n)
       {
@@ -2276,7 +2273,8 @@ public:
    void size_adjust_force(uint32_t value)  { rep->size_adjust_force(value); }
    void size_adjust_force(const char* ptr) { rep->size_adjust_force(ptr); }
 
-   void size_adjust_constant(uint32_t sz)  { rep->size_adjust_constant(sz); }
+   void size_adjust_constant(uint32_t sz)     { rep->size_adjust_constant(sz); }
+   void size_adjust_constant(const char* ptr) { rep->size_adjust_constant(ptr); }
 
    void setUpTime()
       {

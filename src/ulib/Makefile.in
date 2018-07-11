@@ -153,10 +153,11 @@ target_triplet = @target@
 @STATIC_ORM_DRIVER_SQLITE_TRUE@am__append_63 = orm/driver/orm_driver_sqlite.cpp
 @STATIC_ORM_DRIVER_MYSQL_TRUE@am__append_64 = orm/driver/orm_driver_mysql.cpp
 @STATIC_ORM_DRIVER_PGSQL_TRUE@am__append_65 = orm/driver/orm_driver_pgsql.cpp
-@MINGW_TRUE@am__append_66 = -export-symbols $(srcdir)/@ULIB@.def -no-undefined -Wl,ULib-win32-res.o
+@HAVE_PGSQL_BATCH_API_FALSE@@STATIC_ORM_DRIVER_PGSQL_TRUE@am__append_66 = $(top_builddir)/src/ulib/orm/driver/libpq/libpq.la @POSTGRESQL_LDFLAGS@ @POSTGRESQL_LIBS@
+@MINGW_TRUE@am__append_67 = -export-symbols $(srcdir)/@ULIB@.def -no-undefined -Wl,ULib-win32-res.o
 
 # Handler static http servlet
-@STATIC_ONLY_TRUE@@STATIC_SERVLET_TRUE@am__append_67 = net/server/plugin/usp/loader.autoconf.inc 
+@STATIC_ONLY_TRUE@@STATIC_SERVLET_TRUE@am__append_68 = net/server/plugin/usp/loader.autoconf.inc 
 subdir = src/ulib
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
 	$(srcdir)/ULib.rc.in $(srcdir)/ULib.pc.in \
@@ -501,14 +502,74 @@ am__v_CXXLD_0 = @echo "  CXXLD   " $@;
 am__v_CXXLD_1 = 
 SOURCES = $(lib@ULIB@_la_SOURCES)
 DIST_SOURCES = $(am__lib@ULIB@_la_SOURCES_DIST)
+RECURSIVE_TARGETS = all-recursive check-recursive cscopelist-recursive \
+	ctags-recursive dvi-recursive html-recursive info-recursive \
+	install-data-recursive install-dvi-recursive \
+	install-exec-recursive install-html-recursive \
+	install-info-recursive install-pdf-recursive \
+	install-ps-recursive install-recursive installcheck-recursive \
+	installdirs-recursive pdf-recursive ps-recursive \
+	tags-recursive uninstall-recursive
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
     *) (install-info --version) >/dev/null 2>&1;; \
   esac
 DATA = $(noinst_DATA) $(pkgconfig_DATA)
+RECURSIVE_CLEAN_TARGETS = mostlyclean-recursive clean-recursive	\
+  distclean-recursive maintainer-clean-recursive
+am__recursive_targets = \
+  $(RECURSIVE_TARGETS) \
+  $(RECURSIVE_CLEAN_TARGETS) \
+  $(am__extra_recursive_targets)
+AM_RECURSIVE_TARGETS = $(am__recursive_targets:-recursive=) TAGS CTAGS \
+	distdir
 am__tagged_files = $(HEADERS) $(SOURCES) $(TAGS_FILES) $(LISP)
+# Read a list of newline-separated strings from the standard input,
+# and print each of them once, without duplicates.  Input order is
+# *not* preserved.
+am__uniquify_input = $(AWK) '\
+  BEGIN { nonempty = 0; } \
+  { items[$$0] = 1; nonempty = 1; } \
+  END { if (nonempty) { for (i in items) print i; }; } \
+'
+# Make sure the list of sources is unique.  This is necessary because,
+# e.g., the same source file might be shared among _SOURCES variables
+# for different programs/libraries.
+am__define_uniq_tagged_files = \
+  list='$(am__tagged_files)'; \
+  unique=`for i in $$list; do \
+    if test -f "$$i"; then echo $$i; else echo $(srcdir)/$$i; fi; \
+  done | $(am__uniquify_input)`
+ETAGS = etags
+CTAGS = ctags
+DIST_SUBDIRS = orm/driver/libpq
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
+am__relativize = \
+  dir0=`pwd`; \
+  sed_first='s,^\([^/]*\)/.*$$,\1,'; \
+  sed_rest='s,^[^/]*/*,,'; \
+  sed_last='s,^.*/\([^/]*\)$$,\1,'; \
+  sed_butlast='s,/*[^/]*$$,,'; \
+  while test -n "$$dir1"; do \
+    first=`echo "$$dir1" | sed -e "$$sed_first"`; \
+    if test "$$first" != "."; then \
+      if test "$$first" = ".."; then \
+        dir2=`echo "$$dir0" | sed -e "$$sed_last"`/"$$dir2"; \
+        dir0=`echo "$$dir0" | sed -e "$$sed_butlast"`; \
+      else \
+        first2=`echo "$$dir2" | sed -e "$$sed_first"`; \
+        if test "$$first2" = "$$first"; then \
+          dir2=`echo "$$dir2" | sed -e "$$sed_rest"`; \
+        else \
+          dir2="../$$dir2"; \
+        fi; \
+        dir0="$$dir0"/"$$first"; \
+      fi; \
+    fi; \
+    dir1=`echo "$$dir1" | sed -e "$$sed_rest"`; \
+  done; \
+  reldir="$$dir2"
 ACLOCAL = @ACLOCAL@
 ALLOCA = @ALLOCA@
 AMTAR = @AMTAR@
@@ -708,6 +769,7 @@ EXTRA_DIST = base/* container/* db/* debug/* dynamic/* flex/* internal/* ldap/* 
              net/server/plugin/*.cpp net/server/plugin/Makefile.* \
 				 *.cpp all_c.c ULib.pc.in ULib.rc.in utility/bin
 
+@HAVE_PGSQL_BATCH_API_FALSE@@HAVE_PGSQL_TRUE@@STATIC_ORM_DRIVER_PGSQL_TRUE@SUBDIRS = orm/driver/libpq
 DEFAULT_INCLUDES = -I. -I$(top_builddir)/include
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = ULib.pc
@@ -765,16 +827,16 @@ SRC_CPP = internal/common.cpp internal/error.cpp ui/dialog.cpp \
 	$(am__append_57) $(am__append_58) $(am__append_59) \
 	$(am__append_60) $(am__append_61) $(am__append_62) \
 	$(am__append_63) $(am__append_64) $(am__append_65) \
-	$(am__append_67)
-lib@ULIB@_la_LDFLAGS = @ULIB_LIBS@ -version-info 1:0:0 -release \
-	@ULIB_VERSION@ $(am__append_66)
+	$(am__append_68)
+lib@ULIB@_la_LDFLAGS = @ULIB_LIBS@ $(am__append_66) -version-info \
+	1:0:0 -release @ULIB_VERSION@ $(am__append_67)
 @MINGW_TRUE@lib@ULIB@_la_DEPENDENCIES = ULib-win32-res.o
 @FINAL_FALSE@lib@ULIB@_la_SOURCES = $(SRC_C) $(SRC_CPP)
 @FINAL_TRUE@lib@ULIB@_la_SOURCES = all_c.c base/xxhash/xxhash.c all_cpp.cpp
 lib_LTLIBRARIES = lib@ULIB@.la
 @CROSS_COMPILING_FALSE@SUFFIXES = .cpp .usp .lo .la
 @MS_LIB_AVAILABLE_TRUE@noinst_DATA = @ULIB@-@ULIB_VERSION@.lib
-all: all-am
+all: all-recursive
 
 .SUFFIXES:
 .SUFFIXES: .cpp .usp .lo .la .c .o .obj
@@ -1824,12 +1886,105 @@ uninstall-pkgconfigDATA:
 	@list='$(pkgconfig_DATA)'; test -n "$(pkgconfigdir)" || list=; \
 	files=`for p in $$list; do echo $$p; done | sed -e 's|^.*/||'`; \
 	dir='$(DESTDIR)$(pkgconfigdir)'; $(am__uninstall_files_from_dir)
-tags TAGS:
 
-ctags CTAGS:
+# This directory's subdirectories are mostly independent; you can cd
+# into them and run 'make' without going through this Makefile.
+# To change the values of 'make' variables: instead of editing Makefiles,
+# (1) if the variable is set in 'config.status', edit 'config.status'
+#     (which will cause the Makefiles to be regenerated when you run 'make');
+# (2) otherwise, pass the desired values on the 'make' command line.
+$(am__recursive_targets):
+	@fail=; \
+	if $(am__make_keepgoing); then \
+	  failcom='fail=yes'; \
+	else \
+	  failcom='exit 1'; \
+	fi; \
+	dot_seen=no; \
+	target=`echo $@ | sed s/-recursive//`; \
+	case "$@" in \
+	  distclean-* | maintainer-clean-*) list='$(DIST_SUBDIRS)' ;; \
+	  *) list='$(SUBDIRS)' ;; \
+	esac; \
+	for subdir in $$list; do \
+	  echo "Making $$target in $$subdir"; \
+	  if test "$$subdir" = "."; then \
+	    dot_seen=yes; \
+	    local_target="$$target-am"; \
+	  else \
+	    local_target="$$target"; \
+	  fi; \
+	  ($(am__cd) $$subdir && $(MAKE) $(AM_MAKEFLAGS) $$local_target) \
+	  || eval $$failcom; \
+	done; \
+	if test "$$dot_seen" = "no"; then \
+	  $(MAKE) $(AM_MAKEFLAGS) "$$target-am" || exit 1; \
+	fi; test -z "$$fail"
 
-cscope cscopelist:
+ID: $(am__tagged_files)
+	$(am__define_uniq_tagged_files); mkid -fID $$unique
+tags: tags-recursive
+TAGS: tags
 
+tags-am: $(TAGS_DEPENDENCIES) $(am__tagged_files)
+	set x; \
+	here=`pwd`; \
+	if ($(ETAGS) --etags-include --version) >/dev/null 2>&1; then \
+	  include_option=--etags-include; \
+	  empty_fix=.; \
+	else \
+	  include_option=--include; \
+	  empty_fix=; \
+	fi; \
+	list='$(SUBDIRS)'; for subdir in $$list; do \
+	  if test "$$subdir" = .; then :; else \
+	    test ! -f $$subdir/TAGS || \
+	      set "$$@" "$$include_option=$$here/$$subdir/TAGS"; \
+	  fi; \
+	done; \
+	$(am__define_uniq_tagged_files); \
+	shift; \
+	if test -z "$(ETAGS_ARGS)$$*$$unique"; then :; else \
+	  test -n "$$unique" || unique=$$empty_fix; \
+	  if test $$# -gt 0; then \
+	    $(ETAGS) $(ETAGSFLAGS) $(AM_ETAGSFLAGS) $(ETAGS_ARGS) \
+	      "$$@" $$unique; \
+	  else \
+	    $(ETAGS) $(ETAGSFLAGS) $(AM_ETAGSFLAGS) $(ETAGS_ARGS) \
+	      $$unique; \
+	  fi; \
+	fi
+ctags: ctags-recursive
+
+CTAGS: ctags
+ctags-am: $(TAGS_DEPENDENCIES) $(am__tagged_files)
+	$(am__define_uniq_tagged_files); \
+	test -z "$(CTAGS_ARGS)$$unique" \
+	  || $(CTAGS) $(CTAGSFLAGS) $(AM_CTAGSFLAGS) $(CTAGS_ARGS) \
+	     $$unique
+
+GTAGS:
+	here=`$(am__cd) $(top_builddir) && pwd` \
+	  && $(am__cd) $(top_srcdir) \
+	  && gtags -i $(GTAGS_ARGS) "$$here"
+cscopelist: cscopelist-recursive
+
+cscopelist-am: $(am__tagged_files)
+	list='$(am__tagged_files)'; \
+	case "$(srcdir)" in \
+	  [\\/]* | ?:[\\/]*) sdir="$(srcdir)" ;; \
+	  *) sdir=$(subdir)/$(srcdir) ;; \
+	esac; \
+	for i in $$list; do \
+	  if test -f "$$i"; then \
+	    echo "$(subdir)/$$i"; \
+	  else \
+	    echo "$$sdir/$$i"; \
+	  fi; \
+	done >> $(top_builddir)/cscope.files
+
+distclean-tags:
+	-rm -f TAGS ID GTAGS GRTAGS GSYMS GPATH tags
 
 distdir: $(DISTFILES)
 	@srcdirstrip=`echo "$(srcdir)" | sed 's/[].[^$$\\*]/\\\\&/g'`; \
@@ -1861,25 +2016,51 @@ distdir: $(DISTFILES)
 	    || exit 1; \
 	  fi; \
 	done
+	@list='$(DIST_SUBDIRS)'; for subdir in $$list; do \
+	  if test "$$subdir" = .; then :; else \
+	    $(am__make_dryrun) \
+	      || test -d "$(distdir)/$$subdir" \
+	      || $(MKDIR_P) "$(distdir)/$$subdir" \
+	      || exit 1; \
+	    dir1=$$subdir; dir2="$(distdir)/$$subdir"; \
+	    $(am__relativize); \
+	    new_distdir=$$reldir; \
+	    dir1=$$subdir; dir2="$(top_distdir)"; \
+	    $(am__relativize); \
+	    new_top_distdir=$$reldir; \
+	    echo " (cd $$subdir && $(MAKE) $(AM_MAKEFLAGS) top_distdir="$$new_top_distdir" distdir="$$new_distdir" \\"; \
+	    echo "     am__remove_distdir=: am__skip_length_check=: am__skip_mode_fix=: distdir)"; \
+	    ($(am__cd) $$subdir && \
+	      $(MAKE) $(AM_MAKEFLAGS) \
+	        top_distdir="$$new_top_distdir" \
+	        distdir="$$new_distdir" \
+		am__remove_distdir=: \
+		am__skip_length_check=: \
+		am__skip_mode_fix=: \
+	        distdir) \
+	      || exit 1; \
+	  fi; \
+	done
 	$(MAKE) $(AM_MAKEFLAGS) \
 	  top_distdir="$(top_distdir)" distdir="$(distdir)" \
 	  dist-hook
 check-am: all-am
-check: check-am
+check: check-recursive
 all-am: Makefile $(LTLIBRARIES) $(DATA)
-installdirs:
+installdirs: installdirs-recursive
+installdirs-am:
 	for dir in "$(DESTDIR)$(libdir)" "$(DESTDIR)$(pkgconfigdir)"; do \
 	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
 	done
-install: install-am
-install-exec: install-exec-am
-install-data: install-data-am
-uninstall: uninstall-am
+install: install-recursive
+install-exec: install-exec-recursive
+install-data: install-data-recursive
+uninstall: uninstall-recursive
 
 install-am: all-am
 	@$(MAKE) $(AM_MAKEFLAGS) install-exec-am install-data-am
 
-installcheck: installcheck-am
+installcheck: installcheck-recursive
 install-strip:
 	if test -z '$(STRIP)'; then \
 	  $(MAKE) $(AM_MAKEFLAGS) INSTALL_PROGRAM="$(INSTALL_STRIP_PROGRAM)" \
@@ -1994,93 +2175,95 @@ maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"
 	@echo "it deletes files that may require special tools to rebuild."
 	-test -z "$(MAINTAINERCLEANFILES)" || rm -f $(MAINTAINERCLEANFILES)
-clean: clean-am
+clean: clean-recursive
 
 clean-am: clean-generic clean-libLTLIBRARIES clean-libtool clean-local \
 	mostlyclean-am
 
-distclean: distclean-am
+distclean: distclean-recursive
 	-rm -rf ./$(DEPDIR) base/$(DEPDIR) base/apex/$(DEPDIR) base/coder/$(DEPDIR) base/miniz/$(DEPDIR) base/ssl/$(DEPDIR) base/win32/$(DEPDIR) base/xxhash/$(DEPDIR) base/zip/$(DEPDIR) container/$(DEPDIR) curl/$(DEPDIR) db/$(DEPDIR) dbi/$(DEPDIR) debug/$(DEPDIR) dynamic/$(DEPDIR) event/$(DEPDIR) flex/$(DEPDIR) internal/$(DEPDIR) json/$(DEPDIR) ldap/$(DEPDIR) lemon/$(DEPDIR) libevent/$(DEPDIR) magic/$(DEPDIR) mime/$(DEPDIR) net/$(DEPDIR) net/client/$(DEPDIR) net/rpc/$(DEPDIR) net/server/$(DEPDIR) net/server/plugin/$(DEPDIR) net/server/plugin/mod_geoip/$(DEPDIR) net/server/plugin/mod_shib/$(DEPDIR) orm/$(DEPDIR) orm/driver/$(DEPDIR) pcre/$(DEPDIR) query/$(DEPDIR) replace/$(DEPDIR) serialize/$(DEPDIR) ssh/net/$(DEPDIR) ssl/$(DEPDIR) ssl/mime/$(DEPDIR) ssl/net/$(DEPDIR) ui/$(DEPDIR) utility/$(DEPDIR) xml/expat/$(DEPDIR) xml/libxml2/$(DEPDIR) xml/soap/$(DEPDIR) zip/$(DEPDIR)
 	-rm -f Makefile
-distclean-am: clean-am distclean-compile distclean-generic
+distclean-am: clean-am distclean-compile distclean-generic \
+	distclean-tags
 
-dvi: dvi-am
+dvi: dvi-recursive
 
 dvi-am:
 
-html: html-am
+html: html-recursive
 
 html-am:
 
-info: info-am
+info: info-recursive
 
 info-am:
 
 install-data-am: install-data-local install-pkgconfigDATA
 
-install-dvi: install-dvi-am
+install-dvi: install-dvi-recursive
 
 install-dvi-am:
 
 install-exec-am: install-libLTLIBRARIES
 
-install-html: install-html-am
+install-html: install-html-recursive
 
 install-html-am:
 
-install-info: install-info-am
+install-info: install-info-recursive
 
 install-info-am:
 
 install-man:
 
-install-pdf: install-pdf-am
+install-pdf: install-pdf-recursive
 
 install-pdf-am:
 
-install-ps: install-ps-am
+install-ps: install-ps-recursive
 
 install-ps-am:
 
 installcheck-am:
 
-maintainer-clean: maintainer-clean-am
+maintainer-clean: maintainer-clean-recursive
 	-rm -rf ./$(DEPDIR) base/$(DEPDIR) base/apex/$(DEPDIR) base/coder/$(DEPDIR) base/miniz/$(DEPDIR) base/ssl/$(DEPDIR) base/win32/$(DEPDIR) base/xxhash/$(DEPDIR) base/zip/$(DEPDIR) container/$(DEPDIR) curl/$(DEPDIR) db/$(DEPDIR) dbi/$(DEPDIR) debug/$(DEPDIR) dynamic/$(DEPDIR) event/$(DEPDIR) flex/$(DEPDIR) internal/$(DEPDIR) json/$(DEPDIR) ldap/$(DEPDIR) lemon/$(DEPDIR) libevent/$(DEPDIR) magic/$(DEPDIR) mime/$(DEPDIR) net/$(DEPDIR) net/client/$(DEPDIR) net/rpc/$(DEPDIR) net/server/$(DEPDIR) net/server/plugin/$(DEPDIR) net/server/plugin/mod_geoip/$(DEPDIR) net/server/plugin/mod_shib/$(DEPDIR) orm/$(DEPDIR) orm/driver/$(DEPDIR) pcre/$(DEPDIR) query/$(DEPDIR) replace/$(DEPDIR) serialize/$(DEPDIR) ssh/net/$(DEPDIR) ssl/$(DEPDIR) ssl/mime/$(DEPDIR) ssl/net/$(DEPDIR) ui/$(DEPDIR) utility/$(DEPDIR) xml/expat/$(DEPDIR) xml/libxml2/$(DEPDIR) xml/soap/$(DEPDIR) zip/$(DEPDIR)
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 
-mostlyclean: mostlyclean-am
+mostlyclean: mostlyclean-recursive
 
 mostlyclean-am: mostlyclean-compile mostlyclean-generic \
 	mostlyclean-libtool
 
-pdf: pdf-am
+pdf: pdf-recursive
 
 pdf-am:
 
-ps: ps-am
+ps: ps-recursive
 
 ps-am:
 
 uninstall-am: uninstall-libLTLIBRARIES uninstall-local \
 	uninstall-pkgconfigDATA
 
-.MAKE: install-am install-strip
+.MAKE: $(am__recursive_targets) install-am install-strip
 
-.PHONY: all all-am check check-am clean clean-generic \
-	clean-libLTLIBRARIES clean-libtool clean-local cscopelist-am \
-	ctags-am dist-hook distclean distclean-compile \
-	distclean-generic distclean-libtool distdir dvi dvi-am html \
+.PHONY: $(am__recursive_targets) CTAGS GTAGS TAGS all all-am check \
+	check-am clean clean-generic clean-libLTLIBRARIES \
+	clean-libtool clean-local cscopelist-am ctags ctags-am \
+	dist-hook distclean distclean-compile distclean-generic \
+	distclean-libtool distclean-tags distdir dvi dvi-am html \
 	html-am info info-am install install-am install-data \
 	install-data-am install-data-local install-dvi install-dvi-am \
 	install-exec install-exec-am install-html install-html-am \
 	install-info install-info-am install-libLTLIBRARIES \
 	install-man install-pdf install-pdf-am install-pkgconfigDATA \
 	install-ps install-ps-am install-strip installcheck \
-	installcheck-am installdirs maintainer-clean \
+	installcheck-am installdirs installdirs-am maintainer-clean \
 	maintainer-clean-generic mostlyclean mostlyclean-compile \
 	mostlyclean-generic mostlyclean-libtool pdf pdf-am ps ps-am \
-	tags-am uninstall uninstall-am uninstall-libLTLIBRARIES \
+	tags tags-am uninstall uninstall-am uninstall-libLTLIBRARIES \
 	uninstall-local uninstall-pkgconfigDATA
 
 

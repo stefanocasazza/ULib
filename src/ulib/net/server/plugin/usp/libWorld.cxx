@@ -10,6 +10,8 @@ uint32_t			  World::rnumber[500];
 UOrmSession*	  World::psql_query;
 UOrmStatement*	  World::pstmt_query;
 #ifdef U_STATIC_ORM_DRIVER_PGSQL
+char				  World::num2str[sizeof(unsigned int)];
+PGconn*			  World::conn;
 UOrmDriverPgSql* World::pdrv;
 UPgSqlStatement* World::pstmt;
 #endif

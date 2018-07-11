@@ -1296,13 +1296,13 @@ data_missing:
       }
 #endif
 
-   resetBuffer();
-
 #if defined(U_SERVER_CAPTIVE_PORTAL) && defined(ENABLE_THREAD)
    if (UHTTP::checkForUSP()) U_RETURN(U_NOTIFIER_OK);
 
    if (U_ClientImage_parallelization == U_PARALLELIZATION_PARENT) U_RETURN(U_NOTIFIER_DELETE);
 #endif
+
+   resetBuffer();
 
    size_request = 0;
 

@@ -108,6 +108,7 @@ cleandist:
   		$(distdir)/src/ulib/orm/driver/.deps \
   		$(distdir)/src/ulib/orm/driver/.libs \
   		$(distdir)/src/ulib/orm/driver/Makefile \
+  		$(distdir)/src/ulib/orm/driver/libpq/Makefile \
   		$(distdir)/src/ulib/net/server/plugin/*.o \
   		$(distdir)/src/ulib/net/server/plugin/*.l? \
   		$(distdir)/src/ulib/net/server/plugin/.deps \

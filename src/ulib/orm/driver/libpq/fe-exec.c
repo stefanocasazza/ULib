@@ -2014,6 +2014,58 @@ exitFailed:
    return 0;
 }
 
+void* PQbatchPutSyncOnQueue(PGconn* conn)
+{
+   PGcommandQueueEntry* entry;
+
+   if (!conn ||
+        conn->batch_status == PQBATCH_MODE_OFF)
+      {
+      return NULL;
+      }
+
+   switch (conn->asyncStatus)
+      {
+      case PGASYNC_IDLE:      printfPQExpBuffer(&conn->errorMessage, libpq_gettext_noop("internal error, IDLE in batch mode")); break;
+
+      case PGASYNC_COPY_IN:
+      case PGASYNC_COPY_OUT:
+      case PGASYNC_COPY_BOTH: printfPQExpBuffer(&conn->errorMessage, libpq_gettext_noop("internal error, COPY in batch mode")); break;
+
+      case PGASYNC_READY:
+      case PGASYNC_READY_MORE:
+      case PGASYNC_BUSY:
+      case PGASYNC_QUEUED:
+      /* can send sync to end this batch of cmds */
+      break;
+      }
+
+   entry = PQmakePipelinedCommand(conn);
+
+   if (entry)
+      {
+      entry->query      = NULL;
+      entry->queryclass = PGQUERY_SYNC;
+
+      /* construct the Sync message */
+      if (pqPutMsgStart('S', false, conn) < 0 ||
+          pqPutMsgEnd(conn) < 0)
+         {
+         PQrecyclePipelinedCommand(conn, entry);
+
+         return NULL;
+         }
+
+      PQappendPipelinedCommand(conn, entry);
+
+      return entry;
+      }
+
+   /* error msg already set */
+
+   return NULL;
+}
+
 /*
  * PQbatchSendQueue
  *    End a batch submission by sending a protocol sync. The connection will
@@ -2032,60 +2084,21 @@ exitFailed:
 int
 PQbatchSendQueue(PGconn *conn)
 {
-   PGcommandQueueEntry *entry;
+   PGcommandQueueEntry* entry = (PGcommandQueueEntry*)PQbatchPutSyncOnQueue(conn);
 
-   if (!conn)
-      return 0;
+   if (entry)
+      {
+      /*
+       * Give the data a push. In nonblock mode, don't complain if we're unable
+       * to send it all; PQgetResult() will do any additional flushing needed.
+       */
 
-   if (conn->batch_status == PQBATCH_MODE_OFF)
-      return 0;
+      if (PQflush(conn) >= 0) return 1;
 
-   switch (conn->asyncStatus)
-   {
-      case PGASYNC_IDLE:
-         printfPQExpBuffer(&conn->errorMessage,
-               libpq_gettext_noop("internal error, IDLE in batch mode"));
-         break;
-      case PGASYNC_COPY_IN:
-      case PGASYNC_COPY_OUT:
-      case PGASYNC_COPY_BOTH:
-         printfPQExpBuffer(&conn->errorMessage,
-               libpq_gettext_noop("internal error, COPY in batch mode"));
-         break;
-      case PGASYNC_READY:
-      case PGASYNC_READY_MORE:
-      case PGASYNC_BUSY:
-      case PGASYNC_QUEUED:
-         /* can send sync to end this batch of cmds */
-         break;
-   }
+      PQrecyclePipelinedCommand(conn, entry);
+      pqHandleSendFailure(conn);
+      }
 
-   entry = PQmakePipelinedCommand(conn);
-   if (entry == NULL)
-      return 0;         /* error msg already set */
-
-   entry->queryclass = PGQUERY_SYNC;
-   entry->query = NULL;
-
-   /* construct the Sync message */
-   if (pqPutMsgStart('S', false, conn) < 0 ||
-      pqPutMsgEnd(conn) < 0)
-      goto sendFailed;
-
-   PQappendPipelinedCommand(conn, entry);
-
-   /*
-    * Give the data a push.  In nonblock mode, don't complain if we're unable
-    * to send it all; PQgetResult() will do any additional flushing needed.
-    */
-   if (PQflush(conn) < 0)
-      goto sendFailed;
-
-   return 1;
-
-sendFailed:
-   PQrecyclePipelinedCommand(conn, entry);
-   pqHandleSendFailure(conn);
    return 0;
 }
 

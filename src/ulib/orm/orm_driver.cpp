@@ -670,14 +670,14 @@ const char* USqlStatementBindResult::dump(bool _reset) const
 
 const char* USqlStatement::dump(bool _reset) const
 {
-   *UObjectIO::os << "pHandle                                    " << pHandle         << '\n'
-                  << "current_row                                " << current_row     << '\n'
-                  << "num_row_result                             " << num_row_result  << '\n'
-                  << "num_bind_param                             " << num_bind_param  << '\n'
-                  << "num_bind_result                            " << num_bind_result << '\n'
+   *UObjectIO::os << "pHandle                                    " << pHandle                           << '\n'
+                  << "current_row                                " << current_row                       << '\n'
+                  << "num_row_result                             " << num_row_result                    << '\n'
+                  << "num_bind_param                             " << num_bind_param                    << '\n'
+                  << "num_bind_result                            " << num_bind_result                   << '\n'
                   << "asyncPipelineHandlerResult                 " << (void*)asyncPipelineHandlerResult << '\n'
-                  << "vparam  (UVector<USqlStatementBindParam*>  " << (void*)&vparam  << ")\n"
-                  << "vresult (UVector<USqlStatementBindResult*> " << (void*)&vresult << ')';
+                  << "vparam  (UVector<USqlStatementBindParam*>  " << (void*)&vparam                    << ")\n"
+                  << "vresult (UVector<USqlStatementBindResult*> " << (void*)&vresult                   << ')';
 
    if (_reset)
       {

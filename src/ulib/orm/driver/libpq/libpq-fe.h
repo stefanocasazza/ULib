@@ -440,12 +440,12 @@ extern int	PQisBusy(PGconn *conn);
 extern int	PQconsumeInput(PGconn *conn);
 
 /* Routines for batch mode management */
-extern int	PQbatchStatus(PGconn *conn);
-extern int	PQbatchQueueCount(PGconn *conn);
-extern int	PQenterBatchMode(PGconn *conn);
-extern int	PQexitBatchMode(PGconn *conn);
-extern int	PQbatchSendQueue(PGconn *conn);
-extern int	PQbatchProcessQueue(PGconn *conn);
+extern int	 PQbatchStatus(PGconn *conn);
+extern int	 PQenterBatchMode(PGconn *conn);
+extern int	 PQexitBatchMode(PGconn *conn);
+extern int	 PQbatchSendQueue(PGconn *conn);
+extern int	 PQbatchProcessQueue(PGconn *conn);
+extern void* PQbatchPutSyncOnQueue(PGconn* conn);
 
 /* LISTEN/NOTIFY support */
 extern PGnotify *PQnotifies(PGconn *conn);

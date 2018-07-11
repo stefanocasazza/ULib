@@ -666,21 +666,6 @@ bool UOrmDriverPgSql::handlerQuery(const char* query, uint32_t query_len)
 
 // ASYNC with PIPELINE (PostgresSQL v3 extended query protocol)
 
-#ifndef USE_PGSQL_BATCH_API
-//#define USE_PGSQL_BATCH_API
-extern "C" {
-extern U_EXPORT int PQexitBatchMode(PGconn* connection);
-extern U_EXPORT int PQenterBatchMode(PGconn* connection);
-extern U_EXPORT int PQbatchSendQueue(PGconn* connection);
-extern U_EXPORT int PQbatchProcessQueue(PGconn* connection);
-
-extern U_EXPORT int PQexitBatchMode(PGconn* connection) {}
-extern U_EXPORT int PQenterBatchMode(PGconn* connection) {}
-extern U_EXPORT int PQbatchSendQueue(PGconn* connection) {}
-extern U_EXPORT int PQbatchProcessQueue(PGconn* connection) {}
-};
-#endif
-
 bool UOrmDriverPgSql::asyncPipelineMode(bool benter)
 {
    U_TRACE(0, "UOrmDriverPgSql::asyncPipelineMode(%b)", benter)

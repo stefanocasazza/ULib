@@ -27,6 +27,25 @@ extern "C" {
 #include <postgres_fe.h>
 #include <libpq-fe.h>
 #include <catalog/pg_type.h>
+
+// ASYNC with PIPELINE (PostgresSQL v3 extended query protocol)
+
+#ifndef USE_PGSQL_BATCH_API
+#define USE_PGSQL_BATCH_API
+extern U_EXPORT int   PQexitBatchMode(PGconn* conn);
+extern U_EXPORT int   PQenterBatchMode(PGconn* conn);
+extern U_EXPORT int   PQbatchSendQueue(PGconn* conn);
+extern U_EXPORT int   PQbatchProcessQueue(PGconn* conn);
+extern U_EXPORT void* PQbatchPutSyncOnQueue(PGconn* conn);
+
+/*
+extern U_EXPORT int   PQexitBatchMode(PGconn* conn) { return 0; }
+extern U_EXPORT int   PQenterBatchMode(PGconn* conn) { return 0; }
+extern U_EXPORT int   PQbatchSendQueue(PGconn* conn) { return 0; }
+extern U_EXPORT int   PQbatchProcessQueue(PGconn* conn) { return 0; }
+extern U_EXPORT void* PQbatchPutSyncOnQueue(PGconn* conn) { return 0; }
+*/
+#endif
 }
 
 #undef  PACKAGE_NAME
@@ -91,7 +110,7 @@ public:
       U_TRACE_CTOR(0, UPgSqlStatementBindParam, "%p", v)
 
       type   = CHAROID;
-      length = sizeof(char);
+      length = sizeof(unsigned char);
       }
 
    explicit UPgSqlStatementBindParam(short* v) : USqlStatementBindParam(v)
@@ -107,7 +126,7 @@ public:
       U_TRACE_CTOR(0, UPgSqlStatementBindParam, "%p", v)
 
       type   = INT2OID;
-      length = sizeof(short);
+      length = sizeof(unsigned short);
       }
 
    explicit UPgSqlStatementBindParam(int* v) : USqlStatementBindParam(v)
@@ -123,7 +142,7 @@ public:
       U_TRACE_CTOR(0, UPgSqlStatementBindParam, "%p", v)
 
       type   = INT4OID;
-      length = sizeof(int);
+      length = sizeof(unsigned int);
       }
 
    explicit UPgSqlStatementBindParam(long* v) : USqlStatementBindParam(v)
@@ -147,7 +166,7 @@ public:
 #  else
       type   = INT8OID;
 #  endif
-      length = sizeof(long);
+      length = sizeof(unsigned long);
       }
 
    explicit UPgSqlStatementBindParam(long long* v) : USqlStatementBindParam(v)
@@ -163,7 +182,7 @@ public:
       U_TRACE_CTOR(0, UPgSqlStatementBindParam, "%p", v)
 
       type   = INT8OID;
-      length = sizeof(long long);
+      length = sizeof(unsigned long long);
       }
 
    explicit UPgSqlStatementBindParam(float* v) : USqlStatementBindParam(v)
@@ -187,7 +206,7 @@ public:
       U_TRACE_CTOR(0, UPgSqlStatementBindParam, "%p", v)
 
       type   = FLOAT8OID;
-      length = sizeof(double);
+      length = sizeof(long double);
       }
 
    explicit UPgSqlStatementBindParam(UString& s) : USqlStatementBindParam(s)
@@ -242,7 +261,7 @@ public:
       U_TRACE_CTOR(0, UPgSqlStatementBindResult, "%p", v)
 
       type   = CHAROID;
-      length = sizeof(char);
+      length = sizeof(unsigned char);
       }
 
    explicit UPgSqlStatementBindResult(short* v) : USqlStatementBindResult(v)
@@ -258,7 +277,7 @@ public:
       U_TRACE_CTOR(0, UPgSqlStatementBindResult, "%p", v)
 
       type   = INT2OID;
-      length = sizeof(short);
+      length = sizeof(unsigned short);
       }
 
    explicit UPgSqlStatementBindResult(int* v) : USqlStatementBindResult(v)
@@ -274,7 +293,7 @@ public:
       U_TRACE_CTOR(0, UPgSqlStatementBindResult, "%p", v)
 
       type   = INT4OID;
-      length = sizeof(int);
+      length = sizeof(unsigned int);
       }
 
    explicit UPgSqlStatementBindResult(long* v) : USqlStatementBindResult(v)
@@ -298,7 +317,7 @@ public:
 #  else
       type   = INT8OID;
 #  endif
-      length = sizeof(long);
+      length = sizeof(unsigned long);
       }
 
    explicit UPgSqlStatementBindResult(long long* v) : USqlStatementBindResult(v)
@@ -314,7 +333,7 @@ public:
       U_TRACE_CTOR(0, UPgSqlStatementBindResult, "%p", v)
 
       type   = INT8OID;
-      length = sizeof(long long);
+      length = sizeof(unsigned long long);
       }
 
    explicit UPgSqlStatementBindResult(float* v) : USqlStatementBindResult(v)
@@ -338,7 +357,7 @@ public:
       U_TRACE_CTOR(0, UPgSqlStatementBindResult, "%p", v)
 
       type   = FLOAT8OID;
-      length = sizeof(double);
+      length = sizeof(long double);
       }
 
    explicit UPgSqlStatementBindResult(UString& s) : USqlStatementBindResult(s)

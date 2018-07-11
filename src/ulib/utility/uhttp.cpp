@@ -11717,6 +11717,15 @@ loop: while (u__isalpha(*++ptr1)) {}
          {
          old_sz = sz;
 
+         U_http_info.nResponseCode = HTTP_OK;
+
+         UClientImage_Base::body->clear();
+         UClientImage_Base::wbuffer->size_adjust_constant(0U);
+
+         UClientImage_Base::setHeaderForResponse(6+29+2+12+2); // Date: Wed, 20 Jun 2012 11:43:17 GMT\r\nServer: ULib\r\n
+
+         setStatusDescription();
+
 next:    if (*ptr1 == '?')
             {
             U_http_info.query = (const char*)(ptr1 += U_CONSTANT_SIZE("?queries"));
@@ -11728,15 +11737,11 @@ next:    if (*ptr1 == '?')
             U_INTERNAL_DUMP("query = %.*S", U_HTTP_QUERY_TO_TRACE)
             }
 
-         U_http_content_type_len = 0;
-
-         U_http_info.nResponseCode = HTTP_OK;
-
          usp->runDynamicPage();
 
          if (U_ClientImage_parallelization < U_PARALLELIZATION_PARENT)
             {
-            setDynamicResponse();
+            U_INTERNAL_DUMP("U_http_usp_flag = %u UClientImage_Base::wbuffer(%u) = %V", U_http_usp_flag, UClientImage_Base::wbuffer->size(), UClientImage_Base::wbuffer->rep)
 
             (void) UServer_Base::pClientImage->writeResponse();
 
