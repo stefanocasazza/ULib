@@ -111,7 +111,7 @@ void UREDISClient_Base::manageResponseBufferResize(uint32_t n)
       U_INTERNAL_DUMP("rep = %p rep->parent = %p rep->references = %u rep->_length = %u rep->_capacity = %u",
                        rep,     rep->parent,     rep->references,     rep->_length,     rep->_capacity)
 
-      UStringRep* nrep = UStringRep::create(rep->_length, n, rep->data());
+      UStringRep* nrep = UStringRep::create(rep->_length, rep->_length+n, rep->data());
 
       if ((n = pthis->vitem.size()))
          {
@@ -231,6 +231,8 @@ U_NO_EXPORT bool UREDISClient_Base::getResponseItem()
       while (len > UClient_Base::response.remain(ptr2))
          {
          uint32_t d = UClient_Base::response.distance(ptr2);
+
+         manageResponseBufferResize(len);
 
          if (UClient_Base::readResponse() == false)
             {

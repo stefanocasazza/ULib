@@ -686,6 +686,21 @@ public:
 
    bool processMultiRequest(const char* format, uint32_t fmt_size, ...);
 
+   // REDI-SEARCH (@see https://oss.redislabs.com/redisearch/)
+
+   bool suggest(const char* key, uint32_t keyLength, const char* prefix, uint32_t prefixLength, bool fuzzy, bool withPayloads)
+      {
+      U_TRACE(0, "UREDISClient_Base::suggest(%.*S,%u,%.*S,%u,%b,%b)", keyLength, key, keyLength, prefixLength, prefix, prefixLength, fuzzy, withPayloads)
+
+      U_INTERNAL_ASSERT_EQUALS(u_buffer_len, 0)
+
+      return processRequest(U_RC_MULTIBULK, U_CONSTANT_TO_PARAM("FT.SUGGET"), u_buffer,
+                              u__snprintf(u_buffer, U_BUFFER_SIZE, U_CONSTANT_TO_PARAM("%.*s %.*s %.*s %.*s"),
+                                          keyLength, key, prefixLength, prefix,
+                                          (fuzzy        ? U_CONSTANT_SIZE("FUZZY")        : 0), "FUZZY",
+                                          (withPayloads ? U_CONSTANT_SIZE("WITHPAYLOADS") : 0), "WITHPAYLOADS"));
+      }
+
 #if defined(U_STDCPP_ENABLE) && defined(DEBUG)
    const char* dump(bool reset) const;
 #endif

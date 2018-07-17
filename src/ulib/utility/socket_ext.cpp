@@ -78,6 +78,8 @@ bool USocketExt::read(USocket* sk, UString& buffer, uint32_t count, int timeoutM
       else                              UString::_reserve(buffer, buffer.getReserveNeed(chunk));
 
       ncount = buffer.space();
+
+      U_INTERNAL_ASSERT_MAJOR(ncount, 0)
       }
 
    ptr = buffer.c_pointer(start);
