@@ -36,7 +36,7 @@ enum StringAllocationIndex {
    STR_ALLOCATE_INDEX_SSI          = STR_ALLOCATE_INDEX_IMAP+4,
    STR_ALLOCATE_INDEX_NOCAT        = STR_ALLOCATE_INDEX_SSI+2,
    STR_ALLOCATE_INDEX_HTTP         = STR_ALLOCATE_INDEX_NOCAT+2,
-   STR_ALLOCATE_INDEX_QUERY_PARSER = STR_ALLOCATE_INDEX_HTTP+9,
+   STR_ALLOCATE_INDEX_QUERY_PARSER = STR_ALLOCATE_INDEX_HTTP+11,
    STR_ALLOCATE_INDEX_ORM          = STR_ALLOCATE_INDEX_QUERY_PARSER+5,
    STR_ALLOCATE_INDEX_HTTP2        = STR_ALLOCATE_INDEX_ORM+15
 };
@@ -416,6 +416,7 @@ public:
       U_RETURN(false);
       }
 
+   bool equal(const char* s) const         { return equal(s, u__strlen(s, __PRETTY_FUNCTION__)); }
    bool equal(const UStringRep* rep) const { return equal(rep->str, rep->_length); }
 
    // Equal with ignore case
@@ -1155,6 +1156,8 @@ public:
    static const UString* str_storage_keyid;
    static const UString* str_websocket_key;
    static const UString* str_websocket_prot;
+   static const UString* str_htdigest;
+   static const UString* str_htpasswd;
    // QUERY PARSER
    static const UString* str_p1;
    static const UString* str_p2;

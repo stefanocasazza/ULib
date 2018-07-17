@@ -86,6 +86,8 @@ const UString* UString::str_ulib_header;
 const UString* UString::str_storage_keyid;
 const UString* UString::str_websocket_key;
 const UString* UString::str_websocket_prot;
+const UString* UString::str_htpasswd;
+const UString* UString::str_htdigest;
 // QUERY PARSER
 const UString* UString::str_p1;
 const UString* UString::str_p2;
@@ -179,9 +181,9 @@ const UString* UString::str_ULib;
 #endif
 
 #ifdef U_HTTP2_DISABLE
-static ustringrep stringrep_storage[72] = {
+static ustringrep stringrep_storage[74] = {
 #else
-static ustringrep stringrep_storage[136] = {
+static ustringrep stringrep_storage[138] = {
 #endif
    { U_STRINGREP_FROM_CONSTANT("host") },
    { U_STRINGREP_FROM_CONSTANT("chunked") },
@@ -239,6 +241,8 @@ static ustringrep stringrep_storage[136] = {
    { U_STRINGREP_FROM_CONSTANT("StiD") },
    { U_STRINGREP_FROM_CONSTANT("Sec-WebSocket-Key") },
    { U_STRINGREP_FROM_CONSTANT("Sec-WebSocket-Protocol") },
+   { U_STRINGREP_FROM_CONSTANT("../.htpasswd") },
+   { U_STRINGREP_FROM_CONSTANT("../.htdigest") },
    // QUERY PARSER
    { U_STRINGREP_FROM_CONSTANT("(") },
    { U_STRINGREP_FROM_CONSTANT(")") },
@@ -458,7 +462,9 @@ void UString::str_allocate(int which)
       U_INTERNAL_ASSERT_EQUALS(str_ulib_header, U_NULLPTR)
       U_INTERNAL_ASSERT_EQUALS(str_storage_keyid, U_NULLPTR)
       U_INTERNAL_ASSERT_EQUALS(str_websocket_key, U_NULLPTR)
-      U_INTERNAL_ASSERT_EQUALS(str_websocket_prot, U_NULLPTR)
+      U_INTERNAL_ASSERT_EQUALS(str_websocket_key, U_NULLPTR)
+      U_INTERNAL_ASSERT_EQUALS(str_htpasswd, U_NULLPTR)
+      U_INTERNAL_ASSERT_EQUALS(str_htdigest, U_NULLPTR)
 
       U_NEW_ULIB_STRING(str_ctype_tsa,      UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP+0));
       U_NEW_ULIB_STRING(str_ctype_txt,      UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP+1));
@@ -469,6 +475,8 @@ void UString::str_allocate(int which)
       U_NEW_ULIB_STRING(str_storage_keyid,  UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP+6));
       U_NEW_ULIB_STRING(str_websocket_key,  UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP+7));
       U_NEW_ULIB_STRING(str_websocket_prot, UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP+8));
+      U_NEW_ULIB_STRING(str_htpasswd,       UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP+9));
+      U_NEW_ULIB_STRING(str_htdigest,       UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP+10));
       }
    else if ((which & STR_ALLOCATE_QUERY_PARSER) != 0)
       {
@@ -522,7 +530,7 @@ void UString::str_allocate(int which)
    else if ((which & STR_ALLOCATE_HTTP2) != 0)
       {
       U_INTERNAL_ASSERT_EQUALS(str_authority, U_NULLPTR)
-      U_INTERNAL_ASSERT_EQUALS(U_NUM_ELEMENTS(stringrep_storage), 136)
+      U_INTERNAL_ASSERT_EQUALS(U_NUM_ELEMENTS(stringrep_storage), 138)
 
       U_NEW_ULIB_STRING(str_authority,                   UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+0));
       U_NEW_ULIB_STRING(str_method,                      UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+1));
@@ -590,7 +598,7 @@ void UString::str_allocate(int which)
       U_NEW_ULIB_STRING(str_ULib,                        UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+63));
       }
 #else
-   U_INTERNAL_ASSERT_EQUALS(U_NUM_ELEMENTS(stringrep_storage), 72)
+   U_INTERNAL_ASSERT_EQUALS(U_NUM_ELEMENTS(stringrep_storage), 74)
 #endif
 }
 

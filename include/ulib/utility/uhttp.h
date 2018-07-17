@@ -574,6 +574,7 @@ public:
    static UString* htdigest;
    static bool digest_authentication; // authentication method (digest|basic)
    static UString* user_authentication;
+   static time_t htdigest_mtime, htpasswd_mtime;
 
    static UString getUserAuthentication() { return *user_authentication; }
 
@@ -1511,6 +1512,7 @@ private:
    static void manageDataForCache(const UString& basename, const UString& suffix) U_NO_EXPORT;
    static bool checkDataSession(const UString& token, time_t expire, UString* data) U_NO_EXPORT;
    static void putDataInCache(const UString& path, const UString& fmt, UString& content) U_NO_EXPORT;
+   static uint32_t checkPasswd(UFileCacheData* ptr_file_data, UString& fpasswd, const UString& line) U_NO_EXPORT;
    static void addContentLengthToHeader(UString& header, char* ptr, uint32_t size, const char* pEndHeader = U_NULLPTR) U_NO_EXPORT;
    static void setDataInCache(const UString& fmt, const UString& content, const char* encoding, uint32_t encoding_len) U_NO_EXPORT;
    static bool processAuthorization(const char* ptr = U_NULLPTR, uint32_t sz = 0, const char* pattern = U_NULLPTR, uint32_t len = 0) U_NO_EXPORT;

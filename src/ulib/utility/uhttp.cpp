@@ -81,6 +81,8 @@ URDB*    UHTTP::db_not_found;
 off_t    UHTTP::range_size;
 off_t    UHTTP::range_start;
 UFile*   UHTTP::file;
+time_t   UHTTP::htdigest_mtime;
+time_t   UHTTP::htpasswd_mtime;
 UString* UHTTP::ext;
 UString* UHTTP::etag;
 UString* UHTTP::geoip;
@@ -7472,6 +7474,98 @@ next:
    handlerResponse();
 }
 
+U_NO_EXPORT uint32_t UHTTP::checkPasswd(UHTTP::UFileCacheData* ptr_file_data, UString& fpasswd, const UString& line)
+{
+   U_TRACE(0, "UHTTP::checkPasswd(%p,%V,%V)", ptr_file_data, fpasswd.rep, line.rep)
+
+   // s.casazza:{SHA}Lkii1ZE7k.....\n
+   // s.casazza:Protected Area:b9ee2af50be37...........\n
+
+   uint32_t pos = fpasswd.find(line);
+
+   if (pos == U_NOT_FOUND ||
+       (pos > 0 && line[pos-1] != '\n'))
+      {
+      U_INTERNAL_DUMP("digest_authentication = %b htpasswd = %p", digest_authentication, htpasswd)
+
+      if (ptr_file_data)
+         {
+         U_ASSERT(cache_file->key()->equal(u_buffer))
+
+         UString lpathname = cache_file->getKey();
+
+         UFile tmp(lpathname);
+
+         if (tmp.open() &&
+             (tmp.st_mtime = ptr_file_data->mtime, tmp.isModified()))
+            {
+            ptr_file_data->array->erase(0);
+
+            fpasswd = tmp.getContent(true, false, true);
+
+            ptr_file_data->array->push_back(fpasswd);
+
+            U_SRV_LOG("File data users permission: %V reloaded - %u bytes", lpathname.rep, fpasswd.size());
+
+            goto next;
+            }
+
+         tmp.close();
+         }
+      else
+         {
+         if (digest_authentication)
+            {
+            U_INTERNAL_ASSERT(htdigest)
+
+            UFile tmp(*UString::str_htdigest);
+
+            if (tmp.open() &&
+                (tmp.st_mtime = htdigest_mtime, tmp.isModified()))
+               {
+               fpasswd = *htdigest = tmp.getContent(true, false, true);
+
+               U_SRV_LOG("File data users permission: ../.htdigest reloaded - %u bytes", fpasswd.size());
+
+               goto next;
+               }
+
+            tmp.close();
+            }
+         else
+            {
+            U_INTERNAL_ASSERT(htpasswd)
+
+            UFile tmp(*UString::str_htpasswd);
+
+            if (tmp.open() &&
+                (tmp.st_mtime = htpasswd_mtime, tmp.isModified()))
+               {
+               fpasswd = *htpasswd = tmp.getContent(true, false, true);
+
+               U_SRV_LOG("File data users permission: ../.htpasswd reloaded - %u bytes", fpasswd.size());
+
+               goto next;
+               }
+
+            tmp.close();
+            }
+         }
+
+      U_RETURN(U_NOT_FOUND);
+
+next: pos = fpasswd.find(line);
+
+      if (pos == U_NOT_FOUND ||
+          (pos > 0 && line[pos-1] != '\n'))
+         {
+         U_RETURN(U_NOT_FOUND);
+         }
+      }
+
+   U_RETURN(pos);
+}
+
 U_NO_EXPORT bool UHTTP::processAuthorization(const char* request, uint32_t sz, const char* pattern, uint32_t len)
 {
    U_TRACE(0, "UHTTP::processAuthorization(%.*S,%u,%.*S,%u)", sz, request, sz, len, pattern, len)
@@ -7712,7 +7806,7 @@ U_NO_EXPORT bool UHTTP::processAuthorization(const char* request, uint32_t sz, c
 
          // s.casazza:Protected Area:b9ee2af50be37...........\n
 
-         pos = fpasswd.find(buffer);
+         pos = checkPasswd(ptr_file_data, fpasswd, buffer);
 
          if (pos == U_NOT_FOUND) goto end;
 
@@ -7771,7 +7865,7 @@ U_NO_EXPORT bool UHTTP::processAuthorization(const char* request, uint32_t sz, c
 
                // s.casazza:{SHA}Lkii1ZE7k.....\n
 
-               if (fpasswd.find(line) != U_NOT_FOUND) result = true;
+               if (checkPasswd(ptr_file_data, fpasswd, line) != U_NOT_FOUND) result = true;
                }
             }
          }
@@ -8773,6 +8867,9 @@ U_NO_EXPORT void UHTTP::manageDataForCache(const UString& basename, const UStrin
             if (bpasswd)
                {
                U_INTERNAL_ASSERT_EQUALS(htpasswd, U_NULLPTR)
+               U_ASSERT_EQUALS(lpathname, *UString::str_htpasswd)
+
+               htpasswd_mtime = file->st_mtime;
 
                U_NEW_STRING(htpasswd, UString(content));
 
@@ -8782,6 +8879,9 @@ U_NO_EXPORT void UHTTP::manageDataForCache(const UString& basename, const UStrin
                {
                U_INTERNAL_ASSERT(bdigest)
                U_INTERNAL_ASSERT_EQUALS(htdigest, U_NULLPTR)
+               U_ASSERT_EQUALS(lpathname, *UString::str_htdigest)
+
+               htdigest_mtime = file->st_mtime;
 
                U_NEW_STRING(htdigest, UString(content));
 
@@ -11566,16 +11666,12 @@ bool UHTTP::checkIfSourceHasChangedAndCompileUSP()
 
    if (suffix.empty())
       {
-      struct stat st;
       char buffer[U_PATH_MAX+1];
 
       if (getFileCachePointer(buffer, u__snprintf(buffer, U_PATH_MAX, U_CONSTANT_TO_PARAM("%.*s.usp"), U_FILE_TO_TRACE(*file))) &&
-          U_SYSCALL(stat, "%S,%p", buffer, &st) == 0                                                                            &&
-          st.st_mtime > file_data->mtime)
+          UFile::isModified(buffer, file_data->mtime))
          {
          U_INTERNAL_ASSERT_POINTER(usp)
-
-         U_INTERNAL_DUMP("st.st_mtime = %#3D file_data->mtime = %#3D", st.st_mtime, file_data->mtime)
 
 compile: if (compileUSP(ptr, len) == false)
             {

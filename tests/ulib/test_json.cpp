@@ -143,6 +143,16 @@ U_EXPORT main (int argc, char* argv[], char* env[])
    char buffer[4096];
    uint32_t i, n, params[2] = { 2, 1 };
    UString result(U_CAPACITY), result1, filename, content, array;
+ 
+   /*
+   double lat, lon;
+
+   content = U_STRING_FROM_CONSTANT("{ \"joinedAtLon\" : \"-73.968285\", \"token\" : \"A8Ngwl5\",  \"joinedAtLat\" : \"40.785091\", \"number\" : \"+12016752089\" }");
+   (void) U_JFIND(content, "joinedAtLat", lat);
+   (void) U_JFIND(content, "joinedAtLon", lon);
+
+   U_INTERNAL_DUMP("lat = %f lon = %f", lat, lon)
+   */
 
    UValue::jsonParseFlags = 2;
 

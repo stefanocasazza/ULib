@@ -627,23 +627,6 @@ public:
       U_RETURN(st_dev != parent_id);
       }
 
-   // MODIFIER
-
-   bool modified()
-      {
-      U_TRACE_NO_PARAM(0, "UFile::modified()")
-
-      time_t mtime = st_mtime;
-
-      fstat();
-
-      U_INTERNAL_DUMP("mtime = %ld, st_mtime = %ld", (long)mtime, (long)st_mtime)
-
-      if (mtime != st_mtime) U_RETURN(true);
-
-      U_RETURN(false);
-      }
-
    static bool isBlocking(int _fd, int& flags) // actual state is blocking...?
       {
       U_TRACE(1, "UFile::isBlocking(%d,%d)", _fd, flags)
@@ -749,6 +732,42 @@ public:
          st_size = n;
 
          U_RETURN(true);
+         }
+
+      U_RETURN(false);
+      }
+
+   bool isModified()
+      {
+      U_TRACE_NO_PARAM(0, "UFile::isModified()")
+
+      time_t old = st_mtime;
+
+      fstat();
+
+      U_INTERNAL_DUMP("old = %#3D, st_mtime = %#3D", old, st_mtime)
+
+      if (st_mtime > old) U_RETURN(true);
+
+      U_RETURN(false);
+      }
+
+   static bool isModified(const char* _pathname, time_t& old)
+      {
+      U_TRACE(0, "UFile::isModified(%S,%ld)", _pathname, old)
+
+      struct stat st;
+
+      if (U_SYSCALL(stat, "%S,%p", U_PATH_CONV(_pathname), &st) == 0)
+         {
+         U_INTERNAL_DUMP("old = %#3D, st.st_mtime = %#3D", old, st.st_mtime)
+
+         if (st.st_mtime > old)
+            {
+            old = st.st_mtime;
+
+            U_RETURN(true);
+            }
          }
 
       U_RETURN(false);
