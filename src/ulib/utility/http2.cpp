@@ -2605,7 +2605,7 @@ void UHTTP2::handlerResponse()
    if (U_http_info.nResponseCode == HTTP_NOT_IMPLEMENTED ||
        U_http_info.nResponseCode == HTTP_OPTIONS_RESPONSE)
       {
-      UClientImage_Base::body->clear(); // clean body to avoid writev() in response...
+      U_ASSERT(UClientImage_Base::body->empty())
 
       UClientImage_Base::setCloseConnection();
 
@@ -3100,7 +3100,7 @@ void UHTTP2::wrapRequest()
    bproxy = true;
 
    uint32_t sz0     = pStream->headers.size(),
-            body_sz = UClientImage_Base::body->size();
+            body_sz = UHTTP::body->size();
 
    U_DUMP("pStream->id = %u pStream->state = (%u, %s) pStream->headers(%u) = %V pStream->clength = %u pStream->body(%u) = %V",
            pStream->id, pStream->state, getStreamStatusDescription(), sz0, pStream->headers.rep, pStream->clength, body_sz, pStream->body.rep)
@@ -3149,10 +3149,10 @@ void UHTTP2::wrapRequest()
 
       p0 += HTTP2_FRAME_HEADER_SIZE;
 
-      U_MEMCPY(p0, UClientImage_Base::body->data(), body_sz);
-               p0                                += body_sz;
+      U_MEMCPY(p0, UHTTP::body->data(), body_sz);
+               p0                    += body_sz;
 
-      UClientImage_Base::body->clear();
+      UHTTP::body->clear();
       }
 
    UClientImage_Base::request->size_adjust(p0);
@@ -3560,7 +3560,7 @@ process_request:
 
             U_http_info.clength = pStream->clength;
 
-            *UClientImage_Base::body = pStream->body;
+            *UHTTP::body = pStream->body;
 
             if (UHTTP::manageRequest() == U_PLUGIN_HANDLER_ERROR) goto err;
 

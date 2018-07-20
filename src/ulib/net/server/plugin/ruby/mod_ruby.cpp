@@ -77,8 +77,8 @@ static VALUE URUBY_io_rewind(VALUE obj, VALUE args)
 {
    U_TRACE(0, "URUBY_io_rewind(%llu,%llu)", obj, args)
 
-   post_readline_pos       =                     UClientImage_Base::body->data();
-   post_readline_watermark = post_readline_pos + UClientImage_Base::body->size();
+   post_readline_pos       =                     UHTTP::body->data();
+   post_readline_watermark = post_readline_pos + UHTTP::body->size();
 
    U_INTERNAL_DUMP("post_readline_pos = %p post_readline_watermark = %p", post_readline_pos, post_readline_watermark)
 

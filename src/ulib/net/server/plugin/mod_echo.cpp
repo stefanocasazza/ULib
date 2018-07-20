@@ -40,7 +40,7 @@ int UEchoPlugIn::handlerRequest()
 {
    U_TRACE_NO_PARAM(0, "UEchoPlugIn::handlerRequest()")
 
-   UClientImage_Base::body->clear();
+   U_ASSERT(UClientImage_Base::body->empty())
 
    UClientImage_Base::setRequestProcessed();
    UClientImage_Base::setNoHeaderForResponse();

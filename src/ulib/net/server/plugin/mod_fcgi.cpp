@@ -338,9 +338,9 @@ int UFCGIPlugIn::handlerRequest()
 
       // maybe we have some data to put on stdin of cgi process (POST)
 
-      U_INTERNAL_DUMP("UClientImage_Base::body(%u) = %V", UClientImage_Base::body->size(), UClientImage_Base::body->rep)
+      U_INTERNAL_DUMP("UHTTP::body(%u) = %V", UHTTP::body->size(), UHTTP::body->rep)
 
-      size = UClientImage_Base::body->size();
+      size = UHTTP::body->size();
 
       if (size)
          {
@@ -357,7 +357,7 @@ int UFCGIPlugIn::handlerRequest()
 
       if (size)
          {
-         (void) request.append(*UClientImage_Base::body);
+         (void) request.append(*UHTTP::body);
 
          fill_FCGIBeginRequest(FCGI_STDIN, 0);
 

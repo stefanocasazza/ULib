@@ -92,7 +92,7 @@ int UTsaPlugIn::handlerRequest()
 
       UString body;
 
-      if (command->execute(UClientImage_Base::body, &body) == false) UHTTP::setInternalError();
+      if (command->execute(UHTTP::body, &body) == false) UHTTP::setInternalError();
       else
          {
          U_http_info.nResponseCode = HTTP_OK;

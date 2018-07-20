@@ -172,6 +172,7 @@ public:
    static UFile* file;
    static UString* ext;
    static UString* etag;
+   static UString* body;
    static UString* qcontent;
    static UString* pathname;
    static UString* rpathname;
@@ -204,7 +205,7 @@ public:
    static bool scanfHeaderRequest(const char* ptr, uint32_t size);
    static bool scanfHeaderResponse(const char* ptr, uint32_t size);
    static bool readHeaderResponse(USocket* socket, UString& buffer);
-   static bool readBodyResponse(USocket* socket, UString* buffer, UString& body);
+   static bool readBodyResponse(USocket* socket, UString* buffer, UString& lbody);
 
    static UString getPathComponent(uint32_t index); // Returns the path element at the specified index
 
@@ -429,8 +430,7 @@ public:
       U_TRACE_NO_PARAM(0, "UHTTP::setResponse()")
 
       U_ASSERT(ext->empty())
-
-      UClientImage_Base::body->clear(); // clean body to avoid writev() in response...
+      U_ASSERT(UClientImage_Base::body->empty())
 
       handlerResponse();
       }
@@ -1401,7 +1401,7 @@ private:
    static int handlerREAD();
    static void processRequest();
    static void handlerResponse();
-   static void setDynamicResponse(const UString& body, const UString& header = UString::getStringNull(), const UString& content_type = UString::getStringNull());
+   static void setDynamicResponse(const UString& lbody, const UString& header = UString::getStringNull(), const UString& content_type = UString::getStringNull());
 
 #ifndef U_LOG_DISABLE
    static int handlerREADWithLog()
@@ -1478,7 +1478,7 @@ private:
    static void checkArrayCompressData(UFileCacheData* ptr) U_NO_EXPORT;
 # endif
 
-   static inline bool compress(const UString& body) U_NO_EXPORT;
+   static inline bool compress(UString& header, const UString& lbody) U_NO_EXPORT;
    static inline void setAcceptEncoding(const char* ptr, uint32_t len) U_NO_EXPORT;
 #endif
 
@@ -1508,7 +1508,7 @@ private:
    static bool splitCGIOutput(const char*& ptr1, const char* ptr2) U_NO_EXPORT;
    static void setHeaderForCache(UFileCacheData* ptr, UString& data) U_NO_EXPORT;
    static void setResponseForRange(off_t start, off_t end, uint32_t header) U_NO_EXPORT;
-   static bool readDataChunked(USocket* sk, UString* pbuffer, UString& body) U_NO_EXPORT;
+   static bool readDataChunked(USocket* sk, UString* pbuffer, UString& lbody) U_NO_EXPORT;
    static void manageDataForCache(const UString& basename, const UString& suffix) U_NO_EXPORT;
    static bool checkDataSession(const UString& token, time_t expire, UString* data) U_NO_EXPORT;
    static void putDataInCache(const UString& path, const UString& fmt, UString& content) U_NO_EXPORT;

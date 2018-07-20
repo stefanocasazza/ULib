@@ -654,8 +654,8 @@ int UShibPlugIn::handlerRequest()
          U_ASSERT(U_HTTP_CTYPE_STRNEQ("application/x-www-form-urlencoded"))
 
          UShibTarget::content_type = "application/x-www-form-urlencoded";
-         UShibTarget::postdata_ptr = UClientImage_Base::body->data();
-         UShibTarget::postdata_len = UClientImage_Base::body->size();
+         UShibTarget::postdata_ptr = UHTTP::body->data();
+         UShibTarget::postdata_len = UHTTP::body->size();
 
          if (shib_handler()) mode = -1;
          else

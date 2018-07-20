@@ -1137,7 +1137,7 @@ int UNoDogPlugIn::handlerRequest()
             char policy;
             UFlatBuffer fb, vec;
 
-            fb.setRoot(*UClientImage_Base::body);
+            fb.setRoot(*UHTTP::body);
             fb.AsVector(vec);
 
             // $1 -> peer
@@ -1209,7 +1209,7 @@ int UNoDogPlugIn::handlerRequest()
             uint32_t n, ip_peer;
             UFlatBuffer fb, vec;
 
-            fb.setRoot(*UClientImage_Base::body);
+            fb.setRoot(*UHTTP::body);
             fb.AsVector(vec);
 
             n = vec.GetSize();

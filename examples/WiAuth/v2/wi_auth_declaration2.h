@@ -710,7 +710,7 @@ static bool getDataFromPOST(bool bpeer)
 
    UFlatBuffer fb, vec;
 
-   fb.setRoot(*UClientImage_Base::body);
+   fb.setRoot(*UHTTP::body);
    fb.AsVector(vec);
 
    *ap = vec.AsVectorGet<UString>(0);
@@ -1493,11 +1493,11 @@ static void POST_info()
 {
    U_TRACE_NO_PARAM(5, "::POST_info()")
 
-   U_INTERNAL_DUMP("UClientImage_Base::body(%u) = %#V", UClientImage_Base::body->size(), UClientImage_Base::body->rep)
+   U_INTERNAL_DUMP("UHTTP::body(%u) = %#V", UHTTP::body->size(), UHTTP::body->rep)
 
    UFlatBuffer fb, vec;
 
-   fb.setRoot(*UClientImage_Base::body);
+   fb.setRoot(*UHTTP::body);
    fb.AsVector(vec);
 
    *ap = vec.AsVectorGet<UString>(0);

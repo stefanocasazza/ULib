@@ -24,12 +24,12 @@
 #define USP_PRINTF(fmt,args...)     (UClientImage_Base::_buffer->snprintf(U_CONSTANT_TO_PARAM(fmt) , ##args),USP_PUTS_STRING(*UClientImage_Base::_buffer))
 #define USP_PRINTF_ADD(fmt,args...)  UClientImage_Base::wbuffer->snprintf_add(U_CONSTANT_TO_PARAM(fmt) , ##args)
 
-#define USP_JSON_REQUEST_PARSE(obj) JSON_parse(*UClientImage_Base::body,(obj))
-#define USP_JFIND_REQUEST(type,str) UValue::jfind(*UClientImage_Base::body,#type,U_CONSTANT_SIZE(#type),(str))
+#define USP_JSON_REQUEST_PARSE(obj) JSON_parse(*UHTTP::body,(obj))
+#define USP_JFIND_REQUEST(type,str) UValue::jfind(*UHTTP::body,#type,U_CONSTANT_SIZE(#type),(str))
 
 #define USP_OBJ_JSON_stringify(obj) JSON_OBJ_stringify(*UClientImage_Base::wbuffer,(obj))
 
-#define USP_SERIALIZE_OBJECT(class,obj) UFlatBuffer::toObject<class>(*UClientImage_Base::body,(obj))
+#define USP_SERIALIZE_OBJECT(class,obj) UFlatBuffer::toObject<class>(*UHTTP::body,(obj))
 
 #define USP_XML_PUTS(string) \
    ((void)UClientImage_Base::_encoded->reserve((string).size() * 4), \

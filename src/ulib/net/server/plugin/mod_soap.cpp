@@ -87,7 +87,7 @@ int USoapPlugIn::handlerRequest()
 
          bool bSendingFault;
 
-         UString body   = soap_parser->processMessage(*UClientImage_Base::body, *URPCObject::dispatcher, bSendingFault),
+         UString body   = soap_parser->processMessage(*UHTTP::body, *URPCObject::dispatcher, bSendingFault),
                  method = soap_parser->getMethodName();
 
          U_SRV_LOG_WITH_ADDR("method %V process %s for", method.rep, (bSendingFault ? "failed" : "passed"));

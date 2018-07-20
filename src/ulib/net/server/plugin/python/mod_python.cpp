@@ -154,7 +154,7 @@ extern U_EXPORT bool runPYTHON();
    dict_set(py_environ, "wsgi.multithread",  PyBool_FromLong(0));
    dict_set(py_environ, "wsgi.multiprocess", PyBool_FromLong(UServer_Base::isPreForked()));
 
-   if (*UClientImage_Base::body) dict_set(py_environ, "userver.req.content", PyByteArray_FromStringAndSize(U_STRING_TO_PARAM(*UClientImage_Base::body)));
+   if (*UHTTP::body) dict_set(py_environ, "userver.req.content", PyByteArray_FromStringAndSize(U_STRING_TO_PARAM(*UHTTP::body)));
 
    // call python
 

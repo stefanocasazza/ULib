@@ -175,7 +175,7 @@ int USCGIPlugIn::handlerRequest()
 
       request.snprintf(U_CONSTANT_TO_PARAM("%u:%v,"), environment.size(), environment.rep);
 
-      (void) request.append(*UClientImage_Base::body);
+      (void) request.append(*UHTTP::body);
 
       connection->prepareRequest(request);
 

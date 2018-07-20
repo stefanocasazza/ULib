@@ -85,6 +85,7 @@ time_t   UHTTP::htdigest_mtime;
 time_t   UHTTP::htpasswd_mtime;
 UString* UHTTP::ext;
 UString* UHTTP::etag;
+UString* UHTTP::body;
 UString* UHTTP::geoip;
 UString* UHTTP::tmpdir;
 UString* UHTTP::htpasswd;
@@ -836,6 +837,7 @@ void UHTTP::init()
 
    U_INTERNAL_ASSERT_EQUALS(ext, U_NULLPTR)
    U_INTERNAL_ASSERT_EQUALS(etag, U_NULLPTR)
+   U_INTERNAL_ASSERT_EQUALS(body, U_NULLPTR)
    U_INTERNAL_ASSERT_EQUALS(file, U_NULLPTR)
    U_INTERNAL_ASSERT_EQUALS(pcmd, U_NULLPTR)
    U_INTERNAL_ASSERT_EQUALS(geoip, U_NULLPTR)
@@ -858,6 +860,7 @@ void UHTTP::init()
 
    U_NEW_STRING(ext, UString);
    U_NEW_STRING(etag, UString);
+   U_NEW_STRING(body, UString);
    U_NEW_STRING(geoip, UString(U_CAPACITY));
    U_NEW_STRING(tmpdir, UString(U_PATH_MAX));
    U_NEW_STRING(qcontent, UString);
@@ -1401,6 +1404,7 @@ void UHTTP::dtor()
       {
       U_DELETE(ext)
       U_DELETE(etag)
+      U_DELETE(body)
       U_DELETE(file)
       U_DELETE(pcmd)
       U_DELETE(geoip)
@@ -2248,11 +2252,11 @@ U_NO_EXPORT inline bool UHTTP::checkDataChunked(UString* pbuffer)
    U_RETURN(false);
 }
 
-U_NO_EXPORT bool UHTTP::readDataChunked(USocket* sk, UString* pbuffer, UString& body)
+U_NO_EXPORT bool UHTTP::readDataChunked(USocket* sk, UString* pbuffer, UString& lbody)
 {
-   U_TRACE(0, "UHTTP::readDataChunked(%p,%V,%V)", sk, pbuffer->rep, body.rep)
+   U_TRACE(0, "UHTTP::readDataChunked(%p,%V,%V)", sk, pbuffer->rep, lbody.rep)
 
-   U_ASSERT(body.empty())
+   U_ASSERT(lbody.empty())
 
    if (checkDataChunked(pbuffer))
       {
@@ -2323,9 +2327,9 @@ U_NO_EXPORT bool UHTTP::readDataChunked(USocket* sk, UString* pbuffer, UString& 
       inp = ptr + U_http_info.endHeader;
       end = ptr + (len = pbuffer->size());
 
-      body.setBuffer(len - U_http_info.endHeader);
+      lbody.setBuffer(len - U_http_info.endHeader);
 
-      out = body.data();
+      out = lbody.data();
 
 loop: U_INTERNAL_DUMP("inp = %.20S", inp) // Decode the hexadecimal chunk size into an understandable number
 
@@ -2351,13 +2355,13 @@ loop: U_INTERNAL_DUMP("inp = %.20S", inp) // Decode the hexadecimal chunk size i
 
       if (chunkSize == 0)
          {
-         size = body.distance(out);
+         size = lbody.distance(out);
 
          if (size)
             {
-            body.size_adjust(size);
+            lbody.size_adjust(size);
 
-            U_INTERNAL_DUMP("body(%u) = %V", size, body.rep)
+            U_INTERNAL_DUMP("lbody(%u) = %V", size, lbody.rep)
 
             len = pbuffer->distance(inp) + U_CONSTANT_SIZE(U_CRLF2);
 
@@ -2414,7 +2418,6 @@ U_NO_EXPORT bool UHTTP::readBodyRequest()
 {
    U_TRACE_NO_PARAM(0, "UHTTP::readBodyRequest()")
 
-   U_ASSERT(UClientImage_Base::body->empty())
    U_INTERNAL_ASSERT_EQUALS(U_line_terminator_len, 2)
 
    uint32_t body_byte_read = UClientImage_Base::request->size() - U_http_info.endHeader;
@@ -2477,7 +2480,7 @@ U_NO_EXPORT bool UHTTP::readBodyRequest()
          U_RETURN(false);
          }
 
-      if (readDataChunked(UServer_Base::csocket, UClientImage_Base::request, *UClientImage_Base::body)) U_RETURN(true);
+      if (readDataChunked(UServer_Base::csocket, UClientImage_Base::request, *body)) U_RETURN(true);
 
       U_INTERNAL_DUMP("U_http_data_chunked = %b", U_http_data_chunked)
 
@@ -2496,18 +2499,18 @@ U_NO_EXPORT bool UHTTP::readBodyRequest()
 
    U_INTERNAL_ASSERT_MAJOR(U_http_info.clength, 0)
 
-   *UClientImage_Base::body = UClientImage_Base::request->substr(U_http_info.endHeader, U_http_info.clength);
+   *body = UClientImage_Base::request->substr(U_http_info.endHeader, U_http_info.clength);
 
    UClientImage_Base::setRequestNoCache();
 
    U_RETURN(true);
 }
 
-bool UHTTP::readBodyResponse(USocket* sk, UString* pbuffer, UString& body)
+bool UHTTP::readBodyResponse(USocket* sk, UString* pbuffer, UString& lbody)
 {
-   U_TRACE(0, "UHTTP::readBodyResponse(%p,%V,%V)", sk, pbuffer->rep, body.rep)
+   U_TRACE(0, "UHTTP::readBodyResponse(%p,%V,%V)", sk, pbuffer->rep, lbody.rep)
 
-   U_ASSERT(body.empty())
+   U_ASSERT(lbody.empty())
    U_INTERNAL_ASSERT_EQUALS(U_line_terminator_len, 2)
    U_INTERNAL_ASSERT_DIFFERS(U_http_info.endHeader, 0)
 
@@ -2529,12 +2532,12 @@ bool UHTTP::readBodyResponse(USocket* sk, UString* pbuffer, UString& body)
             }
          }
 
-      body = pbuffer->substr(U_http_info.endHeader, U_http_info.clength);
+      lbody = pbuffer->substr(U_http_info.endHeader, U_http_info.clength);
 
       U_RETURN(true);
       }
 
-   if (readDataChunked(sk, pbuffer, body)) U_RETURN(true);
+   if (readDataChunked(sk, pbuffer, lbody)) U_RETURN(true);
 
    U_RETURN(false);
 }
@@ -4015,7 +4018,7 @@ int UHTTP::handlerREAD()
 
       UClientImage_Base::setRequestProcessed();
 
-      UClientImage_Base::body->clear(); // clean body to avoid writev() in response...
+      U_ASSERT(UClientImage_Base::body->empty())
 
       (void) UClientImage_Base::wbuffer->assign(U_CONSTANT_TO_PARAM("Allow: "
          "GET, HEAD, POST, PUT, DELETE, OPTIONS, "     // request methods
@@ -4092,7 +4095,7 @@ int UHTTP::handlerREAD()
 
          U_SRV_LOG("we strike back sending gzip bomb...", 0);
 
-         UClientImage_Base::body->clear();
+         U_ASSERT(UClientImage_Base::body->empty())
 
          U_http_info.nResponseCode = HTTP_OK;
 
@@ -4791,9 +4794,7 @@ void UHTTP::writeUploadData(const char* ptr, uint32_t sz)
 
    (void) dest.append(basename);
 
-   if (UFile::writeTo(dest, *UClientImage_Base::body) == false) U_http_info.nResponseCode = HTTP_INTERNAL_ERROR;
-
-   UClientImage_Base::body->clear(); // clean body to avoid writev() in response...
+   if (UFile::writeTo(dest, *body) == false) U_http_info.nResponseCode = HTTP_INTERNAL_ERROR;
 }
 
 bool UHTTP::getFileInCache(const char* name, uint32_t len)
@@ -4832,15 +4833,15 @@ U_NO_EXPORT inline void UHTTP::resetFileCache()
 }
 
 #if defined(USE_LIBZ) || defined(USE_LIBBROTLI)
-U_NO_EXPORT inline bool UHTTP::compress(const UString& body)
+U_NO_EXPORT inline bool UHTTP::compress(UString& header, const UString& lbody)
 {
-   U_TRACE(0, "UHTTP::compress(%V)", body.rep)
+   U_TRACE(0, "UHTTP::compress(%V,%V)", header.rep, lbody.rep)
 
-   char* ptr = ext->data();
+   char* ptr = header.data();
 
 #ifdef USE_LIBBROTLI
    if (U_http_is_accept_brotli &&
-       (*UClientImage_Base::body = UStringExt::brotli(body, (U_PARALLELIZATION_CHILD ? BROTLI_MAX_QUALITY : brotli_level_for_dynamic_content))))
+       (*UClientImage_Base::body = UStringExt::brotli(lbody, (U_PARALLELIZATION_CHILD ? BROTLI_MAX_QUALITY : brotli_level_for_dynamic_content))))
       {
 #  ifndef U_CACHE_REQUEST_DISABLE
       is_response_compressed = 2; // brotli
@@ -4851,7 +4852,7 @@ U_NO_EXPORT inline bool UHTTP::compress(const UString& body)
       u_put_unalignedp32(ptr+16, U_MULTICHAR_CONSTANT32(':',' ','b','r'));
       u_put_unalignedp16(ptr+20, U_MULTICHAR_CONSTANT16('\r','\n'));
 
-      ext->rep->_length = U_CONSTANT_SIZE("Content-Encoding: br\r\n");
+      header.rep->_length = U_CONSTANT_SIZE("Content-Encoding: br\r\n");
 
       U_SRV_LOG("dynamic response: %u bytes - (%u%%) brotli compression ratio", UClientImage_Base::body->size(), 100-UStringExt::ratio);
 
@@ -4861,7 +4862,7 @@ U_NO_EXPORT inline bool UHTTP::compress(const UString& body)
 
 #ifdef USE_LIBZ
    if (U_http_is_accept_gzip &&
-       (*UClientImage_Base::body = UStringExt::deflate(body, (U_PARALLELIZATION_CHILD ? 0 : gzip_level_for_dynamic_content))))
+       (*UClientImage_Base::body = UStringExt::deflate(lbody, (U_PARALLELIZATION_CHILD ? 0 : gzip_level_for_dynamic_content))))
       {
 #  ifndef U_CACHE_REQUEST_DISABLE
       is_response_compressed = 1; // gzip
@@ -4871,7 +4872,7 @@ U_NO_EXPORT inline bool UHTTP::compress(const UString& body)
       u_put_unalignedp64(ptr+8,  U_MULTICHAR_CONSTANT64('E','n','c','o','d','i','n','g'));
       u_put_unalignedp64(ptr+16, U_MULTICHAR_CONSTANT64(':',' ','g','z','i','p','\r','\n'));
 
-      ext->rep->_length = U_CONSTANT_SIZE("Content-Encoding: gzip\r\n");
+      header.rep->_length = U_CONSTANT_SIZE("Content-Encoding: gzip\r\n");
 
       U_SRV_LOG("dynamic response: %u bytes - (%u%%) %s compression ratio", UClientImage_Base::body->size(), 100-UStringExt::ratio, UStringExt::deflate_agent);
 
@@ -4883,18 +4884,18 @@ U_NO_EXPORT inline bool UHTTP::compress(const UString& body)
 }
 #endif
 
-void UHTTP::setDynamicResponse(const UString& body, const UString& header, const UString& content_type)
+void UHTTP::setDynamicResponse(const UString& lbody, const UString& header, const UString& content_type)
 {
-   U_TRACE(0, "UHTTP::setDynamicResponse(%V,%V,%V)", body.rep, header.rep, content_type.rep)
+   U_TRACE(0, "UHTTP::setDynamicResponse(%V,%V,%V)", lbody.rep, header.rep, content_type.rep)
 
    ext->setBuffer(U_CAPACITY);
 
 #if defined(USE_LIBZ) || defined(USE_LIBBROTLI)
-   if (checkForCompression(body.size()) == false ||
-       compress(body) == false)
+   if (checkForCompression(lbody.size()) == false ||
+       compress(*ext, lbody) == false)
 #endif
    {
-   *UClientImage_Base::body = body;
+   *UClientImage_Base::body = lbody;
    }
 
    if (header)
@@ -4963,7 +4964,7 @@ void UHTTP::processRequest()
                {
                U_INTERNAL_DUMP("U_http_info.clength = %u", U_http_info.clength)
 
-               if (*UClientImage_Base::body) writeUploadData(ptr, sz);
+               if (*body) writeUploadData(ptr, sz);
                }
 
             // ---------------------------------------------------------------------------------------------------------------------------------------------------
@@ -5254,7 +5255,8 @@ void UHTTP::setEndRequestProcessing()
 {
    U_TRACE_NO_PARAM(0, "UHTTP::setEndRequestProcessing()")
 
-   ext->clear();
+    ext->clear();
+   body->clear();
 
 #ifdef U_ALIAS
    alias->clear();
@@ -6438,12 +6440,12 @@ uint32_t UHTTP::processForm()
       // Content-Type: application/x-www-form-urlencoded OR multipart/form-data
       // ----------------------------------------------------------------------
 
-      if (U_HTTP_CTYPE_MEMEQ("application/x-www-form-urlencoded")) tmp = *UClientImage_Base::body;
+      if (U_HTTP_CTYPE_MEMEQ("application/x-www-form-urlencoded")) tmp = *body;
       else
          {
          // multipart/form-data (FILE UPLOAD)
 
-         if (*UClientImage_Base::body &&
+         if (*body &&
              U_HTTP_CTYPE_MEMEQ("multipart/form-data"))
             {
             // create temporary directory with files uploaded...
@@ -6451,7 +6453,7 @@ uint32_t UHTTP::processForm()
             tmpdir->snprintf(U_CONSTANT_TO_PARAM("%s/formXXXXXX"), u_tmpdir);
 
             if (UFile::mkdtemp(*tmpdir) &&
-                formMulti->init(*UClientImage_Base::body))
+                formMulti->init(*body))
                {
                UMimeEntity* item;
                const char* ptr = tmpdir->data();
@@ -6849,7 +6851,7 @@ void UHTTP::setResponse(const UString& content_type, UString* pbody)
 
    if (pbody == U_NULLPTR)
       {
-      UClientImage_Base::body->clear(); // clean body to avoid writev() in response...
+      U_ASSERT(UClientImage_Base::body->empty())
 
       pbody = UClientImage_Base::body;
       }
@@ -6988,6 +6990,8 @@ void UHTTP::setRedirectResponse(int mode, const char* ptr_location, uint32_t len
 
    if ((mode & NO_BODY) != 0)
       {
+      U_ASSERT(UClientImage_Base::body->empty())
+
       sz = tmp.size();
 
       uint32_t sz1 = sz + U_CONSTANT_SIZE("Content-Length: 0\r\n\r\n");
@@ -7004,8 +7008,6 @@ void UHTTP::setRedirectResponse(int mode, const char* ptr_location, uint32_t len
       u_put_unalignedp64(ptr+16, U_MULTICHAR_CONSTANT64('0','\r','\n','\r','\n','\0','\0','\0'));
 
       ext->size_adjust_constant(sz1);
-
-      UClientImage_Base::body->clear(); // clean body to avoid writev() in response...
 
       handlerResponse();
       }
@@ -7025,17 +7027,17 @@ void UHTTP::setRedirectResponse(int mode, const char* ptr_location, uint32_t len
          }
 
       const char* status = getStatusDescription(&sz);
-      UString body(500U + len_location), content_type(U_CAPACITY);
+      UString lbody(500U + len_location), content_type(U_CAPACITY);
 
-      body.snprintf(U_CONSTANT_TO_PARAM(U_STR_FMR_BODY),
-                    U_http_info.nResponseCode, sz, status,
-                                               sz, status,
-                    len, msg);
+      lbody.snprintf(U_CONSTANT_TO_PARAM(U_STR_FMR_BODY),
+                     U_http_info.nResponseCode, sz, status,
+                                                sz, status,
+                     len, msg);
 
       (void) content_type.assign(U_CONSTANT_TO_PARAM(U_CTYPE_HTML "\r\n"));
       (void) content_type.append(tmp);
 
-      setResponse(content_type, &body);
+      setResponse(content_type, &lbody);
       }
 }
 
@@ -7058,14 +7060,14 @@ void UHTTP::setErrorResponse(const UString& content_type, int code, const char* 
       fmt_size = U_CONSTANT_SIZE("Your browser sent a request that this server could not understand");
       }
 
-   UString body;
+   UString lbody;
 
    UHTTP::UFileCacheData* ptr_file_data = getFileCachePointerVar(U_CONSTANT_TO_PARAM("ErrorDocument/%u.html"), (U_http_info.nResponseCode = code));
 
    if (ptr_file_data &&
        ptr_file_data->array != U_NULLPTR)
       {
-      body = (*ptr_file_data->array)[0];
+      lbody = (*ptr_file_data->array)[0];
       }
    else
       {
@@ -7089,7 +7091,7 @@ void UHTTP::setErrorResponse(const UString& content_type, int code, const char* 
                              sz, status,
                        len, buffer);
 
-         body = x;
+         lbody = x;
          }
       else
          {
@@ -7100,11 +7102,11 @@ void UHTTP::setErrorResponse(const UString& content_type, int code, const char* 
                              sz, status,
                        fmt_size, fmt);
 
-         body = x;
+         lbody = x;
          }
       }
 
-   setResponse(content_type, &body);
+   setResponse(content_type, &lbody);
 }
 
 void UHTTP::setUnAuthorized()
@@ -7337,38 +7339,53 @@ void UHTTP::setDynamicResponse()
 {
    U_TRACE_NO_PARAM(1, "UHTTP::setDynamicResponse()")
 
-   U_INTERNAL_DUMP("U_http_info.endHeader = %u U_http_content_type_len = %u mime_index(%d) = %C U_http_usp_flag = %u UClientImage_Base::wbuffer(%u) = %V",
-                    U_http_info.endHeader,     U_http_content_type_len,     mime_index, mime_index, U_http_usp_flag, UClientImage_Base::wbuffer->size(), UClientImage_Base::wbuffer->rep)
+   U_INTERNAL_DUMP("U_http_info.endHeader = %d U_http_content_type_len = %u mime_index(%d) = %C U_http_usp_flag = %u UClientImage_Base::wbuffer(%u) = %V",
+           (int32_t)U_http_info.endHeader,     U_http_content_type_len,     mime_index, mime_index, U_http_usp_flag, UClientImage_Base::wbuffer->size(), UClientImage_Base::wbuffer->rep)
 
    U_INTERNAL_ASSERT_MAJOR(U_http_info.nResponseCode, 0)
 
    char* ptr;
+   uint32_t clength;
+   bool bcontent_type; // NB: if false we assume that we don't have a HTTP content-type header...
    const char* pEndHeader;
-   bool bcontent_type = false; // NB: if false we assume that we don't have a HTTP content-type header...
-   uint32_t clength = UClientImage_Base::wbuffer->size();
-
-#if !defined(USE_LIBZ) && !defined(USE_LIBBROTLI)
-   bool bcompress = false;
-#else
-   bool bcompress = checkForCompression(clength);
-#endif
-
-   ext->setBuffer(U_CAPACITY);
 
    if (U_http_info.endHeader)
       {
-      if ((int32_t)U_http_info.endHeader < 0)
+      if ((int32_t)U_http_info.endHeader >= 0) bcontent_type = false;
+      else
          {
+         if (U_http_info.endHeader == U_NOT_FOUND)
+            {
+            U_ASSERT(UClientImage_Base::body->empty())
+
+            UClientImage_Base::setRequestProcessed();
+
+            UClientImage_Base::setHeaderForResponse(6+29+2+12+2); // Date: Wed, 20 Jun 2012 11:43:17 GMT\r\nServer: ULib\r\n
+
+            setStatusDescription();
+
+            return;
+            }
+
          bcontent_type = true;
 
          U_http_info.endHeader = -U_http_info.endHeader;
          }
 
+      clength = UClientImage_Base::wbuffer->size();
+
       U_INTERNAL_ASSERT(clength >= U_http_info.endHeader)
 
       clength -= U_http_info.endHeader;
 
-      if (clength == 0) goto no_response;
+      if (clength == 0)
+         {
+         U_ASSERT(UClientImage_Base::body->empty())
+
+         goto end;
+         }
+
+      ext->setBuffer(U_CAPACITY);
 
       pEndHeader = UClientImage_Base::wbuffer->data();
 
@@ -7387,39 +7404,46 @@ void UHTTP::setDynamicResponse()
          }
 #  endif
 
-      if (bcompress == false)
-         {
-         (void) UClientImage_Base::body->replace(pEndHeader + U_http_info.endHeader, clength);
+#  if defined(USE_LIBZ) || defined(USE_LIBBROTLI)
+      if (checkForCompression(clength) == false)
+#  endif
+      {
+      (void) UClientImage_Base::body->replace(pEndHeader + U_http_info.endHeader, clength);
 
-         goto next;
-         }
+      goto next;
+      }
       }
    else
       {
+      clength = UClientImage_Base::wbuffer->size();
+
       if (clength == 0)
          {
-no_response:
-         UClientImage_Base::body->clear(); // clean body to avoid writev() in response...
+         U_ASSERT(UClientImage_Base::body->empty())
 
-         handlerResponse();
-
-         return;
+         goto end;
          }
+
+      bcontent_type = false;
 
       pEndHeader = U_NULLPTR;
 
-      if (bcompress == false)
-         {
-         *UClientImage_Base::body = *UClientImage_Base::wbuffer; 
+      ext->setBuffer(U_CAPACITY);
 
-         goto next;
-         }
+#  if defined(USE_LIBZ) || defined(USE_LIBBROTLI)
+      if (checkForCompression(clength) == false)
+#  endif
+      {
+      *UClientImage_Base::body = *UClientImage_Base::wbuffer; 
+
+      goto next;
+      }
       }
 
-   U_INTERNAL_ASSERT(bcompress)
+   U_ASSERT(checkForCompression(clength))
 
 #if defined(USE_LIBZ) || defined(USE_LIBBROTLI)
-   if (compress(UClientImage_Base::wbuffer->substr(U_http_info.endHeader, clength))) clength = UClientImage_Base::body->size();
+   if (compress(*ext, UClientImage_Base::wbuffer->substr(U_http_info.endHeader, clength))) clength = UClientImage_Base::body->size();
    else
       {
       U_INTERNAL_ASSERT_MAJOR(clength, 0)
@@ -7430,6 +7454,8 @@ no_response:
 #endif
 
 next:
+   U_ASSERT_MAJOR(ext->space(), 0)
+
    ptr = ext->pend();
 
    if (bcontent_type == false)
@@ -7471,6 +7497,7 @@ next:
 
    addContentLengthToHeader(*ext, ptr, clength, pEndHeader);
 
+end:
    handlerResponse();
 }
 
@@ -9222,9 +9249,9 @@ U_NO_EXPORT void UHTTP::processFileCache()
       range_size  = file_data->size;
       range_start = 0;
 
-      UString body = getBodyFromCache();
+      UString lbody = getBodyFromCache();
 
-      if (body.empty())
+      if (lbody.empty())
          {
          // NB: we can't service the content of file directly from cache, the status must be 'file exist and need to be processed'...
 
@@ -9233,15 +9260,15 @@ U_NO_EXPORT void UHTTP::processFileCache()
          return;
          }
 
-      U_INTERNAL_ASSERT_EQUALS(body.size(), range_size)
+      U_INTERNAL_ASSERT_EQUALS(lbody.size(), range_size)
 
       *ext = getHeaderFromCache();
 
-      if (checkGetRequestForRange(body.data()) == U_PARTIAL)
+      if (checkGetRequestForRange(lbody.data()) == U_PARTIAL)
          {
          U_ASSERT_EQUALS(isSizeForSendfile(range_size), false)
 
-         *UClientImage_Base::body = body.substr(range_start, range_size);
+         *UClientImage_Base::body = lbody.substr(range_start, range_size);
          }
       }
    else
@@ -9785,7 +9812,7 @@ bool UHTTP::getCGIEnvironment(UString& environment, int type)
 
    buffer.snprintf_add(U_CONSTANT_TO_PARAM("CONTENT_LENGTH=%u\n"
                        "REQUEST_METHOD=%.*s\n"),
-                       UClientImage_Base::body->size(),
+                       body->size(),
                        U_HTTP_METHOD_TO_TRACE);
 
    if ((type & U_PHP) == 0) buffer.snprintf_add(U_CONSTANT_TO_PARAM("SCRIPT_NAME=%.*s\n"), sz, ptr);
@@ -10473,8 +10500,6 @@ loop:
                   {
                   // NB: we assume to have no content without HTTP headers...
 
-                  UClientImage_Base::body->clear();
-
                   setResponse();
 
                   U_RETURN(true);
@@ -10679,7 +10704,7 @@ loop:
    if (http_response)
       {
 noparse:
-      UClientImage_Base::body->clear();
+      U_ASSERT(UClientImage_Base::body->empty())
 
       UClientImage_Base::setNoHeaderForResponse();
 
@@ -10695,7 +10720,7 @@ noparse:
       {
       // NB: we assume to have no content with some HTTP headers...
 
-      UClientImage_Base::body->clear();
+      U_ASSERT(UClientImage_Base::body->empty())
 
       // NB: we use the var 'set_cookie' for opportunism within handlerResponse()...
 
@@ -10750,7 +10775,7 @@ bool UHTTP::processCGIRequest(UCommand* cmd, UHTTP::ucgi* cgi)
 
    if (fd_stderr == 0) fd_stderr = UServices::getDevNull("/tmp/processCGIRequest.err");
 
-   bool result = cmd->execute(UClientImage_Base::body->empty() ? U_NULLPTR : UClientImage_Base::body, UClientImage_Base::wbuffer, -1, fd_stderr);
+   bool result = cmd->execute(body->empty() ? U_NULLPTR : body, UClientImage_Base::wbuffer, -1, fd_stderr);
 
    if (cgi) (void) UFile::chdir(U_NULLPTR, true);
 

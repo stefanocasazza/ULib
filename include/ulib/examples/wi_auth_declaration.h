@@ -7396,7 +7396,7 @@ static void POST_info()
    U_INTERNAL_ASSERT_EQUALS(UServer_Base::bssl, false)
 
 #ifdef USE_LIBZ
-   if (UStringExt::isGzip(*UClientImage_Base::body)) *UClientImage_Base::body = UStringExt::gunzip(*UClientImage_Base::body);
+   if (UStringExt::isGzip(*UHTTP::body)) *UHTTP::body = UStringExt::gunzip(*UHTTP::body);
 #endif
 
    uint32_t end;
@@ -7583,7 +7583,7 @@ static void POST_roaming()
    U_TRACE_NO_PARAM(5, "::POST_roaming()")
 
 #ifdef USE_LIBZ
-   if (UStringExt::isGzip(*UClientImage_Base::body)) *UClientImage_Base::body = UStringExt::gunzip(*UClientImage_Base::body);
+   if (UStringExt::isGzip(*UHTTP::body)) *UHTTP::body = UStringExt::gunzip(*UHTTP::body);
 #endif
 
    uint32_t end;

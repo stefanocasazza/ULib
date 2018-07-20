@@ -1048,7 +1048,7 @@ int USSIPlugIn::handlerRequest()
             }
          else
             {
-            U_INTERNAL_DUMP("UClientImage_Base::body(%u) = %V", UClientImage_Base::body->size(), UClientImage_Base::body->rep)
+            U_INTERNAL_DUMP("UHTTP::body(%u) = %V", UHTTP::body->size(), UHTTP::body->rep)
 
             U_ASSERT(UHTTP::isDataFromCache())
             U_INTERNAL_ASSERT_POINTER(UHTTP::file_data->array)
@@ -1061,8 +1061,8 @@ int USSIPlugIn::handlerRequest()
             (void) header->append(UHTTP::getDataFromCache(UHTTP::file_data->array, 1)); // NB: we must consider HTTP/2
 
             *body = (UHTTP::isGETorHEAD() &&
-                     *UClientImage_Base::body
-                         ? *UClientImage_Base::body
+                     *UHTTP::body
+                         ? *UHTTP::body
                          : UHTTP::getBodyFromCache());
             }
 

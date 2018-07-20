@@ -16,7 +16,9 @@
 
 #include <ulib/container/hash_map.h>
 
-#include <arpa/inet.h>
+#ifndef _MSWINDOWS_
+#  include <arpa/inet.h>
+#endif
 
 /**
  * @see http://google.github.io/flatbuffers/index.html

@@ -467,7 +467,16 @@ public:
 
          setDirectiveItem(directive, U_CONSTANT_SIZE("header"));
 
-         if (token.empty()) bhttp_header_empty = true;
+         (void) output1.reserve(200U);
+
+         if (token.empty())
+            {
+            bhttp_header_empty = true;
+
+#        if !defined(U_SERVER_CAPTIVE_PORTAL) || !defined(ENABLE_THREAD)
+            (void) output1.append(U_CONSTANT_TO_PARAM("\n\tU_http_info.endHeader = U_NOT_FOUND;\n"));
+#        endif
+            }
          else
             {
             // NB: we use insert because the possibility of UHTTP::callService() (see chat.usp)...
@@ -486,7 +495,6 @@ public:
 
             U_ASSERT(encoded.isQuoted())
 
-            (void)     output1.reserve(200U);
             (void) http_header.reserve(200U + encoded.size());
 
             (void) http_header.snprintf(U_CONSTANT_TO_PARAM("\n\tU_ASSERT_EQUALS(UClientImage_Base::wbuffer->findEndHeader(),false)"
