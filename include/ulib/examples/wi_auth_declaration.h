@@ -170,7 +170,7 @@ public:
 
    WiAuthDataStorage() : UDataStorage(*UString::str_storage_keyid)
       {
-      U_TRACE_CTOR(5, WiAuthDataStorage, "", 0)
+      U_TRACE_CTOR(5, WiAuthDataStorage, "")
 
       utenti_connessi_giornaliero_globale         =
       tempo_permanenza_utenti_giornaliero_globale = 0;
@@ -250,7 +250,7 @@ public:
 
    WiAuthVirtualAccessPoint()
       {
-      U_TRACE_CTOR(5, WiAuthVirtualAccessPoint, "", 0)
+      U_TRACE_CTOR(5, WiAuthVirtualAccessPoint, "")
 
       _index_access_point  =
       _num_users_connected = 0;
@@ -422,7 +422,7 @@ public:
 
    WiAuthAccessPoint()
       {
-      U_TRACE_CTOR(5, WiAuthAccessPoint, "", 0)
+      U_TRACE_CTOR(5, WiAuthAccessPoint, "")
 
       reset();
 
@@ -583,7 +583,7 @@ public:
 
    WiAuthNodog()
       {
-      U_TRACE_CTOR(5, WiAuthNodog, "", 0)
+      U_TRACE_CTOR(5, WiAuthNodog, "")
 
       sz        = 0;
       port      = 5280;
@@ -2048,7 +2048,7 @@ public:
 
    WiAuthUser()
       {
-      U_TRACE_CTOR(5, WiAuthUser, "", 0)
+      U_TRACE_CTOR(5, WiAuthUser, "")
 
       login_time    = last_modified = 0L;
       _traffic_done = _traffic_available = _traffic_consumed = 0ULL;

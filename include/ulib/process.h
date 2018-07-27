@@ -50,7 +50,7 @@ public:
 
    UProcess()
       {
-      U_TRACE_CTOR(0, UProcess, "", 0)
+      U_TRACE_CTOR(0, UProcess, "")
 
       _pid    = (pid_t)-1;
       status  = 0;

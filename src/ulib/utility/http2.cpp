@@ -127,7 +127,7 @@ UHTTP2::Connection::Connection() : itable(64, setIndexStaticTable)
 , dtable(64, setIndexStaticTable)
 #endif
 {
-   U_TRACE_CTOR(0, Connection, "", 0)
+   U_TRACE_CTOR(0, Connection, "")
 
    reset();
 

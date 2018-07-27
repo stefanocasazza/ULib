@@ -25,7 +25,7 @@ public:
 
    UHttpPlugIn()
       {
-      U_TRACE_CTOR(0, UHttpPlugIn, "", 0)
+      U_TRACE_CTOR(0, UHttpPlugIn, "")
       }
 
    virtual ~UHttpPlugIn();

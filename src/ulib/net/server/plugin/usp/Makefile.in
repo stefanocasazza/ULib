@@ -110,27 +110,42 @@ CONFIG_HEADER = $(top_builddir)/include/ulib/internal/config.h
 CONFIG_CLEAN_FILES = usp_compile.sh
 CONFIG_CLEAN_VPATH_FILES =
 LTLIBRARIES = $(noinst_LTLIBRARIES)
-libFortune_la_LIBADD =
+am__DEPENDENCIES_1 = $(top_builddir)/src/ulib/lib@ULIB@.la
+libFortune_la_DEPENDENCIES = $(am__DEPENDENCIES_1)
 am_libFortune_la_OBJECTS = libFortune.lo
 libFortune_la_OBJECTS = $(am_libFortune_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
 am__v_lt_1 = 
-libFortuneNoSql_la_LIBADD =
+libFortune_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
+	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
+	$(AM_CXXFLAGS) $(CXXFLAGS) $(libFortune_la_LDFLAGS) $(LDFLAGS) \
+	-o $@
+libFortuneNoSql_la_DEPENDENCIES = $(am__DEPENDENCIES_1)
 am_libFortuneNoSql_la_OBJECTS = libFortuneNoSql.lo
 libFortuneNoSql_la_OBJECTS = $(am_libFortuneNoSql_la_OBJECTS)
-libWorld_la_LIBADD =
+libFortuneNoSql_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
+	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
+	$(AM_CXXFLAGS) $(CXXFLAGS) $(libFortuneNoSql_la_LDFLAGS) \
+	$(LDFLAGS) -o $@
+libWorld_la_DEPENDENCIES = $(am__DEPENDENCIES_1)
 am_libWorld_la_OBJECTS = libWorld.lo
 libWorld_la_OBJECTS = $(am_libWorld_la_OBJECTS)
-libWorldNoSql_la_LIBADD =
+libWorld_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CXXLD) $(AM_CXXFLAGS) \
+	$(CXXFLAGS) $(libWorld_la_LDFLAGS) $(LDFLAGS) -o $@
+libWorldNoSql_la_DEPENDENCIES = $(am__DEPENDENCIES_1)
 am_libWorldNoSql_la_OBJECTS = libWorldNoSql.lo
 libWorldNoSql_la_OBJECTS = $(am_libWorldNoSql_la_OBJECTS)
+libWorldNoSql_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
+	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
+	$(AM_CXXFLAGS) $(CXXFLAGS) $(libWorldNoSql_la_LDFLAGS) \
+	$(LDFLAGS) -o $@
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
 am_usp_translator_OBJECTS = usp_translator.$(OBJEXT)
 usp_translator_OBJECTS = $(am_usp_translator_OBJECTS)
-am__DEPENDENCIES_1 = $(top_builddir)/src/ulib/lib@ULIB@.la
 usp_translator_DEPENDENCIES = $(am__DEPENDENCIES_1)
 usp_translator_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
@@ -399,10 +414,19 @@ ulib_la = @ULIBS@ $(top_builddir)/src/ulib/lib@ULIB@.la
 usp_translator_LDADD = $(ulib_la) @ULIB_LIBS@
 usp_translator_SOURCES = usp_translator.cpp
 usp_translator_LDFLAGS = $(PRG_LDFLAGS)
+LDADD = @ULIBS@ $(top_builddir)/src/ulib/lib@ULIB@.la @ULIB_LIBS@
 libWorld_la_SOURCES = libWorld.cxx
+libWorld_la_LIBADD = $(LDADD)
+libWorld_la_LDFLAGS = -module -rpath /nowhere @MODULE_LIBTOOL_OPTIONS@
 libWorldNoSql_la_SOURCES = libWorldNoSql.cxx
+libWorldNoSql_la_LIBADD = $(LDADD)
+libWorldNoSql_la_LDFLAGS = -module -rpath /nowhere @MODULE_LIBTOOL_OPTIONS@
 libFortune_la_SOURCES = libFortune.cxx
+libFortune_la_LIBADD = $(LDADD)
+libFortune_la_LDFLAGS = -module -rpath /nowhere @MODULE_LIBTOOL_OPTIONS@
 libFortuneNoSql_la_SOURCES = libFortuneNoSql.cxx
+libFortuneNoSql_la_LIBADD = $(LDADD)
+libFortuneNoSql_la_LDFLAGS = -module -rpath /nowhere @MODULE_LIBTOOL_OPTIONS@
 noinst_LTLIBRARIES = libWorld.la libWorldNoSql.la libFortune.la libFortuneNoSql.la
 @CROSS_COMPILING_FALSE@moduledir = @ULIB_MODULEDIR@/usp
 @CROSS_COMPILING_FALSE@AM_CPPFLAGS = @USP_FLAGS@
@@ -455,16 +479,16 @@ clean-noinstLTLIBRARIES:
 	}
 
 libFortune.la: $(libFortune_la_OBJECTS) $(libFortune_la_DEPENDENCIES) $(EXTRA_libFortune_la_DEPENDENCIES) 
-	$(AM_V_CXXLD)$(CXXLINK)  $(libFortune_la_OBJECTS) $(libFortune_la_LIBADD) $(LIBS)
+	$(AM_V_CXXLD)$(libFortune_la_LINK)  $(libFortune_la_OBJECTS) $(libFortune_la_LIBADD) $(LIBS)
 
 libFortuneNoSql.la: $(libFortuneNoSql_la_OBJECTS) $(libFortuneNoSql_la_DEPENDENCIES) $(EXTRA_libFortuneNoSql_la_DEPENDENCIES) 
-	$(AM_V_CXXLD)$(CXXLINK)  $(libFortuneNoSql_la_OBJECTS) $(libFortuneNoSql_la_LIBADD) $(LIBS)
+	$(AM_V_CXXLD)$(libFortuneNoSql_la_LINK)  $(libFortuneNoSql_la_OBJECTS) $(libFortuneNoSql_la_LIBADD) $(LIBS)
 
 libWorld.la: $(libWorld_la_OBJECTS) $(libWorld_la_DEPENDENCIES) $(EXTRA_libWorld_la_DEPENDENCIES) 
-	$(AM_V_CXXLD)$(CXXLINK)  $(libWorld_la_OBJECTS) $(libWorld_la_LIBADD) $(LIBS)
+	$(AM_V_CXXLD)$(libWorld_la_LINK)  $(libWorld_la_OBJECTS) $(libWorld_la_LIBADD) $(LIBS)
 
 libWorldNoSql.la: $(libWorldNoSql_la_OBJECTS) $(libWorldNoSql_la_DEPENDENCIES) $(EXTRA_libWorldNoSql_la_DEPENDENCIES) 
-	$(AM_V_CXXLD)$(CXXLINK)  $(libWorldNoSql_la_OBJECTS) $(libWorldNoSql_la_LIBADD) $(LIBS)
+	$(AM_V_CXXLD)$(libWorldNoSql_la_LINK)  $(libWorldNoSql_la_OBJECTS) $(libWorldNoSql_la_LIBADD) $(LIBS)
 install-binPROGRAMS: $(bin_PROGRAMS)
 	@$(NORMAL_INSTALL)
 	@list='$(bin_PROGRAMS)'; test -n "$(bindir)" || list=; \

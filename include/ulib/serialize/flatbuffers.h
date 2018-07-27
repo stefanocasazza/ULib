@@ -339,7 +339,7 @@ public:
 
    UFlatBuffer()
       {
-      U_TRACE_CTOR(0, UFlatBuffer, "", 0)
+      U_TRACE_CTOR(0, UFlatBuffer, "")
 
       // coverity[uninit_ctor]
 #  ifdef U_COVERITY_FALSE_POSITIVE
@@ -2108,7 +2108,7 @@ public:
 
    UFlatBufferSpaceShort()
       {
-      U_TRACE_CTOR(0, UFlatBufferSpaceShort, "", 0)
+      U_TRACE_CTOR(0, UFlatBufferSpaceShort, "")
 
       prev_stack       = UFlatBuffer::getStack();
       prev_buffer      = UFlatBuffer::getBuffer();
@@ -2156,7 +2156,7 @@ public:
 
    UFlatBufferSpaceMedium()
       {
-      U_TRACE_CTOR(0, UFlatBufferSpaceMedium, "", 0)
+      U_TRACE_CTOR(0, UFlatBufferSpaceMedium, "")
 
       prev_stack       = UFlatBuffer::getStack();
       prev_buffer      = UFlatBuffer::getBuffer();
@@ -2204,7 +2204,7 @@ public:
 
    UFlatBufferSpaceLarge()
       {
-      U_TRACE_CTOR(0, UFlatBufferSpaceLarge, "", 0)
+      U_TRACE_CTOR(0, UFlatBufferSpaceLarge, "")
 
       prev_stack       = UFlatBuffer::getStack();
       prev_buffer      = UFlatBuffer::getBuffer();
@@ -2259,7 +2259,7 @@ public:
 
    UFlatBufferSpaceUser()
       {
-      U_TRACE_CTOR(0, UFlatBufferSpaceUser, "", 0)
+      U_TRACE_CTOR(0, UFlatBufferSpaceUser, "")
 
       prev_stack       = UFlatBuffer::getStack();
       prev_buffer      = UFlatBuffer::getBuffer();

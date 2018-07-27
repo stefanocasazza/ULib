@@ -136,6 +136,7 @@ public:
       {
       U_TRACE(0+256, "UHTTP2::Connection::preallocate(%u)", max_connection)
 
+      U_INTERNAL_ASSERT_MAJOR(max_connection, 0)
       U_INTERNAL_ASSERT_EQUALS(vConnection, U_NULLPTR)
 
       U_INTERNAL_DUMP("sizeof(Connection) = %u sizeof(Stream) = %u", sizeof(Connection), sizeof(Stream))
@@ -403,8 +404,6 @@ protected:
    static bool writev(struct iovec* iov, int iovcnt, uint32_t count)
       {
       U_TRACE(0, "UHTTP2::writev(%p,%d,%u)", iov, iovcnt, count)
-
-      U_DUMP_IOVEC(iov,iovcnt)
 
       if (USocketExt::writev(UServer_Base::csocket, iov, iovcnt, count, 0) == count) U_RETURN(true);
 

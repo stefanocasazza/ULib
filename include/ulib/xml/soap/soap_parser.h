@@ -176,7 +176,7 @@ public:
 
    USOAPParser(UVector<UString>* arg = U_NULLPTR) : URPCParser(arg), tree(U_NULLPTR,U_NULLPTR,2)
       {
-      U_TRACE_CTOR(0, USOAPParser, "", 0)
+      U_TRACE_CTOR(0, USOAPParser, "")
 
 #  ifdef U_SOAP_NAMESPACE
       XMLNStoURN.allocate();

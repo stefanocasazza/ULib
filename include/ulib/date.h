@@ -44,7 +44,7 @@ public:
 
    UTimeDate()
       {
-      U_TRACE_CTOR(0, UTimeDate, "", 0)
+      U_TRACE_CTOR(0, UTimeDate, "")
 
       _day   =
       _month = 1;

@@ -284,6 +284,15 @@ public:
       U_RETURN(U_NOT_FOUND);
       }
 
+   bool isContained(const void* elem)
+      {
+      U_TRACE(0, "UVector<void*>::isContained(%p)", elem)
+
+      if (find(elem) != U_NOT_FOUND) U_RETURN(true);
+
+      U_RETURN(false);
+      }
+
    // EXTENSION
 
    static int qscomp(const void* p, const void* q)
@@ -1136,12 +1145,14 @@ public:
 
       U_INTERNAL_DUMP("_length = %u _capacity = %u", _length, _capacity)
 
+      U_INTERNAL_ASSERT_EQUALS(_capacity & (_capacity-1), 0) // must be a power of 2
+
       if (lend < _capacity) push_back(str);
       else
          {
          ++lstart;
 
-         replace(lend % _capacity, str);
+         replace(lend & (_capacity-1), str);
          }
 
       ++lend;
@@ -1153,7 +1164,9 @@ public:
 
       U_INTERNAL_DUMP("_length = %u _capacity = %u", _length, _capacity)
 
-      for (uint32_t i = (llast < lstart ? lstart : llast); i < lend; ++i) _vec.push_back(at(i % _capacity));
+      U_INTERNAL_ASSERT_EQUALS(_capacity & (_capacity-1), 0) // must be a power of 2
+
+      for (uint32_t i = (llast < lstart ? lstart : llast); i < lend; ++i) _vec.push_back(at(i & (_capacity-1)));
       }
 
    // BINARY HEAP

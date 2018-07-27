@@ -51,7 +51,7 @@ public:
 
    UCommand()
       {
-      U_TRACE_CTOR(0, UCommand, "", 0)
+      U_TRACE_CTOR(0, UCommand, "")
 
       zero();
       }

@@ -38,7 +38,7 @@ public:
 
    UWebSocketClient()
       {
-      U_TRACE_CTOR(0, UWebSocketClient, "", 0)
+      U_TRACE_CTOR(0, UWebSocketClient, "")
 
       U_NEW(UClient<USSLSocket>, client, UClient<USSLSocket>(U_NULLPTR));
       }

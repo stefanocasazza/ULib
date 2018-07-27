@@ -14,10 +14,23 @@ usp_translator_LDFLAGS = $(PRG_LDFLAGS)
 
 bin_PROGRAMS = usp_translator
 
-libWorld_la_SOURCES   		= libWorld.cxx
-libWorldNoSql_la_SOURCES   = libWorldNoSql.cxx
-libFortune_la_SOURCES 		= libFortune.cxx
+LDADD = @ULIBS@ $(top_builddir)/src/ulib/lib@ULIB@.la @ULIB_LIBS@
+
+libWorld_la_SOURCES = libWorld.cxx
+libWorld_la_LIBADD  = $(LDADD)
+libWorld_la_LDFLAGS = -module -rpath /nowhere @MODULE_LIBTOOL_OPTIONS@
+
+libWorldNoSql_la_SOURCES = libWorldNoSql.cxx
+libWorldNoSql_la_LIBADD  = $(LDADD)
+libWorldNoSql_la_LDFLAGS = -module -rpath /nowhere @MODULE_LIBTOOL_OPTIONS@
+
+libFortune_la_SOURCES = libFortune.cxx
+libFortune_la_LIBADD  = $(LDADD)
+libFortune_la_LDFLAGS = -module -rpath /nowhere @MODULE_LIBTOOL_OPTIONS@
+
 libFortuneNoSql_la_SOURCES = libFortuneNoSql.cxx
+libFortuneNoSql_la_LIBADD  = $(LDADD)
+libFortuneNoSql_la_LDFLAGS = -module -rpath /nowhere @MODULE_LIBTOOL_OPTIONS@
 
 ## for convenience library
 noinst_LTLIBRARIES = libWorld.la libWorldNoSql.la libFortune.la libFortuneNoSql.la

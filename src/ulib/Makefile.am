@@ -47,7 +47,7 @@ SRC_CPP = internal/common.cpp internal/error.cpp \
 			 net/client/http.cpp net/client/client.cpp net/client/redis.cpp net/client/elasticsearch.cpp \
 			 net/ipt_ACCOUNT.cpp \
 			 json/value.cpp serialize/flatbuffers.cpp \
-			 query/query_parser.cpp  event/event_time.cpp \
+			 query/query_parser.cpp event/event_time.cpp event/event_db.cpp \
 			 timeval.cpp timer.cpp notifier.cpp string.cpp file.cpp process.cpp file_config.cpp log.cpp \
 			 options.cpp application.cpp cache.cpp date.cpp url.cpp tokenizer.cpp command.cpp
 

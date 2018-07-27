@@ -12,74 +12,48 @@
 #	include <ulib/net/client/mongodb.h>
 #endif
 
-class WorldNoSql {
+class U_EXPORT WorldNoSql {
 public:
 
 	static UString* str_rnumber;
-
-	static void handlerOneResult(uint32_t uid)
-		{
-		U_TRACE(5, "WorldNoSql::handlerOneResult(%u)", uid)
-
-		U_INTERNAL_ASSERT_POINTER(str_rnumber)
-		U_INTERNAL_ASSERT_POINTER(World::pwbuffer)
-
-		u_put_unalignedp32(World::pwbuffer, U_MULTICHAR_CONSTANT32('"','i','d','"'));
-
-		World::pwbuffer[4] = ':';
-
-		World::pwbuffer = u_num2str32(uid, World::pwbuffer+5);
-
-		u_put_unalignedp64(World::pwbuffer,   U_MULTICHAR_CONSTANT64(',','"','r','a','n','d','o','m'));
-		u_put_unalignedp64(World::pwbuffer+8, U_MULTICHAR_CONSTANT64('N','u','m','b','e','r','"',':'));
-								 World::pwbuffer += 16;
-
-		uint32_t sz = str_rnumber->size();
-
-		(void) memcpy(World::pwbuffer, str_rnumber->data(), sz);
-						  World::pwbuffer +=							 sz;
-
-		str_rnumber->clear();
-		}
-
-	static void handlerResult(uint32_t uid)
-		{
-		U_TRACE(5, "WorldNoSql::handlerResult(%u)", uid)
-
-		U_INTERNAL_ASSERT_POINTER(str_rnumber)
-		U_INTERNAL_ASSERT_POINTER(World::pwbuffer)
-
-		u_put_unalignedp32(World::pwbuffer,   U_MULTICHAR_CONSTANT32('{','"','i','d'));
-		u_put_unalignedp16(World::pwbuffer+4, U_MULTICHAR_CONSTANT16('"',':'));
-
-		World::pwbuffer = u_num2str32(uid, World::pwbuffer+6);
-
-		u_put_unalignedp64(World::pwbuffer,   U_MULTICHAR_CONSTANT64(',','"','r','a','n','d','o','m'));
-		u_put_unalignedp64(World::pwbuffer+8, U_MULTICHAR_CONSTANT64('N','u','m','b','e','r','"',':'));
-								 World::pwbuffer += 16;
-
-		uint32_t sz = str_rnumber->size();
-
-		(void) memcpy(World::pwbuffer, str_rnumber->data(), sz);
-						  World::pwbuffer +=							 sz;
-
-		str_rnumber->clear();
-
-		u_put_unalignedp16(World::pwbuffer, U_MULTICHAR_CONSTANT16('}',','));
-								 World::pwbuffer += 2;
-		}
 
 	static void doOneQuery(vPFu handlerQuery)
 		{
 		U_TRACE(5, "WorldNoSql::doOneQuery(%p)", handlerQuery)
 
-		World::initOneResult();
-
 		handlerQuery(World::rnumber[0]);
 
-		handlerOneResult(World::rnumber[0]);
+		uint32_t sz = str_rnumber->size();
+
+		World::initOneResult();
+
+		(void) memcpy(World::pwbuffer+16, str_rnumber->data(), sz);
+
+		World::ptr = World::pwbuffer+16+sz;
 
 		World::endOneResult();
+
+		str_rnumber->clear();
+		}
+
+	static void handlerResult(uint32_t i)
+		{
+		U_TRACE(5, "WorldNoSql::handlerResult(%u)", i)
+
+		U_INTERNAL_ASSERT_POINTER(str_rnumber)
+		U_INTERNAL_ASSERT_POINTER(World::pwbuffer)
+
+		if (i) World::addResult(i);
+
+		uint32_t sz = str_rnumber->size();
+
+		(void) memcpy(World::ptr+16, str_rnumber->data(), sz);
+						  World::ptr += 16+						  sz;
+
+		u_put_unalignedp16(World::ptr, U_MULTICHAR_CONSTANT16('}',','));
+								 World::ptr += 2;
+
+		str_rnumber->clear();
 		}
 
 	static void doQuery(vPFu handlerQuery)
@@ -92,7 +66,7 @@ public:
 			{
 			handlerQuery(World::rnumber[i]);
 
-			handlerResult(World::rnumber[i]);
+			handlerResult(i);
 			}
 
 		World::endResult();

@@ -99,7 +99,7 @@ public:
 
    UFile()
       {
-      U_TRACE_CTOR(0, UFile, "", 0)
+      U_TRACE_CTOR(0, UFile, "")
 
       reset();
 

@@ -34,7 +34,7 @@ public:
 
    URPCFault() : detail(U_CAPACITY)
       {
-      U_TRACE_CTOR(0, URPCFault, "", 0)
+      U_TRACE_CTOR(0, URPCFault, "")
 
       faultCode = Sender;
       }

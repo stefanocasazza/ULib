@@ -90,7 +90,7 @@ public:
 
    UMimeHeader()
       {
-      U_TRACE_CTOR(0, UMimeHeader, "", 0)
+      U_TRACE_CTOR(0, UMimeHeader, "")
       }
 
    ~UMimeHeader()

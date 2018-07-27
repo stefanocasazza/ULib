@@ -56,6 +56,8 @@ void URDBServer::preallocate()
 {
    U_TRACE_NO_PARAM(0+256, "URDBServer::preallocate()")
 
+   U_INTERNAL_ASSERT_MAJOR(UNotifier::max_connection, 0)
+
    UServer_Base::vClientImage = new URDBClientImage[UNotifier::max_connection];
 }
 

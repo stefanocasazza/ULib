@@ -25,7 +25,7 @@ public:
 
    USOAPFault()
       {
-      U_TRACE_CTOR(0, USOAPFault, "", 0)
+      U_TRACE_CTOR(0, USOAPFault, "")
       }
 
    virtual ~USOAPFault()

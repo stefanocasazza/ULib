@@ -257,8 +257,19 @@ public:
    // -------------------------------------------------------------------
 
    static char mod_name[2][32];
-   static UEventFd* handler_other;
+   static UEventFd* handler_db1;
+   static UEventFd* handler_db2;
    static UEventFd* handler_inotify;
+   static UVector<UEventFd*>* handler_other;
+
+   static void addHandlerEvent(UEventFd* item)
+      {
+      U_TRACE(0, "UServer_Base::addHandlerEvent(%p)", item)
+
+      if (handler_other == U_NULLPTR) U_NEW(UVector<UEventFd*>, handler_other, UVector<UEventFd*>);
+
+      handler_other->push_back(item);
+      }
 
    static int loadPlugins(UString& plugin_dir, const UString& plugin_list); // load plugin modules and call server-wide hooks handlerConfig()...
 
@@ -1241,6 +1252,8 @@ protected:
       {
       U_TRACE_NO_PARAM(0+256, "UServer<Socket>::preallocate()")
 
+      U_INTERNAL_ASSERT_MAJOR(UNotifier::max_connection, 0)
+      
       // NB: array are not pointers (virtual table can shift the address of this)...
 
       vClientImage = new client_type[UNotifier::max_connection];

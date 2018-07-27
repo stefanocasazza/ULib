@@ -30,6 +30,7 @@
 #include "container/vector.cpp"
 #include "container/hash_map.cpp"
 #include "container/tree.cpp"
+#include "event/event_db.cpp"
 #include "event/event_time.cpp"
 #include "net/socket.cpp"
 #include "net/ipaddress.cpp"

@@ -12,7 +12,7 @@
 #  include <ulib/net/client/mongodb.h>
 #endif
 
-class FortuneNoSql {
+class U_EXPORT FortuneNoSql {
 public:
 
 #ifdef USE_MONGODB

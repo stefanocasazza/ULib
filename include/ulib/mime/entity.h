@@ -326,7 +326,7 @@ public:
 
    UMimeMultipart() : UMimeEntity()
       {
-      U_TRACE_CTOR(0, UMimeMultipart, "", 0)
+      U_TRACE_CTOR(0, UMimeMultipart, "")
 
       buf = bbuf = U_NULLPTR;
       blen = boundaryStart = boundaryEnd = endPos = 0;

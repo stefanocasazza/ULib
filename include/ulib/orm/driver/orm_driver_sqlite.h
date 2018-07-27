@@ -21,7 +21,7 @@ public:
 
    USqliteStatementBindParam()
       {
-      U_TRACE_CTOR(0, USqliteStatementBindParam, "", 0)
+      U_TRACE_CTOR(0, USqliteStatementBindParam, "")
 
       type = U_NULL_VALUE;
       }

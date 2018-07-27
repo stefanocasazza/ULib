@@ -135,11 +135,7 @@ UClientImage_Base::UClientImage_Base()
 
    // NB: array are not pointers (virtual table can shift the address of 'this')...
 
-   if (UServer_Base::pClientImage == U_NULLPTR)
-      {
-      UServer_Base::pClientImage = this;
-      UServer_Base::eClientImage = this + UNotifier::max_connection;
-      }
+   if (UServer_Base::pClientImage == U_NULLPTR) UServer_Base::eClientImage = (UServer_Base::pClientImage = this) + UNotifier::max_connection;
 }
 
 UClientImage_Base::~UClientImage_Base()
@@ -460,13 +456,13 @@ void UClientImage_Base::handlerDelete()
 {
    U_TRACE_NO_PARAM(0, "UClientImage_Base::handlerDelete()")
 
-   bool bsocket_open = socket->isOpen();
+   bool bsocket_open = isOpen();
 
 #if !defined(USE_LIBEVENT) && defined(HAVE_EPOLL_WAIT) && defined(DEBUG)
    if (UNLIKELY(UNotifier::num_connection <= UNotifier::min_connection))
       {
       U_WARNING("handlerDelete(): "
-                "UEventFd::fd = %d socket->iSockDesc = %d socket->isOpen() = %b "
+                "UEventFd::fd = %d socket->iSockDesc = %d isOpen() = %b "
                 "UNotifier::num_connection = %d UNotifier::min_connection = %d "
                 "UServer_Base::isParallelizationChild() = %b sfd = %d UEventFd::op_mask = %B",
                 UEventFd::fd, socket->iSockDesc, bsocket_open, UNotifier::num_connection, UNotifier::min_connection, UServer_Base::isParallelizationChild(), sfd, UEventFd::op_mask);
@@ -1114,8 +1110,8 @@ bool UClientImage_Base::genericRead()
    {
    if (USocketExt::read(socket, *rbuffer, U_SINGLE_READ, 0) == false) // NB: timeout == 0 means that we put the socket fd on epoll queue if EAGAIN...
       {
-      U_ClientImage_state = (socket->isOpen() ? U_PLUGIN_HANDLER_AGAIN
-                                              : U_PLUGIN_HANDLER_ERROR);
+      U_ClientImage_state = (isOpen() ? U_PLUGIN_HANDLER_AGAIN
+                                      : U_PLUGIN_HANDLER_ERROR);
 
       U_RETURN(false);
       }
@@ -1186,7 +1182,7 @@ start:
       if (U_ClientImage_state == U_PLUGIN_HANDLER_AGAIN &&
           U_ClientImage_parallelization != U_PARALLELIZATION_CHILD)
          {
-         U_INTERNAL_ASSERT(socket->isOpen())
+         U_ASSERT(isOpen())
 
 #     ifdef DEBUG
          UServer_Base::nread_again++;
@@ -1199,7 +1195,7 @@ start:
       }
 
 #ifdef DEBUG
-   U_INTERNAL_ASSERT(socket->isOpen())
+   U_ASSERT(isOpen())
 
    UServer_Base::nread++;
 #endif
@@ -1270,7 +1266,7 @@ data_missing:
 
       U_INTERNAL_DUMP("data_pending(%u) = %V", data_pending->size(), data_pending->rep)
 
-      U_INTERNAL_ASSERT(socket->isOpen())
+      U_ASSERT(isOpen())
       U_INTERNAL_ASSERT_DIFFERS(U_ClientImage_parallelization, U_PARALLELIZATION_CHILD)
 
       U_RETURN(U_NOTIFIER_OK);
@@ -1331,7 +1327,7 @@ cls:  if (U_ClientImage_parallelization == U_PARALLELIZATION_PARENT)
    U_INTERNAL_DUMP("U_ClientImage_pipeline = %b U_ClientImage_parallelization = %d U_ClientImage_data_missing = %b",
                     U_ClientImage_pipeline,     U_ClientImage_parallelization,     U_ClientImage_data_missing)
 
-   U_INTERNAL_ASSERT(socket->isOpen())
+   U_ASSERT(isOpen())
    U_INTERNAL_ASSERT_EQUALS(U_ClientImage_state & U_PLUGIN_HANDLER_ERROR, 0)
 
    if (U_ClientImage_data_missing) goto data_missing;
@@ -1454,6 +1450,18 @@ check:            U_INTERNAL_DUMP("nrequest = %u resto = %u", nrequest, resto)
 
       if (UNLIKELY(socket->isClosed())) goto cls;
       }
+#if defined(U_SERVER_CAPTIVE_PORTAL) && defined(ENABLE_THREAD)
+   else
+      {
+      writeResponseCompact();
+
+      U_INTERNAL_DUMP("U_ClientImage_request_is_cached = %b", U_ClientImage_request_is_cached)
+
+      if (U_ClientImage_request_is_cached == false) endRequest();
+
+      U_RETURN(U_NOTIFIER_OK);
+      }
+#endif
 
    U_INTERNAL_DUMP("socket->isClosed() = %b U_http_info.nResponseCode = %u U_ClientImage_close = %b U_ClientImage_state = %d %B",
                     socket->isClosed(),     U_http_info.nResponseCode,     U_ClientImage_close,     U_ClientImage_state, U_ClientImage_state)
@@ -1563,15 +1571,7 @@ error:
    if (uri) UServer_Base::clearThrottling();
 #endif
 
-#if defined(U_SERVER_CAPTIVE_PORTAL) && defined(ENABLE_THREAD)
-   U_INTERNAL_DUMP("U_ClientImage_request_is_cached = %b", U_ClientImage_request_is_cached)
-
-   if (U_ClientImage_request_is_cached == false) endRequest();
-
-   U_RETURN(U_NOTIFIER_OK);
-#else
    endRequest();
-#endif
 
    U_DUMP("U_ClientImage_close = %b UServer_Base::isParallelizationChild() = %b", U_ClientImage_close, UServer_Base::isParallelizationChild())
 
@@ -1601,7 +1601,7 @@ death:
 
    last_event = u_now->tv_sec;
 
-   U_INTERNAL_ASSERT(socket->isOpen())
+   U_ASSERT(isOpen())
    U_INTERNAL_ASSERT_DIFFERS(U_ClientImage_parallelization, U_PARALLELIZATION_CHILD)
    U_INTERNAL_ASSERT_DIFFERS(U_ClientImage_parallelization, U_PARALLELIZATION_PARENT)
 
@@ -1616,8 +1616,8 @@ bool UClientImage_Base::writeResponse()
 
    U_INTERNAL_DUMP("U_ClientImage_pipeline = %b U_ClientImage_close = %b nrequest = %u", U_ClientImage_pipeline, U_ClientImage_close, nrequest)
 
+   U_ASSERT(isOpen())
    U_INTERNAL_ASSERT(*wbuffer)
-   U_INTERNAL_ASSERT(socket->isOpen())
    U_INTERNAL_ASSERT_DIFFERS(U_http_version, '2')
    U_INTERNAL_ASSERT_DIFFERS(U_ClientImage_parallelization, U_PARALLELIZATION_PARENT)
 
@@ -1719,8 +1719,6 @@ bool UClientImage_Base::writeResponse()
    else
 #endif
    {
-   U_DUMP_IOVEC(iov,iovcnt)
-
    U_INTERNAL_ASSERT_EQUALS(nrequest, 0)
 
    iBytesWrite = USocketExt::writev(socket, iov, iovcnt, ncount, U_ClientImage_pipeline ? U_TIMEOUT_MS : 0);
@@ -1865,9 +1863,9 @@ int UClientImage_Base::handlerWrite()
       }
 #endif
 
+   U_ASSERT(isOpen())
    U_INTERNAL_ASSERT_MAJOR(sfd, 0)
    U_INTERNAL_ASSERT_MAJOR(count, 0)
-   U_INTERNAL_ASSERT(socket->isOpen())
 
    bool bwrite = (UEventFd::op_mask == EPOLLOUT);
 
@@ -1926,7 +1924,7 @@ write:
 
       U_INTERNAL_ASSERT_MAJOR(count, 0)
 
-      if (socket->isOpen() == false) goto end;
+      if (isOpen() == false) goto end;
 
       if (bwrite) U_RETURN(U_NOTIFIER_OK);
 

@@ -53,7 +53,7 @@ public:
 
    UModNoDogPeer() : UEventTime(30L,0L), mac(*UString::str_without_mac)
       {
-      U_TRACE_CTOR(0, UModNoDogPeer, "", 0)
+      U_TRACE_CTOR(0, UModNoDogPeer, "")
 
       _ctime          = u_now->tv_sec;
       ctraffic        = 

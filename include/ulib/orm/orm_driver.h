@@ -29,7 +29,7 @@ public:
 
    USqlStatementBindParam()
       {
-      U_TRACE_CTOR(0, USqlStatementBindParam, "", 0)
+      U_TRACE_CTOR(0, USqlStatementBindParam, "")
 
       buffer = U_NULLPTR;
       pstr   = U_NULLPTR;

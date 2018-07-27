@@ -14,6 +14,7 @@
 #include <ulib/ui/dialog.h>
 #include <ulib/query/parser.h>
 #include <ulib/net/udpsocket.h>
+#include <ulib/event/event_db.h>
 #include <ulib/mime/multipart.h>
 #include <ulib/net/client/ftp.h>
 #include <ulib/net/client/http.h>

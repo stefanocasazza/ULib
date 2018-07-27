@@ -11,10 +11,11 @@
 #include <ulib/net/server/client_image.h>
 
 #ifdef U_STATIC_ORM_DRIVER_PGSQL
+#	include <ulib/event/event_db.h>
 #  include <ulib/orm/driver/orm_driver_pgsql.h>
 #endif
 
-class Fortune {
+class U_EXPORT Fortune {
 public:
 	// Check for memory error
 	U_MEMORY_TEST
@@ -109,11 +110,34 @@ public:
 		}
 
 	static uint32_t uid;
+	static char* pwbuffer;
 	static UString* pmessage;
 	static UVector<Fortune*>* pvfortune;
 
 	static UOrmSession*	  psql_fortune;
 	static UOrmStatement* pstmt_fortune;
+
+#ifdef U_STATIC_ORM_DRIVER_PGSQL
+	static PGconn* conn;
+	static UOrmDriverPgSql* pdrv;
+	static UPgSqlStatement* pstmt;
+
+	static PGresult* execPrepared()
+		{
+		U_TRACE_NO_PARAM(5, "Fortune::execPrepared()")
+
+		PGresult* res = (PGresult*) U_SYSCALL(PQexecPrepared, "%p,%S,%u,%p,%p,%p,%u", conn, pstmt->stmtName, 0, 0, 0, 0, 1);
+
+		U_RETURN_POINTER(res, PGresult);
+		}
+
+	static void sendQueryPrepared()
+		{
+		U_TRACE_NO_PARAM(5, "Fortune::sendQueryPrepared()")
+
+		(void) U_SYSCALL(PQsendQueryPrepared, "%p,%S,%u,%p,%p,%p,%u", conn, pstmt->stmtName, 0, 0, 0, 0, 1);
+		}
+#endif
 
 	static void replace(uint32_t i, uint32_t _id, const char* msg, uint32_t len)
 		{
@@ -133,41 +157,54 @@ public:
 	static void replace(uint32_t i,					 const UString& message) { replace(i, i+1, U_STRING_TO_PARAM(message)); }
 	static void replace(uint32_t i, uint32_t _id, const UString& message) { replace(i, _id, U_STRING_TO_PARAM(message)); }
 
-	static void doQuery(vPF handlerQuery)
+	static void initQuery()
 		{
-		U_TRACE(5, "Fortune::doQuery(%p)", handlerQuery)
+		U_TRACE_NO_PARAM(5, "::initQuery()")
+
+		char* ptr = UClientImage_Base::wbuffer->data();
+
+		U_INTERNAL_DUMP("wbuffer(%u) = %#.10S", UClientImage_Base::wbuffer->size(), ptr)
+
+		if (*ptr == '\0')
+			{
+			u_put_unalignedp64(ptr,	    U_MULTICHAR_CONSTANT64('C','o','n','t','e','n','t','-'));
+			u_put_unalignedp64(ptr+8,   U_MULTICHAR_CONSTANT64('L','e','n','g','t','h',':',' '));
+			u_put_unalignedp64(ptr+16,  U_MULTICHAR_CONSTANT64('1','2','2','7','\r','\n','C','o'));
+			u_put_unalignedp64(ptr+24,  U_MULTICHAR_CONSTANT64('n','t','e','n','t','-','T','y'));
+			u_put_unalignedp64(ptr+32,  U_MULTICHAR_CONSTANT64('p','e',':',' ','t','e','x','t'));
+			u_put_unalignedp64(ptr+40,  U_MULTICHAR_CONSTANT64('/','h','t','m','l',';',' ','c'));
+			u_put_unalignedp64(ptr+48,  U_MULTICHAR_CONSTANT64('h','a','r','s','e','t','=','U'));
+			u_put_unalignedp64(ptr+56,  U_MULTICHAR_CONSTANT64('T','F','-','8','\r','\n','\r','\n'));
+			u_put_unalignedp64(ptr+64,  U_MULTICHAR_CONSTANT64('<','!','d','o','c','t','y','p'));
+			u_put_unalignedp64(ptr+72,  U_MULTICHAR_CONSTANT64('e',' ','h','t','m','l','>','<'));
+			u_put_unalignedp64(ptr+80,  U_MULTICHAR_CONSTANT64('h','t','m','l','>','<','h','e'));
+			u_put_unalignedp64(ptr+88,  U_MULTICHAR_CONSTANT64('a','d','>','<','t','i','t','l'));
+			u_put_unalignedp64(ptr+96,  U_MULTICHAR_CONSTANT64('e','>','F','o','r','t','u','n'));
+			u_put_unalignedp64(ptr+104, U_MULTICHAR_CONSTANT64('e','s','<','/','t','i','t','l'));
+			u_put_unalignedp64(ptr+112, U_MULTICHAR_CONSTANT64('e','>','<','/','h','e','a','d'));
+			u_put_unalignedp64(ptr+120, U_MULTICHAR_CONSTANT64('>','<','b','o','d','y','>','<'));
+			u_put_unalignedp64(ptr+128, U_MULTICHAR_CONSTANT64('t','a','b','l','e','>','<','t'));
+			u_put_unalignedp64(ptr+136, U_MULTICHAR_CONSTANT64('r','>','<','t','h','>','i','d'));
+			u_put_unalignedp64(ptr+144, U_MULTICHAR_CONSTANT64('<','/','t','h','>','<','t','h'));
+			u_put_unalignedp64(ptr+152, U_MULTICHAR_CONSTANT64('>','m','e','s','s','a','g','e'));
+			u_put_unalignedp64(ptr+160, U_MULTICHAR_CONSTANT64('<','/','t','h','>','<','/','t'));
+			u_put_unalignedp16(ptr+168, U_MULTICHAR_CONSTANT16('r','>'));
+
+			pwbuffer	= ptr + U_CONSTANT_SIZE("Content-Length: 1227\r\nContent-Type: text/html; charset=UTF-8\r\n\r\n"
+														"<!doctype html><html><head><title>Fortunes</title></head><body><table><tr><th>id</th><th>message</th></tr>");
+
+			UClientImage_Base::wbuffer->size_adjust_constant(U_CONSTANT_SIZE("Content-Length: 1227\r\nContent-Type: text/html; charset=UTF-8\r\n\r\n") + 1227);
+			}
+
+		U_INTERNAL_ASSERT_EQUALS(u_get_unalignedp64(UClientImage_Base::wbuffer->data()),        U_MULTICHAR_CONSTANT64('C','o','n','t','e','n','t','-'))
+		U_INTERNAL_ASSERT_EQUALS(u_get_unalignedp64(UClientImage_Base::wbuffer->c_pointer(48)), U_MULTICHAR_CONSTANT64('h','a','r','s','e','t','=','U'))
+		}
+
+	static void endQuery()
+		{
+		U_TRACE_NO_PARAM(5, "::endQuery()")
 
 		U_INTERNAL_ASSERT_POINTER(pvfortune)
-
-		char* pwbuffer = UClientImage_Base::wbuffer->data();
-
-		u_put_unalignedp64(pwbuffer,	   U_MULTICHAR_CONSTANT64('C','o','n','t','e','n','t','-'));
-		u_put_unalignedp64(pwbuffer+8,   U_MULTICHAR_CONSTANT64('L','e','n','g','t','h',':',' '));
-		u_put_unalignedp64(pwbuffer+16,  U_MULTICHAR_CONSTANT64('1','2','2','7','\r','\n','C','o'));
-		u_put_unalignedp64(pwbuffer+24,  U_MULTICHAR_CONSTANT64('n','t','e','n','t','-','T','y'));
-		u_put_unalignedp64(pwbuffer+32,  U_MULTICHAR_CONSTANT64('p','e',':',' ','t','e','x','t'));
-		u_put_unalignedp64(pwbuffer+40,  U_MULTICHAR_CONSTANT64('/','h','t','m','l',';',' ','c'));
-		u_put_unalignedp64(pwbuffer+48,  U_MULTICHAR_CONSTANT64('h','a','r','s','e','t','=','U'));
-		u_put_unalignedp64(pwbuffer+56,  U_MULTICHAR_CONSTANT64('T','F','-','8','\r','\n','\r','\n'));
-		u_put_unalignedp64(pwbuffer+64,  U_MULTICHAR_CONSTANT64('<','!','d','o','c','t','y','p'));
-		u_put_unalignedp64(pwbuffer+72,  U_MULTICHAR_CONSTANT64('e',' ','h','t','m','l','>','<'));
-		u_put_unalignedp64(pwbuffer+80,  U_MULTICHAR_CONSTANT64('h','t','m','l','>','<','h','e'));
-		u_put_unalignedp64(pwbuffer+88,  U_MULTICHAR_CONSTANT64('a','d','>','<','t','i','t','l'));
-		u_put_unalignedp64(pwbuffer+96,  U_MULTICHAR_CONSTANT64('e','>','F','o','r','t','u','n'));
-		u_put_unalignedp64(pwbuffer+104, U_MULTICHAR_CONSTANT64('e','s','<','/','t','i','t','l'));
-		u_put_unalignedp64(pwbuffer+112, U_MULTICHAR_CONSTANT64('e','>','<','/','h','e','a','d'));
-		u_put_unalignedp64(pwbuffer+120, U_MULTICHAR_CONSTANT64('>','<','b','o','d','y','>','<'));
-		u_put_unalignedp64(pwbuffer+128, U_MULTICHAR_CONSTANT64('t','a','b','l','e','>','<','t'));
-		u_put_unalignedp64(pwbuffer+136, U_MULTICHAR_CONSTANT64('r','>','<','t','h','>','i','d'));
-		u_put_unalignedp64(pwbuffer+144, U_MULTICHAR_CONSTANT64('<','/','t','h','>','<','t','h'));
-		u_put_unalignedp64(pwbuffer+152, U_MULTICHAR_CONSTANT64('>','m','e','s','s','a','g','e'));
-		u_put_unalignedp64(pwbuffer+160, U_MULTICHAR_CONSTANT64('<','/','t','h','>','<','/','t'));
-		u_put_unalignedp16(pwbuffer+168, U_MULTICHAR_CONSTANT16('r','>'));
-
-		pwbuffer	+= U_CONSTANT_SIZE("Content-Length: 1227\r\nContent-Type: text/html; charset=UTF-8\r\n\r\n"
-											 "<!doctype html><html><head><title>Fortunes</title></head><body><table><tr><th>id</th><th>message</th></tr>");
-
-		handlerQuery();
 
 		Fortune* elem = pvfortune->last();
 
@@ -176,32 +213,55 @@ public:
 
 		pvfortune->sort(Fortune::cmp_obj);
 
+		char* ptr = pwbuffer;
+
 		for (uint32_t sz, i = 0, n = pvfortune->size(); i < n; ++i)
 			{
 			elem = pvfortune->at(i);
 
-			u_put_unalignedp64(pwbuffer, U_MULTICHAR_CONSTANT64('<','t','r','>','<','t','d','>'));
+			u_put_unalignedp64(ptr, U_MULTICHAR_CONSTANT64('<','t','r','>','<','t','d','>'));
 
-			pwbuffer = u_num2str32(elem->id, pwbuffer+8);
+			ptr = u_num2str32(elem->id, ptr+8);
 
-			u_put_unalignedp64(pwbuffer, U_MULTICHAR_CONSTANT64('<','/','t','d','>','<','t','d'));
-									 pwbuffer += 8;
+			u_put_unalignedp64(ptr, U_MULTICHAR_CONSTANT64('<','/','t','d','>','<','t','d'));
+									 ptr += 8;
 
-			*pwbuffer++ = '>';
+			*ptr++ = '>';
 
-			(void) memcpy(pwbuffer, elem->message.data(), sz = elem->message.size());
-							  pwbuffer += sz;
+			(void) memcpy(ptr, elem->message.data(), sz = elem->message.size());
+							  ptr += sz;
 
-			u_put_unalignedp64(pwbuffer,   U_MULTICHAR_CONSTANT64('<','/','t','d','>','<','/','t'));
-			u_put_unalignedp16(pwbuffer+8, U_MULTICHAR_CONSTANT16('r','>'));
-									 pwbuffer += 8+2;
+			u_put_unalignedp64(ptr,   U_MULTICHAR_CONSTANT64('<','/','t','d','>','<','/','t'));
+			u_put_unalignedp16(ptr+8, U_MULTICHAR_CONSTANT16('r','>'));
+									 ptr += 8+2;
 			}
 
-		u_put_unalignedp64(pwbuffer,    U_MULTICHAR_CONSTANT64('<','/','t','a','b','l','e','>'));
-		u_put_unalignedp64(pwbuffer+8,  U_MULTICHAR_CONSTANT64('<','/','b','o','d','y','>','<'));
-		u_put_unalignedp64(pwbuffer+16, U_MULTICHAR_CONSTANT64('/','h','t','m','l','>','\0','\0'));
+		u_put_unalignedp64(ptr,    U_MULTICHAR_CONSTANT64('<','/','t','a','b','l','e','>'));
+		u_put_unalignedp64(ptr+8,  U_MULTICHAR_CONSTANT64('<','/','b','o','d','y','>','<'));
+		u_put_unalignedp64(ptr+16, U_MULTICHAR_CONSTANT64('/','h','t','m','l','>','\0','\0'));
+		}
 
-		UClientImage_Base::wbuffer->size_adjust_constant(pwbuffer + U_CONSTANT_SIZE("</table></body></html>"));
+	static void doQuery(vPF handlerQuery)
+		{
+		U_TRACE(5, "Fortune::doQuery(%p)", handlerQuery)
+
+			initQuery();
+		handlerQuery();
+			 endQuery();
+		}
+
+	static void handlerInitSql()
+		{
+		U_TRACE_NO_PARAM(5, "Fortune::handlerInitSql()")
+
+#	ifdef U_STATIC_ORM_DRIVER_PGSQL
+		U_INTERNAL_DUMP("UServer_Base::handler_db2 = %p", UServer_Base::handler_db2)
+
+		if (UServer_Base::handler_db2 == U_NULLPTR)
+			{
+			U_NEW_WITHOUT_CHECK_MEMORY(UEventDB, UServer_Base::handler_db2, UEventDB);
+			}
+#	endif
 		}
 
 	static void handlerFork()
@@ -246,6 +306,18 @@ public:
 			handlerFork();
 
 			pstmt_fortune->into(uid, *pmessage);
+
+#		ifdef U_STATIC_ORM_DRIVER_PGSQL
+			if (UOrmDriver::isPGSQL())
+				{
+				 conn = (PGconn*)(pdrv = (UOrmDriverPgSql*)psql_fortune->getDriver())->UOrmDriver::connection;
+				pstmt = (UPgSqlStatement*)pstmt_fortune->getStatement();
+
+				pstmt->prepareStatement(pdrv);
+
+				((UEventDB*)UServer_Base::handler_db2)->setConnection(conn);
+				}
+#		endif
 			}
 		}
 

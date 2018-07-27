@@ -718,6 +718,8 @@ void UNotifier::createMapFd()
    lo_map_fd_len = 20+max_connection;
    lo_map_fd     = (UEventFd**) UMemoryPool::_malloc(&lo_map_fd_len, sizeof(UEventFd*), true);
 
+   U_INTERNAL_DUMP("lo_map_fd_len = %u", lo_map_fd_len)
+
    typedef UGenericHashMap<unsigned int,UEventFd*> umapfd;
 
    U_NEW(umapfd, hi_map_fd, umapfd);
@@ -733,7 +735,7 @@ bool UNotifier::isHandler(int fd)
 
    bool result = false;
 
-   U_INTERNAL_DUMP("num_connection = %d min_connection = %d", num_connection, min_connection)
+   U_INTERNAL_DUMP("num_connection = %u min_connection = %u", num_connection, min_connection)
 
    if (num_connection > min_connection)
       {
@@ -761,6 +763,8 @@ bool UNotifier::setHandler(int fd)
    U_INTERNAL_ASSERT_DIFFERS(fd, -1)
    U_INTERNAL_ASSERT_POINTER(lo_map_fd)
    U_INTERNAL_ASSERT_POINTER(hi_map_fd)
+
+   U_INTERNAL_DUMP("lo_map_fd_len = %u", lo_map_fd_len)
 
    if (fd < (int32_t)lo_map_fd_len)
       {
@@ -796,7 +800,7 @@ bool UNotifier::setHandler(int fd)
 
 void UNotifier::insert(UEventFd* item, int op)
 {
-   U_TRACE(0, "UNotifier::insert(%p%d)", item, op)
+   U_TRACE(0, "UNotifier::insert(%p,%d)", item, op)
 
    U_INTERNAL_ASSERT_POINTER(item)
 
@@ -805,6 +809,8 @@ void UNotifier::insert(UEventFd* item, int op)
    U_INTERNAL_DUMP("fd = %d item->op_mask = %B num_connection = %d", fd, item->op_mask, num_connection)
 
    U_INTERNAL_ASSERT_DIFFERS(fd, -1)
+
+   U_INTERNAL_DUMP("lo_map_fd_len = %u", lo_map_fd_len)
 
    if (fd < (int32_t)lo_map_fd_len) lo_map_fd[fd] = item;
    else

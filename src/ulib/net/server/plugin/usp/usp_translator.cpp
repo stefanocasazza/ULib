@@ -473,7 +473,7 @@ public:
             {
             bhttp_header_empty = true;
 
-#        if !defined(U_SERVER_CAPTIVE_PORTAL) || !defined(ENABLE_THREAD)
+#        if !defined(U_SERVER_CAPTIVE_PORTAL) || !defined(ENABLE_THREAD) || !defined(U_CACHE_REQUEST_DISABLE)
             (void) output1.append(U_CONSTANT_TO_PARAM("\n\tU_http_info.endHeader = U_NOT_FOUND;\n"));
 #        endif
             }

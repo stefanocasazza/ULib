@@ -36,7 +36,7 @@ public:
 
    UXMLParser()
       {
-      U_TRACE_CTOR(0, UXMLParser, "", 0)
+      U_TRACE_CTOR(0, UXMLParser, "")
 
       m_parser = U_NULLPTR;
       }

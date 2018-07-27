@@ -46,7 +46,7 @@ public:
 
    URPCMethod()
       {
-      U_TRACE_CTOR(0, URPCMethod, "", 0)
+      U_TRACE_CTOR(0, URPCMethod, "")
       }
 
    URPCMethod(const UString& n, const UString& _ns) : method_name(n), ns(_ns)

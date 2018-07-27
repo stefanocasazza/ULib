@@ -7440,7 +7440,9 @@ void UHTTP::setDynamicResponse()
       }
       }
 
+#if defined(USE_LIBZ) || defined(USE_LIBBROTLI)
    U_ASSERT(checkForCompression(clength))
+#endif
 
 #if defined(USE_LIBZ) || defined(USE_LIBBROTLI)
    if (compress(*ext, UClientImage_Base::wbuffer->substr(U_http_info.endHeader, clength))) clength = UClientImage_Base::body->size();
@@ -7479,11 +7481,6 @@ next:
          }
       else
          {
-#     ifdef U_SERVER_CAPTIVE_PORTAL
-         u_put_unalignedp64(ptr, U_MULTICHAR_CONSTANT64('/','p','l','a','i','n','\r','\n'));
-
-         ptr += U_CONSTANT_SIZE("/plain\r\n");
-#     else
          u_put_unalignedp64(ptr,    U_MULTICHAR_CONSTANT64('/','p','l','a','i','n',';',' '));
          u_put_unalignedp64(ptr+8,  U_MULTICHAR_CONSTANT64('c','h','a','r','s','e','t','='));
          u_put_unalignedp32(ptr+16, U_MULTICHAR_CONSTANT32('U','T','F','-'));
@@ -7491,7 +7488,6 @@ next:
          u_put_unalignedp16(ptr+21, U_MULTICHAR_CONSTANT16('\r','\n'));
 
          ptr += U_CONSTANT_SIZE("/plain; charset=UTF-8\r\n");
-#     endif
          }
       }
 
@@ -11841,7 +11837,7 @@ loop: while (u__isalpha(*++ptr1)) {}
          U_http_info.nResponseCode = HTTP_OK;
 
          UClientImage_Base::body->clear();
-         UClientImage_Base::wbuffer->size_adjust_constant(0U);
+         UClientImage_Base::wbuffer->rep->setEmpty();
 
          UClientImage_Base::setHeaderForResponse(6+29+2+12+2); // Date: Wed, 20 Jun 2012 11:43:17 GMT\r\nServer: ULib\r\n
 
@@ -11864,7 +11860,7 @@ next:    if (*ptr1 == '?')
             {
             U_INTERNAL_DUMP("U_http_usp_flag = %u UClientImage_Base::wbuffer(%u) = %V", U_http_usp_flag, UClientImage_Base::wbuffer->size(), UClientImage_Base::wbuffer->rep)
 
-            (void) UServer_Base::pClientImage->writeResponse();
+            if (UClientImage_Base::isRequestNeedProcessing()) UServer_Base::pClientImage->writeResponseCompact();
 
             if (U_ClientImage_parallelization == U_PARALLELIZATION_CHILD) UServer_Base::endNewChild(); // no return
 

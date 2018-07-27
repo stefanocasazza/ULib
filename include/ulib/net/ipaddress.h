@@ -74,7 +74,7 @@ public:
 
    UIPAllow()
       {
-      U_TRACE_CTOR(0, UIPAllow, "", 0)
+      U_TRACE_CTOR(0, UIPAllow, "")
 
       mask = addr = network = 0;
       bnot = false;
@@ -225,7 +225,7 @@ public:
 
    UIPAddress()
       {
-      U_TRACE_CTOR(0, UIPAddress, "", 0)
+      U_TRACE_CTOR(0, UIPAddress, "")
 
       pcStrAddress[0] = '\0';
       iAddressLength  =

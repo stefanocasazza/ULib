@@ -961,6 +961,17 @@ private:
 
    void _release();
 
+   void setEmpty()
+      {
+      U_TRACE_NO_PARAM(0, "UStringRep::setEmpty()")
+
+      U_CHECK_MEMORY
+
+      ((char*)str)[_length = 0] = '\0';
+
+      U_INTERNAL_ASSERT(invariant())
+      }
+
    void shift(ptrdiff_t diff)
       {
       U_TRACE(0, "UStringRep::shift(%p)", diff)
@@ -1419,7 +1430,7 @@ public:
 
    UString() : rep(UStringRep::string_rep_null)
       {
-      U_TRACE_CTOR(0, UString, "", 0)
+      U_TRACE_CTOR(0, UString, "")
 
       rep->hold();
 

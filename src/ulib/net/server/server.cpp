@@ -139,7 +139,8 @@ UString*      UServer_Base::crashEmailAddress;
 USocket*      UServer_Base::socket;
 USocket*      UServer_Base::csocket;
 UProcess*     UServer_Base::proc;
-UEventFd*     UServer_Base::handler_other;
+UEventFd*     UServer_Base::handler_db1;
+UEventFd*     UServer_Base::handler_db2;
 UEventFd*     UServer_Base::handler_inotify;
 UEventTime*   UServer_Base::ptime;
 UUDPSocket*   UServer_Base::udp_sock;
@@ -162,6 +163,7 @@ UVector<UString>*                 UServer_Base::vplugin_name_static;
 UClientImage_Base*                UServer_Base::vClientImage;
 UClientImage_Base*                UServer_Base::pClientImage;
 UClientImage_Base*                UServer_Base::eClientImage;
+UVector<UEventFd*>*               UServer_Base::handler_other;
 UVector<UServerPlugIn*>*          UServer_Base::vplugin;
 UVector<UServerPlugIn*>*          UServer_Base::vplugin_static;
 UVector<UServer_Base::file_LOG*>* UServer_Base::vlog;
@@ -230,7 +232,7 @@ public:
 
    UTimeStat() : UEventTime(U_ONE_HOUR_IN_SECOND, 0L)
       {
-      U_TRACE_CTOR(0, UTimeStat, "", 0)
+      U_TRACE_CTOR(0, UTimeStat, "")
       }
 
    virtual ~UTimeStat() U_DECL_FINAL
@@ -272,7 +274,7 @@ public:
 
    UTimeoutConnection() : UEventTime(UServer_Base::timeoutMS / 1000L, 0L)
       {
-      U_TRACE_CTOR(0, UTimeoutConnection, "", 0)
+      U_TRACE_CTOR(0, UTimeoutConnection, "")
       }
 
    virtual ~UTimeoutConnection() U_DECL_FINAL
@@ -361,7 +363,7 @@ public:
 
    UBandWidthThrottling() : UEventTime(U_THROTTLE_TIME, 0L)
       {
-      U_TRACE_CTOR(0, UBandWidthThrottling, "", 0)
+      U_TRACE_CTOR(0, UBandWidthThrottling, "")
       }
 
    virtual ~UBandWidthThrottling() U_DECL_FINAL
@@ -528,11 +530,14 @@ public:
 
       U_INTERNAL_ASSERT_POINTER(cimg)
 
-      U_INTERNAL_DUMP("pthis = %p handler_other = %p handler_inotify = %p ", UServer_Base::pthis, UServer_Base::handler_other, UServer_Base::handler_inotify)
+      U_INTERNAL_DUMP("pthis = %p handler_other = %p handler_inotify = %p handler_db1 = %p handler_db2 = %p",
+         UServer_Base::pthis, UServer_Base::handler_other, UServer_Base::handler_inotify, UServer_Base::handler_db1, UServer_Base::handler_db2)
 
-      if (cimg == UServer_Base::pthis         ||
-          cimg == UServer_Base::handler_other ||
-          cimg == UServer_Base::handler_inotify)
+      if (cimg == UServer_Base::pthis           ||
+          cimg == UServer_Base::handler_db1     ||
+          cimg == UServer_Base::handler_db2     ||
+          cimg == UServer_Base::handler_inotify ||
+          (UServer_Base::handler_other && UServer_Base::handler_other->isContained(cimg)))
          {
          U_RETURN(false);
          }
@@ -1463,7 +1468,9 @@ public:
       UVector<UString> vec;
       UVector<UString> vmessage;
       UString row, _id, token, rID, message, tmp;
-      uint32_t pos, mr, sz, last_event_id, i, n, k, start = 0, end = 0;
+      uint32_t pos, mr, sz, last_event_id, i, n, k, start = 0, end = 0, mask = vmessage.capacity()-1;
+
+      U_INTERNAL_ASSERT_EQUALS(mask & (mask+1), 0) // must be a power of 2
 
       char buffer_input[ 64U * 1024U],
            buffer_output[64U * 1024U];
@@ -1522,7 +1529,7 @@ public:
 
                            pos = message.find('=');
 
-                           U_INTERNAL_DUMP("vmessage[%u] = %V pos = %u", i % vmessage.capacity(), message.rep, pos)
+                           U_INTERNAL_DUMP("vmessage[%u] = %V pos = %u", i & mask, message.rep, pos)
 
                            if (ball ||
                                token.equal(message.data(), pos))
@@ -1828,6 +1835,10 @@ UServer_Base::~UServer_Base()
 #  endif
 # endif
 #endif
+
+   if (handler_db1) delete handler_db1;
+   if (handler_db2) delete handler_db2;
+   if (handler_other) handler_other->clear();
 
    UClientImage_Base::clear();
 
@@ -2211,8 +2222,10 @@ void UServer_Base::loadConfigParam()
    USocket::iBackLog          = cfg->readLong(U_CONSTANT_TO_PARAM("LISTEN_BACKLOG"), SOMAXCONN);
    min_size_for_sendfile      = cfg->readLong(U_CONSTANT_TO_PARAM("MIN_SIZE_FOR_SENDFILE"), 500 * 1024); // 500k: for major size we assume is better to use sendfile()
    num_client_threshold       = cfg->readLong(U_CONSTANT_TO_PARAM("CLIENT_THRESHOLD"));
-   UNotifier::max_connection  = cfg->readLong(U_CONSTANT_TO_PARAM("MAX_KEEP_ALIVE"));
+   UNotifier::max_connection  = cfg->readLong(U_CONSTANT_TO_PARAM("MAX_KEEP_ALIVE"), USocket::iBackLog);
    u_printf_string_max_length = cfg->readLong(U_CONSTANT_TO_PARAM("LOG_MSG_SIZE"));
+
+   U_INTERNAL_DUMP("UNotifier::max_connection = %u USocket::iBackLog = %u", UNotifier::max_connection, USocket::iBackLog)
 
 #ifdef U_MAX_CONNECTIONS_ACCEPTED_SIMULTANEOUSLY
    max_accepted = USocket::iBackLog;
@@ -3447,13 +3460,6 @@ next:
       socket_flags |= O_NONBLOCK;
       }
 
-   if (handler_other)
-      {
-      UNotifier::min_connection++;
-
-      handler_other->UEventFd::op_mask &= ~EPOLLRDHUP;
-      }
-
    if (handler_inotify)
       {
       UNotifier::min_connection++;
@@ -3462,13 +3468,16 @@ next:
       }
    }
 
-   UNotifier::max_connection = (UNotifier::max_connection ? UNotifier::max_connection : USocket::iBackLog) + (UNotifier::num_connection = UNotifier::min_connection);
+   UNotifier::num_connection = UNotifier::min_connection;
 
    if (num_client_threshold == 0) num_client_threshold = U_NOT_FOUND;
    }
 
-   U_INTERNAL_DUMP("UNotifier::max_connection = %u UNotifier::min_connection = %u num_client_threshold = %u",
-                    UNotifier::max_connection,     UNotifier::min_connection,     num_client_threshold)
+   U_INTERNAL_DUMP("UNotifier::max_connection = %u USocket::iBackLog = %u", UNotifier::max_connection, USocket::iBackLog)
+
+   if (UNotifier::max_connection == 0) UNotifier::max_connection = USocket::iBackLog;
+
+   U_INTERNAL_ASSERT_MAJOR(UNotifier::max_connection, 0)
 
    pthis->preallocate();
 
@@ -4332,11 +4341,14 @@ bool UServer_Base::handlerTimeoutConnection(void* cimg)
    U_INTERNAL_ASSERT_POINTER(ptime)
    U_INTERNAL_ASSERT_DIFFERS(timeoutMS, -1)
 
-   U_INTERNAL_DUMP("pthis = %p handler_other = %p handler_inotify = %p", pthis, handler_other, handler_inotify)
+   U_INTERNAL_DUMP("pthis = %p handler_other = %p handler_inotify = %p handler_db1 = %p handler_db2 = %p",
+      UServer_Base::pthis, UServer_Base::handler_other, UServer_Base::handler_inotify, UServer_Base::handler_db1, UServer_Base::handler_db2)
 
-   if (cimg == pthis         ||
-       cimg == handler_other ||
-       cimg == handler_inotify)
+   if (cimg == pthis                         ||
+       cimg == UServer_Base::handler_db1     ||
+       cimg == UServer_Base::handler_db2     ||
+       cimg == UServer_Base::handler_inotify ||
+       (UServer_Base::handler_other && UServer_Base::handler_other->isContained(cimg)))
       {
       U_RETURN(false);
       }
@@ -4462,15 +4474,49 @@ void UServer_Base::runLoop(const char* user)
    if (budp == false)
 #endif
    {
-   UNotifier::init();
+   if (handler_db1)
+      {
+      UNotifier::min_connection++;
 
-   U_INTERNAL_DUMP("UNotifier::min_connection = %d", UNotifier::min_connection)
+      handler_db1->UEventFd::op_mask &= ~EPOLLRDHUP;
+      }
+
+   if (handler_db2)
+      {
+      UNotifier::min_connection++;
+
+      handler_db2->UEventFd::op_mask &= ~EPOLLRDHUP;
+      }
+
+   if (handler_other)
+      {
+      uint32_t n = handler_other->size();
+
+      U_INTERNAL_DUMP("handler_other->size() = %u", n)
+
+      UNotifier::min_connection += n;
+
+      for (uint32_t i = 0; i < n; ++i) (*handler_other)[i]->UEventFd::op_mask &= ~EPOLLRDHUP;
+      }
+
+   UNotifier::max_connection += (UNotifier::num_connection = UNotifier::min_connection);
+
+   U_INTERNAL_DUMP("UNotifier::max_connection = %u UNotifier::min_connection = %u num_client_threshold = %u",
+                    UNotifier::max_connection,     UNotifier::min_connection,     num_client_threshold)
+
+   UNotifier::init();
 
    if (UNotifier::min_connection)
       {
       if (binsert)         UNotifier::insert(pthis,           EPOLLEXCLUSIVE | EPOLLROUNDROBIN); // NB: we ask to be notified for request of connection (=> accept)
-      if (handler_other)   UNotifier::insert(handler_other,   EPOLLEXCLUSIVE | EPOLLROUNDROBIN); // NB: we ask to be notified for request from generic system
+      if (handler_db1)     UNotifier::insert(handler_db1,     EPOLLEXCLUSIVE | EPOLLROUNDROBIN); // NB: we ask to be notified for response from db
+      if (handler_db2)     UNotifier::insert(handler_db2,     EPOLLEXCLUSIVE | EPOLLROUNDROBIN); // NB: we ask to be notified for response from db
       if (handler_inotify) UNotifier::insert(handler_inotify, EPOLLEXCLUSIVE | EPOLLROUNDROBIN); // NB: we ask to be notified for change of file system (=> inotify)
+
+      if (handler_other) // NB: we ask to be notified for request from generic system
+         {
+         for (uint32_t i = 0, n = handler_other->size(); i < n; ++i) UNotifier::insert(handler_other->at(i), EPOLLEXCLUSIVE | EPOLLROUNDROBIN);
+         }
       }
 
 #if defined(ENABLE_THREAD) && !defined(USE_LIBEVENT) && defined(U_SERVER_THREAD_APPROACH_SUPPORT)
@@ -4541,8 +4587,8 @@ void UServer_Base::runLoop(const char* user)
 
       UClientImage_Base::callerHandlerRead = UServer_Base::handlerUDP;
 
-      U_INTERNAL_DUMP("handler_other = %p handler_inotify = %p UNotifier::num_connection = %u UNotifier::min_connection = %u",
-                       handler_other,     handler_inotify,     UNotifier::num_connection,     UNotifier::min_connection)
+      U_INTERNAL_DUMP("handler_other = %p handler_inotify = %p handler_db1 = %p handler_db2 = %p UNotifier::num_connection = %u UNotifier::min_connection = %u",
+                       handler_other,     handler_inotify,     handler_db1,     handler_db2, UNotifier::num_connection,     UNotifier::min_connection)
 
       // NB: we can go directly on recvFrom() and block on it...
 
@@ -4574,8 +4620,8 @@ void UServer_Base::runLoop(const char* user)
    {
    while (flag_loop)
       {
-      U_INTERNAL_DUMP("handler_other = %p handler_inotify = %p UNotifier::num_connection = %u UNotifier::min_connection = %u",
-                       handler_other,     handler_inotify,     UNotifier::num_connection,     UNotifier::min_connection)
+      U_INTERNAL_DUMP("handler_other = %p handler_inotify = %p handler_db1 = %p handler_db2 = %p UNotifier::num_connection = %u UNotifier::min_connection = %u",
+                       handler_other,     handler_inotify,     handler_db1,     handler_db2, UNotifier::num_connection,     UNotifier::min_connection)
 
 #  if defined(ENABLE_THREAD) && !defined(USE_LIBEVENT) && defined(U_SERVER_THREAD_APPROACH_SUPPORT)
       if (preforked_num_kids != -1)

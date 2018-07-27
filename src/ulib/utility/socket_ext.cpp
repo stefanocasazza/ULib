@@ -501,6 +501,8 @@ uint32_t USocketExt::writev(USocket* sk, struct iovec* iov, int iovcnt, uint32_t
 {
    U_TRACE(0, "USocketExt::writev(%p,%p,%d,%u,%d)", sk, iov, iovcnt, count, timeoutMS)
 
+   U_DUMP_IOVEC(iov,iovcnt)
+
    U_INTERNAL_ASSERT_POINTER(sk)
    U_INTERNAL_ASSERT_MAJOR(count, 0)
    U_INTERNAL_ASSERT(sk->isConnected())

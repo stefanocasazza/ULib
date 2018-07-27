@@ -49,7 +49,7 @@ public:
 
    UTDB()
       {
-      U_TRACE_CTOR(0, UTDB, "", 0)
+      U_TRACE_CTOR(0, UTDB, "")
 
       context = U_NULLPTR;
       }

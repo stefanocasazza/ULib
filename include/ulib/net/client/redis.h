@@ -348,6 +348,28 @@ public:
 
    UString getRedisVersion() { return getInfoData("default", U_CONSTANT_TO_PARAM("redis_version:")); }
 
+   // GEO (@see https://redis.io/commands#geo)
+   
+   // GEOADD key longitude latitude member [longitude latitude member ...]
+   bool geoadd(const char* param, uint32_t len)
+   {
+      U_TRACE(0, "UREDISClient_Base::geoadd(%.*S,%u)", len, param, len)
+
+      if (processRequest(U_RC_INT, U_CONSTANT_TO_PARAM("GEOADD"), param, len)) return getBool();
+
+      U_RETURN(false);
+   }
+   
+   // GEORADIUS key longitude latitude radius m|km|ft|mi [WITHCOORD] [WITHDIST] [WITHHASH] [COUNT count] [ASC|DESC] [STORE key] [STOREDIST key]
+   bool georadius(const char* param, uint32_t len)
+   {
+      U_TRACE(0, "UREDISClient_Base::georadius(%.*S,%u)", len, param, len)
+
+      if (processRequest(U_RC_MULTIBULK, U_CONSTANT_TO_PARAM("GEORADIUS"), param, len)) return getBool();
+
+      U_RETURN(false);
+   }
+   
    // SET (@see http://redis.io/commands#set)
 
    bool sadd(const char* key, uint32_t keylen, const char* param, uint32_t len) // Add one or more members to a set
@@ -715,7 +737,7 @@ protected:
 
    UREDISClient_Base() : UClient_Base(U_NULLPTR)
       {
-      U_TRACE_CTOR(0, UREDISClient_Base, "", 0)
+      U_TRACE_CTOR(0, UREDISClient_Base, "")
 
       err = 0;
       }
@@ -791,7 +813,7 @@ public:
 
    UREDISClient() : UREDISClient_Base()
       {
-      U_TRACE_CTOR(0, UREDISClient, "", 0)
+      U_TRACE_CTOR(0, UREDISClient, "")
 
       U_NEW(Socket, UClient_Base::socket, Socket(UClient_Base::bIPv6));
       }

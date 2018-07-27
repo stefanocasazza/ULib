@@ -30,7 +30,7 @@ public:
 
    UDataStorage()
       {
-      U_TRACE_CTOR(0, UDataStorage, "", 0)
+      U_TRACE_CTOR(0, UDataStorage, "")
 
 #  ifdef DEBUG
       recdata      = U_NULLPTR;
@@ -155,7 +155,7 @@ public:
 
    UDataSession()
       {
-      U_TRACE_CTOR(0, UDataSession, "", 0)
+      U_TRACE_CTOR(0, UDataSession, "")
 
       init();
       }

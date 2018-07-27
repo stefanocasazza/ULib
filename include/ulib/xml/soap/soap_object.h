@@ -34,7 +34,7 @@ public:
 
    USOAPObject()
       {
-      U_TRACE_CTOR(0, USOAPObject, "", 0)
+      U_TRACE_CTOR(0, USOAPObject, "")
       }
 
    virtual ~USOAPObject()

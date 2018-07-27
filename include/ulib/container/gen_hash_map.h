@@ -99,7 +99,7 @@ protected:
 public:
    UGenericHashMap()
       {
-      U_TRACE_CTOR(0, UGenericHashMap, "", 0)
+      U_TRACE_CTOR(0, UGenericHashMap, "")
 
       node  = U_NULLPTR;
       table = U_NULLPTR;

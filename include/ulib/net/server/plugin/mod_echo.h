@@ -24,7 +24,7 @@ public:
 
    UEchoPlugIn()
       {
-      U_TRACE_CTOR(0, UEchoPlugIn, "", 0)
+      U_TRACE_CTOR(0, UEchoPlugIn, "")
       }
 
    virtual ~UEchoPlugIn();

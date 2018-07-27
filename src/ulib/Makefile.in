@@ -256,21 +256,21 @@ am__lib@ULIB@_la_SOURCES_DIST = base/base.c base/base_error.c \
 	net/client/imap.cpp net/client/http.cpp net/client/client.cpp \
 	net/client/redis.cpp net/client/elasticsearch.cpp \
 	net/ipt_ACCOUNT.cpp json/value.cpp serialize/flatbuffers.cpp \
-	query/query_parser.cpp event/event_time.cpp timeval.cpp \
-	timer.cpp notifier.cpp string.cpp file.cpp process.cpp \
-	file_config.cpp log.cpp options.cpp application.cpp cache.cpp \
-	date.cpp url.cpp tokenizer.cpp command.cpp db/tdb.cpp \
-	net/client/mongodb.cpp utility/http2.cpp internal/objectIO.cpp \
-	thread.cpp debug/debug_common.cpp debug/trace.cpp \
-	debug/error_memory.cpp debug/error_simulation.cpp \
-	debug/objectDB.cpp internal/memory_pool.cpp zip/zip.cpp \
-	flex/flexer.cpp flex/bison.cpp pcre/pcre.cpp \
-	ssl/certificate.cpp ssl/pkcs7.cpp ssl/crl.cpp ssl/pkcs10.cpp \
-	net/client/twilio.cpp net/client/uwebsocket.cpp \
-	ssl/mime/mime_pkcs7.cpp ssl/net/sslsocket.cpp \
-	ssl/net/ssl_session.cpp utility/des3.cpp ssl/timestamp.cpp \
-	ssh/net/sshsocket.cpp ldap/ldap.cpp curl/curl.cpp \
-	xml/expat/attribute.cpp xml/expat/element.cpp \
+	query/query_parser.cpp event/event_time.cpp event/event_db.cpp \
+	timeval.cpp timer.cpp notifier.cpp string.cpp file.cpp \
+	process.cpp file_config.cpp log.cpp options.cpp \
+	application.cpp cache.cpp date.cpp url.cpp tokenizer.cpp \
+	command.cpp db/tdb.cpp net/client/mongodb.cpp \
+	utility/http2.cpp internal/objectIO.cpp thread.cpp \
+	debug/debug_common.cpp debug/trace.cpp debug/error_memory.cpp \
+	debug/error_simulation.cpp debug/objectDB.cpp \
+	internal/memory_pool.cpp zip/zip.cpp flex/flexer.cpp \
+	flex/bison.cpp pcre/pcre.cpp ssl/certificate.cpp ssl/pkcs7.cpp \
+	ssl/crl.cpp ssl/pkcs10.cpp net/client/twilio.cpp \
+	net/client/uwebsocket.cpp ssl/mime/mime_pkcs7.cpp \
+	ssl/net/sslsocket.cpp ssl/net/ssl_session.cpp utility/des3.cpp \
+	ssl/timestamp.cpp ssh/net/sshsocket.cpp ldap/ldap.cpp \
+	curl/curl.cpp xml/expat/attribute.cpp xml/expat/element.cpp \
 	xml/expat/xml_parser.cpp xml/expat/xml2txt.cpp \
 	xml/soap/soap_fault.cpp xml/soap/soap_gen_method.cpp \
 	xml/soap/soap_parser.cpp xml/soap/soap_encoder.cpp \
@@ -420,23 +420,23 @@ am__objects_68 = internal/common.lo internal/error.lo ui/dialog.lo \
 	net/client/http.lo net/client/client.lo net/client/redis.lo \
 	net/client/elasticsearch.lo net/ipt_ACCOUNT.lo json/value.lo \
 	serialize/flatbuffers.lo query/query_parser.lo \
-	event/event_time.lo timeval.lo timer.lo notifier.lo string.lo \
-	file.lo process.lo file_config.lo log.lo options.lo \
-	application.lo cache.lo date.lo url.lo tokenizer.lo command.lo \
-	$(am__objects_27) $(am__objects_28) $(am__objects_29) \
-	$(am__objects_30) $(am__objects_31) $(am__objects_32) \
-	$(am__objects_33) $(am__objects_34) $(am__objects_35) \
-	$(am__objects_36) $(am__objects_37) $(am__objects_38) \
-	$(am__objects_39) $(am__objects_40) $(am__objects_41) \
-	$(am__objects_42) $(am__objects_43) $(am__objects_44) \
-	$(am__objects_45) $(am__objects_46) $(am__objects_47) \
-	$(am__objects_48) $(am__objects_49) $(am__objects_50) \
-	$(am__objects_51) $(am__objects_52) $(am__objects_53) \
-	$(am__objects_54) $(am__objects_55) $(am__objects_56) \
-	$(am__objects_57) $(am__objects_58) $(am__objects_59) \
-	$(am__objects_60) $(am__objects_61) $(am__objects_62) \
-	$(am__objects_63) $(am__objects_64) $(am__objects_65) \
-	$(am__objects_66) $(am__objects_67)
+	event/event_time.lo event/event_db.lo timeval.lo timer.lo \
+	notifier.lo string.lo file.lo process.lo file_config.lo log.lo \
+	options.lo application.lo cache.lo date.lo url.lo tokenizer.lo \
+	command.lo $(am__objects_27) $(am__objects_28) \
+	$(am__objects_29) $(am__objects_30) $(am__objects_31) \
+	$(am__objects_32) $(am__objects_33) $(am__objects_34) \
+	$(am__objects_35) $(am__objects_36) $(am__objects_37) \
+	$(am__objects_38) $(am__objects_39) $(am__objects_40) \
+	$(am__objects_41) $(am__objects_42) $(am__objects_43) \
+	$(am__objects_44) $(am__objects_45) $(am__objects_46) \
+	$(am__objects_47) $(am__objects_48) $(am__objects_49) \
+	$(am__objects_50) $(am__objects_51) $(am__objects_52) \
+	$(am__objects_53) $(am__objects_54) $(am__objects_55) \
+	$(am__objects_56) $(am__objects_57) $(am__objects_58) \
+	$(am__objects_59) $(am__objects_60) $(am__objects_61) \
+	$(am__objects_62) $(am__objects_63) $(am__objects_64) \
+	$(am__objects_65) $(am__objects_66) $(am__objects_67)
 @FINAL_FALSE@am_lib@ULIB@_la_OBJECTS = $(am__objects_26) \
 @FINAL_FALSE@	$(am__objects_68)
 @FINAL_TRUE@am_lib@ULIB@_la_OBJECTS = all_c.lo base/xxhash/xxhash.lo \
@@ -810,24 +810,24 @@ SRC_CPP = internal/common.cpp internal/error.cpp ui/dialog.cpp \
 	net/client/imap.cpp net/client/http.cpp net/client/client.cpp \
 	net/client/redis.cpp net/client/elasticsearch.cpp \
 	net/ipt_ACCOUNT.cpp json/value.cpp serialize/flatbuffers.cpp \
-	query/query_parser.cpp event/event_time.cpp timeval.cpp \
-	timer.cpp notifier.cpp string.cpp file.cpp process.cpp \
-	file_config.cpp log.cpp options.cpp application.cpp cache.cpp \
-	date.cpp url.cpp tokenizer.cpp command.cpp $(am__append_1) \
-	$(am__append_2) $(am__append_3) $(am__append_4) \
-	$(am__append_5) $(am__append_7) $(am__append_8) \
-	$(am__append_28) $(am__append_31) $(am__append_33) \
-	$(am__append_34) $(am__append_36) $(am__append_37) \
-	$(am__append_38) $(am__append_39) $(am__append_40) \
-	$(am__append_41) $(am__append_42) $(am__append_43) \
-	$(am__append_44) $(am__append_45) $(am__append_47) \
-	$(am__append_48) $(am__append_49) $(am__append_50) \
-	$(am__append_51) $(am__append_52) $(am__append_53) \
-	$(am__append_54) $(am__append_55) $(am__append_56) \
-	$(am__append_57) $(am__append_58) $(am__append_59) \
-	$(am__append_60) $(am__append_61) $(am__append_62) \
-	$(am__append_63) $(am__append_64) $(am__append_65) \
-	$(am__append_68)
+	query/query_parser.cpp event/event_time.cpp event/event_db.cpp \
+	timeval.cpp timer.cpp notifier.cpp string.cpp file.cpp \
+	process.cpp file_config.cpp log.cpp options.cpp \
+	application.cpp cache.cpp date.cpp url.cpp tokenizer.cpp \
+	command.cpp $(am__append_1) $(am__append_2) $(am__append_3) \
+	$(am__append_4) $(am__append_5) $(am__append_7) \
+	$(am__append_8) $(am__append_28) $(am__append_31) \
+	$(am__append_33) $(am__append_34) $(am__append_36) \
+	$(am__append_37) $(am__append_38) $(am__append_39) \
+	$(am__append_40) $(am__append_41) $(am__append_42) \
+	$(am__append_43) $(am__append_44) $(am__append_45) \
+	$(am__append_47) $(am__append_48) $(am__append_49) \
+	$(am__append_50) $(am__append_51) $(am__append_52) \
+	$(am__append_53) $(am__append_54) $(am__append_55) \
+	$(am__append_56) $(am__append_57) $(am__append_58) \
+	$(am__append_59) $(am__append_60) $(am__append_61) \
+	$(am__append_62) $(am__append_63) $(am__append_64) \
+	$(am__append_65) $(am__append_68)
 lib@ULIB@_la_LDFLAGS = @ULIB_LIBS@ $(am__append_66) -version-info \
 	1:0:0 -release @ULIB_VERSION@ $(am__append_67)
 @MINGW_TRUE@lib@ULIB@_la_DEPENDENCIES = ULib-win32-res.o
@@ -1258,6 +1258,8 @@ event/$(DEPDIR)/$(am__dirstamp):
 	@: > event/$(DEPDIR)/$(am__dirstamp)
 event/event_time.lo: event/$(am__dirstamp) \
 	event/$(DEPDIR)/$(am__dirstamp)
+event/event_db.lo: event/$(am__dirstamp) \
+	event/$(DEPDIR)/$(am__dirstamp)
 db/tdb.lo: db/$(am__dirstamp) db/$(DEPDIR)/$(am__dirstamp)
 net/client/mongodb.lo: net/client/$(am__dirstamp) \
 	net/client/$(DEPDIR)/$(am__dirstamp)
@@ -1639,6 +1641,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@debug/$(DEPDIR)/trace.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@dynamic/$(DEPDIR)/dynamic.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@dynamic/$(DEPDIR)/plugin.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@event/$(DEPDIR)/event_db.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@event/$(DEPDIR)/event_time.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@flex/$(DEPDIR)/bison.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@flex/$(DEPDIR)/flexer.Plo@am__quote@

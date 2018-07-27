@@ -29,7 +29,7 @@ public:
 
    UMySqlStatementBindParam()
       {
-      U_TRACE_CTOR(0, UMySqlStatementBindParam, "", 0)
+      U_TRACE_CTOR(0, UMySqlStatementBindParam, "")
 
       type        = MYSQL_TYPE_NULL;
       is_unsigned = false;

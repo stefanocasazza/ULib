@@ -29,7 +29,7 @@ public:
 
    UXMLElement()
       {
-      U_TRACE_CTOR(0, UXMLElement, "", 0)
+      U_TRACE_CTOR(0, UXMLElement, "")
       }
 
    UXMLElement(const UString& s, const UString& a, const UString& n) : str(s), accessorName(a), namespaceName(n)

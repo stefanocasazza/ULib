@@ -36,7 +36,7 @@ public:
 
    USOAPEncoder()
       {
-      U_TRACE_CTOR(0, USOAPEncoder, "", 0)
+      U_TRACE_CTOR(0, USOAPEncoder, "")
       }
 
    virtual ~USOAPEncoder()

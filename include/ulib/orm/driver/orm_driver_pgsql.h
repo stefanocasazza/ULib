@@ -83,7 +83,7 @@ public:
 
    UPgSqlStatementBindParam()
       {
-      U_TRACE_CTOR(0, UPgSqlStatementBindParam, "", 0)
+      U_TRACE_CTOR(0, UPgSqlStatementBindParam, "")
 
       type   = 0;
       length = 0;

@@ -186,28 +186,29 @@ U_DO_PRAGMA(message ("Sorry I was compiled without thread enabled so I cannot us
 extern "C" {
 #endif
 
-typedef int   (*iPF)     (void);
-typedef bool  (*bPF)     (void);
-typedef void  (*vPF)     (void);
-typedef void* (*pvPF)    (void);
-typedef bool  (*bPFi)    (int);
-typedef void  (*vPFi)    (int);
-typedef void  (*vPFu)    (uint32_t);
-typedef void  (*vPFpv)   (void*);
-typedef bool  (*bPFpv)   (void*);
-typedef int   (*iPFpv)   (void*);
-typedef bool  (*bPFpc)   (const char*);
-typedef void  (*vPFpc)   (const char*);
-typedef void* (*pvPFpv)  (void*);
-typedef void  (*vpFpcu)  (const char*,uint32_t);
-typedef bool  (*bPFpcu)  (const char*,uint32_t);
-typedef void  (*vPFpvu)  (void*,uint32_t);
-typedef int   (*iPFpvpv) (void*,void*);
-typedef bool  (*bPFpvpv) (void*,void*);
-typedef bool  (*bPFpcpv) (const char*,void*);
-typedef bool  (*bPFpcpc) (const char*,const char*);
-typedef void  (*vPFpvpc) (void*,char*);
-typedef void  (*vPFpvpv) (void*,void*);
+typedef int   (*iPF)      (void);
+typedef bool  (*bPF)      (void);
+typedef void  (*vPF)      (void);
+typedef void* (*pvPF)     (void);
+typedef bool  (*bPFi)     (int);
+typedef void  (*vPFi)     (int);
+typedef void  (*vPFu)     (uint32_t);
+typedef void  (*vPFpv)    (void*);
+typedef bool  (*bPFpv)    (void*);
+typedef int   (*iPFpv)    (void*);
+typedef bool  (*bPFpc)    (const char*);
+typedef void  (*vPFpc)    (const char*);
+typedef void* (*pvPFpv)   (void*);
+typedef void  (*vpFpcu)   (const char*,uint32_t);
+typedef bool  (*bPFpcu)   (const char*,uint32_t);
+typedef void  (*vPFpvu)   (void*,uint32_t);
+typedef int   (*iPFpvpv)  (void*,void*);
+typedef bool  (*bPFpvpv)  (void*,void*);
+typedef bool  (*bPFpcpv)  (const char*,void*);
+typedef bool  (*bPFpcpc)  (const char*,const char*);
+typedef void  (*vPFpvpc)  (void*,char*);
+typedef void  (*vPFpvpv)  (void*,void*);
+typedef void  (*vPFpvpvu) (void*,void*,uint32_t);
 
 typedef char* (*pcPFdpc)   (double,char*);
 typedef char* (*pcPFu32pc) (uint32_t,char*);

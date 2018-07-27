@@ -67,6 +67,14 @@ public:
 #  endif
       }
 
+   UEventFd(const UEventFd& ev)
+      {
+      U_TRACE_CTOR(0, UEventFd, "%p", &ev)
+
+      fd      = ev.fd;
+      op_mask = ev.op_mask;
+      }
+
    virtual ~UEventFd()
       {
 #  ifdef USE_LIBEVENT
@@ -97,7 +105,7 @@ public:
 #endif
 
 private:
-   U_DISALLOW_COPY_AND_ASSIGN(UEventFd)
+   U_DISALLOW_ASSIGN(UEventFd)
 };
 
 #endif

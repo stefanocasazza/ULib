@@ -36,7 +36,7 @@ public:
 
    UElasticSearchClient() : uri(U_CAPACITY)
       {
-      U_TRACE_CTOR(0, UElasticSearchClient, "", 0)
+      U_TRACE_CTOR(0, UElasticSearchClient, "")
 
       client = U_NULLPTR;
       }

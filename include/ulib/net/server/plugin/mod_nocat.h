@@ -69,7 +69,7 @@ public:
 
    UModNoCatPeer() : UEventTime(0L,1L), mac(*UString::str_without_mac)
       {
-      U_TRACE_CTOR(0, UModNoCatPeer, "", 0)
+      U_TRACE_CTOR(0, UModNoCatPeer, "")
 
       init();
       }

@@ -177,7 +177,7 @@ public:
 
    UQueryParser()
       {
-      U_TRACE_CTOR(0, UQueryParser, "", 0)
+      U_TRACE_CTOR(0, UQueryParser, "")
 
       U_INTERNAL_ASSERT_POINTER(UString::str_not);
 

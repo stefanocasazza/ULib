@@ -56,7 +56,7 @@ public:
 
    UCache()
       {
-      U_TRACE_CTOR(0, UCache, "", 0)
+      U_TRACE_CTOR(0, UCache, "")
 
       fd = -1;
 

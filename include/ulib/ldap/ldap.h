@@ -124,7 +124,7 @@ public:
 
    ULDAP()
       {
-      U_TRACE_CTOR(0, ULDAP, "", 0)
+      U_TRACE_CTOR(0, ULDAP, "")
 
       ld           = U_NULLPTR;
       ludpp        = U_NULLPTR;

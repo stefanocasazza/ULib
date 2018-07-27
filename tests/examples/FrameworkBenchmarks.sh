@@ -10,21 +10,24 @@ rm -f benchmark/FrameworkBenchmarks/benchmark.log* \
 					 trace.*userver_*.[0-9]*			  object.*userver_*.[0-9]*				 stack.*userver_*.[0-9]*			  mempool.*userver_*.[0-9]* \
       $DOC_ROOT/trace.*userver_*.[0-9]* $DOC_ROOT/object.*userver_*.[0-9]* $DOC_ROOT/stack.*userver_*.[0-9]* $DOC_ROOT/mempool.*userver_*.[0-9]*
 
-#UTRACE="0 100M 0"
+#UTRACE="0 50M 0"
+ UTRACE_SIGNAL="0 50M -1"
+ UTRACE_FOLDER=/tmp
+ TMPDIR=/tmp
 #UOBJDUMP="0 10M 100"
 #USIMERR="error.sim"
-#VALGRIND="valgrind -v --trace-children=yes"
 #UMEMUSAGE=yes
- export UTRACE UOBJDUMP USIMERR VALGRIND UMEMUSAGE
+#VALGRIND="valgrind -v --trace-children=yes"
+export UTRACE UOBJDUMP USIMERR UTRACE_SIGNAL UMEMUSAGE VALGRIND UTRACE_FOLDER TMPDIR
 
 unset  ORM_DRIVER ORM_OPTION
 export ORM_DRIVER ORM_OPTION UMEMPOOL
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------
 # PLAINTEXT
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------
- UMEMPOOL="58,0,0,41,16401,-14,-15,11,25"
- sed -i "s|TCP_LINGER_SET .*|TCP_LINGER_SET 0|g"	  benchmark/FrameworkBenchmarks/fbenchmark.cfg
- sed -i "s|LISTEN_BACKLOG .*|LISTEN_BACKLOG 16384|g" benchmark/FrameworkBenchmarks/fbenchmark.cfg
+#UMEMPOOL="84,0,0,41,16401,-14,-15,11,25"
+#sed -i "s|TCP_LINGER_SET .*|TCP_LINGER_SET 0|g"	  benchmark/FrameworkBenchmarks/fbenchmark.cfg
+#sed -i "s|LISTEN_BACKLOG .*|LISTEN_BACKLOG 16384|g" benchmark/FrameworkBenchmarks/fbenchmark.cfg
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------
 #Running 15s test @ http://localhost:8080/plaintext
 #  4 threads and 256 connections
@@ -42,9 +45,9 @@ export ORM_DRIVER ORM_OPTION UMEMPOOL
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------
 # JSON
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------
-#UMEMPOOL="58,0,0,41,16401,-14,-15,11,25"
-#sed -i "s|TCP_LINGER_SET .*|TCP_LINGER_SET 0|g"	 benchmark/FrameworkBenchmarks/fbenchmark.cfg
-#sed -i "s|LISTEN_BACKLOG .*|LISTEN_BACKLOG 256|g"	 benchmark/FrameworkBenchmarks/fbenchmark.cfg
+ UMEMPOOL="237,0,0,49,273,-15,-14,-20,36"
+ sed -i "s|TCP_LINGER_SET .*|TCP_LINGER_SET 0|g"	 benchmark/FrameworkBenchmarks/fbenchmark.cfg
+ sed -i "s|LISTEN_BACKLOG .*|LISTEN_BACKLOG 256|g"	 benchmark/FrameworkBenchmarks/fbenchmark.cfg
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------
 #Running 15s test @ http://localhost:8080/json
 #  4 threads and 256 connections

@@ -99,7 +99,7 @@ public:
 
    Url()
       {
-      U_TRACE_CTOR(0, Url, "", 0)
+      U_TRACE_CTOR(0, Url, "")
 
       service_end =
        user_begin =

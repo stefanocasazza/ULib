@@ -40,7 +40,7 @@ public:
 
    UTimeVal()
       {
-      U_TRACE_CTOR(0, UTimeVal, "", 0)
+      U_TRACE_CTOR(0, UTimeVal, "")
 
       U_INTERNAL_ASSERT_EQUALS((void*)this, (void*)&tv_sec)
       }

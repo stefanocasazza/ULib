@@ -66,7 +66,7 @@ public:
 
    UXML2Document()
       {
-      U_TRACE_CTOR(0, UXML2Document, "", 0)
+      U_TRACE_CTOR(0, UXML2Document, "")
 
       impl_ = (xmlDocPtr) U_SYSCALL(xmlNewDoc, "%S", (xmlChar*)"1.0");
       }

@@ -346,6 +346,59 @@ public:
    static UString* _buffer;
    static UString* _encoded;
 
+   bool isOpen()
+      {
+      U_TRACE_NO_PARAM(0, "UClientImage_Base::isOpen()")
+
+      if (socket->isOpen()) U_RETURN(true);
+
+      U_RETURN(false);
+      }
+
+   bool writeResponse();
+   void writeResponseCompact()
+      {
+      U_TRACE_NO_PARAM(0, "UClientImage_Base::writeResponseCompact()")
+
+      uint32_t sz = wbuffer->size();
+
+      U_ASSERT(body->empty())
+      U_INTERNAL_ASSERT_MAJOR(sz, 0)
+
+      iov_vec[2].iov_len  = sz;
+      iov_vec[2].iov_base = (caddr_t)wbuffer->data();
+
+      U_INTERNAL_ASSERT_EQUALS(iov_vec[0].iov_len, 17)
+      U_INTERNAL_ASSERT_EQUALS(iov_vec[1].iov_len, 51)
+
+#  ifndef U_PIPELINE_HOMOGENEOUS_DISABLE
+      if (nrequest)
+         {
+         struct iovec iov[256];
+
+         U_INTERNAL_ASSERT_MAJOR(nrequest, 1)
+
+         char* ptr = (char*)iov;
+
+         U_MEMCPY(ptr, iov_vec, sizeof(struct iovec) * 3);
+
+         for (uint32_t i = 1; i < nrequest; ++i)
+            {
+                     ptr +=        sizeof(struct iovec) * 3;
+            U_MEMCPY(ptr, iov_vec, sizeof(struct iovec) * 3);
+            }
+
+         (void) USocketExt::writev(socket, iov, 3*nrequest, (17+51+sz)*nrequest, 0);
+         }
+      else
+#  endif
+      {
+      U_INTERNAL_ASSERT_EQUALS(nrequest, 0)
+
+      (void) USocketExt::writev(socket, iov_vec, 3, 17+51+sz, 0);
+      }
+      }
+
 protected:
    USocket* socket;
 #ifdef U_THROTTLING_SUPPORT
@@ -401,6 +454,8 @@ protected:
       U_INTERNAL_DUMP("wbuffer(%u) = %V", wbuffer->size(), wbuffer->rep)
 
       wbuffer->setBuffer(U_CAPACITY); // NB: this string can be referenced more than one (often if U_SUBSTR_INC_REF is defined)...
+
+      wbuffer->rep->setNullTerminated();
       }
 
    int handlerResponse()
@@ -430,7 +485,6 @@ protected:
       U_RETURN(U_SINGLE_READ);
       }
 
-   bool writeResponse();
    bool logCertificate(); // append on log the peer certicate of client ("issuer","serial")
    bool askForClientCertificate();
 
@@ -531,7 +585,7 @@ public:
 
    UClientImage() : UClientImage_Base()
       {
-      U_TRACE_CTOR(0, UClientImage<Socket>, "", 0)
+      U_TRACE_CTOR(0, UClientImage<Socket>, "")
 
       U_NEW(Socket, socket, Socket(UClientImage_Base::bIPv6))
 
@@ -559,7 +613,7 @@ public:
 
    UClientImage() : UClientImage_Base()
       {
-      U_TRACE_CTOR(0, UClientImage<USSLSocket>, "", 0)
+      U_TRACE_CTOR(0, UClientImage<USSLSocket>, "")
 
       U_NEW(USSLSocket, socket, USSLSocket(UClientImage_Base::bIPv6, USSLSocket::sctx, true))
 

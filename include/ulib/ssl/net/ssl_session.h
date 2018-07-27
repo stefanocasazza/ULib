@@ -31,7 +31,7 @@ public:
 
    USSLSession()
       {
-      U_TRACE_CTOR(0, USSLSession, "", 0)
+      U_TRACE_CTOR(0, USSLSession, "")
       }
 
    virtual ~USSLSession() U_DECL_FINAL

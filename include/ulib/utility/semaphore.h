@@ -55,7 +55,7 @@ public:
 
    USemaphore()
       {
-      U_TRACE_CTOR(0, USemaphore, "", 0)
+      U_TRACE_CTOR(0, USemaphore, "")
 
       next = U_NULLPTR;
       psem = U_NULLPTR;

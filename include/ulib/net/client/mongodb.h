@@ -49,7 +49,7 @@ public:
 
     UMongoDBClient() : uri(100)
       {
-      U_TRACE_CTOR(0, UMongoDBClient, "", 0)
+      U_TRACE_CTOR(0, UMongoDBClient, "")
 
 #  ifdef USE_MONGODB
       puri = U_NULLPTR;

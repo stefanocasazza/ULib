@@ -10,10 +10,11 @@
 #include <ulib/net/server/client_image.h>
 
 #ifdef U_STATIC_ORM_DRIVER_PGSQL
+#	include <ulib/event/event_db.h>
 #  include <ulib/orm/driver/orm_driver_pgsql.h>
 #endif
 
-class World {
+class U_EXPORT World {
 public:
 	// Check for memory error
 	U_MEMORY_TEST
@@ -111,9 +112,10 @@ public:
 #	endif
 		}
 
+	static char* ptr;
 	static char* pwbuffer;
 	static char wbuffer[18000];
-	static uint32_t rnum, rnumber[500];
+	static uint32_t rnum, rnumber[501];
 
 	static World*        pworld_query;
 	static UOrmSession*	  psql_query;
@@ -124,21 +126,6 @@ public:
 	static UOrmDriverPgSql* pdrv;
 	static UPgSqlStatement* pstmt;
 	static char num2str[sizeof(unsigned int)];
-
-	static bool initPipeline()
-		{
-		U_TRACE(5, "World::initPipeline()")
-
-		if (pdrv)
-			{
-			(void) U_SYSCALL(PQsetnonblocking, "%p,%u", conn, 1);
-			(void) U_SYSCALL(PQenterBatchMode, "%p",	  conn);
-
-			U_RETURN(true);
-			}
-
-		U_RETURN(false);
-		}
 
 	static PGresult* execPrepared()
 		{
@@ -166,6 +153,17 @@ public:
 		U_RETURN_POINTER(res, PGresult);
 		}
 
+	static void sendQueryPrepared()
+		{
+		U_TRACE_NO_PARAM(5, "World::sendQueryPrepared()")
+
+		U_INTERNAL_ASSERT_MAJOR(rnumber[0], 0)
+
+		*(unsigned int*)num2str = htonl(rnumber[0]);
+
+		(void) U_SYSCALL(PQsendQueryPrepared, "%p,%S,%u,%p,%p,%p,%u", conn, pstmt->stmtName, 1, pstmt->paramValues, pstmt->paramLengths, pstmt->paramFormats, 1);
+		}
+
 	static void sendQueryPrepared(uint32_t i)
 		{
 		U_TRACE(5, "World::sendQueryPrepared(%u)", i)
@@ -174,122 +172,146 @@ public:
 
 		*(unsigned int*)num2str = htonl(rnumber[i]);
 
+#	ifdef DEBUG
+		if (U_SYSCALL(PQsendQueryPrepared, "%p,%S,%u,%p,%p,%p,%u", conn, pstmt->stmtName, 1, pstmt->paramValues, pstmt->paramLengths, pstmt->paramFormats, 1) == 0)
+			{
+			pdrv->printError(__PRETTY_FUNCTION__);
+			}
+#	else
 		(void) U_SYSCALL(PQsendQueryPrepared, "%p,%S,%u,%p,%p,%p,%u", conn, pstmt->stmtName, 1, pstmt->paramValues, pstmt->paramLengths, pstmt->paramFormats, 1);
+#	endif
 		}
 #endif
 
-	static void initResult()
-		{
-		U_TRACE(5, "World::initResult()")
-
-		u_put_unalignedp64(wbuffer,	 U_MULTICHAR_CONSTANT64('C','o','n','t','e','n','t','-'));
-		u_put_unalignedp64(wbuffer+8,  U_MULTICHAR_CONSTANT64('L','e','n','g','t','h',':',' '));
-		u_put_unalignedp64(wbuffer+16, U_MULTICHAR_CONSTANT64('1','3','3','3','1','\r','\n','C'));
-		u_put_unalignedp64(wbuffer+24, U_MULTICHAR_CONSTANT64('o','n','t','e','n','t','-','T'));
-		u_put_unalignedp64(wbuffer+32, U_MULTICHAR_CONSTANT64('y','p','e',':',' ','a','p','p'));
-		u_put_unalignedp64(wbuffer+40, U_MULTICHAR_CONSTANT64('l','i','c','a','t','i','o','n'));
-		u_put_unalignedp64(wbuffer+48, U_MULTICHAR_CONSTANT64('/','j','s','o','n','\r','\n','\r'));
-		u_put_unalignedp16(wbuffer+56, U_MULTICHAR_CONSTANT16('\n','['));
-
-		pwbuffer	= wbuffer + U_CONSTANT_SIZE("Content-Length: 13331\r\nContent-Type: application/json\r\n\r\n[");
-		}
-
-	static void endResult()
-		{
-		U_TRACE_NO_PARAM(5, "World::endResult()")
-
-		*(pwbuffer-1) = ']';
-
-		uint32_t		  len = pwbuffer-wbuffer,
-					body_len = len - U_CONSTANT_SIZE("Content-Length: 13331\r\nContent-Type: application/json\r\n\r\n");
-
-		pwbuffer = u_num2str32(body_len, wbuffer + U_CONSTANT_SIZE("Content-Length: "));
-
-		while (*pwbuffer != '\r') *pwbuffer++ = ' ';
-
-		UClientImage_Base::wbuffer->setConstant(wbuffer, len);
-		}
-
 	static void initOneResult()
 		{
-		U_TRACE(5, "World::initOneResult()")
+		U_TRACE_NO_PARAM(5, "World::initOneResult()")
 
-		u_put_unalignedp64(wbuffer,	 U_MULTICHAR_CONSTANT64('C','o','n','t','e','n','t','-'));
-		u_put_unalignedp64(wbuffer+8,  U_MULTICHAR_CONSTANT64('L','e','n','g','t','h',':',' '));
-		u_put_unalignedp32(wbuffer+16, U_MULTICHAR_CONSTANT32('3','1','\r','\n'));
-		u_put_unalignedp64(wbuffer+20, U_MULTICHAR_CONSTANT64('C','o','n','t','e','n','t','-'));
-		u_put_unalignedp64(wbuffer+28, U_MULTICHAR_CONSTANT64('T','y','p','e',':',' ','a','p'));
-		u_put_unalignedp64(wbuffer+36, U_MULTICHAR_CONSTANT64('p','l','i','c','a','t','i','o'));
-		u_put_unalignedp64(wbuffer+44, U_MULTICHAR_CONSTANT64('n','/','j','s','o','n','\r','\n'));
-		u_put_unalignedp32(wbuffer+52, U_MULTICHAR_CONSTANT32('\r','\n','{','\0'));
+		U_INTERNAL_DUMP("wbuffer = %#.10S", wbuffer)
 
-		pwbuffer	= wbuffer + U_CONSTANT_SIZE("Content-Length: 31\r\nContent-Type: application/json\r\n\r\n{");
+		if (*wbuffer == '\0')
+			{
+			u_put_unalignedp64(wbuffer,	 U_MULTICHAR_CONSTANT64('C','o','n','t','e','n','t','-'));
+			u_put_unalignedp64(wbuffer+8,  U_MULTICHAR_CONSTANT64('L','e','n','g','t','h',':',' '));
+			u_put_unalignedp32(wbuffer+16, U_MULTICHAR_CONSTANT32('3','1','\r','\n'));
+			u_put_unalignedp64(wbuffer+20, U_MULTICHAR_CONSTANT64('C','o','n','t','e','n','t','-'));
+			u_put_unalignedp64(wbuffer+28, U_MULTICHAR_CONSTANT64('T','y','p','e',':',' ','a','p'));
+			u_put_unalignedp64(wbuffer+36, U_MULTICHAR_CONSTANT64('p','l','i','c','a','t','i','o'));
+			u_put_unalignedp64(wbuffer+44, U_MULTICHAR_CONSTANT64('n','/','j','s','o','n','\r','\n'));
+			u_put_unalignedp64(wbuffer+52, U_MULTICHAR_CONSTANT64('\r','\n','{','"','i','d','"',':'));
+
+			pwbuffer = u_num2str32(rnumber[0], wbuffer + U_CONSTANT_SIZE("Content-Length: 31\r\nContent-Type: application/json\r\n\r\n{\"id\":"));
+
+			u_put_unalignedp64(pwbuffer,   U_MULTICHAR_CONSTANT64(',','"','r','a','n','d','o','m'));
+			u_put_unalignedp64(pwbuffer+8, U_MULTICHAR_CONSTANT64('N','u','m','b','e','r','"',':'));
+			}
+
+		U_INTERNAL_ASSERT_EQUALS(u_get_unalignedp64(wbuffer),		U_MULTICHAR_CONSTANT64('C','o','n','t','e','n','t','-'))
+		U_INTERNAL_ASSERT_EQUALS(u_get_unalignedp64(wbuffer+52), U_MULTICHAR_CONSTANT64('\r','\n','{','"','i','d','"',':'))
 		}
 
 	static void endOneResult()
 		{
 		U_TRACE_NO_PARAM(5, "World::endOneResult()")
 
-		*pwbuffer = '}';
+		*ptr = '}';
 
-		uint32_t		  len = pwbuffer-wbuffer+1,
+		uint32_t		  len = ptr-wbuffer+1,
 					body_len = len - U_CONSTANT_SIZE("Content-Length: 31\r\nContent-Type: application/json\r\n\r\n");
 
-		(void) u_num2str32(body_len, wbuffer+U_CONSTANT_SIZE("Content-Length: "));
+		U_NUM2STR16(wbuffer+U_CONSTANT_SIZE("Content-Length: "), body_len);
 
 		UClientImage_Base::wbuffer->setConstant(wbuffer, len);
 		}
 
-	static void handlerOneResult(uint32_t uid, uint32_t random)
+	static void handlerOneResult(uint32_t random)
 		{
-		U_TRACE(5, "World::handlerOneResult(%u,%u)", uid, random)
+		U_TRACE(5, "World::handlerOneResult(%u)", random)
 
-		u_put_unalignedp32(pwbuffer, U_MULTICHAR_CONSTANT32('"','i','d','"'));
+		initOneResult();
 
-		pwbuffer[4] = ':';
+		ptr = u_num2str32(random, pwbuffer+16);
 
-		pwbuffer = u_num2str32(uid, pwbuffer+5);
-
-		u_put_unalignedp64(pwbuffer,   U_MULTICHAR_CONSTANT64(',','"','r','a','n','d','o','m'));
-		u_put_unalignedp64(pwbuffer+8, U_MULTICHAR_CONSTANT64('N','u','m','b','e','r','"',':'));
-
-		pwbuffer = u_num2str32(random, pwbuffer+16);
+		endOneResult();
 		}
 
-	static void handlerResult(uint32_t uid, uint32_t random)
+	static void initResult()
 		{
-		U_TRACE(5, "World::handlerResult(%u,%u)", uid, random)
+		U_TRACE_NO_PARAM(5, "World::initResult()")
 
-		u_put_unalignedp32(pwbuffer,   U_MULTICHAR_CONSTANT32('{','"','i','d'));
-		u_put_unalignedp16(pwbuffer+4, U_MULTICHAR_CONSTANT16('"',':'));
+		U_INTERNAL_DUMP("wbuffer = %#.10S", wbuffer)
 
-		pwbuffer = u_num2str32(uid, pwbuffer+6);
+		if (*wbuffer == '\0')
+			{
+			u_put_unalignedp64(wbuffer,	 U_MULTICHAR_CONSTANT64('C','o','n','t','e','n','t','-'));
+			u_put_unalignedp64(wbuffer+8,  U_MULTICHAR_CONSTANT64('L','e','n','g','t','h',':',' '));
+			u_put_unalignedp64(wbuffer+16, U_MULTICHAR_CONSTANT64('1','3','3','3','1','\r','\n','C'));
+			u_put_unalignedp64(wbuffer+24, U_MULTICHAR_CONSTANT64('o','n','t','e','n','t','-','T'));
+			u_put_unalignedp64(wbuffer+32, U_MULTICHAR_CONSTANT64('y','p','e',':',' ','a','p','p'));
+			u_put_unalignedp64(wbuffer+40, U_MULTICHAR_CONSTANT64('l','i','c','a','t','i','o','n'));
+			u_put_unalignedp64(wbuffer+48, U_MULTICHAR_CONSTANT64('/','j','s','o','n','\r','\n','\r'));
+			u_put_unalignedp64(wbuffer+56, U_MULTICHAR_CONSTANT64('\n','[','{','"','i','d','"',':'));
 
-		u_put_unalignedp64(pwbuffer,   U_MULTICHAR_CONSTANT64(',','"','r','a','n','d','o','m'));
-		u_put_unalignedp64(pwbuffer+8, U_MULTICHAR_CONSTANT64('N','u','m','b','e','r','"',':'));
+			pwbuffer = u_num2str32(rnumber[0], wbuffer + U_CONSTANT_SIZE("Content-Length: 13331\r\nContent-Type: application/json\r\n\r\n[{\"id\":"));
 
-		pwbuffer = u_num2str32(random, pwbuffer+16);
+			u_put_unalignedp64(pwbuffer,   U_MULTICHAR_CONSTANT64(',','"','r','a','n','d','o','m'));
+			u_put_unalignedp64(pwbuffer+8, U_MULTICHAR_CONSTANT64('N','u','m','b','e','r','"',':'));
+			}
 
-		u_put_unalignedp16(pwbuffer, U_MULTICHAR_CONSTANT16('}',','));
-								 pwbuffer += 2;
+		U_INTERNAL_ASSERT_EQUALS(u_get_unalignedp64(wbuffer),		U_MULTICHAR_CONSTANT64('C','o','n','t','e','n','t','-'))
+		U_INTERNAL_ASSERT_EQUALS(u_get_unalignedp64(wbuffer+56), U_MULTICHAR_CONSTANT64('\n','[','{','"','i','d','"',':'))
+
+		ptr = pwbuffer;
 		}
 
-	static void handlerResult(uint32_t i)
+	static void endResult()
 		{
-		U_TRACE(5, "World::handlerResult(%u)", i)
+		U_TRACE_NO_PARAM(5, "World::endResult()")
 
-		U_INTERNAL_ASSERT_POINTER(pworld_query)
+		*(ptr-1) = ']';
 
-		U_INTERNAL_DUMP("pworld_query->randomNumber = %u", pworld_query->randomNumber)
+		uint32_t		  len = ptr-wbuffer,
+					body_len = len - U_CONSTANT_SIZE("Content-Length: 13331\r\nContent-Type: application/json\r\n\r\n");
+
+		ptr = u_num2str32(body_len, wbuffer + U_CONSTANT_SIZE("Content-Length: "));
+
+		while (*ptr != '\r') *ptr++ = ' ';
+
+		UClientImage_Base::wbuffer->setConstant(wbuffer, len);
 		}
 
-	static void handlerResultSql(uint32_t i)
+	static void addResult(uint32_t i)
 		{
-		U_TRACE(5, "World::handlerResultSql(%u)", i)
+		U_TRACE(5, "World::addResult(%u)", i)
 
-		U_INTERNAL_ASSERT_POINTER(pworld_query)
+		U_INTERNAL_ASSERT_MAJOR(i, 0)
 
-		handlerResult(rnumber[i], pworld_query->randomNumber);
+		u_put_unalignedp32(ptr,   U_MULTICHAR_CONSTANT32('{','"','i','d'));
+		u_put_unalignedp16(ptr+4, U_MULTICHAR_CONSTANT16('"',':'));
+
+		ptr = u_num2str32(rnumber[i], ptr+6);
+
+		u_put_unalignedp64(ptr,   U_MULTICHAR_CONSTANT64(',','"','r','a','n','d','o','m'));
+		u_put_unalignedp64(ptr+8, U_MULTICHAR_CONSTANT64('N','u','m','b','e','r','"',':'));
+		}
+
+	static void addRandom(uint32_t random)
+		{
+		U_TRACE(5, "World::addRandom(%u)", random)
+
+		ptr = u_num2str32(random, ptr+16);
+
+		u_put_unalignedp16(ptr, U_MULTICHAR_CONSTANT16('}',','));
+								 ptr += 2;
+		}
+
+	static void handlerResult(uint32_t i, uint32_t random)
+		{
+		U_TRACE(5, "World::handlerResult(%u,%u)", i, random)
+
+		if (i) addResult(i);
+
+		addRandom(random);
 		}
 
 	static void doUpdateNoSql(vPFu handlerUpdateNoSql)
@@ -302,17 +324,31 @@ public:
 			{
 			handlerUpdateNoSql(i);
 
-			handlerResult(rnumber[i], rnum);
+			handlerResult(i, rnum);
 			}
 
 		endResult();
+		}
+
+	static void handlerInitSql()
+		{
+		U_TRACE_NO_PARAM(5, "World::handlerInitSql()")
+
+#	ifdef U_STATIC_ORM_DRIVER_PGSQL
+		U_INTERNAL_DUMP("UServer_Base::handler_db1 = %p", UServer_Base::handler_db1)
+
+		if (UServer_Base::handler_db1 == U_NULLPTR)
+			{
+			U_NEW_WITHOUT_CHECK_MEMORY(UEventDB, UServer_Base::handler_db1, UEventDB);
+			}
+#	endif
 		}
 
 	static void handlerFork()
 		{
 		U_TRACE_NO_PARAM(5, "World::handlerFork()")
 
-		if (rnumber[0] == 0) for (uint32_t i = 0; i < 500; ++i) rnumber[i] = u_get_num_random_range1(10000);
+		if (rnumber[0] == 0) for (uint32_t i = 0; i <= 500; ++i) rnumber[i] = u_get_num_random_range1(10000);
 		}
 
 	static void handlerForkSql()
@@ -344,13 +380,15 @@ public:
 #		ifdef U_STATIC_ORM_DRIVER_PGSQL
 			if (UOrmDriver::isPGSQL())
 				{
-				conn	= (PGconn*)(pdrv = (UOrmDriverPgSql*)psql_query->getDriver())->UOrmDriver::connection;
+				 conn = (PGconn*)(pdrv = (UOrmDriverPgSql*)psql_query->getDriver())->UOrmDriver::connection;
 				pstmt = (UPgSqlStatement*)pstmt_query->getStatement();
 
 				(void) pstmt->setBindParam(pdrv);
 
 				pstmt->paramValues[0]  = num2str;
 				pstmt->paramLengths[0] = sizeof(unsigned int);
+
+				((UEventDB*)UServer_Base::handler_db1)->setConnection(conn);
 				}
 #		endif
 

@@ -982,7 +982,7 @@ private:
 
    UCServletPage()
       {
-      U_TRACE_CTOR(0, UCServletPage, "", 0)
+      U_TRACE_CTOR(0, UCServletPage, "")
 
       size      = 0;
       relocated = U_NULLPTR;
@@ -1018,7 +1018,7 @@ private:
 
    UPHP()
       {
-      U_TRACE_CTOR(0, UPHP, "", 0)
+      U_TRACE_CTOR(0, UPHP, "")
 
       initPHP =
        runPHP = U_NULLPTR;
@@ -1053,7 +1053,7 @@ private:
 
    URUBY()
       {
-      U_TRACE_CTOR(0, URUBY, "", 0)
+      U_TRACE_CTOR(0, URUBY, "")
 
       initRUBY =
        runRUBY = U_NULLPTR;
@@ -1088,7 +1088,7 @@ private:
 
    UPYTHON()
       {
-      U_TRACE_CTOR(0, UPYTHON, "", 0)
+      U_TRACE_CTOR(0, UPYTHON, "")
 
       initPYTHON =
        runPYTHON = U_NULLPTR;
@@ -1129,7 +1129,7 @@ private:
 
    UPageSpeed()
       {
-      U_TRACE_CTOR(0, UPageSpeed, "", 0)
+      U_TRACE_CTOR(0, UPageSpeed, "")
 
       minify_html  = 0;
       optimize_gif = optimize_png = optimize_jpg = 0;
@@ -1159,7 +1159,7 @@ private:
 
    UV8JavaScript()
       {
-      U_TRACE_CTOR(0, UV8JavaScript, "", 0)
+      U_TRACE_CTOR(0, UV8JavaScript, "")
 
       runv8 = U_NULLPTR;
       }

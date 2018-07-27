@@ -58,7 +58,7 @@ public:
 
    URPCObject()
       {
-      U_TRACE_CTOR(0, URPCObject, "", 0)
+      U_TRACE_CTOR(0, URPCObject, "")
       }
 
    virtual ~URPCObject()

@@ -31,7 +31,7 @@ public:
 
    URPCEnvelope()
       {
-      U_TRACE_CTOR(0, URPCEnvelope, "", 0)
+      U_TRACE_CTOR(0, URPCEnvelope, "")
 
       arg            = U_NULLPTR;
       mustUnderstand = false;

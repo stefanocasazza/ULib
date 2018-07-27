@@ -36,7 +36,7 @@ public:
 
    UTimer()
       {
-      U_TRACE_CTOR(0, UTimer, "", 0)
+      U_TRACE_CTOR(0, UTimer, "")
 
       next  = U_NULLPTR;
       alarm = U_NULLPTR;
