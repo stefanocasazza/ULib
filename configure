@@ -775,8 +775,6 @@ TCC_TRUE
 PRG_LDFLAGS
 POSTGRESQL_USE_OPENSSL_FALSE
 POSTGRESQL_USE_OPENSSL_TRUE
-HAVE_PGSQL_BATCH_API_FALSE
-HAVE_PGSQL_BATCH_API_TRUE
 HAVE_PGSQL_FALSE
 HAVE_PGSQL_TRUE
 POSTGRESQL_LIBS
@@ -30415,14 +30413,6 @@ else
 fi
 
  if false; then
-  HAVE_PGSQL_BATCH_API_TRUE=
-  HAVE_PGSQL_BATCH_API_FALSE='#'
-else
-  HAVE_PGSQL_BATCH_API_TRUE='#'
-  HAVE_PGSQL_BATCH_API_FALSE=
-fi
-
- if false; then
   POSTGRESQL_USE_OPENSSL_TRUE=
   POSTGRESQL_USE_OPENSSL_FALSE='#'
 else
@@ -30443,87 +30433,6 @@ fi
 
 $as_echo "#define USE_PGSQL 1" >>confdefs.h
 
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing PQenterBatchMode" >&5
-$as_echo_n "checking for library containing PQenterBatchMode... " >&6; }
-if ${ac_cv_search_PQenterBatchMode+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_func_search_save_LIBS="$LIBS"
-ac_cv_search_PQenterBatchMode="no"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char PQenterBatchMode ();
-int
-main ()
-{
-return PQenterBatchMode ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_cxx_try_link "$LINENO"; then :
-  ac_cv_search_PQenterBatchMode="none required"
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-test "$ac_cv_search_PQenterBatchMode" = "no" && for i in pq; do
-LIBS="-l$i  $ac_func_search_save_LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char PQenterBatchMode ();
-int
-main ()
-{
-return PQenterBatchMode ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_cxx_try_link "$LINENO"; then :
-  ac_cv_search_PQenterBatchMode="-l$i"
-break
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-done
-LIBS="$ac_func_search_save_LIBS"
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_PQenterBatchMode" >&5
-$as_echo "$ac_cv_search_PQenterBatchMode" >&6; }
-if test "$ac_cv_search_PQenterBatchMode" != "no"; then
-  test "$ac_cv_search_PQenterBatchMode" = "none required" || POSTGRESQL_LIBS="$POSTGRESQL_LIBS $ac_cv_search_PQenterBatchMode"
-
-else :
-
-fi
-	if test "$ac_cv_search_PQenterBatchMode" = "yes"; then
-		 if true; then
-  HAVE_PGSQL_BATCH_API_TRUE=
-  HAVE_PGSQL_BATCH_API_FALSE='#'
-else
-  HAVE_PGSQL_BATCH_API_TRUE='#'
-  HAVE_PGSQL_BATCH_API_FALSE=
-fi
-
-
-$as_echo "#define USE_PGSQL_BATCH_API 1" >>confdefs.h
-
-	fi
 	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether PostgreSQL use openssl" >&5
 $as_echo_n "checking whether PostgreSQL use openssl... " >&6; }
 	if test -n "`pg_config --configure | grep openssl`"; then
@@ -34142,7 +34051,7 @@ fi
 		CXX_MAYBE_FLAGS_MODERN=""
 
 		if test "$found_postgresql" = "yes"; then
-			if test "$ac_cv_search_PQenterBatchMode" = "yes"; then
+			if test "$static_handler_pgsql" != "yes"; then
 				CC_MAYBE_FLAGS="$CC_MAYBE_FLAGS -Wc++-compat -Wold-style-definition"
 			else
 				CC_MAYBE_FLAGS="$CC_MAYBE_FLAGS -Wno-discarded-qualifiers -Wno-switch-enum -Wno-missing-field-initializers -Wno-sign-compare -Wno-strict-aliasing \
@@ -36021,20 +35930,12 @@ if test -z "${HAVE_PGSQL_TRUE}" && test -z "${HAVE_PGSQL_FALSE}"; then
   as_fn_error $? "conditional \"HAVE_PGSQL\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
-if test -z "${HAVE_PGSQL_BATCH_API_TRUE}" && test -z "${HAVE_PGSQL_BATCH_API_FALSE}"; then
-  as_fn_error $? "conditional \"HAVE_PGSQL_BATCH_API\" was never defined.
-Usually this means the macro was only invoked conditionally." "$LINENO" 5
-fi
 if test -z "${POSTGRESQL_USE_OPENSSL_TRUE}" && test -z "${POSTGRESQL_USE_OPENSSL_FALSE}"; then
   as_fn_error $? "conditional \"POSTGRESQL_USE_OPENSSL\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${HAVE_PGSQL_TRUE}" && test -z "${HAVE_PGSQL_FALSE}"; then
   as_fn_error $? "conditional \"HAVE_PGSQL\" was never defined.
-Usually this means the macro was only invoked conditionally." "$LINENO" 5
-fi
-if test -z "${HAVE_PGSQL_BATCH_API_TRUE}" && test -z "${HAVE_PGSQL_BATCH_API_FALSE}"; then
-  as_fn_error $? "conditional \"HAVE_PGSQL_BATCH_API\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${POSTGRESQL_USE_OPENSSL_TRUE}" && test -z "${POSTGRESQL_USE_OPENSSL_FALSE}"; then

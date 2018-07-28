@@ -153,7 +153,7 @@ target_triplet = @target@
 @STATIC_ORM_DRIVER_SQLITE_TRUE@am__append_63 = orm/driver/orm_driver_sqlite.cpp
 @STATIC_ORM_DRIVER_MYSQL_TRUE@am__append_64 = orm/driver/orm_driver_mysql.cpp
 @STATIC_ORM_DRIVER_PGSQL_TRUE@am__append_65 = orm/driver/orm_driver_pgsql.cpp
-@HAVE_PGSQL_BATCH_API_FALSE@@STATIC_ORM_DRIVER_PGSQL_TRUE@am__append_66 = $(top_builddir)/src/ulib/orm/driver/libpq/libpq.la @POSTGRESQL_LDFLAGS@ @POSTGRESQL_LIBS@
+@STATIC_ORM_DRIVER_PGSQL_TRUE@am__append_66 = $(top_builddir)/src/ulib/orm/driver/libpq/libpq.la @POSTGRESQL_LDFLAGS@ @POSTGRESQL_LIBS@
 @MINGW_TRUE@am__append_67 = -export-symbols $(srcdir)/@ULIB@.def -no-undefined -Wl,ULib-win32-res.o
 
 # Handler static http servlet
@@ -769,7 +769,7 @@ EXTRA_DIST = base/* container/* db/* debug/* dynamic/* flex/* internal/* ldap/* 
              net/server/plugin/*.cpp net/server/plugin/Makefile.* \
 				 *.cpp all_c.c ULib.pc.in ULib.rc.in utility/bin
 
-@HAVE_PGSQL_BATCH_API_FALSE@@HAVE_PGSQL_TRUE@@STATIC_ORM_DRIVER_PGSQL_TRUE@SUBDIRS = orm/driver/libpq
+@HAVE_PGSQL_TRUE@@STATIC_ORM_DRIVER_PGSQL_TRUE@SUBDIRS = orm/driver/libpq
 DEFAULT_INCLUDES = -I. -I$(top_builddir)/include
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = ULib.pc

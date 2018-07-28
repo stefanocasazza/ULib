@@ -777,9 +777,6 @@
 /* Define if enable PostgreSQL database support */
 #undef USE_PGSQL
 
-/* Define if PostgreSQL database support batch API */
-#undef USE_PGSQL_BATCH_API
-
 /* Define if enable php support */
 #undef USE_PHP
 

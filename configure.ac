@@ -1433,17 +1433,11 @@ AC_CHECK_MYSQL
 AX_LIB_POSTGRESQL
 
 AM_CONDITIONAL(HAVE_PGSQL, false)
-AM_CONDITIONAL(HAVE_PGSQL_BATCH_API, false)
 AM_CONDITIONAL(POSTGRESQL_USE_OPENSSL, false)
 
 if test "$found_postgresql" = "yes"; then
    AM_CONDITIONAL(HAVE_PGSQL, true)
 	AC_DEFINE(USE_PGSQL, 1, [Define if enable PostgreSQL database support])
-   AC_SEARCH_LIBS_VAR([PQenterBatchMode], pq, , , , POSTGRESQL_LIBS)
-	if test "$ac_cv_search_PQenterBatchMode" = "yes"; then
-		AM_CONDITIONAL(HAVE_PGSQL_BATCH_API, true)
-		AC_DEFINE(USE_PGSQL_BATCH_API, 1, [Define if PostgreSQL database support batch API])
-	fi
 	AC_MSG_CHECKING([whether PostgreSQL use openssl])
 	if test -n "`pg_config --configure | grep openssl`"; then
 		AC_MSG_RESULT([yes])
@@ -2424,7 +2418,7 @@ if test "$ac_cv_c_compiler_gnu" = "yes" -a "x$OPERATINGSYSTEM" = xlinux; then
 		CXX_MAYBE_FLAGS_MODERN=""
 
 		if test "$found_postgresql" = "yes"; then
-			if test "$ac_cv_search_PQenterBatchMode" = "yes"; then
+			if test "$static_handler_pgsql" != "yes"; then
 				CC_MAYBE_FLAGS="$CC_MAYBE_FLAGS -Wc++-compat -Wold-style-definition"
 			else
 				CC_MAYBE_FLAGS="$CC_MAYBE_FLAGS -Wno-discarded-qualifiers -Wno-switch-enum -Wno-missing-field-initializers -Wno-sign-compare -Wno-strict-aliasing \

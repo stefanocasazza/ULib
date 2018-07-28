@@ -105,12 +105,25 @@ set_ADDRESS() {
 # function : prepare_usp
 prepare_usp() {
 
+#		  rm -f  db.la  query.la  update.la  fortune.la cached_worlds.la \
+#				  mdb.la mquery.la mupdate.la mfortune.la \
+#				  rdb.la rquery.la rupdate.la rfortune.la \
+#				  edb.la equery.la eupdate.la; \
+#	     AM_LDFLAGS="-lWorld"					 make  db.la  query.la  update.la cached_worlds.la 2>&1; \
+#		  AM_LDFLAGS="-lWorld  -lWorldNoSql" make mdb.la mquery.la mupdate.la 2>&1; \
+#		  AM_LDFLAGS="-lWorld  -lWorldNoSql" make rdb.la rquery.la rupdate.la 2>&1; \
+#		  AM_LDFLAGS="-lWorld  -lWorldNoSql" make edb.la equery.la eupdate.la 2>&1; \
+#		  AM_LDFLAGS="-lFortune"					 make  fortune.la 2>&1; \
+#		  AM_LDFLAGS="-lFortune -lFortuneNoSql" make mfortune.la 2>&1; \
+#		  AM_LDFLAGS="-lFortune -lFortuneNoSql" make rfortune.la 2>&1; \
+
 	if [ "$TERM" != "cygwin" ]; then
 		if [ ! -d ../db ]; then
 			mkdir -p ../db
 		fi
 		rm -f ../db/session.ssl.jnl
-		( cd ../../src/ulib/net/server/plugin/usp/; ./usp2so.sh >/tmp/usp2so.sh.out 2>&1 || exit 1; \
+		( cd ../../src/ulib/net/server/plugin/usp/; make; \
+		  ./usp2so.sh >/tmp/usp2so.sh.out 2>&1 || exit 1; \
 		  test -d ../.libs && cd ../.libs; \
 		  ln -sf ../v8/.libs/server_plugin_v8.so; \
 		  ln -sf ../php/.libs/server_plugin_php.so; \

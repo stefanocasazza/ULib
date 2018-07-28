@@ -39,7 +39,9 @@ void UEventDB::addClientImage(vPFpvu handlerResult, uint32_t num_query)
    (void) U_SYSCALL(PQflush, "%p", (PGconn*)conn);
 #endif
 
+#if defined(U_SERVER_CAPTIVE_PORTAL) && defined(ENABLE_THREAD)
    UClientImage_Base::setRequestProcessed();
+#endif
 
    U_INTERNAL_DUMP("start = %u end = %u", start, end)
 
