@@ -223,11 +223,11 @@ pqParseInput3(PGconn *conn)
             case 'Z':      /* sync response, backend is ready for new query */
                if (getReadyForQuery(conn))
                   return;
-               if (conn->batch_status != PQBATCH_MODE_OFF)
+               if (conn->queue_status != PQQUEUE_MODE_OFF)
                {
-                  conn->batch_status = PQBATCH_MODE_ON;
+                  conn->queue_status = PQQUEUE_MODE_ON;
                   conn->result = PQmakeEmptyPGresult(conn,
-                        PGRES_BATCH_END);
+                        PGRES_QUEUE_END);
                   conn->asyncStatus = PGASYNC_READY;
                }
                else
@@ -888,8 +888,8 @@ pqGetErrorNotice3(PGconn *conn, bool isError)
    PQExpBufferData workBuf;
    char     id;
 
-   if (isError && conn->batch_status != PQBATCH_MODE_OFF)
-      conn->batch_status = PQBATCH_MODE_ABORTED;
+   if (isError && conn->queue_status != PQQUEUE_MODE_OFF)
+      conn->queue_status = PQQUEUE_MODE_ABORTED;
 
    /*
     * If this is an error message, pre-emptively clear any incomplete query

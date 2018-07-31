@@ -4305,6 +4305,7 @@ set_uri: U_http_info.uri     = alias->data();
    U_MEMCPY(p1+u_cwd_len, U_http_info.uri, U_http_info.uri_len);
 
    pathname->size_adjust_force(len);
+   pathname->rep->setNullTerminated();
 
    U_http_info.nResponseCode = HTTP_OK;
 
@@ -7333,6 +7334,7 @@ U_NO_EXPORT void UHTTP::addContentLengthToHeader(UString& header, char* ptr, uin
    u_put_unalignedp32(ptr, U_MULTICHAR_CONSTANT32('\r','\n','\r','\n'));
 
    header.size_adjust(new_size);
+   header.rep->setNullTerminated();
 }
 
 void UHTTP::setDynamicResponse()
@@ -9291,6 +9293,7 @@ U_NO_EXPORT inline bool UHTTP::checkPathName(uint32_t len)
    U_TRACE(0, "UHTTP::checkPathName(%u)", len)
 
    pathname->size_adjust_force(u_cwd_len + len); // NB: pathname can be referenced by the file obj...
+   pathname->rep->setNullTerminated();
 
    return checkPathName();
 }
@@ -11837,7 +11840,7 @@ loop: while (u__isalpha(*++ptr1)) {}
          U_http_info.nResponseCode = HTTP_OK;
 
          UClientImage_Base::body->clear();
-         UClientImage_Base::wbuffer->rep->setEmpty();
+         UClientImage_Base::wbuffer->setEmpty();
 
          UClientImage_Base::setHeaderForResponse(6+29+2+12+2); // Date: Wed, 20 Jun 2012 11:43:17 GMT\r\nServer: ULib\r\n
 

@@ -103,6 +103,7 @@ vClientImage = new client_type[UNotifier::max_connection]; } }
 
 class UHTTP;
 class UHTTP2;
+class UEventDB;
 class UCommand;
 class UTimeStat;
 class UDayLight;
@@ -257,8 +258,8 @@ public:
    // -------------------------------------------------------------------
 
    static char mod_name[2][32];
-   static UEventFd* handler_db1;
-   static UEventFd* handler_db2;
+   static UEventDB* handler_db1;
+   static UEventDB* handler_db2;
    static UEventFd* handler_inotify;
    static UVector<UEventFd*>* handler_other;
 

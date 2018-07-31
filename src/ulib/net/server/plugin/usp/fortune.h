@@ -119,7 +119,6 @@ public:
 
 #ifdef U_STATIC_ORM_DRIVER_PGSQL
 	static PGconn* conn;
-	static UOrmDriverPgSql* pdrv;
 	static UPgSqlStatement* pstmt;
 
 	static PGresult* execPrepared()
@@ -165,7 +164,7 @@ public:
 
 		U_INTERNAL_DUMP("wbuffer(%u) = %#.10S", UClientImage_Base::wbuffer->size(), ptr)
 
-		if (*ptr == '\0')
+		if (u_get_unalignedp64(ptr+48) != U_MULTICHAR_CONSTANT64('h','a','r','s','e','t','=','U'))
 			{
 			u_put_unalignedp64(ptr,	    U_MULTICHAR_CONSTANT64('C','o','n','t','e','n','t','-'));
 			u_put_unalignedp64(ptr+8,   U_MULTICHAR_CONSTANT64('L','e','n','g','t','h',':',' '));
@@ -192,12 +191,11 @@ public:
 
 			pwbuffer	= ptr + U_CONSTANT_SIZE("Content-Length: 1227\r\nContent-Type: text/html; charset=UTF-8\r\n\r\n"
 														"<!doctype html><html><head><title>Fortunes</title></head><body><table><tr><th>id</th><th>message</th></tr>");
-
-			UClientImage_Base::wbuffer->size_adjust_constant(U_CONSTANT_SIZE("Content-Length: 1227\r\nContent-Type: text/html; charset=UTF-8\r\n\r\n") + 1227);
 			}
 
-		U_INTERNAL_ASSERT_EQUALS(u_get_unalignedp64(UClientImage_Base::wbuffer->data()),        U_MULTICHAR_CONSTANT64('C','o','n','t','e','n','t','-'))
-		U_INTERNAL_ASSERT_EQUALS(u_get_unalignedp64(UClientImage_Base::wbuffer->c_pointer(48)), U_MULTICHAR_CONSTANT64('h','a','r','s','e','t','=','U'))
+		U_INTERNAL_ASSERT_EQUALS(u_get_unalignedp64(UClientImage_Base::wbuffer->data()), U_MULTICHAR_CONSTANT64('C','o','n','t','e','n','t','-'))
+
+		UClientImage_Base::wbuffer->size_adjust_constant(U_CONSTANT_SIZE("Content-Length: 1227\r\nContent-Type: text/html; charset=UTF-8\r\n\r\n") + 1227);
 		}
 
 	static void endQuery()
@@ -259,7 +257,7 @@ public:
 
 		if (UServer_Base::handler_db2 == U_NULLPTR)
 			{
-			U_NEW_WITHOUT_CHECK_MEMORY(UEventDB, UServer_Base::handler_db2, UEventDB);
+			U_NEW(UEventDB, UServer_Base::handler_db2, UEventDB);
 			}
 #	endif
 		}
@@ -310,12 +308,14 @@ public:
 #		ifdef U_STATIC_ORM_DRIVER_PGSQL
 			if (UOrmDriver::isPGSQL())
 				{
-				 conn = (PGconn*)(pdrv = (UOrmDriverPgSql*)psql_fortune->getDriver())->UOrmDriver::connection;
+				UOrmDriverPgSql* pdrv = (UOrmDriverPgSql*)psql_fortune->getDriver();
+
+				 conn = (PGconn*)pdrv->UOrmDriver::connection;
 				pstmt = (UPgSqlStatement*)pstmt_fortune->getStatement();
 
 				pstmt->prepareStatement(pdrv);
 
-				((UEventDB*)UServer_Base::handler_db2)->setConnection(conn);
+				UServer_Base::handler_db2->setConnection(conn);
 				}
 #		endif
 			}

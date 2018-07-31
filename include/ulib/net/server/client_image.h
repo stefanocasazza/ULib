@@ -451,11 +451,9 @@ protected:
 
       body->clear();
 
-      U_INTERNAL_DUMP("wbuffer(%u) = %V", wbuffer->size(), wbuffer->rep)
+      U_DUMP("wbuffer(%u) = %V isConstant() = %b", wbuffer->size(), wbuffer->rep, wbuffer->isConstant())
 
       wbuffer->setBuffer(U_CAPACITY); // NB: this string can be referenced more than one (often if U_SUBSTR_INC_REF is defined)...
-
-      wbuffer->rep->setNullTerminated();
       }
 
    int handlerResponse()

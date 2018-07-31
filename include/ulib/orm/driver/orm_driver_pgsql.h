@@ -28,22 +28,18 @@ extern "C" {
 #include <libpq-fe.h>
 #include <catalog/pg_type.h>
 
-// ASYNC with PIPELINE (PostgresSQL v3 extended query protocol)
-
-#ifndef USE_PGSQL_BATCH_API
-#define USE_PGSQL_BATCH_API
-extern U_EXPORT int   PQexitBatchMode(PGconn* conn);
-extern U_EXPORT int   PQenterBatchMode(PGconn* conn);
-extern U_EXPORT int   PQbatchSendQueue(PGconn* conn);
-extern U_EXPORT int   PQbatchProcessQueue(PGconn* conn);
-extern U_EXPORT void* PQbatchPutSyncOnQueue(PGconn* conn);
+#ifndef USE_PGSQL_QUEUE_API
+#define USE_PGSQL_QUEUE_API // PostgresSQL v3 extended query protocol
+extern U_EXPORT int PQsendQueue(PGconn* conn);
+extern U_EXPORT int PQprocessQueue(PGconn* conn);
+extern U_EXPORT int PQexitQueueMode(PGconn* conn);
+extern U_EXPORT int PQenterQueueMode(PGconn* conn);
 
 /*
-extern U_EXPORT int   PQexitBatchMode(PGconn* conn) { return 0; }
-extern U_EXPORT int   PQenterBatchMode(PGconn* conn) { return 0; }
-extern U_EXPORT int   PQbatchSendQueue(PGconn* conn) { return 0; }
-extern U_EXPORT int   PQbatchProcessQueue(PGconn* conn) { return 0; }
-extern U_EXPORT void* PQbatchPutSyncOnQueue(PGconn* conn) { return 0; }
+extern U_EXPORT int PQsendQueue(PGconn* conn) { return 0; }
+extern U_EXPORT int PQprocessQueue(PGconn* conn) { return 0; }
+extern U_EXPORT int PQexitQueueMode(PGconn* conn) { return 0; }
+extern U_EXPORT int PQenterQueueMode(PGconn* conn) { return 0; }
 */
 #endif
 }

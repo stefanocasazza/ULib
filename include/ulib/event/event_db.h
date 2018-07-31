@@ -27,7 +27,8 @@ public:
    typedef struct query_info {
       vPFpvu             handlerResult;
       UClientImage_Base* pClientImage;
-      uint32_t           num_query, num_result;
+      uint32_t           timestamp;
+      uint16_t           num_query, num_result;
    } query_info;
 
    UEventDB()
@@ -39,6 +40,8 @@ public:
       start = end = 0;
 
       (void) U_SYSCALL(memset, "%p,%d,%u", query, 0, sizeof(query));
+
+      bmode = false;
       }
 
    ~UEventDB()
@@ -48,8 +51,9 @@ public:
 
    // SERVICES
 
+   void handlerResult(vPFpvu handler);
    void setConnection(void* connection);
-   void addClientImage(vPFpvu handlerResult, uint32_t num_query = 1);
+   void handlerQuery(uint32_t num_query = 1);
 
    // define method VIRTUAL
 
@@ -63,6 +67,7 @@ private:
    void* conn;
    uint32_t start, end;
    query_info query[512];
+   bool bmode;
 
    U_DISALLOW_COPY_AND_ASSIGN(UEventDB)
 };

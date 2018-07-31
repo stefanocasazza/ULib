@@ -412,9 +412,9 @@ pqParseInput2(PGconn *conn)
 {
    char     id;
 
-   if (conn->batch_status != PQBATCH_MODE_OFF)
+   if (conn->queue_status != PQQUEUE_MODE_OFF)
    {
-      fprintf(stderr, "internal error, attempt to read v2 protocol in batch mode");
+      fprintf(stderr, "internal error, attempt to read v2 protocol in queue mode");
       abort();
    }
 

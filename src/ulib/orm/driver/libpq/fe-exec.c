@@ -41,8 +41,8 @@ char     *const pgresStatus[] = {
    "PGRES_FATAL_ERROR",
    "PGRES_COPY_BOTH",
    "PGRES_SINGLE_TUPLE",
-   "PGRES_BATCH_END",
-   "PGRES_BATCH_ABORTED"
+   "PGRES_QUEUE_END",
+   "PGRES_QUEUE_ABORTED"
 };
 
 /*
@@ -76,7 +76,7 @@ static int  check_field_number(const PGresult *res, int field_num);
 static PGcommandQueueEntry *PQmakePipelinedCommand(PGconn *conn);
 static void PQappendPipelinedCommand(PGconn *conn, PGcommandQueueEntry * entry);
 static void PQrecyclePipelinedCommand(PGconn *conn, PGcommandQueueEntry * entry);
-static int pqBatchFlush(PGconn *conn);
+static int pqQueueFlush(PGconn *conn);
 
 /* ----------------
  * Space management for PGresult.
@@ -1187,10 +1187,10 @@ fail:
 int
 PQsendQuery(PGconn *conn, const char *query)
 {
-   if (conn->batch_status != PQBATCH_MODE_OFF)
+   if (conn->queue_status != PQQUEUE_MODE_OFF)
    {
       printfPQExpBuffer(&conn->errorMessage,
-                    libpq_gettext("cannot PQsendQuery in batch mode, use PQsendQueryParams\n"));
+                    libpq_gettext("cannot PQsendQuery in queue mode, use PQsendQueryParams\n"));
       return false;
    }
 
@@ -1354,7 +1354,7 @@ PQsendPrepare(PGconn *conn,
       goto sendFailed;
 
    /* construct the Sync message */
-   if (conn->batch_status == PQBATCH_MODE_OFF)
+   if (conn->queue_status == PQQUEUE_MODE_OFF)
    {
       if (pqPutMsgStart('S', false, conn) < 0 ||
          pqPutMsgEnd(conn) < 0)
@@ -1387,11 +1387,11 @@ PQsendPrepare(PGconn *conn,
     * Give the data a push.  In nonblock mode, don't complain if we're unable
     * to send it all; PQgetResult() will do any additional flushing needed.
     */
-   if (pqBatchFlush(conn) < 0)
+   if (pqQueueFlush(conn) < 0)
       goto sendFailed;
 
    /* OK, it's launched! */
-   if (conn->batch_status != PQBATCH_MODE_OFF)
+   if (conn->queue_status != PQQUEUE_MODE_OFF)
       PQappendPipelinedCommand(conn, pipeCmd);
    else
       conn->asyncStatus = PGASYNC_BUSY;
@@ -1539,19 +1539,19 @@ PQsendQueryStart(PGconn *conn)
    }
 
    /* Can't send while already busy, either, unless enqueuing for later */
-   if (conn->asyncStatus != PGASYNC_IDLE && conn->batch_status == PQBATCH_MODE_OFF)
+   if (conn->asyncStatus != PGASYNC_IDLE && conn->queue_status == PQQUEUE_MODE_OFF)
    {
       printfPQExpBuffer(&conn->errorMessage,
                     libpq_gettext("another command is already in progress\n"));
       return false;
    }
 
-   if (conn->batch_status != PQBATCH_MODE_OFF)
+   if (conn->queue_status != PQQUEUE_MODE_OFF)
    {
       /*
        * When enqueuing a message we don't change much of the connection
        * state since it's already in use for the current command. The
-       * connection state will get updated when PQbatchQueueProcess(...)
+       * connection state will get updated when PQqueueQueueProcess(...)
        * advances to start processing the queued message.
        *
        * Just make sure we can safely enqueue given the current connection
@@ -1576,7 +1576,7 @@ PQsendQueryStart(PGconn *conn)
             break;
          case PGASYNC_IDLE:
             printfPQExpBuffer(&conn->errorMessage,
-                  libpq_gettext_noop("internal error, idle state in batch mode"));
+                  libpq_gettext_noop("internal error, idle state in queue mode"));
             break;
       }
    }
@@ -1627,7 +1627,7 @@ PQsendQueryGuts(PGconn *conn,
       return 0;
    }
 
-   if (conn->batch_status != PQBATCH_MODE_OFF)
+   if (conn->queue_status != PQQUEUE_MODE_OFF)
    {
       pipeCmd = PQmakePipelinedCommand(conn);
 
@@ -1756,7 +1756,7 @@ PQsendQueryGuts(PGconn *conn,
       pqPutMsgEnd(conn) < 0)
       goto sendFailed;
 
-   if (conn->batch_status == PQBATCH_MODE_OFF)
+   if (conn->queue_status == PQQUEUE_MODE_OFF)
    {
       /* construct the Sync message */
       if (pqPutMsgStart('S', false, conn) < 0 ||
@@ -1780,11 +1780,11 @@ PQsendQueryGuts(PGconn *conn,
     * Give the data a push.  In nonblock mode, don't complain if we're unable
     * to send it all; PQgetResult() will do any additional flushing needed.
     */
-   if (pqBatchFlush(conn) < 0)
+   if (pqQueueFlush(conn) < 0)
       goto sendFailed;
 
    /* OK, it's launched! */
-   if (conn->batch_status != PQBATCH_MODE_OFF)
+   if (conn->queue_status != PQQUEUE_MODE_OFF)
       PQappendPipelinedCommand(conn, pipeCmd);
    else
       conn->asyncStatus = PGASYNC_BUSY;
@@ -1919,67 +1919,67 @@ PQisBusy(PGconn *conn)
 }
 
 /*
- * PQbatchStatus
- *    Returns current batch mode status
+ * PQqueueStatus
+ *    Returns current queue mode status
  */
 int
-PQbatchStatus(PGconn *conn)
+PQqueueStatus(PGconn *conn)
 {
    if (!conn)
       return false;
 
-   return conn->batch_status;
+   return conn->queue_status;
 }
 
 /*
- * PQenterBatchMode
- *    Put an idle connection in batch mode. Commands submitted after this
+ * PQenterQueueMode
+ *    Put an idle connection in queue mode. Commands submitted after this
  *    can be pipelined on the connection, there's no requirement to wait for
  *    one to finish before the next is dispatched.
  *
  *    Queuing of a new query or syncing during COPY is not allowed.
  *
- *    A set of commands is terminated by a PQbatchQueueSync. Multiple sets of batched
- *    commands may be sent while in batch mode. Batch mode can be exited by
- *    calling PQbatchEnd() once all results are processed.
+ *    A set of commands is terminated by a PQqueueQueueSync. Multiple sets of queueed
+ *    commands may be sent while in queue mode. Queue mode can be exited by
+ *    calling PQqueueEnd() once all results are processed.
  *
  *    This doesn't actually send anything on the wire, it just puts libpq
  *    into a state where it can pipeline work.
  */
 int
-PQenterBatchMode(PGconn *conn)
+PQenterQueueMode(PGconn *conn)
 {
    if (!conn)
       return 0;
 
-   if (conn->batch_status != PQBATCH_MODE_OFF)
+   if (conn->queue_status != PQQUEUE_MODE_OFF)
       return 1;
 
    if (conn->asyncStatus != PGASYNC_IDLE)
       return 0;
 
-   conn->batch_status = PQBATCH_MODE_ON;
+   conn->queue_status = PQQUEUE_MODE_ON;
    conn->asyncStatus = PGASYNC_QUEUED;
 
    return 1;
 }
 
 /*
- * PQexitBatchMode
- *    End batch mode and return to normal command mode.
+ * PQexitQueueMode
+ *    End queue mode and return to normal command mode.
  *
  *    Has no effect unless the client has processed all results
- *    from all outstanding batches and the connection is idle.
+ *    from all outstanding queuees and the connection is idle.
  *
- *    Returns 1 if batch mode ended.
+ *    Returns 1 if queue mode ended.
  */
 int
-PQexitBatchMode(PGconn *conn)
+PQexitQueueMode(PGconn *conn)
 {
    if (!conn)
       goto exitFailed;
 
-   if (conn->batch_status == PQBATCH_MODE_OFF)
+   if (conn->queue_status == PQQUEUE_MODE_OFF)
       return 1;
 
    switch (conn->asyncStatus)
@@ -1987,7 +1987,7 @@ PQexitBatchMode(PGconn *conn)
       case PGASYNC_READY:
       case PGASYNC_READY_MORE:
       case PGASYNC_BUSY:
-         /* can't end batch while busy */
+         /* can't end queue while busy */
          goto exitFailed;
       default:
          break;
@@ -1997,7 +1997,7 @@ PQexitBatchMode(PGconn *conn)
    if (conn->cmd_queue_head != NULL)
       goto exitFailed;
 
-   conn->batch_status = PQBATCH_MODE_OFF;
+   conn->queue_status = PQQUEUE_MODE_OFF;
    conn->asyncStatus = PGASYNC_IDLE;
 
    /* Flush any pending data in out buffer */
@@ -2010,117 +2010,104 @@ sendFailed:
 
 exitFailed:
    printfPQExpBuffer(&conn->errorMessage,
-                     libpq_gettext_noop("internal error, Failed to exit batch mode"));
+                     libpq_gettext_noop("internal error, Failed to exit queue mode"));
    return 0;
 }
 
-void* PQbatchPutSyncOnQueue(PGconn* conn)
+/*
+ * PQsendQueue
+ *    End a queue submission by sending a protocol sync. The connection will
+ *    remain in queue mode and unavailable for new synchronous command execution
+ *    functions until all results from the queue are processed by the client.
+ *
+ *    It's legal to start submitting another queue immediately, without waiting
+ *    for the results of the current queue. There's no need to end queue mode
+ *    and start it again.
+ *
+ *    If a command in a queue fails, every subsequent command up to and including
+ *    the PQqueueQueueSync command result gets set to PGRES_QUEUE_ABORTED state. If the
+ *    whole queue is processed without error, a PGresult with PGRES_QUEUE_END is
+ *    produced.
+ */
+int
+PQsendQueue(PGconn *conn)
 {
-   PGcommandQueueEntry* entry;
+   PGcommandQueueEntry *entry;
 
-   if (!conn ||
-        conn->batch_status == PQBATCH_MODE_OFF)
-      {
-      return NULL;
-      }
+   if (!conn)
+      return 0;
+
+   if (conn->queue_status == PQQUEUE_MODE_OFF)
+      return 0;
 
    switch (conn->asyncStatus)
-      {
-      case PGASYNC_IDLE:      printfPQExpBuffer(&conn->errorMessage, libpq_gettext_noop("internal error, IDLE in batch mode")); break;
-
+   {
+      case PGASYNC_IDLE:
+         printfPQExpBuffer(&conn->errorMessage,
+               libpq_gettext_noop("internal error, IDLE in queue mode"));
+         break;
       case PGASYNC_COPY_IN:
       case PGASYNC_COPY_OUT:
-      case PGASYNC_COPY_BOTH: printfPQExpBuffer(&conn->errorMessage, libpq_gettext_noop("internal error, COPY in batch mode")); break;
-
+      case PGASYNC_COPY_BOTH:
+         printfPQExpBuffer(&conn->errorMessage,
+               libpq_gettext_noop("internal error, COPY in queue mode"));
+         break;
       case PGASYNC_READY:
       case PGASYNC_READY_MORE:
       case PGASYNC_BUSY:
       case PGASYNC_QUEUED:
-      /* can send sync to end this batch of cmds */
-      break;
-      }
+         /* can send sync to end this queue of cmds */
+         break;
+   }
 
    entry = PQmakePipelinedCommand(conn);
+   if (entry == NULL)
+      return 0;         /* error msg already set */
 
-   if (entry)
-      {
-      entry->query      = NULL;
-      entry->queryclass = PGQUERY_SYNC;
+   entry->queryclass = PGQUERY_SYNC;
+   entry->query = NULL;
 
-      /* construct the Sync message */
-      if (pqPutMsgStart('S', false, conn) < 0 ||
-          pqPutMsgEnd(conn) < 0)
-         {
-         PQrecyclePipelinedCommand(conn, entry);
+   /* construct the Sync message */
+   if (pqPutMsgStart('S', false, conn) < 0 ||
+      pqPutMsgEnd(conn) < 0)
+      goto sendFailed;
 
-         return NULL;
-         }
+   PQappendPipelinedCommand(conn, entry);
 
-      PQappendPipelinedCommand(conn, entry);
+   /*
+    * Give the data a push.  In nonblock mode, don't complain if we're unable
+    * to send it all; PQgetResult() will do any additional flushing needed.
+    */
+   if (PQflush(conn) < 0)
+      goto sendFailed;
 
-      return entry;
-      }
+   return 1;
 
-   /* error msg already set */
-
-   return NULL;
-}
-
-/*
- * PQbatchSendQueue
- *    End a batch submission by sending a protocol sync. The connection will
- *    remain in batch mode and unavailable for new synchronous command execution
- *    functions until all results from the batch are processed by the client.
- *
- *    It's legal to start submitting another batch immediately, without waiting
- *    for the results of the current batch. There's no need to end batch mode
- *    and start it again.
- *
- *    If a command in a batch fails, every subsequent command up to and including
- *    the PQbatchQueueSync command result gets set to PGRES_BATCH_ABORTED state. If the
- *    whole batch is processed without error, a PGresult with PGRES_BATCH_END is
- *    produced.
- */
-int
-PQbatchSendQueue(PGconn *conn)
-{
-   PGcommandQueueEntry* entry = (PGcommandQueueEntry*)PQbatchPutSyncOnQueue(conn);
-
-   if (entry)
-      {
-      /*
-       * Give the data a push. In nonblock mode, don't complain if we're unable
-       * to send it all; PQgetResult() will do any additional flushing needed.
-       */
-
-      if (PQflush(conn) >= 0) return 1;
-
-      PQrecyclePipelinedCommand(conn, entry);
-      pqHandleSendFailure(conn);
-      }
-
+sendFailed:
+   PQrecyclePipelinedCommand(conn, entry);
+   pqHandleSendFailure(conn);
    return 0;
 }
 
 /*
- * PQbatchProcessQueue
- *  In batch mode, start processing the next query in the queue.
+ * PQprocessQueue
+ *  In queue mode, start processing the next query in the queue.
  *
  * Returns 1 if the next query was popped from the queue and can
  * be processed by PQconsumeInput, PQgetResult, etc.
  *
  * Returns 0 if the current query isn't done yet, the connection
- * is not in a batch, or there are no more queries to process.
+ * is not in a queue, or there are no more queries to process.
  */
 int
-PQbatchProcessQueue(PGconn *conn)
+PQprocessQueue(PGconn *conn)
 {
    PGcommandQueueEntry *next_query;
 
    if (!conn)
       return 0;
 
-   if (conn->batch_status == PQBATCH_MODE_OFF)
+   if (conn->queue_status == PQQUEUE_MODE_OFF)
       return 0;
 
    switch (conn->asyncStatus)
@@ -2129,7 +2116,7 @@ PQbatchProcessQueue(PGconn *conn)
       case PGASYNC_COPY_OUT:
       case PGASYNC_COPY_BOTH:
          printfPQExpBuffer(&conn->errorMessage,
-               libpq_gettext_noop("internal error, COPY in batch mode"));
+               libpq_gettext_noop("internal error, COPY in queue mode"));
          break;
       case PGASYNC_READY:
       case PGASYNC_READY_MORE:
@@ -2139,7 +2126,7 @@ PQbatchProcessQueue(PGconn *conn)
          break;
       case PGASYNC_IDLE:
          printfPQExpBuffer(&conn->errorMessage,
-               libpq_gettext_noop("internal error, IDLE in batch mode"));
+               libpq_gettext_noop("internal error, IDLE in queue mode"));
          break;
       case PGASYNC_QUEUED:
          /* next query please */
@@ -2149,15 +2136,15 @@ PQbatchProcessQueue(PGconn *conn)
    if (conn->cmd_queue_head == NULL)
    {
       /*
-       * In batch mode but nothing left on the queue; caller can submit more
-       * work or PQbatchEnd() now.
+       * In queue mode but nothing left on the queue; caller can submit more
+       * work or PQqueueEnd() now.
        */
       return 0;
    }
 
    /*
     * Pop the next query from the queue and set up the connection state as if
-    * it'd just been dispatched from a non-batched call
+    * it'd just been dispatched from a non-queueed call
     */
    next_query = conn->cmd_queue_head;
    conn->cmd_queue_head = next_query->next;
@@ -2176,17 +2163,17 @@ PQbatchProcessQueue(PGconn *conn)
 
    PQrecyclePipelinedCommand(conn, next_query);
 
-   if (conn->batch_status == PQBATCH_MODE_ABORTED && conn->queryclass != PGQUERY_SYNC)
+   if (conn->queue_status == PQQUEUE_MODE_ABORTED && conn->queryclass != PGQUERY_SYNC)
    {
       /*
-       * In an aborted batch we don't get anything from the server for each
+       * In an aborted queue we don't get anything from the server for each
        * result; we're just discarding input until we get to the next sync
        * from the server. The client needs to know its queries got aborted
        * so we create a fake PGresult to return immediately from
        * PQgetResult.
        */
       conn->result = PQmakeEmptyPGresult(conn,
-                                 PGRES_BATCH_ABORTED);
+                                 PGRES_QUEUE_ABORTED);
       if (!conn->result)
       {
          printfPQExpBuffer(&conn->errorMessage,
@@ -2269,14 +2256,14 @@ PQgetResult(PGconn *conn)
          break;
       case PGASYNC_READY:
          res = pqPrepareAsyncResult(conn);
-         if (conn->batch_status != PQBATCH_MODE_OFF)
+         if (conn->queue_status != PQQUEUE_MODE_OFF)
          {
             /*
-             * In batch mode, query execution state cannot be IDLE as there
+             * In queue mode, query execution state cannot be IDLE as there
              * can be other queries or results waiting in the queue
              *
              * The connection isn't idle since we can't submit new
-             * nonbatched commands. It isn't also busy since the current
+             * nonqueueed commands. It isn't also busy since the current
              * command is done and we need to process a new one.
              */
             conn->asyncStatus = PGASYNC_QUEUED;
@@ -2468,10 +2455,10 @@ PQexecStart(PGconn *conn)
    if (!conn)
       return false;
 
-   if (conn->batch_status != PQBATCH_MODE_OFF)
+   if (conn->queue_status != PQQUEUE_MODE_OFF)
    {
       printfPQExpBuffer(&conn->errorMessage,
-                    libpq_gettext("Synchronous command execution functions are not allowed in batch mode\n"));
+                    libpq_gettext("Synchronous command execution functions are not allowed in queue mode\n"));
       return false;
    }
 
@@ -2687,7 +2674,7 @@ PQsendDescribe(PGconn *conn, char desc_type, const char *desc_target)
       return 0;
    }
 
-   if (conn->batch_status != PQBATCH_MODE_OFF)
+   if (conn->queue_status != PQQUEUE_MODE_OFF)
    {
       pipeCmd = PQmakePipelinedCommand(conn);
 
@@ -2709,7 +2696,7 @@ PQsendDescribe(PGconn *conn, char desc_type, const char *desc_target)
       goto sendFailed;
 
    /* construct the Sync message */
-   if (conn->batch_status == PQBATCH_MODE_OFF)
+   if (conn->queue_status == PQQUEUE_MODE_OFF)
    {
       if (pqPutMsgStart('S', false, conn) < 0 ||
          pqPutMsgEnd(conn) < 0)
@@ -2720,7 +2707,7 @@ PQsendDescribe(PGconn *conn, char desc_type, const char *desc_target)
    *queryclass = PGQUERY_DESCRIBE;
 
    /* reset last-query string (not relevant now) */
-   if (conn->last_query && conn->batch_status != PQBATCH_MODE_OFF)
+   if (conn->last_query && conn->queue_status != PQQUEUE_MODE_OFF)
    {
       free(conn->last_query);
       conn->last_query = NULL;
@@ -2730,11 +2717,11 @@ PQsendDescribe(PGconn *conn, char desc_type, const char *desc_target)
     * Give the data a push.  In nonblock mode, don't complain if we're unable
     * to send it all; PQgetResult() will do any additional flushing needed.
     */
-   if (pqBatchFlush(conn) < 0)
+   if (pqQueueFlush(conn) < 0)
       goto sendFailed;
 
    /* OK, it's launched! */
-   if (conn->batch_status != PQBATCH_MODE_OFF)
+   if (conn->queue_status != PQQUEUE_MODE_OFF)
       PQappendPipelinedCommand(conn, pipeCmd);
    else
       conn->asyncStatus = PGASYNC_BUSY;
@@ -3136,10 +3123,10 @@ PQfn(PGconn *conn,
    /* clear the error string */
    resetPQExpBuffer(&conn->errorMessage);
 
-   if (conn->batch_status != PQBATCH_MODE_OFF)
+   if (conn->queue_status != PQQUEUE_MODE_OFF)
    {
       printfPQExpBuffer(&conn->errorMessage,
-                  libpq_gettext("Synchronous command execution functions are not allowed in batch mode\n"));
+                  libpq_gettext("Synchronous command execution functions are not allowed in queue mode\n"));
       return NULL;
    }
 
@@ -4336,14 +4323,14 @@ PQunescapeBytea(const unsigned char *strtext, size_t *retbuflen)
    *retbuflen = buflen;
    return tmpbuf;
 }
-/* pqBatchFlush
- * In batch mode, data will be flushed only when the out buffer reaches the threshold value.
- * In non-batch mode, data will be flushed all the time.
+/* pqQueueFlush
+ * In queue mode, data will be flushed only when the out buffer reaches the threshold value.
+ * In non-queue mode, data will be flushed all the time.
  */
 static int
-pqBatchFlush(PGconn *conn)
+pqQueueFlush(PGconn *conn)
 {
-   if ((conn->batch_status == PQBATCH_MODE_OFF)||(conn->outCount >= OUTBUFFER_THRESHOLD))
+   if ((conn->queue_status == PQQUEUE_MODE_OFF)||(conn->outCount >= OUTBUFFER_THRESHOLD))
       return(pqFlush(conn));
    return 0; /* Just to keep compiler quiet */
 }

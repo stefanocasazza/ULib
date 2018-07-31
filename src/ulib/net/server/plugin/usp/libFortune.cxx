@@ -10,7 +10,6 @@ UOrmStatement*		 Fortune::pstmt_fortune;
 UVector<Fortune*>* Fortune::pvfortune;
 #ifdef U_STATIC_ORM_DRIVER_PGSQL
 PGconn*				 Fortune::conn;
-UOrmDriverPgSql*	 Fortune::pdrv;
 UPgSqlStatement*	 Fortune::pstmt;
 #endif
 

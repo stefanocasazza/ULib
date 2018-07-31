@@ -96,9 +96,9 @@ typedef enum
 	PGRES_FATAL_ERROR,			/* query failed */
 	PGRES_COPY_BOTH,			/* Copy In/Out data transfer in progress */
 	PGRES_SINGLE_TUPLE,			/* single tuple from larger resultset */
-	PGRES_BATCH_END,			/* end of a batch of commands */
-	PGRES_BATCH_ABORTED,		/* Command didn't run because of an abort
-								 * earlier in a batch */
+	PGRES_QUEUE_END,			/* end of a queue of commands */
+	PGRES_QUEUE_ABORTED,		/* Command didn't run because of an abort
+								 * earlier in a queue */
 } ExecStatusType;
 
 typedef enum
@@ -138,15 +138,15 @@ typedef enum
 } PGPing;
 
 /*
- * PQBatchStatus - Current status of batch mode
+ * PQQueueStatus - Current status of queue mode
  */
 
 typedef enum
 {
-	PQBATCH_MODE_OFF,
-	PQBATCH_MODE_ON,
-	PQBATCH_MODE_ABORTED
-}	PQBatchStatus;
+	PQQUEUE_MODE_OFF,
+	PQQUEUE_MODE_ON,
+	PQQUEUE_MODE_ABORTED
+}	PQQueueStatus;
 
 /* PGconn encapsulates a connection to the backend.
  * The contents of this struct are not supposed to be known to applications.
@@ -439,13 +439,12 @@ extern PGresult *PQgetResult(PGconn *conn);
 extern int	PQisBusy(PGconn *conn);
 extern int	PQconsumeInput(PGconn *conn);
 
-/* Routines for batch mode management */
-extern int	 PQbatchStatus(PGconn *conn);
-extern int	 PQenterBatchMode(PGconn *conn);
-extern int	 PQexitBatchMode(PGconn *conn);
-extern int	 PQbatchSendQueue(PGconn *conn);
-extern int	 PQbatchProcessQueue(PGconn *conn);
-extern void* PQbatchPutSyncOnQueue(PGconn* conn);
+/* Routines for queue mode management */
+extern int	PQqueueStatus(PGconn *conn);
+extern int	PQenterQueueMode(PGconn *conn);
+extern int	PQexitQueueMode(PGconn *conn);
+extern int	PQsendQueue(PGconn *conn);
+extern int	PQprocessQueue(PGconn *conn);
 
 /* LISTEN/NOTIFY support */
 extern PGnotify *PQnotifies(PGconn *conn);

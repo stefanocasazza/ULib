@@ -14,6 +14,17 @@
 #include <ulib/net/socket.h>
 #include <ulib/orm/driver/orm_driver_pgsql.h>
 
+/*
+extern "C" {
+#ifdef USE_PGSQL_QUEUE_API // PostgresSQL v3 extended query protocol
+extern U_EXPORT int PQsendQueue(PGconn* conn) { return 0; }
+extern U_EXPORT int PQprocessQueue(PGconn* conn) { return 0; }
+extern U_EXPORT int PQexitQueueMode(PGconn* conn) { return 0; }
+extern U_EXPORT int PQenterQueueMode(PGconn* conn) { return 0; }
+#endif
+}
+*/
+
 U_CREAT_FUNC(orm_driver_pgsql, UOrmDriverPgSql)
 
 UOrmDriverPgSql::~UOrmDriverPgSql()
@@ -670,18 +681,18 @@ bool UOrmDriverPgSql::asyncPipelineMode(bool benter)
 {
    U_TRACE(0, "UOrmDriverPgSql::asyncPipelineMode(%b)", benter)
 
-#ifdef USE_PGSQL_BATCH_API
+#ifdef USE_PGSQL_QUEUE_API
    if (benter)
       {
       if (U_SYSCALL(PQsetnonblocking, "%p,%d", (PGconn*)UOrmDriver::connection, 1) == 0 && // NB: nonblocking if arg is 1, or blocking if arg is 0...
-          U_SYSCALL(PQenterBatchMode, "%p", (PGconn*)UOrmDriver::connection) == 1)
+          U_SYSCALL(PQenterQueueMode, "%p",    (PGconn*)UOrmDriver::connection)    == 1)
          {
          U_RETURN(true);
          }
       }
    else
       {
-      if (U_SYSCALL(PQexitBatchMode, "%p", (PGconn*)UOrmDriver::connection) == 1 &&
+      if (U_SYSCALL(PQexitQueueMode, "%p",     (PGconn*)UOrmDriver::connection)    == 1 &&
           U_SYSCALL(PQsetnonblocking, "%p,%d", (PGconn*)UOrmDriver::connection, 0) == 0) // NB: nonblocking if arg is 1, or blocking if arg is 0...
          {
          U_RETURN(true);
@@ -698,7 +709,7 @@ bool UOrmDriverPgSql::asyncPipelineSendQuery(USqlStatement* pstmt, const char* q
 {
    U_TRACE(0, "UOrmDriverPgSql::asyncPipelineSendQuery(%p,%.*S,%u,%u)", pstmt, query_len, query, query_len, n)
 
-#ifdef USE_PGSQL_BATCH_API
+#ifdef USE_PGSQL_QUEUE_API
    if (U_SYSCALL(PQsendQueryParams, "%p,%S,%d,%p,%p,%p,%d", (PGconn*)UOrmDriver::connection, query, 0, U_NULLPTR, U_NULLPTR, U_NULLPTR, U_NULLPTR, 0) == 1)
       {
       return asyncPipelineProcessQueue(pstmt, n);
@@ -716,7 +727,7 @@ bool UOrmDriverPgSql::asyncPipelineSendQueryPrepared(USqlStatement* pstmt, uint3
 {
    U_TRACE(0, "UOrmDriverPgSql::asyncPipelineSendQueryPrepared(%p,%u)", pstmt, i)
 
-#ifdef USE_PGSQL_BATCH_API
+#ifdef USE_PGSQL_QUEUE_API
    if ((((UPgSqlStatement*)pstmt)->setBindParam(),
         U_SYSCALL(PQsendQueryPrepared, "%p,%S,%d,%p,%p,%p,%d",
                     (PGconn*)UOrmDriver::connection,
@@ -748,8 +759,8 @@ bool UOrmDriverPgSql::asyncPipelineProcessQueue(USqlStatement* pstmt, uint32_t n
 
    U_INTERNAL_ASSERT_POINTER(UOrmDriver::connection)
 
-#ifdef USE_PGSQL_BATCH_API
-   if (U_SYSCALL(PQbatchSendQueue, "%p", (PGconn*)UOrmDriver::connection) != 1)
+#ifdef USE_PGSQL_QUEUE_API
+   if (U_SYSCALL(PQsendQueue, "%p", (PGconn*)UOrmDriver::connection) != 1)
       {
       UOrmDriver::printError(__PRETTY_FUNCTION__);
 
@@ -758,13 +769,13 @@ bool UOrmDriverPgSql::asyncPipelineProcessQueue(USqlStatement* pstmt, uint32_t n
 
    PGresult* res;
 
-   for (uint32_t i = 0; U_SYSCALL(PQbatchProcessQueue, "%p", (PGconn*)UOrmDriver::connection) == 1; ++i)
+   for (uint32_t i = 0; U_SYSCALL(PQprocessQueue, "%p", (PGconn*)UOrmDriver::connection) == 1; ++i)
       {
    // (void) U_SYSCALL(PQsetSingleRowMode, "%p", (PGconn*)UOrmDriver::connection);
 
       while ((res = (PGresult*) U_SYSCALL(PQgetResult, "%p", (PGconn*)UOrmDriver::connection)))
          {
-         U_INTERNAL_DUMP("Result status: %d (%s) for i=%u, tuples: %d", PQresultStatus(res), PQresStatus(PQresultStatus(res)), i, PQntuples(res))
+         U_INTERNAL_DUMP("Result status: %d (%s) for num_result(%u), tuples(%d), fields(%d)", PQresultStatus(res), PQresStatus(PQresultStatus(res)), i, PQntuples(res), PQnfields(res))
 
          U_INTERNAL_ASSERT_POINTER(((UPgSqlStatement*)pstmt)->res)
 

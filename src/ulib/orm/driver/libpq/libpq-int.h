@@ -233,7 +233,7 @@ typedef enum
 	PGQUERY_EXTENDED,			/* full Extended protocol (PQexecParams) */
 	PGQUERY_PREPARE,			/* Parse only (PQprepare) */
 	PGQUERY_DESCRIBE,			/* Describe Statement or Portal */
-	PGQUERY_SYNC				/* A protocol sync to end a batch */
+	PGQUERY_SYNC				/* A protocol sync to end a queue */
 } PGQueryClass;
 
 /* PGSetenvStatusType defines the state of the PQSetenv state machine */
@@ -303,7 +303,7 @@ typedef enum pg_conn_host_type
 	CHT_UNIX_SOCKET
 } pg_conn_host_type;
 
-/* An entry in the pending command queue. Used by batch mode to keep track
+/* An entry in the pending command queue. Used by queue mode to keep track
  * of the expected results of future commands we've dispatched.
  *
  * Note that entries in this list are reused by being zeroed and appended to
@@ -407,7 +407,7 @@ struct pg_conn
 	bool		options_valid;	/* true if OK to attempt connection */
 	bool		nonblocking;	/* whether this connection is using nonblock
 								 * sending semantics */
-	PQBatchStatus batch_status; /* Batch(pipelining) mode status of connection */
+	PQQueueStatus queue_status; /* Queue(pipelining) mode status of connection */
 	bool		singleRowMode;	/* return current query result row-by-row? */
 	char		copy_is_binary; /* 1 = copy binary, 0 = copy text */
 	int			copy_already_done;	/* # bytes already returned in COPY OUT */

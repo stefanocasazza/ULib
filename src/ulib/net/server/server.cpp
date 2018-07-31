@@ -17,6 +17,7 @@
 #include <ulib/net/udpsocket.h>
 #include <ulib/utility/escape.h>
 #include <ulib/orm/orm_driver.h>
+#include <ulib/event/event_db.h>
 #include <ulib/net/client/http.h>
 #include <ulib/net/client/smtp.h>
 #include <ulib/dynamic/dynamic.h>
@@ -139,8 +140,8 @@ UString*      UServer_Base::crashEmailAddress;
 USocket*      UServer_Base::socket;
 USocket*      UServer_Base::csocket;
 UProcess*     UServer_Base::proc;
-UEventFd*     UServer_Base::handler_db1;
-UEventFd*     UServer_Base::handler_db2;
+UEventDB*     UServer_Base::handler_db1;
+UEventDB*     UServer_Base::handler_db2;
 UEventFd*     UServer_Base::handler_inotify;
 UEventTime*   UServer_Base::ptime;
 UUDPSocket*   UServer_Base::udp_sock;

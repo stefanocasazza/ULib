@@ -46,7 +46,7 @@ int UEchoPlugIn::handlerRequest()
    UClientImage_Base::setNoHeaderForResponse();
 
 #ifndef U_ECHO_RESPONSE_FOR_TEST
-   *UClientImage_Base::wbuffer = *UClientImage_Base::request;
+   UClientImage_Base::wbuffer->replace(*UClientImage_Base::request);
 #else
    (void) UClientImage_Base::wbuffer->assign(U_CONSTANT_TO_PARAM(U_ECHO_RESPONSE_FOR_TEST));
 #endif

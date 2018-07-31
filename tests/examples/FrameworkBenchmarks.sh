@@ -182,6 +182,7 @@ if [ "$TERM" != "cygwin" ]; then
 	( cd $DOC_ROOT; rm -f *; \
 	  ln -sf ../../../../../../src/ulib/net/server/plugin/usp/.libs/json.so; \
 	  ln -sf ../../../../../../src/ulib/net/server/plugin/usp/.libs/plaintext.so; \
+	  ln -sf ../../../../../../src/ulib/net/server/plugin/usp/.libs/cached_worlds.so; \
  	  ln -sf ../../../../../../src/ulib/net/server/plugin/usp/.libs/query.so; \
  	  ln -sf ../../../../../../src/ulib/net/server/plugin/usp/.libs/db.so; \
  	  ln -sf ../../../../../../src/ulib/net/server/plugin/usp/.libs/update.so; \

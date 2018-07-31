@@ -9,7 +9,7 @@ start_msg server
 rm -rf err/server.err \
 		 trace.*server*.[0-9]* object.*server*.[0-9]* stack.*server*.[0-9]*
 
-#UTRACE="0 20M -1"
+#UTRACE="0 20M 0"
 #UTRACE_SIGNAL="0 10M 0"
 #UOBJDUMP="0 50M 1000"
 #USIMERR="error.sim"

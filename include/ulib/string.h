@@ -510,7 +510,7 @@ public:
 
       U_INTERNAL_ASSERT(value <= _capacity)
 
-      ((char*)str)[_length = value] = '\0';
+      _length = value;
 
       U_INTERNAL_ASSERT(invariant())
       }
@@ -537,7 +537,7 @@ public:
       U_INTERNAL_ASSERT(value <= _capacity)
       U_INTERNAL_ASSERT_MAJOR((int32_t)_capacity, 0)
 
-      ((char*)str)[_length = value] = '\0';
+      _length = value;
 
       U_INTERNAL_ASSERT(invariant())
       }
@@ -560,7 +560,7 @@ public:
 
 #ifdef DEBUG
    bool invariant() const;
-   const char* dump(bool reset) const;
+   const char* dump(bool _reset) const;
 #endif
 
    // EXTENSION
@@ -960,17 +960,6 @@ private:
    ~UStringRep();
 
    void _release();
-
-   void setEmpty()
-      {
-      U_TRACE_NO_PARAM(0, "UStringRep::setEmpty()")
-
-      U_CHECK_MEMORY
-
-      ((char*)str)[_length = 0] = '\0';
-
-      U_INTERNAL_ASSERT(invariant())
-      }
 
    void shift(ptrdiff_t diff)
       {
@@ -2046,7 +2035,7 @@ public:
 #ifdef DEBUG
    bool invariant() const;
 # ifdef U_STDCPP_ENABLE
-   const char* dump(bool reset) const;
+   const char* dump(bool _reset) const;
 # endif
 #endif
 
@@ -2148,6 +2137,15 @@ public:
    bool writeable() const { return rep->writeable(); }
 
    // manage UString as constant string...
+
+   bool isConstant() const
+      {
+      U_TRACE_NO_PARAM(0, "UString::isConstant()")
+
+      if (rep->writeable()) U_RETURN(false);
+
+      U_RETURN(true);
+      }
 
    void setConstant(const char* t, uint32_t tlen)
       {
