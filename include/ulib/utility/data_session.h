@@ -286,8 +286,6 @@ protected:
       creation    =
       last_access = u_now->tv_sec;
 
-      U_INTERNAL_ASSERT_EQUALS(vec_var, U_NULLPTR)
-
       U_NEW(UVector<UString>, vec_var, UVector<UString>);
       }
 

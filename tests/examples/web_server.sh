@@ -4,7 +4,8 @@
 
 (cd benchmark; rm -f  db; creat_link FrameworkBenchmarks/ULib/db db)
 
- DOC_ROOT=docroot
+ DOC_ROOT=SESSION
+#DOC_ROOT=docroot
 #DOC_ROOT=sse_example
 #DOC_ROOT=ruby/blog
 #DOC_ROOT=benchmark/docroot
@@ -16,7 +17,7 @@ rm -f tmp/usp_compile.sh.err /tmp/*.hpack.* \
                 trace.*userver_*.[0-9]*           object.*userver_*.[0-9]*           stack.*userver_*.[0-9]*           mempool.*userver_*.[0-9]* \
       $DOC_ROOT/trace.*userver_*.[0-9]* $DOC_ROOT/object.*userver_*.[0-9]* $DOC_ROOT/stack.*userver_*.[0-9]* $DOC_ROOT/mempool.*userver_*.[0-9]*
 
-#UTRACE="0 50M 0"
+ UTRACE="0 50M -1"
  UTRACE_SIGNAL="0 50M -1"
  UTRACE_FOLDER=/tmp
  TMPDIR=/tmp
