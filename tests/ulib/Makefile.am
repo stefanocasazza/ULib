@@ -145,8 +145,8 @@ test_pcre_SOURCES = test_pcre.cpp
 endif
 
 if SSL
-PRG += test_des3 test_digest test_certificate test_crl test_pkcs10 test_ssl_client test_ssl_server test_https test_pkcs7 test_url
-TST += des3.test digest.test certificate.test crl.test pkcs10.test ssl_client_server.test https.test pkcs7.test url.test
+PRG += test_des3 test_certificate test_crl test_pkcs10 test_ssl_client test_ssl_server test_https test_pkcs7 test_url test_digest
+TST += des3.test digest.test certificate.test crl.test pkcs10.test ssl_client_server.test https.test pkcs7.test url.test digest.test
 test_des3_SOURCES = test_des3.cpp
 test_digest_SOURCES = test_digest.cpp
 test_certificate_SOURCES = test_certificate.cpp

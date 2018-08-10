@@ -80,13 +80,11 @@ void UDataSession::toStream(ostream& os)
 {
    U_TRACE(0, "UDataSession::toStream(%p)", &os)
 
-   U_INTERNAL_ASSERT_POINTER(vec_var)
-
    os.put('{');
    os.put(' ');
    os << creation;
    os.put(' ');
-   os << *vec_var;
+   os << vec_var;
    os.put(' ');
    os.put('}');
 }
@@ -95,7 +93,6 @@ void UDataSession::fromStream(istream& is)
 {
    U_TRACE(0, "UDataSession::fromStream(%p)", &is)
 
-   U_INTERNAL_ASSERT_POINTER(vec_var)
    U_INTERNAL_ASSERT_EQUALS(is.peek(), '{')
 
    is.get(); // skip '{'
@@ -106,7 +103,7 @@ void UDataSession::fromStream(istream& is)
 
    U_INTERNAL_ASSERT(is.peek() == '(')
 
-   is >> *vec_var;
+   is >> vec_var;
 
    is.get(); // skip ' '
    is.get(); // skip '}'
@@ -134,9 +131,9 @@ const char* UDataSession::dump(bool reset) const
    UDataStorage::dump(false);
 
    *UObjectIO::os << '\n'
-                  << "creation                   " << creation       << '\n'
-                  << "last_access                " << last_access    << '\n'
-                  << "vec_var (UVector<UString*> " << (void*)vec_var << ')';
+                  << "creation                   " << creation        << '\n'
+                  << "last_access                " << last_access     << '\n'
+                  << "vec_var (UVector<UString*> " << (void*)&vec_var << ')';
 
    if (reset)
       {

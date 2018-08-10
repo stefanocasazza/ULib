@@ -722,6 +722,8 @@ void UServices::generateDigest(int alg, uint32_t keylen, unsigned char* data, ui
 #ifdef USE_LIBSSL
    u_dgst_init(alg, (const char*)key, keylen);
 
+   U_INTERNAL_DUMP("u_hmac_keylen = %u", u_hmac_keylen)
+
    u_dgst_hash(data, size);
 
    if (base64 == -2)
@@ -732,13 +734,61 @@ void UServices::generateDigest(int alg, uint32_t keylen, unsigned char* data, ui
       }
    else
       {
-      uint32_t bytes_written = u_dgst_finish((unsigned char*)output.pend(), base64);
+      uint32_t sz = output.size(), bytes_written = u_dgst_finish((unsigned char*)output.data()+sz, base64);
 
-      output.size_adjust(output.size() + bytes_written);
+      output.size_adjust(sz + bytes_written);
       }
 
    U_INTERNAL_DUMP("u_mdLen = %d output = %V", u_mdLen, output.rep)
 #endif
+}
+
+bool UServices::setDigestCalcResponse(const UString& ha1, const UString& nc, const UString& nonce, const UString& cnonce, const UString& uri, const UString& user, UString& response)
+{
+   U_TRACE(0, "UServices::setDigestCalcResponse(%V,%V,%V,%V,%V,%V,%p)", ha1.rep, nc.rep, nonce.rep, cnonce.rep, uri.rep, user.rep, &response)
+
+   U_INTERNAL_ASSERT(ha1)
+
+   if (    nc.empty() ||
+          uri.empty() ||
+        nonce.empty() ||
+       cnonce.empty() ||
+         user.empty())
+      {
+      U_WARNING("Invalid Authorization Digest header: nc = %V nonce = %V cnonce = %V uri = %V user = %V", nc.rep, nonce.rep, cnonce.rep, uri.rep, user.rep);
+
+      U_RETURN(false);
+      }
+
+   // ha1 => MD5(user : realm : password)
+
+#ifdef USE_LIBSSL
+   UString  a2(4+1+uri.size()), //     method : uri
+           ha2(33U),            // MD5(method : uri)
+            a3(200U);
+
+   // MD5(method : uri)
+
+   a2.snprintf(U_CONSTANT_TO_PARAM("%.*s:%v"), U_HTTP_METHOD_TO_TRACE, uri.rep);
+
+   generateDigest(U_HASH_MD5, 0, a2, ha2, false);
+
+   U_INTERNAL_DUMP("U_HTTP_METHOD_TO_TRACE = %.*s ha2 = %V", U_HTTP_METHOD_TO_TRACE, ha2.rep)
+
+   // --------------------------------------------------------------------------
+   // MD5(HA1 : nonce : nc : cnonce : qop : HA2)
+   // --------------------------------------------------------------------------
+
+   a3.snprintf(U_CONSTANT_TO_PARAM("%v:%v:%v:%v:" U_HTTP_QOP ":%v"), ha1.rep, nonce.rep, nc.rep, cnonce.rep, ha2.rep);
+
+   generateDigest(U_HASH_MD5, 0, a3, response, false);
+
+   U_INTERNAL_DUMP("response = %V", response.rep)
+
+   U_RETURN(true);
+#endif
+
+   U_RETURN(false);
 }
 
 #define U_HMAC_SIZE  16U                           // MD5 output len

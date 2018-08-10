@@ -170,10 +170,6 @@ public:
    virtual ~UDataSession()
       {
       U_TRACE_DTOR(0, UDataSession)
-
-      U_INTERNAL_ASSERT_POINTER(vec_var)
-
-      U_DELETE(vec_var)
       }
 
    // SERVICES
@@ -224,10 +220,8 @@ public:
       {
       U_TRACE(0, "UDataSession::getValueVar(%u,%p)", index, &value)
 
-      U_INTERNAL_ASSERT_POINTER(vec_var)
-
-      if (index < vec_var->size()) value = vec_var->at(index);
-      else                         value.clear();
+      if (index < vec_var.size()) value = vec_var.at(index);
+      else                        value.clear();
 
       U_INTERNAL_DUMP("value = %V", value.rep)
       }
@@ -236,14 +230,12 @@ public:
       {
       U_TRACE(0, "UDataSession::putValueVar(%u,%V)", index, value.rep)
 
-      U_INTERNAL_ASSERT_POINTER(vec_var)
-
-      if (index < vec_var->size()) vec_var->replace(index, value);
+      if (index < vec_var.size()) vec_var.replace(index, value);
       else
          {
-         U_INTERNAL_ASSERT_EQUALS(index, vec_var->size())
+         U_INTERNAL_ASSERT_EQUALS(index, vec_var.size())
 
-         vec_var->push_back(value);
+         vec_var.push_back(value);
          }
       }
 
@@ -256,9 +248,7 @@ public:
       {
       U_TRACE_NO_PARAM(0, "UDataSession::clear()")
 
-      U_INTERNAL_ASSERT_POINTER(vec_var)
-
-      vec_var->clear();
+      vec_var.clear();
       }
 
    // STREAM
@@ -276,7 +266,7 @@ public:
 #endif
 
 protected:
-   UVector<UString>* vec_var;
+   UVector<UString> vec_var;
    long creation, last_access;
 
    void init()
@@ -285,8 +275,6 @@ protected:
 
       creation    =
       last_access = u_now->tv_sec;
-
-      U_NEW(UVector<UString>, vec_var, UVector<UString>);
       }
 
 private:

@@ -3599,7 +3599,7 @@ next:
             case HTTP_BAD_METHOD:   setBadMethod();          break;
             case HTTP_BAD_REQUEST:  setBadRequest();         break;
             case HTTP_UNAVAILABLE:  setServiceUnavailable(); break;
-            case HTTP_UNAUTHORIZED: setUnAuthorized();       break;
+            case HTTP_UNAUTHORIZED: setUnAuthorized(false);  break;
             default:                setInternalError();      break;
             }
 
@@ -6683,7 +6683,11 @@ void UHTTP::handlerResponse()
    else
 #endif
    {
-   UClientImage_Base::setHeaderForResponse(6+29+2+12+2); // Date: Wed, 20 Jun 2012 11:43:17 GMT\r\nServer: ULib\r\n
+   U_INTERNAL_DUMP("UClientImage_Base::iov_vec[0].iov_len = %u UClientImage_Base::iov_vec[1].iov_len = %u", UClientImage_Base::iov_vec[0].iov_len, UClientImage_Base::iov_vec[1].iov_len)
+
+   U_INTERNAL_ASSERT_EQUALS(UClientImage_Base::iov_vec[1].iov_len, 51)
+
+// UClientImage_Base::setHeaderForResponse(6+29+2+12+2); // Date: Wed, 20 Jun 2012 11:43:17 GMT\r\nServer: ULib\r\n
 
    setStatusDescription();
 
@@ -6801,14 +6805,14 @@ void UHTTP::handlerResponse()
 
          // A server implements an HSTS policy by supplying a header over an HTTPS connection (HSTS headers over HTTP are ignored)
 
-#     if defined(USE_LIBSSL) && defined(U_HTTP_STRICT_TRANSPORT_SECURITY)
+   #     if defined(USE_LIBSSL) && defined(U_HTTP_STRICT_TRANSPORT_SECURITY)
          if (UServer_Base::bssl &&
              uri_strict_transport_security_mask == (void*)1L)
             {
             ptr2 =                 "Strict-Transport-Security: max-age=31536000; includeSubDomains; preload\r\nContent-Length: 0\r\n\r\n";
              sz2 = U_CONSTANT_SIZE("Strict-Transport-Security: max-age=31536000; includeSubDomains; preload\r\nContent-Length: 0\r\n\r\n");
             }
-#     endif
+   #     endif
          }
       }
 
@@ -7110,20 +7114,37 @@ void UHTTP::setErrorResponse(const UString& content_type, int code, const char* 
    setResponse(content_type, &lbody);
 }
 
-void UHTTP::setUnAuthorized()
+void UHTTP::setUnAuthorized(bool bstale)
 {
-   U_TRACE_NO_PARAM(0, "UHTTP::setUnAuthorized()")
+   U_TRACE(0, "UHTTP::setUnAuthorized(%b)", bstale)
 
-   UString tmp(100U);
+   UString tmp(200U);
+   char* ptr = tmp.data();
 
-   (void) tmp.assign(U_CONSTANT_TO_PARAM(U_CTYPE_HTML "\r\nWWW-Authenticate: "));
+   U_MEMCPY(ptr, U_CTYPE_HTML "\r\nWWW-Authenticate: ", U_CONSTANT_SIZE(U_CTYPE_HTML "\r\nWWW-Authenticate: "));
+            ptr +=                                      U_CONSTANT_SIZE(U_CTYPE_HTML "\r\nWWW-Authenticate: ");
 
    U_INTERNAL_DUMP("digest_authentication = %b", digest_authentication)
 
-   if (digest_authentication)        tmp.snprintf_add(U_CONSTANT_TO_PARAM("Digest qop=\"auth\", nonce=\"%ld\", algorithm=MD5,"), u_now->tv_sec);
-   else                       (void) tmp.append(U_CONSTANT_TO_PARAM("Basic"));
+   if (digest_authentication)
+      {
+      ptr += u__snprintf(ptr, tmp.remain(ptr), U_CONSTANT_TO_PARAM("Digest qop=" U_HTTP_QOP ", nonce=%lu, algorithm=MD5,"), u_now->tv_sec);
+      }
+   else
+      {
+      U_MEMCPY(ptr, "Basic", U_CONSTANT_SIZE("Basic"));
+               ptr +=        U_CONSTANT_SIZE("Basic");
+      }
 
-   (void) tmp.append(U_CONSTANT_TO_PARAM(" realm=\"" U_HTTP_REALM "\"\r\n"));
+   if (bstale)
+      {
+      U_MEMCPY(ptr, " stale=TRUE,", U_CONSTANT_SIZE(" stale=TRUE,"));
+               ptr +=               U_CONSTANT_SIZE(" stale=TRUE,");
+      }
+
+   U_MEMCPY(ptr, " realm=\"" U_HTTP_REALM "\"\r\n", U_CONSTANT_SIZE(" realm=\"" U_HTTP_REALM "\"\r\n"));
+
+   tmp.size_adjust(ptr + U_CONSTANT_SIZE(" realm=\"" U_HTTP_REALM "\"\r\n"));
 
    UClientImage_Base::setRequestForbidden();
 
@@ -7499,6 +7520,21 @@ end:
    handlerResponse();
 }
 
+U_NO_EXPORT uint32_t UHTTP::getPosPasswd(UString& fpasswd, const UString& line)
+{
+   U_TRACE(0, "UHTTP::getPosPasswd(%V,%V)", fpasswd.rep, line.rep)
+
+   uint32_t pos = fpasswd.find(line);
+
+   if (pos == U_NOT_FOUND ||
+       (pos > 0 && fpasswd[pos-1] != '\n'))
+      {
+      U_RETURN(U_NOT_FOUND);
+      }
+
+   U_RETURN(pos);
+}
+
 U_NO_EXPORT uint32_t UHTTP::checkPasswd(UHTTP::UFileCacheData* ptr_file_data, UString& fpasswd, const UString& line)
 {
    U_TRACE(0, "UHTTP::checkPasswd(%p,%V,%V)", ptr_file_data, fpasswd.rep, line.rep)
@@ -7506,10 +7542,9 @@ U_NO_EXPORT uint32_t UHTTP::checkPasswd(UHTTP::UFileCacheData* ptr_file_data, US
    // s.casazza:{SHA}Lkii1ZE7k.....\n
    // s.casazza:Protected Area:b9ee2af50be37...........\n
 
-   uint32_t pos = fpasswd.find(line);
+   uint32_t pos = getPosPasswd(fpasswd, line);
 
-   if (pos == U_NOT_FOUND ||
-       (pos > 0 && line[pos-1] != '\n'))
+   if (pos == U_NOT_FOUND)
       {
       U_INTERNAL_DUMP("digest_authentication = %b htpasswd = %p", digest_authentication, htpasswd)
 
@@ -7521,70 +7556,60 @@ U_NO_EXPORT uint32_t UHTTP::checkPasswd(UHTTP::UFileCacheData* ptr_file_data, US
 
          UFile tmp(lpathname);
 
-         if (tmp.open() &&
-             (tmp.st_mtime = ptr_file_data->mtime, tmp.isModified()))
+         if (tmp.open())
             {
-            ptr_file_data->array->erase(0);
+            if ((tmp.st_mtime = ptr_file_data->mtime, tmp.isModified()) == false) tmp.close();
+            else
+               {
+               ptr_file_data->array->erase(0);
 
-            fpasswd = tmp.getContent(true, false, true);
+               fpasswd = tmp.getContent(true, false, true);
 
-            ptr_file_data->array->push_back(fpasswd);
+               ptr_file_data->array->push_back(fpasswd);
 
-            U_SRV_LOG("File data users permission: %V reloaded - %u bytes", lpathname.rep, fpasswd.size());
+               U_SRV_LOG("File data users permission: %V reloaded - %u bytes", lpathname.rep, fpasswd.size());
 
-            goto next;
+               pos = getPosPasswd(fpasswd, line);
+               }
             }
-
-         tmp.close();
          }
-      else
+      else if (digest_authentication)
          {
-         if (digest_authentication)
+         U_INTERNAL_ASSERT(htdigest)
+
+         UFile tmp(*UString::str_htdigest);
+
+         if (tmp.open())
             {
-            U_INTERNAL_ASSERT(htdigest)
-
-            UFile tmp(*UString::str_htdigest);
-
-            if (tmp.open() &&
-                (tmp.st_mtime = htdigest_mtime, tmp.isModified()))
+            if ((tmp.st_mtime = htdigest_mtime, tmp.isModified()) == false) tmp.close();
+            else
                {
                fpasswd = *htdigest = tmp.getContent(true, false, true);
 
                U_SRV_LOG("File data users permission: ../.htdigest reloaded - %u bytes", fpasswd.size());
 
-               goto next;
+               pos = getPosPasswd(fpasswd, line);
                }
-
-            tmp.close();
             }
-         else
+         }
+      else
+         {
+         U_INTERNAL_ASSERT(htpasswd)
+
+         UFile tmp(*UString::str_htpasswd);
+
+         if (tmp.open())
             {
-            U_INTERNAL_ASSERT(htpasswd)
-
-            UFile tmp(*UString::str_htpasswd);
-
-            if (tmp.open() &&
-                (tmp.st_mtime = htpasswd_mtime, tmp.isModified()))
+            if ((tmp.st_mtime = htpasswd_mtime, tmp.isModified()) == false) tmp.close();
+            else
                {
                fpasswd = *htpasswd = tmp.getContent(true, false, true);
 
                U_SRV_LOG("File data users permission: ../.htpasswd reloaded - %u bytes", fpasswd.size());
 
-               goto next;
+               pos = getPosPasswd(fpasswd, line);
                }
-
-            tmp.close();
             }
-         }
-
-      U_RETURN(U_NOT_FOUND);
-
-next: pos = fpasswd.find(line);
-
-      if (pos == U_NOT_FOUND ||
-          (pos > 0 && line[pos-1] != '\n'))
-         {
-         U_RETURN(U_NOT_FOUND);
          }
       }
 
@@ -7595,15 +7620,13 @@ U_NO_EXPORT bool UHTTP::processAuthorization(const char* request, uint32_t sz, c
 {
    U_TRACE(0, "UHTTP::processAuthorization(%.*S,%u,%.*S,%u)", sz, request, sz, len, pattern, len)
 
-   user_authentication->clear();
-
    if (sz == 0) request = UClientImage_Base::getRequestUri(sz);
 
    UTokenizer t;
    const char* ptr;
    uint32_t pos = 0;
-   bool result = false, bpass = false;
    UString buffer(U_CAPACITY), fpasswd, content, tmp;
+   bool result = false, bpass = false, bstale = false;
 
    if (pattern)
       {
@@ -7700,7 +7723,7 @@ U_NO_EXPORT bool UHTTP::processAuthorization(const char* request, uint32_t sz, c
           */
 
          UVector<UString> name_value;
-         UString name, value, realm, nonce, _uri, response, qop, nc, cnonce;
+         UString name, value, nc, nonce, cnonce, uri, response, ha1, ha3(33U);
 
          for (int32_t i = 0, n = UStringExt::getNameValueFromData(content, name_value, U_CONSTANT_TO_PARAM(", \t")); i < n; i += 2)
             {
@@ -7715,13 +7738,12 @@ U_NO_EXPORT bool UHTTP::processAuthorization(const char* request, uint32_t sz, c
                   {
                   if (name.equal(U_CONSTANT_TO_PARAM("username")))
                      {
-                     U_ASSERT(user_authentication->empty())
-
-                     *user_authentication = value;
+                     if (value == *user_authentication) bstale = true;
+                     else         *user_authentication = value;
                      }
                   else if (name.equal(U_CONSTANT_TO_PARAM("uri")))
                      {
-                     U_ASSERT(_uri.empty())
+                     U_ASSERT(uri.empty())
 
                      ptr = value.data();
                      pos = value.size();
@@ -7741,7 +7763,7 @@ U_NO_EXPORT bool UHTTP::processAuthorization(const char* request, uint32_t sz, c
                            }
                         }
                
-                     _uri = value;
+                     uri = value;
                      }
                   }
                break;
@@ -7750,9 +7772,7 @@ U_NO_EXPORT bool UHTTP::processAuthorization(const char* request, uint32_t sz, c
                   {
                   if (name.equal(U_CONSTANT_TO_PARAM("realm")))
                      {
-                     U_ASSERT(realm.empty())
-
-                     realm = value;
+                     if (value.equal(U_HTTP_REALM) == false) goto end;
                      }
                   else if (name.equal(U_CONSTANT_TO_PARAM("response")))
                      {
@@ -7771,9 +7791,7 @@ U_NO_EXPORT bool UHTTP::processAuthorization(const char* request, uint32_t sz, c
                      {
                      U_ASSERT(nonce.empty())
 
-                     // XXX: Due to a bug in MSIE (version=??), we do not check for authentication timeout...
-
-                     if ((u_now->tv_sec - value.strtoul()) > 3600) goto end;
+                  // if ((u_now->tv_sec - value.strtoul()) > 3600) goto end; // Due to a bug in MSIE (version=??), we do not check for authentication timeout...
 
                      nonce = value;
                      }
@@ -7790,9 +7808,7 @@ U_NO_EXPORT bool UHTTP::processAuthorization(const char* request, uint32_t sz, c
                   {
                   if (name.equal(U_CONSTANT_TO_PARAM("qop")))
                      {
-                     U_ASSERT(qop.empty())
-
-                     qop = value;
+                     if (value.equal(U_HTTP_QOP) == false) goto end;
                      }
                   }
                break;
@@ -7819,15 +7835,9 @@ U_NO_EXPORT bool UHTTP::processAuthorization(const char* request, uint32_t sz, c
                }
             }
 
-         UString  a2(4 + 1 + _uri.size()), //     method : uri
-                 ha2(33U),                 // MD5(method : uri)
-                 ha1,                      // MD5(user : realm : password)
-                  a3(200U),
-                 ha3(33U);
+         // ha1 => MD5(user : realm : password)
 
-         // MD5(user : realm : password)
-
-         buffer.snprintf(U_CONSTANT_TO_PARAM("%v:%v:"), user_authentication->rep, realm.rep);
+         buffer.snprintf(U_CONSTANT_TO_PARAM("%v:" U_HTTP_REALM ":"), user_authentication->rep);
 
          // s.casazza:Protected Area:b9ee2af50be37...........\n
 
@@ -7836,37 +7846,14 @@ U_NO_EXPORT bool UHTTP::processAuthorization(const char* request, uint32_t sz, c
          if (pos == U_NOT_FOUND) goto end;
 
          pos += buffer.size();
-         ha1  = fpasswd.substr(pos, 32);
 
-         U_INTERNAL_ASSERT_EQUALS(fpasswd.c_char(pos + 32), '\n')
+         ha1 = fpasswd.substr(pos, 32);
 
-         U_INTERNAL_DUMP("ha1 = %V", ha1.rep)
+         U_INTERNAL_ASSERT_EQUALS(fpasswd.c_char(pos+32), '\n')
 
-         // MD5(method : uri)
+         if (UServices::setDigestCalcResponse(ha1, nc, nonce, cnonce, uri, *user_authentication, ha3)) result = (ha3 == response);
 
-         a2.snprintf(U_CONSTANT_TO_PARAM("%.*s:%v"), U_HTTP_METHOD_TO_TRACE, _uri.rep);
-
-         UServices::generateDigest(U_HASH_MD5, 0, a2, ha2, false);
-
-         U_INTERNAL_DUMP("ha2 = %V", ha2.rep)
-
-         // --------------------------------------------------------------------------
-         // MD5(HA1 : nonce : nc : cnonce : qop : HA2)
-         // --------------------------------------------------------------------------
-         // NB: wget supports only Basic auth as the only auth type over HTTP proxy...
-         // --------------------------------------------------------------------------
-         // if (qop.empty()) (void) qop.assign(U_CONSTANT_TO_PARAM("auth"));
-         // --------------------------------------------------------------------------
-
-         a3.snprintf(U_CONSTANT_TO_PARAM("%v:%v:%v:%v:%v:%v"), ha1.rep, nonce.rep, nc.rep, cnonce.rep, qop.rep, ha2.rep);
-
-         UServices::generateDigest(U_HASH_MD5, 0, a3, ha3, false);
-
-         U_INTERNAL_DUMP("ha3 = %V response = %V", ha3.rep, response.rep)
-
-         result = (ha3 == response);
-
-         U_INTERNAL_DUMP("result = %b", result)
+         U_INTERNAL_DUMP("ha3 = %V response = %V result = %b bstale = %b", ha3.rep, response.rep, result, bstale)
          }
       else if (content.size() < 1000) // Authorization: Basic cy5jYXNhenphOnN0ZWZhbm8x==
          {
@@ -7895,7 +7882,7 @@ U_NO_EXPORT bool UHTTP::processAuthorization(const char* request, uint32_t sz, c
             }
          }
 
-end:  if (*user_authentication) user_authentication->duplicate();
+end:  if (user_authentication->isConstant()) user_authentication->duplicate();
 
       U_SRV_LOG("%srequest authorization for user %V %s", result ? "" : "WARNING: ", user_authentication->rep, result ? "success" : "failed");
       }
@@ -7904,8 +7891,8 @@ end:  if (*user_authentication) user_authentication->duplicate();
       {
       // NB: we cannot authorize someone if it is not present above document root almost one auth file... 
 
-      if (bpass || htdigest || htpasswd) setUnAuthorized();
-      else                                  setForbidden();
+      if (bpass || htdigest || htpasswd) setUnAuthorized(bstale);
+      else                               setForbidden();
 
       U_RETURN(false);
       }
@@ -8869,9 +8856,9 @@ U_NO_EXPORT void UHTTP::manageDataForCache(const UString& basename, const UStrin
                }
 
             if (bdigest &&
-                U_STRING_FIND(content, 0, ":Protected Area:") == U_NOT_FOUND) // htdigest .htdigest 'Protected Area' admin
+                U_STRING_FIND(content, 0, ":" U_HTTP_REALM ":") == U_NOT_FOUND) // htdigest .htdigest 'Protected Area' admin
                {
-               U_WARNING("Find file data users permission (%V - %u bytes) that don't use the fixed realm name 'Protected Area', ignored", lpathname.rep, file_data->size);
+               U_WARNING("Find file data users permission (%V - %u bytes) that don't use the fixed realm name '" U_HTTP_REALM "', ignored", lpathname.rep, file_data->size);
 
                goto error;
                }
@@ -11845,6 +11832,10 @@ loop: while (u__isalpha(*++ptr1)) {}
          UClientImage_Base::setHeaderForResponse(6+29+2+12+2); // Date: Wed, 20 Jun 2012 11:43:17 GMT\r\nServer: ULib\r\n
 
          setStatusDescription();
+
+         U_INTERNAL_ASSERT_EQUALS(UClientImage_Base::iov_vec[1].iov_base, ULog::date.date3)
+
+         ULog::updateDate3(U_NULLPTR);
 
 next:    if (*ptr1 == '?')
             {

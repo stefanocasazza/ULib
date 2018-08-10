@@ -44,10 +44,7 @@ public:
       bmode = false;
       }
 
-   ~UEventDB()
-      {
-      U_TRACE_DTOR(0, UEventDB)
-      }
+   ~UEventDB();
 
    // SERVICES
 
@@ -67,7 +64,17 @@ private:
    void* conn;
    uint32_t start, end;
    query_info query[512];
+   int fd_conn;
    bool bmode;
+
+   static bool basync;
+   static uint32_t nquery;
+
+#ifdef DEBUG
+   static uint32_t max_num_handler;
+#endif
+
+   uint32_t getResult(void* vresult);
 
    U_DISALLOW_COPY_AND_ASSIGN(UEventDB)
 };

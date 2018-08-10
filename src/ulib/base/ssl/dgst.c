@@ -174,6 +174,8 @@ int u_dgst_finish(unsigned char* restrict hash, int base64) /* Finish and get ha
 
    if (u_hmac_keylen)
       {
+      u_hmac_keylen = 0;
+
 #  if OPENSSL_VERSION_NUMBER < 0x10100000L
       HMAC_Final(&u_hctx, u_mdValue, (unsigned int*)&u_mdLen);
 #  else

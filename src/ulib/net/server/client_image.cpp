@@ -1198,6 +1198,8 @@ start:
    U_ASSERT(isOpen())
 
    UServer_Base::nread++;
+
+   U_INTERNAL_DUMP("iov_vec[0].iov_len = %u iov_vec[1].iov_len = %u", iov_vec[0].iov_len, iov_vec[1].iov_len)
 #endif
 
 loop:
@@ -1579,6 +1581,8 @@ error:
       {
 end:  if (U_ClientImage_parallelization == U_PARALLELIZATION_CHILD) goto death;
 
+      setHeaderForResponse(6+29+2+12+2); // Date: Wed, 20 Jun 2012 11:43:17 GMT\r\nServer: ULib\r\n
+
       U_RETURN(U_NOTIFIER_DELETE);
       }
 
@@ -1673,7 +1677,7 @@ bool UClientImage_Base::writeResponse()
       if (U_ClientImage_close &&
           U_ClientImage_pipeline == false)
          {
-         iov_vec[1].iov_len += 17+2; // Connection: close\r\n
+         iov_vec[1].iov_len = 6+29+2+12+2+17+2; // Date: Wed, 20 Jun 2012 11:43:17 GMT\r\nServer: ULib\r\nConnection: close\r\n
          }
       }
 

@@ -2,16 +2,23 @@
 
 . ../.function
 
-## digest.test -- Test vector feature
+## digest.test -- Test digest feature
 
 start_msg digest
 
-#UTRACE="0 1M 0"
+#UTRACE="0 5M 0"
 #UOBJDUMP="-1 100k 10"
 #USIMERR="error.sim"
  export UTRACE UOBJDUMP USIMERR
 
-start_prg digest
+#STRACE=$TRUSS
+#VALGRIND='valgrind' #  --leak-check=full
+
+#						 ha1,											nc,		  nonce,		   cnonce,				 uri,						   user
+ start_prg digest "b9ee2af50be372e1784497693a3caa80" "00000002" "1533798660" "71afdcdea5197745" "/tutor/tutor_profile" "s.casazza" # 43bd362b65d2924c3f4bc47f8b4e94a0
+#start_prg digest "b9ee2af50be372e1784497693a3caa80" "00000003" "1533798660" "c1c6858eeaea3d54" "/tutor/tutor_home"    "s.casazza" # 5000f6066f6ccf0277816292b18f5d0f
+#start_prg digest "b9ee2af50be372e1784497693a3caa80" "00000004" "1533798660" "5366e2067b7971fb" "/tutor/tutor_profile" "s.casazza" # f01b5eb77baf3511ce0f4d65b12d0093
+#start_prg digest "b9ee2af50be372e1784497693a3caa80" "00000003" "1533833952" "cf091939a67054ec" "/tutor/tutor_profile" "s.casazza" # 4f88e04ee241f80c9ff53d884805907b
 
 # Test against expected output
 test_output_diff digest

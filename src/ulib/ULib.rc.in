@@ -19,7 +19,7 @@ VS_VERSION_INFO VERSIONINFO
 	VALUE "InternalName", "libulib-1.4-2"
 	VALUE "LegalCopyright", "Copyright © 2014 Unirel"
 	VALUE "OriginalFilename", "libulib-1.4-2.dll"
-	VALUE "ProductName", "Ulib"
+	VALUE "ProductName", "ULib"
 	VALUE "ProductVersion", "1.4.2"
       END
     END

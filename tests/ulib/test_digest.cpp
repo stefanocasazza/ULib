@@ -1,58 +1,31 @@
 // test_digest.cpp
 
-#include <ulib/ssl/digest.h>
+#include <ulib/utility/services.h>
 
-static const char* test[] = {
-   "",
-   "a",
-   "abc",
-   "message digest",
-   "abcdefghijklmnopqrstuvwxyz",
-   "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789",
-   "12345678901234567890123456789012345678901234567890123456789012345678901234567890",
-   0,
-};
-
-static const char* ret[] = {
-   "d41d8cd98f00b204e9800998ecf8427e",
-   "0cc175b9c0f1b6a831c399e269772661",
-   "900150983cd24fb0d6963f7d28e17f72",
-   "f96b697d7cb7938d525a2f31aaf161d0",
-   "c3fcd3d76192e4007dfb496cca67e13b",
-   "d174ab98d277d9f5a5611c2c9f419d9f",
-   "57edf4a22be3c955ac49da2e2107b67a",
-};
+#include <ulib/internal/chttp.h>
 
 int
-U_EXPORT main (int argc, char* argv[])
+U_EXPORT main(int argc, char* argv[])
 {
    U_ULIB_INIT(argv);
 
    U_TRACE(5,"main(%d)",argc)
 
-   int i;
-   unsigned char* md;
-   UString buffer(MD5_DIGEST_LENGTH * 2);
+   U_INTERNAL_DUMP("argv[0] = %S argv[1] = %S argv[2] = %S argv[3] = %S argv[4] = %S argv[5] = %S argv[6] = %S", argv[0], argv[1], argv[2], argv[3], argv[4], argv[5], argv[6])
 
-   buffer.size_adjust(MD5_DIGEST_LENGTH * 2);
+   UString ha1, nc, nonce, cnonce, uri, user, ha3(33U);
 
-   char* buf      = buffer.data();
-   const char** P = test;
-   const char** R = ret;
+      ha1.assign(argv[1]);
+       nc.assign(argv[2]);
+    nonce.assign(argv[3]);
+   cnonce.assign(argv[4]);
+      uri.assign(argv[5]);
+     user.assign(argv[6]);
 
-   while (*P)
-      {
-      UString data(*P), output = UDigest::md5(data);
+   u_init_http_method_list();
 
-      md = (unsigned char*)output.data();
+   (void) UServices::setDigestCalcResponse(ha1, nc, nonce, cnonce, uri, user, ha3);
 
-      for (i = 0; i < MD5_DIGEST_LENGTH; ++i) (void)sprintf(&(buf[i*2]), "%02x", md[i]);
-
-      cout << *P << " -> " << buffer << endl;
-
-      U_ASSERT( buffer == *R )
-
-      ++R;
-      ++P;
-      }
+   cout.write(U_STRING_TO_PARAM(ha3));
+   cout.put('\n');
 }

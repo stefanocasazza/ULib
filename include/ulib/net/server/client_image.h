@@ -105,14 +105,14 @@ public:
       {
       U_TRACE_NO_PARAM(0, "UClientImage_Base::setNoHeaderForResponse()")
 
-      iov_vec[1].iov_len = 0;
+      iov_vec[0].iov_len = 0;
       }
 
    static bool isNoHeaderForResponse()
       {
       U_TRACE_NO_PARAM(0, "UClientImage_Base::isNoHeaderForResponse()")
 
-      if (UNLIKELY(iov_vec[1].iov_len == 0)) U_RETURN(true);
+      if (UNLIKELY(iov_vec[0].iov_len == 0)) U_RETURN(true);
 
       U_RETURN(false);
       }
@@ -367,6 +367,8 @@ public:
 
       iov_vec[2].iov_len  = sz;
       iov_vec[2].iov_base = (caddr_t)wbuffer->data();
+
+      U_INTERNAL_DUMP("iov_vec[0].iov_len = %u iov_vec[1].iov_len = %u", iov_vec[0].iov_len, iov_vec[1].iov_len)
 
       U_INTERNAL_ASSERT_EQUALS(iov_vec[0].iov_len, 17)
       U_INTERNAL_ASSERT_EQUALS(iov_vec[1].iov_len, 51)

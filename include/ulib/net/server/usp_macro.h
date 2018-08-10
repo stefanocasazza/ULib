@@ -43,40 +43,4 @@
 #define USP_FORM_NAME(n)               (UHTTP::getFormValue(*UClientImage_Base::_value,(0+(n*2))),                *UClientImage_Base::_value)
 #define USP_FORM_VALUE(n)              (UHTTP::getFormValue(*UClientImage_Base::_value,(1+(n*2))),                *UClientImage_Base::_value)
 #define USP_FORM_VALUE_FROM_NAME(name) (UHTTP::getFormValue(*UClientImage_Base::_value,U_CONSTANT_TO_PARAM(name)),*UClientImage_Base::_value)
-
-#define USP_STORAGE_VAR_GET(index,varname) \
-   { \
-   UString varname##_value; \
-   if (UHTTP::getDataStorage(index, varname##_value) && \
-       (usp_sz = varname##_value.size())) \
-      { \
-      UString2Object(varname##_value.data(), usp_sz, varname); \
-      } \
-   }
-
-#define USP_SESSION_VAR_GET(index,varname) \
-   { \
-   UString varname##_value; \
-        if (UHTTP::getDataSession(index, varname##_value) == false) UHTTP::setSessionCookie(); \
-   else if ((usp_sz = varname##_value.size())) \
-      { \
-      UString2Object(varname##_value.data(), usp_sz, varname); \
-      } \
-   }
-
-#define USP_STORAGE_VAR_PUT(index,varname) \
-   { \
-   usp_sz = UObject2String(varname, usp_buffer, sizeof(usp_buffer)); \
-   UHTTP::putDataStorage(index, usp_buffer, usp_sz); \
-   }
-
-#define USP_SESSION_VAR_PUT(index,varname) \
-   { \
-   if (UHTTP::isDataSession() && \
-       (usp_sz = UObject2String(varname, usp_buffer, sizeof(usp_buffer)))) \
-      { \
-      UHTTP::putDataSession(index, usp_buffer, usp_sz); \
-      } \
-   }
-
 #endif

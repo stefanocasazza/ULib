@@ -92,8 +92,8 @@ target_triplet = @target@
 @LIBTDB_TRUE@am__append_11 = tdb.test
 @PCRE_TRUE@am__append_12 = test_pcre
 @PCRE_TRUE@am__append_13 = pcre.test
-@SSL_TRUE@am__append_14 = test_des3 test_digest test_certificate test_crl test_pkcs10 test_ssl_client test_ssl_server test_https test_pkcs7 test_url
-@SSL_TRUE@am__append_15 = des3.test digest.test certificate.test crl.test pkcs10.test ssl_client_server.test https.test pkcs7.test url.test
+@SSL_TRUE@am__append_14 = test_des3 test_certificate test_crl test_pkcs10 test_ssl_client test_ssl_server test_https test_pkcs7 test_url test_digest
+@SSL_TRUE@am__append_15 = des3.test digest.test certificate.test crl.test pkcs10.test ssl_client_server.test https.test pkcs7.test url.test digest.test
 @SSL_TRUE@@SSL_TS_TRUE@am__append_16 = test_timestamp
 @SSL_TRUE@@SSL_TS_TRUE@am__append_17 = timestamp.test
 @SSH_TRUE@am__append_18 = test_ssh_client
@@ -183,11 +183,11 @@ product2_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) \
 @ZIP_TRUE@am__EXEEXT_6 = test_zip$(EXEEXT)
 @LIBTDB_TRUE@am__EXEEXT_7 = test_tdb$(EXEEXT)
 @PCRE_TRUE@am__EXEEXT_8 = test_pcre$(EXEEXT)
-@SSL_TRUE@am__EXEEXT_9 = test_des3$(EXEEXT) test_digest$(EXEEXT) \
-@SSL_TRUE@	test_certificate$(EXEEXT) test_crl$(EXEEXT) \
-@SSL_TRUE@	test_pkcs10$(EXEEXT) test_ssl_client$(EXEEXT) \
-@SSL_TRUE@	test_ssl_server$(EXEEXT) test_https$(EXEEXT) \
-@SSL_TRUE@	test_pkcs7$(EXEEXT) test_url$(EXEEXT)
+@SSL_TRUE@am__EXEEXT_9 = test_des3$(EXEEXT) test_certificate$(EXEEXT) \
+@SSL_TRUE@	test_crl$(EXEEXT) test_pkcs10$(EXEEXT) \
+@SSL_TRUE@	test_ssl_client$(EXEEXT) test_ssl_server$(EXEEXT) \
+@SSL_TRUE@	test_https$(EXEEXT) test_pkcs7$(EXEEXT) \
+@SSL_TRUE@	test_url$(EXEEXT) test_digest$(EXEEXT)
 @SSL_TRUE@@SSL_TS_TRUE@am__EXEEXT_10 = test_timestamp$(EXEEXT)
 @CURL_TRUE@am__EXEEXT_11 = test_curl$(EXEEXT)
 @MAGIC_TRUE@am__EXEEXT_12 = test_magic$(EXEEXT)

@@ -42,11 +42,31 @@ static void usp_end_ir_web()
    U_DELETE(footer)
 }
    
+static bool usp_bSESSION;
+   
+#define USP_SESSION_VAR_GET(index,varname) \
+   { \
+   UString varname##_value; \
+   if (UHTTP::getDataSession(index, varname##_value) && \
+        (usp_sz = varname##_value.size())) \
+      { \
+      UString2Object(varname##_value.data(), usp_sz, varname); \
+      } \
+   U_INTERNAL_DUMP("%s(%u) = %.*S", #varname, usp_sz, usp_sz, varname##_value.data()) \
+   }
+   
+#define USP_SESSION_VAR_PUT(index,varname) \
+   { \
+   usp_sz = UObject2String(varname, usp_buffer, sizeof(usp_buffer)); \
+   UHTTP::putDataSession(index, usp_buffer, usp_sz); \
+   }
+   
 static void usp_body_ir_web()
 {
    U_TRACE(5, "::usp_body_ir_web()")
    
-   if (UHTTP::getDataSession() == false) UHTTP::setSessionCookie();
+   usp_bSESSION = (UHTTP::getDataSession() ? true : (UHTTP::setSessionCookie(), false));
+   usp_bSESSION = true;
    const char* ref     = "?ext=help";
    uint32_t num_args   = UHTTP::processForm() / 2;
    bool form_with_help = false;
@@ -199,7 +219,7 @@ extern U_EXPORT void runDynamicPage_ir_web();
    U_TRACE_NO_PARAM(0, "::runDynamicPage_ir_web()")
    
    usp_body_ir_web();
-   UHTTP::putDataSession();
+   if (usp_bSESSION) UHTTP::putDataSession();
    UHTTP::mime_index = U_html;
    U_http_info.endHeader = 0;
 } }

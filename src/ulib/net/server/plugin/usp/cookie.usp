@@ -17,7 +17,7 @@ if (delete_cookie) UHTTP::removeDataSession();
 -->
 <html>
  <head>
-  <title>Hello World-application for Ulib</title>
+  <title>Hello World-application for ULib</title>
  </head>
 
  <body bgcolor="#FFFFFF">

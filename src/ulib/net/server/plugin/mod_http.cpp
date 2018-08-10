@@ -531,7 +531,7 @@ int UHttpPlugIn::handlerRun() // NB: we use this method instead of handlerInit()
    UServer_Base::update_date  =
    UServer_Base::update_date3 = true;
 
-   UClientImage_Base::iov_vec[1].iov_len  = 6+29+2+12+2+17+2;
+   UClientImage_Base::iov_vec[1].iov_len  = 6+29+2+12+2; //+17+2;
    UClientImage_Base::iov_vec[1].iov_base = (caddr_t)ULog::date.date3; // Date: Wed, 20 Jun 2012 11:43:17 GMT\r\nServer: ULib\r\nConnection: close\r\n
 
 #if defined(U_LINUX) && defined(ENABLE_THREAD)

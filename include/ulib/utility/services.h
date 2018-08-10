@@ -43,6 +43,10 @@ typedef int (*verify_cb)(int,X509_STORE_CTX*); /* error callback */
 #define FNM_CASEFOLD FNM_IGNORECASE
 #endif
 
+// HTTP Access Authentication
+#define U_HTTP_QOP   "auth"
+#define U_HTTP_REALM "Protected Area"
+
 struct U_EXPORT UServices {
 
    static bool isSetuidRoot();               // UID handling: check if we are setuid-root
@@ -168,6 +172,8 @@ struct U_EXPORT UServices {
    static void generateDigest(int alg, uint32_t keylen, unsigned char* data, uint32_t size, UString& output, int base64 = 0);
    static void generateDigest(int alg, uint32_t keylen, const UString& data,                UString& output, int base64 = 0)
       { generateDigest(alg, keylen, (unsigned char*)U_STRING_TO_PARAM(data), output, base64); }
+
+   static bool setDigestCalcResponse(const UString& ha1, const UString& nc, const UString& nonce, const UString& cnonce, const UString& _uri, const UString& user, UString& response);
 
    static UString generateCode(uint32_t len = 6)
       {

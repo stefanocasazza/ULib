@@ -9,7 +9,7 @@
         <tr>
           <td bgcolor="white">
             <center>
-              <h3>Welcome to Ulib (Ver. <!--#puts ULIB_VERSION -->)!</h3>
+              <h3>Welcome to ULib (Ver. <!--#puts ULIB_VERSION -->)!</h3>
             </center>
           </td>
         </tr>
@@ -24,7 +24,7 @@
       </table>
     </blockquote>
 
-    <p>About Ulib:</p>
+    <p>About ULib:</p>
 
     <blockquote>
       <table width="750" cellpadding="5">

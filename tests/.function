@@ -453,13 +453,22 @@ send_req() {
 
 # function : wait_server_ready
 wait_server_ready() {
-$SLEEP
-for i in 1 2 3 4 5; do
-	$1 -c $1 $2 </dev/null 2>/dev/null
-	if [ $? -eq 0 ]; then
-		break
+
+	if [ -z "$NCAT" ]; then
+		check_for_netcat
 	fi
-done
+
+#	FTMP=/tmp/get.req
+#	echo -en 'GET / HTTP/1.0\r\n\r\n' >$FTMP
+
+	$SLEEP
+	for i in 1 2 3 4 5; do
+#		send_req $NCAT $1 $2 $FTMP web_server 3 || break
+ 		$NCAT -z $1 $2
+		if [ $? -eq 0 ]; then
+			break
+		fi
+	done
 }
 
 # function : post_processing

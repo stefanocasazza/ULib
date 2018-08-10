@@ -1111,7 +1111,7 @@ private:
    U_DISALLOW_COPY_AND_ASSIGN(UClientThread)
 };
 
-#  ifdef U_LINUX
+#  if defined(U_LINUX) && !defined(U_SERVER_CAPTIVE_PORTAL)
 class UTimeThread : public UThread {
 public:
 
@@ -1195,7 +1195,7 @@ public:
             continue;
             }
 
-#       if !defined(U_SERVER_CAPTIVE_PORTAL) && !defined(U_LOG_DISABLE) && defined(USE_LIBZ)
+#       if !defined(U_LOG_DISABLE) && defined(USE_LIBZ)
          if (UServer_Base::log)                         UServer_Base::log->checkForLogRotateDataToWrite();
          if (UServer_Base::apache_like_log) UServer_Base::apache_like_log->checkForLogRotateDataToWrite();
 #       endif
@@ -1260,19 +1260,15 @@ public:
 
          sec = u_now->tv_sec;
 
-#       ifndef U_SERVER_CAPTIVE_PORTAL
          if (daylight &&
              (sec % U_ONE_HOUR_IN_SECOND) == 0)
             {
             (void) UTimeDate::checkForDaylightSavingTime(sec);
             }
-#       endif
 
          if (UServer_Base::update_date)
             {
-#        ifndef U_SERVER_CAPTIVE_PORTAL
             (void) U_SYSCALL(pthread_rwlock_wrlock, "%p", ULog::prwlock);
-#        endif
 
             if ((sec % U_ONE_HOUR_IN_SECOND) != 0)
                {
@@ -1289,9 +1285,7 @@ public:
                if (UServer_Base::update_date3) (void) u_strftime2(ULog::ptr_shared_date->date3+6, 29-4, U_CONSTANT_TO_PARAM("%a, %d %b %Y %T"), sec);
                }
 
-#        ifndef U_SERVER_CAPTIVE_PORTAL
             (void) U_SYSCALL(pthread_rwlock_unlock, "%p", ULog::prwlock);
-#        endif
             }
          }
       }
@@ -1803,13 +1797,15 @@ UServer_Base::~UServer_Base()
       }
 # endif
 
-# ifdef U_LINUX
+# if defined(U_LINUX)
+#  if !defined(U_SERVER_CAPTIVE_PORTAL)
    if (u_pthread_time)
       {
       U_DELETE((UTimeThread*)u_pthread_time)
 
       (void) pthread_rwlock_destroy(ULog::prwlock);
       }
+#  endif
 
 #  if defined(USE_LIBSSL) && !defined(OPENSSL_NO_OCSP) && defined(SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB)
    if (bssl)
@@ -2216,7 +2212,7 @@ void UServer_Base::loadConfigParam()
    U_INTERNAL_DUMP("SOMAXCONN = %d FD_SETSIZE = %d", SOMAXCONN, FD_SETSIZE)
 
    set_tcp_keep_alive    = cfg->readBoolean(U_CONSTANT_TO_PARAM("TCP_KEEP_ALIVE"));
-   set_realtime_priority = cfg->readBoolean(U_CONSTANT_TO_PARAM("SET_REALTIME_PRIORITY"), true);
+   set_realtime_priority = cfg->readBoolean(U_CONSTANT_TO_PARAM("SET_REALTIME_PRIORITY"), false);
 
    crash_count                = cfg->readLong(U_CONSTANT_TO_PARAM("CRASH_COUNT"), 5);
    tcp_linger_set             = cfg->readLong(U_CONSTANT_TO_PARAM("TCP_LINGER_SET"), -2);
@@ -3036,7 +3032,9 @@ void UServer_Base::suspendThread()
    U_TRACE_NO_PARAM(0, "UServer_Base::suspendThread()")
 
 #if defined(U_LINUX) && defined(ENABLE_THREAD)
+# if !defined(U_SERVER_CAPTIVE_PORTAL)
    if (u_pthread_time) ((UTimeThread*)u_pthread_time)->suspend();
+# endif
 
 # if defined(USE_LIBSSL) && !defined(OPENSSL_NO_OCSP) && defined(SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB)
    if (pthread_ocsp) pthread_ocsp->suspend();
@@ -3354,15 +3352,19 @@ next:
    U_INTERNAL_ASSERT_EQUALS(u_pthread_time, U_NULLPTR)
 
 # ifdef USERVER_UDP
-   if (budp == false ||
-       UServer_Base::update_date)
+   if (budp == false)
 # endif
    {
-   U_NEW_WITHOUT_CHECK_MEMORY(UTimeThread, u_pthread_time, UTimeThread);
+#  if !defined(U_SERVER_CAPTIVE_PORTAL)
+   if (UServer_Base::update_date)
+      {
+      U_NEW_WITHOUT_CHECK_MEMORY(UTimeThread, u_pthread_time, UTimeThread);
 
-   (void) UThread::initRwLock((ULog::prwlock = &(ptr_shared_data->rwlock)));
+      (void) UThread::initRwLock((ULog::prwlock = &(ptr_shared_data->rwlock)));
 
-   ((UTimeThread*)u_pthread_time)->start(50);
+      ((UTimeThread*)u_pthread_time)->start(50);
+      }
+#  endif
    }
 #endif
 
@@ -3626,7 +3628,9 @@ void UServer_Base::sendSignalToAllChildren(int signo, sighandler_t handler)
 #endif
 
 #if defined(U_LINUX) && defined(ENABLE_THREAD)
+# if !defined(U_SERVER_CAPTIVE_PORTAL)
    if (u_pthread_time) ((UTimeThread*)u_pthread_time)->resume();
+# endif
 
 # if defined(USE_LIBSSL) && !defined(OPENSSL_NO_OCSP) && defined(SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB)
    if (pthread_ocsp) pthread_ocsp->resume();
@@ -4187,9 +4191,7 @@ retry:   pid = UProcess::waitpid(-1, &status, WNOHANG); // NB: to avoid too much
    if (msg_welcome &&
        USocketExt::write(CSOCKET, *msg_welcome, timeoutMS) == false)
       {
-      CSOCKET->abortive_close();
-
-      CLIENT_IMAGE->UClientImage_Base::handlerDelete();
+      if (CSOCKET->isOpen()) CSOCKET->abortive_close();
 
       goto next;
       }
@@ -4475,14 +4477,16 @@ void UServer_Base::runLoop(const char* user)
    if (budp == false)
 #endif
    {
-   if (handler_db1)
+   if (handler_db1 &&
+       handler_db1->UEventFd::fd != -1)
       {
       UNotifier::min_connection++;
 
       handler_db1->UEventFd::op_mask &= ~EPOLLRDHUP;
       }
 
-   if (handler_db2)
+   if (handler_db2 &&
+       handler_db2->UEventFd::fd != -1)
       {
       UNotifier::min_connection++;
 
@@ -4510,9 +4514,19 @@ void UServer_Base::runLoop(const char* user)
    if (UNotifier::min_connection)
       {
       if (binsert)         UNotifier::insert(pthis,           EPOLLEXCLUSIVE | EPOLLROUNDROBIN); // NB: we ask to be notified for request of connection (=> accept)
-      if (handler_db1)     UNotifier::insert(handler_db1,     EPOLLEXCLUSIVE | EPOLLROUNDROBIN); // NB: we ask to be notified for response from db
-      if (handler_db2)     UNotifier::insert(handler_db2,     EPOLLEXCLUSIVE | EPOLLROUNDROBIN); // NB: we ask to be notified for response from db
       if (handler_inotify) UNotifier::insert(handler_inotify, EPOLLEXCLUSIVE | EPOLLROUNDROBIN); // NB: we ask to be notified for change of file system (=> inotify)
+
+      if (handler_db1 &&
+          handler_db1->UEventFd::fd != -1)
+         {
+         UNotifier::insert(handler_db1, EPOLLEXCLUSIVE | EPOLLROUNDROBIN); // NB: we ask to be notified for response from db
+         }
+
+      if (handler_db2 &&
+          handler_db2->UEventFd::fd != -1)
+         {
+         UNotifier::insert(handler_db2, EPOLLEXCLUSIVE | EPOLLROUNDROBIN); // NB: we ask to be notified for response from db
+         }
 
       if (handler_other) // NB: we ask to be notified for request from generic system
          {

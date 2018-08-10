@@ -196,48 +196,38 @@ void ULog::updateDate1()
     * 012345678901234567890123456789
     */
 
-#if defined(U_LINUX) && defined(ENABLE_THREAD)
-# ifdef U_SERVER_CAPTIVE_PORTAL
-   U_INTERNAL_ASSERT_POINTER(u_pthread_time)
-# else
+#if defined(U_LINUX) && !defined(U_SERVER_CAPTIVE_PORTAL) && defined(ENABLE_THREAD)
    if (u_pthread_time)
-# endif
-   {
-# ifndef U_SERVER_CAPTIVE_PORTAL
-   (void) U_SYSCALL(pthread_rwlock_rdlock, "%p", prwlock);
-# endif
-
-   if (tv_sec_old_1 != u_now->tv_sec)
       {
-      long tv_sec = u_now->tv_sec;
-
-      U_INTERNAL_DUMP("tv_sec_old_1 = %lu u_now->tv_sec = %lu", tv_sec_old_1, tv_sec)
-
-      if ((tv_sec - tv_sec_old_1) != 1 ||
-          (tv_sec % U_ONE_HOUR_IN_SECOND) == 0)
+      if (tv_sec_old_1 != u_now->tv_sec)
          {
-         tv_sec_old_1 = tv_sec;
+         (void) U_SYSCALL(pthread_rwlock_rdlock, "%p", prwlock);
 
-         U_MEMCPY(date.date1, ptr_shared_date->date1, 17);
+         long tv_sec = u_now->tv_sec;
+
+         U_INTERNAL_DUMP("tv_sec_old_1 = %lu u_now->tv_sec = %lu", tv_sec_old_1, tv_sec)
+
+         if ((tv_sec - tv_sec_old_1) != 1 ||
+             (tv_sec % U_ONE_HOUR_IN_SECOND) == 0)
+            {
+            tv_sec_old_1 = tv_sec;
+
+            U_MEMCPY(date.date1, ptr_shared_date->date1, 17);
+            }
+         else
+            {
+            ++tv_sec_old_1;
+
+            u_put_unalignedp16(date.date1+12,  U_MULTICHAR_CONSTANT16(ptr_shared_date->date1[12],ptr_shared_date->date1[13]));
+            u_put_unalignedp16(date.date1+12+3,U_MULTICHAR_CONSTANT16(ptr_shared_date->date1[15],ptr_shared_date->date1[16]));
+            }
+
+         U_INTERNAL_ASSERT_EQUALS(tv_sec, tv_sec_old_1)
+
+         (void) U_SYSCALL(pthread_rwlock_unlock, "%p", prwlock);
          }
-      else
-         {
-         ++tv_sec_old_1;
-
-         u_put_unalignedp16(date.date1+12,  U_MULTICHAR_CONSTANT16(ptr_shared_date->date1[12],ptr_shared_date->date1[13]));
-         u_put_unalignedp16(date.date1+12+3,U_MULTICHAR_CONSTANT16(ptr_shared_date->date1[15],ptr_shared_date->date1[16]));
-         }
-
-      U_INTERNAL_ASSERT_EQUALS(tv_sec, tv_sec_old_1)
       }
-
-# ifndef U_SERVER_CAPTIVE_PORTAL
-   (void) U_SYSCALL(pthread_rwlock_unlock, "%p", prwlock);
-# endif
-   }
-# ifndef U_SERVER_CAPTIVE_PORTAL
    else
-# endif
 #endif
    {
    U_INTERNAL_ASSERT_EQUALS(u_pthread_time, U_NULLPTR)
@@ -278,39 +268,42 @@ void ULog::updateDate2()
     * 012345678901234567890123456789
     */
 
-#if defined(U_LINUX) && defined(ENABLE_THREAD)
-# ifndef U_SERVER_CAPTIVE_PORTAL
-   (void) U_SYSCALL(pthread_rwlock_rdlock, "%p", prwlock);
-# endif
-
-   if (tv_sec_old_2 != u_now->tv_sec)
+#if defined(U_LINUX) && !defined(U_SERVER_CAPTIVE_PORTAL) && defined(ENABLE_THREAD)
+   if (u_pthread_time)
       {
-      long tv_sec = u_now->tv_sec;
-
-      U_INTERNAL_DUMP("tv_sec_old_2 = %lu u_now->tv_sec = %lu", tv_sec_old_2, tv_sec)
-
-      if ((tv_sec - tv_sec_old_2) != 1 ||
-          (tv_sec % U_ONE_HOUR_IN_SECOND) == 0)
+      if (tv_sec_old_2 != u_now->tv_sec)
          {
-         tv_sec_old_2 = tv_sec;
+         (void) U_SYSCALL(pthread_rwlock_rdlock, "%p", prwlock);
 
-         U_MEMCPY(date.date2, ptr_shared_date->date2, 26);
+         long tv_sec = u_now->tv_sec;
+
+         U_INTERNAL_DUMP("tv_sec_old_2 = %lu u_now->tv_sec = %lu", tv_sec_old_2, tv_sec)
+
+         if ((tv_sec - tv_sec_old_2) != 1 ||
+             (tv_sec % U_ONE_HOUR_IN_SECOND) == 0)
+            {
+            tv_sec_old_2 = tv_sec;
+
+            U_MEMCPY(date.date2, ptr_shared_date->date2, 26);
+            }
+         else
+            {
+            ++tv_sec_old_2;
+
+            u_put_unalignedp16(date.date2+15,  U_MULTICHAR_CONSTANT16(ptr_shared_date->date2[15],ptr_shared_date->date2[16]));
+            u_put_unalignedp16(date.date2+15+3,U_MULTICHAR_CONSTANT16(ptr_shared_date->date2[18],ptr_shared_date->date2[19]));
+            }
+
+         U_INTERNAL_ASSERT_EQUALS(tv_sec, tv_sec_old_2)
+
+         (void) U_SYSCALL(pthread_rwlock_unlock, "%p", prwlock);
          }
-      else
-         {
-         ++tv_sec_old_2;
-
-         u_put_unalignedp16(date.date2+15,  U_MULTICHAR_CONSTANT16(ptr_shared_date->date2[15],ptr_shared_date->date2[16]));
-         u_put_unalignedp16(date.date2+15+3,U_MULTICHAR_CONSTANT16(ptr_shared_date->date2[18],ptr_shared_date->date2[19]));
-         }
-
-      U_INTERNAL_ASSERT_EQUALS(tv_sec, tv_sec_old_2)
       }
+   else
+#endif
+   {
+   U_INTERNAL_ASSERT_EQUALS(u_pthread_time, U_NULLPTR)
 
-# ifndef U_SERVER_CAPTIVE_PORTAL
-   (void) U_SYSCALL(pthread_rwlock_unlock, "%p", prwlock);
-# endif
-#else
    u_gettimenow();
 
    if (tv_sec_old_2 != u_now->tv_sec)
@@ -333,7 +326,7 @@ void ULog::updateDate2()
 
       U_INTERNAL_ASSERT_EQUALS(tv_sec, tv_sec_old_2)
       }
-#endif
+   }
 
    U_INTERNAL_DUMP("date.date2 = %.26S", date.date2)
 }
@@ -348,51 +341,54 @@ void ULog::updateDate3(char* ptr_date)
     * 0123456789012345678901234567890123456789
     */
 
-#if defined(U_LINUX) && defined(ENABLE_THREAD)
-# ifndef U_SERVER_CAPTIVE_PORTAL
-   (void) U_SYSCALL(pthread_rwlock_rdlock, "%p", prwlock);
-# endif
-
-   if (tv_sec_old_3 != u_now->tv_sec)
+#if defined(U_LINUX) && !defined(U_SERVER_CAPTIVE_PORTAL) && defined(ENABLE_THREAD)
+   if (u_pthread_time)
       {
-      long tv_sec = u_now->tv_sec;
-
-      U_INTERNAL_DUMP("tv_sec_old_3 = %lu u_now->tv_sec = %lu", tv_sec_old_3, tv_sec)
-
-      /*
-      U_INTERNAL_ASSERT_DIFFERS(u_get_unalignedp64(            date.date3+6+U_CONSTANT_SIZE("Wed, 20 Jun 2012 ")),
-                                u_get_unalignedp64(ptr_shared_date->date3+6+U_CONSTANT_SIZE("Wed, 20 Jun 2012 ")))
-      */
-
-      if ((tv_sec - tv_sec_old_3) != 1 ||
-          (tv_sec % U_ONE_HOUR_IN_SECOND) == 0)
+      if (tv_sec_old_3 != u_now->tv_sec)
          {
-         tv_sec_old_3 = tv_sec;
+         (void) U_SYSCALL(pthread_rwlock_rdlock, "%p", prwlock);
 
-                       U_MEMCPY(date.date3+6, ptr_shared_date->date3+6, 29-4);
-         if (ptr_date) U_MEMCPY(  ptr_date+6, ptr_shared_date->date3+6, 29-4);
-         }
-      else
-         {
-         ++tv_sec_old_3;
+         long tv_sec = u_now->tv_sec;
 
-         u_put_unalignedp16(date.date3+26,  U_MULTICHAR_CONSTANT16(ptr_shared_date->date3[26],ptr_shared_date->date3[27]));
-         u_put_unalignedp16(date.date3+26+3,U_MULTICHAR_CONSTANT16(ptr_shared_date->date3[29],ptr_shared_date->date3[30]));
+         U_INTERNAL_DUMP("tv_sec_old_3 = %lu u_now->tv_sec = %lu", tv_sec_old_3, tv_sec)
 
-         if (ptr_date)
+         /*
+         U_INTERNAL_ASSERT_DIFFERS(u_get_unalignedp64(            date.date3+6+U_CONSTANT_SIZE("Wed, 20 Jun 2012 ")),
+                                   u_get_unalignedp64(ptr_shared_date->date3+6+U_CONSTANT_SIZE("Wed, 20 Jun 2012 ")))
+         */
+
+         if ((tv_sec - tv_sec_old_3) != 1 ||
+             (tv_sec % U_ONE_HOUR_IN_SECOND) == 0)
             {
-            u_put_unalignedp16(ptr_date+26,  U_MULTICHAR_CONSTANT16(ptr_shared_date->date3[26],ptr_shared_date->date3[27]));
-            u_put_unalignedp16(ptr_date+26+3,U_MULTICHAR_CONSTANT16(ptr_shared_date->date3[29],ptr_shared_date->date3[30]));
+            tv_sec_old_3 = tv_sec;
+
+                          U_MEMCPY(date.date3+6, ptr_shared_date->date3+6, 29-4);
+            if (ptr_date) U_MEMCPY(  ptr_date+6, ptr_shared_date->date3+6, 29-4);
             }
+         else
+            {
+            ++tv_sec_old_3;
+
+            u_put_unalignedp16(date.date3+26,  U_MULTICHAR_CONSTANT16(ptr_shared_date->date3[26],ptr_shared_date->date3[27]));
+            u_put_unalignedp16(date.date3+26+3,U_MULTICHAR_CONSTANT16(ptr_shared_date->date3[29],ptr_shared_date->date3[30]));
+
+            if (ptr_date)
+               {
+               u_put_unalignedp16(ptr_date+26,  U_MULTICHAR_CONSTANT16(ptr_shared_date->date3[26],ptr_shared_date->date3[27]));
+               u_put_unalignedp16(ptr_date+26+3,U_MULTICHAR_CONSTANT16(ptr_shared_date->date3[29],ptr_shared_date->date3[30]));
+               }
+            }
+
+         U_INTERNAL_ASSERT_EQUALS(tv_sec, tv_sec_old_3)
+
+         (void) U_SYSCALL(pthread_rwlock_unlock, "%p", prwlock);
          }
-
-      U_INTERNAL_ASSERT_EQUALS(tv_sec, tv_sec_old_3)
       }
+   else
+#endif
+   {
+   U_INTERNAL_ASSERT_EQUALS(u_pthread_time, U_NULLPTR)
 
-# ifndef U_SERVER_CAPTIVE_PORTAL
-   (void) U_SYSCALL(pthread_rwlock_unlock, "%p", prwlock);
-# endif
-#else
    u_gettimenow();
 
    if (tv_sec_old_3 != u_now->tv_sec)
@@ -418,11 +414,11 @@ void ULog::updateDate3(char* ptr_date)
 
       U_INTERNAL_ASSERT_EQUALS(tv_sec, tv_sec_old_3)
       }
-#endif
-
-   U_INTERNAL_DUMP("date.date3+6 = %.29S", date.date3+6)
+   }
 
 #ifdef DEBUG
+   U_INTERNAL_DUMP("date.date3+6 = %.29S", date.date3+6)
+
    if (ptr_date) U_INTERNAL_DUMP("ptr_date+6 = %.29S", ptr_date+6)
 #endif
 }

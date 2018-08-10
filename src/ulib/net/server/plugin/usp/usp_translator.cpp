@@ -93,8 +93,8 @@ public:
          (void) output0.reserve(50U + size);
          (void) output1.reserve(50U + size);
 
-         output0.snprintf_add(U_CONSTANT_TO_PARAM("\n\tUSP_%s_VAR_GET(%u,%.*s);\n"), name, i, size, ptr);
-         output1.snprintf_add(U_CONSTANT_TO_PARAM("\n\tUSP_%s_VAR_PUT(%u,%.*s);\n"), name, i, size, ptr);
+         output0.snprintf_add(U_CONSTANT_TO_PARAM("\n\tif (usp_b%s) USP_%s_VAR_GET(%u,%.*s);\n"), name, name, i, size, ptr);
+         output1.snprintf_add(U_CONSTANT_TO_PARAM("\n\tif (usp_b%s) USP_%s_VAR_PUT(%u,%.*s);\n"), name, name, i, size, ptr);
 
 #     ifdef DEBUG
          id.clear(); // NB: to avoid DEAD OF SOURCE STRING WITH CHILD ALIVE...
@@ -263,14 +263,17 @@ public:
 
          bsession = true;
 
+         (void) output0.append(U_CONSTANT_TO_PARAM("\n\tusp_bSESSION = (UHTTP::getDataSession() ? true : (UHTTP::setSessionCookie(), false));\n"));
+
          setDirectiveItem(directive, U_CONSTANT_SIZE("session"));
 
          if (token) manageDirectiveSessionOrStorage("SESSION");
          else
             {
-            (void) output0.append(U_CONSTANT_TO_PARAM("\n\tif (UHTTP::getDataSession() == false) UHTTP::setSessionCookie();\n"));
-            (void) output1.append(U_CONSTANT_TO_PARAM("\n\tUHTTP::putDataSession();\n"));
+            (void) output1.append(U_CONSTANT_TO_PARAM("\n\tif (usp_bSESSION) UHTTP::putDataSession();\n"));
             }
+
+         (void) output0.append(U_CONSTANT_TO_PARAM("\n\tusp_bSESSION = true;\n"));
          }
       else if (strncmp(directive, U_CONSTANT_TO_PARAM("storage")) == 0)
          {
@@ -279,14 +282,17 @@ public:
 
          bstorage = true;
 
+         (void) output0.append(U_CONSTANT_TO_PARAM("\n\tusp_bSTORAGE = true;\n\t(void) UHTTP::getDataStorage();\n"));
+
          setDirectiveItem(directive, U_CONSTANT_SIZE("storage"));
 
          if (token) manageDirectiveSessionOrStorage("STORAGE");
          else
             {
-            (void) output0.append(U_CONSTANT_TO_PARAM("\n\t(void) UHTTP::getDataStorage();\n"));
-            (void) output1.append(U_CONSTANT_TO_PARAM("\n\tUHTTP::putDataStorage();\n"));
+            (void) output1.append(U_CONSTANT_TO_PARAM("\n\ttif (usp_bSTORAGE) UHTTP::putDataStorage();\n"));
             }
+
+         (void) output0.append(U_CONSTANT_TO_PARAM("\n\tusp_bSTORAGE = true;\n"));
          }
       else if (strncmp(directive, U_CONSTANT_TO_PARAM("args")) == 0)
          {
@@ -627,25 +633,28 @@ loop: distance = t.getDistance();
          if (size)
             {
             token = usp.substr(distance, size);
-      
-            // plain html block
-
-            if (test_if_html == false)
+     
+            if (token.isWhiteSpace() == false)
                {
-               test_if_html = true;
+               // plain html block
 
-               if (u_isHTML(token.data())) is_html = true;
+               if (test_if_html == false)
+                  {
+                  test_if_html = true;
+
+                  if (u_isHTML(token.data())) is_html = true;
+                  }
+
+               UString tmp(token.size() * 4);
+
+               UEscape::encode(token, tmp);
+
+               U_ASSERT(tmp.isQuoted())
+
+               (void) output0.reserve(100U + tmp.size());
+
+               output0.snprintf_add(U_CONSTANT_TO_PARAM("\n\t(void) UClientImage_Base::wbuffer->append(\n\t\tU_CONSTANT_TO_PARAM(%v)\n\t);\n"), tmp.rep);
                }
-
-            UString tmp(token.size() * 4);
-
-            UEscape::encode(token, tmp);
-
-            U_ASSERT(tmp.isQuoted())
-
-            (void) output0.reserve(100U + tmp.size());
-
-            output0.snprintf_add(U_CONSTANT_TO_PARAM("\n\t(void) UClientImage_Base::wbuffer->append(\n\t\tU_CONSTANT_TO_PARAM(%v)\n\t);\n"), tmp.rep);
             }
          }
 
@@ -816,28 +825,78 @@ loop: distance = t.getDistance();
          bclose  = false;
          }
 
-      U_INTERNAL_DUMP("binit = %b breset = %b bend = %b bsighup = %b bfork = %b bopen = %b bclose = %b", binit, breset, bend, bsighup, bfork, bopen, bclose)
+      bool bdatamod = (bsession || bstorage);
 
-      if (binit == false &&
-          (bsession || bstorage))
+      U_INTERNAL_DUMP("binit = %b breset = %b bend = %b bsighup = %b bfork = %b bopen = %b bclose = %b bdatamod = %b", binit, breset, bend, bsighup, bfork, bopen, bclose, bdatamod)
+
+      if (bdatamod)
          {
-         binit = true;
+         if (bsession)
+            {
+            (void) declaration.append(U_CONSTANT_TO_PARAM(
+               "\n\t\nstatic bool usp_bSESSION;\n"
+               "\n\t\n"
+               "#define USP_SESSION_VAR_GET(index,varname) \\\n"
+               "   { \\\n"
+               "   UString varname##_value; \\\n"
+               "   if (UHTTP::getDataSession(index, varname##_value) && \\\n"
+               "       (usp_sz = varname##_value.size())) \\\n"
+               "      { \\\n"
+               "      UString2Object(varname##_value.data(), usp_sz, varname); \\\n"
+               "      } \\\n"
+               "   U_INTERNAL_DUMP(\"%s(%u) = %.*S\", #varname, usp_sz, usp_sz, varname##_value.data()) \\\n"
+               "   }"
+               "\n\t\n"
+               "#define USP_SESSION_VAR_PUT(index,varname) \\\n"
+               "   { \\\n"
+               "   usp_sz = UObject2String(varname, usp_buffer, sizeof(usp_buffer)); \\\n"
+               "   UHTTP::putDataSession(index, usp_buffer, usp_sz); \\\n"
+               "   }\n"));
+            }
 
-         (void) declaration.reserve(500U);
+         if (bstorage)
+            {
+            (void) declaration.append(U_CONSTANT_TO_PARAM(
+               "\n\t\nstatic bool usp_bSTORAGE;\n"
+               "\n\t\n"
+               "#define USP_STORAGE_VAR_GET(index,varname) \\\n"
+               "   { \\\n"
+               "   UString varname##_value; \\\n"
+               "   if (UHTTP::getDataStorage(index, varname##_value) && \\\n"
+               "       (usp_sz = varname##_value.size())) \\\n"
+               "      { \\\n"
+               "      UString2Object(varname##_value.data(), usp_sz, varname); \\\n"
+               "      } \\\n"
+               "   U_INTERNAL_DUMP(\"%s(%u) = %.*S\", #varname, usp_sz, usp_sz, varname##_value.data()) \\\n"
+               "   }"
+               "\n\t\n"
+               "#define USP_STORAGE_VAR_PUT(index,varname) \\\n"
+               "   { \\\n"
+               "   usp_sz = UObject2String(varname, usp_buffer, sizeof(usp_buffer)); \\\n"
+               "   UHTTP::putDataStorage(index, usp_buffer, usp_sz); \\\n"
+               "   }\n"));
+            }
 
-         declaration.snprintf_add(U_CONSTANT_TO_PARAM(
-               "\n\t\nstatic void usp_init_%.*s()\n"
-               "{\n"
-               "\tU_TRACE(5, \"::usp_init_%.*s()\")\n"
-               "\t\n"
-               "%s"
-               "%s"
-               "\n\tif (UHTTP::db_session == U_NULLPTR) UHTTP::initSession();\n"
-               "}"),
-               basename_sz, basename_ptr,
-               basename_sz, basename_ptr,
-               (bsession ? "\n\tif (UHTTP::data_session == U_NULLPTR) U_NEW(UDataSession, UHTTP::data_session, UDataSession)\n" : ""),
-               (bstorage ? "\n\tif (UHTTP::data_storage == U_NULLPTR) { U_NEW(UDataSession, UHTTP::data_storage, UDataSession(*UString::str_storage_keyid)) }\n" : ""));
+         if (binit == false)
+            {
+            binit = true;
+
+            (void) declaration.reserve(500U);
+
+            declaration.snprintf_add(U_CONSTANT_TO_PARAM(
+                  "\n\t\nstatic void usp_init_%.*s()\n"
+                  "{\n"
+                  "\tU_TRACE(5, \"::usp_init_%.*s()\")\n"
+                  "\t\n"
+                  "%s"
+                  "%s"
+                  "\n\tif (UHTTP::db_session == U_NULLPTR) UHTTP::initSession();\n"
+                  "}"),
+                  basename_sz, basename_ptr,
+                  basename_sz, basename_ptr,
+                  (bsession ? "\n\tif (UHTTP::data_session == U_NULLPTR) U_NEW(UDataSession, UHTTP::data_session, UDataSession)\n" : ""),
+                  (bstorage ? "\n\tif (UHTTP::data_storage == U_NULLPTR) { U_NEW(UDataSession, UHTTP::data_storage, UDataSession(*UString::str_storage_keyid)) }\n" : ""));
+            }
          }
 
       if (binit) (void) u__snprintf(ptr1, 100, U_CONSTANT_TO_PARAM("\n\tif (param == U_DPAGE_INIT) { usp_init_%.*s(); return; }\n"), basename_sz, basename_ptr);

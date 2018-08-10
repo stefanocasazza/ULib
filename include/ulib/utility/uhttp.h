@@ -27,8 +27,6 @@
 #  include <ulib/container/vector.h>
 #endif
 
-#define U_HTTP_REALM "Protected Area" // HTTP Access Authentication
-
 #define U_MAX_UPLOAD_PROGRESS   16
 #define U_MIN_SIZE_FOR_DEFLATE 150 // NB: google advice...
 
@@ -539,7 +537,7 @@ public:
       setErrorResponse(*UString::str_ctype_html, HTTP_ENTITY_TOO_LARGE, U_CONSTANT_TO_PARAM("Sorry, the data you requested is too large"), false);
       }
 
-   static void setUnAuthorized();
+   static void setUnAuthorized(bool bstale);
 
    static void setInternalError()
       {
@@ -1512,7 +1510,6 @@ private:
    static void manageDataForCache(const UString& basename, const UString& suffix) U_NO_EXPORT;
    static bool checkDataSession(const UString& token, time_t expire, UString* data) U_NO_EXPORT;
    static void putDataInCache(const UString& path, const UString& fmt, UString& content) U_NO_EXPORT;
-   static uint32_t checkPasswd(UFileCacheData* ptr_file_data, UString& fpasswd, const UString& line) U_NO_EXPORT;
    static void addContentLengthToHeader(UString& header, char* ptr, uint32_t size, const char* pEndHeader = U_NULLPTR) U_NO_EXPORT;
    static void setDataInCache(const UString& fmt, const UString& content, const char* encoding, uint32_t encoding_len) U_NO_EXPORT;
    static bool processAuthorization(const char* ptr = U_NULLPTR, uint32_t sz = 0, const char* pattern = U_NULLPTR, uint32_t len = 0) U_NO_EXPORT;
@@ -1537,6 +1534,9 @@ private:
    static inline void setAcceptLanguage(const char* ptr, uint32_t len) U_NO_EXPORT;
    static inline void setXForwardedFor(const char* ptr, uint32_t len) U_NO_EXPORT;
    static inline void setXHttpForwardedFor(const char* ptr, uint32_t len) U_NO_EXPORT;
+
+   static uint32_t getPosPasswd(UString& fpasswd, const UString& line) U_NO_EXPORT;
+   static uint32_t  checkPasswd(UFileCacheData* ptr_file_data, UString& fpasswd, const UString& line) U_NO_EXPORT;
 
    U_DISALLOW_COPY_AND_ASSIGN(UHTTP)
 
