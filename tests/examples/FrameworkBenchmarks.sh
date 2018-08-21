@@ -32,16 +32,16 @@ export ORM_DRIVER ORM_OPTION UMEMPOOL
 #Running 15s test @ http://localhost:8080/plaintext
 #  4 threads and 256 connections
 #  Thread Stats   Avg      Stdev     Max   +/- Stdev
-#    Latency     0.91ms  208.81us  11.38ms   80.51%
-#    Req/Sec   606.98k    39.03k  699.20k    71.14%
+#    Latency     0.91ms  353.79us  19.39ms   96.10%
+#    Req/Sec   609.19k    62.71k  808.89k    77.44%
 #  Latency Distribution
-#     50%    0.90ms
-#     75%    1.01ms
-#     90%    1.11ms
-#     99%    1.76ms
-#  34226368 requests in 14.94s, 4.11GB read
-#Requests/sec: 2290284.44
-#Transfer/sec:    281.76MB
+#     50%    0.88ms
+#     75%    0.97ms
+#     90%    1.06ms
+#     99%    1.90ms
+#  34449216 requests in 14.95s, 4.14GB read
+#Requests/sec: 2303880.07
+#Transfer/sec:    283.43MB
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------
 # JSON
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -52,16 +52,16 @@ export ORM_DRIVER ORM_OPTION UMEMPOOL
 #Running 15s test @ http://localhost:8080/json
 #  4 threads and 256 connections
 #  Thread Stats   Avg      Stdev     Max   +/- Stdev
-#    Latency   353.08us  168.28us   8.74ms   84.43%
-#    Req/Sec    93.33k     8.35k  167.78k    68.27%
+#    Latency   416.42us  683.05us  22.19ms   98.26%
+#    Req/Sec    89.37k    17.73k  170.55k    80.41%
 #  Latency Distribution
-#     50%  327.00us
-#     75%  451.00us
-#     90%  516.00us
-#     99%  745.00us
-#  5280348 requests in 15.00s, 750.32MB read
-#Requests/sec: 352026.18
-#Transfer/sec:     50.02MB
+#     50%  339.00us
+#     75%  452.00us
+#     90%  580.00us
+#     99%    1.53ms
+#  5037291 requests in 15.00s, 715.79MB read
+#Requests/sec: 335816.85
+#Transfer/sec:     47.72MB
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------
 # DB
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -75,61 +75,71 @@ export ORM_DRIVER ORM_OPTION UMEMPOOL
  sed -i "s|TCP_LINGER_SET .*|TCP_LINGER_SET -2|g"	benchmark/FrameworkBenchmarks/fbenchmark.cfg
  sed -i "s|LISTEN_BACKLOG .*|LISTEN_BACKLOG 256|g"	benchmark/FrameworkBenchmarks/fbenchmark.cfg
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------
+#Running 15s test @ http://localhost:8080/cached_worlds?queries=20
+#  4 threads and 256 connections
+#  Thread Stats   Avg      Stdev     Max   +/- Stdev
+#    Latency     1.10ms    3.00ms  33.28ms   93.31%
+#    Req/Sec    91.87k    45.63k  204.00k    69.59%
+#  Latency Distribution
+#     50%  211.00us
+#     75%  600.00us
+#     90%    1.71ms
+#     99%   18.38ms
+#  5137994 requests in 15.00s, 3.65GB read
+#Requests/sec: 342537.14
+#Transfer/sec:    248.92MB
 #Running 15s test @ http://localhost:8080/fortune
 #  4 threads and 256 connections
 #  Thread Stats   Avg      Stdev     Max   +/- Stdev
-#    Latency     5.97ms    2.42ms  16.39ms   94.85%
-#    Req/Sec     8.63k     2.15k   11.82k    92.32%
+#    Latency     4.19ms    1.06ms  22.93ms   78.97%
+#    Req/Sec    13.88k     2.24k   19.07k    58.09%
 #  Latency Distribution
-#     50%    5.21ms
-#     75%    6.09ms
-#     90%    6.47ms
-#     99%   16.39ms
-#  520090 requests in 16.00s, 674.06MB read
-#Requests/sec:  32502.85
-#Transfer/sec:     42.13MB
-#
+#     50%    3.96ms
+#     75%    4.61ms
+#     90%    5.42ms
+#     99%    8.84ms
+#  807248 requests in 15.00s, 1.02GB read
+#Requests/sec:  53817.00
+#Transfer/sec:     69.75MB
 #Running 15s test @ http://localhost:8080/db
 #  4 threads and 256 connections
 #  Thread Stats   Avg      Stdev     Max   +/- Stdev
-#    Latency     5.59ms    1.04ms  11.43ms   78.71%
-#    Req/Sec     9.25k     1.44k   12.09k    90.49%
+#    Latency     2.42ms    0.96ms  22.48ms   80.96%
+#    Req/Sec    20.47k    10.97k   36.33k    53.29%
 #  Latency Distribution
-#     50%    5.69ms
-#     75%    6.05ms
-#     90%    6.39ms
-#     99%   11.05ms
-#  539816 requests in 16.01s, 78.25MB read
-#Requests/sec:  33720.45
-#Transfer/sec:      4.89MB
-#
+#     50%    2.25ms
+#     75%    2.41ms
+#     90%    4.00ms
+#     99%    5.16ms
+#  870010 requests in 16.03s, 126.95MB read
+#Requests/sec:  54280.30
+#Transfer/sec:      7.92MB
 #Running 15s test @ http://localhost:8080/query?queries=20
 #  4 threads and 256 connections
 #  Thread Stats   Avg      Stdev     Max   +/- Stdev
-#    Latency    30.71ms    1.41ms  37.71ms   75.83%
-#    Req/Sec     1.34k   355.28     2.00k    62.54%
+#    Latency    19.08ms    2.83ms  69.17ms   91.24%
+#    Req/Sec     2.07k     1.12k    3.34k    42.54%
 #  Latency Distribution
-#     50%   30.01ms
-#     75%   31.05ms
-#     90%   33.01ms
-#     99%   34.28ms
-#  59809 requests in 16.02s, 43.63MB read
-#Requests/sec:   3734.19
-#Transfer/sec:      2.72MB
-#
+#     50%   18.37ms
+#     75%   20.93ms
+#     90%   21.66ms
+#     99%   26.06ms
+#  60493 requests in 16.02s, 43.96MB read
+#Requests/sec:   3775.05
+#Transfer/sec:      2.74MB
 #Running 15s test @ http://localhost:8080/update?queries=20
 #  4 threads and 256 connections
 #  Thread Stats   Avg      Stdev     Max   +/- Stdev
-#    Latency   979.35ms  123.76ms   1.23s    74.15%
-#    Req/Sec    37.42     25.76    70.00     52.78%
+#    Latency   961.45ms  120.92ms   1.33s    72.70%
+#    Req/Sec    41.03      9.16    54.00     58.06%
 #  Latency Distribution
-#     50%  954.28ms
+#     50%  954.03ms
 #     75%    1.03s 
-#     90%    1.23s 
-#     99%    1.23s 
-#  1263 requests in 16.01s, 0.92MB read
-#Requests/sec:     78.89
-#Transfer/sec:     58.70KB
+#     90%    1.11s 
+#     99%    1.28s 
+#  1232 requests in 16.03s, 0.90MB read
+#Requests/sec:     76.85
+#Transfer/sec:     57.32KB
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------
 #export REDIS_HOST=localhost
 #UMEMPOOL="1261,0,0,49,274,-14,-15,-24,40"

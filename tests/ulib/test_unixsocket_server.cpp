@@ -69,7 +69,7 @@ U_EXPORT main (int argc, char* argv[], char* env[])
 
       (void) fcg.open(x);
 
-      s.cfg = &fcg;
+      s.pcfg = &fcg;
       }
 
    s.loadPlugins(plugin_dir, plugin_list);

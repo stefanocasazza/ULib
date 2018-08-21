@@ -156,16 +156,13 @@ int UGeoIPPlugIn::handlerConfig(UFileConfig& cfg)
    // COUNTRY_FORBIDDEN_MASK  mask (DOS regexp) of GEOIP country code that give forbidden access
    // ------------------------------------------------------------------------------------------
 
-   if (cfg.loadTable())
+   UString x = cfg.at(U_CONSTANT_TO_PARAM("COUNTRY_FORBIDDEN_MASK"));
+
+   if (x)
       {
-      UString x = cfg.at(U_CONSTANT_TO_PARAM("COUNTRY_FORBIDDEN_MASK"));
+      U_NEW_STRING(country_forbidden_mask, UString(x));
 
-      if (x)
-         {
-         U_NEW_STRING(country_forbidden_mask, UString(x));
-
-         U_RETURN(U_PLUGIN_HANDLER_PROCESSED);
-         }
+      U_RETURN(U_PLUGIN_HANDLER_PROCESSED);
       }
 
    U_RETURN(U_PLUGIN_HANDLER_OK);

@@ -36,26 +36,23 @@ URpcPlugIn::~URpcPlugIn()
 
 // Server-wide hooks
 
-int URpcPlugIn::handlerConfig(UFileConfig& cfg)
-{
-   U_TRACE(0, "URpcPlugIn::handlerConfig(%p)", &cfg)
-
-   // Perform registration of server RPC method
-
-   U_NEW(URPCParser, rpc_parser, URPCParser);
-
-   URPCObject::loadGenericMethod(&cfg);
-
-   U_RETURN(U_PLUGIN_HANDLER_PROCESSED);
-}
-
-__pure int URpcPlugIn::handlerInit()
+int URpcPlugIn::handlerInit()
 {
    U_TRACE_NO_PARAM(0, "URpcPlugIn::handlerInit()")
 
-   if (rpc_parser) U_RETURN(U_PLUGIN_HANDLER_OK);
+   // Perform registration of server RPC method
 
-   U_RETURN(U_PLUGIN_HANDLER_ERROR);
+   if (UServer_Base::pcfg &&
+       UServer_Base::pcfg->searchForObjectStream(U_CONSTANT_TO_PARAM("rpc")))
+      {
+      UServer_Base::pcfg->table.clear();
+
+      U_NEW(URPCParser, rpc_parser, URPCParser);
+
+      URPCObject::loadGenericMethod(UServer_Base::pcfg);
+      }
+
+   U_RETURN(U_PLUGIN_HANDLER_PROCESSED);
 }
 
 // Connection-wide hooks

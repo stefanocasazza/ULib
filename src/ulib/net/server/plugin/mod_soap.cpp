@@ -36,27 +36,23 @@ USoapPlugIn::~USoapPlugIn()
 
 // Server-wide hooks
 
-int USoapPlugIn::handlerConfig(UFileConfig& cfg)
-{
-   U_TRACE(0, "USoapPlugIn::handlerConfig(%p)", &cfg)
-
-   // Perform registration of server SOAP method
-
-   U_NEW(USOAPParser, soap_parser, USOAPParser);
-
-   USOAPObject::loadGenericMethod(&cfg);
-
-   U_RETURN(U_PLUGIN_HANDLER_PROCESSED);
-}
-
 int USoapPlugIn::handlerInit()
 {
    U_TRACE_NO_PARAM(0, "USoapPlugIn::handlerInit()")
 
-   // NB: soap is NOT a static page, so to avoid stat() syscall we use alias mechanism...
+   // Perform registration of server SOAP method
 
-   if (soap_parser)
+   if (UServer_Base::pcfg &&
+       UServer_Base::pcfg->searchForObjectStream(U_CONSTANT_TO_PARAM("soap")))
       {
+      UServer_Base::pcfg->table.clear();
+
+      U_NEW(USOAPParser, soap_parser, USOAPParser);
+
+      USOAPObject::loadGenericMethod(UServer_Base::pcfg);
+
+      // NB: soap is NOT a static page, so to avoid stat() syscall we use alias mechanism...
+
 #  ifndef U_ALIAS
       U_SRV_LOG("WARNING: Sorry, I can't run soap plugin because alias URI support is missing, please recompile ULib...");
 #  else
@@ -65,7 +61,7 @@ int USoapPlugIn::handlerInit()
       UHTTP::valias->push_back(*UString::str_soap);
       UHTTP::valias->push_back(*UString::str_nostat);
 
-      U_RETURN(U_PLUGIN_HANDLER_OK);
+      U_RETURN(U_PLUGIN_HANDLER_PROCESSED);
 #  endif
       }
 

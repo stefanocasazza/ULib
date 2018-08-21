@@ -87,7 +87,7 @@ U_EXPORT main (int argc, char* argv[], char* env[])
 
       (void) fcg.open(x);
 
-      server.cfg = &fcg;
+      server.pcfg = &fcg;
       }
 
    UServer_Base::bssl = true;

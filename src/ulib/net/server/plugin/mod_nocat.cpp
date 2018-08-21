@@ -1958,144 +1958,141 @@ int UNoCatPlugIn::handlerConfig(UFileConfig& cfg)
    // NUM_PEERS_PREALLOCATE Size of memory block to preallocate for table of users
    // -----------------------------------------------------------------------------------------------------------------------------------
 
-   if (cfg.loadTable())
+   *fw_env = cfg.at(U_CONSTANT_TO_PARAM("FW_ENV"));
+
+   if (fw_env->empty()) U_RETURN(U_PLUGIN_HANDLER_ERROR);
+
+   int port = 0;
+   UString lnetlbl, tmp;
+
+   *fw_cmd      = cfg.at(U_CONSTANT_TO_PARAM("FW_CMD"));
+   lnetlbl      = cfg.at(U_CONSTANT_TO_PARAM("LOCAL_NETWORK_LABEL"));
+// *decrypt_cmd = cfg.at(U_CONSTANT_TO_PARAM("DECRYPT_CMD"));
+   *decrypt_key = cfg.at(U_CONSTANT_TO_PARAM("DECRYPT_KEY"));
+
+   check_type   = cfg.readLong(U_CONSTANT_TO_PARAM("CHECK_TYPE"));
+   check_expire = cfg.readLong(U_CONSTANT_TO_PARAM("CHECK_EXPIRE_INTERVAL"));
+
+   tmp = cfg.at(U_CONSTANT_TO_PARAM("NUM_PEERS_PREALLOCATE"));
+
+   num_peers_preallocate = (tmp ? tmp.strtoul() : 512);
+
+   tmp = cfg.at(U_CONSTANT_TO_PARAM("LOGIN_TIMEOUT"));
+
+   if (tmp)
       {
-      *fw_env = cfg.at(U_CONSTANT_TO_PARAM("FW_ENV"));
+      char* ptr;
 
-      if (fw_env->empty()) U_RETURN(U_PLUGIN_HANDLER_ERROR);
+                            time_available = ::strtol(tmp.data(),  &ptr, 10);
+      if (ptr[0] == ':') traffic_available = ::strtoll(ptr+1, U_NULLPTR, 10);
 
-      int port = 0;
-      UString lnetlbl, tmp;
+      if (   time_available > U_ONE_DAY_IN_SECOND) time_available = U_ONE_DAY_IN_SECOND;
+      if (traffic_available == 0)               traffic_available = 4ULL * 1024ULL * 1024ULL * 1024ULL; // 4G
 
-      *fw_cmd      = cfg.at(U_CONSTANT_TO_PARAM("FW_CMD"));
-      lnetlbl      = cfg.at(U_CONSTANT_TO_PARAM("LOCAL_NETWORK_LABEL"));
-   // *decrypt_cmd = cfg.at(U_CONSTANT_TO_PARAM("DECRYPT_CMD"));
-      *decrypt_key = cfg.at(U_CONSTANT_TO_PARAM("DECRYPT_KEY"));
+      U_INTERNAL_DUMP("check_expire = %u time_available = %u traffic_available = %llu", check_expire, time_available, traffic_available)
 
-      check_type   = cfg.readLong(U_CONSTANT_TO_PARAM("CHECK_TYPE"));
-      check_expire = cfg.readLong(U_CONSTANT_TO_PARAM("CHECK_EXPIRE_INTERVAL"));
-
-      tmp = cfg.at(U_CONSTANT_TO_PARAM("NUM_PEERS_PREALLOCATE"));
-
-      num_peers_preallocate = (tmp ? tmp.strtoul() : 512);
-
-      tmp = cfg.at(U_CONSTANT_TO_PARAM("LOGIN_TIMEOUT"));
-
-      if (tmp)
+      if (check_expire == 0 ||
+          check_expire > time_available) 
          {
-         char* ptr;
-
-                               time_available = ::strtol(tmp.data(),  &ptr, 10);
-         if (ptr[0] == ':') traffic_available = ::strtoll(ptr+1, U_NULLPTR, 10);
-
-         if (   time_available > U_ONE_DAY_IN_SECOND) time_available = U_ONE_DAY_IN_SECOND;
-         if (traffic_available == 0)               traffic_available = 4ULL * 1024ULL * 1024ULL * 1024ULL; // 4G
-
-         U_INTERNAL_DUMP("check_expire = %u time_available = %u traffic_available = %llu", check_expire, time_available, traffic_available)
-
-         if (check_expire == 0 ||
-             check_expire > time_available) 
-            {
-            check_expire = time_available;
-            }
+         check_expire = time_available;
          }
-
-      if (check_expire) UEventTime::setTimeToExpire(check_expire);
-
-      U_INTERNAL_DUMP("check_expire = %u time_available = %u check_type = %B", check_expire, time_available, check_type)
-
-      *fw_env = UStringExt::prepareForEnvironmentVar(*fw_env);
-
-      tmp = UStringExt::getEnvironmentVar(U_CONSTANT_TO_PARAM("InternalDevice"), fw_env);
-
-      if (tmp) *intdev = tmp;
-
-      tmp = UStringExt::getEnvironmentVar(U_CONSTANT_TO_PARAM("ExternalDevice"), fw_env);
-
-      if (tmp) *extdev = tmp;
-
-      tmp = UStringExt::getEnvironmentVar(U_CONSTANT_TO_PARAM("LocalNetwork"), fw_env);
-
-      if (tmp) *localnet = tmp;
-
-      tmp = UStringExt::getEnvironmentVar(U_CONSTANT_TO_PARAM("AuthServiceAddr"), fw_env);
-
-      if (tmp) *auth_login = tmp;
-
-      tmp = UStringExt::getEnvironmentVar(U_CONSTANT_TO_PARAM("GatewayPort"), fw_env);
-
-      if (tmp) port = tmp.strtoul();
-
-      (void) vauth->split(U_STRING_TO_PARAM(*auth_login));
-
-      if (extdev->empty())
-         {
-         *extdev = UServer_Base::getNetworkDevice(U_NULLPTR);
-
-         if (extdev->empty()) U_ERROR("No ExternalDevice detected");
-
-         U_SRV_LOG("Autodetected ExternalDevice %S", extdev->data());
-         }
-
-      if (intdev->empty())
-         {
-         *intdev = UServer_Base::getNetworkDevice(extdev->data());
-
-         if (intdev->empty()) U_ERROR("No InternalDevice detected");
-
-         U_SRV_LOG("Autodetected InternalDevice %S", intdev->data());
-         }
-
-      num_radio = vInternalDevice->split(U_STRING_TO_PARAM(*intdev));
-
-      U_INTERNAL_DUMP("num_radio = %u", num_radio)
-
-      if (localnet->empty())
-         {
-         *localnet = UServer_Base::getNetworkAddress(intdev->data());
-
-         if (localnet->empty()) U_ERROR("No LocalNetwork detected");
-
-         U_SRV_LOG("Autodetected LocalNetwork %S", localnet->data());
-         }
-
-      (void) UIPAllow::parseMask(*localnet, *vLocalNetworkMask, vLocalNetworkSpec);
-
-      (void) vLocalNetworkLabel->split(U_STRING_TO_PARAM(lnetlbl));
-
-      U_ASSERT_EQUALS(vLocalNetworkLabel->size(), vLocalNetworkMask->size())
-
-      U_INTERNAL_DUMP("port = %d", port)
-
-      UServer_Base::port = (port ? port : 5280);
-
-      *allowed_members = cfg.at(U_CONSTANT_TO_PARAM("ALLOWED_MEMBERS"));
-      *allowed_members = UFile::contentOf(allowed_members->empty() ? *UString::str_allowed_members_default : *allowed_members);
-
-#  ifdef USE_LIBTDB
-      tmp = cfg.at(U_CONSTANT_TO_PARAM("DHCP_DATA_FILE"));
-
-      if (tmp)
-         {
-         U_NEW_WITHOUT_CHECK_MEMORY(UTDB, pdata, UTDB);
-
-         U_INTERNAL_ASSERT(tmp.isNullTerminated())
-
-         if (((UTDB*)pdata)->open(tmp.data()))
-            {
-            U_SRV_LOG("open DHCP_DATA_FILE %V", tmp.rep);
-            }
-         else
-            {
-            U_SRV_LOG("WARNING: fail to open DHCP_DATA_FILE %V", tmp.rep);
-
-            U_DELETE((UTDB*)pdata)
-
-            pdata = U_NULLPTR;
-            }
-         }
-#  endif
       }
+
+   if (check_expire) UEventTime::setTimeToExpire(check_expire);
+
+   U_INTERNAL_DUMP("check_expire = %u time_available = %u check_type = %B", check_expire, time_available, check_type)
+
+   *fw_env = UStringExt::prepareForEnvironmentVar(*fw_env);
+
+   tmp = UStringExt::getEnvironmentVar(U_CONSTANT_TO_PARAM("InternalDevice"), fw_env);
+
+   if (tmp) *intdev = tmp;
+
+   tmp = UStringExt::getEnvironmentVar(U_CONSTANT_TO_PARAM("ExternalDevice"), fw_env);
+
+   if (tmp) *extdev = tmp;
+
+   tmp = UStringExt::getEnvironmentVar(U_CONSTANT_TO_PARAM("LocalNetwork"), fw_env);
+
+   if (tmp) *localnet = tmp;
+
+   tmp = UStringExt::getEnvironmentVar(U_CONSTANT_TO_PARAM("AuthServiceAddr"), fw_env);
+
+   if (tmp) *auth_login = tmp;
+
+   tmp = UStringExt::getEnvironmentVar(U_CONSTANT_TO_PARAM("GatewayPort"), fw_env);
+
+   if (tmp) port = tmp.strtoul();
+
+   (void) vauth->split(U_STRING_TO_PARAM(*auth_login));
+
+   if (extdev->empty())
+      {
+      *extdev = UServer_Base::getNetworkDevice(U_NULLPTR);
+
+      if (extdev->empty()) U_ERROR("No ExternalDevice detected");
+
+      U_SRV_LOG("Autodetected ExternalDevice %S", extdev->data());
+      }
+
+   if (intdev->empty())
+      {
+      *intdev = UServer_Base::getNetworkDevice(extdev->data());
+
+      if (intdev->empty()) U_ERROR("No InternalDevice detected");
+
+      U_SRV_LOG("Autodetected InternalDevice %S", intdev->data());
+      }
+
+   num_radio = vInternalDevice->split(U_STRING_TO_PARAM(*intdev));
+
+   U_INTERNAL_DUMP("num_radio = %u", num_radio)
+
+   if (localnet->empty())
+      {
+      *localnet = UServer_Base::getNetworkAddress(intdev->data());
+
+      if (localnet->empty()) U_ERROR("No LocalNetwork detected");
+
+      U_SRV_LOG("Autodetected LocalNetwork %S", localnet->data());
+      }
+
+   (void) UIPAllow::parseMask(*localnet, *vLocalNetworkMask, vLocalNetworkSpec);
+
+   (void) vLocalNetworkLabel->split(U_STRING_TO_PARAM(lnetlbl));
+
+   U_ASSERT_EQUALS(vLocalNetworkLabel->size(), vLocalNetworkMask->size())
+
+   U_INTERNAL_DUMP("port = %d", port)
+
+   UServer_Base::port = (port ? port : 5280);
+
+   *allowed_members = cfg.at(U_CONSTANT_TO_PARAM("ALLOWED_MEMBERS"));
+   *allowed_members = UFile::contentOf(allowed_members->empty() ? *UString::str_allowed_members_default : *allowed_members);
+
+#ifdef USE_LIBTDB
+   tmp = cfg.at(U_CONSTANT_TO_PARAM("DHCP_DATA_FILE"));
+
+   if (tmp)
+      {
+      U_NEW_WITHOUT_CHECK_MEMORY(UTDB, pdata, UTDB);
+
+      U_INTERNAL_ASSERT(tmp.isNullTerminated())
+
+      if (((UTDB*)pdata)->open(tmp.data()))
+         {
+         U_SRV_LOG("open DHCP_DATA_FILE %V", tmp.rep);
+         }
+      else
+         {
+         U_SRV_LOG("WARNING: fail to open DHCP_DATA_FILE %V", tmp.rep);
+
+         U_DELETE((UTDB*)pdata)
+
+         pdata = U_NULLPTR;
+         }
+      }
+#endif
 
    *label = (vLocalNetworkLabel->empty() ? *UString::str_without_label : (*vLocalNetworkLabel)[0]);
 

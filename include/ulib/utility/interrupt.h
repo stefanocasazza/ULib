@@ -16,6 +16,10 @@
 
 #include <ulib/internal/common.h>
 
+#if defined(U_SERVER_CAPTIVE_PORTAL) && !defined(ENABLE_THREAD)
+#  include <ulib/internal/error.h>
+#endif
+
 #include <setjmp.h>
 
 #ifndef HAVE_SIGINFO_T
@@ -56,6 +60,10 @@ struct U_EXPORT UInterrupt {
          {
 #     ifdef DEBUG
          u_debug_at_exit(); 
+#     elif defined(U_SERVER_CAPTIVE_PORTAL) && !defined(ENABLE_THREAD)
+         UError::stackDump();
+
+         if (UError::callerDataDump) UError::callerDataDump();
 #     endif
          }
 

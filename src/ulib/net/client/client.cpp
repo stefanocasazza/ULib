@@ -21,12 +21,12 @@ bool           UClient_Base::bIPv6;
 bool           UClient_Base::log_shared_with_server;
 ULog*          UClient_Base::log;
 USocket*       UClient_Base::csocket;
-UFileConfig*   UClient_Base::cfg;
+UFileConfig*   UClient_Base::pcfg;
 const UString* UClient_Base::queue_dir;
 
-UClient_Base::UClient_Base(UFileConfig* pcfg) : response(U_CAPACITY), buffer(U_CAPACITY), host_port(100U)
+UClient_Base::UClient_Base(UFileConfig* cfg) : response(U_CAPACITY), buffer(U_CAPACITY), host_port(100U)
 {
-   U_TRACE_CTOR(0, UClient_Base, "%p", pcfg)
+   U_TRACE_CTOR(0, UClient_Base, "%p", cfg)
 
    if (u_hostname_len == 0)
       {
@@ -40,16 +40,14 @@ UClient_Base::UClient_Base(UFileConfig* pcfg) : response(U_CAPACITY), buffer(U_C
 
    (void) memset(iov, 0, sizeof(struct iovec) * 6);
 
-   if (pcfg)
+   if (cfg)
       {
-      if (cfg == U_NULLPTR)
+      if (pcfg == U_NULLPTR)
          {
-         cfg = pcfg;
-
-         cfg->load();
+         (pcfg = cfg)->load();
          }
 
-      if (cfg->empty() == false) loadConfigParam();
+      if (pcfg->empty() == false) loadConfigParam();
       }
 
 #ifndef U_LOG_DISABLE
@@ -114,7 +112,7 @@ void UClient_Base::setSSLContext()
 
    U_ASSERT(((USSLSocket*)socket)->isSSL())
 
-   if (cfg) ((USSLSocket*)socket)->ciphersuite_model = cfg->readLong(U_CONSTANT_TO_PARAM("CIPHER_SUITE"));
+   if (pcfg) ((USSLSocket*)socket)->ciphersuite_model = pcfg->readLong(U_CONSTANT_TO_PARAM("CIPHER_SUITE"));
 
    // Load our certificate
 
@@ -194,7 +192,7 @@ void UClient_Base::loadConfigParam()
 {
    U_TRACE_NO_PARAM(0, "UClient_Base::loadConfigParam()")
 
-   U_INTERNAL_ASSERT_POINTER(cfg)
+   U_INTERNAL_ASSERT_POINTER(pcfg)
 
    // --------------------------------------------------------------------------------------------------------------------------------------
    // client - configuration parameters
@@ -220,47 +218,47 @@ void UClient_Base::loadConfigParam()
    // CIPHER_SUITE  cipher suite model (Intermediate=0, Modern=1, Old=2)
    // --------------------------------------------------------------------------------------------------------------------------------------
 
-   ca_file   = cfg->at(U_CONSTANT_TO_PARAM("CA_FILE"));
-   ca_path   = cfg->at(U_CONSTANT_TO_PARAM("CA_PATH"));
-   key_file  = cfg->at(U_CONSTANT_TO_PARAM("KEY_FILE"));
-   password  = cfg->at(U_CONSTANT_TO_PARAM("PASSWORD"));
-   cert_file = cfg->at(U_CONSTANT_TO_PARAM("CERT_FILE"));
+   ca_file   = pcfg->at(U_CONSTANT_TO_PARAM("CA_FILE"));
+   ca_path   = pcfg->at(U_CONSTANT_TO_PARAM("CA_PATH"));
+   key_file  = pcfg->at(U_CONSTANT_TO_PARAM("KEY_FILE"));
+   password  = pcfg->at(U_CONSTANT_TO_PARAM("PASSWORD"));
+   cert_file = pcfg->at(U_CONSTANT_TO_PARAM("CERT_FILE"));
 
    // write pid on file...
 
-   UString x = cfg->at(U_CONSTANT_TO_PARAM("PID_FILE"));
+   UString x = pcfg->at(U_CONSTANT_TO_PARAM("PID_FILE"));
 
    if (x) (void) UFile::writeTo(x, UString(u_pid_str, u_pid_str_len));
 
 #ifndef U_LOG_DISABLE
-   x = cfg->at(U_CONSTANT_TO_PARAM("LOG_FILE"));
+   x = pcfg->at(U_CONSTANT_TO_PARAM("LOG_FILE"));
 
    if (x                               &&
        log == U_NULLPTR                &&
        (UServer_Base::isLog() == false ||
         UServer_Base::log->getPath().equal(x) == false))
       {
-      U_NEW(ULog, log, ULog(x, cfg->readLong(U_CONSTANT_TO_PARAM("LOG_FILE_SZ"))));
+      U_NEW(ULog, log, ULog(x, pcfg->readLong(U_CONSTANT_TO_PARAM("LOG_FILE_SZ"))));
 
       log->setPrefix(U_CONSTANT_TO_PARAM(U_SERVER_LOG_PREFIX));
       }
 #endif
 
 #ifdef ENABLE_IPV6
-   bIPv6       = cfg->readBoolean(U_CONSTANT_TO_PARAM("ENABLE_IPV6"));
+   bIPv6       = pcfg->readBoolean(U_CONSTANT_TO_PARAM("ENABLE_IPV6"));
 #endif
-   verify_mode = cfg->readLong(U_CONSTANT_TO_PARAM("VERIFY_MODE"));
+   verify_mode = pcfg->readLong(U_CONSTANT_TO_PARAM("VERIFY_MODE"));
 
-   UString host      = cfg->at(U_CONSTANT_TO_PARAM("SERVER")),
-           name_sock = cfg->at(U_CONSTANT_TO_PARAM("SOCKET_NAME"));
+   UString host      = pcfg->at(U_CONSTANT_TO_PARAM("SERVER")),
+           name_sock = pcfg->at(U_CONSTANT_TO_PARAM("SOCKET_NAME"));
 
    if (host ||
        name_sock)
       {
-      (void) setHostPort(name_sock.empty() ? host : name_sock, cfg->readLong(U_CONSTANT_TO_PARAM("PORT")));
+      (void) setHostPort(name_sock.empty() ? host : name_sock, pcfg->readLong(U_CONSTANT_TO_PARAM("PORT")));
       }
 
-   UString value = cfg->at(U_CONSTANT_TO_PARAM("RES_TIMEOUT"));
+   UString value = pcfg->at(U_CONSTANT_TO_PARAM("RES_TIMEOUT"));
 
    if (value)
       {

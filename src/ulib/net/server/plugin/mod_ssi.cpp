@@ -944,31 +944,26 @@ int USSIPlugIn::handlerConfig(UFileConfig& cfg)
    // SSI_AUTOMATIC_ALIASING  special SSI HTML file that is recognized automatically as alias of all uri request without suffix
    // -------------------------------------------------------------------------------------------------------------------------
 
-   if (cfg.loadTable())
+   UString x = cfg.at(U_CONSTANT_TO_PARAM("ENVIRONMENT"));
+
+   if (x)
       {
-      UString x = cfg.at(U_CONSTANT_TO_PARAM("ENVIRONMENT"));
+      U_NEW_STRING(environment, UString(UStringExt::prepareForEnvironmentVar(UFile::contentOf(x, O_RDONLY, false, U_NULLPTR))));
 
-      if (x)
-         {
-         U_NEW_STRING(environment, UString(UStringExt::prepareForEnvironmentVar(UFile::contentOf(x, O_RDONLY, false, U_NULLPTR))));
+      const char* home = U_SYSCALL(getenv, "%S", "HOME");
 
-         const char* home = U_SYSCALL(getenv, "%S", "HOME");
+      if (home) environment->snprintf_add(U_CONSTANT_TO_PARAM("HOME=%s\n"), home);
 
-         if (home) environment->snprintf_add(U_CONSTANT_TO_PARAM("HOME=%s\n"), home);
-
-         U_ASSERT_EQUALS(environment->isBinary(), false)
-         }
-
-#  ifdef U_ALIAS
-      x = cfg.at(U_CONSTANT_TO_PARAM("SSI_AUTOMATIC_ALIASING"));
-
-      if (x) UHTTP::setGlobalAlias(x); // NB: automatic alias of all uri request without suffix...
-#  endif
-
-      U_RETURN(U_PLUGIN_HANDLER_PROCESSED);
+      U_ASSERT_EQUALS(environment->isBinary(), false)
       }
 
-   U_RETURN(U_PLUGIN_HANDLER_OK);
+#ifdef U_ALIAS
+   x = cfg.at(U_CONSTANT_TO_PARAM("SSI_AUTOMATIC_ALIASING"));
+
+   if (x) UHTTP::setGlobalAlias(x); // NB: automatic alias of all uri request without suffix...
+#endif
+
+   U_RETURN(U_PLUGIN_HANDLER_PROCESSED);
 }
 
 int USSIPlugIn::handlerInit()

@@ -39,20 +39,16 @@ int UTsaPlugIn::handlerConfig(UFileConfig& cfg)
 {
    U_TRACE(0, "UTsaPlugIn::handlerConfig(%p)", &cfg)
 
+   // -----------------------------------------------
    // Perform registration of userver method
    // -----------------------------------------------
    // COMMAND                      command to execute
    // ENVIRONMENT  environment for command to execute
    // -----------------------------------------------
 
-   if (cfg.loadTable())
-      {
-      command = UServer_Base::loadConfigCommand();
+   command = UServer_Base::loadConfigCommand();
 
-      U_RETURN(U_PLUGIN_HANDLER_PROCESSED);
-      }
-
-   U_RETURN(U_PLUGIN_HANDLER_OK);
+   U_RETURN(U_PLUGIN_HANDLER_PROCESSED);
 }
 
 int UTsaPlugIn::handlerInit()

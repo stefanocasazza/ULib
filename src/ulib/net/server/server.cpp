@@ -148,7 +148,7 @@ UUDPSocket*   UServer_Base::udp_sock;
 const char*   UServer_Base::document_root_ptr;
 unsigned int  UServer_Base::port;
 USmtpClient*  UServer_Base::emailClient;
-UFileConfig*  UServer_Base::cfg;
+UFileConfig*  UServer_Base::pcfg;
 UServer_Base* UServer_Base::pthis;
 
 uint32_t                   UServer_Base::map_size;
@@ -1713,9 +1713,9 @@ private:
 static long sysctl_somaxconn, tcp_abort_on_overflow, sysctl_max_syn_backlog, tcp_fin_timeout;
 #endif
 
-UServer_Base::UServer_Base(UFileConfig* pcfg)
+UServer_Base::UServer_Base(UFileConfig* cfg)
 {
-   U_TRACE_CTOR(0, UServer_Base, "%p", pcfg)
+   U_TRACE_CTOR(0, UServer_Base, "%p", cfg)
 
    U_INTERNAL_ASSERT_EQUALS(pthis, U_NULLPTR)
    U_INTERNAL_ASSERT_EQUALS(cenvironment, U_NULLPTR)
@@ -1763,15 +1763,13 @@ UServer_Base::UServer_Base(UFileConfig* pcfg)
 
    u_tmpdir = (tmpdir ? tmpdir : "/var/tmp");
 
-   if (pcfg)
+   if (cfg)
       {
-      U_INTERNAL_ASSERT_EQUALS(cfg, U_NULLPTR)
+      U_INTERNAL_ASSERT_EQUALS(pcfg, U_NULLPTR)
 
-      cfg = pcfg;
+      (pcfg = cfg)->load();
 
-      cfg->load();
-
-      if (cfg->empty() == false) loadConfigParam();
+      if (pcfg->empty() == false) loadConfigParam();
       }
 
 #ifdef ENABLE_IPV6
@@ -2092,7 +2090,7 @@ void UServer_Base::loadConfigParam()
 {
    U_TRACE_NO_PARAM(0, "UServer_Base::loadConfigParam()")
 
-   U_INTERNAL_ASSERT_POINTER(cfg)
+   U_INTERNAL_ASSERT_POINTER(pcfg)
 
    // --------------------------------------------------------------------------------------------------------------------------------------
    // userver - configuration parameters
@@ -2177,27 +2175,27 @@ void UServer_Base::loadConfigParam()
       U_ERROR("Sorry, I was compiled on Windows so there isn't UNIX domain sockets");
 #  endif
 
-      *name_sock = cfg->at(U_CONSTANT_TO_PARAM("SOCKET_NAME"));
+      *name_sock = pcfg->at(U_CONSTANT_TO_PARAM("SOCKET_NAME"));
 
       if (name_sock->empty()) U_ERROR("Sorry, I cannot run without SOCKET_NAME value");
       }
 #endif
 
-   UString x = cfg->at(U_CONSTANT_TO_PARAM("SERVER"));
+   UString x = pcfg->at(U_CONSTANT_TO_PARAM("SERVER"));
 
    if (x) U_NEW_STRING(server, UString(x));
 
-   *IP_address = cfg->at(U_CONSTANT_TO_PARAM("IP_ADDRESS"));
+   *IP_address = pcfg->at(U_CONSTANT_TO_PARAM("IP_ADDRESS"));
 
 #ifdef ENABLE_IPV6
-   UClientImage_Base::bIPv6 = cfg->readBoolean(U_CONSTANT_TO_PARAM("ENABLE_IPV6"));
+   UClientImage_Base::bIPv6 = pcfg->readBoolean(U_CONSTANT_TO_PARAM("ENABLE_IPV6"));
 #endif
 
-   timeoutMS = cfg->readLong(U_CONSTANT_TO_PARAM("REQ_TIMEOUT"), -1);
+   timeoutMS = pcfg->readLong(U_CONSTANT_TO_PARAM("REQ_TIMEOUT"), -1);
 
    if (timeoutMS > 0) timeoutMS *= 1000;
 
-   port = cfg->readLong(U_CONSTANT_TO_PARAM("PORT"), bssl ? 443 : 80);
+   port = pcfg->readLong(U_CONSTANT_TO_PARAM("PORT"), bssl ? 443 : 80);
 
    if ((port == 80 || port == 443) &&
        UServices::isSetuidRoot() == false)
@@ -2211,16 +2209,16 @@ void UServer_Base::loadConfigParam()
 
    U_INTERNAL_DUMP("SOMAXCONN = %d FD_SETSIZE = %d", SOMAXCONN, FD_SETSIZE)
 
-   set_tcp_keep_alive    = cfg->readBoolean(U_CONSTANT_TO_PARAM("TCP_KEEP_ALIVE"));
-   set_realtime_priority = cfg->readBoolean(U_CONSTANT_TO_PARAM("SET_REALTIME_PRIORITY"), false);
+   set_tcp_keep_alive    = pcfg->readBoolean(U_CONSTANT_TO_PARAM("TCP_KEEP_ALIVE"));
+   set_realtime_priority = pcfg->readBoolean(U_CONSTANT_TO_PARAM("SET_REALTIME_PRIORITY"), false);
 
-   crash_count                = cfg->readLong(U_CONSTANT_TO_PARAM("CRASH_COUNT"), 5);
-   tcp_linger_set             = cfg->readLong(U_CONSTANT_TO_PARAM("TCP_LINGER_SET"), -2);
-   USocket::iBackLog          = cfg->readLong(U_CONSTANT_TO_PARAM("LISTEN_BACKLOG"), SOMAXCONN);
-   min_size_for_sendfile      = cfg->readLong(U_CONSTANT_TO_PARAM("MIN_SIZE_FOR_SENDFILE"), 500 * 1024); // 500k: for major size we assume is better to use sendfile()
-   num_client_threshold       = cfg->readLong(U_CONSTANT_TO_PARAM("CLIENT_THRESHOLD"));
-   UNotifier::max_connection  = cfg->readLong(U_CONSTANT_TO_PARAM("MAX_KEEP_ALIVE"), USocket::iBackLog);
-   u_printf_string_max_length = cfg->readLong(U_CONSTANT_TO_PARAM("LOG_MSG_SIZE"));
+   crash_count                = pcfg->readLong(U_CONSTANT_TO_PARAM("CRASH_COUNT"), 5);
+   tcp_linger_set             = pcfg->readLong(U_CONSTANT_TO_PARAM("TCP_LINGER_SET"), -2);
+   USocket::iBackLog          = pcfg->readLong(U_CONSTANT_TO_PARAM("LISTEN_BACKLOG"), SOMAXCONN);
+   min_size_for_sendfile      = pcfg->readLong(U_CONSTANT_TO_PARAM("MIN_SIZE_FOR_SENDFILE"), 500 * 1024); // 500k: for major size we assume is better to use sendfile()
+   num_client_threshold       = pcfg->readLong(U_CONSTANT_TO_PARAM("CLIENT_THRESHOLD"));
+   UNotifier::max_connection  = pcfg->readLong(U_CONSTANT_TO_PARAM("MAX_KEEP_ALIVE"), USocket::iBackLog);
+   u_printf_string_max_length = pcfg->readLong(U_CONSTANT_TO_PARAM("LOG_MSG_SIZE"));
 
    U_INTERNAL_DUMP("UNotifier::max_connection = %u USocket::iBackLog = %u", UNotifier::max_connection, USocket::iBackLog)
 
@@ -2236,7 +2234,7 @@ void UServer_Base::loadConfigParam()
       }
 #endif
 
-   x = cfg->at(U_CONSTANT_TO_PARAM("CRASH_EMAIL_NOTIFY"));
+   x = pcfg->at(U_CONSTANT_TO_PARAM("CRASH_EMAIL_NOTIFY"));
 
    if (x)
       {
@@ -2251,12 +2249,12 @@ void UServer_Base::loadConfigParam()
       }
 
 #ifdef U_WELCOME_SUPPORT
-   x = cfg->at(U_CONSTANT_TO_PARAM("WELCOME_MSG"));
+   x = pcfg->at(U_CONSTANT_TO_PARAM("WELCOME_MSG"));
 
    if (x) setMsgWelcome(x);
 #endif
 
-   x = cfg->at(U_CONSTANT_TO_PARAM("PREFORK_CHILD"));
+   x = pcfg->at(U_CONSTANT_TO_PARAM("PREFORK_CHILD"));
 
    if (x)
       {
@@ -2303,14 +2301,14 @@ void UServer_Base::loadConfigParam()
 #ifdef USE_LIBSSL
    if (bssl)
       {
-      *dh_file   = cfg->at(U_CONSTANT_TO_PARAM("DH_FILE"));
-      *ca_file   = cfg->at(U_CONSTANT_TO_PARAM("CA_FILE"));
-      *ca_path   = cfg->at(U_CONSTANT_TO_PARAM("CA_PATH"));
-      *key_file  = cfg->at(U_CONSTANT_TO_PARAM("KEY_FILE"));
-      *password  = cfg->at(U_CONSTANT_TO_PARAM("PASSWORD"));
-      *cert_file = cfg->at(U_CONSTANT_TO_PARAM("CERT_FILE"));
+      *dh_file   = pcfg->at(U_CONSTANT_TO_PARAM("DH_FILE"));
+      *ca_file   = pcfg->at(U_CONSTANT_TO_PARAM("CA_FILE"));
+      *ca_path   = pcfg->at(U_CONSTANT_TO_PARAM("CA_PATH"));
+      *key_file  = pcfg->at(U_CONSTANT_TO_PARAM("KEY_FILE"));
+      *password  = pcfg->at(U_CONSTANT_TO_PARAM("PASSWORD"));
+      *cert_file = pcfg->at(U_CONSTANT_TO_PARAM("CERT_FILE"));
 
-      verify_mode = cfg->readLong(U_CONSTANT_TO_PARAM("VERIFY_MODE"));
+      verify_mode = pcfg->readLong(U_CONSTANT_TO_PARAM("VERIFY_MODE"));
 
       min_size_for_sendfile = U_NOT_FOUND; // NB: we can't use sendfile with SSL...
       }
@@ -2325,7 +2323,7 @@ void UServer_Base::loadConfigParam()
    // warning is logged on the server but nothing is sent to the client
 
 #ifdef U_ACL_SUPPORT
-   x = cfg->at(U_CONSTANT_TO_PARAM("ALLOWED_IP"));
+   x = pcfg->at(U_CONSTANT_TO_PARAM("ALLOWED_IP"));
 
    if (x)
       {
@@ -2343,7 +2341,7 @@ void UServer_Base::loadConfigParam()
 #endif
 
 #ifdef U_RFC1918_SUPPORT
-   x = cfg->at(U_CONSTANT_TO_PARAM("ALLOWED_IP_PRIVATE"));
+   x = pcfg->at(U_CONSTANT_TO_PARAM("ALLOWED_IP_PRIVATE"));
 
    if (x)
       {
@@ -2359,7 +2357,7 @@ void UServer_Base::loadConfigParam()
          }
       }
 
-   enable_rfc1918_filter = cfg->readBoolean(U_CONSTANT_TO_PARAM("ENABLE_RFC1918_FILTER"));
+   enable_rfc1918_filter = pcfg->readBoolean(U_CONSTANT_TO_PARAM("ENABLE_RFC1918_FILTER"));
 #endif
 
    // If you want the webserver to run as a process of a defined user, you can do it.
@@ -2370,7 +2368,7 @@ void UServer_Base::loadConfigParam()
    bool bmsg = false;
 #endif
 
-   x = cfg->at(U_CONSTANT_TO_PARAM("RUN_AS_USER"));
+   x = pcfg->at(U_CONSTANT_TO_PARAM("RUN_AS_USER"));
 
    if (x)
       {
@@ -2412,11 +2410,11 @@ void UServer_Base::loadConfigParam()
    if (budp == false)
 #endif
    {
-   if (setDocumentRoot(cfg->at(U_CONSTANT_TO_PARAM("DOCUMENT_ROOT"))) == false) U_ERROR("Setting DOCUMENT ROOT to %V failed", document_root->rep);
+   if (setDocumentRoot(pcfg->at(U_CONSTANT_TO_PARAM("DOCUMENT_ROOT"))) == false) U_ERROR("Setting DOCUMENT ROOT to %V failed", document_root->rep);
    }
 
 #ifndef U_LOG_DISABLE
-   x = cfg->at(U_CONSTANT_TO_PARAM("LOG_FILE"));
+   x = pcfg->at(U_CONSTANT_TO_PARAM("LOG_FILE"));
 
    if (x)
       {
@@ -2425,7 +2423,7 @@ void UServer_Base::loadConfigParam()
       update_date  =
       update_date1 = true;
 
-      U_NEW(ULog, log, ULog(x, cfg->readLong(U_CONSTANT_TO_PARAM("LOG_FILE_SZ"))));
+      U_NEW(ULog, log, ULog(x, pcfg->readLong(U_CONSTANT_TO_PARAM("LOG_FILE_SZ"))));
 
       log->init(U_CONSTANT_TO_PARAM(U_SERVER_LOG_PREFIX));
 
@@ -2440,7 +2438,7 @@ void UServer_Base::loadConfigParam()
       }
 #endif
 
-   x = cfg->at(U_CONSTANT_TO_PARAM("PID_FILE"));
+   x = pcfg->at(U_CONSTANT_TO_PARAM("PID_FILE"));
 
    if (x)
       {
@@ -2469,7 +2467,7 @@ void UServer_Base::loadConfigParam()
    if (budp == false)
 # endif
    {
-   x = cfg->at(U_CONSTANT_TO_PARAM("LOAD_BALANCE_DEVICE_NETWORK"));
+   x = pcfg->at(U_CONSTANT_TO_PARAM("LOAD_BALANCE_DEVICE_NETWORK"));
 
    if (x)
       {
@@ -2478,13 +2476,13 @@ void UServer_Base::loadConfigParam()
       U_NEW_STRING(ifname, UString(x));
       }
 
-   x = cfg->at(U_CONSTANT_TO_PARAM("LOAD_BALANCE_LOADAVG_THRESHOLD"));
+   x = pcfg->at(U_CONSTANT_TO_PARAM("LOAD_BALANCE_LOADAVG_THRESHOLD"));
 
    if (x) loadavg_threshold = u_loadavg(x.data()); // 0.19 => 2, 4.56 => 46, ...
 
    U_INTERNAL_DUMP("loadavg_threshold = %u", loadavg_threshold)
 
-   x = cfg->at(U_CONSTANT_TO_PARAM("LOAD_BALANCE_CLUSTER"));
+   x = pcfg->at(U_CONSTANT_TO_PARAM("LOAD_BALANCE_CLUSTER"));
 
    if (x)
       {
@@ -2512,26 +2510,26 @@ void UServer_Base::loadConfigParam()
     * Once the threshold for that interval has been exceeded (defaults to 2), the IP address of the client will be added to the blocking list
     */
 
-   page_count = cfg->readLong(U_CONSTANT_TO_PARAM("DOS_PAGE_COUNT"), 2);
+   page_count = pcfg->readLong(U_CONSTANT_TO_PARAM("DOS_PAGE_COUNT"), 2);
 
    /**
     * The interval for the page count threshold; defaults to 1 second intervals
     */
 
-   page_interval = cfg->readLong(U_CONSTANT_TO_PARAM("DOS_PAGE_INTERVAL"), 1);
+   page_interval = pcfg->readLong(U_CONSTANT_TO_PARAM("DOS_PAGE_INTERVAL"), 1);
 
    /**
     * This is the threshold for the total number of requests for any object by the same client per site interval.
     * Once the threshold for that interval has been exceeded (defaults to 50), the IP address of the client will be added to the blocking list
     */
 
-   site_count = cfg->readLong(U_CONSTANT_TO_PARAM("DOS_SITE_COUNT"), 50);
+   site_count = pcfg->readLong(U_CONSTANT_TO_PARAM("DOS_SITE_COUNT"), 50);
 
    /**
     * The interval for the site count threshold; defaults to 1 second intervals
     */
 
-   site_interval = cfg->readLong(U_CONSTANT_TO_PARAM("DOS_SITE_INTERVAL"), 1);
+   site_interval = pcfg->readLong(U_CONSTANT_TO_PARAM("DOS_SITE_INTERVAL"), 1);
 
    /**
     * The blocking period is the amount of time (in seconds) that a client will be blocked for if they are added to the blocking list (defaults to 10).
@@ -2540,7 +2538,7 @@ void UServer_Base::loadConfigParam()
     * timer will keep getting reset
     */
 
-   blocking_period = cfg->readLong(U_CONSTANT_TO_PARAM("DOS_BLOCKING_PERIOD"), 10);
+   blocking_period = pcfg->readLong(U_CONSTANT_TO_PARAM("DOS_BLOCKING_PERIOD"), 10);
 
    /**
     * IP addresses of trusted clients can be whitelisted to insure they are never denied. The purpose of whitelisting is to protect software, scripts, local
@@ -2549,7 +2547,7 @@ void UServer_Base::loadConfigParam()
     * malicious attack, and for that reason it is more appropriate to allow the module to decide on its own whether or not an individual customer should be blocked
     */
 
-   x = cfg->at(U_CONSTANT_TO_PARAM("DOS_WHITE_LIST"));
+   x = pcfg->at(U_CONSTANT_TO_PARAM("DOS_WHITE_LIST"));
 
    if (x)
       {
@@ -2569,7 +2567,7 @@ void UServer_Base::loadConfigParam()
     * If this value is set, an email will be sent to the address specified whenever an IP address becomes blacklisted
     */
 
-   x = cfg->at(U_CONSTANT_TO_PARAM("DOS_EMAIL_NOTIFY"));
+   x = pcfg->at(U_CONSTANT_TO_PARAM("DOS_EMAIL_NOTIFY"));
 
    if (x)
       {
@@ -2588,7 +2586,7 @@ void UServer_Base::loadConfigParam()
     * This is designed to enable system calls to ip filter or other tools. Use %.*s to denote the IP address of the blacklisted IP
     */
 
-   x = cfg->at(U_CONSTANT_TO_PARAM("DOS_SYSTEM_COMMAND"));
+   x = pcfg->at(U_CONSTANT_TO_PARAM("DOS_SYSTEM_COMMAND"));
 
    if (x)
       {
@@ -2597,7 +2595,7 @@ void UServer_Base::loadConfigParam()
       U_NEW_STRING(systemCommand, UString(x));
       }
 
-   x = cfg->at(U_CONSTANT_TO_PARAM("DOS_LOGFILE"));
+   x = pcfg->at(U_CONSTANT_TO_PARAM("DOS_LOGFILE"));
 
    if (x)
       {
@@ -2611,8 +2609,8 @@ void UServer_Base::loadConfigParam()
    // load ORM driver modules...
 
 #if defined(USE_SQLITE) || defined(USE_MYSQL) || defined(USE_PGSQL)
-   UString orm_driver_dir  = cfg->at(U_CONSTANT_TO_PARAM("ORM_DRIVER_DIR")),
-           orm_driver_list = cfg->at(U_CONSTANT_TO_PARAM("ORM_DRIVER"));
+   UString orm_driver_dir  = pcfg->at(U_CONSTANT_TO_PARAM("ORM_DRIVER_DIR")),
+           orm_driver_list = pcfg->at(U_CONSTANT_TO_PARAM("ORM_DRIVER"));
 
    if (UOrmDriver::loadDriver(orm_driver_dir, orm_driver_list) == false) U_ERROR("ORM drivers load failed");
 #endif
@@ -2623,8 +2621,8 @@ void UServer_Base::loadConfigParam()
    if (budp == false)
 #endif
    {
-   UString plugin_dir  = cfg->at(U_CONSTANT_TO_PARAM("PLUGIN_DIR")),
-           plugin_list = cfg->at(U_CONSTANT_TO_PARAM("PLUGIN"));
+   UString plugin_dir  = pcfg->at(U_CONSTANT_TO_PARAM("PLUGIN_DIR")),
+           plugin_list = pcfg->at(U_CONSTANT_TO_PARAM("PLUGIN"));
 
    if (loadPlugins(plugin_dir, plugin_list) != U_PLUGIN_HANDLER_FINISHED) U_ERROR("Plugins stage load failed");
    }
@@ -2791,7 +2789,7 @@ int UServer_Base::loadPlugins(UString& plugin_dir, const UString& plugin_list)
    U_DELETE(vplugin_static)
    U_DELETE(vplugin_name_static)
 
-   if (cfg)
+   if (pcfg)
       {
       // NB: we load configuration in reverse order respect to the content of config var PLUGIN...
 
@@ -2800,25 +2798,27 @@ int UServer_Base::loadPlugins(UString& plugin_dir, const UString& plugin_list)
       do {
          item = vplugin_name->at(--i);
 
-         if (cfg->searchForObjectStream(U_STRING_TO_PARAM(item)))
+         if (pcfg->searchForObjectStream(U_STRING_TO_PARAM(item)))
             {
-            cfg->table.clear();
+            pcfg->table.clear();
 
-            result = vplugin->at(i)->handlerConfig(*cfg);
+            result = U_PLUGIN_HANDLER_ERROR;
 
-            cfg->reset();
-
-            if (result)
+            if (pcfg->loadTable())
                {
-               if (result == U_PLUGIN_HANDLER_ERROR)
-                  {
-                  U_SRV_LOG("WARNING: Configuration phase of plugin %V failed", item.rep);
+               result = vplugin->at(i)->handlerConfig(*pcfg);
 
-                  U_RETURN(U_PLUGIN_HANDLER_ERROR);
-                  }
-
-               U_SRV_LOG("Configuration phase of plugin %V success", item.rep);
+               pcfg->reset();
                }
+
+            if (result == U_PLUGIN_HANDLER_ERROR)
+               {
+               U_SRV_LOG("WARNING: Configuration phase of plugin %V failed", item.rep);
+
+               U_RETURN(U_PLUGIN_HANDLER_ERROR);
+               }
+
+            U_SRV_LOG("Configuration phase of plugin %V success", item.rep);
             }
          }
       while (i > 0);
@@ -3566,7 +3566,7 @@ next:
    }
 #endif
 
-   if (cfg) cfg->clear();
+   if (pcfg) pcfg->clear();
 
    UInterrupt::syscall_restart                 = false;
    UInterrupt::exit_loop_wait_event_for_signal = true;
@@ -4202,6 +4202,7 @@ retry:   pid = UProcess::waitpid(-1, &status, WNOHANG); // NB: to avoid too much
    else
 #endif
    {
+   /*
 #ifdef DEBUG
    uint32_t len = 0;
    int cpu = U_SYSCALL_NO_PARAM(sched_getcpu), scpu = -1;
@@ -4221,6 +4222,7 @@ retry:   pid = UProcess::waitpid(-1, &status, WNOHANG); // NB: to avoid too much
 
    if (len) U_DEBUG("UServer_Base::handlerRead(): CPU: %d sched(%d) socket(%d)%.*s", USocket::incoming_cpu, cpu, scpu, len, " [DIFFER]")
 #endif
+   */
 
    if (CLIENT_IMAGE_HANDLER_READ == false) goto next;
    }
@@ -4477,19 +4479,19 @@ void UServer_Base::runLoop(const char* user)
    if (budp == false)
 #endif
    {
-   if (handler_db1 &&
-       handler_db1->UEventFd::fd != -1)
+   if (handler_db1)
       {
       UNotifier::min_connection++;
 
+      handler_db1->UEventFd::op_mask |=  EPOLLET;
       handler_db1->UEventFd::op_mask &= ~EPOLLRDHUP;
       }
 
-   if (handler_db2 &&
-       handler_db2->UEventFd::fd != -1)
+   if (handler_db2)
       {
       UNotifier::min_connection++;
 
+      handler_db2->UEventFd::op_mask |=  EPOLLET;
       handler_db2->UEventFd::op_mask &= ~EPOLLRDHUP;
       }
 
@@ -4516,15 +4518,27 @@ void UServer_Base::runLoop(const char* user)
       if (binsert)         UNotifier::insert(pthis,           EPOLLEXCLUSIVE | EPOLLROUNDROBIN); // NB: we ask to be notified for request of connection (=> accept)
       if (handler_inotify) UNotifier::insert(handler_inotify, EPOLLEXCLUSIVE | EPOLLROUNDROBIN); // NB: we ask to be notified for change of file system (=> inotify)
 
-      if (handler_db1 &&
-          handler_db1->UEventFd::fd != -1)
+      U_INTERNAL_DUMP("rkids = %d", rkids)
+
+      if (handler_db1)
          {
+#     ifdef U_STATIC_ORM_DRIVER_PGSQL
+         U_INTERNAL_ASSERT_MINOR(rkids, U_DB_BUSY_ARRAY_SIZE)
+
+         handler_db1->pbusy = U_SRV_DB1_BUSY+rkids;
+#     endif
+
          UNotifier::insert(handler_db1, EPOLLEXCLUSIVE | EPOLLROUNDROBIN); // NB: we ask to be notified for response from db
          }
 
-      if (handler_db2 &&
-          handler_db2->UEventFd::fd != -1)
+      if (handler_db2)
          {
+#     ifdef U_STATIC_ORM_DRIVER_PGSQL
+         U_INTERNAL_ASSERT_MINOR(rkids, U_DB_BUSY_ARRAY_SIZE)
+
+         handler_db2->pbusy = U_SRV_DB2_BUSY+rkids;
+#     endif
+
          UNotifier::insert(handler_db2, EPOLLEXCLUSIVE | EPOLLROUNDROBIN); // NB: we ask to be notified for response from db
          }
 

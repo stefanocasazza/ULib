@@ -152,9 +152,8 @@ UPgSqlStatement::UPgSqlStatement(const char* s, uint32_t n) : USqlStatement(U_NU
    char* p = stmtName;
    uint32_t start = 0, len;
 
-   u_put_unalignedp32(p, U_MULTICHAR_CONSTANT32('S','Q','L','_'));
-            u_int2hex(p+4, (uint32_t)U_PTR2INT(this));
-                      p[12] = '\0';
+   u_int2hex(p, (uint32_t)U_PTR2INT(this));
+             p[8] = '\0';
 
    while ((p = (char*)memchr(s + start, '?', n - start)))
       {

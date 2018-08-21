@@ -566,28 +566,6 @@ public:
    static bool isUriRequestStrictTransportSecurity() __pure;
 #endif
 
-   // URI PROTECTION (for example directory listing)
-
-   static UString* htpasswd;
-   static UString* htdigest;
-   static bool digest_authentication; // authentication method (digest|basic)
-   static UString* user_authentication;
-   static time_t htdigest_mtime, htpasswd_mtime;
-
-   static UString getUserAuthentication() { return *user_authentication; }
-
-#ifdef USE_LIBSSL
-   static UString* uri_protected_mask;
-   static UVector<UIPAllow*>* vallow_IP;
-   static UString* uri_request_cert_mask;
-
-   static bool checkUriProtected();
-#endif
-
-#if defined(U_HTTP_STRICT_TRANSPORT_SECURITY) || defined(USE_LIBSSL)
-   static bool isValidation();
-#endif
-
 #ifdef U_ALIAS
    static UString* alias;
    static bool virtual_host;
@@ -933,6 +911,7 @@ public:
 
 private:
    bool load() U_NO_EXPORT;
+   void loadConfig() U_NO_EXPORT;
    bool isPath(const char* pathname, uint32_t len)
       {
       U_TRACE(0, "UServletPage::isPath(%.*S,%u)", len, pathname, len)
@@ -1363,6 +1342,38 @@ private:
 
    static UString contentOfFromCache(const UString& path) { return contentOfFromCache(U_STRING_TO_PARAM(path)); }
 
+   // URI PROTECTION (for example directory listing)
+
+   static UString* htpasswd;
+   static UString* htdigest;
+   static bool digest_authentication; // authentication method (digest|basic)
+   static UString* user_authentication;
+   static time_t htdigest_mtime, htpasswd_mtime;
+
+   static UString getUserAuthentication() { return *user_authentication; }
+
+   // -----------------------------------------------------------------------------------------------
+   // for Jonathan Kelly
+   // -----------------------------------------------------------------------------------------------
+   static UFileCacheData* getPasswdDB(const char* name, uint32_t len,       UString& fpasswd);                                // ex. U_CONSTANT_TO_PARAM("tutor"), x
+   static bool           savePasswdDB(const char* name, uint32_t len, const UString& fpasswd, UFileCacheData* ptr_file_data); // Save Changes to Disk and Cache
+
+   static void    setPasswdUser(UString& fpasswd, const UString& username, const UString& password); // Add/Update passwd User
+   static bool revokePasswdUser(UString& fpasswd, const UString& username);                          //     Remove passwd User
+   // -----------------------------------------------------------------------------------------------
+
+#ifdef USE_LIBSSL
+   static UString* uri_protected_mask;
+   static UVector<UIPAllow*>* vallow_IP;
+   static UString* uri_request_cert_mask;
+
+   static bool checkUriProtected();
+#endif
+
+#if defined(U_HTTP_STRICT_TRANSPORT_SECURITY) || defined(USE_LIBSSL)
+   static bool isValidation();
+#endif
+
 private:
    static uint32_t old_response_code, is_response_compressed;
 
@@ -1535,7 +1546,7 @@ private:
    static inline void setXForwardedFor(const char* ptr, uint32_t len) U_NO_EXPORT;
    static inline void setXHttpForwardedFor(const char* ptr, uint32_t len) U_NO_EXPORT;
 
-   static uint32_t getPosPasswd(UString& fpasswd, const UString& line) U_NO_EXPORT;
+   static uint32_t getPosPasswd(UString& fpasswd, const UString& line) __pure U_NO_EXPORT;
    static uint32_t  checkPasswd(UFileCacheData* ptr_file_data, UString& fpasswd, const UString& line) U_NO_EXPORT;
 
    U_DISALLOW_COPY_AND_ASSIGN(UHTTP)

@@ -38,14 +38,15 @@ typedef void* HINSTANCE;
 
 enum DynamicPageType {
    U_DPAGE_SSE     = 0,
-   U_DPAGE_INIT    = 1,
-   U_DPAGE_RESET   = 2,
-   U_DPAGE_DESTROY = 3,
-   U_DPAGE_SIGHUP  = 4,
-   U_DPAGE_FORK    = 5,
-   U_DPAGE_OPEN    = 6,
-   U_DPAGE_CLOSE   = 7,
-   U_DPAGE_ERROR   = 8 
+   U_DPAGE_CONFIG  = 1,
+   U_DPAGE_INIT    = 2,
+   U_DPAGE_RESET   = 3,
+   U_DPAGE_DESTROY = 4,
+   U_DPAGE_SIGHUP  = 5,
+   U_DPAGE_FORK    = 6,
+   U_DPAGE_OPEN    = 7,
+   U_DPAGE_CLOSE   = 8,
+   U_DPAGE_ERROR   = 9 
 };
 
 /**

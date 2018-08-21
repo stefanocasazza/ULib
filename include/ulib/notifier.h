@@ -105,8 +105,8 @@ public:
 
 #ifndef USE_LIBEVENT
    static void init();
-   static void resume(UEventFd* item);
    static void suspend(UEventFd* item);
+   static void  resume(UEventFd* item, uint32_t flags = EPOLLOUT);
 
    static void waitForEvent();
    static void waitForEvent(                                                 UEventTime* ptimeout);

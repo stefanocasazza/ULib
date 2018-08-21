@@ -223,7 +223,7 @@ bool UClientImage_Base::check_memory()
 }
 #endif
 
-#ifdef DEBUG
+#if defined(DEBUG) || (defined(U_SERVER_CAPTIVE_PORTAL) && !defined(ENABLE_THREAD))
 void UClientImage_Base::saveRequestResponse()
 {
    U_TRACE_NO_PARAM(0, "UClientImage_Base::saveRequestResponse()")
@@ -237,7 +237,9 @@ void UClientImage_Base::saveRequestResponse()
    {
    if (*rbuffer) U_FILE_WRITE_TO_TMP(*rbuffer, "request.%P");
 
+#ifdef DEBUG
    if (U_http_info.nResponseCode) (void) UFile::writeToTmp(iov_vec, 4, O_RDWR | O_TRUNC, U_CONSTANT_TO_PARAM("response.%P"), 0);
+#endif
    }
 }
 #endif
@@ -272,7 +274,7 @@ void UClientImage_Base::init()
 
    chronometer->start();
 
-#ifdef DEBUG
+#if defined(DEBUG) || (defined(U_SERVER_CAPTIVE_PORTAL) && !defined(ENABLE_THREAD))
    UError::callerDataDump = saveRequestResponse;
 #endif
 }
@@ -552,7 +554,7 @@ void UClientImage_Base::handlerDelete()
             U_ERROR("handlerDelete(): "
                     "UEventFd::fd = %d socket->iSockDesc = %d "
                     "UNotifier::num_connection = %d UNotifier::min_connection = %d "
-                    "U_ClientImage_parallelization = %d sfd = %d UEventFd::op_mask = %B",
+                    "U_ClientImage_parallelization = %u sfd = %d UEventFd::op_mask = %B",
                     UEventFd::fd, socket->iSockDesc, UNotifier::num_connection, UNotifier::min_connection,
                     U_ClientImage_parallelization, sfd, UEventFd::op_mask);
             }
@@ -1243,7 +1245,7 @@ pipeline:
    if (U_ClientImage_data_missing)
       {
 data_missing:
-      U_INTERNAL_DUMP("U_ClientImage_parallelization = %d U_http_version = %C", U_ClientImage_parallelization, U_http_version)
+      U_INTERNAL_DUMP("U_ClientImage_parallelization = %u U_http_version = %C", U_ClientImage_parallelization, U_http_version)
 
       U_INTERNAL_ASSERT_DIFFERS(U_http_version, '2')
 
@@ -1326,7 +1328,7 @@ cls:  if (U_ClientImage_parallelization == U_PARALLELIZATION_PARENT)
       goto error;
       }
 
-   U_INTERNAL_DUMP("U_ClientImage_pipeline = %b U_ClientImage_parallelization = %d U_ClientImage_data_missing = %b",
+   U_INTERNAL_DUMP("U_ClientImage_pipeline = %b U_ClientImage_parallelization = %u U_ClientImage_data_missing = %b",
                     U_ClientImage_pipeline,     U_ClientImage_parallelization,     U_ClientImage_data_missing)
 
    U_ASSERT(isOpen())
@@ -1684,7 +1686,7 @@ bool UClientImage_Base::writeResponse()
       ncount += iov_vec[0].iov_len +
                 iov_vec[1].iov_len;
 
-#  if defined(U_LINUX) && defined(ENABLE_THREAD)
+#  if defined(U_LINUX) && defined(ENABLE_THREAD) && !defined(U_SERVER_CAPTIVE_PORTAL)
       U_INTERNAL_ASSERT_EQUALS(iov_vec[1].iov_base, ULog::ptr_shared_date->date3)
 #  else
       U_INTERNAL_ASSERT_EQUALS(iov_vec[1].iov_base, ULog::date.date3)
@@ -1807,7 +1809,7 @@ void UClientImage_Base::resetPipeline()
 {
    U_TRACE_NO_PARAM(0, "UClientImage_Base::resetPipeline()")
 
-   U_INTERNAL_DUMP("U_ClientImage_pipeline = %b U_ClientImage_parallelization = %d U_ClientImage_request_is_cached = %b U_ClientImage_close = %b",
+   U_INTERNAL_DUMP("U_ClientImage_pipeline = %b U_ClientImage_parallelization = %u U_ClientImage_request_is_cached = %b U_ClientImage_close = %b",
                     U_ClientImage_pipeline,     U_ClientImage_parallelization,     U_ClientImage_request_is_cached,     U_ClientImage_close)
 
    U_INTERNAL_ASSERT(U_ClientImage_pipeline)

@@ -20,30 +20,24 @@ static UFile* file_WARNING;
 
 static UVector<UString>* vmac;
 static UVector<UString>* vapID;
+static UVector<UString>* vwelcome_file;
 
 static UREDISClient_Base* rc;
 static UHttpClient<UTCPSocket>* client;
 
-static UHTTP::UFileCacheData*    deny_html;
-static UHTTP::UFileCacheData* welcome_html;
+static UHTTP::UFileCacheData* deny_html;
 
 static void* peer;
 static UPing* sockp;
 static bool ap_consume;
 static UString* policySessionId;
-static uint8_t policySessionNotify;
-static uint64_t counter, device_counter;
+static uint8_t vwelcome_index[2][3]; // policy: (DAILY|FLAT), SessionNotify: (0,notify) (1,no_notify) (2,strict_notify)
+static uint64_t counter, device_counter, max_traffic_daily;
+static uint8_t policySessionNotify, policySessionNotifyDefault;
 static uint32_t addr, old_addr, ip_peer, created, lastUpdate, lastReset, idx, vec_logout[8192];
 
-//#define U_TEST
-#define U_CLEAN_INTERVAL (60U * 60U) // 1h 
-#define U_MAX_TIME_NO_TRAFFIC (15 * 60) // 15m
-
-#ifdef U_TEST
-#  define U_MAX_TRAFFIC_DAILY ( 50ULL * 1024ULL * 1024ULL) // 50M
-#else
-#  define U_MAX_TRAFFIC_DAILY (500ULL * 1024ULL * 1024ULL) // 500M
-#endif
+#define U_CLEAN_INTERVAL      (60U * 60U) // 1h 
+#define U_MAX_TIME_NO_TRAFFIC (15U * 60U) // 15m
 
 #define U_LOGGER(fmt,args...) ULog::log(file_WARNING->getFd(), U_CONSTANT_TO_PARAM("%v: " fmt), UClientImage_Base::request_uri->rep , ##args)
 
@@ -170,9 +164,86 @@ loop:
       }
 }
 
+static void usp_config_wi_auth2()
+{
+   U_TRACE_NO_PARAM(5, "::usp_config_wi_auth2()")
+
+   U_INTERNAL_ASSERT_POINTER(UServer_Base::pcfg)
+
+   // --------------------------------------------------------------------------------------------------------------------------------------
+   // configuration parameters
+   // --------------------------------------------------------------------------------------------------------------------------------------
+   // WELCOME_FILE  vector of           html files
+   // WELCOME_INDEX vector of index for html files - policy: (DAILY|FLAT), SessionNotify: (0,notify) (1,no_notify) (2,strict_notify)
+   //
+   // MAX_TRAFFIC_DAILY
+   // POLICY_SESSION_NOTIFY_DEFAULT (0,notify) (1,no_notify) (2,strict_notify)
+   // --------------------------------------------------------------------------------------------------------------------------------------
+
+   UString x = UServer_Base::pcfg->at(U_CONSTANT_TO_PARAM("WELCOME_FILE"));
+
+   if (x)
+      {
+      UVector<UString> vec(x);
+      uint32_t n = vec.size();
+
+      if (n < 1 ||
+          n > 6)
+         {
+         U_ERROR("usp_config_wi_auth2(): vector WELCOME_FILE malformed: %V", x.rep);
+         }
+
+      U_INTERNAL_ASSERT_EQUALS(vwelcome_file, U_NULLPTR)
+
+      U_NEW(UVector<UString>, vwelcome_file, UVector<UString>(vec, n));
+      }
+
+   // policy: (DAILY|FLAT), SessionNotify: (0,notify) (1,no_notify) (2,strict_notify)
+
+   x = UServer_Base::pcfg->at(U_CONSTANT_TO_PARAM("WELCOME_INDEX"));
+
+   if (x)
+      {
+      const char* ptr1 = x.data();
+      uint8_t*    ptr2 = (uint8_t*)vwelcome_index;
+
+      for (uint32_t i = 0, n = x.size(); i < n; ++i) *ptr2 = *ptr1 - '0';
+      }
+
+   max_traffic_daily          = UServer_Base::pcfg->readLong(U_CONSTANT_TO_PARAM("MAX_TRAFFIC_DAILY"), 500ULL * 1024ULL * 1024ULL); // 500M
+   policySessionNotifyDefault = UServer_Base::pcfg->readLong(U_CONSTANT_TO_PARAM("POLICY_SESSION_NOTIFY_DEFAULT"));
+}
+
 static void usp_init_wi_auth2()
 {
    U_TRACE_NO_PARAM(5, "::usp_init_wi_auth2()")
+
+   deny_html = UHTTP::getFileCachePointer(U_CONSTANT_TO_PARAM("deny.html"));
+
+   if (deny_html == U_NULLPTR)
+      {
+      U_ERROR("usp_init_wi_auth2(): missing deny.html from cache");
+      }
+
+   if (vwelcome_file == U_NULLPTR)
+      {
+      U_ERROR("usp_init_wi_auth2(): WELCOME_FILE empty");
+      }
+
+   UString x;
+   UHTTP::UFileCacheData* welcome_html;
+
+   for (uint32_t i = 0, n = vwelcome_file->size(); i < n; ++i)
+      {
+      x = vwelcome_file->at(i);
+
+      welcome_html = UHTTP::getFileCachePointer(U_STRING_TO_PARAM(x));
+
+      if (welcome_html == U_NULLPTR)
+         {
+         U_ERROR("usp_init_wi_auth2(): missing %V from cache", x.rep);
+         }
+      }
 
    // NODOG config template
 
@@ -191,20 +262,6 @@ static void usp_init_wi_auth2()
       }
 
    UDES3::setPassword(content.c_strndup());
-
-   welcome_html = UHTTP::getFileCachePointer(U_CONSTANT_TO_PARAM("welcome.html"));
-
-   if (welcome_html == U_NULLPTR)
-      {
-      U_ERROR("usp_init_wi_auth2(): missing welcome.html from cache");
-      }
-
-   deny_html = UHTTP::getFileCachePointer(U_CONSTANT_TO_PARAM("deny.html"));
-
-   if (deny_html == U_NULLPTR)
-      {
-      U_ERROR("usp_init_wi_auth2(): missing deny.html from cache");
-      }
 
    U_NEW_STRING(db_anagrafica, UString);
    U_NEW_STRING(allowed_web_hosts, UString);
@@ -313,7 +370,8 @@ static void usp_end_wi_auth2()
    U_DELETE(rc)
    U_DELETE(client)
 
-   if (sockp) U_DELETE(sockp)
+   if (sockp)         U_DELETE(sockp)
+   if (vwelcome_file) U_DELETE(vwelcome_file)
 #endif
 }
 
@@ -492,11 +550,15 @@ static void setSessionPolicy()
    if ((*policySessionId = rc->getString())) rc->setUInt8(policySessionNotify, 1);
    else
       {
+      // da configurazione
+
       *policySessionId = U_STRING_FROM_CONSTANT("DAILY");
 
-      policySessionNotify = 0; // notify
+      policySessionNotify = policySessionNotifyDefault;
 
-      (void) rc->hmset(U_CONSTANT_TO_PARAM("DEVICE:id:%v id %v pId DAILY pNotify 0 pCounter 0 lastAccess %u pLastReset %u"), mac->rep, mac->rep, u_now->tv_sec, u_now->tv_sec);
+      (void) rc->hmset(U_CONSTANT_TO_PARAM("DEVICE:id:%v id %v pId DAILY pNotify 0 pCounter 0 lastAccess %u pLastReset %u created %u"),
+                       mac->rep, mac->rep, u_now->tv_sec, u_now->tv_sec, u_now->tv_sec);
+
       (void) rc->zadd(U_CONSTANT_TO_PARAM("DEVICE:bylastAccess %u id:%v"), u_now->tv_sec, mac->rep);
       }
 
@@ -675,7 +737,7 @@ static bool checkDevice()
       {
       resetDeviceDailyCounter();
 
-      if (device_counter >= U_MAX_TRAFFIC_DAILY) U_RETURN(false);
+      if (device_counter >= max_traffic_daily) U_RETURN(false);
       }
 
    U_RETURN(true);
@@ -901,6 +963,21 @@ static void sessionClean(const UString& key)
    key_session->snprintf(U_CONSTANT_TO_PARAM("%.*s"), key.remain(ptr), ptr);
 
    lostSession(2);
+}
+
+static void GET_acceptTermsOfConditions()
+{
+   U_TRACE_NO_PARAM(5, "::GET_acceptTermsOfConditions()")
+}
+
+static void GET_acceptTermsOfConditionsExpirationList()
+{
+   U_TRACE_NO_PARAM(5, "::GET_acceptTermsOfConditionsExpirationList()")
+}
+
+static void GET_acceptTermsOfConditionsRenew()
+{
+   U_TRACE_NO_PARAM(5, "::GET_acceptTermsOfConditionsRenew()")
 }
 
 static void GET_anagrafica()
@@ -1319,17 +1396,31 @@ static void GET_welcome()
 
    if (UHTTP::processForm() == 4*2)
       {
-      UHTTP::getFormValue(*mac,      U_CONSTANT_TO_PARAM("mac"),  0, 3, 8);
-      UHTTP::getFormValue(*ap_label, U_CONSTANT_TO_PARAM("apid"), 0, 5, 8);
+      UHTTP::getFormValue(*mac, U_CONSTANT_TO_PARAM("mac"), 0, 3, 8);
 
-      U_ASSERT(mac->isXMacAddr())
+      if (mac->isXMacAddr())
+         {
+         UHTTP::getFormValue(*ap_label, U_CONSTANT_TO_PARAM("apid"), 0, 5, 8);
 
-      setSessionPolicy();
+         setSessionPolicy();
 
-      ok = checkDevice();
+         ok = checkDevice();
+         }
       }
 
-   UHTTP::setResponseFromFileCache(ok ? welcome_html : deny_html);
+   if (ok == false) UHTTP::setResponseFromFileCache(deny_html);
+   else
+      {
+      // policy: (DAILY|FLAT), SessionNotify: (0,notify) (1,no_notify) (2,strict_notify)
+
+      UString x = vwelcome_file->at(vwelcome_index[policySessionId->equal(U_CONSTANT_TO_PARAM("FLAT"))][policySessionNotify]);
+
+      UHTTP::UFileCacheData* welcome_html = UHTTP::getFileCachePointer(U_STRING_TO_PARAM(x));
+
+      U_INTERNAL_ASSERT_POINTER(welcome_html)
+
+      UHTTP::setResponseFromFileCache(welcome_html);
+      }
 
    U_http_info.nResponseCode = HTTP_NO_CONTENT; // NB: to escape management after usp exit...
 }
@@ -1602,7 +1693,7 @@ del_login:     addToLogout(label);
 
             if (ap_consume                                           &&
                 policySessionId->equal(U_CONSTANT_TO_PARAM("DAILY")) &&
-                rc->hincrby(U_CONSTANT_TO_PARAM("DEVICE:id:%v pCounter %u"), mac->rep, ctraffic) >= U_MAX_TRAFFIC_DAILY)
+                rc->hincrby(U_CONSTANT_TO_PARAM("DEVICE:id:%v pCounter %u"), mac->rep, ctraffic) >= max_traffic_daily)
                {
                op     =                 "DENY_POLICY";
                op_len = U_CONSTANT_SIZE("DENY_POLICY");

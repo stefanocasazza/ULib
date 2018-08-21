@@ -2,11 +2,15 @@
 static void usp_end_wi_auth2();
 static void usp_init_wi_auth2();
 static void usp_fork_wi_auth2();
+static void usp_config_wi_auth2();
 
 #include "wi_auth_declaration2.h"
 -->
 <!--#code
 static UHTTP::service_info GET_table[] = { // NB: the table must be ordered alphabetically for binary search...
+   GET_ENTRY(acceptTermsOfConditions),
+   GET_ENTRY(acceptTermsOfConditionsExpirationList),
+   GET_ENTRY(acceptTermsOfConditionsRenew),
    GET_ENTRY(anagrafica),
    GET_ENTRY(checkCaptive),
    GET_ENTRY(clean),

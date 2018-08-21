@@ -32,6 +32,10 @@ U_DUMP_KERNEL_VERSION(LINUX_VERSION_CODE)
 #  include <ulib/ssl/net/sslsocket.h>
 #endif
 
+#if defined(U_LINUX) && (!defined(U_SERVER_CAPTIVE_PORTAL) || defined(ENABLE_THREAD))
+#  include <linux/filter.h>
+#endif
+
 int            USocket::incoming_cpu = -1;
 int            USocket::iBackLog = SOMAXCONN;
 int            USocket::accept4_flags;  // If flags is 0, then accept4() is the same as accept()
@@ -416,6 +420,42 @@ bool USocket::setServer(unsigned int port, void* localAddress)
    U_RETURN(false);
 }
 
+#if defined(U_LINUX) && (!defined(U_SERVER_CAPTIVE_PORTAL) || defined(ENABLE_THREAD))
+bool USocket::enable_bpf()
+{
+   U_TRACE_NO_PARAM(0, "USocket::enable_bpf()")
+
+   /**
+    * Author: Jesper Dangaard Brouer <netoptimizer@brouer.com>, (C)2014-2016
+    * From: https://github.com/netoptimizer/network-testing
+    */
+
+   struct sock_filter code[] = {
+      /* A = raw_smp_processor_id() */
+      { BPF_LD  | BPF_W | BPF_ABS, 0, 0, (unsigned int)(SKF_AD_OFF + SKF_AD_CPU) },
+      /* return A */
+      { BPF_RET | BPF_A, 0, 0, 0 }
+   };
+
+   struct sock_fprog p = {
+      .len = 2,
+      .filter = code,
+   };
+
+   /**
+    * the kernel will call the specified filter to distribute the packets among the SO_REUSEPORT sockets group.
+    * Only the first socket in the group can set such filter. The filter implemented here distributes the ingress
+    * packets to the socket with the id equal to the CPU id processing the packet inside the kernel. With RSS in
+    * place and 1 to 1 mapping between ingress NIC RX queues and NIC's irqs, this maps 1 to 1 between ingress NIC
+    * RX queues and REUSEPORT sockets
+    */
+
+   if (setSockOpt(SOL_SOCKET, SO_ATTACH_REUSEPORT_CBPF, (void*)&p, sizeof(p))) U_RETURN(true);
+
+   U_RETURN(false);
+}
+#endif
+
 void USocket::reusePort(int _flags)
 {
    U_TRACE(1, "USocket::reusePort(%d)", _flags)
@@ -449,11 +489,18 @@ void USocket::reusePort(int _flags)
            cLocal->setIPAddressWildCard(U_socket_IPv6(this)), bind()) == false ||
           listen() == false)
          {
-         U_ERROR("SO_REUSEPORT failed, port %d", iLocalPort);
+         U_ERROR("SO_REUSEPORT failed, port %u", iLocalPort);
          }
 
-#  if defined(SO_INCOMING_CPU) && !defined(U_COVERITY_FALSE_POSITIVE)
+#  if !defined(U_SERVER_CAPTIVE_PORTAL) || defined(ENABLE_THREAD)
+      if (enable_bpf() == false) // Enable BPF filtering to distribute the ingress packets among the SO_REUSEPORT sockets
+         {
+         U_WARNING("SO_ATTACH_REUSEPORT_CBPF failed, port %u", iLocalPort);
+         }
+
+#    if defined(SO_INCOMING_CPU) && !defined(U_COVERITY_FALSE_POSITIVE)
       if (incoming_cpu != -1) bincoming_cpu = setSockOpt(SOL_SOCKET, SO_INCOMING_CPU, (void*)&incoming_cpu);
+#    endif
 #  endif
 
       (void) U_SYSCALL(close, "%d", old);

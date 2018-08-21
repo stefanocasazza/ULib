@@ -3858,29 +3858,29 @@ static void usp_init_wi_auth()
 
    // NB: REBOOT access point tramite webif...
 
-#  ifdef USE_LIBSSL
-      if (UServer_Base::bssl)
+#ifdef USE_LIBSSL
+   if (UServer_Base::bssl)
+      {
+      U_ASSERT_EQUALS(client->isPasswordAuthentication(), false)
+
+      if (UServer_Base::pcfg->searchForObjectStream(U_CONSTANT_TO_PARAM("proxy")))
          {
-         U_ASSERT_EQUALS(client->isPasswordAuthentication(), false)
+         UServer_Base::pcfg->table.clear();
 
-         if (UServer_Base::cfg->searchForObjectStream(U_CONSTANT_TO_PARAM("proxy")))
+         if (UModProxyService::loadConfig(*UServer_Base::pcfg))
             {
-            UServer_Base::cfg->table.clear();
+            UServer_Base::pcfg->reset();
 
-            if (UModProxyService::loadConfig(*UServer_Base::cfg))
-               {
-               UServer_Base::cfg->reset();
+            U_http_method_type = HTTP_GET;
 
-               U_http_method_type = HTTP_GET;
+            UModProxyService* service = UModProxyService::findService(U_STRING_TO_PARAM(*virtual_name),
+                                                                      U_CONSTANT_TO_PARAM("/cgi-bin/webif/status.sh"));
 
-               UModProxyService* service = UModProxyService::findService(U_STRING_TO_PARAM(*virtual_name),
-                                                                         U_CONSTANT_TO_PARAM("/cgi-bin/webif/status.sh"));
-
-               if (service) client->setRequestPasswordAuthentication(service->getUser(), service->getPassword());
-               }
+            if (service) client->setRequestPasswordAuthentication(service->getUser(), service->getPassword());
             }
          }
-#  endif
+      }
+#endif
 
    U_NEW(UFile, file_LOG, UFile(U_STRING_FROM_CONSTANT("$FILE_LOG"), environment));
 

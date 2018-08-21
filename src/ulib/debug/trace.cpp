@@ -247,7 +247,10 @@ void UTrace::trace_sysreturn(bool error, const char* format, uint32_t fmt_size, 
 #           ifdef USE_LIBPCRE
                 strstr(buffer_syscall, "::pcre_exec") == U_NULLPTR &&
 #           endif
-                strstr(buffer_syscall, "::getenv")    == U_NULLPTR)
+#           ifdef U_STATIC_ORM_DRIVER_PGSQL
+                strstr(buffer_syscall, "::PQgetResult") == U_NULLPTR &&
+#           endif
+                strstr(buffer_syscall, "::getenv") == U_NULLPTR)
                {
                U_WARNING("%s", buffer_syscall);
                }

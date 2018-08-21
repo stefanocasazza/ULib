@@ -34,6 +34,7 @@
 class UHTTP;
 class UHTTP2;
 class UIPAllow;
+class UEventDB;
 class USSIPlugIn;
 class USocketExt;
 class UHttpPlugIn;
@@ -497,10 +498,13 @@ protected:
    static void startRequest();
 #endif
 
+#if defined(DEBUG) || (defined(U_SERVER_CAPTIVE_PORTAL) && !defined(ENABLE_THREAD))
+   static void saveRequestResponse();
+#endif
+
    static void endRequest();
    static void resetReadBuffer();
    static void resetWriteBuffer();
-   static void saveRequestResponse();
    static void manageReadBufferResize(uint32_t n);
    static void setSendfile(int fd, off_t start, off_t count);
 
@@ -565,6 +569,7 @@ private:
 
                       friend class UHTTP;
                       friend class UHTTP2;
+                      friend class UEventDB;
                       friend class USocketExt;
                       friend class USSIPlugIn;
                       friend class UHttpPlugIn;

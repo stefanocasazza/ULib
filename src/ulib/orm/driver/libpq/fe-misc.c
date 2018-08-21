@@ -604,6 +604,8 @@ pqPutMsgEnd(PGconn *conn)
    /* Make message eligible to send */
    conn->outCount = conn->outMsgEnd;
 
+   if (conn->queue_status == PQQUEUE_MODE_OFF)
+   {
    if (conn->outCount >= 8192)
    {
       int         toSend = conn->outCount - (conn->outCount % 8192);
@@ -611,6 +613,7 @@ pqPutMsgEnd(PGconn *conn)
       if (pqSendSome(conn, toSend) < 0)
          return EOF;
       /* in nonblock mode, don't complain if unable to send it all */
+   }
    }
 
    return 0;
@@ -682,6 +685,7 @@ pqReadData(PGconn *conn)
 retry3:
    nread = pqsecure_read(conn, conn->inBuffer + conn->inEnd,
                     conn->inBufSize - conn->inEnd);
+
    if (nread < 0)
    {
       if (SOCK_ERRNO == EINTR)

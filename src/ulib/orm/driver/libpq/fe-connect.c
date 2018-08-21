@@ -3568,8 +3568,7 @@ sendTerminateConn(PGconn *conn)
  * PQfreeCommandQueue
  * Free all the entries of PGcommandQueueEntry queue passed.
  */
-static void
-PQfreeCommandQueue(PGcommandQueueEntry *queue)
+void PQfreeCommandQueue(PGcommandQueueEntry *queue)
 {
 
    while (queue != NULL)

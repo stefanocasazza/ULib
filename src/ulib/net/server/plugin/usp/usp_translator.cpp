@@ -749,17 +749,20 @@ loop: distance = t.getDistance();
        * Server-wide hooks
        *
        * enum DynamicPageType {
-       * U_DPAGE_INIT    = 0,
-       * U_DPAGE_RESET   = 1,
-       * U_DPAGE_DESTROY = 2,
-       * U_DPAGE_SIGHUP  = 3,
-       * U_DPAGE_FORK    = 4,
-       * U_DPAGE_OPEN    = 5,
-       * U_DPAGE_CLOSE   = 6,
-       * U_DPAGE_ERROR   = 7 };
+       * U_DPAGE_SSE     = 0,
+       * U_DPAGE_CONFIG  = 1,
+       * U_DPAGE_INIT    = 2,
+       * U_DPAGE_RESET   = 3,
+       * U_DPAGE_DESTROY = 4,
+       * U_DPAGE_SIGHUP  = 5,
+       * U_DPAGE_FORK    = 6,
+       * U_DPAGE_OPEN    = 7,
+       * U_DPAGE_CLOSE   = 8,
+       * U_DPAGE_ERROR   = 9 };
        */
 
-      bool binit,   // usp_init
+      bool bcfg,    // usp_config
+           binit,   // usp_init
            breset,  // usp_reset
            bend,    // usp_end
            bsighup, // usp_sighup
@@ -776,6 +779,7 @@ loop: distance = t.getDistance();
       char ptr6[100] = { '\0' };
       char ptr7[100] = { '\0' };
       char ptr8[100] = { '\0' };
+      char ptr9[100] = { '\0' };
 
 #  ifndef U_CACHE_REQUEST_DISABLE
       if (usp.c_char(4) == '#'      &&
@@ -788,6 +792,7 @@ loop: distance = t.getDistance();
 
       if (declaration)
          {
+         bcfg    = (U_STRING_FIND(declaration, 0, "static void usp_config_") != U_NOT_FOUND);
          binit   = (U_STRING_FIND(declaration, 0, "static void usp_init_")   != U_NOT_FOUND);
          breset  = (U_STRING_FIND(declaration, 0, "static void usp_reset_")  != U_NOT_FOUND);
          bend    = (U_STRING_FIND(declaration, 0, "static void usp_end_")    != U_NOT_FOUND);
@@ -809,13 +814,15 @@ loop: distance = t.getDistance();
             }
 
          if (bsighup) (void) u__snprintf(ptr4, 100, U_CONSTANT_TO_PARAM("\n\tif (param == U_DPAGE_SIGHUP) { usp_sighup_%.*s(); return; }\n"), basename_sz, basename_ptr);
-         if (bfork)   (void) u__snprintf(ptr5, 100, U_CONSTANT_TO_PARAM("\n\tif (param == U_DPAGE_FORK) { usp_fork_%.*s(); return; }\n"),     basename_sz, basename_ptr);
-         if (bopen)   (void) u__snprintf(ptr6, 100, U_CONSTANT_TO_PARAM("\n\tif (param == U_DPAGE_OPEN) { usp_open_%.*s(); return; }\n"),     basename_sz, basename_ptr);
-         if (bclose)  (void) u__snprintf(ptr7, 100, U_CONSTANT_TO_PARAM("\n\tif (param == U_DPAGE_CLOSE) { usp_close_%.*s(); return; }\n"),   basename_sz, basename_ptr);
-         if (berror)  (void) u__snprintf(ptr8, 100, U_CONSTANT_TO_PARAM("\n\tif (param == U_DPAGE_ERROR) { usp_error_%.*s(); return; }\n"),   basename_sz, basename_ptr);
+         if (bfork)   (void) u__snprintf(ptr5, 100, U_CONSTANT_TO_PARAM("\n\tif (param == U_DPAGE_FORK)   { usp_fork_%.*s();   return; }\n"), basename_sz, basename_ptr);
+         if (bopen)   (void) u__snprintf(ptr6, 100, U_CONSTANT_TO_PARAM("\n\tif (param == U_DPAGE_OPEN)   { usp_open_%.*s();   return; }\n"), basename_sz, basename_ptr);
+         if (bclose)  (void) u__snprintf(ptr7, 100, U_CONSTANT_TO_PARAM("\n\tif (param == U_DPAGE_CLOSE)  { usp_close_%.*s();  return; }\n"), basename_sz, basename_ptr);
+         if (berror)  (void) u__snprintf(ptr8, 100, U_CONSTANT_TO_PARAM("\n\tif (param == U_DPAGE_ERROR)  { usp_error_%.*s();  return; }\n"), basename_sz, basename_ptr);
+         if (bcfg)    (void) u__snprintf(ptr9, 100, U_CONSTANT_TO_PARAM("\n\tif (param == U_DPAGE_CONFIG) { usp_config_%.*s(); return; }\n"), basename_sz, basename_ptr);
          }
       else
          {
+         bcfg    =
          binit   =
          breset  =
          bend    =
@@ -827,7 +834,8 @@ loop: distance = t.getDistance();
 
       bool bdatamod = (bsession || bstorage);
 
-      U_INTERNAL_DUMP("binit = %b breset = %b bend = %b bsighup = %b bfork = %b bopen = %b bclose = %b bdatamod = %b", binit, breset, bend, bsighup, bfork, bopen, bclose, bdatamod)
+      U_INTERNAL_DUMP("bcfg = %b binit = %b breset = %b bend = %b bsighup = %b bfork = %b bopen = %b bclose = %b bdatamod = %b",
+                       bcfg,     binit,     breset,     bend,     bsighup,     bfork,     bopen,     bclose,     bdatamod)
 
       if (bdatamod)
          {
@@ -964,6 +972,7 @@ loop: distance = t.getDistance();
             "%s"
             "%s"
             "%s"
+            "%s"
             "\treturn;\n"
             "} }\n"
             "\t\n"
@@ -995,6 +1004,7 @@ loop: distance = t.getDistance();
             ptr6,
             ptr7,
             ptr8,
+            ptr9,
             basename_sz, basename_ptr,
             basename_sz, basename_ptr,
             basename_sz, basename_ptr,

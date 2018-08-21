@@ -97,7 +97,7 @@ typedef enum
 	PGRES_COPY_BOTH,			/* Copy In/Out data transfer in progress */
 	PGRES_SINGLE_TUPLE,			/* single tuple from larger resultset */
 	PGRES_QUEUE_END,			/* end of a queue of commands */
-	PGRES_QUEUE_ABORTED,		/* Command didn't run because of an abort
+	PGRES_QUEUE_ABORTED		/* Command didn't run because of an abort
 								 * earlier in a queue */
 } ExecStatusType;
 

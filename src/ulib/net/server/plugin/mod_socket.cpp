@@ -68,24 +68,19 @@ int UWebSocketPlugIn::handlerConfig(UFileConfig& cfg)
    // MAX_MESSAGE_SIZE maximum size (in bytes) of a message to accept; default is approximately 4GB
    // ----------------------------------------------------------------------------------------------
 
-   if (cfg.loadTable())
-      {
-      UWebSocket::command = UServer_Base::loadConfigCommand();
+   UWebSocket::command = UServer_Base::loadConfigCommand();
 
-      U_INTERNAL_ASSERT_EQUALS(UWebSocket::penvironment, U_NULLPTR)
+   U_INTERNAL_ASSERT_EQUALS(UWebSocket::penvironment, U_NULLPTR)
 
-      U_NEW_STRING(UWebSocket::penvironment, UString(U_CAPACITY));
+   U_NEW_STRING(UWebSocket::penvironment, UString(U_CAPACITY));
 
-      UWebSocket::max_message_size = cfg.readLong(U_CONSTANT_TO_PARAM("MAX_MESSAGE_SIZE"), U_STRING_MAX_SIZE);
+   UWebSocket::max_message_size = cfg.readLong(U_CONSTANT_TO_PARAM("MAX_MESSAGE_SIZE"), U_STRING_MAX_SIZE);
 
-      UWebSocket::fd_stderr = UServices::getDevNull("/tmp/UWebSocketPlugIn.err");
+   UWebSocket::fd_stderr = UServices::getDevNull("/tmp/UWebSocketPlugIn.err");
 
-      enable_db = cfg.readBoolean(U_CONSTANT_TO_PARAM("ENABLE_DB"));
+   enable_db = cfg.readBoolean(U_CONSTANT_TO_PARAM("ENABLE_DB"));
 
-      U_RETURN(U_PLUGIN_HANDLER_PROCESSED);
-      }
-
-   U_RETURN(U_PLUGIN_HANDLER_OK);
+   U_RETURN(U_PLUGIN_HANDLER_PROCESSED);
 }
 
 int UWebSocketPlugIn::handlerRun()

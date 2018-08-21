@@ -760,6 +760,8 @@ protected:
       U_ASSERT_EQUALS(isIPC(), false)
 
       /**
+       * With SO_REUSEPORT each of the processes will have a separate socket descriptor.
+       * Therefore each will own a dedicated UDP receive buffer. This avoids the contention issues.
        * As with TCP, SO_REUSEPORT allows multiple UDP sockets to be bound to the same port. This facility could, for example,
        * be useful in a DNS server operating over UDP. With SO_REUSEPORT, each thread could use recv() on its own socket to
        * accept datagrams arriving on the port. The traditional approach is that all threads would compete to perform recv()
@@ -774,6 +776,13 @@ protected:
       breuseport = setSockOpt(SOL_SOCKET, SO_REUSEPORT, (const int[]){ 1 });
 #  endif
       }
+
+#if defined(U_LINUX) && (!defined(U_SERVER_CAPTIVE_PORTAL) || defined(ENABLE_THREAD))
+#  ifndef SO_ATTACH_REUSEPORT_CBPF
+#  define SO_ATTACH_REUSEPORT_CBPF 51
+#  endif
+   bool enable_bpf();
+#endif
 
    bool listen()
       {

@@ -44,33 +44,23 @@ UProxyPlugIn::~UProxyPlugIn()
 
 // Server-wide hooks
 
-int UProxyPlugIn::handlerConfig(UFileConfig& cfg)
-{
-   U_TRACE(0, "UProxyPlugIn::handlerConfig(%p)", &cfg)
-
-   if (UModProxyService::loadConfig(cfg)) U_RETURN(U_PLUGIN_HANDLER_PROCESSED);
-
-   U_RETURN(U_PLUGIN_HANDLER_OK);
-}
-
 int UProxyPlugIn::handlerInit()
 {
    U_TRACE_NO_PARAM(0, "UProxyPlugIn::handlerInit()")
 
-   if (UHTTP::vservice == U_NULLPTR ||
-       UHTTP::vservice->empty())
-      {
-      U_RETURN(U_PLUGIN_HANDLER_ERROR);
-      }
+   // Perform registration of proxy services method
 
-/*
-#ifdef LINUX_NETFILTER
-#endif
-*/
+   if (UServer_Base::pcfg &&
+       UServer_Base::pcfg->searchForObjectStream(U_CONSTANT_TO_PARAM("proxy")))
+      {
+      UServer_Base::pcfg->table.clear();
+
+      if (UModProxyService::loadConfig(*UServer_Base::pcfg) == false) U_RETURN(U_PLUGIN_HANDLER_ERROR);
+      }
 
    U_NEW(UHttpClient<UTCPSocket>, client_http, UHttpClient<UTCPSocket>((UFileConfig*)U_NULLPTR));
 
-   U_RETURN(U_PLUGIN_HANDLER_OK);
+   U_RETURN(U_PLUGIN_HANDLER_PROCESSED);
 }
 
 // Connection-wide hooks

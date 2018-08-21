@@ -310,17 +310,14 @@ next:
       }
 }
 
-void UNotifier::resume(UEventFd* item)
+void UNotifier::resume(UEventFd* item, uint32_t flags)
 {
-   U_TRACE(0, "UNotifier::resume(%p)", item)
+   U_TRACE(0, "UNotifier::resume(%p,%u)", item, flags)
 
    U_INTERNAL_ASSERT_POINTER(item)
-   U_INTERNAL_ASSERT_EQUALS(item->op_mask, EPOLLOUT)
 
 #ifdef HAVE_EPOLL_WAIT
-   U_INTERNAL_ASSERT_DIFFERS(U_ClientImage_parallelization, U_PARALLELIZATION_CHILD)
-
-   struct epoll_event _events = { EPOLLOUT, { item } };
+   struct epoll_event _events = { flags, { item } };
 
    (void) U_SYSCALL(epoll_ctl, "%d,%d,%d,%p", epollfd, EPOLL_CTL_ADD, item->fd, &_events);
 #elif defined(HAVE_KQUEUE)
@@ -329,7 +326,6 @@ void UNotifier::resume(UEventFd* item)
 
    EV_SET(kqevents+nkqevents++, item->fd, EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0, (void*)item);
 #else
-   U_INTERNAL_ASSERT_DIFFERS(item->op_mask & EPOLLOUT, 0)
    U_INTERNAL_ASSERT_EQUALS(FD_ISSET(item->fd, &fd_set_write), 0)
 
    FD_SET(item->fd, &fd_set_write);
@@ -349,11 +345,8 @@ void UNotifier::suspend(UEventFd* item)
    U_TRACE(0, "UNotifier::suspend(%p)", item)
 
    U_INTERNAL_ASSERT_POINTER(item)
-   U_INTERNAL_ASSERT_EQUALS(item->op_mask, EPOLLOUT)
 
 #ifdef HAVE_EPOLL_WAIT
-   U_INTERNAL_ASSERT_DIFFERS(U_ClientImage_parallelization, U_PARALLELIZATION_CHILD)
-
    (void) U_SYSCALL(epoll_ctl, "%d,%d,%d,%p", epollfd, EPOLL_CTL_DEL, item->fd, (struct epoll_event*)1);
 #elif defined(HAVE_KQUEUE)
    U_INTERNAL_ASSERT_MAJOR(kq, 0)
@@ -361,7 +354,6 @@ void UNotifier::suspend(UEventFd* item)
 
    EV_SET(kqevents+nkqevents++, item->fd, EVFILT_WRITE, EV_DELETE | EV_DISABLE, 0, 0, (void*)item);
 #else
-   U_INTERNAL_ASSERT_DIFFERS(item->op_mask & EPOLLOUT, 0)
    U_INTERNAL_ASSERT(FD_ISSET(item->fd, &fd_set_write))
 
    FD_CLR(item->fd, &fd_set_write);

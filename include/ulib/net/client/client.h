@@ -289,7 +289,7 @@ protected:
    struct iovec iov[6];
 
    static ULog* log;
-   static UFileConfig* cfg;
+   static UFileConfig* pcfg;
    static bool log_shared_with_server, bIPv6;
 
    void loadConfigParam();
@@ -312,7 +312,7 @@ protected:
       }
 #endif
 
-    UClient_Base(UFileConfig* pcfg = U_NULLPTR);
+    UClient_Base(UFileConfig* cfg = U_NULLPTR);
    ~UClient_Base();
 
 private:
@@ -343,9 +343,9 @@ private:
 template <class Socket> class U_EXPORT UClient : public UClient_Base {
 public:
 
-   UClient(UFileConfig* pcfg) : UClient_Base(pcfg)
+   UClient(UFileConfig* cfg) : UClient_Base(cfg)
       {
-      U_TRACE_CTOR(0, UClient, "%p", pcfg)
+      U_TRACE_CTOR(0, UClient, "%p", cfg)
 
       U_NEW(Socket, socket, Socket(UClient_Base::bIPv6));
       }
@@ -369,9 +369,9 @@ private:
 template <> class U_EXPORT UClient<USSLSocket> : public UClient_Base {
 public:
 
-   UClient(UFileConfig* pcfg) : UClient_Base(pcfg)
+   UClient(UFileConfig* cfg) : UClient_Base(cfg)
       {
-      U_TRACE_CTOR(0, UClient<USSLSocket>, "%p", pcfg)
+      U_TRACE_CTOR(0, UClient<USSLSocket>, "%p", cfg)
 
       UClient_Base::setSSLContext();
       }

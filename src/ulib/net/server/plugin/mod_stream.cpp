@@ -72,6 +72,7 @@ int UStreamPlugIn::handlerConfig(UFileConfig& cfg)
 {
    U_TRACE(0, "UStreamPlugIn::handlerConfig(%p)", &cfg)
 
+   // ------------------------------------------------------------------------------------------------------------------------
    // stream - plugin parameters
    // ------------------------------------------------------------------------------------------------------------------------
    // URI_PATH     specifies the local part of the URL path at which you would like the content to appear (Ex. /my/video.mjpeg)
@@ -82,21 +83,16 @@ int UStreamPlugIn::handlerConfig(UFileConfig& cfg)
    // ENVIRONMENT  environment for command to execute
    // ------------------------------------------------------------------------------------------------------------------------
 
-   if (cfg.loadTable())
-      {
-      UString x = cfg.at(U_CONSTANT_TO_PARAM("METADATA"));
+   UString x = cfg.at(U_CONSTANT_TO_PARAM("METADATA"));
 
-      if (x) U_NEW_STRING(metadata, UString(x))
+   if (x) U_NEW_STRING(metadata, UString(x))
 
-      *uri_path     = cfg.at(U_CONSTANT_TO_PARAM("URI_PATH"));
-      *content_type = cfg.at(U_CONSTANT_TO_PARAM("CONTENT_TYPE"));
+   *uri_path     = cfg.at(U_CONSTANT_TO_PARAM("URI_PATH"));
+   *content_type = cfg.at(U_CONSTANT_TO_PARAM("CONTENT_TYPE"));
 
-      command = UServer_Base::loadConfigCommand();
+   command = UServer_Base::loadConfigCommand();
 
-      U_RETURN(U_PLUGIN_HANDLER_PROCESSED);
-      }
-
-   U_RETURN(U_PLUGIN_HANDLER_OK);
+   U_RETURN(U_PLUGIN_HANDLER_PROCESSED);
 }
 
 int UStreamPlugIn::handlerInit()

@@ -28,6 +28,9 @@
 #ifndef SIGWINCH
 #define SIGWINCH 28
 #endif
+#ifdef U_STATIC_ORM_DRIVER_PGSQL
+#define U_DB_BUSY_ARRAY_SIZE 256
+#endif
 
 /**
  * @class UServer
@@ -53,8 +56,8 @@
 #  define U_MACROSERVER(server_class,client_type,socket_type) \
 class server_class : public UServer<socket_type> { \
 public: \
- server_class(UFileConfig* pcfg) : UServer<socket_type>(pcfg) { U_TRACE_CTOR(  5, server_class, "%p", pcfg) } \
-~server_class()                                               { U_TRACE_DTOR(5, server_class) } \
+ server_class(UFileConfig* cfg) : UServer<socket_type>(cfg) { U_TRACE_CTOR(5, server_class, "%p", cfg) } \
+~server_class()                                             { U_TRACE_DTOR(5, server_class) } \
 const char* dump(bool reset) const { return UServer<socket_type>::dump(reset); } \
 protected: \
 virtual void preallocate() U_DECL_FINAL { \
@@ -68,7 +71,7 @@ virtual bool check_memory() U_DECL_FINAL { return u_check_memory_vector<client_t
 #  define U_MACROSERVER(server_class,client_type,socket_type) \
 class server_class : public UServer<socket_type> { \
 public: \
- server_class(UFileConfig* pcfg) : UServer<socket_type>(pcfg) {} \
+ server_class(UFileConfig* cfg) : UServer<socket_type>(cfg) {} \
 ~server_class()                                               {} \
 protected: \
 virtual void preallocate() U_DECL_FINAL { \
@@ -221,7 +224,7 @@ public:
 
    static void run(); // loop waiting for connection
 
-   static UFileConfig* cfg;
+   static UFileConfig* pcfg;
    static bool bssl, bipc, budp, flag_loop;
    static unsigned int port; // the port number to bind to
 
@@ -230,7 +233,7 @@ public:
    static UString      getHost()        { return *host; }
    static unsigned int getPort()        { return port; }
 
-   static UCommand* loadConfigCommand() { return UCommand::loadConfigCommand(cfg); }
+   static UCommand* loadConfigCommand() { return UCommand::loadConfigCommand(pcfg); }
 
    // The directory out of which you will serve your documents...
 
@@ -353,6 +356,12 @@ public:
 #  endif
    // ------------------------------------------------------------------------------
 #  if defined(U_LINUX) && defined(ENABLE_THREAD)
+   // ---------------------------------
+#   ifdef U_STATIC_ORM_DRIVER_PGSQL
+      uint8_t busy_db1[U_DB_BUSY_ARRAY_SIZE];
+      uint8_t busy_db2[U_DB_BUSY_ARRAY_SIZE];
+#   endif
+   // ---------------------------------
       ULog::log_date log_date_shared;
       struct timeval now_shared; // => u_now
       pthread_rwlock_t rwlock;
@@ -372,6 +381,7 @@ public:
 #define U_SRV_BUF5                  UServer_Base::ptr_shared_data->buffer5
 #define U_SRV_BUF6                  UServer_Base::ptr_shared_data->buffer6
 #define U_SRV_BUF7                  UServer_Base::ptr_shared_data->buffer7
+#define U_SRV_MY_LOAD               UServer_Base::ptr_shared_data->my_load
 #define U_SRV_CNT_USR1              UServer_Base::ptr_shared_data->cnt_usr1
 #define U_SRV_CNT_USR2              UServer_Base::ptr_shared_data->cnt_usr2
 #define U_SRV_CNT_USR3              UServer_Base::ptr_shared_data->cnt_usr3
@@ -381,11 +391,10 @@ public:
 #define U_SRV_CNT_USR7              UServer_Base::ptr_shared_data->cnt_usr7
 #define U_SRV_CNT_USR8              UServer_Base::ptr_shared_data->cnt_usr8
 #define U_SRV_CNT_USR9              UServer_Base::ptr_shared_data->cnt_usr9
-#define U_SRV_CNT_NOCAT             UServer_Base::ptr_shared_data->cnt_usr7
-#define U_SRV_CNT_WIAUTH            UServer_Base::ptr_shared_data->cnt_usr7
 #define U_SRV_SSE_CNT1              UServer_Base::ptr_shared_data->cnt_usr8
 #define U_SRV_SSE_CNT2              UServer_Base::ptr_shared_data->cnt_usr9
-#define U_SRV_MY_LOAD               UServer_Base::ptr_shared_data->my_load
+#define U_SRV_CNT_NOCAT             UServer_Base::ptr_shared_data->cnt_usr7
+#define U_SRV_CNT_WIAUTH            UServer_Base::ptr_shared_data->cnt_usr7
 #define U_SRV_FLAG_SIGTERM          UServer_Base::ptr_shared_data->flag_sigterm
 #define U_SRV_LEN_OCSP_STAPLE       UServer_Base::ptr_shared_data->len_ocsp_staple
 #define U_SRV_VALID_OCSP_STAPLE     UServer_Base::ptr_shared_data->valid_ocsp_staple
@@ -393,6 +402,8 @@ public:
 #define U_SRV_MIN_LOAD_REMOTE_IP    UServer_Base::ptr_shared_data->min_load_remote_ip
 #define U_SRV_TOT_CONNECTION        UServer_Base::ptr_shared_data->tot_connection
 #define U_SRV_CNT_PARALLELIZATION   UServer_Base::ptr_shared_data->cnt_parallelization
+#define U_SRV_DB1_BUSY              UServer_Base::ptr_shared_data->busy_db1
+#define U_SRV_DB2_BUSY              UServer_Base::ptr_shared_data->busy_db2
 #define U_SRV_LOCK_USER1          &(UServer_Base::ptr_shared_data->lock_user1)
 #define U_SRV_LOCK_USER2          &(UServer_Base::ptr_shared_data->lock_user2)
 #define U_SRV_LOCK_SSE            &(UServer_Base::ptr_shared_data->lock_sse)
@@ -1051,7 +1062,7 @@ protected:
       }
 #endif
 
-            UServer_Base(UFileConfig* pcfg = U_NULLPTR);
+            UServer_Base(UFileConfig* cfg = U_NULLPTR);
    virtual ~UServer_Base();
 
 #ifndef U_LOG_DISABLE
@@ -1222,9 +1233,9 @@ public:
 
    typedef UClientImage<Socket> client_type;
 
-   UServer(UFileConfig* pcfg = 0) : UServer_Base(pcfg)
+   UServer(UFileConfig* cfg = 0) : UServer_Base(cfg)
       {
-      U_TRACE_CTOR(0, UServer, "%p", pcfg)
+      U_TRACE_CTOR(0, UServer, "%p", cfg)
 
       U_NEW(Socket, socket, Socket(UClientImage_Base::bIPv6));
       }
@@ -1287,12 +1298,12 @@ public:
 
    typedef UClientImage<USSLSocket> client_type;
 
-   UServer(UFileConfig* pcfg) : UServer_Base(pcfg)
+   UServer(UFileConfig* cfg) : UServer_Base(cfg)
       {
-      U_TRACE_CTOR(0, UServer<USSLSocket>, "%p", pcfg)
+      U_TRACE_CTOR(0, UServer<USSLSocket>, "%p", cfg)
 
 #  ifdef DEBUG
-      if (pcfg &&
+      if (cfg &&
           bssl == false)
          {
          U_ERROR("You need to set bssl var before loading the configuration");
@@ -1301,7 +1312,7 @@ public:
 
       U_NEW(USSLSocket, socket, USSLSocket(UClientImage_Base::bIPv6, U_NULLPTR, true));
 
-      if (pcfg) ((USSLSocket*)socket)->ciphersuite_model = pcfg->readLong(U_CONSTANT_TO_PARAM("CIPHER_SUITE"));
+      if (cfg) ((USSLSocket*)socket)->ciphersuite_model = cfg->readLong(U_CONSTANT_TO_PARAM("CIPHER_SUITE"));
       }
 
    virtual ~UServer()
@@ -1357,12 +1368,12 @@ public:
 
    typedef UClientImage<UUDPSocket> client_type;
 
-   UServer(UFileConfig* pcfg) : UServer_Base(pcfg)
+   UServer(UFileConfig* cfg) : UServer_Base(cfg)
       {
-      U_TRACE_CTOR(0, UServer<UUDPSocket>, "%p", pcfg)
+      U_TRACE_CTOR(0, UServer<UUDPSocket>, "%p", cfg)
 
 #  ifdef DEBUG
-      if (pcfg &&
+      if (cfg &&
           budp == false)
          {
          U_ERROR("You need to set budp var before loading the configuration");
@@ -1425,12 +1436,12 @@ public:
 
    typedef UClientImage<UUnixSocket> client_type;
 
-   UServer(UFileConfig* pcfg) : UServer_Base(pcfg)
+   UServer(UFileConfig* cfg) : UServer_Base(cfg)
       {
-      U_TRACE_CTOR(0, UServer<UUnixSocket>, "%p", pcfg)
+      U_TRACE_CTOR(0, UServer<UUnixSocket>, "%p", cfg)
 
 #  ifdef DEBUG
-      if (pcfg &&
+      if (cfg &&
           bipc == false)
          {
          U_ERROR("You need to set bipc var before loading the configuration");

@@ -1551,7 +1551,7 @@ PQsendQueryStart(PGconn *conn)
       /*
        * When enqueuing a message we don't change much of the connection
        * state since it's already in use for the current command. The
-       * connection state will get updated when PQqueueQueueProcess(...)
+       * connection state will get updated when PQprocessQueue(...)
        * advances to start processing the queued message.
        *
        * Just make sure we can safely enqueue given the current connection
@@ -1776,6 +1776,11 @@ PQsendQueryGuts(PGconn *conn,
    else
       *last_query = NULL;
 
+   /* OK, it's launched! */
+   if (conn->queue_status != PQQUEUE_MODE_OFF)
+      PQappendPipelinedCommand(conn, pipeCmd);
+   else
+   {
    /*
     * Give the data a push.  In nonblock mode, don't complain if we're unable
     * to send it all; PQgetResult() will do any additional flushing needed.
@@ -1783,11 +1788,8 @@ PQsendQueryGuts(PGconn *conn,
    if (pqQueueFlush(conn) < 0)
       goto sendFailed;
 
-   /* OK, it's launched! */
-   if (conn->queue_status != PQQUEUE_MODE_OFF)
-      PQappendPipelinedCommand(conn, pipeCmd);
-   else
       conn->asyncStatus = PGASYNC_BUSY;
+   }
    return 1;
 
 sendFailed:
@@ -1939,9 +1941,9 @@ PQqueueStatus(PGconn *conn)
  *
  *    Queuing of a new query or syncing during COPY is not allowed.
  *
- *    A set of commands is terminated by a PQqueueQueueSync. Multiple sets of queueed
+ *    A set of commands is terminated by a Sync. Multiple sets of queueed
  *    commands may be sent while in queue mode. Queue mode can be exited by
- *    calling PQqueueEnd() once all results are processed.
+ *    calling PQexitQueueMode() once all results are processed.
  *
  *    This doesn't actually send anything on the wire, it just puts libpq
  *    into a state where it can pipeline work.
@@ -2025,7 +2027,7 @@ exitFailed:
  *    and start it again.
  *
  *    If a command in a queue fails, every subsequent command up to and including
- *    the PQqueueQueueSync command result gets set to PGRES_QUEUE_ABORTED state. If the
+ *    the PQprocessQueue command result gets set to PGRES_QUEUE_ABORTED state. If the
  *    whole queue is processed without error, a PGresult with PGRES_QUEUE_END is
  *    produced.
  */
@@ -2137,7 +2139,7 @@ PQprocessQueue(PGconn *conn)
    {
       /*
        * In queue mode but nothing left on the queue; caller can submit more
-       * work or PQqueueEnd() now.
+       * work or PQexitQueueMode() now.
        */
       return 0;
    }
@@ -4333,4 +4335,61 @@ pqQueueFlush(PGconn *conn)
    if ((conn->queue_status == PQQUEUE_MODE_OFF)||(conn->outCount >= OUTBUFFER_THRESHOLD))
       return(pqFlush(conn));
    return 0; /* Just to keep compiler quiet */
+}
+
+void PQresetQueue(PGconn* conn)
+{
+   /*
+   PGnotify* notify;
+   pgParameterStatus* pstatus;
+   */
+   PGcommandQueueEntry* queue;
+
+   conn->asyncStatus = PGASYNC_READY;
+   pqClearAsyncResult(conn);  /* deallocate result */
+   resetPQExpBuffer(&conn->errorMessage);
+
+   /*
+   notify = conn->notifyHead;
+   while (notify != NULL)
+      {
+      PGnotify* prev = notify;
+      notify = notify->next;
+      free(prev);
+      }
+   conn->notifyHead = conn->notifyTail = NULL;
+   */
+
+   queue = conn->cmd_queue_head;
+   PQfreeCommandQueue(queue);
+   conn->cmd_queue_head = conn->cmd_queue_tail = NULL;
+
+   queue = conn->cmd_queue_recycle;
+   PQfreeCommandQueue(queue);
+
+   conn->cmd_queue_recycle = NULL;
+
+   /*
+   pstatus = conn->pstatus;
+   while (pstatus != NULL)
+      {
+      pgParameterStatus* prev = pstatus;
+      pstatus = pstatus->next;
+      free(prev);
+      }
+   conn->pstatus = NULL;
+   */
+
+   /* discard any unread data
+   */
+   conn->inStart  =
+   conn->inCursor =
+   conn->inEnd    = 0;
+
+   /* discard any unsent data
+   */
+   conn->outCount = 0;
+
+   conn->queue_status = PQQUEUE_MODE_ON;
+   conn->asyncStatus = PGASYNC_QUEUED;
 }

@@ -318,6 +318,8 @@ typedef struct pgCommandQueueEntry
 	struct pgCommandQueueEntry *next;
 }	PGcommandQueueEntry;
 
+extern void PQresetQueue(PGconn* conn);
+extern void PQfreeCommandQueue(PGcommandQueueEntry *queue);
 
 /*
  * pg_conn_host stores all information about one of possibly several hosts
@@ -712,7 +714,7 @@ extern ssize_t pgtls_write(PGconn *conn, const void *ptr, size_t len);
  * Connection's outbuffer threshold is set to 64k as it is safe
  * in Windows as per comments in pqSendSome() API.
  */
-#define OUTBUFFER_THRESHOLD	65536
+#define OUTBUFFER_THRESHOLD  65536
 
 #ifdef ENABLE_NLS
 extern char *libpq_gettext(const char *msgid) pg_attribute_format_arg(1);

@@ -216,6 +216,7 @@ public:
 
    // will be typecast into conn-specific type
 
+   UOrmDriver*    getDriver() const    { return pdrv; }
    USqlStatement* getStatement() const { return pstmt; }
 
    // Execute the statement

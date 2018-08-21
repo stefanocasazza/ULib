@@ -19,8 +19,8 @@ public:
 
    // COSTRUTTORE
 
-   explicit UClientLCSP(UFileConfig* pcfg) : URPCClient<T>(pcfg) {}
-   virtual ~UClientLCSP()                                        {}
+   explicit UClientLCSP(UFileConfig* cfg) : URPCClient<T>(cfg) {}
+   virtual ~UClientLCSP()                                      {}
 
    // OBJECT FOR METHOD REQUEST
 

@@ -21,7 +21,7 @@ U_EXPORT main (int argc, char* argv[], char* env[])
       {
       fcg.load(UString(argv[3]));
 
-      server.cfg = &fcg;
+      server.pcfg = &fcg;
       }
 
    server.setDocumentRoot(UString::getStringNull());

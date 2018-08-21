@@ -61,24 +61,19 @@ int USCGIPlugIn::handlerConfig(UFileConfig& cfg)
    // LOG_FILE       location for file log (use server log if exist)
    // ------------------------------------------------------------------------------------------
 
-   if (cfg.loadTable())
-      {
-      UClient_Base::cfg = &cfg;
+   UClient_Base::pcfg = &cfg;
 
-      U_NEW(UClient_Base, connection, UClient_Base(&cfg));
+   U_NEW(UClient_Base, connection, UClient_Base(&cfg));
 
-      UString x = cfg.at(U_CONSTANT_TO_PARAM("SCGI_URI_MASK"));
+   UString x = cfg.at(U_CONSTANT_TO_PARAM("SCGI_URI_MASK"));
 
-      U_INTERNAL_ASSERT_EQUALS(UHTTP::scgi_uri_mask, U_NULLPTR)
+   U_INTERNAL_ASSERT_EQUALS(UHTTP::scgi_uri_mask, U_NULLPTR)
 
-      if (x) U_NEW_STRING(UHTTP::scgi_uri_mask, UString(x))
+   if (x) U_NEW_STRING(UHTTP::scgi_uri_mask, UString(x))
 
-      scgi_keep_conn = cfg.readBoolean(U_CONSTANT_TO_PARAM("SCGI_KEEP_CONN"));
+   scgi_keep_conn = cfg.readBoolean(U_CONSTANT_TO_PARAM("SCGI_KEEP_CONN"));
 
-      U_RETURN(U_PLUGIN_HANDLER_PROCESSED);
-      }
-
-   U_RETURN(U_PLUGIN_HANDLER_OK);
+   U_RETURN(U_PLUGIN_HANDLER_PROCESSED);
 }
 
 int USCGIPlugIn::handlerInit()

@@ -30,10 +30,13 @@ extern "C" {
 
 #ifndef USE_PGSQL_QUEUE_API
 #define USE_PGSQL_QUEUE_API // PostgresSQL v3 extended query protocol
-extern U_EXPORT int PQsendQueue(PGconn* conn);
-extern U_EXPORT int PQprocessQueue(PGconn* conn);
-extern U_EXPORT int PQexitQueueMode(PGconn* conn);
-extern U_EXPORT int PQenterQueueMode(PGconn* conn);
+extern U_EXPORT int  pqReadData(PGconn* conn);
+extern U_EXPORT int  pqParseInput3(PGconn* conn);
+extern U_EXPORT int  PQsendQueue(PGconn* conn);
+extern U_EXPORT void PQresetQueue(PGconn* conn);
+extern U_EXPORT int  PQprocessQueue(PGconn* conn);
+extern U_EXPORT int  PQexitQueueMode(PGconn* conn);
+extern U_EXPORT int  PQenterQueueMode(PGconn* conn);
 
 /*
 extern U_EXPORT int PQsendQueue(PGconn* conn) { return 0; }

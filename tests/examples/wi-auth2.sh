@@ -43,6 +43,13 @@ http {
  LIMIT_REQUEST_BODY 10M
  REQUEST_READ_TIMEOUT 30
 }
+wi_auth2.usp {
+ WELCOME_FILE "[ welcome.html ]"
+ WELCOME_INDEX 000000 # policy: (DAILY|FLAT), SessionNotify: (0,notify) (1,no_notify) (2,strict_notify)
+
+ MAX_TRAFFIC_DAILY 500M
+ POLICY_SESSION_NOTIFY_DEFAULT 0 # (0,notify) (1,no_notify) (2,strict_notify)
+}
 EOF
 
 DIR_CMD="../../examples/userver"

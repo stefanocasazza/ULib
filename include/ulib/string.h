@@ -1658,6 +1658,19 @@ public:
       return *this;
       }
 
+   UString& replace(uint32_t pos, uint32_t n, char c)
+      {
+      U_TRACE(0, "UString::replace(%u,%u,%C)", pos, n, c)
+
+      char* ptr = __replace(pos, n, 1);
+
+      if (ptr) *ptr = c;
+
+      U_INTERNAL_ASSERT(invariant())
+
+      return *this;
+      }
+
    UString& replace(uint32_t pos, uint32_t n1, const char* s, uint32_t n2)
       {
       U_TRACE(0, "UString::replace(%u,%u,%S,%u)", pos, n1, s, n2)

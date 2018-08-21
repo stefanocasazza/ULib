@@ -16,6 +16,13 @@
 
 #include <ulib/event/event_fd.h>
 
+#ifdef DEBUG
+#  define U_QUERY_INFO_SZ 168
+#else
+#  define U_QUERY_INFO_SZ 200
+#endif
+
+class UServer_Base;
 class UClientImage_Base;
 
 class U_EXPORT UEventDB : public UEventFd {
@@ -24,33 +31,33 @@ public:
    // Check for memory error
    U_MEMORY_TEST
 
-   typedef struct query_info {
-      vPFpvu             handlerResult;
-      UClientImage_Base* pClientImage;
-      uint32_t           timestamp;
-      uint16_t           num_query, num_result;
-   } query_info;
+   // Allocator e Deallocator
+   U_MEMORY_ALLOCATOR
+   U_MEMORY_DEALLOCATOR
 
-   UEventDB()
-      {
-      U_TRACE_CTOR(0, UEventDB, "")
-
-      conn = U_NULLPTR;
-
-      start = end = 0;
-
-      (void) U_SYSCALL(memset, "%p,%d,%u", query, 0, sizeof(query));
-
-      bmode = false;
-      }
-
+    UEventDB();
    ~UEventDB();
 
    // SERVICES
 
-   void handlerResult(vPFpvu handler);
+   void reset();
    void setConnection(void* connection);
-   void handlerQuery(uint32_t num_query = 1);
+   void handlerQuery(vPFpvu handler, uint32_t num_query = 1);
+
+   bool isEmpty()
+      {
+      U_TRACE_NO_PARAM(0, "UEventDB::isEmpty()")
+
+      U_CHECK_MEMORY
+
+      U_INTERNAL_DUMP("num_handler = %u", num_handler)
+
+      U_INTERNAL_ASSERT_MINOR(num_handler, U_QUERY_INFO_SZ)
+
+      if (num_handler) U_RETURN(false);
+
+      U_RETURN(true);
+      }
 
    // define method VIRTUAL
 
@@ -60,21 +67,28 @@ public:
    const char* dump(bool reset) const;
 #endif
 
-private:
-   void* conn;
-   uint32_t start, end;
-   query_info query[512];
-   int fd_conn;
-   bool bmode;
+protected:
+   typedef struct query_info {
+      vPFpvu handlerResult;
+      UClientImage_Base* pClientImage;
+#  ifdef DEBUG
+      uint32_t timestamp;
+#  endif
+      uint16_t num_query;
+   } query_info;
 
-   static bool basync;
-   static uint32_t nquery;
+   void* conn;
+   uint8_t* pbusy;
+   query_info query[U_QUERY_INFO_SZ];
+   uint16_t num_result, num_handler;
+   bool bsend, bnotifier;
 
 #ifdef DEBUG
    static uint32_t max_num_handler;
 #endif
 
-   uint32_t getResult(void* vresult);
+private:
+   friend class UServer_Base;
 
    U_DISALLOW_COPY_AND_ASSIGN(UEventDB)
 };
