@@ -60,6 +60,47 @@ int WINAPI WinMain (HINSTANCE hinstance, HINSTANCE hPrevInstance, LPSTR command_
 }
 */
 
+/*
+#if defined(USE_FSTACK) && !defined(U_SSL_SOCKET) && !defined(U_UDP_SOCKET) && !defined(U_UNIX_SOCKET)
+#  include <ff_api.h>
+#  include <ff_epoll.h>
+
+extern "C" {
+extern U_EXPORT int ff_epoll_create(int size)                                                                          { return epoll_create(size); }
+extern U_EXPORT int ff_epoll_ctl(int epfd, int op, int fd, struct epoll_event* event)                                  { return epoll_ctl(epfd, op, fd, event); }
+extern U_EXPORT int ff_epoll_wait(int epfd, struct epoll_event* events, int maxevents, int timeout)                    { return epoll_wait(epfd, events, maxevents, timeout); }
+extern U_EXPORT int ff_close(int fd)                                                                                   { return close(fd); }
+extern U_EXPORT int ff_shutdown(int s, int how)                                                                        { return shutdown(s, how); }
+extern U_EXPORT int ff_listen(int s, int backlog)                                                                      { return listen(s, backlog); }
+extern U_EXPORT int ff_socket(int domain, int type, int protocol)                                                      { return socket(domain, type, protocol); }
+extern U_EXPORT int ff_poll(struct pollfd fds[], nfds_t nfds, int timeout)                                             { return poll(fds, nfds, timeout); }
+extern U_EXPORT int ff_accept(int s, struct linux_sockaddr* addr, socklen_t* addrlen)                                  { return accept(s, (sockaddr*)addr, addrlen); }
+extern U_EXPORT int ff_bind(int s, const struct linux_sockaddr* addr, socklen_t addrlen)                               { return bind(s, (sockaddr*)addr, addrlen); }
+extern U_EXPORT int ff_getpeername(int s, struct linux_sockaddr* name, socklen_t* namelen)                             { return getpeername(s, (sockaddr*)name, namelen); }
+extern U_EXPORT int ff_getsockname(int s, struct linux_sockaddr* name, socklen_t* namelen)                             { return getsockname(s, (sockaddr*)name, namelen); }
+extern U_EXPORT int ff_connect(int s, const struct linux_sockaddr* name, socklen_t namelen)                            { return connect(s, (sockaddr*)name, namelen); }
+extern U_EXPORT int ff_getsockopt(int s, int level, int optname, void* optval, socklen_t* optlen)                      { return getsockopt(s, level, optname, optval, optlen); }
+extern U_EXPORT int ff_setsockopt(int s, int level, int optname, const void* optval, socklen_t optlen)                 { return setsockopt(s, level, optname, optval, optlen); }
+extern U_EXPORT int ff_select(int nfds, fd_set* readfds, fd_set* writefds, fd_set* exceptfds, struct timeval* timeout) { return select(nfds, readfds, writefds, exceptfds, timeout); }
+
+extern U_EXPORT ssize_t ff_recv(int s, void* buf, size_t len, int flags)       { return recv(s, buf, len, flags); }
+extern U_EXPORT ssize_t ff_recvmsg(int s, struct msghdr* msg, int flags)       { return recvmsg(s, msg, flags); }
+extern U_EXPORT ssize_t ff_write(int fd, const void* buf, size_t nbytes)       { return write(fd, buf, nbytes); }
+extern U_EXPORT ssize_t ff_writev(int fd, const struct iovec* iov, int iovcnt) { return writev(fd, iov, iovcnt); }
+extern U_EXPORT ssize_t ff_send(int s, const void* buf, size_t len, int flags) { return send(s, buf, len, flags); }
+
+extern U_EXPORT ssize_t ff_recvfrom(int s, void* buf, size_t len, int flags, struct linux_sockaddr* from, socklen_t* fromlen)
+{ return recvfrom(s, buf, len, flags, (sockaddr*)from, fromlen); }
+
+extern U_EXPORT ssize_t ff_sendto(int s, const void* buf, size_t len, int flags, const struct linux_sockaddr* to, socklen_t tolen)
+{ return sendto(s, buf, len, flags, (sockaddr*)to, tolen); }
+
+extern U_EXPORT int ff_fcntl(int fd, int cmd, void* argp)               { return fcntl(fd, cmd, argp); }
+extern U_EXPORT int ff_ioctl(int fd, unsigned long request, void* argp) { return ioctl(fd, request, argp); }
+}
+#endif
+*/
+
 class Application;
 
 class U_EXPORT UApplication {

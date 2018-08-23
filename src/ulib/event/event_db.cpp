@@ -373,7 +373,7 @@ next:
 
 // DEBUG
 
-#ifdef DEBUG
+#if defined(U_STDCPP_ENABLE) && defined(DEBUG)
 const char* UEventDB::dump(bool _reset) const
 {
    *UObjectIO::os << "bsend       " << bsend      << '\n'

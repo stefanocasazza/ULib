@@ -1208,7 +1208,7 @@ public:
 
             U_INTERNAL_DUMP("U_SRV_MY_LOAD = %u", U_SRV_MY_LOAD)
 
-            int iBytesTransferred = U_SYSCALL(sendto, "%d,%p,%u,%u,%p,%d", fd_sock, &U_SRV_MY_LOAD, sizeof(char), MSG_DONTROUTE,
+            int iBytesTransferred = U_FF_SYSCALL(sendto, "%d,%p,%u,%u,%p,%d", fd_sock, &U_SRV_MY_LOAD, sizeof(char), MSG_DONTROUTE,
                                                                            (sockaddr*)&(srv_addr.psaGeneric), sizeof(srv_addr));
 
             if (iBytesTransferred == sizeof(char))
@@ -1219,7 +1219,7 @@ public:
                uint8_t  min_loadavg_remote    = 255;
                uint32_t min_loadavg_remote_ip = 0;
 
-               while ((iBytesTransferred = U_SYSCALL(recvfrom,"%d,%p,%u,%u,%p,%p", fd_sock, datagram, sizeof(datagram), MSG_DONTWAIT,
+               while ((iBytesTransferred = U_FF_SYSCALL(recvfrom,"%d,%p,%u,%u,%p,%p", fd_sock, datagram, sizeof(datagram), MSG_DONTWAIT,
                                                                            (sockaddr*)&(cli_addr.psaGeneric),&slDummy)) > 0)
                   {
                   U_DUMP("Received datagram from (%V:%u) = (%u,%#.*S)",
@@ -1429,7 +1429,7 @@ protected:
 
       if (bprocess)
          {
-         if (U_SYSCALL(write, "%u,%S,%u", fd, U_STRING_TO_PARAM(message)) <= 0) U_RETURN(false);
+         if (U_FF_SYSCALL(write, "%u,%S,%u", fd, U_STRING_TO_PARAM(message)) <= 0) U_RETURN(false);
          }
       else
          {
@@ -1437,7 +1437,7 @@ protected:
 
          UString tmp = UServer_Base::printSSE(U_SRV_SSE_CNT1, message, pevent);
 
-         if (U_SYSCALL(write, "%u,%S,%u", fd, U_STRING_TO_PARAM(tmp)) <= 0) U_RETURN(false);
+         if (U_FF_SYSCALL(write, "%u,%S,%u", fd, U_STRING_TO_PARAM(tmp)) <= 0) U_RETURN(false);
          }
 
       U_RETURN(true);
@@ -1535,7 +1535,7 @@ public:
 
                         output.push_back('\n');
 
-                        (void) U_SYSCALL(write, "%u,%S,%u", UServer_Base::sse_event_fd, U_STRING_TO_PARAM(output));
+                        (void) U_FF_SYSCALL(write, "%u,%S,%u", UServer_Base::sse_event_fd, U_STRING_TO_PARAM(output));
 
                         output.setEmpty();
                         }
@@ -1544,7 +1544,7 @@ public:
                         {
                      // int rfd = fd;
 
-                        fd = (U_SYSCALL(recvmsg, "%u,%p,%u", UServer_Base::sse_socketpair[0], &UServer_Base::msg, 0) == 1 ? UServer_Base::cmsg.cmsg_data : -1);
+                        fd = (U_FF_SYSCALL(recvmsg, "%u,%p,%u", UServer_Base::sse_socketpair[0], &UServer_Base::msg, 0) == 1 ? UServer_Base::cmsg.cmsg_data : -1);
 
                         U_INTERNAL_DUMP("fd = %d", fd)
 
@@ -4758,7 +4758,7 @@ void UServer_Base::run()
       }
 #endif
 
-#if defined(_POSIX_PRIORITY_SCHEDULING) && \
+#if defined(_POSIX_PRIORITY_SCHEDULING) && !defined(HAVE_OLD_IOSTREAM) && \
     (_POSIX_PRIORITY_SCHEDULING > 0) && (defined(HAVE_SCHED_H) || defined(HAVE_SYS_SCHED_H))
    if (set_realtime_priority)
       {

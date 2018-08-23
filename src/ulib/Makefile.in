@@ -602,6 +602,9 @@ ECHO_T = @ECHO_T@
 EGREP = @EGREP@
 EXEEXT = @EXEEXT@
 FGREP = @FGREP@
+FSTACKINCLUDES = @FSTACKINCLUDES@
+FSTACKLDFLAGS = @FSTACKLDFLAGS@
+FSTACKLIBS = @FSTACKLIBS@
 GCC_AR = @GCC_AR@
 GREP = @GREP@
 HAVE_CXX11 = @HAVE_CXX11@
@@ -770,7 +773,7 @@ EXTRA_DIST = base/* container/* db/* debug/* dynamic/* flex/* internal/* ldap/* 
 				 *.cpp all_c.c ULib.pc.in ULib.rc.in utility/bin
 
 @HAVE_PGSQL_TRUE@@STATIC_ORM_DRIVER_PGSQL_TRUE@SUBDIRS = orm/driver/libpq
-DEFAULT_INCLUDES = -I. -I$(top_builddir)/include
+DEFAULT_INCLUDES = -I. -I$(top_builddir)/include @FSTACKINCLUDES@
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = ULib.pc
 SRC_C = base/base.c base/base_error.c base/hash.c base/utility.c \

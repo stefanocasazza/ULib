@@ -708,6 +708,9 @@
 /* Define if enable c-ares support */
 #undef USE_C_ARES
 
+/* Define if enable f-stack support */
+#undef USE_FSTACK
+
 /* Define if we have support for crc32 intrinsics */
 #undef USE_HARDWARE_CRC32
 

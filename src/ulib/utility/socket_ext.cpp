@@ -587,7 +587,7 @@ loop:
    U_RETURN(byte_written);
    }
 #endif
-   value = U_SYSCALL(writev, "%d,%p,%d", sk->iSockDesc, iov, iovcnt);
+   value = U_FF_SYSCALL(writev, "%d,%p,%d", sk->iSockDesc, iov, iovcnt);
 
 #if defined(USE_LIBSSL) || defined(_MSWINDOWS_)
 check:

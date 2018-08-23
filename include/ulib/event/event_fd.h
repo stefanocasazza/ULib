@@ -20,7 +20,7 @@
 #  include <ulib/libevent/event.h>
 #endif
 
-#ifndef _MSWINDOWS_
+#if defined(U_LINUX) && !defined(HAVE_OLD_IOSTREAM)
 #  include <sys/epoll.h>
 #endif
 

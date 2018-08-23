@@ -176,6 +176,11 @@ public:
    operator       sockaddr*()       { return &(addr.psaGeneric); }
    operator const sockaddr*() const { return &(addr.psaGeneric); }
 
+#ifdef USE_FSTACK
+   operator       struct linux_sockaddr*()       { return (      struct linux_sockaddr*)&(addr.psaGeneric); }
+   operator const struct linux_sockaddr*() const { return (const struct linux_sockaddr*)&(addr.psaGeneric); }
+#endif
+
 #if defined(HAVE_GETADDRINFO) || defined(HAVE_GETNAMEINFO)
    /*
    struct addrinfo {

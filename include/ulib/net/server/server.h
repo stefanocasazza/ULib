@@ -28,6 +28,7 @@
 #ifndef SIGWINCH
 #define SIGWINCH 28
 #endif
+
 #ifdef U_STATIC_ORM_DRIVER_PGSQL
 #define U_DB_BUSY_ARRAY_SIZE 256
 #endif
@@ -223,6 +224,17 @@ public:
    // --------------------------------------------------------------------------------------------------------------------------------------
 
    static void run(); // loop waiting for connection
+
+#ifdef USE_FSTACK
+   static int ff_run(void* arg)
+      {
+      U_TRACE(0, "UServer_Base::ff_run(%p)", arg)
+
+      run();
+
+      U_RETURN(0);
+      }
+#endif
 
    static UFileConfig* pcfg;
    static bool bssl, bipc, budp, flag_loop;

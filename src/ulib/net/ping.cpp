@@ -454,10 +454,10 @@ loop: // wait for ARP reply
    if (UNotifier::waitForRead(USocket::iSockDesc, timeoutMS) != 1) U_RETURN(2);
 
 #ifdef U_ARP_WITH_BROADCAST
-   ret = U_SYSCALL(recv,      "%d,%p,%d,%u,%p,%p", USocket::iSockDesc, &reply, sizeof(reply),    0);
+   ret = U_FF_SYSCALL(recv,      "%d,%p,%d,%u,%p,%p", USocket::iSockDesc, &reply, sizeof(reply),    0);
 #else
    alen = sizeof(struct sockaddr);
-   ret  = U_SYSCALL(recvfrom, "%d,%p,%d,%u,%p,%p", USocket::iSockDesc,  ah.pc, sizeof(reply)-14, 0, &(from.s), &alen);
+   ret  = U_FF_SYSCALL(recvfrom, "%d,%p,%d,%u,%p,%p", USocket::iSockDesc,  ah.pc, sizeof(reply)-14, 0, &(from.s), &alen);
 #endif
 
    if (ret <= 0)
@@ -540,7 +540,7 @@ void UPing::initArpPing(const char* device)
 
       (void) u__strncpy(ifr.ifr_name, device, IFNAMSIZ-1);
 
-      if (U_SYSCALL(ioctl, "%d,%d,%p", USocket::iSockDesc, SIOCGIFINDEX, (char*)&ifr) == -1) U_ERROR("Unknown iface for interface %S", device);
+      if (U_FF_SYSCALL(ioctl, "%d,%d,%p", USocket::iSockDesc, SIOCGIFINDEX, (char*)&ifr) == -1) U_ERROR("Unknown iface for interface %S", device);
 
       U_INTERNAL_DUMP("ifr_ifindex = %u", ifr.ifr_ifindex)
 
@@ -557,8 +557,8 @@ void UPing::initArpPing(const char* device)
 
       U_INTERNAL_DUMP("alen = %u", alen)
 
-      if (U_SYSCALL(bind,        "%d,%p,%d", USocket::iSockDesc, &(he.s),  alen) == -1) U_ERROR_SYSCALL("bind");
-      if (U_SYSCALL(getsockname, "%d,%p,%p", USocket::iSockDesc, &(he.s), &alen) == -1) U_ERROR_SYSCALL("getsockname");
+      if (U_FF_SYSCALL(bind,        "%d,%p,%d", USocket::iSockDesc, &(he.s),  alen) == -1) U_ERROR_SYSCALL("bind");
+      if (U_FF_SYSCALL(getsockname, "%d,%p,%p", USocket::iSockDesc, &(he.s), &alen) == -1) U_ERROR_SYSCALL("getsockname");
 
       U_INTERNAL_DUMP("alen = %d he.sll_halen = %u", alen, he.l.sll_halen) // 6
 
@@ -569,12 +569,12 @@ void UPing::initArpPing(const char* device)
       (void) U_SYSCALL(memset, "%p,%d,%u", he.l.sll_addr, 0xff, 6);
 #  endif
 
-      if (U_SYSCALL(ioctl, "%d,%d,%p", USocket::iSockDesc, SIOCGIFFLAGS, (char*)&ifr) == -1) U_ERROR("ioctl(SIOCGIFFLAGS) failed for interface %S", device);
+      if (U_FF_SYSCALL(ioctl, "%d,%d,%p", USocket::iSockDesc, SIOCGIFFLAGS, (char*)&ifr) == -1) U_ERROR("ioctl(SIOCGIFFLAGS) failed for interface %S", device);
 
       if (!(ifr.ifr_flags &  IFF_UP))                                                        U_ERROR("Interface %S is down", device);
       if (  ifr.ifr_flags & (IFF_NOARP | IFF_LOOPBACK))                                      U_ERROR("Interface %S is not ARPable", device);
 
-      if (U_SYSCALL(ioctl, "%d,%d,%p", USocket::iSockDesc, SIOCGIFADDR, (char*)&ifr)  == -1) U_ERROR("ioctl(SIOCGIFADDR) failed for interface %S", device);
+      if (U_FF_SYSCALL(ioctl, "%d,%d,%p", USocket::iSockDesc, SIOCGIFADDR, (char*)&ifr)  == -1) U_ERROR("ioctl(SIOCGIFADDR) failed for interface %S", device);
 
       U_MEMCPY(arp.sInaddr, ifr.ifr_addr.sa_data + sizeof(short), 4); // source IP address
 
@@ -594,7 +594,7 @@ void UPing::initArpPing(const char* device)
       U_INTERNAL_DUMP("ar_op = %u", arp.operation)
 
 #  ifdef U_ARP_WITH_BROADCAST
-      if (U_SYSCALL(ioctl, "%d,%d,%p", USocket::iSockDesc, SIOCGIFHWADDR, (char*)&ifr) == -1)
+      if (U_FF_SYSCALL(ioctl, "%d,%d,%p", USocket::iSockDesc, SIOCGIFHWADDR, (char*)&ifr) == -1)
          {
          U_ERROR("ioctl(SIOCGIFHWADDR) failed for interface %S", device);
          }
@@ -682,7 +682,7 @@ retry:
 
    for (i = 0; i < 3; ++i)
       {
-      ret = U_SYSCALL(sendto, "%d,%p,%d,%u,%p,%d", USocket::iSockDesc, buf, len, 0, saddr, alen);
+      ret = U_FF_SYSCALL(sendto, "%d,%p,%d,%u,%p,%d", USocket::iSockDesc, buf, len, 0, saddr, alen);
 
       if (USocket::checkIO(ret) == false) U_RETURN(false);
 
