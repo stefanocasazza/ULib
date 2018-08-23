@@ -67,7 +67,7 @@ bool UUnixSocket::connectServer(const UString& server, unsigned int iServPort, i
       }
 
 loop:
-   result = U_SYSCALL(connect, "%d,%p,%d", iSockDesc, &addr.psaGeneric, len);
+   result = U_FF_SYSCALL(connect, "%d,%p,%d", iSockDesc, &addr.psaGeneric, len);
 
    if (result == 0)
       {

@@ -92,11 +92,23 @@
 #  define U_SYSCALL_VOID_NO_PARAM(name) { utr.trace_syscall(U_CONSTANT_TO_PARAM("::"#name"()"),0); \
                                           name(); utr.trace_sysreturn(false,U_NULLPTR,0); }
 
+#  define U_SYSCALL_VOID(name,format,args...) { utr.suspend();               utr.trace_syscall(U_CONSTANT_TO_PARAM("::"#name"(" format ")") , ##args); \
+                                                utr.resume();  ::name(args); utr.trace_sysreturn(false,U_NULLPTR,0); }
+
 #  define U_SYSCALL(name,format,args...) (utr.suspend(), utr.trace_syscall(U_CONSTANT_TO_PARAM("::"#name"(" format ")") , ##args), \
                                           utr.resume(),  utr.trace_sysreturn_type(::name(args)))
 
-#  define U_SYSCALL_VOID(name,format,args...) { utr.suspend();               utr.trace_syscall(U_CONSTANT_TO_PARAM("::"#name"(" format ")") , ##args); \
-                                                utr.resume();  ::name(args); utr.trace_sysreturn(false,U_NULLPTR,0); }
+# ifdef USE_FSTACK
+#  define U_FF_SYSCALL(name,format,args...) (utr.suspend(), utr.trace_syscall(U_CONSTANT_TO_PARAM("::ff_"#name"(" format ")") , ##args), \
+                                             utr.resume(),  utr.trace_sysreturn_type(::ff_##name(args)))
+#  define U_FF_SYSCALL_VOID(name,format,args...) { utr.suspend();                   utr.trace_syscall(U_CONSTANT_TO_PARAM("::ff_"#name"(" format ")") , ##args); \
+                                                   utr.resume(); ::ff_##name(args); utr.trace_sysreturn(false,U_NULLPTR,0); }
+# else
+#  define U_FF_SYSCALL(name,format,args...) (utr.suspend(), utr.trace_syscall(U_CONSTANT_TO_PARAM("::"#name"(" format ")") , ##args), \
+                                             utr.resume(),  utr.trace_sysreturn_type(::name(args)))
+#  define U_FF_SYSCALL_VOID(name,format,args...) { utr.suspend();               utr.trace_syscall(U_CONSTANT_TO_PARAM("::"#name"(" format ")") , ##args); \
+                                                   utr.resume();  ::name(args); utr.trace_sysreturn(false,U_NULLPTR,0); }
+# endif
 
 #  define U_RETURN(r)                                                 return (utr.trace_return_type((r)))
 #  define U_RETURN_STRING(str) {U_INTERNAL_ASSERT((str).invariant()); return (utr.trace_return(U_CONSTANT_TO_PARAM("%V"),(str).rep),(str));}
@@ -290,6 +302,14 @@ if (envp) \
 #  define U_SYSCALL_VOID_NO_PARAM(name)       ::name()
 #  define U_SYSCALL(name,format,args...)      ::name(args)
 #  define U_SYSCALL_VOID(name,format,args...) ::name(args)
+
+# ifdef USE_FSTACK
+#  define U_FF_SYSCALL(name,format,args...)      ::ff_##name(args) 
+#  define U_FF_SYSCALL_VOID(name,format,args...) ::ff_##name(args)
+# else
+#  define U_FF_SYSCALL(name,format,args...)      ::name(args)
+#  define U_FF_SYSCALL_VOID(name,format,args...) ::name(args)
+# endif
 
 # ifdef U_APEX_ENABLE
 #  define U_MEMCPY(a,b,n) (void) apex_memcpy((void*)(a),(const void*)(b),(n))

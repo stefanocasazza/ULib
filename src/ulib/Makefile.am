@@ -14,7 +14,7 @@ SUBDIRS = orm/driver/libpq
 endif
 endif
 
-DEFAULT_INCLUDES = -I. -I$(top_builddir)/include
+DEFAULT_INCLUDES = -I. -I$(top_builddir)/include @FSTACKINCLUDES@
 
 pkgconfigdir 	= $(libdir)/pkgconfig
 pkgconfig_DATA = ULib.pc

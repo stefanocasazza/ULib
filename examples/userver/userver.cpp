@@ -58,7 +58,7 @@ public:
 
       if (UApplication::isOptions()) cfg_str = opt['c'];
 
-      // manage file configuration
+      // argpmanage file configuration
 
       if (cfg_str.empty()) cfg_str = U_STRING_FROM_CONSTANT(U_SYSCONFDIR "/userver.cfg");
 
@@ -118,7 +118,7 @@ public:
       // PREFORK_CHILD  number of child server processes created at startup ( 0 - serialize, no forking
       //                                                                      1 - classic, forking after accept client)
       //                                                                     >1 - pool of process serialize plus monitoring process)
-      //
+      //argp
       // CRASH_COUNT         this is the threshold for the number of crash of child server processes
       // CRASH_EMAIL_NOTIFY  the email address to send a message whenever the number of crash > CRASH_COUNT
       // ---------------------------------------------------------------------------------------------------------------------------------------
@@ -141,11 +141,37 @@ public:
       UServer_Base::budp = true;
 #  elif defined(U_UNIX_SOCKET)
       UServer_Base::bipc = true;
+#  elif defined(USE_FSTACK)
+      UString x = cfg.at(U_CONSTANT_TO_PARAM("FSTACK_ARG"));
+
+      if (x.empty())
+         {
+         if (UFile::access("config.ini", R_OK) == false)
+            {
+            U_ERROR("file ./config.ini is missing, exiting...");
+            }
+
+         x = UString((void*)U_CONSTANT_TO_PARAM("-c config.ini -p 0 -t auto"));
+         }
+
+      const char* argp[10];
+      uint32_t n = u_split(U_STRING_TO_PARAM(x), (char**)argp+1, U_NULLPTR);
+
+      argp[0] = PACKAGE;
+
+      if (U_FF_SYSCALL(init, "%u,%p", n+1, (char* const*)argp)) // NB: load and parse ./config.ini
+       {
+       U_ERROR("Sorry, ff_init() failed, exiting...");
+       }
 #  endif
 
       server = new Server(&cfg);
 
-      server->run();
+#if defined(USE_FSTACK) && !defined(U_SSL_SOCKET) && !defined(U_UDP_SOCKET) && !defined(U_UNIX_SOCKET)
+      U_FF_SYSCALL_VOID(run, "%p,%p", UServer_Base::ff_run, U_NULLPTR);
+#  else
+      UServer_Base::run();
+#  endif
       }
 
 private:

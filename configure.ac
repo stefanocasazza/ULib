@@ -1641,7 +1641,7 @@ if test "$use_php" = "yes" ; then
 
 	# List of php-config include paths
 	AC_ARG_WITH(php-includes,
-		 [  --with-php-includes=PATHS  php-config include list],
+		 [  --with-php-includes=PATHS  php-config includes list],
 		 [PHPCONFIGINCLUDES="$withval"],
 		 [PHPCONFIGINCLUDES=""])
 
@@ -1678,7 +1678,7 @@ if test "$use_php" = "yes" ; then
 
 	# List of php-config lib paths
 	AC_ARG_WITH(php-libs,
-		 [  --with-php-libs=LIBS       php-config lib list],
+		 [  --with-php-libs=LIBS       php-config libs list],
 		 [PHPCONFIGLIBS="$withval"],
 		 [PHPCONFIGLIBS=""])
 
@@ -1860,6 +1860,79 @@ if test "$use_python" = "yes"; then
 	 AC_SUBST(PYTHONCONFIGLIBS)
 	 AC_SUBST(PYTHONCONFIGLDFLAGS)
   fi
+fi
+
+TWOCAN_CONF_MSG(Checking for f-stack support)
+# ---------------------------------------------------------------------------------------------------
+# Check for F-STACK (http://www.f-stack.org/?from=github)
+# ---------------------------------------------------------------------------------------------------
+AC_MSG_CHECKING(if you want to use f-stack)
+AC_ARG_WITH(f-stack,
+	[  --with-f-stack             use f-stack (experimental)],
+	[use_fstack=$withval],
+	[use_fstack=no])
+AC_MSG_RESULT($use_fstack)
+
+if test "$use_fstack" = "yes"; then
+  TWOCAN_CONF_MSG(Checking for f-stack package specific)
+
+  # List of f-stack include paths
+  AC_ARG_WITH(f-stack-includes,
+		 [  --with-f-stack-includes=PATHS  f-stack includes list],
+		 [FSTACKINCLUDES="$withval"],
+		 [FSTACKINCLUDES=""])
+
+  if test -z "$FSTACKINCLUDES"; then
+	FSTACKINCLUDES="-I/opt/f-stack/lib"
+  fi
+
+  AC_SUBST(FSTACKINCLUDES)
+
+  # Check for ff_api.h
+  AC_LANG([C])
+  save_CPPFLAGS="$CPPFLAGS"
+  CPPFLAGS="$CPPFLAGS $FSTACKINCLUDES"
+
+  AC_MSG_CHECKING([whether ff_api.h actually works])
+  AC_COMPILE_IFELSE([AC_LANG_SOURCE([[#include <ff_api.h>]], [[return 0;]])],
+						 [AC_MSG_RESULT([ff_api.h exists and works correctly])],
+						 [AC_MSG_ERROR([Cannot find ff_api.h])])
+
+  CPPFLAGS=$save_CPPFLAGS
+  AC_LANG([C++])
+
+  CXXFLAGS="$CXXFLAGS $FSTACKINCLUDES"
+
+  # List of f-stack ldflags
+  AC_ARG_WITH(f-stack-ldflags,
+		 [  --with-f-stack-ldflags=LDFLAGS f-stack ldflags list],
+		 [FSTACKLDFLAGS="$withval"],
+		 [FSTACKLDFLAGS=""])
+
+  if test -z "$FSTACKLDFLAGS"; then
+	FSTACKLDFLAGS="-L/opt/f-stack/lib -L/opt/f-stack/dpdk/x86_64-native-linuxapp-gcc/lib"
+  fi
+
+##LDFLAGS="$LDFLAGS $FSTACKLDFLAGS"
+
+  AC_SUBST(FSTACKLDFLAGS)
+
+  # List of f-stack lib paths
+  AC_ARG_WITH(f-stack-libs,
+		 [  --with-f-stack-libs=LIBS       f-stack libs list],
+		 [FSTACKLIBS="$withval"],
+		 [FSTACKLIBS=""])
+
+  if test -z "$FSTACKLIBS"; then
+	FSTACKLIBS="-lfstack -lrte_eal -lrte_kni -lrte_port -lrte_cryptodev -lrte_ethdev -lrte_gso -lrte_ip_frag -lrte_mempool -lrte_pdump -lrte_pipeline -lrte_pmd_af_packet -lrte_reorder -lrte_sched -lrte_ring -lrte_timer -lrte_mbuf"
+  fi
+
+##ULIB_LIBS="$ULIB_LIBS $FSTACKLIBS"
+
+  AC_SUBST(FSTACKLIBS)
+
+  USE_FSTACK=yes
+  AC_DEFINE(USE_FSTACK, 1, [Define if enable f-stack support])
 fi
 
 TWOCAN_CONF_MSG(Checking for typedefs)

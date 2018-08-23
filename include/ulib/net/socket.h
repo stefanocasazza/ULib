@@ -25,6 +25,10 @@
 #  if defined(U_LINUX) && !defined(SO_INCOMING_CPU)
 #     define SO_INCOMING_CPU 49
 #  endif
+#  ifdef USE_FSTACK
+#     include <ff_api.h>
+#     define sockaddr linux_sockaddr
+#  endif
 #endif
 
 #ifndef SOL_TCP
@@ -157,7 +161,7 @@ public:
       {
       U_TRACE(1, "USocket::socket(%d,%d,%d)", domain, type, protocol)
 
-      int fd = U_SYSCALL(socket, "%d,%d,%d", domain, type, protocol);
+      int fd = U_FF_SYSCALL(socket, "%d,%d,%d", domain, type, protocol);
 
       U_RETURN(fd);
       }
@@ -236,7 +240,7 @@ public:
 
       U_INTERNAL_ASSERT(isOpen())
 
-      if (U_SYSCALL(getsockopt, "%d,%d,%d,%p,%p", getFd(), iCodeLevel, iOptionName, CAST(pOptionData), (socklen_t*)&iDataLength) == 0) U_RETURN(true);
+      if (U_FF_SYSCALL(getsockopt, "%d,%d,%d,%p,%p", getFd(), iCodeLevel, iOptionName, CAST(pOptionData), (socklen_t*)&iDataLength) == 0) U_RETURN(true);
 
       U_RETURN(false);
       }
@@ -253,7 +257,7 @@ public:
 
       U_INTERNAL_ASSERT(isOpen())
 
-      if (U_SYSCALL(setsockopt, "%d,%d,%d,%p,%u", getFd(), iCodeLevel, iOptionName, CAST(pOptionData), iDataLength) == 0) U_RETURN(true);
+      if (U_FF_SYSCALL(setsockopt, "%d,%d,%d,%p,%u", getFd(), iCodeLevel, iOptionName, CAST(pOptionData), iDataLength) == 0) U_RETURN(true);
 
       U_RETURN(false);
       }
@@ -433,7 +437,7 @@ public:
 
       U_INTERNAL_ASSERT(isOpen())
 
-      if (U_SYSCALL(shutdown, "%d,%d", getFd(), how) == 0) U_RETURN(true);
+      if (U_FF_SYSCALL(shutdown, "%d,%d", getFd(), how) == 0) U_RETURN(true);
 
       U_RETURN(false);
       }
@@ -717,7 +721,7 @@ protected:
 
       U_INTERNAL_ASSERT(isOpen())
 
-      (void) U_SYSCALL(fcntl, "%d,%d,%d", iSockDesc, F_SETFL, (flags = _flags));
+      (void) U_FF_SYSCALL(fcntl, "%d,%d,%d", iSockDesc, F_SETFL, (flags = _flags));
       }
 
    bool setTimeout(int type, uint32_t timeoutMS)
@@ -777,7 +781,7 @@ protected:
 #  endif
       }
 
-#if defined(U_LINUX) && (!defined(U_SERVER_CAPTIVE_PORTAL) || defined(ENABLE_THREAD))
+#if defined(U_LINUX) && (!defined(U_SERVER_CAPTIVE_PORTAL) || defined(ENABLE_THREAD)) && !defined(HAVE_OLD_IOSTREAM)
 #  ifndef SO_ATTACH_REUSEPORT_CBPF
 #  define SO_ATTACH_REUSEPORT_CBPF 51
 #  endif
@@ -789,7 +793,7 @@ protected:
       U_TRACE_NO_PARAM(0, "USocket::listen()")
 
       if (isUDP() ||
-          U_SYSCALL(listen, "%d,%d", iSockDesc, iBackLog) == 0)
+          U_FF_SYSCALL(listen, "%d,%d", iSockDesc, iBackLog) == 0)
          {
          U_RETURN(true);
          }

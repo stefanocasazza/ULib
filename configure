@@ -747,6 +747,9 @@ SSL_TS_FALSE
 SSL_TS_TRUE
 SSL_FALSE
 SSL_TRUE
+FSTACKLIBS
+FSTACKLDFLAGS
+FSTACKINCLUDES
 PYTHONCONFIGLDFLAGS
 PYTHONCONFIGLIBS
 PYTHONCPPFLAGS
@@ -1119,6 +1122,10 @@ with_php_libs
 with_ruby_embedded
 with_ruby_command
 with_python_embedded
+with_f_stack
+with_f_stack_includes
+with_f_stack_ldflags
+with_f_stack_libs
 enable_static_server_plugin
 enable_static_orm_driver
 enable_static_servlet
@@ -1872,12 +1879,16 @@ Optional Packages:
   --with-mongodb-libs=LIBS       mongodb lib locations
   --with-php-embedded        use php-embedded
   --with-php-config=PATH     Path to php-config tool. EX: /<localpath>/php-config
-  --with-php-includes=PATHS  php-config include list
+  --with-php-includes=PATHS  php-config includes list
   --with-php-ldflags=LDFLAGS php-config ldflags list
-  --with-php-libs=LIBS       php-config lib list
+  --with-php-libs=LIBS       php-config libs list
   --with-ruby-embedded       use ruby-embedded
   --with-ruby-command=RUBY   name of the Ruby command (default: ruby)
   --with-python-embedded     use python-embedded
+  --with-f-stack             use f-stack (experimental)
+  --with-f-stack-includes=PATHS  f-stack includes list
+  --with-f-stack-ldflags=LDFLAGS f-stack ldflags list
+  --with-f-stack-libs=LIBS       f-stack libs list
 
 Some influential environment variables:
   CC          C compiler command
@@ -31807,6 +31818,128 @@ $as_echo "#define USE_PYTHON 1" >>confdefs.h
 
 
   fi
+fi
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: " >&5
+$as_echo "" >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: ${T_MD}Checking for f-stack support:${T_ME}" >&5
+$as_echo "${T_MD}Checking for f-stack support:${T_ME}" >&6; }
+
+# ---------------------------------------------------------------------------------------------------
+# Check for F-STACK (http://www.f-stack.org/?from=github)
+# ---------------------------------------------------------------------------------------------------
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if you want to use f-stack" >&5
+$as_echo_n "checking if you want to use f-stack... " >&6; }
+
+# Check whether --with-f-stack was given.
+if test "${with_f_stack+set}" = set; then :
+  withval=$with_f_stack; use_fstack=$withval
+else
+  use_fstack=no
+fi
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $use_fstack" >&5
+$as_echo "$use_fstack" >&6; }
+
+if test "$use_fstack" = "yes"; then
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: " >&5
+$as_echo "" >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: ${T_MD}Checking for f-stack package specific:${T_ME}" >&5
+$as_echo "${T_MD}Checking for f-stack package specific:${T_ME}" >&6; }
+
+
+  # List of f-stack include paths
+
+# Check whether --with-f-stack-includes was given.
+if test "${with_f_stack_includes+set}" = set; then :
+  withval=$with_f_stack_includes; FSTACKINCLUDES="$withval"
+else
+  FSTACKINCLUDES=""
+fi
+
+
+  if test -z "$FSTACKINCLUDES"; then
+	FSTACKINCLUDES="-I/opt/f-stack/lib"
+  fi
+
+
+
+  # Check for ff_api.h
+  ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
+  save_CPPFLAGS="$CPPFLAGS"
+  CPPFLAGS="$CPPFLAGS $FSTACKINCLUDES"
+
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether ff_api.h actually works" >&5
+$as_echo_n "checking whether ff_api.h actually works... " >&6; }
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <ff_api.h>
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: ff_api.h exists and works correctly" >&5
+$as_echo "ff_api.h exists and works correctly" >&6; }
+else
+  as_fn_error $? "Cannot find ff_api.h" "$LINENO" 5
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+
+  CPPFLAGS=$save_CPPFLAGS
+  ac_ext=cpp
+ac_cpp='$CXXCPP $CPPFLAGS'
+ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
+
+
+  CXXFLAGS="$CXXFLAGS $FSTACKINCLUDES"
+
+  # List of f-stack ldflags
+
+# Check whether --with-f-stack-ldflags was given.
+if test "${with_f_stack_ldflags+set}" = set; then :
+  withval=$with_f_stack_ldflags; FSTACKLDFLAGS="$withval"
+else
+  FSTACKLDFLAGS=""
+fi
+
+
+  if test -z "$FSTACKLDFLAGS"; then
+	FSTACKLDFLAGS="-L/opt/f-stack/lib -L/opt/f-stack/dpdk/x86_64-native-linuxapp-gcc/lib"
+  fi
+
+##LDFLAGS="$LDFLAGS $FSTACKLDFLAGS"
+
+
+
+  # List of f-stack lib paths
+
+# Check whether --with-f-stack-libs was given.
+if test "${with_f_stack_libs+set}" = set; then :
+  withval=$with_f_stack_libs; FSTACKLIBS="$withval"
+else
+  FSTACKLIBS=""
+fi
+
+
+  if test -z "$FSTACKLIBS"; then
+	FSTACKLIBS="-lfstack -lrte_eal -lrte_kni -lrte_port -lrte_cryptodev -lrte_ethdev -lrte_gso -lrte_ip_frag -lrte_mempool -lrte_pdump -lrte_pipeline -lrte_pmd_af_packet -lrte_reorder -lrte_sched -lrte_ring -lrte_timer -lrte_mbuf"
+  fi
+
+##ULIB_LIBS="$ULIB_LIBS $FSTACKLIBS"
+
+
+
+  USE_FSTACK=yes
+
+$as_echo "#define USE_FSTACK 1" >>confdefs.h
+
 fi
 
 

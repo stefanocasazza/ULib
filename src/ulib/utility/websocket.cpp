@@ -730,7 +730,7 @@ void UWebSocket::handlerRequest()
 loop:
    read_set = fd_set_read;
 
-   if (U_SYSCALL(select, "%d,%p,%p,%p,%p", fdmax, &read_set, U_NULLPTR, U_NULLPTR, U_NULLPTR) > 0)
+   if (U_FF_SYSCALL(select, "%d,%p,%p,%p,%p", fdmax, &read_set, U_NULLPTR, U_NULLPTR, U_NULLPTR) > 0)
       {
       if (FD_ISSET(UProcess::filedes[2], &read_set))
          {
