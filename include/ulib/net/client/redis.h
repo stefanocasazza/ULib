@@ -14,6 +14,7 @@
 #ifndef ULIB_REDIS_H
 #define ULIB_REDIS_H 1
 
+#include <ulib/notifier.h>
 #include <ulib/net/client/client.h>
 
 /**
@@ -59,7 +60,7 @@
 
 typedef void (*vPFcs)(const UString&);
 
-class U_EXPORT UREDISClient_Base : public UClient_Base {
+class U_EXPORT UREDISClient_Base : public UClient_Base, UEventFd {
 public:
 
    ~UREDISClient_Base()
@@ -670,31 +671,6 @@ public:
                                           host, port, keylen, key, destination_db, timeout_ms, COPY ? "COPY" : "", REPLACE ? "REPLACE" : ""));
       }
 
-   // PUB/SUB (@see http://redis.io/pubsub)
-
-   bool publish(const char* channel, uint32_t channel_len, const char* msg, uint32_t msg_len) // Posts a message to the given channel
-      {
-      U_TRACE(0, "UREDISClient_Base::publish(%.*S,%u,%.*S,%u)", channel_len, channel, channel_len, msg_len, msg, msg_len)
-
-      if (processRequest(U_RC_INT, U_CONSTANT_TO_PARAM("PUBLISH"), channel, channel_len, msg, msg_len)) return getBool();
-
-      U_RETURN(false);
-      }
-
-   bool subscribe(const char* param, uint32_t len) // Listen for messages published to the given channels
-      {
-      U_TRACE(0, "UREDISClient_Base::subscribe(%.*S,%u)", len, param, len)
-
-      return processRequest(U_RC_MULTIBULK, U_CONSTANT_TO_PARAM("SUBSCRIBE"), param, len);
-      }
-
-   bool unsubscribe(const char* param, uint32_t len) // Stop listening for messages posted to the given channels
-      {
-      U_TRACE(0, "UREDISClient_Base::unsubscribe(%.*S,%u)", len, param, len)
-
-      return processRequest(U_RC_MULTIBULK, U_CONSTANT_TO_PARAM("UNSUBSCRIBE"), param, len);
-      }
-
    // LIST (@see http://redis.io/list)
 
    bool lrange(const char* param, uint32_t len) // Get a range of elements from a list
@@ -721,6 +697,59 @@ public:
                                           keyLength, key, prefixLength, prefix,
                                           (fuzzy        ? U_CONSTANT_SIZE("FUZZY")        : 0), "FUZZY",
                                           (withPayloads ? U_CONSTANT_SIZE("WITHPAYLOADS") : 0), "WITHPAYLOADS"));
+      }
+
+   // PUB/SUB (@see http://redis.io/pubsub)
+
+   bool publish(const char* channel, uint32_t channel_len, const char* msg, uint32_t msg_len) // Posts a message to the given channel
+      {
+      U_TRACE(0, "UREDISClient_Base::publish(%.*S,%u,%.*S,%u)", channel_len, channel, channel_len, msg_len, msg, msg_len)
+
+      if (processRequest(U_RC_INT, U_CONSTANT_TO_PARAM("PUBLISH"), channel, channel_len, msg, msg_len)) return getBool();
+
+      U_RETURN(false);
+      }
+
+   bool subscribe(const char* param, uint32_t len) // Listen for messages published to the given channels
+      {
+      U_TRACE(0, "UREDISClient_Base::subscribe(%.*S,%u)", len, param, len)
+
+      return processRequest(U_RC_MULTIBULK, U_CONSTANT_TO_PARAM("SUBSCRIBE"), param, len);
+      }
+
+   bool unsubscribe(const char* param, uint32_t len) // Stop listening for messages posted to the given channels
+      {
+      U_TRACE(0, "UREDISClient_Base::unsubscribe(%.*S,%u)", len, param, len)
+
+      return processRequest(U_RC_MULTIBULK, U_CONSTANT_TO_PARAM("UNSUBSCRIBE"), param, len);
+      }
+
+   // define method VIRTUAL of class UEventFd
+
+   virtual int handlerRead() U_DECL_FINAL
+      {
+      U_TRACE_NO_PARAM(0, "UREDISClient_Base::handlerRead()")
+
+      U_RETURN(U_NOTIFIER_OK);
+      }
+
+   virtual void handlerDelete() U_DECL_FINAL
+      {
+      U_TRACE_NO_PARAM(0, "UREDISClient_Base::handlerDelete()")
+
+      U_INTERNAL_DUMP("UEventFd::fd = %d", UEventFd::fd)
+
+      UEventFd::fd = -1;
+      }
+
+   void listenForEvents()
+      {
+      U_TRACE_NO_PARAM(0, "UREDISClient_Base::listenForEvents()")
+
+      UEventFd::op_mask |=  EPOLLET;
+      UEventFd::op_mask &= ~EPOLLRDHUP;
+
+      UNotifier::insert(this, EPOLLEXCLUSIVE | EPOLLROUNDROBIN); // NB: we ask to listen for events to a Redis publish channel... 
       }
 
 #if defined(U_STDCPP_ENABLE) && defined(DEBUG)

@@ -16,11 +16,7 @@
 
 #include <ulib/event/event_fd.h>
 
-#ifdef DEBUG
-#  define U_QUERY_INFO_SZ 168
-#else
-#  define U_QUERY_INFO_SZ 200
-#endif
+#define U_QUERY_INFO_SZ 168
 
 class UServer_Base;
 class UClientImage_Base;
@@ -71,17 +67,20 @@ protected:
    typedef struct query_info {
       vPFpvu handlerResult;
       UClientImage_Base* pClientImage;
+      uint16_t num_query;
 #  ifdef DEBUG
       uint32_t timestamp;
 #  endif
-      uint16_t num_query;
    } query_info;
 
    void* conn;
    uint8_t* pbusy;
-   query_info query[U_QUERY_INFO_SZ];
    uint16_t num_result, num_handler;
    bool bsend, bnotifier;
+   query_info query[U_QUERY_INFO_SZ];
+#ifdef DEBUG
+   const void* pthis;
+#endif
 
 #ifdef DEBUG
    static uint32_t max_num_handler;

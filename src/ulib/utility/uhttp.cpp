@@ -7527,15 +7527,26 @@ U_NO_EXPORT __pure uint32_t UHTTP::getPosPasswd(UString& fpasswd, const UString&
 {
    U_TRACE(0, "UHTTP::getPosPasswd(%V,%V)", fpasswd.rep, line.rep)
 
+   U_INTERNAL_ASSERT(fpasswd)
+
    uint32_t pos = fpasswd.find(line);
 
-   if (pos == U_NOT_FOUND ||
-       (pos > 0 && fpasswd[pos-1] != '\n'))
+   if (pos == U_NOT_FOUND) U_RETURN(U_NOT_FOUND);
+
+   if (pos == 0 ||
+       fpasswd[pos-1] == '\n')
       {
-      U_RETURN(U_NOT_FOUND);
+      U_RETURN(pos);
       }
 
-   U_RETURN(pos);
+   while (true)
+      {
+      pos = fpasswd.find(line, pos+1);
+
+      if (pos == U_NOT_FOUND) U_RETURN(U_NOT_FOUND);
+
+      if (fpasswd[pos-1] == '\n') U_RETURN(pos);
+      }
 }
 
 U_NO_EXPORT uint32_t UHTTP::checkPasswd(UHTTP::UFileCacheData* ptr_file_data, UString& fpasswd, const UString& line)
@@ -7715,37 +7726,41 @@ void UHTTP::setPasswdUser(UString& fpasswd, const UString& username, const UStri
 {
    U_TRACE(0, "UHTTP::setPasswdUser(%V,%V,%V)", fpasswd.rep, username.rep, password.rep)
 
-   UString buffer(U_CAPACITY), hash(1000U), user_token(U_CAPACITY);
-
-   if (digest_authentication)
+   if (username &&
+       password)
       {
-      // s.casazza:Protected Area:b9ee2af50be37...........\n
+      UString buffer(U_CAPACITY), hash(1000U), user_token(U_CAPACITY);
 
-      buffer.snprintf(U_CONSTANT_TO_PARAM("%v:" U_HTTP_REALM ":"), username.rep);
+      if (digest_authentication)
+         {
+         // s.casazza:Protected Area:b9ee2af50be37...........\n
 
-      UServices::generateDigest(U_HASH_MD5, 0, buffer+password, hash);
+         buffer.snprintf(U_CONSTANT_TO_PARAM("%v:" U_HTTP_REALM ":"), username.rep);
 
-      user_token.snprintf(U_CONSTANT_TO_PARAM("%v\n"), buffer.rep, hash.rep);
-      }
-   else
-      {
-      // s.casazza:{SHA}Lkii1ZE7k.....\n
+         UServices::generateDigest(U_HASH_MD5, 0, buffer+password, hash);
 
-      buffer.snprintf(U_CONSTANT_TO_PARAM("%v:{SHA}"), username.rep);
+         user_token.snprintf(U_CONSTANT_TO_PARAM("%v%v\n"), buffer.rep, hash.rep);
+         }
+      else
+         {
+         // s.casazza:{SHA}Lkii1ZE7k.....\n
 
-      UServices::generateDigest(U_HASH_SHA1, 0, password, hash, true);
+         buffer.snprintf(U_CONSTANT_TO_PARAM("%v:{SHA}"), username.rep);
 
-      user_token.snprintf(U_CONSTANT_TO_PARAM("%v:{SHA}%v\n"), username.rep, hash.rep);
-      }
+         UServices::generateDigest(U_HASH_SHA1, 0, password, hash, true);
 
-   uint32_t pos_begin = getPosPasswd(fpasswd, buffer);
+         user_token.snprintf(U_CONSTANT_TO_PARAM("%v:{SHA}%v\n"), username.rep, hash.rep);
+         }
 
-   if (pos_begin == U_NOT_FOUND) (void) fpasswd.append(user_token);
-   else
-      {
-      uint32_t pos_end = fpasswd.find('\n', pos_begin+1) - pos_begin;
+      uint32_t pos_begin = getPosPasswd(fpasswd, buffer);
 
-      (void) fpasswd.replace(pos_begin, pos_end, user_token);
+      if (pos_begin == U_NOT_FOUND) (void) fpasswd.append(user_token);
+      else
+         {
+         uint32_t pos_end = fpasswd.find('\n', pos_begin+1) - pos_begin+1;
+
+         (void) fpasswd.replace(pos_begin, pos_end, user_token);
+         }
       }
 }
 
@@ -7753,20 +7768,24 @@ bool UHTTP::revokePasswdUser(UString& fpasswd, const UString& username) // Remov
 {
    U_TRACE(0, "UHTTP::revokePasswdUser(%V,%V)", fpasswd.rep, username.rep)
 
-   UString buffer(U_CAPACITY);
-
-   if (digest_authentication) buffer.snprintf(U_CONSTANT_TO_PARAM("%v:" U_HTTP_REALM ":"), username.rep); // s.casazza:Protected Area:b9ee2af50be37...........\n
-   else                       buffer.snprintf(U_CONSTANT_TO_PARAM("%v:{SHA}"),             username.rep); // s.casazza:{SHA}Lkii1ZE7k.....\n
-
-   uint32_t pos_begin = getPosPasswd(fpasswd, buffer);
-
-   if (pos_begin != U_NOT_FOUND)
+   if (fpasswd &&
+       username)
       {
-      uint32_t pos_end = fpasswd.find('\n', pos_begin+1) - pos_begin;
+      UString buffer(U_CAPACITY);
 
-      (void) fpasswd.erase(pos_begin, pos_end);
+      if (digest_authentication) buffer.snprintf(U_CONSTANT_TO_PARAM("%v:" U_HTTP_REALM ":"), username.rep); // s.casazza:Protected Area:b9ee2af50be37...........\n
+      else                       buffer.snprintf(U_CONSTANT_TO_PARAM("%v:{SHA}"),             username.rep); // s.casazza:{SHA}Lkii1ZE7k.....\n
 
-      U_RETURN(true);
+      uint32_t pos_begin = getPosPasswd(fpasswd, buffer);
+
+      if (pos_begin != U_NOT_FOUND)
+         {
+         uint32_t pos_end = fpasswd.find('\n', pos_begin+1) - pos_begin;
+
+         (void) fpasswd.erase(pos_begin, pos_end);
+
+         U_RETURN(true);
+         }
       }
 
    U_RETURN(false);

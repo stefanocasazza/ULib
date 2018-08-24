@@ -36,6 +36,12 @@ UEventDB::UEventDB()
 
    bsend     = false;
    bnotifier = true;
+
+#ifdef DEBUG
+   pthis = (void*)U_CHECK_MEMORY_SENTINEL;
+#endif
+
+// U_WARNING("UEventDB::UEventDB(): sizeof(UEventDB) = %u sizeof(query_info) = %u", sizeof(UEventDB), sizeof(query_info)); // sizeof(UEventDB) = 4072|4088 sizeof(query_info) = 24
 }
 
 UEventDB::~UEventDB()
@@ -73,18 +79,18 @@ void UEventDB::reset()
 
    U_CHECK_MEMORY
 
-   U_INTERNAL_DUMP("num_handler = %u", num_handler)
-
-   U_INTERNAL_ASSERT_MINOR(num_handler, U_QUERY_INFO_SZ)
-
 #ifdef U_STATIC_ORM_DRIVER_PGSQL
    bsend = false;
 
-   num_result = 0;
+   U_INTERNAL_DUMP("num_handler = %u", num_handler)
 
    if (num_handler)
       {
-      U_DEBUG("UEventDB::reset(): num_handler = %u", num_handler);
+      U_DEBUG("UEventDB::reset(): num_result(%u), num_handler(%u)%s", num_result, num_handler, pthis == (void*)U_CHECK_MEMORY_SENTINEL ? "" : " ABW on query array");
+
+      U_INTERNAL_ASSERT_MINOR(num_handler, U_QUERY_INFO_SZ)
+
+      U_SYSCALL_VOID(PQresetQueue, "%p", (PGconn*)conn);
 
       for (uint32_t i = 0; i < num_handler; ++i)
          {
@@ -102,10 +108,12 @@ void UEventDB::reset()
             }
          }
 
-      num_handler = 0;
+      (void) U_SYSCALL(memset, "%p,%d,%u", query, 0, num_handler * sizeof(query_info));
 
-      U_SYSCALL_VOID(PQresetQueue, "%p", (PGconn*)conn);
+      num_handler = 0;
       }
+
+   num_result = 0;
 #endif
 }
 
@@ -130,8 +138,11 @@ void UEventDB::handlerQuery(vPFpvu handler, uint32_t num_query)
    pquery->handlerResult = handler;
    pquery->pClientImage  = UServer_Base::pClientImage;
    pquery->num_query     = num_query;
+
 #ifdef DEBUG
-   pquery->timestamp     = u_now->tv_sec;
+   pquery->timestamp = u_now->tv_sec;
+
+   U_ASSERT_MACRO(pthis == (void*)U_CHECK_MEMORY_SENTINEL, "ABW on query array", "")
 #endif
 
    num_result += num_query;
@@ -167,6 +178,9 @@ void UEventDB::handlerQuery(vPFpvu handler, uint32_t num_query)
          handlerRead();
 
          *pbusy = false;
+
+         U_INTERNAL_ASSERT_EQUALS(num_result, 0)
+         U_INTERNAL_ASSERT_EQUALS(num_handler, 0)
 
          return;
          }
@@ -283,17 +297,20 @@ read:
          }
       }
 
-   U_DEBUG("UEventDB::handlerRead(): vresult_size = %u num_result = %u pid = %u conn->errorMessage = %S", vresult_size, num_result, pid, PQerrorMessage((PGconn*)conn));
+   U_DEBUG("UEventDB::handlerRead(): vresult_size = %u num_result = %u num_handler = %u pid = %u conn->errorMessage = %S",
+                                     vresult_size,     num_result,     num_handler,     pid,     PQerrorMessage((PGconn*)conn));
 
 next:
    *pbusy = false;
 
-   n = U_min(num_handler, vresult_size);
+   n = U_min(num_result, vresult_size);
 
    U_INTERNAL_DUMP("n = %u", n)
 
    for (k = i = 0; k < n; ++i)
       {
+      U_INTERNAL_ASSERT_MINOR(i, num_handler)
+
       bopen = (pquery = (query+i))->pClientImage->isOpen();
 
 #  ifdef DEBUG
@@ -337,7 +354,7 @@ next:
             }
          }
 
-      U_INTERNAL_DUMP("i = %u k = %u vresult_size = %u num_handler = %u", i+1, k, vresult_size, num_handler)
+      U_INTERNAL_DUMP("i = %u k = %u vresult_size = %u num_result = %u num_handler = %u", i+1, k, vresult_size, num_result, num_handler)
       }
 
    for (; i < num_handler; ++i)
