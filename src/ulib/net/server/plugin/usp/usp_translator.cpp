@@ -77,6 +77,7 @@ public:
       U_TRACE_NO_PARAM(5, "Application::Application()")
 
       bvar                  = 
+      breturn               =
       bsession              =
       bstorage              =
       bfirst_pass           =
@@ -429,6 +430,8 @@ public:
 
          if (token)
             {
+            if (breturn == false) breturn = (U_STRING_FIND(token, 0, "return") != U_NOT_FOUND);
+
             token = UStringExt::substitute(token, '\n', U_CONSTANT_TO_PARAM("\n\t"));
 
             (void) output0.reserve(20U + token.size());
@@ -776,6 +779,8 @@ loop: distance = t.getDistance();
 
       if (vdefine.empty() == false) usp = UStringExt::substitute(usp, vdefine);
 
+      usp = UStringExt::eraseIds(usp);
+
       if (execPreProcessing() == false) U_WARNING("preprocessing of %V failed", filename.rep);
 
       bfirst_pass = false;
@@ -963,9 +968,9 @@ loop: distance = t.getDistance();
          if (bhttp_header_empty == false) (void) output1.append(U_CONSTANT_TO_PARAM("\n\tU_http_info.endHeader = 0;\n"));
          }
 
-      // NB: we check for presence of 'return' inside the code...
+      // NB: we have checked for presence of 'return' inside the code...
 
-      if (U_STRING_FIND(output0, 0, "return") != U_NOT_FOUND)
+      if (breturn)
          {
          (void) declaration.reserve(200U + vars.size() + output0.size());
 
@@ -981,8 +986,6 @@ loop: distance = t.getDistance();
                basename_sz, basename_ptr,
                vars.rep,
                output0.rep);
-
-         vars.clear();
 
          output0.snprintf(U_CONSTANT_TO_PARAM("\n\tusp_body_%.*s();\n"), basename_sz, basename_ptr);
          }
@@ -1066,7 +1069,7 @@ private:
    UString pinclude, usp, token, output0, output1, declaration, vcode, http_header, sseloop, vars;
    const char* basename_ptr;
    uint32_t basename_sz;
-   bool bvar, bsession, bstorage, bfirst_pass, is_html, test_if_html, bhttp_header_empty, bpreprocessing_failed;
+   bool bvar, breturn, bsession, bstorage, bfirst_pass, is_html, test_if_html, bhttp_header_empty, bpreprocessing_failed;
 
    U_DISALLOW_COPY_AND_ASSIGN(Application)
 };

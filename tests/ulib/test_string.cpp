@@ -2017,6 +2017,10 @@ U_EXPORT main(int argc, char* argv[])
 
    U_ASSERT_EQUALS(y, "Bob purchased 5 Apples. Thanks Bob!")
 
+   y = UStringExt::eraseIds(U_CONSTANT_TO_PARAM("$11 purchased $10 $12. Thanks $11!"));
+
+   U_ASSERT_EQUALS(y, " purchased  . Thanks !")
+
    y = U_STRING_FROM_CONSTANT("Hello\n\n");
 
    z = UStringExt::dos2unix(y, true);

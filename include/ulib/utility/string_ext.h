@@ -268,6 +268,9 @@ public:
    static UString erase(const UString& s, const UString& a)           { return substitute(U_STRING_TO_PARAM(s), U_STRING_TO_PARAM(a), U_NULLPTR, 0); }
    static UString erase(const UString& s, const char* a, uint32_t n1) { return substitute(U_STRING_TO_PARAM(s), a, n1,                U_NULLPTR, 0); }
 
+   static UString eraseIds(const char* s, uint32_t len);
+   static UString eraseIds(const UString& s)             { return eraseIds(U_STRING_TO_PARAM(s)); }
+
    // dos2unix: '\n' <=> '\r\n' convertor
 
    static UString dos2unix(const UString& s, bool unix2dos = false);

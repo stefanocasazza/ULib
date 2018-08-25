@@ -602,6 +602,59 @@ loop:
    U_RETURN_STRING(x);
 }
 
+UString UStringExt::eraseIds(const char* s, uint32_t len)
+{
+   U_TRACE(0, "UStringExt::eraseIds(%.*S,%u)", len, s, len)
+
+   U_INTERNAL_ASSERT_MAJOR(len, 0)
+
+   const char* p1;
+   const char* end = s + len;
+
+   UString x(len);
+   char* p2 = x.data();
+
+loop:
+   for (p1 = s; p1 < end; ++p1)
+      {
+      U_INTERNAL_DUMP("p1 = %.10S", p1)
+
+      if (*p1 != '$') continue;
+
+      len = (p1-s);
+
+      U_INTERNAL_DUMP("len = %u", len)
+
+      if (len)
+         {
+         U_MEMCPY(p2, s, len);
+                  p2 +=  len;
+         }
+
+      s = p1+1;
+
+      while (u__isname(*s)) { ++s; }
+
+      goto loop;
+      }
+
+   len = (end-s);
+
+   U_INTERNAL_DUMP("len = %u", len)
+
+   if (len)
+      {
+      U_MEMCPY(p2, s, len);
+               p2 +=  len;
+      }
+
+   x.rep->_length = x.distance(p2);
+
+   U_INTERNAL_ASSERT(x.invariant())
+
+   U_RETURN_STRING(x);
+}
+
 // dos2unix: '\n' <=> '\r\n' convertor
 
 UString UStringExt::dos2unix(const UString& s, bool unix2dos)
