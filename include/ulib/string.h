@@ -2698,6 +2698,37 @@ inline bool operator>=(const UString& lhs,    const UString& rhs)    { return lh
 inline bool operator>=(const char* lhs,       const UString& rhs)    { return rhs.compare(lhs)  <= 0; }
 inline bool operator>=(const UString& lhs,    const char* rhs)       { return lhs.compare(rhs)  >= 0; }
 
+// template specialization for UString2Object() and UObject2String()
+
+template <> inline void UString2Object<UString>(const char* t, uint32_t tlen, UString& object)
+{
+   U_TRACE(0, "UString2Object<UString>(%.*S,%u,%V)", tlen, t, tlen, object.rep)
+
+   object.setConstant(t, tlen);
+}
+
+template <> inline char* UObject2String<UString>(UString& object)
+{
+   U_TRACE(0, "UObject2String<UString>(%V)", object.rep)
+
+   U_INTERNAL_ASSERT(object.isNullTerminated())
+
+   return object.data();
+}
+
+template <> inline uint32_t UObject2String<UString>(UString& object, char* pbuffer, uint32_t buffer_size)
+{
+   U_TRACE(0, "UObject2String<UString>(%V,%p,%u)", object.rep, pbuffer, buffer_size)
+
+   uint32_t sz = object.size();
+
+   U_INTERNAL_ASSERT_MINOR(sz, buffer_size)
+
+   U_MEMCPY(pbuffer, object.data(), sz);
+
+   return sz;
+}
+
 // by Victor Stewart
 
 #if defined(U_STDCPP_ENABLE) && defined(HAVE_CXX11)

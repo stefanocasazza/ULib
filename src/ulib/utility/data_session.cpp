@@ -114,7 +114,7 @@ void UDataSession::fromStream(istream& is)
 #  ifdef DEBUG
 const char* UDataStorage::dump(bool reset) const
 {
-   *UObjectIO::os << "keyid   (UString           " << (void*)&keyid << ')';
+   *UObjectIO::os << "keyid   (UString          " << (void*)&keyid << ')';
 
    if (reset)
       {
@@ -131,9 +131,9 @@ const char* UDataSession::dump(bool reset) const
    UDataStorage::dump(false);
 
    *UObjectIO::os << '\n'
-                  << "creation                   " << creation        << '\n'
-                  << "last_access                " << last_access     << '\n'
-                  << "vec_var (UVector<UString*> " << (void*)&vec_var << ')';
+                  << "creation                  " << creation        << '\n'
+                  << "last_access               " << last_access     << '\n'
+                  << "vec_var (UVector<UString> " << (void*)&vec_var << ')';
 
    if (reset)
       {

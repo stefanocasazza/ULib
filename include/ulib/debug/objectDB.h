@@ -16,10 +16,6 @@
 
 #include <ulib/base/base.h>
 
-#ifdef USE_LIBXML2
-#  include <libxml/xpathInternals.h>
-#endif
-
 /**
  * class UObjectDumpable
  *
@@ -104,7 +100,9 @@ public:
    virtual const char* dump() const __pure { return ((Concrete*)ptr_object)->dump(true); }
 };
 
-#ifdef USE_LIBXML2
+#if defined(USE_LIBXML2) && !defined(U_USP_PROCESS)
+#  include <libxml/xpathInternals.h>
+
 template <> class U_NO_EXPORT UObjectDumpable_Adapter<_xmlNode> : public UObjectDumpable {
 public:
 

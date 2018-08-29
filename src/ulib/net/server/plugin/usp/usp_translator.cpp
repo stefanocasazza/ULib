@@ -103,43 +103,50 @@ public:
       U_INTERNAL_DUMP("token = %V", token.rep)
       }
 
-   void manageDirectiveSessionOrStorage(const char* name)
+   void manageDirectiveSessionOrStorage(const char* name, uint32_t name_len)
       {
-      U_TRACE(5, "Application::manageDirectiveSessionOrStorage(%S)", name)
+      U_TRACE(5, "Application::manageDirectiveSessionOrStorage(%.*S,%u)", name_len, name, name_len)
 
-      U_INTERNAL_ASSERT(token)
+      (void) output0.reserve(500U + token.size());
+      (void) output1.reserve(500U);
 
-      UString id, tmp;
-      const char* ptr;
-      uint32_t pos, size;
-      UVector<UString> vec(token, "\t\n;");
+      output0.snprintf_add(U_CONSTANT_TO_PARAM("\n\t%v\n\t\n\tif (usp_b%.*s) {\n"), token.rep, name_len, name);
+      output1.snprintf_add(U_CONSTANT_TO_PARAM(          "\n\tif (usp_b%.*s) {\n"),            name_len, name);
 
-      bvar = true;
-
-      (void) output0.reserve(20U + token.size());
-
-      output0.snprintf_add(U_CONSTANT_TO_PARAM("\n\t%v\n\t\n"), token.rep);
-
-      for (uint32_t i = 0, n = vec.size(); i < n; ++i)
+      if (token.empty()) output0.snprintf_add(U_CONSTANT_TO_PARAM("\n\tUHTTP::putData%.*s();\n"), name_len, name);
+      else
          {
-         ptr = (tmp = UStringExt::trim(vec[i])).data();
+         UString id, tmp;
+         const char* ptr;
+         uint32_t pos, size;
+         UVector<UString> vec(token, "\t\n;");
 
-         do { ++ptr; } while (u__isspace(*ptr) == false);
-         do { ++ptr; } while (u__isspace(*ptr) == true);
+         bvar = true;
 
-          pos = (id = tmp.substr(tmp.distance(ptr))).find('(');
-         size = (pos == U_NOT_FOUND ? id.size() : pos);
+         for (uint32_t i = 0, n = vec.size(); i < n; ++i)
+            {
+            ptr = (tmp = UStringExt::trim(vec[i])).data();
 
-         (void) output0.reserve(50U + size);
-         (void) output1.reserve(50U + size);
+            do { ++ptr; } while (u__isspace(*ptr) == false);
+            do { ++ptr; } while (u__isspace(*ptr) == true);
 
-         output0.snprintf_add(U_CONSTANT_TO_PARAM("\n\tif (usp_b%s) USP_%s_VAR_GET(%u,%.*s);\n"), name, name, i, size, ptr);
-         output1.snprintf_add(U_CONSTANT_TO_PARAM("\n\tif (usp_b%s) USP_%s_VAR_PUT(%u,%.*s);\n"), name, name, i, size, ptr);
+             pos = (id = tmp.substr(tmp.distance(ptr))).find('(');
+            size = (pos == U_NOT_FOUND ? id.size() : pos);
 
-#     ifdef DEBUG
-         id.clear(); // NB: to avoid DEAD OF SOURCE STRING WITH CHILD ALIVE...
-#     endif
+            (void) output0.reserve(50U + size);
+            (void) output1.reserve(50U + size);
+
+            output0.snprintf_add(U_CONSTANT_TO_PARAM("\n\tUSP_%.*s_VAR_GET(%u,%.*s);\n"), name_len, name, i, size, ptr);
+            output1.snprintf_add(U_CONSTANT_TO_PARAM("\n\tUSP_%.*s_VAR_PUT(%u,%.*s);\n"), name_len, name, i, size, ptr);
+
+#        ifdef DEBUG
+            id.clear(); // NB: to avoid DEAD OF SOURCE STRING WITH CHILD ALIVE...
+#        endif
+            }
          }
+
+      output0.snprintf_add(U_CONSTANT_TO_PARAM(                         "\n\t}\n\tusp_b%.*s = true;\n"),                 name_len, name);
+      output1.snprintf_add(U_CONSTANT_TO_PARAM("\n\tUHTTP::putData%.*s();\n\t}\n\tusp_b%.*s = true;\n"), name_len, name, name_len, name);
       }
 
    void manageDirectiveArgsOrCpath(const char* name, bool binc)
@@ -152,7 +159,7 @@ public:
       UString id, tmp;
       UVector<UString> vec(token, "\t\n;");
 
-      (void) output0.reserve(200U + token.size());
+      (void) output0.reserve(500U + token.size());
 
       for (uint32_t i = 0, n = vec.size(); i < n; ++i)
          {
@@ -307,13 +314,7 @@ public:
 
          setDirectiveItem(directive, U_CONSTANT_SIZE("session"));
 
-         if (token) manageDirectiveSessionOrStorage("SESSION");
-         else
-            {
-            (void) output1.append(U_CONSTANT_TO_PARAM("\n\tif (usp_bSESSION) UHTTP::putDataSession();\n"));
-            }
-
-         (void) output0.append(U_CONSTANT_TO_PARAM("\n\tusp_bSESSION = true;\n"));
+         manageDirectiveSessionOrStorage(U_CONSTANT_TO_PARAM("SESSION"));
          }
       else if (strncmp(directive, U_CONSTANT_TO_PARAM("storage")) == 0)
          {
@@ -326,13 +327,7 @@ public:
 
          setDirectiveItem(directive, U_CONSTANT_SIZE("storage"));
 
-         if (token) manageDirectiveSessionOrStorage("STORAGE");
-         else
-            {
-            (void) output1.append(U_CONSTANT_TO_PARAM("\n\ttif (usp_bSTORAGE) UHTTP::putDataStorage();\n"));
-            }
-
-         (void) output0.append(U_CONSTANT_TO_PARAM("\n\tusp_bSTORAGE = true;\n"));
+         manageDirectiveSessionOrStorage(U_CONSTANT_TO_PARAM("STORAGE"));
          }
       else if (strncmp(directive, U_CONSTANT_TO_PARAM("args")) == 0)
          {
@@ -896,13 +891,15 @@ loop: distance = t.getDistance();
                "      { \\\n"
                "      UString2Object(varname##_value.data(), usp_sz, varname); \\\n"
                "      } \\\n"
-               "   U_INTERNAL_DUMP(\"%s(%u) = %.*S\", #varname, usp_sz, usp_sz, varname##_value.data()) \\\n"
+               "   U_INTERNAL_DUMP(\"%s(%u) = %V\", #varname, usp_sz, varname##_value.rep) \\\n"
                "   }"
                "\n\t\n"
                "#define USP_SESSION_VAR_PUT(index,varname) \\\n"
                "   { \\\n"
                "   usp_sz = UObject2String(varname, usp_buffer, sizeof(usp_buffer)); \\\n"
-               "   UHTTP::putDataSession(index, usp_buffer, usp_sz); \\\n"
+               "   UString varname##_value((void*)usp_buffer, usp_sz); \\\n"
+               "   UHTTP::data_session->putValueVar(index, varname##_value); \\\n"
+               "   U_INTERNAL_DUMP(\"%s(%u) = %V\", #varname, usp_sz, varname##_value.rep) \\\n"
                "   }\n"));
             }
 
@@ -919,13 +916,15 @@ loop: distance = t.getDistance();
                "      { \\\n"
                "      UString2Object(varname##_value.data(), usp_sz, varname); \\\n"
                "      } \\\n"
-               "   U_INTERNAL_DUMP(\"%s(%u) = %.*S\", #varname, usp_sz, usp_sz, varname##_value.data()) \\\n"
+               "   U_INTERNAL_DUMP(\"%s(%u) = %V\", #varname, usp_sz, varname##_value.rep) \\\n"
                "   }"
                "\n\t\n"
                "#define USP_STORAGE_VAR_PUT(index,varname) \\\n"
                "   { \\\n"
                "   usp_sz = UObject2String(varname, usp_buffer, sizeof(usp_buffer)); \\\n"
-               "   UHTTP::putDataStorage(index, usp_buffer, usp_sz); \\\n"
+               "   UString varname##_value((void*)usp_buffer, usp_sz); \\\n"
+               "   UHTTP::data_storage->putValueVar(index, varname##_value); \\\n"
+               "   U_INTERNAL_DUMP(\"%s(%u) = %V\", #varname, usp_sz, varname##_value.rep) \\\n"
                "   }\n"));
             }
 

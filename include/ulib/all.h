@@ -79,7 +79,7 @@
 #  include <ulib/magic/magic.h>
 #endif
 
-#ifdef USE_LIBXML2
+#if defined(USE_LIBXML2) && !defined(U_USP_PROCESS)
 #  include "ulib/xml/libxml2/schema.h"
 #endif
 

@@ -14,7 +14,9 @@
 #ifndef U_USP_MACRO_H
 #define U_USP_MACRO_H 1
 
+#define U_USP_PROCESS 1
 #include <ulib/all.h>
+#undef  U_USP_PROCESS
 
 #define USP_PUTS_BUFFER           (void)UClientImage_Base::wbuffer->append(usp_buffer,usp_sz)
 #define USP_PUTS_CHAR(c)          (void)UClientImage_Base::wbuffer->push_back((c))

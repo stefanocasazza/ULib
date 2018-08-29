@@ -139,5 +139,4 @@ template <class T> inline char* U_OBJECT_TO_TRACE(T& object)
    return str;
 }
 #endif
-
 #endif

@@ -52,13 +52,15 @@ static bool usp_bSESSION;
       { \
       UString2Object(varname##_value.data(), usp_sz, varname); \
       } \
-   U_INTERNAL_DUMP("%s(%u) = %.*S", #varname, usp_sz, usp_sz, varname##_value.data()) \
+   U_INTERNAL_DUMP("%s(%u) = %V", #varname, usp_sz, varname##_value.rep) \
    }
    
 #define USP_SESSION_VAR_PUT(index,varname) \
    { \
    usp_sz = UObject2String(varname, usp_buffer, sizeof(usp_buffer)); \
-   UHTTP::putDataSession(index, usp_buffer, usp_sz); \
+   UString varname##_value((void*)usp_buffer, usp_sz); \
+   UHTTP::data_session->putValueVar(index, varname##_value); \
+   U_INTERNAL_DUMP("%s(%u) = %V", #varname, usp_sz, varname##_value.rep) \
    }
    
 static void usp_body_ir_web()
@@ -66,6 +68,11 @@ static void usp_body_ir_web()
    U_TRACE(5, "::usp_body_ir_web()")
    
    usp_bSESSION = (UHTTP::getDataSession() ? true : (UHTTP::setSessionCookie(), false));
+   
+   
+   if (usp_bSESSION) {
+   UHTTP::putDataSESSION();
+   }
    usp_bSESSION = true;
    const char* ref     = "?ext=help";
    uint32_t num_args   = UHTTP::processForm() / 2;
@@ -219,7 +226,10 @@ extern U_EXPORT void runDynamicPage_ir_web();
    U_TRACE_NO_PARAM(0, "::runDynamicPage_ir_web()")
    
    usp_body_ir_web();
-   if (usp_bSESSION) UHTTP::putDataSession();
+   if (usp_bSESSION) {
+   UHTTP::putDataSESSION();
+   }
+   usp_bSESSION = true;
    UHTTP::mime_index = U_html;
    U_http_info.endHeader = 0;
 } }

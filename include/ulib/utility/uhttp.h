@@ -673,8 +673,8 @@ public:
    static bool getDataStorage(uint32_t index, UString& value);
    static bool getDataSession(uint32_t index, UString& value);
 
-   static void putDataStorage();
-   static void putDataSession();
+   static void putDataSTORAGE();
+   static void putDataSESSION();
    static void putDataStorage(uint32_t index, const char* val, uint32_t sz);
    static void putDataSession(uint32_t index, const char* val, uint32_t sz);
 

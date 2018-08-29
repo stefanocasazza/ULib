@@ -6039,9 +6039,9 @@ bool UHTTP::getDataSession(uint32_t index, UString& value)
    U_RETURN(false);
 }
 
-void UHTTP::putDataSession()
+void UHTTP::putDataSESSION()
 {
-   U_TRACE_NO_PARAM(0, "UHTTP::putDataSession()")
+   U_TRACE_NO_PARAM(0, "UHTTP::putDataSESSION()")
 
    U_INTERNAL_ASSERT_POINTER(db_session)
    U_INTERNAL_ASSERT_POINTER(data_session)
@@ -6060,17 +6060,17 @@ void UHTTP::putDataSession(uint32_t index, const char* value, uint32_t size)
    if (size == 0) data_session->putValueVar(index, UString::getStringNull());
    else
       {
-      UString _value((void*)value, size);
+      UString x((void*)value, size);
 
-      data_session->putValueVar(index, _value);
+      data_session->putValueVar(index, x);
       }
 
-   putDataSession();
+   putDataSESSION();
 }
 
-void UHTTP::putDataStorage()
+void UHTTP::putDataSTORAGE()
 {
-   U_TRACE_NO_PARAM(0, "UHTTP::putDataStorage()")
+   U_TRACE_NO_PARAM(0, "UHTTP::putDataSTORAGE()")
 
    U_INTERNAL_ASSERT_POINTER(db_session)
    U_INTERNAL_ASSERT_POINTER(data_storage)
@@ -6095,7 +6095,7 @@ void UHTTP::putDataStorage(uint32_t index, const char* value, uint32_t size)
       data_storage->putValueVar(index, _value);
       }
 
-   putDataStorage();
+   putDataSTORAGE();
 }
 
 #ifdef DEBUG

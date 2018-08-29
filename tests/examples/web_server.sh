@@ -19,7 +19,7 @@ rm -f tmp/usp_compile.sh.err /tmp/*.hpack.* \
       $DOC_ROOT/trace.*userver_*.[0-9]* $DOC_ROOT/object.*userver_*.[0-9]* $DOC_ROOT/stack.*userver_*.[0-9]* $DOC_ROOT/mempool.*userver_*.[0-9]*
 
  UTRACE="0 50M 0"
- UTRACE_SIGNAL="0 50M -1"
+#UTRACE_SIGNAL="0 50M -1"
  UTRACE_FOLDER=/tmp
  TMPDIR=/tmp
 #UOBJDUMP="0 10M 100"
@@ -73,7 +73,8 @@ userver {
 #LOAD_BALANCE_CLUSTER 10.30.0.1,10.30.0.2
 #LOAD_BALANCE_DEVICE_NETWORK enp0s20u1
 #LOAD_BALANCE_LOADAVG_THRESHOLD 4.0
- PREFORK_CHILD 2
+ PREFORK_CHILD 0
+#PREFORK_CHILD 2
 #CRASH_COUNT 1
 #CRASH_EMAIL_NOTIFY mail.unirel.com:stefano.casazza@unirel.com
 #DOS_SITE_COUNT 1
