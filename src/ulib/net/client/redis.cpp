@@ -228,7 +228,7 @@ U_NO_EXPORT bool UREDISClient_Base::getResponseItem()
       {
       len += U_CONSTANT_SIZE(U_CRLF);
 
-      while (len > UClient_Base::response.remain(ptr2))
+      while (len > (uint32_t)UClient_Base::response.remain(ptr2))
          {
          uint32_t d = UClient_Base::response.distance(ptr2);
 

@@ -684,7 +684,7 @@ bool u_runAsUser(const char* restrict user, bool change_dir)
       return false;
       }
 
-   (void) u__strncpy(u_user_name, user, (u_user_name_len = u__strlen(user, __PRETTY_FUNCTION__))); /* change user name */
+   (void) memcpy(u_user_name, user, (u_user_name_len = u__strlen(user, __PRETTY_FUNCTION__))+1); /* change user name */
 
    if (change_dir &&
        pw->pw_dir &&

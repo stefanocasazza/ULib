@@ -339,9 +339,9 @@ public:
          }
       }
 
-   static uint32_t substr_count(const UString& s,       char  a)             { return substr_count(U_STRING_TO_PARAM(s), &a, 1); }
-   static uint32_t substr_count(const UString& s, const char* a, uint32_t n) { return substr_count(U_STRING_TO_PARAM(s),  a, n); }
-   static uint32_t substr_count(const UString& s, const UString& a)          { return substr_count(U_STRING_TO_PARAM(s), U_STRING_TO_PARAM(a)); }
+   static __pure uint32_t substr_count(const UString& s,       char  a)             { return substr_count(U_STRING_TO_PARAM(s), &a, 1); }
+   static __pure uint32_t substr_count(const UString& s, const char* a, uint32_t n) { return substr_count(U_STRING_TO_PARAM(s),  a, n); }
+   static __pure uint32_t substr_count(const UString& s, const UString& a)          { return substr_count(U_STRING_TO_PARAM(s), U_STRING_TO_PARAM(a)); }
 
    // manage escaping for delimiter character
 

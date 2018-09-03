@@ -2313,9 +2313,7 @@ for drv in $use_static_driver; do
 			AC_DEFINE(U_STATIC_ORM_DRIVER_SQLITE,, [STATIC_ORM_DRIVER_SQLITE])
 		elif test "$drv" = "pgsql"; then
 			static_handler_pgsql="yes"
-         ULIB_LIBS="$ULIB_LIBS $POSTGRESQL_LIBS"
-			LDFLAGS="$POSTGRESQL_LDFLAGS $LDFLAGS"
-			CPPFLAGS="$POSTGRESQL_CPPFLAGS $CPPFLAGS"
+         CPPFLAGS="$POSTGRESQL_CPPFLAGS $CPPFLAGS"
 			AC_DEFINE(U_STATIC_ORM_DRIVER_PGSQL,, [STATIC_ORM_DRIVER_PGSQL])
 		elif test "$drv" = "mysql"; then
 			static_handler_mysql="yes"

@@ -16,7 +16,7 @@ PGconn*			  World::conn;
 UPgSqlStatement* World::pstmt;
 #endif
 
-#ifdef DEBUG
+#if defined(U_STDCPP_ENABLE) && defined(DEBUG)
 const char* World::dump(bool breset) const
 {
 	*UObjectIO::os << "id           " << id				<< '\n'

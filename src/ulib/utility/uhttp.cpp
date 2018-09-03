@@ -9110,6 +9110,8 @@ U_NO_EXPORT void UHTTP::manageDataForCache(const UString& basename, const UStrin
          if ( usp_src ||
              (usp_dll = suffix.equal(U_CONSTANT_TO_PARAM(U_LIB_SUFFIX))))
             {
+            UHTTP::UFileCacheData* file_data_src;
+
             file_data->mime_index = U_usp;
 
             if (usp_src)
@@ -9117,6 +9119,8 @@ U_NO_EXPORT void UHTTP::manageDataForCache(const UString& basename, const UStrin
                U_ASSERT_EQUALS(cache_file->find(lpathname), false)
 
                cache_file->insert(lpathname, file_data);
+
+               file_data_src = file_data;
 
                U_NEW(UHTTP::UFileCacheData, file_data, UHTTP::UFileCacheData);
 
@@ -9173,6 +9177,14 @@ U_NO_EXPORT void UHTTP::manageDataForCache(const UString& basename, const UStrin
             if (usp->load() == false) goto error;
 
             file_data->ptr = usp;
+
+            if (usp_src &&
+                usp_found == false)
+               {
+               U_INTERNAL_ASSERT_POINTER(file_data_src)
+
+               file_data_src->ptr = usp;
+               }
 
             U_SRV_LOG("USP found: %V, USP service registered (URI): %V", basename.rep, lpathname.rep);
             }

@@ -38,7 +38,7 @@ timer.tv_sec  = 1;
 timer.tv_usec = 0;
 #endif
 if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, (const void*)&timer, sizeof(timer)) == 0) {
-host = gethostbyname("www.gnu.org");
+host = gethostbyname("www.google.com");
 addr.sin_family = AF_INET;
 addr.sin_port = htons(80);
 addr.sin_addr = *((struct in_addr*)host->h_addr);

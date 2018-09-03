@@ -168,6 +168,9 @@ public:
       u_buffer_len = u__snprintf(u_buffer, U_BUFFER_SIZE, U_CONSTANT_TO_PARAM("%u %u"), rec->csocket, rec->user_id);
       }
 
+   static UString* message;
+   static int message_type;
+
 private:
    static uwrec* rec;
    static int fd_stderr;
@@ -178,10 +181,9 @@ private:
    static uint32_t max_message_size;
    static URDBObjectHandler<UDataStorage*>* db;
 
+   static int status_code;
    static UString* rbuffer;
-   static UString* message;
    static const char* upgrade_settings;
-   static int message_type, status_code;
    static WebSocketFrameData control_frame;
    static WebSocketFrameData message_frame;
 

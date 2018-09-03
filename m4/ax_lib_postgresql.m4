@@ -27,10 +27,14 @@
 #
 #   This macro calls:
 #
-#     AC_SUBST(POSTGRESQL_CPPFLAGS)
-#     AC_SUBST(POSTGRESQL_LDFLAGS)
-#     AC_SUBST(POSTGRESQL_LIBS)
-#     AC_SUBST(POSTGRESQL_VERSION)
+#    AC_SUBST([PG_CONFIG_LIBS])
+#    AC_SUBST([PG_CONFIG_LDFLAGS])
+#    AC_SUBST([PG_CONFIG_CPPFLAGS])
+#
+#    AC_SUBST(POSTGRESQL_CPPFLAGS)
+#    AC_SUBST(POSTGRESQL_LDFLAGS)
+#    AC_SUBST(POSTGRESQL_LIBS)
+#    AC_SUBST(POSTGRESQL_VERSION)
 #
 #   And sets:
 #
@@ -69,6 +73,10 @@ AC_DEFUN([AX_LIB_POSTGRESQL],
         [want_postgresql="no"]
     )
 
+    PG_CONFIG_LIBS=""
+    PG_CONFIG_LDFLAGS=""
+    PG_CONFIG_CPPFLAGS=""
+
     POSTGRESQL_CPPFLAGS=""
     POSTGRESQL_LDFLAGS=""
     POSTGRESQL_LIBS=""
@@ -93,6 +101,10 @@ AC_DEFUN([AX_LIB_POSTGRESQL],
 		  else
             found_postgresql="yes"
             AC_MSG_CHECKING([for PostgreSQL client libraries])
+
+				PG_CONFIG_LIBS=`$PG_CONFIG --libs`
+				PG_CONFIG_LDFLAGS=`$PG_CONFIG --ldflags`
+				PG_CONFIG_CPPFLAGS=`$PG_CONFIG --cppflags`
 
             postgresql_libdir=`$PG_CONFIG --libdir`
             postgresql_cincdir=`$PG_CONFIG --includedir`
@@ -163,11 +175,18 @@ AC_DEFUN([AX_LIB_POSTGRESQL],
             AC_MSG_RESULT([no])
             AC_DEFINE([HAVE_POSTGRESQL], [0],
                 [A required version of PostgreSQL is not found])
+				PG_CONFIG_LIBS=""
+				PG_CONFIG_LDFLAGS=""
+				PG_CONFIG_CPPFLAGS=""
             POSTGRESQL_CPPFLAGS=""
             POSTGRESQL_LDFLAGS=""
             POSTGRESQL_LIBS=""
         fi
     fi
+
+    AC_SUBST([PG_CONFIG_LIBS])
+    AC_SUBST([PG_CONFIG_LDFLAGS])
+    AC_SUBST([PG_CONFIG_CPPFLAGS])
 
     AC_SUBST([POSTGRESQL_VERSION])
     AC_SUBST([POSTGRESQL_CPPFLAGS])

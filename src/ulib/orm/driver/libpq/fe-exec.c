@@ -1780,16 +1780,16 @@ PQsendQueryGuts(PGconn *conn,
    if (conn->queue_status != PQQUEUE_MODE_OFF)
       PQappendPipelinedCommand(conn, pipeCmd);
    else
-   {
-   /*
-    * Give the data a push.  In nonblock mode, don't complain if we're unable
-    * to send it all; PQgetResult() will do any additional flushing needed.
-    */
-   if (pqQueueFlush(conn) < 0)
-      goto sendFailed;
+      {
+      /*
+       * Give the data a push.  In nonblock mode, don't complain if we're unable
+       * to send it all; PQgetResult() will do any additional flushing needed.
+       */
+      if (pqQueueFlush(conn) < 0)
+         goto sendFailed;
 
       conn->asyncStatus = PGASYNC_BUSY;
-   }
+      }
    return 1;
 
 sendFailed:

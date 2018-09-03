@@ -784,6 +784,9 @@ POSTGRESQL_LIBS
 POSTGRESQL_LDFLAGS
 POSTGRESQL_CPPFLAGS
 POSTGRESQL_VERSION
+PG_CONFIG_CPPFLAGS
+PG_CONFIG_LDFLAGS
+PG_CONFIG_LIBS
 PG_CONFIG
 MYSQL_LDFLAGS
 MYSQL_INCLUDE
@@ -30266,6 +30269,10 @@ else
 fi
 
 
+    PG_CONFIG_LIBS=""
+    PG_CONFIG_LDFLAGS=""
+    PG_CONFIG_CPPFLAGS=""
+
     POSTGRESQL_CPPFLAGS=""
     POSTGRESQL_LDFLAGS=""
     POSTGRESQL_LIBS=""
@@ -30329,6 +30336,10 @@ fi
             found_postgresql="yes"
             { $as_echo "$as_me:${as_lineno-$LINENO}: checking for PostgreSQL client libraries" >&5
 $as_echo_n "checking for PostgreSQL client libraries... " >&6; }
+
+				PG_CONFIG_LIBS=`$PG_CONFIG --libs`
+				PG_CONFIG_LDFLAGS=`$PG_CONFIG --ldflags`
+				PG_CONFIG_CPPFLAGS=`$PG_CONFIG --cppflags`
 
             postgresql_libdir=`$PG_CONFIG --libdir`
             postgresql_cincdir=`$PG_CONFIG --includedir`
@@ -30403,11 +30414,18 @@ $as_echo "no" >&6; }
 
 $as_echo "#define HAVE_POSTGRESQL 0" >>confdefs.h
 
+				PG_CONFIG_LIBS=""
+				PG_CONFIG_LDFLAGS=""
+				PG_CONFIG_CPPFLAGS=""
             POSTGRESQL_CPPFLAGS=""
             POSTGRESQL_LDFLAGS=""
             POSTGRESQL_LIBS=""
         fi
     fi
+
+
+
+
 
 
 
@@ -33311,7 +33329,7 @@ timer.tv_sec  = 1;
 timer.tv_usec = 0;
 #endif
 if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, (const void*)&timer, sizeof(timer)) == 0) {
-host = gethostbyname("www.gnu.org");
+host = gethostbyname("www.google.com");
 addr.sin_family = AF_INET;
 addr.sin_port = htons(80);
 addr.sin_addr = *((struct in_addr*)host->h_addr);
@@ -33838,9 +33856,7 @@ $as_echo "#define U_STATIC_ORM_DRIVER_SQLITE /**/" >>confdefs.h
 
 		elif test "$drv" = "pgsql"; then
 			static_handler_pgsql="yes"
-         ULIB_LIBS="$ULIB_LIBS $POSTGRESQL_LIBS"
-			LDFLAGS="$POSTGRESQL_LDFLAGS $LDFLAGS"
-			CPPFLAGS="$POSTGRESQL_CPPFLAGS $CPPFLAGS"
+         CPPFLAGS="$POSTGRESQL_CPPFLAGS $CPPFLAGS"
 
 $as_echo "#define U_STATIC_ORM_DRIVER_PGSQL /**/" >>confdefs.h
 

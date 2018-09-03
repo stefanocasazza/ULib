@@ -458,9 +458,7 @@ static int add_to_zip(int fd, const char* file)
          {
          if (U_ISDOTS(de->d_name)) continue;
 
-         d_namlen = NAMLEN(de);
-
-         (void) u__strncpy(t_ptr, de->d_name, d_namlen);
+         (void) memcpy(t_ptr, de->d_name, (d_namlen = NAMLEN(de)));
 
          t_ptr[d_namlen] = '\0';
 

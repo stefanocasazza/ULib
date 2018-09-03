@@ -13,7 +13,7 @@ PGconn*				 Fortune::conn;
 UPgSqlStatement*	 Fortune::pstmt;
 #endif
 
-#ifdef DEBUG
+#if defined(U_STDCPP_ENABLE) && defined(DEBUG)
 const char* Fortune::dump(bool breset) const
 {
 	*UObjectIO::os << "id               " << id				   << '\n'

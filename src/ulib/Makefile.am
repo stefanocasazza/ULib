@@ -309,7 +309,7 @@ lib@ULIB@_la_LDFLAGS = @ULIB_LIBS@
 
 if STATIC_ORM_DRIVER_PGSQL
 SRC_CPP += orm/driver/orm_driver_pgsql.cpp
-lib@ULIB@_la_LDFLAGS += $(top_builddir)/src/ulib/orm/driver/libpq/libpq.la @POSTGRESQL_LDFLAGS@ @POSTGRESQL_LIBS@
+lib@ULIB@_la_LDFLAGS += $(top_builddir)/src/ulib/orm/driver/libpq/libpq.la
 endif
 
 lib@ULIB@_la_LDFLAGS += -version-info 1:0:0 -release @ULIB_VERSION@
