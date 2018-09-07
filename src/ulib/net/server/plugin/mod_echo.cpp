@@ -11,6 +11,7 @@
 //
 // ============================================================================
 
+#include <ulib/utility/uhttp.h>
 #include <ulib/net/server/client_image.h>
 #include <ulib/net/server/server_plugin.h>
 #include <ulib/net/server/plugin/mod_echo.h>
@@ -42,14 +43,17 @@ int UEchoPlugIn::handlerRequest()
 
    U_ASSERT(UClientImage_Base::body->empty())
 
+   UClientImage_Base::bnoheader = true;
+
    UClientImage_Base::setRequestProcessed();
-   UClientImage_Base::setNoHeaderForResponse();
 
 #ifndef U_ECHO_RESPONSE_FOR_TEST
    UClientImage_Base::wbuffer->replace(*UClientImage_Base::request);
 #else
    (void) UClientImage_Base::wbuffer->assign(U_CONSTANT_TO_PARAM(U_ECHO_RESPONSE_FOR_TEST));
 #endif
+
+   // *UClientImage_Base::body = *UHTTP::body;
 
    U_RETURN(U_PLUGIN_HANDLER_PROCESSED);
 }

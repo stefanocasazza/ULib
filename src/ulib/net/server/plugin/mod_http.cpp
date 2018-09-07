@@ -458,6 +458,15 @@ int UHttpPlugIn::handlerInit()
 {
    U_TRACE_NO_PARAM(0, "UHttpPlugIn::handlerInit()")
 
+   U_MEMCPY(ULog::date.header1, "HTTP/1.1 200 OK\r\n",
+                U_CONSTANT_SIZE("HTTP/1.1 200 OK\r\n")); // 17
+
+   U_MEMCPY(ULog::date.header2, "\r\nServer: ULib\r\nConnection: close\r\n",
+                U_CONSTANT_SIZE("\r\nServer: ULib\r\nConnection: close\r\n")); // 2+12+2+17+2
+
+   UClientImage_Base::iov_vec[1].iov_len  = 17+6+29+2+12+2; //+17+2;
+   UClientImage_Base::iov_vec[1].iov_base = (caddr_t)ULog::date.header1; // HTTP/1.1 200 OK\r\nDate: Wed, 20 Jun 2012 11:43:17 GMT\r\nServer: ULib\r\nConnection: close\r\n
+
 #ifdef USE_LIBSSL
    if (UServer_Base::bssl)
       {
@@ -526,14 +535,11 @@ int UHttpPlugIn::handlerRun() // NB: we use this method instead of handlerInit()
    UServer_Base::update_date  =
    UServer_Base::update_date3 = true;
 
-   UClientImage_Base::iov_vec[1].iov_len  = 6+29+2+12+2; //+17+2;
-   UClientImage_Base::iov_vec[1].iov_base = (caddr_t)ULog::date.date3; // Date: Wed, 20 Jun 2012 11:43:17 GMT\r\nServer: ULib\r\nConnection: close\r\n
-
 #if defined(U_LINUX) && defined(ENABLE_THREAD) && !defined(U_SERVER_CAPTIVE_PORTAL)
    U_INTERNAL_ASSERT_POINTER(UServer_Base::ptr_shared_data)
 
    UClientImage_Base::callerHandlerCache  = UHTTP::handlerCache;
-   UClientImage_Base::iov_vec[1].iov_base = (caddr_t)UServer_Base::ptr_shared_data->log_date_shared.date3;
+   UClientImage_Base::iov_vec[1].iov_base = (caddr_t)UServer_Base::ptr_shared_data->log_date_shared.header1;
 #endif
 
    U_INTERNAL_DUMP("UClientImage_Base::iov_vec[0] = %.*S UClientImage_Base::iov_vec[1] = %.*S",

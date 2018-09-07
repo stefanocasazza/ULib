@@ -463,7 +463,7 @@ loop:
 
 // write data from multiple buffers
 
-uint32_t USocketExt::iov_resize(struct iovec* liov, struct iovec* iov, int iovcnt, uint32_t byte_written)
+uint32_t USocketExt::iov_resize(struct iovec* liov, const struct iovec* iov, int iovcnt, uint32_t byte_written)
 {
    U_TRACE(0, "USocketExt::iov_resize(%p,%p,%d,%u)", liov, iov, iovcnt, byte_written)
 
@@ -476,8 +476,8 @@ uint32_t USocketExt::iov_resize(struct iovec* liov, struct iovec* iov, int iovcn
                   //  iov[idx].iov_len = 0;
       }
 
-   liov    = iov    + idx;
-   liovcnt = iovcnt - idx;
+   liov    = (struct iovec*)iov + idx;
+   liovcnt =             iovcnt - idx;
 
    if (byte_written)
       {

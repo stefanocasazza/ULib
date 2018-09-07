@@ -222,13 +222,11 @@ int UEventDB::handlerRead()
    U_INTERNAL_ASSERT(num_handler <= U_QUERY_INFO_SZ)
 
 #ifdef U_STATIC_ORM_DRIVER_PGSQL
+# ifdef DEBUG
    U_INTERNAL_DUMP("bsend = %b bnotifier = %b busy = %b", bsend, bnotifier, *pbusy)
 
-   U_INTERNAL_ASSERT(bnotifier)
-
-#ifdef DEBUG
    if (max_num_handler < num_handler) max_num_handler = num_handler;
-#endif
+# endif
 
    pid_t pid = (num_handler <= 1 || *pbusy ? 1 : (*pbusy = true, UServer_Base::startNewChild()));
 

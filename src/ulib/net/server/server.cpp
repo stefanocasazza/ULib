@@ -190,7 +190,8 @@ UVector<UIPAllow*>* UServer_Base::vallow_IP_prv;
 #endif
 
 //#define U_MAX_CONNECTIONS_ACCEPTED_SIMULTANEOUSLY 1
-#ifdef  U_MAX_CONNECTIONS_ACCEPTED_SIMULTANEOUSLY
+
+#if defined(U_MAX_CONNECTIONS_ACCEPTED_SIMULTANEOUSLY) && defined(DEBUG)
 static uint32_t max_accepted;
 #endif
 
@@ -2222,10 +2223,6 @@ void UServer_Base::loadConfigParam()
 
    U_INTERNAL_DUMP("UNotifier::max_connection = %u USocket::iBackLog = %u", UNotifier::max_connection, USocket::iBackLog)
 
-#ifdef U_MAX_CONNECTIONS_ACCEPTED_SIMULTANEOUSLY
-   max_accepted = USocket::iBackLog;
-#endif
-
 #ifdef USERVER_UDP
    if (budp &&
        u_printf_string_max_length == -1)
@@ -3754,8 +3751,8 @@ RETSIGTYPE UServer_Base::handlerForSigTERM(int signo)
          if (isLog()) logMemUsage("SIGTERM");
 #     endif
 
-#     ifdef U_MAX_CONNECTIONS_ACCEPTED_SIMULTANEOUSLY
-         U_WARNING("Max connections accepted simultaneously = %u", USocket::iBackLog - max_accepted);
+#     if defined(U_MAX_CONNECTIONS_ACCEPTED_SIMULTANEOUSLY) && defined(DEBUG)
+         U_WARNING("Max connections accepted simultaneously = %u", max_accepted);
 #     endif
 
          U_EXIT(0);
@@ -3842,10 +3839,8 @@ int UServer_Base::handlerRead()
 
    U_INTERNAL_ASSERT_MINOR(nClientIndex, UNotifier::max_connection)
 
-#ifndef U_MAX_CONNECTIONS_ACCEPTED_SIMULTANEOUSLY
-   uint32_t accepted = 10;
-#else
-   uint32_t accepted = USocket::iBackLog;
+#ifdef U_MAX_CONNECTIONS_ACCEPTED_SIMULTANEOUSLY
+   uint32_t accepted = 10; // USocket::iBackLog;
 #endif
 
    // This loops until the accept() fails, trying to start new connections as fast as possible so we don't overrun the listen queue
@@ -3999,7 +3994,7 @@ try_accept:
       if (CSOCKET->iState == -EAGAIN) U_ClientImage_state = U_PLUGIN_HANDLER_AGAIN;
 #  endif
 
-#  ifdef U_MAX_CONNECTIONS_ACCEPTED_SIMULTANEOUSLY
+#  if defined(U_MAX_CONNECTIONS_ACCEPTED_SIMULTANEOUSLY) && defined(DEBUG)
       if (accepted < max_accepted &&
           CSOCKET->iState == -EAGAIN)
          {
@@ -4243,32 +4238,34 @@ next:
    goto end;
 #endif
 
+#ifdef U_MAX_CONNECTIONS_ACCEPTED_SIMULTANEOUSLY
    U_INTERNAL_DUMP("accepted = %u", accepted)
 
    if (--accepted > 0)
+#endif
+   {
+#if defined(ENABLE_THREAD) && defined(U_SERVER_THREAD_APPROACH_SUPPORT)
+   if (preforked_num_kids != -1)
+#endif
+   {
+   U_INTERNAL_ASSERT_DIFFERS(socket_flags & O_NONBLOCK, 0)
+
+   U_INTERNAL_DUMP("cround = %u UNotifier::num_connection = %u num_client_threshold = %u", cround, UNotifier::num_connection, num_client_threshold)
+
+   if (num_client_threshold > UNotifier::num_connection) cround = 0;
+   else
       {
-#  if defined(ENABLE_THREAD) && defined(U_SERVER_THREAD_APPROACH_SUPPORT)
-      if (preforked_num_kids != -1)
-#  endif
-      {
-      U_INTERNAL_ASSERT_DIFFERS(socket_flags & O_NONBLOCK, 0)
+      cround = 2;
 
-      U_INTERNAL_DUMP("cround = %u UNotifier::num_connection = %u num_client_threshold = %u", cround, UNotifier::num_connection, num_client_threshold)
+      CLIENT_IMAGE = vClientImage;
 
-      if (num_client_threshold > UNotifier::num_connection) cround = 0;
-      else
-         {
-         cround = 2;
-
-         CLIENT_IMAGE = vClientImage;
-
-         U_DEBUG("It has passed the client threshold(%u): preallocation(%u) num_connection(%u)",
-                  num_client_threshold, UNotifier::max_connection, UNotifier::num_connection - UNotifier::min_connection)
-         }
-
-      goto loop;
+      U_DEBUG("It has passed the client threshold(%u): preallocation(%u) num_connection(%u)",
+               num_client_threshold, UNotifier::max_connection, UNotifier::num_connection - UNotifier::min_connection)
       }
-      }
+
+   goto loop;
+   }
+   }
 
 end:
 #if defined(HAVE_EPOLL_CTL_BATCH) && !defined(USE_LIBEVENT)

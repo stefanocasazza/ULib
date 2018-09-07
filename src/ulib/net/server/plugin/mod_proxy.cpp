@@ -176,7 +176,7 @@ int UProxyPlugIn::handlerRequest()
       if (result == false) UClientImage_Base::setRequestProcessed();
       else
          {
-         UClientImage_Base::setNoHeaderForResponse();
+         UClientImage_Base::bnoheader = true;
 
          U_INTERNAL_DUMP("U_http_data_chunked = %b U_ClientImage_close = %b client_http->data_chunked = %b", U_http_data_chunked, U_ClientImage_close, client_http->data_chunked)
 

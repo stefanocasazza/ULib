@@ -159,9 +159,9 @@ void ULog::initDate()
    tv_sec_old_2 =
    tv_sec_old_3 = u_now->tv_sec;
 
-   (void) u_strftime2(date.date1, 17,               U_CONSTANT_TO_PARAM("%d/%m/%y %T"),                                                        u_get_localtime(tv_sec_old_1));
-   (void) u_strftime2(date.date2, 26,               U_CONSTANT_TO_PARAM("%d/%b/%Y:%T %z"),                                                     u_get_localtime(tv_sec_old_2));
-   (void) u_strftime2(date.date3, 6+29+2+12+2+17+2, U_CONSTANT_TO_PARAM("Date: %a, %d %b %Y %T GMT\r\nServer: ULib\r\nConnection: close\r\n"),                 tv_sec_old_3);
+   (void) u_strftime2(date.date1, 17,   U_CONSTANT_TO_PARAM("%d/%m/%y %T"),    u_get_localtime(tv_sec_old_1));
+   (void) u_strftime2(date.date2, 26,   U_CONSTANT_TO_PARAM("%d/%b/%Y:%T %z"), u_get_localtime(tv_sec_old_2));
+   (void) u_strftime2(date.date3, 6+29, U_CONSTANT_TO_PARAM("Date: %a, %d %b %Y %T GMT"),      tv_sec_old_3);
 }
 
 void ULog::startup()

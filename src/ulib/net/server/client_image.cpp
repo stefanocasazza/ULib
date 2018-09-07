@@ -29,6 +29,7 @@
 int          UClientImage_Base::idx;
 int          UClientImage_Base::iovcnt;
 bool         UClientImage_Base::bIPv6;
+bool         UClientImage_Base::bnoheader;
 bool         UClientImage_Base::bsendGzipBomb;
 char         UClientImage_Base::cbuffer[128];
 long         UClientImage_Base::time_run;
@@ -1170,7 +1171,6 @@ int UClientImage_Base::handlerRead() // Connection-wide hooks
 {
    U_TRACE_NO_PARAM(0, "UClientImage_Base::handlerRead()")
 
-   int result;
    uint32_t sz;
 
    prepareForRead();
@@ -1200,8 +1200,6 @@ start:
    U_ASSERT(isOpen())
 
    UServer_Base::nread++;
-
-   U_INTERNAL_DUMP("iov_vec[0].iov_len = %u iov_vec[1].iov_len = %u", iov_vec[0].iov_len, iov_vec[1].iov_len)
 #endif
 
 loop:
@@ -1384,9 +1382,9 @@ next2:
                     resto = (sz % size_request);
                uint32_t n = (sz / size_request);
 
-               U_INTERNAL_DUMP("n = %u resto = %u size_request = %u", n, resto, size_request)
+               U_INTERNAL_DUMP("n = %u resto = %u size_request = %u  wbuffer(%u) = %V", n, resto, size_request, wbuffer->size(), wbuffer->rep)
 
-               if (n > 1                                    &&
+               if (n                                        &&
                    *wbuffer                                 &&
                    callerIsValidRequest(ptr1, size_request) &&
                    (resto == 0 || callerIsValidMethod(rbuffer->c_pointer(sz-resto))))
@@ -1398,7 +1396,9 @@ next2:
 
                   while (true)
                      {
+#                 if !defined(U_SERVER_CAPTIVE_PORTAL) || !defined(ENABLE_THREAD)
                      if (memcmp(ptr, ptr1, size_request) != 0) break;
+#                 endif
 
                      ptr1 += size_request;
 
@@ -1421,7 +1421,6 @@ next2:
 check:            U_INTERNAL_DUMP("nrequest = %u resto = %u", nrequest, resto)
 
                   U_INTERNAL_ASSERT(nrequest <= n)
-                  U_INTERNAL_ASSERT_DIFFERS(nrequest, 1)
 
                   if (resto ||
                       nrequest != n)
@@ -1433,8 +1432,14 @@ check:            U_INTERNAL_DUMP("nrequest = %u resto = %u", nrequest, resto)
 
                   U_INTERNAL_DUMP("rstart = %u request(%u) = %V", rstart, request->size(), request->rep)
 
-                  goto write;
+#              if defined(U_SERVER_CAPTIVE_PORTAL) && defined(ENABLE_THREAD)
+                  goto write1;
+#              else
+                  goto write2;
+#              endif
                   }
+
+               resto = 0;
                }
 #        endif
             }
@@ -1457,11 +1462,49 @@ check:            U_INTERNAL_DUMP("nrequest = %u resto = %u", nrequest, resto)
 #if defined(U_SERVER_CAPTIVE_PORTAL) && defined(ENABLE_THREAD)
    else
       {
+#ifndef U_PIPELINE_HOMOGENEOUS_DISABLE
+write1:
+#endif
       writeResponseCompact();
 
       U_INTERNAL_DUMP("U_ClientImage_request_is_cached = %b", U_ClientImage_request_is_cached)
 
       if (U_ClientImage_request_is_cached == false) endRequest();
+
+#  ifndef U_PIPELINE_HOMOGENEOUS_DISABLE
+      U_INTERNAL_DUMP("nrequest = %u resto = %u U_ClientImage_pipeline = %b U_ClientImage_close = %b rstart = %u",
+                       nrequest,     resto,     U_ClientImage_pipeline,     U_ClientImage_close,     rstart)
+
+      if (nrequest > 1)
+         {
+         U_INTERNAL_ASSERT_RANGE(2,nrequest,64)
+
+         struct iovec iov[64];
+
+         char* ptr = (char*)iov;
+
+         U_MEMCPY(ptr, iov_vec+1, sizeof(struct iovec) * 2);
+
+         for (uint32_t i = 1; i < nrequest; ++i)
+            {
+                     ptr +=          sizeof(struct iovec) * 2;
+            U_MEMCPY(ptr, iov_vec+1, sizeof(struct iovec) * 2);
+            }
+
+         (void) USocketExt::writev(socket, iov, 2*nrequest, (17+51+iov_vec[2].iov_len)*nrequest, 0);
+         }
+
+      nrequest = 0;
+
+      if (resto)
+         {
+         resto = 0;
+
+         U_ASSERT_EQUALS(*request, rbuffer->substr(rstart))
+
+         goto data_missing;
+         }
+#  endif
 
       U_RETURN(U_NOTIFIER_OK);
       }
@@ -1482,41 +1525,44 @@ check:            U_INTERNAL_DUMP("nrequest = %u resto = %u", nrequest, resto)
 
       if (count == 0)
          {
-#ifndef U_PIPELINE_HOMOGENEOUS_DISABLE
-write:
+#if !defined(U_PIPELINE_HOMOGENEOUS_DISABLE) && (!defined(U_SERVER_CAPTIVE_PORTAL) || !defined(ENABLE_THREAD))
+write2:
 #endif
          U_INTERNAL_DUMP("U_ClientImage_pipeline = %b U_ClientImage_data_missing = %b", U_ClientImage_pipeline, U_ClientImage_data_missing)
 
-         result = (writeResponse() ? U_NOTIFIER_OK : U_NOTIFIER_DELETE);
+         if (writeResponse() == false)
+            {
+#        ifndef U_PIPELINE_HOMOGENEOUS_DISABLE
+            resto    =
+            nrequest = 0;
+#        endif
+
+            goto error;
+            }
 
 #     ifndef U_PIPELINE_HOMOGENEOUS_DISABLE
          U_INTERNAL_DUMP("nrequest = %u resto = %u U_ClientImage_pipeline = %b U_ClientImage_close = %b rstart = %u",
                           nrequest,     resto,     U_ClientImage_pipeline,     U_ClientImage_close,     rstart)
 
+
          if (nrequest)
             {
             nrequest = 0;
 
-            if (resto)
-               {
-               resto = 0;
+            U_ClientImage_pipeline = false;
+            }
 
-               if (result == U_NOTIFIER_DELETE) goto error;
+         if (resto)
+            {
+            resto = 0;
 
-               endRequest();
+            endRequest();
 
-               goto data_missing;
-               }
+            U_ASSERT_EQUALS(*request, rbuffer->substr(rstart))
 
-            if (U_ClientImage_pipeline &&
-                (rstart == 0 || resto == 0))
-               {
-               U_ClientImage_pipeline = false;
-               }
+            goto data_missing;
             }
 #     endif
-
-         if (result == U_NOTIFIER_DELETE) goto error;
          }
       else
          {
@@ -1583,8 +1629,6 @@ error:
       {
 end:  if (U_ClientImage_parallelization == U_PARALLELIZATION_CHILD) goto death;
 
-      setHeaderForResponse(6+29+2+12+2); // Date: Wed, 20 Jun 2012 11:43:17 GMT\r\nServer: ULib\r\n
-
       U_RETURN(U_NOTIFIER_DELETE);
       }
 
@@ -1628,14 +1672,15 @@ bool UClientImage_Base::writeResponse()
    U_INTERNAL_ASSERT_DIFFERS(U_ClientImage_parallelization, U_PARALLELIZATION_PARENT)
 
    struct iovec* iov;
-#if !defined(U_PIPELINE_HOMOGENEOUS_DISABLE) || defined(U_CLIENT_RESPONSE_PARTIAL_WRITE_SUPPORT) 
-   struct iovec liov[256];
-#endif
+   bool bresult, bclose = false;
    uint32_t iBytesWrite,
             sz1 = wbuffer->size(),
             sz2 = (U_http_method_type == HTTP_HEAD ? 0 : body->size());
 #ifndef U_LOG_DISABLE
    uint32_t msg_len = (U_ClientImage_pipeline ? U_CONSTANT_SIZE("[pipeline] ") : 0);
+#endif
+#if !defined(U_PIPELINE_HOMOGENEOUS_DISABLE) || defined(U_CLIENT_RESPONSE_PARTIAL_WRITE_SUPPORT) 
+   struct iovec liov[256];
 #endif
 
    iov_vec[2].iov_len  = sz1;
@@ -1645,8 +1690,10 @@ bool UClientImage_Base::writeResponse()
 
    ncount = sz1 + sz2;
 
-   if (isNoHeaderForResponse())
+   if (bnoheader)
       {
+      bnoheader = false;
+
       U_INTERNAL_ASSERT_EQUALS(nrequest, 0)
 
       U_SRV_LOG_WITH_ADDR("send response (%u bytes) %.*s%#.*S to", ncount, msg_len, "[pipeline] ", iov_vec[2].iov_len, iov_vec[2].iov_base);
@@ -1667,8 +1714,25 @@ bool UClientImage_Base::writeResponse()
       }
    else
       {
-      idx    = 0;
-      iovcnt = 4;
+      U_INTERNAL_DUMP("iov_vec[1].iov_len = %u", iov_vec[1].iov_len)
+
+      if (iov_vec[1].iov_len == 17+6+29+2+12+2) // HTTP/1.1 200 OK\r\nDate: Wed, 20 Jun 2012 11:43:17 GMT\r\nServer: ULib\r\n
+         {
+         idx    = 1;
+         iovcnt = 3;
+         }
+      else
+         {
+         idx    = 0;
+         iovcnt = 4;
+
+         ncount += iov_vec[0].iov_len;
+
+         iov_vec[1].iov_base = (char*)iov_vec[1].iov_base + 17; // HTTP/1.1 200 OK\r\n
+
+         U_INTERNAL_DUMP("U_http_info.nResponseCode = %u UClientImage_Base::iov_vec[0] = %.*S",
+                          U_http_info.nResponseCode,     UClientImage_Base::iov_vec[0].iov_len, UClientImage_Base::iov_vec[0].iov_base)
+         }
 
 #  ifdef U_SSE_ENABLE // SERVER SENT EVENTS (SSE)
       U_INTERNAL_DUMP("UHTTP::sse_func = %p", UHTTP::sse_func)
@@ -1679,18 +1743,15 @@ bool UClientImage_Base::writeResponse()
       if (U_ClientImage_close &&
           U_ClientImage_pipeline == false)
          {
-         iov_vec[1].iov_len = 6+29+2+12+2+17+2; // Date: Wed, 20 Jun 2012 11:43:17 GMT\r\nServer: ULib\r\nConnection: close\r\n
+         bclose = true;
+
+         iov_vec[1].iov_len += 17+2; // Connection: close\r\n
          }
       }
 
-      ncount += iov_vec[0].iov_len +
-                iov_vec[1].iov_len;
+      ncount += iov_vec[1].iov_len;
 
-#  if defined(U_LINUX) && defined(ENABLE_THREAD) && !defined(U_SERVER_CAPTIVE_PORTAL)
-      U_INTERNAL_ASSERT_EQUALS(iov_vec[1].iov_base, ULog::ptr_shared_date->date3)
-#  else
-      U_INTERNAL_ASSERT_EQUALS(iov_vec[1].iov_base, ULog::date.date3)
-
+#  if !defined(U_LINUX) || !defined(ENABLE_THREAD)
       ULog::updateDate3(U_NULLPTR);
 #  endif
 
@@ -1702,9 +1763,9 @@ bool UClientImage_Base::writeResponse()
    iov = iov_vec+idx;
 
 #ifndef U_PIPELINE_HOMOGENEOUS_DISABLE
-   if (nrequest)
+   if (nrequest > 1)
       {
-      U_INTERNAL_ASSERT_MAJOR(nrequest, 1)
+      U_INTERNAL_ASSERT_RANGE(2,nrequest,256)
 
       char* ptr   = (char*)liov;
       uint32_t sz = sizeof(struct iovec) * iovcnt;
@@ -1725,7 +1786,7 @@ bool UClientImage_Base::writeResponse()
    else
 #endif
    {
-   U_INTERNAL_ASSERT_EQUALS(nrequest, 0)
+   U_INTERNAL_ASSERT_MINOR(nrequest, 2)
 
    iBytesWrite = USocketExt::writev(socket, iov, iovcnt, ncount, U_ClientImage_pipeline ? U_TIMEOUT_MS : 0);
    }
@@ -1737,48 +1798,60 @@ bool UClientImage_Base::writeResponse()
    if (iBytesWrite > 0) UServer_Base::stats_bytes += iBytesWrite;
 #endif
 
-   if (iBytesWrite == ncount) U_RETURN(true);
-
-   U_SRV_LOG("write failed (remain %u bytes) - sock_fd %u", ncount - iBytesWrite, socket->iSockDesc);
-
-   if (socket->isClosed()) U_RETURN(false);
-
-#ifndef U_CLIENT_RESPONSE_PARTIAL_WRITE_SUPPORT
-   resetPipelineAndSetCloseConnection();
-
-   U_RETURN(false);
-#else
-   U_INTERNAL_ASSERT_EQUALS(UServer_Base::bssl, false)
-   U_INTERNAL_ASSERT_EQUALS(UEventFd::op_mask, EPOLLIN | EPOLLRDHUP | EPOLLET)
-   U_INTERNAL_ASSERT_DIFFERS(U_ClientImage_parallelization, U_PARALLELIZATION_CHILD) // NB: we must not have pending write...
-
-   sfd = UFile::mkTemp();
-
-   if (sfd == -1)
+   if ((bresult = (iBytesWrite == ncount)) == false)
       {
-      U_SRV_LOG("partial write failed: (remain %u bytes) - error on create temporary file - sock_fd %u", ncount, socket->iSockDesc);
+      U_SRV_LOG("writev failed (remain %u bytes) - sock_fd %u", ncount - iBytesWrite, socket->iSockDesc);
 
-      U_RETURN(false);
+      if (socket->isOpen())
+         {
+#     ifndef U_CLIENT_RESPONSE_PARTIAL_WRITE_SUPPORT
+         resetPipelineAndSetCloseConnection();
+#     else
+         U_INTERNAL_ASSERT_EQUALS(UServer_Base::bssl, false)
+         U_INTERNAL_ASSERT_EQUALS(UEventFd::op_mask, EPOLLIN | EPOLLRDHUP | EPOLLET)
+         U_INTERNAL_ASSERT_DIFFERS(U_ClientImage_parallelization, U_PARALLELIZATION_CHILD) // NB: we must not have pending write...
+
+         sfd = UFile::mkTemp();
+
+         if ((bresult = (sfd != -1)) == false)
+            {
+            U_SRV_LOG("partial write failed: (remain %u bytes) - error on create temporary file - sock_fd %u", ncount - iBytesWrite, socket->iSockDesc);
+            }
+         else
+            {
+            ncount -= iBytesWrite;
+
+            iBytesWrite = UFile::writev(sfd, liov, USocketExt::iov_resize(liov, iov, iovcnt, iBytesWrite));
+
+            if ((bresult = (iBytesWrite == ncount)))
+               {
+               U_SRV_LOG("partial write: (remain %u bytes) - create temporary file - sock_fd %u sfd %u", ncount, socket->iSockDesc, sfd);
+
+               setPendingSendfile(); // NB: now we have a pending sendfile...
+               }
+            else
+               {
+               U_SRV_LOG("partial write failed: (remain %u bytes) - error on write (%u bytes) on temporary file - sock_fd %u sfd %u", ncount, iBytesWrite, socket->iSockDesc, sfd);
+
+               UFile::close(sfd);
+                            sfd = -1;
+               }
+            }
+#     endif
+         }
       }
 
-   iBytesWrite = UFile::writev(sfd, liov, USocketExt::iov_resize(liov, iov, iovcnt, iBytesWrite));
+   U_INTERNAL_DUMP("bclose = %b idx = %u bresult = %b", bclose, idx, bresult)
 
-   if (iBytesWrite != ncount)
+   if (bclose ||
+       idx == 0)
       {
-      U_SRV_LOG("partial write failed: (remain %u bytes) - error on write (%u bytes) on temporary file - sock_fd %u sfd %u", ncount, iBytesWrite, socket->iSockDesc, sfd);
+      if (idx == 0) iov_vec[1].iov_base = (char*)iov_vec[1].iov_base - 17; // HTTP/1.1 200 OK\r\n
 
-      UFile::close(sfd);
-                   sfd = -1;
-
-      U_RETURN(false);
+      setHeaderForResponse(17+6+29+2+12+2); // HTTP/1.1 200 OK\r\nDate: Wed, 20 Jun 2012 11:43:17 GMT\r\nServer: ULib\r\n
       }
 
-   U_SRV_LOG("partial write: (remain %u bytes) - create temporary file - sock_fd %u sfd %u", ncount, socket->iSockDesc, sfd);
-
-   setPendingSendfile(); // NB: now we have a pending sendfile...
-
-   U_RETURN(true);
-#endif
+   U_RETURN(bresult);
 }
 
 void UClientImage_Base::close()

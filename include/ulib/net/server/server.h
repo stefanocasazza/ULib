@@ -937,8 +937,9 @@ protected:
          *UClientImage_Base::wbuffer = *UClientImage_Base::rbuffer; // echo server
          }
 
+      UClientImage_Base::bnoheader = true;
+
       UClientImage_Base::setRequestProcessed();
-      UClientImage_Base::setNoHeaderForResponse();
 
       U_RETURN(U_PLUGIN_HANDLER_FINISHED);
       }

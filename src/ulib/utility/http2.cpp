@@ -2678,12 +2678,8 @@ void UHTTP2::handlerResponse()
 
    if (dyntbl->num_entries == 0)
       {
-#  if defined(U_LINUX) && defined(ENABLE_THREAD)
-      U_INTERNAL_ASSERT_EQUALS(UClientImage_Base::iov_vec[1].iov_base, ULog::ptr_shared_date->date3)
-#  else
-      U_INTERNAL_ASSERT_EQUALS(UClientImage_Base::iov_vec[1].iov_base, ULog::date.date3)
-
-      ULog::updateDate3(0);
+#  if !defined(U_LINUX) || !defined(ENABLE_THREAD)
+      ULog::updateDate3(U_NULLPTR);
 #  endif
 
       UString date((void*)(((char*)UClientImage_Base::iov_vec[1].iov_base)+6), 29);
@@ -2707,11 +2703,7 @@ void UHTTP2::handlerResponse()
 
       char* ptr_date = entry->value->data();
 
-#  if defined(U_LINUX) && defined(ENABLE_THREAD)
-      U_INTERNAL_ASSERT_EQUALS(UClientImage_Base::iov_vec[1].iov_base, ULog::ptr_shared_date->date3)
-#  else
-      U_INTERNAL_ASSERT_EQUALS(UClientImage_Base::iov_vec[1].iov_base, ULog::date.date3)
-
+#  if !defined(U_LINUX) || !defined(ENABLE_THREAD)
       ULog::updateDate3(ptr_date);
 #  endif
 

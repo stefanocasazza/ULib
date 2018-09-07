@@ -100,22 +100,8 @@ public:
       U_TRACE(0, "UClientImage_Base::setHeaderForResponse(%u)", len)
 
       iov_vec[1].iov_len = len;
-      }
 
-   static void setNoHeaderForResponse()
-      {
-      U_TRACE_NO_PARAM(0, "UClientImage_Base::setNoHeaderForResponse()")
-
-      iov_vec[0].iov_len = 0;
-      }
-
-   static bool isNoHeaderForResponse()
-      {
-      U_TRACE_NO_PARAM(0, "UClientImage_Base::isNoHeaderForResponse()")
-
-      if (UNLIKELY(iov_vec[0].iov_len == 0)) U_RETURN(true);
-
-      U_RETURN(false);
+      U_INTERNAL_DUMP("UClientImage_Base::iov_vec[1] = %.*S", UClientImage_Base::iov_vec[1].iov_len, UClientImage_Base::iov_vec[1].iov_base)
       }
 
    // manage if other data already available... (pipelining)
@@ -327,7 +313,7 @@ public:
    static UString* rbuffer;
    static UString* wbuffer;
    static UString* request;
-   static bool bIPv6, bsendGzipBomb;
+   static bool bIPv6, bsendGzipBomb, bnoheader;
 
    static char cbuffer[128];
    static UString* request_uri;
@@ -365,40 +351,20 @@ public:
 
       U_ASSERT(body->empty())
       U_INTERNAL_ASSERT_MAJOR(sz, 0)
+      U_INTERNAL_ASSERT_EQUALS(U_http_info.nResponseCode, 200)
 
       iov_vec[2].iov_len  = sz;
       iov_vec[2].iov_base = (caddr_t)wbuffer->data();
 
-      U_INTERNAL_DUMP("iov_vec[0].iov_len = %u iov_vec[1].iov_len = %u", iov_vec[0].iov_len, iov_vec[1].iov_len)
+      U_INTERNAL_DUMP("iov_vec[1].iov_len = %u", iov_vec[1].iov_len)
 
-      U_INTERNAL_ASSERT_EQUALS(iov_vec[0].iov_len, 17)
-      U_INTERNAL_ASSERT_EQUALS(iov_vec[1].iov_len, 51)
+      U_INTERNAL_ASSERT_EQUALS(iov_vec[1].iov_len, 17+51) // HTTP/1.1 200 OK\r\nDate: Wed, 20 Jun 2012 11:43:17 GMT\r\nServer: ULib\r\n
 
 #  ifndef U_PIPELINE_HOMOGENEOUS_DISABLE
-      if (nrequest)
-         {
-         struct iovec iov[256];
-
-         U_INTERNAL_ASSERT_MAJOR(nrequest, 1)
-
-         char* ptr = (char*)iov;
-
-         U_MEMCPY(ptr, iov_vec, sizeof(struct iovec) * 3);
-
-         for (uint32_t i = 1; i < nrequest; ++i)
-            {
-                     ptr +=        sizeof(struct iovec) * 3;
-            U_MEMCPY(ptr, iov_vec, sizeof(struct iovec) * 3);
-            }
-
-         (void) USocketExt::writev(socket, iov, 3*nrequest, (17+51+sz)*nrequest, 0);
-         }
-      else
+      if (nrequest <= 1)
 #  endif
       {
-      U_INTERNAL_ASSERT_EQUALS(nrequest, 0)
-
-      (void) USocketExt::writev(socket, iov_vec, 3, 17+51+sz, 0);
+      (void) USocketExt::writev(socket, iov_vec+1, 2, 17+51+sz, 0);
       }
       }
 
@@ -462,6 +428,8 @@ protected:
    int handlerResponse()
       {
       U_TRACE_NO_PARAM(0, "UClientImage::handlerResponse()")
+
+      bnoheader = true;
 
       if (writeResponse()) U_RETURN(U_NOTIFIER_OK);
 

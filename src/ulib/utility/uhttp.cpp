@@ -109,7 +109,6 @@ UString* UHTTP::set_cookie_option;
 UString* UHTTP::user_authentication;
 UString* UHTTP::string_HTTP_Variables;
 uint32_t UHTTP::old_path_len;
-uint32_t UHTTP::old_response_code;
 uint32_t UHTTP::sid_counter_gen;
 uint32_t UHTTP::sid_counter_cur;
 uint32_t UHTTP::is_response_compressed;
@@ -1347,8 +1346,6 @@ void UHTTP::init()
    U_http_info.nResponseCode = HTTP_OK;
 
    setStatusDescription();
-
-   U_INTERNAL_ASSERT_EQUALS(old_response_code, HTTP_OK)
 
    U_MEMCPY(response_buffer, UClientImage_Base::iov_vec[0].iov_base, UClientImage_Base::iov_vec[0].iov_len);
 
@@ -3784,8 +3781,6 @@ bool UHTTP::handlerCache()
    if (U_ClientImage_advise_for_parallelization == 2) U_RETURN(true);
 # endif
 
-   UClientImage_Base::setHeaderForResponse(6+29+2+12+2); // Date: Wed, 20 Jun 2012 11:43:17 GMT\r\nServer: ULib\r\n
-
 # ifndef U_LOG_DISABLE
    if (UServer_Base::apache_like_log)
       {
@@ -4012,10 +4007,6 @@ int UHTTP::handlerREAD()
    if (U_http_method_type == HTTP_OPTIONS)
       {
       U_http_info.nResponseCode = HTTP_OK;
-
-      setStatusDescription();
-
-      UClientImage_Base::setHeaderForResponse(6+29+2+12+2); // Date: Wed, 20 Jun 2012 11:43:17 GMT\r\nServer: ULib\r\n
 
       UClientImage_Base::setCloseConnection();
 
@@ -4499,8 +4490,8 @@ file_in_cache:
          usp->runDynamicPage();
 #     endif
 
-         U_DUMP("U_http_info.nResponseCode = %u U_ClientImage_parallelization = %d UClientImage_Base::isNoHeaderForResponse() = %b",
-                 U_http_info.nResponseCode,     U_ClientImage_parallelization,     UClientImage_Base::isNoHeaderForResponse())
+         U_DUMP("U_http_info.nResponseCode = %u U_ClientImage_parallelization = %d UClientImage_Base::bnoheader = %b",
+                 U_http_info.nResponseCode,     U_ClientImage_parallelization,     UClientImage_Base::bnoheader)
 
          if (U_http_info.nResponseCode == HTTP_OK)
             {
@@ -4514,7 +4505,7 @@ file_in_cache:
 #        endif
             {
 #        ifdef USE_LOAD_BALANCE
-            if (UClientImage_Base::isNoHeaderForResponse() == false)
+            if (UClientImage_Base::bnoheader == false)
 #        endif
             setDynamicResponse();
             }
@@ -4728,7 +4719,7 @@ bool UHTTP::manageRequestOnRemoteServer()
 
       if (client_http->sendRequestAndReadResponse(*UClientImage_Base::request, *UClientImage_Base::body))
          {
-         UClientImage_Base::setNoHeaderForResponse();
+         UClientImage_Base::bnoheader = true;
 
          *UClientImage_Base::wbuffer = client_http->getResponse();
 
@@ -6530,128 +6521,126 @@ void UHTTP::setStatusDescription()
 {
    U_TRACE_NO_PARAM(0, "UHTTP::setStatusDescription()")
 
-   U_INTERNAL_DUMP("old_response_code = %u U_http_info.nResponseCode = %u UClientImage_Base::iov_vec[0] = %.*S", old_response_code,
-                        U_http_info.nResponseCode, UClientImage_Base::iov_vec[0].iov_len, UClientImage_Base::iov_vec[0].iov_base)
+   U_INTERNAL_DUMP("U_http_info.nResponseCode = %u UClientImage_Base::iov_vec[0] = %.*S",
+                    U_http_info.nResponseCode,     UClientImage_Base::iov_vec[0].iov_len, UClientImage_Base::iov_vec[0].iov_base)
 
-   if (old_response_code != U_http_info.nResponseCode ||
-       UClientImage_Base::iov_vec[0].iov_len == 0)
+   switch (U_http_info.nResponseCode)
       {
-      switch ((old_response_code = U_http_info.nResponseCode))
+      // 1xx indicates an informational message only
+      case HTTP_SWITCH_PROT:
          {
-         // 1xx indicates an informational message only
-         case HTTP_SWITCH_PROT:
-            {
-            UClientImage_Base::iov_vec[0].iov_base =       (caddr_t) "HTTP/1.1 101 Switching Protocols\r\n";  
-            UClientImage_Base::iov_vec[0].iov_len  = U_CONSTANT_SIZE("HTTP/1.1 101 Switching Protocols\r\n");
-            }
-         break;
+         UClientImage_Base::iov_vec[0].iov_base =       (caddr_t) "HTTP/1.1 101 Switching Protocols\r\n";  
+         UClientImage_Base::iov_vec[0].iov_len  = U_CONSTANT_SIZE("HTTP/1.1 101 Switching Protocols\r\n");
+         }
+      break;
 
-         // 2xx indicates success of some kind
-         case HTTP_OK:
-            {
-            UClientImage_Base::iov_vec[0].iov_base =       (caddr_t) "HTTP/1.1 200 OK\r\n";  
-            UClientImage_Base::iov_vec[0].iov_len  = U_CONSTANT_SIZE("HTTP/1.1 200 OK\r\n");
-            }
-         break;
-         case HTTP_NO_CONTENT:
-            {
-            UClientImage_Base::iov_vec[0].iov_base =       (caddr_t) "HTTP/1.1 204 No Content\r\n";  
-            UClientImage_Base::iov_vec[0].iov_len  = U_CONSTANT_SIZE("HTTP/1.1 204 No Content\r\n");
-            }
-         break;
-         case HTTP_PARTIAL:
-            {
-            UClientImage_Base::iov_vec[0].iov_base =       (caddr_t) "HTTP/1.1 206 Partial Content\r\n";  
-            UClientImage_Base::iov_vec[0].iov_len  = U_CONSTANT_SIZE("HTTP/1.1 206 Partial Content\r\n");
-            }
-         break;
+      // 2xx indicates success of some kind
+      case HTTP_OK:
+         {
+         UClientImage_Base::iov_vec[0].iov_base =       (caddr_t) "HTTP/1.1 200 OK\r\n";  
+         UClientImage_Base::iov_vec[0].iov_len  = U_CONSTANT_SIZE("HTTP/1.1 200 OK\r\n");
+         }
+      break;
+      case HTTP_NO_CONTENT:
+         {
+         UClientImage_Base::iov_vec[0].iov_base =       (caddr_t) "HTTP/1.1 204 No Content\r\n";  
+         UClientImage_Base::iov_vec[0].iov_len  = U_CONSTANT_SIZE("HTTP/1.1 204 No Content\r\n");
+         }
+      break;
+      case HTTP_PARTIAL:
+         {
+         UClientImage_Base::iov_vec[0].iov_base =       (caddr_t) "HTTP/1.1 206 Partial Content\r\n";  
+         UClientImage_Base::iov_vec[0].iov_len  = U_CONSTANT_SIZE("HTTP/1.1 206 Partial Content\r\n");
+         }
+      break;
 
-         // 3xx Redirection - Further action must be taken in order to complete the request
-         case HTTP_MOVED_TEMP:
-            {
-            UClientImage_Base::iov_vec[0].iov_base =       (caddr_t) "HTTP/1.1 302 Moved Temporarily\r\n";  
-            UClientImage_Base::iov_vec[0].iov_len  = U_CONSTANT_SIZE("HTTP/1.1 302 Moved Temporarily\r\n");
-            }
-         break;
-         case HTTP_NOT_MODIFIED:
-            {
-            UClientImage_Base::iov_vec[0].iov_base =       (caddr_t) "HTTP/1.1 304 Not Modified\r\n";  
-            UClientImage_Base::iov_vec[0].iov_len  = U_CONSTANT_SIZE("HTTP/1.1 304 Not Modified\r\n");
-            }
-         break;
+      // 3xx Redirection - Further action must be taken in order to complete the request
+      case HTTP_MOVED_TEMP:
+         {
+         UClientImage_Base::iov_vec[0].iov_base =       (caddr_t) "HTTP/1.1 302 Moved Temporarily\r\n";  
+         UClientImage_Base::iov_vec[0].iov_len  = U_CONSTANT_SIZE("HTTP/1.1 302 Moved Temporarily\r\n");
+         }
+      break;
+      case HTTP_NOT_MODIFIED:
+         {
+         UClientImage_Base::iov_vec[0].iov_base =       (caddr_t) "HTTP/1.1 304 Not Modified\r\n";  
+         UClientImage_Base::iov_vec[0].iov_len  = U_CONSTANT_SIZE("HTTP/1.1 304 Not Modified\r\n");
+         }
+      break;
 
-         // 4xx indicates an error on the client's part
-         case HTTP_BAD_REQUEST:
-            {
-            UClientImage_Base::iov_vec[0].iov_base =       (caddr_t) "HTTP/1.1 400 Bad Request\r\n";  
-            UClientImage_Base::iov_vec[0].iov_len  = U_CONSTANT_SIZE("HTTP/1.1 400 Bad Request\r\n");
-            }
-         break;
-         case HTTP_UNAUTHORIZED:
-            {
-            UClientImage_Base::iov_vec[0].iov_base =       (caddr_t) "HTTP/1.1 401 Authorization Required\r\n";  
-            UClientImage_Base::iov_vec[0].iov_len  = U_CONSTANT_SIZE("HTTP/1.1 401 Authorization Required\r\n");
-            }
-         break;
-         case HTTP_FORBIDDEN:
-            {
-            UClientImage_Base::iov_vec[0].iov_base =       (caddr_t) "HTTP/1.1 403 Forbidden\r\n";  
-            UClientImage_Base::iov_vec[0].iov_len  = U_CONSTANT_SIZE("HTTP/1.1 403 Forbidden\r\n");
-            }
-         break;
-         case HTTP_NOT_FOUND:
-            {
-            UClientImage_Base::iov_vec[0].iov_base =       (caddr_t) "HTTP/1.1 404 Not Found\r\n";  
-            UClientImage_Base::iov_vec[0].iov_len  = U_CONSTANT_SIZE("HTTP/1.1 404 Not Found\r\n");
-            }
-         break;
-         case HTTP_LENGTH_REQUIRED:
-            {
-            UClientImage_Base::iov_vec[0].iov_base =       (caddr_t) "HTTP/1.1 411 Length Required\r\n";  
-            UClientImage_Base::iov_vec[0].iov_len  = U_CONSTANT_SIZE("HTTP/1.1 411 Length Required\r\n");
-            }
-         break;
-         case HTTP_ENTITY_TOO_LARGE:
-            {
-            UClientImage_Base::iov_vec[0].iov_base =       (caddr_t) "HTTP/1.1 413 Request Entity Too Large\r\n";  
-            UClientImage_Base::iov_vec[0].iov_len  = U_CONSTANT_SIZE("HTTP/1.1 413 Request Entity Too Large\r\n");
-            }
-         break;
+      // 4xx indicates an error on the client's part
+      case HTTP_BAD_REQUEST:
+         {
+         UClientImage_Base::iov_vec[0].iov_base =       (caddr_t) "HTTP/1.1 400 Bad Request\r\n";  
+         UClientImage_Base::iov_vec[0].iov_len  = U_CONSTANT_SIZE("HTTP/1.1 400 Bad Request\r\n");
+         }
+      break;
+      case HTTP_UNAUTHORIZED:
+         {
+         UClientImage_Base::iov_vec[0].iov_base =       (caddr_t) "HTTP/1.1 401 Authorization Required\r\n";  
+         UClientImage_Base::iov_vec[0].iov_len  = U_CONSTANT_SIZE("HTTP/1.1 401 Authorization Required\r\n");
+         }
+      break;
+      case HTTP_FORBIDDEN:
+         {
+         UClientImage_Base::iov_vec[0].iov_base =       (caddr_t) "HTTP/1.1 403 Forbidden\r\n";  
+         UClientImage_Base::iov_vec[0].iov_len  = U_CONSTANT_SIZE("HTTP/1.1 403 Forbidden\r\n");
+         }
+      break;
+      case HTTP_NOT_FOUND:
+         {
+         UClientImage_Base::iov_vec[0].iov_base =       (caddr_t) "HTTP/1.1 404 Not Found\r\n";  
+         UClientImage_Base::iov_vec[0].iov_len  = U_CONSTANT_SIZE("HTTP/1.1 404 Not Found\r\n");
+         }
+      break;
+      case HTTP_LENGTH_REQUIRED:
+         {
+         UClientImage_Base::iov_vec[0].iov_base =       (caddr_t) "HTTP/1.1 411 Length Required\r\n";  
+         UClientImage_Base::iov_vec[0].iov_len  = U_CONSTANT_SIZE("HTTP/1.1 411 Length Required\r\n");
+         }
+      break;
+      case HTTP_ENTITY_TOO_LARGE:
+         {
+         UClientImage_Base::iov_vec[0].iov_base =       (caddr_t) "HTTP/1.1 413 Request Entity Too Large\r\n";  
+         UClientImage_Base::iov_vec[0].iov_len  = U_CONSTANT_SIZE("HTTP/1.1 413 Request Entity Too Large\r\n");
+         }
+      break;
 
-         // 5xx indicates an error on the server's part
-         case HTTP_INTERNAL_ERROR:
-            {
-            UClientImage_Base::iov_vec[0].iov_base =       (caddr_t) "HTTP/1.1 500 Internal Server Error\r\n";  
-            UClientImage_Base::iov_vec[0].iov_len  = U_CONSTANT_SIZE("HTTP/1.1 500 Internal Server Error\r\n");
-            }
-         break;
-         case HTTP_NOT_IMPLEMENTED:
-            {
-            UClientImage_Base::iov_vec[0].iov_base =       (caddr_t) "HTTP/1.1 501 Not Implemented\r\n";  
-            UClientImage_Base::iov_vec[0].iov_len  = U_CONSTANT_SIZE("HTTP/1.1 501 Not Implemented\r\n");
-            }
-         break;
-         case HTTP_VERSION:
-            {
-            UClientImage_Base::iov_vec[0].iov_base =       (caddr_t) "HTTP/1.1 505 HTTP Version Not Supported\r\n";  
-            UClientImage_Base::iov_vec[0].iov_len  = U_CONSTANT_SIZE("HTTP/1.1 505 HTTP Version Not Supported\r\n");
-            }
-         break;
-         case HTTP_NETWORK_AUTHENTICATION_REQUIRED:
-            {
-            UClientImage_Base::iov_vec[0].iov_base =       (caddr_t) "HTTP/1.1 511 Network authentication required\r\n";  
-            UClientImage_Base::iov_vec[0].iov_len  = U_CONSTANT_SIZE("HTTP/1.1 511 Network authentication required\r\n");
-            }
-         break;
+      // 5xx indicates an error on the server's part
+      case HTTP_INTERNAL_ERROR:
+         {
+         UClientImage_Base::iov_vec[0].iov_base =       (caddr_t) "HTTP/1.1 500 Internal Server Error\r\n";  
+         UClientImage_Base::iov_vec[0].iov_len  = U_CONSTANT_SIZE("HTTP/1.1 500 Internal Server Error\r\n");
+         }
+      break;
+      case HTTP_NOT_IMPLEMENTED:
+         {
+         UClientImage_Base::iov_vec[0].iov_base =       (caddr_t) "HTTP/1.1 501 Not Implemented\r\n";  
+         UClientImage_Base::iov_vec[0].iov_len  = U_CONSTANT_SIZE("HTTP/1.1 501 Not Implemented\r\n");
+         }
+      break;
+      case HTTP_VERSION:
+         {
+         UClientImage_Base::iov_vec[0].iov_base =       (caddr_t) "HTTP/1.1 505 HTTP Version Not Supported\r\n";  
+         UClientImage_Base::iov_vec[0].iov_len  = U_CONSTANT_SIZE("HTTP/1.1 505 HTTP Version Not Supported\r\n");
+         }
+      break;
+      case HTTP_NETWORK_AUTHENTICATION_REQUIRED:
+         {
+         UClientImage_Base::iov_vec[0].iov_base =       (caddr_t) "HTTP/1.1 511 Network authentication required\r\n";  
+         UClientImage_Base::iov_vec[0].iov_len  = U_CONSTANT_SIZE("HTTP/1.1 511 Network authentication required\r\n");
+         }
+      break;
 
-         default:
-            {
-            uint32_t sz;
-            const char* status = getStatusDescription(&sz);
+      default:
+         {
+         uint32_t sz;
+         const char* status = getStatusDescription(&sz);
 
-            UClientImage_Base::iov_vec[0].iov_base = response_buffer;
-            UClientImage_Base::iov_vec[0].iov_len  = 9+u__snprintf(response_buffer+9, sizeof(response_buffer)-9, U_CONSTANT_TO_PARAM("%u %.*s\r\n"), old_response_code, sz, status);
-            }
+         // 9 => U_CONSTANT_SIZE("HTTP/1.1 ")
+
+         UClientImage_Base::iov_vec[0].iov_base = response_buffer;
+         UClientImage_Base::iov_vec[0].iov_len  = 9+u__snprintf(response_buffer+9, sizeof(response_buffer)-9, U_CONSTANT_TO_PARAM("%u %.*s\r\n"), U_http_info.nResponseCode, sz, status);
          }
       }
 
@@ -6686,14 +6675,6 @@ void UHTTP::handlerResponse()
    else
 #endif
    {
-   U_INTERNAL_DUMP("UClientImage_Base::iov_vec[0].iov_len = %u UClientImage_Base::iov_vec[1].iov_len = %u", UClientImage_Base::iov_vec[0].iov_len, UClientImage_Base::iov_vec[1].iov_len)
-
-   U_INTERNAL_ASSERT_EQUALS(UClientImage_Base::iov_vec[1].iov_len, 51)
-
-// UClientImage_Base::setHeaderForResponse(6+29+2+12+2); // Date: Wed, 20 Jun 2012 11:43:17 GMT\r\nServer: ULib\r\n
-
-   setStatusDescription();
-
    // NB: all other responses must include an entity body or a Content-Length header field defined with a value of zero (0)
 
    char* ptr;
@@ -6789,10 +6770,7 @@ void UHTTP::handlerResponse()
          {
          UClientImage_Base::wbuffer->swap(*ext);
 
-         U_INTERNAL_DUMP("UClientImage_Base::wbuffer(%u) = %#V", UClientImage_Base::wbuffer->size(), UClientImage_Base::wbuffer->rep)
-         U_INTERNAL_DUMP("UClientImage_Base::body(%u) = %V",     UClientImage_Base::body->size(),    UClientImage_Base::body->rep)
-
-         return;
+         goto end;
          }
 
       ptr2 = ext->data();
@@ -6808,20 +6786,32 @@ void UHTTP::handlerResponse()
 
          // A server implements an HSTS policy by supplying a header over an HTTPS connection (HSTS headers over HTTP are ignored)
 
-   #     if defined(USE_LIBSSL) && defined(U_HTTP_STRICT_TRANSPORT_SECURITY)
+#     if defined(USE_LIBSSL) && defined(U_HTTP_STRICT_TRANSPORT_SECURITY)
          if (UServer_Base::bssl &&
              uri_strict_transport_security_mask == (void*)1L)
             {
             ptr2 =                 "Strict-Transport-Security: max-age=31536000; includeSubDomains; preload\r\nContent-Length: 0\r\n\r\n";
              sz2 = U_CONSTANT_SIZE("Strict-Transport-Security: max-age=31536000; includeSubDomains; preload\r\nContent-Length: 0\r\n\r\n");
             }
-   #     endif
+#     endif
          }
       }
 
    U_MEMCPY(ptr, ptr2, sz2);
 
    UClientImage_Base::wbuffer->size_adjust(sz1 + sz2);
+
+end:
+   U_INTERNAL_DUMP("UClientImage_Base::iov_vec[0].iov_len = %u UClientImage_Base::iov_vec[1].iov_len = %u", UClientImage_Base::iov_vec[0].iov_len, UClientImage_Base::iov_vec[1].iov_len)
+
+   U_INTERNAL_ASSERT_EQUALS(UClientImage_Base::iov_vec[1].iov_len, 17+6+29+2+12+2) // HTTP/1.1 200 OK\r\nDate: Wed, 20 Jun 2012 11:43:17 GMT\r\nServer: ULib\r\n
+
+   if (U_http_info.nResponseCode != HTTP_OK)
+      {
+      setStatusDescription();
+
+      UClientImage_Base::setHeaderForResponse(6+29+2+12+2); // Date: Wed, 20 Jun 2012 11:43:17 GMT\r\nServer: ULib\r\n
+      }
    }
 
    U_INTERNAL_DUMP("UClientImage_Base::wbuffer(%u) = %#V", UClientImage_Base::wbuffer->size(), UClientImage_Base::wbuffer->rep)
@@ -7385,10 +7375,6 @@ void UHTTP::setDynamicResponse()
             U_ASSERT(UClientImage_Base::body->empty())
 
             UClientImage_Base::setRequestProcessed();
-
-            UClientImage_Base::setHeaderForResponse(6+29+2+12+2); // Date: Wed, 20 Jun 2012 11:43:17 GMT\r\nServer: ULib\r\n
-
-            setStatusDescription();
 
             return;
             }
@@ -10863,7 +10849,7 @@ loop:
 noparse:
       U_ASSERT(UClientImage_Base::body->empty())
 
-      UClientImage_Base::setNoHeaderForResponse();
+      UClientImage_Base::bnoheader = true;
 
       U_RETURN(true);
       }
@@ -12015,22 +12001,19 @@ loop: while (u__isalpha(*++ptr1)) {}
          {
          old_sz = sz;
 
+         ULog::updateDate3(U_NULLPTR);
+
          U_http_info.nResponseCode = HTTP_OK;
 
          UClientImage_Base::body->clear();
          UClientImage_Base::wbuffer->size_adjust_constant(0U);
 
-         UClientImage_Base::setHeaderForResponse(6+29+2+12+2); // Date: Wed, 20 Jun 2012 11:43:17 GMT\r\nServer: ULib\r\n
-
-         setStatusDescription();
-
-         U_INTERNAL_ASSERT_EQUALS(UClientImage_Base::iov_vec[1].iov_base, ULog::date.date3)
-
-         ULog::updateDate3(U_NULLPTR);
-
 #     ifdef U_STATIC_ORM_DRIVER_PGSQL
-         UServer_Base::handler_db1->reset();
-         UServer_Base::handler_db2->reset();
+         if (UServer_Base::handler_db1)
+            {
+            UServer_Base::handler_db1->reset();
+            UServer_Base::handler_db2->reset();
+            }
 #     endif
 
 next:    if (*ptr1 == '?')

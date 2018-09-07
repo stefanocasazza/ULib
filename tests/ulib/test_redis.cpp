@@ -1,6 +1,5 @@
 // test_redis.cpp
 
-#include <ulib/net/tcpsocket.h>
 #include <ulib/net/client/redis.h>
 
 int main(int argc, char *argv[], char* env[])
@@ -9,7 +8,7 @@ int main(int argc, char *argv[], char* env[])
 
    U_TRACE(5,"main(%d)",argc)
 
-   UREDISClient<UTCPSocket> rc;
+   UREDISClient<UUnixSocket> rc;
 
    if (rc.connect())
       {
@@ -68,8 +67,6 @@ int main(int argc, char *argv[], char* env[])
       cout.write(buffer, u__snprintf(buffer, sizeof(buffer), U_CONSTANT_TO_PARAM("MYKEY2 = %V\n"), rc.vitem[0].rep));
 
       ok = rc.sadd(U_CONSTANT_TO_PARAM("MY_SET"), U_CONSTANT_TO_PARAM("123 14"));
-
-      U_INTERNAL_ASSERT(ok)
 
       ok = rc.smembers(U_CONSTANT_TO_PARAM("MY_SET"));
 

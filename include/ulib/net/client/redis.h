@@ -15,6 +15,7 @@
 #define ULIB_REDIS_H 1
 
 #include <ulib/notifier.h>
+#include <ulib/net/unixsocket.h>
 #include <ulib/net/client/client.h>
 
 /**
@@ -356,7 +357,7 @@ public:
    {
       U_TRACE(0, "UREDISClient_Base::geoadd(%.*S,%u)", len, param, len)
 
-      if (processRequest(U_RC_INT, U_CONSTANT_TO_PARAM("GEOADD"), param, len)) return getBool();
+      if (processRequest(U_RC_INT, U_CONSTANT_TO_PARAM("GEOADD"), param, len)) return getUInt8();
 
       U_RETURN(false);
    }
@@ -377,7 +378,7 @@ public:
       {
       U_TRACE(0, "UREDISClient_Base::sadd(%.*S,%u,%.*S,%u)", keylen, key, keylen, len, param, len)
 
-      if (processRequest(U_RC_INT, U_CONSTANT_TO_PARAM("SADD"), key, keylen, param, len)) return getBool();
+      if (processRequest(U_RC_INT, U_CONSTANT_TO_PARAM("SADD"), key, keylen, param, len)) return getUInt8();
 
       U_RETURN(false);
       }
@@ -446,7 +447,7 @@ public:
       {
       U_TRACE(0, "UREDISClient_Base::srem(%.*S,%u,%.*S,%u)", keylen, key, keylen, len, param, len)
 
-      if (processRequest(U_RC_INT, U_CONSTANT_TO_PARAM("SREM"), key, keylen, param, len)) return getBool();
+      if (processRequest(U_RC_INT, U_CONSTANT_TO_PARAM("SREM"), key, keylen, param, len)) return getUInt8();
 
       U_RETURN(false);
       }
@@ -516,11 +517,7 @@ public:
       {
       U_TRACE(0, "UREDISClient_Base::exists(%.*S,%u)", keylen, key, keylen)
 
-      if (processRequest(U_RC_INT, U_CONSTANT_TO_PARAM("EXISTS"), key, keylen) &&
-          getUInt8())
-         {
-         U_RETURN(true);
-         }
+      if (processRequest(U_RC_INT, U_CONSTANT_TO_PARAM("EXISTS"), key, keylen)) return getUInt8();
 
       U_RETURN(false);
       }
@@ -529,11 +526,7 @@ public:
       {
       U_TRACE(0, "UREDISClient_Base::hexists(%.*S,%u,%.*S,%u)", keylen, key, keylen, fieldlen, field, fieldlen)
 
-      if (processRequest(U_RC_INT, U_CONSTANT_TO_PARAM("HEXISTS"), key, keylen, field, fieldlen) &&
-          getUInt8())
-         {
-         U_RETURN(true);
-         }
+      if (processRequest(U_RC_INT, U_CONSTANT_TO_PARAM("HEXISTS"), key, keylen, field, fieldlen)) return getUInt8();
 
       U_RETURN(false);
       }
@@ -594,7 +587,7 @@ public:
       {
       U_TRACE(0, "UREDISClient_Base::persist(%.*S,%u)", keylen, key, keylen)
 
-      if (processRequest(U_RC_INT, U_CONSTANT_TO_PARAM("PERSIST"), key, keylen)) return getBool();
+      if (processRequest(U_RC_INT, U_CONSTANT_TO_PARAM("PERSIST"), key, keylen)) return getUInt8();
 
       U_RETURN(false);
       }
@@ -605,7 +598,7 @@ public:
 
       U_INTERNAL_ASSERT_EQUALS(u_buffer_len, 0)
 
-      if (processRequest(U_RC_INT, U_CONSTANT_TO_PARAM("MOVE"), key, keylen, u_buffer, u_num2str32(destination_db, u_buffer) - u_buffer)) return getBool();
+      if (processRequest(U_RC_INT, U_CONSTANT_TO_PARAM("MOVE"), key, keylen, u_buffer, u_num2str32(destination_db, u_buffer) - u_buffer)) return getUInt8();
 
       U_RETURN(false);
       }
@@ -616,7 +609,7 @@ public:
 
       U_INTERNAL_ASSERT_EQUALS(u_buffer_len, 0)
 
-      if (processRequest(U_RC_INT, U_CONSTANT_TO_PARAM("EXPIRE"), key, keylen, u_buffer, u_num2str32(sec, u_buffer) - u_buffer)) return getBool();
+      if (processRequest(U_RC_INT, U_CONSTANT_TO_PARAM("EXPIRE"), key, keylen, u_buffer, u_num2str32(sec, u_buffer) - u_buffer)) return getUInt8();
 
       U_RETURN(false);
       }
@@ -627,7 +620,7 @@ public:
 
       U_INTERNAL_ASSERT_EQUALS(u_buffer_len, 0)
 
-      if (processRequest(U_RC_INT, U_CONSTANT_TO_PARAM("PEXPIRE"), key, keylen, u_buffer, u_num2str32(millisec, u_buffer) - u_buffer)) return getBool();
+      if (processRequest(U_RC_INT, U_CONSTANT_TO_PARAM("PEXPIRE"), key, keylen, u_buffer, u_num2str32(millisec, u_buffer) - u_buffer)) return getUInt8();
 
       U_RETURN(false);
       }
@@ -639,9 +632,9 @@ public:
       U_INTERNAL_ASSERT_EQUALS(u_buffer_len, 0)
 
 #  if SIZEOF_TIME_T == 8
-      if (processRequest(U_RC_INT, U_CONSTANT_TO_PARAM("EXPIREAT"), key, keylen, u_buffer, u_num2str64(timestamp, u_buffer) - u_buffer)) return getBool();
+      if (processRequest(U_RC_INT, U_CONSTANT_TO_PARAM("EXPIREAT"), key, keylen, u_buffer, u_num2str64(timestamp, u_buffer) - u_buffer)) return getUInt8();
 #  else
-      if (processRequest(U_RC_INT, U_CONSTANT_TO_PARAM("EXPIREAT"), key, keylen, u_buffer, u_num2str32(timestamp, u_buffer) - u_buffer)) return getBool();
+      if (processRequest(U_RC_INT, U_CONSTANT_TO_PARAM("EXPIREAT"), key, keylen, u_buffer, u_num2str32(timestamp, u_buffer) - u_buffer)) return getUInt8();
 #  endif
 
       U_RETURN(false);
@@ -653,7 +646,7 @@ public:
 
       U_INTERNAL_ASSERT_EQUALS(u_buffer_len, 0)
 
-      if (processRequest(U_RC_INT, U_CONSTANT_TO_PARAM("PEXPIREAT"), key, keylen, u_buffer, u_num2str64(timestamp, u_buffer) - u_buffer)) return getBool();
+      if (processRequest(U_RC_INT, U_CONSTANT_TO_PARAM("PEXPIREAT"), key, keylen, u_buffer, u_num2str64(timestamp, u_buffer) - u_buffer)) return getUInt8();
 
       U_RETURN(false);
       }
@@ -705,7 +698,7 @@ public:
       {
       U_TRACE(0, "UREDISClient_Base::publish(%.*S,%u,%.*S,%u)", channel_len, channel, channel_len, msg_len, msg, msg_len)
 
-      if (processRequest(U_RC_INT, U_CONSTANT_TO_PARAM("PUBLISH"), channel, channel_len, msg, msg_len)) return getBool();
+      if (processRequest(U_RC_INT, U_CONSTANT_TO_PARAM("PUBLISH"), channel, channel_len, msg, msg_len)) return getUInt8();
 
       U_RETURN(false);
       }
@@ -771,6 +764,7 @@ protected:
       err = 0;
       }
 
+   void init();
    void processResponse();
    bool processRequest(char recvtype);
 
@@ -860,6 +854,53 @@ public:
 
 private:
    U_DISALLOW_COPY_AND_ASSIGN(UREDISClient)
+};
+
+template <> class U_EXPORT UREDISClient<UUnixSocket> : public UREDISClient_Base {
+public:
+
+   UREDISClient() : UREDISClient_Base()
+      {
+      U_TRACE_CTOR(0, UREDISClient<UUnixSocket>, "")
+
+      U_NEW(UUnixSocket, UClient_Base::socket, UUnixSocket(false));
+      }
+
+   ~UREDISClient()
+      {
+      U_TRACE_DTOR(0, UREDISClient<UUnixSocket>)
+      }
+
+   // Connect to REDIS server via pathname (unix socket)
+
+   bool connect(const char* pathname = "/tmp/redis.sock", unsigned int _port = 6379)
+      {
+      U_TRACE(0, "UREDISClient<UUnixSocket>::connect(%S,%u)", pathname, _port)
+
+      UString path(pathname);
+
+      if (UClient_Base::socket->connectServer(path, port))
+         {
+         UREDISClient_Base::init();
+
+         U_RETURN(true);
+         }
+
+      UClient_Base::response.snprintf(U_CONSTANT_TO_PARAM("Sorry, couldn't connect to unix socket %v%R"), path.rep, 0); // NB: the last argument (0) is necessary...
+
+      U_CLIENT_LOG("%v", UClient_Base::response.rep)
+
+      U_RETURN(false);
+      }
+
+   // DEBUG
+
+#if defined(U_STDCPP_ENABLE) && defined(DEBUG)
+   const char* dump(bool _reset) const { return UREDISClient_Base::dump(_reset); }
+#endif
+
+private:
+   U_DISALLOW_COPY_AND_ASSIGN(UREDISClient<UUnixSocket>)
 };
 
 #endif

@@ -21,6 +21,23 @@ UREDISClient_Base* UREDISClient_Base::pthis;
 
 // Connect to REDIS server
 
+void UREDISClient_Base::init()
+{
+   U_TRACE_NO_PARAM(0, "UREDISClient_Base::init()")
+
+   U_DUMP("getRedisVersion() = %V", getRedisVersion().rep)
+
+   clear();
+
+   pthis = this;
+
+   UClient_Base::response.clear();
+
+   UClient_Base::reserve(UString::_getReserveNeed());
+
+   UClient_Base::setForResizeResponseBuffer(manageResponseBufferResize);
+}
+
 bool UREDISClient_Base::connect(const char* phost, unsigned int _port)
 {
    U_TRACE(0, "UREDISClient_Base::connect(%S,%u)", phost, _port)
@@ -49,17 +66,7 @@ bool UREDISClient_Base::connect(const char* phost, unsigned int _port)
    if (UClient_Base::setHostPort(host, _port) &&
        UClient_Base::connect())
       {
-      U_DUMP("getRedisVersion() = %V", getRedisVersion().rep)
-
-      clear();
-
-      pthis = this;
-
-      UClient_Base::response.clear();
-
-      UClient_Base::reserve(UString::_getReserveNeed());
-
-      UClient_Base::setForResizeResponseBuffer(manageResponseBufferResize);
+      init();
 
       U_RETURN(true);
       }
@@ -503,15 +510,14 @@ bool UREDISClient_Base::deleteKeys(const char* pattern, uint32_t len) // Delete 
 {
    U_TRACE(0, "UREDISClient_Base::deleteKeys(%.*S,%u)", len, pattern, len)
 
-   char buf[4096];
-   uint32_t buf_len = u__snprintf(buf, U_CONSTANT_SIZE(buf), U_CONSTANT_TO_PARAM("MATCH %.*s COUNT 1000"), len, pattern);
+   char buf[4096], ncursor[22];
+   uint32_t cursor = 0, buf_len = u__snprintf(buf, U_CONSTANT_SIZE(buf), U_CONSTANT_TO_PARAM("MATCH %.*s COUNT 1000"), len, pattern);
 
-   if (processRequest(U_RC_MULTIBULK, U_CONSTANT_TO_PARAM("SCAN"), U_CONSTANT_TO_PARAM("0"), buf, buf_len))
+   while (processRequest(U_RC_MULTIBULK, U_CONSTANT_TO_PARAM("SCAN"), ncursor, u_num2str32(cursor,ncursor)-ncursor, buf, buf_len))
       {
-      char ncursor[22];
-      uint32_t cursor = getULong();
+      cursor = getULong();
 
-loop: if (setMultiBulk())
+      if (setMultiBulk())
          {
          x.unQuote();
 
@@ -519,13 +525,6 @@ loop: if (setMultiBulk())
          }
 
       if (cursor == 0) U_RETURN(true);
-
-      if (processRequest(U_RC_MULTIBULK, U_CONSTANT_TO_PARAM("SCAN"), ncursor, u__snprintf(ncursor, u_num2str32(cursor,ncursor)-ncursor, buf, buf_len)))
-         {
-         cursor = getULong();
-
-         goto loop;
-         }
       }
 
    U_RETURN(true);

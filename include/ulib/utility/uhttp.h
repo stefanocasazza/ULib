@@ -1375,7 +1375,7 @@ private:
 #endif
 
 private:
-   static uint32_t old_response_code, is_response_compressed;
+   static uint32_t is_response_compressed;
 
    static void setMimeIndex()
       {

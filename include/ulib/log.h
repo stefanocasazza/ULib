@@ -39,9 +39,11 @@ class U_EXPORT ULog : public UFile {
 public:
 
    typedef struct log_date {
-      char date1[17+1];             // 18/06/12 18:45:56
-      char date2[26+1];             // 04/Jun/2012:18:18:37 +0200
-      char date3[6+29+2+12+2+19+1]; // Date: Wed, 20 Jun 2012 11:43:17 GMT\r\nServer: ULib\r\nConnection: close\r\n
+      char date1[17+1];          // 18/06/12 18:45:56
+      char date2[26+1];          // 04/Jun/2012:18:18:37 +0200
+      char header1[17];          // HTTP/1.1 200 OK\r\n
+      char date3[6+29];          // Date: Wed, 20 Jun 2012 11:43:17 GMT
+      char header2[2+12+2+19+1]; // \r\nServer: ULib\r\nConnection: close\r\n
    } log_date;
 
    typedef struct log_data {

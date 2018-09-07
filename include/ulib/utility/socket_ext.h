@@ -197,7 +197,7 @@ private:
 
    // write data from multiple buffers
 
-   static uint32_t iov_resize(struct iovec* liov, struct iovec* iov, int iovcnt, uint32_t byte_written);
+   static uint32_t iov_resize(struct iovec* liov, const struct iovec* iov, int iovcnt, uint32_t byte_written);
 
    static uint32_t writev(USocket* sk, struct iovec* iov, int iovcnt, uint32_t count, int timeoutMS);
 

@@ -6,7 +6,7 @@
 
 start_msg redis
 
- UTRACE="0 50M 0"
+#UTRACE="0 50M 0"
 #UTRACE_SIGNAL="0 100M 0"
 #UOBJDUMP="0 50M 1000"
 #USIMERR="error.sim"
