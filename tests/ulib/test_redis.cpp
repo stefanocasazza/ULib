@@ -68,6 +68,8 @@ int main(int argc, char *argv[], char* env[])
 
       ok = rc.sadd(U_CONSTANT_TO_PARAM("MY_SET"), U_CONSTANT_TO_PARAM("123 14"));
 
+      U_INTERNAL_ASSERT(ok)
+
       ok = rc.smembers(U_CONSTANT_TO_PARAM("MY_SET"));
 
       U_INTERNAL_ASSERT(ok)

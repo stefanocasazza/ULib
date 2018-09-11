@@ -42,9 +42,9 @@
 #  define HAVE_SYS_IOCTL_H 1
 #  define PACKAGE_NAME "ULib"
 #  define HAVE_NETINET_IN_H 1
-#  define ULIB_VERSION "1.4.2"
+#  define ULIB_VERSION "2.4.2"
 #  define HAVE_SYS_SENDFILE_H 1
-#  define PACKAGE_VERSION "1.4.2"
+#  define PACKAGE_VERSION "2.4.2"
 #  define HAVE_NETPACKET_PACKET_H 1
 #  define FNM_PATHNAME (1 << 0)
 #  define FNM_NOESCAPE (1 << 1)

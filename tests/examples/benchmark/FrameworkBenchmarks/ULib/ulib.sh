@@ -4,7 +4,7 @@ fw_depends gcc-6
 
 fw_installed ulib && return 0
 
-ULIB_VERSION=1.4.2
+ULIB_VERSION=2.4.2
 ULIB_ROOT=$IROOT/ULib
 ULIB_DOCUMENT_ROOT=$ULIB_ROOT/ULIB_DOCUMENT_ROOT
 

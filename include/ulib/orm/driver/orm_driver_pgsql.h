@@ -51,7 +51,7 @@ extern U_EXPORT int PQenterQueueMode(PGconn* conn) { return 0; }
 #undef  PACKAGE_STRING
 #undef  PACKAGE_VERSION
 #define PACKAGE_NAME   "ULib"
-#define PACKAGE_STRING "ULib 1.4.2"
+#define PACKAGE_STRING "ULib 2.4.2"
 #define PACKAGE_VERSION ULIB_VERSION
 
 /**

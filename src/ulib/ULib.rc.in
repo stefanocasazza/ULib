@@ -1,8 +1,8 @@
 #include <winver.h>
 
 VS_VERSION_INFO VERSIONINFO
-  FILEVERSION 1,4,2,0
-  PRODUCTVERSION 1,4,2,0
+  FILEVERSION 2,4,2,0
+  PRODUCTVERSION 2,4,2,0
   FILEFLAGSMASK 0
   FILEFLAGS 0
   FILEOS VOS__WINDOWS32
@@ -16,11 +16,11 @@ VS_VERSION_INFO VERSIONINFO
 	VALUE "CompanyName", "Unirel srl"
 	VALUE "FileDescription", "ULib"
 	VALUE "FileVersion", "@ULIB_VERSION@.0"
-	VALUE "InternalName", "libulib-1.4-2"
+	VALUE "InternalName", "libulib-2.4-2"
 	VALUE "LegalCopyright", "Copyright © 2014 Unirel"
-	VALUE "OriginalFilename", "libulib-1.4-2.dll"
+	VALUE "OriginalFilename", "libulib-2.4-2.dll"
 	VALUE "ProductName", "ULib"
-	VALUE "ProductVersion", "1.4.2"
+	VALUE "ProductVersion", "2.4.2"
       END
     END
     BLOCK "VarFileInfo"

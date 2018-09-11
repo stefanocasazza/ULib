@@ -25,7 +25,7 @@
 # This macro must be the very first invoked
 
 AC_PREREQ([2.69])
-AC_INIT([ULib],[1.4.2],[stefano.casazza@gmail.com],[ULib],[http://stefanocasazza.github.io/ULib/])
+AC_INIT([ULib],[2.4.2],[stefano.casazza@gmail.com],[ULib],[http://stefanocasazza.github.io/ULib/])
 AC_CONFIG_SRCDIR([src/ulib/string.cpp])
 AC_CONFIG_MACRO_DIR([m4])
 

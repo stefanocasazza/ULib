@@ -745,7 +745,7 @@ bool UServer_Base::checkThrottlingBeforeSend(bool bwrite)
             U_INTERNAL_ASSERT_EQUALS(pClientImage->started_at, 0)
             U_ASSERT(pClientImage->uri.equal(U_HTTP_URI_TO_PARAM))
 
-            U_INTERNAL_DUMP("pClientImage->bytes_sent = %llu UClientImage_Base::ncount = %u", pClientImage->bytes_sent, UClientImage_Base::ncount)
+            U_INTERNAL_DUMP("pClientImage->bytes_sent = %llu", pClientImage->bytes_sent)
 
             pClientImage->started_at = u_now->tv_sec;
 

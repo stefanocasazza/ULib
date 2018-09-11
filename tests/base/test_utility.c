@@ -378,7 +378,7 @@ int main(int argc, char* argv[])
    U_INTERNAL_ASSERT( ok )
    U_INTERNAL_ASSERT_EQUALS( memcmp(path, U_CONSTANT_TO_PARAM("../../../../../../../..")), 0 )
 
-   (void) strcpy(path, "/usr/src/ULib-1.4.2/tests/examples/benchmark/docroot././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././../../../../../../../../");
+   (void) strcpy(path, "/usr/src/ULib-2.4.2/tests/examples/benchmark/docroot././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././../../../../../../../../");
 
    ok = u_canonicalize_pathname(path, strlen(path)) == U_CONSTANT_SIZE("/");
 

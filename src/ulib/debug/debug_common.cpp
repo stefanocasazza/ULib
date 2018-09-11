@@ -36,7 +36,7 @@
 #  define PACKAGE_NAME ULib
 #  endif
 #  ifndef PACKAGE_STRING
-#  define PACKAGE_STRING "ULib 1.4.2"
+#  define PACKAGE_STRING "ULib 2.4.2"
 #  endif
 
 extern "C" void U_EXPORT u_debug_at_exit(void)

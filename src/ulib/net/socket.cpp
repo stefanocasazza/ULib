@@ -474,6 +474,13 @@ void USocket::reusePort(int _flags)
    U_CHECK_MEMORY
 
 #ifdef U_LINUX
+# if (!defined(U_SERVER_CAPTIVE_PORTAL) || defined(ENABLE_THREAD)) && !defined(HAVE_OLD_IOSTREAM)
+   if (enable_bpf() == false) // Enable BPF filtering to distribute the ingress packets among the SO_REUSEPORT sockets
+      {
+      U_WARNING("SO_ATTACH_REUSEPORT_CBPF failed, port %u", iLocalPort);
+      }
+# endif
+
    U_INTERNAL_DUMP("breuseport = %b", breuseport)
 
    if (breuseport)
@@ -503,16 +510,9 @@ void USocket::reusePort(int _flags)
          U_ERROR("SO_REUSEPORT failed, port %u", iLocalPort);
          }
 
-#  if (!defined(U_SERVER_CAPTIVE_PORTAL) || defined(ENABLE_THREAD)) && !defined(HAVE_OLD_IOSTREAM)
-      if (enable_bpf() == false) // Enable BPF filtering to distribute the ingress packets among the SO_REUSEPORT sockets
-         {
-         U_WARNING("SO_ATTACH_REUSEPORT_CBPF failed, port %u", iLocalPort);
-         }
-
 #    if defined(SO_INCOMING_CPU) && !defined(U_COVERITY_FALSE_POSITIVE)
       if (incoming_cpu != -1) bincoming_cpu = setSockOpt(SOL_SOCKET, SO_INCOMING_CPU, (void*)&incoming_cpu);
 #    endif
-#  endif
 
       (void) U_FF_SYSCALL(close, "%d", old);
       }

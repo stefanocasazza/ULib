@@ -329,9 +329,9 @@ public:
 
    // NB: these are for ULib Servlet Page (USP) - USP_PRINTF...
 
-   static UString* _value;
-   static UString* _buffer;
-   static UString* _encoded;
+   static UString* usp_value;
+   static UString* usp_buffer;
+   static UString* usp_encoded;
 
    bool isOpen()
       {
@@ -457,9 +457,8 @@ protected:
    bool logCertificate(); // append on log the peer certicate of client ("issuer","serial")
    bool askForClientCertificate();
 
-   static int idx, iovcnt;
    static UTimeVal* chronometer;
-   static uint32_t ncount, nrequest, resto;
+   static uint32_t nrequest, resto;
    static long time_between_request, time_run;
 
 #if defined(U_SERVER_CHECK_TIME_BETWEEN_REQUEST) || (defined(DEBUG) && !defined(U_LOG_DISABLE))
@@ -507,8 +506,6 @@ protected:
       U_TRACE_NO_PARAM(0, "UClientImage::setPendingSendfile()")
 
       U_INTERNAL_ASSERT_DIFFERS(U_ClientImage_parallelization, U_PARALLELIZATION_CHILD)
-
-      count = ncount;
 
       prepareForSendfile();
 

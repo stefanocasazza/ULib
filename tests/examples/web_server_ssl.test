@@ -21,7 +21,7 @@ rm -f db/session.ssl* /tmp/ssl_session.txt /tmp/byterange* /tmp/*.memusage.* /tm
 					 trace.*userver_ssl*.[0-9]*			  object.*userver_ssl*.[0-9]*				 stack.*userver_ssl*.[0-9]* mempool.*userver_ssl*.[0-9]* \
       $DOC_ROOT/trace.*userver_ssl*.[0-9]* $DOC_ROOT/object.*userver_ssl*.[0-9]* $DOC_ROOT/stack.*userver_ssl*.[0-9]* $DOC_ROOT/mempool.*userver_ssl*.[0-9]*
 
-#UTRACE="0 110M -1"
+#UTRACE="0 110M 0"
 #UTRACE_SIGNAL="0 50M 0"
 #UOBJDUMP="0 10M 500"
 #USIMERR="error.sim"

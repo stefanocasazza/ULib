@@ -126,7 +126,7 @@ endif
 ## TESTS_ENVIRONMENT = srcdir=$(srcdir)
 ## AM_LFLAGS = -olex.yy.c -S$(shell pwd)/../../include/ulib/flex/flex.skl
 ## NB: il comando per generare il file .cc dal file .ll viene lanciato in una subdirectory:
-## sh -x ../../ylwrap test_flexer.ll lex.yy.c test_flexer.cc -- flex -olex.yy.c -S/usr/src/ULib-1.4.2/include/ulib/flex/flex.skl
+## sh -x ../../ylwrap test_flexer.ll lex.yy.c test_flexer.cc -- flex -olex.yy.c -S/usr/src/ULib-2.4.2/include/ulib/flex/flex.skl
 
 if USE_PARSER
 ##AM_LFLAGS = -olex.yy.c

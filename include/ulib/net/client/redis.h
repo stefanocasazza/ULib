@@ -352,25 +352,23 @@ public:
 
    // GEO (@see https://redis.io/commands#geo)
    
-   // GEOADD key longitude latitude member [longitude latitude member ...]
-   bool geoadd(const char* param, uint32_t len)
-   {
+   bool geoadd(const char* param, uint32_t len) // GEOADD key longitude latitude member [longitude latitude member ...]
+      {
       U_TRACE(0, "UREDISClient_Base::geoadd(%.*S,%u)", len, param, len)
 
       if (processRequest(U_RC_INT, U_CONSTANT_TO_PARAM("GEOADD"), param, len)) return getUInt8();
 
       U_RETURN(false);
-   }
+      }
    
    // GEORADIUS key longitude latitude radius m|km|ft|mi [WITHCOORD] [WITHDIST] [WITHHASH] [COUNT count] [ASC|DESC] [STORE key] [STOREDIST key]
+
    bool georadius(const char* param, uint32_t len)
-   {
+      {
       U_TRACE(0, "UREDISClient_Base::georadius(%.*S,%u)", len, param, len)
 
-      if (processRequest(U_RC_MULTIBULK, U_CONSTANT_TO_PARAM("GEORADIUS"), param, len)) return getBool();
-
-      U_RETURN(false);
-   }
+      return processRequest(U_RC_MULTIBULK, U_CONSTANT_TO_PARAM("GEORADIUS"), param, len);
+      }
    
    // SET (@see http://redis.io/commands#set)
 
@@ -483,7 +481,9 @@ public:
       {
       U_TRACE(0, "UREDISClient_Base::del(%V)", keys.rep)
 
-      return processRequest(U_RC_INT, U_CONSTANT_TO_PARAM("DEL"), U_STRING_TO_PARAM(keys));
+      if (processRequest(U_RC_INT, U_CONSTANT_TO_PARAM("DEL"), U_STRING_TO_PARAM(keys))) return getUInt8();
+
+      U_RETURN(false);
       }
 
    bool del(const char* format, uint32_t fmt_size, ...) // Delete one or more key
@@ -662,6 +662,24 @@ public:
       return processRequest(U_RC_INLINE, U_CONSTANT_TO_PARAM("MIGRATE"), u_buffer,
                               u__snprintf(u_buffer, U_BUFFER_SIZE, U_CONSTANT_TO_PARAM("%s %d %.*s %u %u %s %s"), // host port key destination-db timeout [COPY] [REPLACE]
                                           host, port, keylen, key, destination_db, timeout_ms, COPY ? "COPY" : "", REPLACE ? "REPLACE" : ""));
+      }
+
+   bool pipeline(const char* param, uint32_t len)
+      {
+      U_TRACE(0, "UREDISClient_Base::pipeline(%.*S,%u)", len, param, len)
+
+      return processRequest(U_RC_MULTIBULK, param, len);
+      }
+
+   // RPUSH key value [value ...]
+
+   bool rpush(const char* param, uint32_t len)
+      {
+      U_TRACE(0, "UREDISClient_Base::rpush(%.*S,%u)", len, param, len)
+
+      if (processRequest(U_RC_INT, U_CONSTANT_TO_PARAM("RPUSH"), param, len)) return getUInt8();
+
+      U_RETURN(false);
       }
 
    // LIST (@see http://redis.io/list)

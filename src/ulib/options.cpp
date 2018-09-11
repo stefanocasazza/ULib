@@ -631,7 +631,7 @@ uint32_t UOptions::getopt(int argc, char** argv, int* poptind)
 #        endif
 
 /* -----------------------------------------------------------------------------
-          ULib version: 1.4.2
+          ULib version: 2.4.2
             Build ULib: Shared=yes, Static=yes
 
             Host setup: x86_64-unknown-linux-gnu
@@ -774,8 +774,8 @@ PYTHON language support: yes ( 2.7 )
                BRIGHTGREEN, RESET,
                BRIGHTGREEN, RESET,
                BRIGHTGREEN, RESET,
-               BRIGHTGREEN, RESET,
                // wrapping
+               BRIGHTYELLOW, RESET,
                BRIGHTYELLOW, RESET,
                BRIGHTYELLOW, RESET,
                BRIGHTYELLOW, RESET,

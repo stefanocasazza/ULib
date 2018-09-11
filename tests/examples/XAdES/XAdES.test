@@ -29,7 +29,7 @@ SCHEMA=XAdESv141.xsd
 
 DATA_URI=$DOCUMENT
 X509=`cat ../../ulib/CA/server.crt`
-KEY_HANDLE=/usr/src/ULib-1.4.2/tests/ulib/CA/server_nopass.key
+KEY_HANDLE=/usr/src/ULib-2.4.2/tests/ulib/CA/server_nopass.key
 DIGEST_ALGORITHM=sha256
 SIGNING_TIME=1
 CLAIMED_ROLE="Amministratore UNIREL"

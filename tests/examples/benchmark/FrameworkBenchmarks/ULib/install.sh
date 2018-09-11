@@ -2,7 +2,7 @@
 
 DIR=FrameworkBenchmarks
 
-ULIB_VERSION=1.4.2
+ULIB_VERSION=2.4.2
 IROOT=/mnt/data/$DIR/installs
 ULIB_ROOT=$IROOT/ULib
 ULIB_DOCUMENT_ROOT=$ULIB_ROOT/ULIB_DOCUMENT_ROOT
@@ -179,8 +179,8 @@ generate_profile_data()
 	cd ../..
 }
 
-rm -rf ULib-1.4.2
-tar xf /mnt/storage/ULib-1.4.2.tar.gz
+rm -rf ULib-2.4.2
+tar xf /mnt/storage/ULib-2.4.2.tar.gz
 cd ULib-$ULIB_VERSION
 #cp -f ../config.cache .
 
