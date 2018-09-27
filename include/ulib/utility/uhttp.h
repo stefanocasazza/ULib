@@ -1207,9 +1207,10 @@ private:
    static UString* cache_file_mask;
    static UString* cache_avoid_mask;
    static UString* cache_file_store;
-   static UString* nocache_file_mask;
    static UFileCacheData* file_data;
+   static UString* nocache_file_mask;
    static UFileCacheData* file_gzip_bomb;
+   static UString* cache_file_as_dynamic_mask;
    static UHashMap<UFileCacheData*>* cache_file;
    static UFileCacheData* file_not_in_cache_data;
 

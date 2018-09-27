@@ -448,10 +448,7 @@ bool USocket::enable_bpf()
       { BPF_RET | BPF_A, 0, 0, 0 }
    };
 
-   struct sock_fprog p = {
-      .len = 2,
-      .filter = code,
-   };
+   struct sock_fprog p = { 2, code };
 
    /**
     * the kernel will call the specified filter to distribute the packets among the SO_REUSEPORT sockets group.

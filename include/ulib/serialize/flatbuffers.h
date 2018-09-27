@@ -21,6 +21,9 @@
 #endif
 
 /**
+ * Serialization is the process of translating data structures or object state into a format that can be stored (for example, in a file or
+ * memory buffer) or transmitted (for example, across a network connection link) and reconstructed later (possibly in a different computer environment)
+ *
  * @see http://google.github.io/flatbuffers/index.html
  *
  * All data is accessed over offsets, all scalars are aligned to their own size, and all data is always stored in little endian format.

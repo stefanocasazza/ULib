@@ -36,6 +36,7 @@ userver {
 http {
    CACHE_AVOID_MASK ap|immagini
  NOCACHE_FILE_MASK banner.html
+ CACHE_FILE_AS_DYNAMIC_MASK *.html
 
  URI_PROTECTED_MASK /get_config
  USP_AUTOMATIC_ALIASING servlet/wi_auth2

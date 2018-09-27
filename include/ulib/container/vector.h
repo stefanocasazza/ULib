@@ -915,6 +915,16 @@ private:
 };
 
 #if defined(U_STDCPP_ENABLE) && defined(HAVE_CXX11)
+/**
+ * for (decl : rng) { ... } is equivalent to: {
+ * auto && __range = rng;
+ * auto __begin = begin(__range);
+ * auto __end = end(__range) ;
+ * for ( ; __begin != __end; ++__begin ) {
+ * decl = *__begin;
+ * ...
+ * } }
+ */
 class UVectorStringIter { // this class is to make work Range-based for loop: for ( UString x : UVector<UString> ) loop_statement      
 public:
    explicit UVectorStringIter(const UVector<UString>* p_vec, uint32_t pos) : _pos(pos), _p_vec(p_vec) {}
@@ -929,11 +939,7 @@ public:
       {
       ++_pos;
 
-      // although not strictly necessary for a range-based for loop
-      // following the normal convention of returning a value from
-      // operator++ is a good idea
-
-      return *this;
+      return *this; // although not strictly necessary for a range-based for loop following the normal convention of returning a value from operator++ is a good idea
       }
 
 private:

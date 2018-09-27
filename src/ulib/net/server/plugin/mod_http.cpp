@@ -78,6 +78,8 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
    // NOCACHE_FILE_MASK      mask (DOS regexp) of pathfile that content  NOT be cached in memory
    // CACHE_FILE_STORE       pathfile of memory cache stored on filesystem
    //
+   // CACHE_FILE_AS_DYNAMIC_MASK mask (DOS regexp) of pathfile that content be cached as dynamic in memory (to avoid 'Last-Modified: ...' in header response)
+   //
    // CGI_TIMEOUT            timeout for cgi execution
    // VIRTUAL_HOST           flag to activate practice of maintaining more than one server on one machine, as differentiated by their apparent hostname
    // DIGEST_AUTHENTICATION  flag authentication method (yes = digest, no = basic)
@@ -223,6 +225,17 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
       if (x.findWhiteSpace() != U_NOT_FOUND) x = UStringExt::removeWhiteSpace(x);
 
       U_NEW_STRING(UHTTP::nocache_file_mask, UString(x));
+      }
+
+   x = cfg.at(U_CONSTANT_TO_PARAM("CACHE_FILE_AS_DYNAMIC_MASK"));
+
+   if (x)
+      {
+      U_INTERNAL_ASSERT_EQUALS(UHTTP::cache_file_as_dynamic_mask, U_NULLPTR)
+
+      if (x.findWhiteSpace() != U_NOT_FOUND) x = UStringExt::removeWhiteSpace(x);
+
+      U_NEW_STRING(UHTTP::cache_file_as_dynamic_mask, UString(x));
       }
 
 # ifdef U_STDCPP_ENABLE

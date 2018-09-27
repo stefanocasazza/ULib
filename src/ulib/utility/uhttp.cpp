@@ -108,6 +108,7 @@ UString* UHTTP::cgi_cookie_option;
 UString* UHTTP::set_cookie_option;
 UString* UHTTP::user_authentication;
 UString* UHTTP::string_HTTP_Variables;
+UString* UHTTP::cache_file_as_dynamic_mask;
 uint32_t UHTTP::old_path_len;
 uint32_t UHTTP::sid_counter_gen;
 uint32_t UHTTP::sid_counter_cur;
@@ -9243,7 +9244,7 @@ manage:
          }
       else if (file->open())
          {
-         UString content;
+         UString content, header;
          const char* ptr = U_NULLPTR;
 
          mime_index = file_data->mime_index;
@@ -9262,7 +9263,17 @@ manage:
             ptr = content.data();
             }
 
-         putDataInCache(lpathname, getHeaderMimeType(ptr, 0, ctype, U_TIME_FOR_EXPIRE), content);
+         if (cache_file_as_dynamic_mask &&
+             UServices::dosMatchWithOR(basename_ptr, basename_len, U_STRING_TO_PARAM(*cache_file_as_dynamic_mask), 0))
+            {
+            mime_index = '9'; // NB: '9' => we declare a dynamic page to avoid 'Last-Modified: ...' in header response...
+            }
+
+         header = getHeaderMimeType(ptr, 0, ctype, U_TIME_FOR_EXPIRE);
+
+         mime_index = file_data->mime_index;
+
+         putDataInCache(lpathname, header, content);
          }
       }
 
