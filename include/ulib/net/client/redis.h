@@ -59,15 +59,13 @@
  * @brief UREDISClient is a wrapper to REDIS API
  */
 
-typedef void (*vPFcs)(const UString&);
+typedef void (*vPFcs)  (const UString&);
+typedef void (*vPFcscs)(const UString&,const UString&);
 
 class U_EXPORT UREDISClient_Base : public UClient_Base, UEventFd {
 public:
 
-   ~UREDISClient_Base()
-      {
-      U_TRACE_DTOR(0, UREDISClient_Base)
-      }
+   ~UREDISClient_Base();
 
    // RESPONSE
 
@@ -735,14 +733,12 @@ public:
       return processRequest(U_RC_MULTIBULK, U_CONSTANT_TO_PARAM("UNSUBSCRIBE"), param, len);
       }
 
+   void unsubscribe(const UString& channel);                   // unregister the callback for messages published to the given channels
+   void   subscribe(const UString& channel, vPFcscs callback); //   register the callback for messages published to the given channels
+
    // define method VIRTUAL of class UEventFd
 
-   virtual int handlerRead() U_DECL_FINAL
-      {
-      U_TRACE_NO_PARAM(0, "UREDISClient_Base::handlerRead()")
-
-      U_RETURN(U_NOTIFIER_OK);
-      }
+   virtual int handlerRead() U_DECL_FINAL;
 
    virtual void handlerDelete() U_DECL_FINAL
       {
@@ -774,6 +770,7 @@ protected:
    static ptrdiff_t diff;
    static UVector<UString>* pvec;
    static UREDISClient_Base* pthis;
+   static UHashMap<void*>* pchannelCallbackMap;
 
    UREDISClient_Base() : UClient_Base(U_NULLPTR)
       {
