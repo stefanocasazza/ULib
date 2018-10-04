@@ -78,13 +78,13 @@ void USocket::setLocal(const UIPAddress& addr)
    U_socket_LocalSet(this) = true;
 }
 
-USocket::USocket(bool bSocketIsIPv6)
+USocket::USocket(bool bSocketIsIPv6, int fd)
 {
-   U_TRACE_CTOR(0, USocket, "%b", bSocketIsIPv6)
+   U_TRACE_CTOR(0, USocket, "%b,%d", bSocketIsIPv6, fd)
 
    flags       = O_RDWR;
    iState      = CLOSE;
-   iSockDesc   = -1;
+   iSockDesc   = fd;
    iLocalPort  =
    iRemotePort = 0;
 
@@ -98,7 +98,7 @@ USocket::USocket(bool bSocketIsIPv6)
    U_socket_LocalSet(this) = false;
 
 #ifdef _MSWINDOWS_
-   fh = -1;
+   fh = fd;
 #endif
 }
 

@@ -107,7 +107,7 @@ public:
       SK_SSL_ACTIVE = 0x010
    };
 
-   USocket(bool bSocketIsIPv6 = false);
+   USocket(bool bSocketIsIPv6 = false, int fd = -1);
 
    virtual ~USocket()
       {

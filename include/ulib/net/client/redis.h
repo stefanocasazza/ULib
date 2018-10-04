@@ -682,11 +682,30 @@ public:
 
    // LIST (@see http://redis.io/list)
 
+   bool lpush(const char* key, uint32_t keylen, const char* param, uint32_t len)
+      {
+      U_TRACE(0, "UREDISClient_Base::lpush((%.*S,%u,%.*S,%u)", keylen, key, keylen, len, param, len)
+
+      if (processRequest(U_RC_INT, U_CONSTANT_TO_PARAM("LPUSH"), key, keylen, param, len)) return getUInt8();
+
+      U_RETURN(false);
+      }
+
    bool lrange(const char* param, uint32_t len) // Get a range of elements from a list
       {
       U_TRACE(0, "UREDISClient_Base::lrange(%.*S,%u)", len, param, len)
 
       return processRequest(U_RC_MULTIBULK, U_CONSTANT_TO_PARAM("LRANGE"), param, len);
+      }
+
+   bool ltrim(const char* key, uint32_t keylen, int32_t _min, int32_t _max)
+      {
+      U_TRACE(0, "UREDISClient_Base::ltrim(%.*S,%u,%d,%d)", keylen, key, keylen, _min, _max)
+
+      char buf[128];
+      uint32_t buf_len = u__snprintf(buf, U_CONSTANT_SIZE(buf), U_CONSTANT_TO_PARAM("%d %d"), _min, _max);
+
+      return processRequest(U_RC_INLINE, U_CONSTANT_TO_PARAM("LTRIM"), key, keylen, buf, buf_len);
       }
 
    // MULTI-EXEC (@see https://redis.io/commands/exec)
@@ -710,31 +729,8 @@ public:
 
    // PUB/SUB (@see http://redis.io/pubsub)
 
-   bool publish(const char* channel, uint32_t channel_len, const char* msg, uint32_t msg_len) // Posts a message to the given channel
-      {
-      U_TRACE(0, "UREDISClient_Base::publish(%.*S,%u,%.*S,%u)", channel_len, channel, channel_len, msg_len, msg, msg_len)
-
-      if (processRequest(U_RC_INT, U_CONSTANT_TO_PARAM("PUBLISH"), channel, channel_len, msg, msg_len)) return getUInt8();
-
-      U_RETURN(false);
-      }
-
-   bool subscribe(const char* param, uint32_t len) // Listen for messages published to the given channels
-      {
-      U_TRACE(0, "UREDISClient_Base::subscribe(%.*S,%u)", len, param, len)
-
-      return processRequest(U_RC_MULTIBULK, U_CONSTANT_TO_PARAM("SUBSCRIBE"), param, len);
-      }
-
-   bool unsubscribe(const char* param, uint32_t len) // Stop listening for messages posted to the given channels
-      {
-      U_TRACE(0, "UREDISClient_Base::unsubscribe(%.*S,%u)", len, param, len)
-
-      return processRequest(U_RC_MULTIBULK, U_CONSTANT_TO_PARAM("UNSUBSCRIBE"), param, len);
-      }
-
-   void unsubscribe(const UString& channel);                   // unregister the callback for messages published to the given channels
-   void   subscribe(const UString& channel, vPFcscs callback); //   register the callback for messages published to the given channels
+   bool unsubscribe(const UString& channel);                   // unregister the callback for messages published to the given channels
+   bool   subscribe(const UString& channel, vPFcscs callback); //   register the callback for messages published to the given channels
 
    // define method VIRTUAL of class UEventFd
 
@@ -917,5 +913,4 @@ public:
 private:
    U_DISALLOW_COPY_AND_ASSIGN(UREDISClient<UUnixSocket>)
 };
-
 #endif

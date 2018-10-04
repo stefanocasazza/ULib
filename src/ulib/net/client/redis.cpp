@@ -326,6 +326,8 @@ U_NO_EXPORT bool UREDISClient_Base::getResponseItem()
          }
       }
 
+   pvec = pvec1;
+
    U_RETURN(true);
 }
 
@@ -543,30 +545,42 @@ bool UREDISClient_Base::deleteKeys(const char* pattern, uint32_t len) // Delete 
 
 // PUB/SUB (@see http://redis.io/pubsub)
 
-void UREDISClient_Base::unsubscribe(const UString& channel) // unregister the callback for messages published to the given channels
+bool UREDISClient_Base::unsubscribe(const UString& channel) // unregister the callback for messages published to the given channels
 {
    U_TRACE(0, "UREDISClient_Base::unsubscribe(%V)", channel.rep)
 
-   if (pchannelCallbackMap == U_NULLPTR)
+   if (processRequest(U_RC_MULTIBULK, U_CONSTANT_TO_PARAM("UNSUBSCRIBE"), U_STRING_TO_PARAM(channel)))
       {
-      U_NEW(UHashMap<void*>, pchannelCallbackMap, UHashMap<void*>);
-      }
-   else
-      {
+      if (pchannelCallbackMap == U_NULLPTR)
+         {
+         U_NEW(UHashMap<void*>, pchannelCallbackMap, UHashMap<void*>);
+         }
+
       (void) pchannelCallbackMap->erase(channel);
+
+      U_RETURN(true);
       }
+
+   U_RETURN(false);
 }
 
-void UREDISClient_Base::subscribe(const UString& channel, vPFcscs callback) // register the callback for messages published to the given channels
+bool UREDISClient_Base::subscribe(const UString& channel, vPFcscs callback) // register the callback for messages published to the given channels
 {
    U_TRACE(0, "UREDISClient_Base::subscribe(%V,%p)", channel.rep, callback)
 
-   if (pchannelCallbackMap == U_NULLPTR)
+   if (processRequest(U_RC_MULTIBULK, U_CONSTANT_TO_PARAM("SUBSCRIBE"), U_STRING_TO_PARAM(channel)))
       {
-      U_NEW(UHashMap<void*>, pchannelCallbackMap, UHashMap<void*>);
+      if (pchannelCallbackMap == U_NULLPTR)
+         {
+         U_NEW(UHashMap<void*>, pchannelCallbackMap, UHashMap<void*>);
+         }
+
+      pchannelCallbackMap->insert(channel, (const void*)callback);
+
+      U_RETURN(true);
       }
 
-   pchannelCallbackMap->insert(channel, (const void*)callback);
+   U_RETURN(false);
 }
 
 // define method VIRTUAL of class UEventFd
