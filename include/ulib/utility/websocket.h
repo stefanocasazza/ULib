@@ -19,6 +19,7 @@
 
 #define U_WS_MESSAGE_TYPE_INVALID  -1
 #define U_WS_MESSAGE_TYPE_TEXT      0
+#define U_WS_MESSAGE_TYPE_BROTLI    6
 #define U_WS_MESSAGE_TYPE_BINARY  128
 #define U_WS_MESSAGE_TYPE_CLOSE   255
 #define U_WS_MESSAGE_TYPE_PING    256
@@ -27,6 +28,7 @@
 #define U_WS_OPCODE_CONTINUATION 0x0
 #define U_WS_OPCODE_TEXT         0x1
 #define U_WS_OPCODE_BINARY       0x2
+#define U_WS_OPCODE_BROTLI       0x6
 #define U_WS_OPCODE_CLOSE        0x8
 #define U_WS_OPCODE_PING         0x9
 #define U_WS_OPCODE_PONG         0xA

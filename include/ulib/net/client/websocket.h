@@ -67,7 +67,7 @@ public:
       U_RETURN(false);
       }
 
-   bool sendMessage(const UString& msg, int type = U_WS_MESSAGE_TYPE_TEXT)
+   bool sendMessage(const UString& msg, int type = U_WS_MESSAGE_TYPE_TEXT) // U_WS_MESSAGE_TYPE_BROTLI
       {
       U_TRACE(0, "UWebSocketClient::sendMessage(%V,%d)", msg.rep, type)
 

@@ -83,8 +83,6 @@ USocket::USocket(bool bSocketIsIPv6, int fd)
    U_TRACE_CTOR(0, USocket, "%b,%d", bSocketIsIPv6, fd)
 
    flags       = O_RDWR;
-   iState      = CLOSE;
-   iSockDesc   = fd;
    iLocalPort  =
    iRemotePort = 0;
 
@@ -94,8 +92,20 @@ USocket::USocket(bool bSocketIsIPv6, int fd)
    U_socket_IPv6(this) = false;
 #endif
 
-   U_socket_Type(this)     = 0;
    U_socket_LocalSet(this) = false;
+
+   if (fd == -1)
+      {
+      iSockDesc           = -1;
+      iState              = CLOSE;
+      U_socket_Type(this) = 0;
+      }
+   else
+      {
+      iSockDesc           = fd;
+      iState              = CONNECT;
+      U_socket_Type(this) = SK_STREAM;
+      }
 
 #ifdef _MSWINDOWS_
    fh = fd;

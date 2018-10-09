@@ -76,7 +76,7 @@ if (isMessageForAnotherUSP(*UWebSocket::message))
    }
 else if (isMessageForAnotherWebSocket(*UWebSocket::message))
    {
-   if (wsclient->connectServer(U_STRING_FROM_CONSTANT("ws://localhost:8888/websocket"))) (void) wsclient->sendMessage(*UWebSocket::message);
+   if (wsclient->connectServer(U_STRING_FROM_CONSTANT("ws://localhost:8888/websocket"))) (void) wsclient->sendMessage(*UWebSocket::message, U_WS_MESSAGE_TYPE_BROTLI);
 
    // ...
    }

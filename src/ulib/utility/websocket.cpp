@@ -175,7 +175,7 @@ loop:
       {
       status_code = U_WS_STATUS_CODE_INTERNAL_ERROR;
 
-      U_RETURN(status_code);
+      U_RETURN(U_WS_STATUS_CODE_INTERNAL_ERROR);
       }
 
               block        = (unsigned char*) rbuffer->data();
@@ -199,7 +199,7 @@ loop:
 
                status_code = U_WS_STATUS_CODE_PROTOCOL_ERROR;
 
-               U_RETURN(status_code);
+               U_RETURN(U_WS_STATUS_CODE_PROTOCOL_ERROR);
                }
 
             fin    = U_WS_FRAME_GET_FIN(   block[block_offset]);
@@ -217,7 +217,7 @@ loop:
 
                   status_code = U_WS_STATUS_CODE_PROTOCOL_ERROR;
 
-                  U_RETURN(status_code);
+                  U_RETURN(U_WS_STATUS_CODE_PROTOCOL_ERROR);
                   }
 
                frame             = &UWebSocket::control_frame;
@@ -236,7 +236,7 @@ loop:
 
                      status_code = U_WS_STATUS_CODE_PROTOCOL_ERROR;
 
-                     U_RETURN(status_code);
+                     U_RETURN(U_WS_STATUS_CODE_PROTOCOL_ERROR);
                      }
 
                   frame->opcode     = opcode;
@@ -249,7 +249,7 @@ loop:
 
                   status_code = U_WS_STATUS_CODE_PROTOCOL_ERROR;
 
-                  U_RETURN(status_code);
+                  U_RETURN(U_WS_STATUS_CODE_PROTOCOL_ERROR);
                   }
 
                frame->fin = fin;
@@ -295,7 +295,7 @@ loop:
 
                status_code = U_WS_STATUS_CODE_PROTOCOL_ERROR;
 
-               U_RETURN(status_code);
+               U_RETURN(U_WS_STATUS_CODE_PROTOCOL_ERROR);
                }
 
             framing_state = U_WS_DATA_FRAMING_PAYLOAD_LENGTH_EXT; // 3
@@ -329,7 +329,7 @@ loop:
 
                   status_code = U_WS_STATUS_CODE_MESSAGE_TOO_LARGE; // Invalid payload length
 
-                  U_RETURN(status_code);
+                  U_RETURN(U_WS_STATUS_CODE_MESSAGE_TOO_LARGE);
                   }
 
                if (masking == 0)
@@ -490,7 +490,7 @@ loop:
 
                         status_code = U_WS_STATUS_CODE_INVALID_UTF8;
 
-                        U_RETURN(status_code);
+                        U_RETURN(U_WS_STATUS_CODE_INVALID_UTF8);
                         }
 
                      message_type = U_WS_MESSAGE_TYPE_TEXT;
@@ -498,6 +498,7 @@ loop:
                   break;
 
                   case U_WS_OPCODE_BINARY: message_type = U_WS_MESSAGE_TYPE_BINARY; break;
+                  case U_WS_OPCODE_BROTLI: message_type = U_WS_MESSAGE_TYPE_BROTLI; break;
 
                   case U_WS_OPCODE_CLOSE:
                      {
@@ -505,7 +506,7 @@ loop:
 
                      status_code = U_WS_STATUS_CODE_OK;
 
-                     U_RETURN(status_code);
+                     U_RETURN(U_WS_STATUS_CODE_OK);
                      }
 
                   case U_WS_OPCODE_PING:
@@ -514,7 +515,7 @@ loop:
                         {
                         status_code = U_WS_STATUS_CODE_PROTOCOL_ERROR;
 
-                        U_RETURN(status_code);
+                        U_RETURN(U_WS_STATUS_CODE_PROTOCOL_ERROR);
                         }
                      }
                   break;
@@ -527,7 +528,7 @@ loop:
 
                      status_code = U_WS_STATUS_CODE_PROTOCOL_ERROR;
 
-                     U_RETURN(status_code);
+                     U_RETURN(U_WS_STATUS_CODE_PROTOCOL_ERROR);
                      }
                   }
 
@@ -547,7 +548,15 @@ loop:
 
                      status_code = U_WS_STATUS_CODE_OK;
 
-                     U_RETURN(status_code);
+#                 ifdef USE_LIBBROTLI
+                     if (message_type == U_WS_MESSAGE_TYPE_BROTLI &&
+                         UStringExt::isBrotli(*message))
+                        {
+                        *message = UStringExt::unbrotli(*message);
+                        }
+#                 endif
+
+                     U_RETURN(U_WS_STATUS_CODE_OK);
                      }
 
                   frame->application_data        = U_NULLPTR;
@@ -569,7 +578,7 @@ loop:
 
             status_code = U_WS_STATUS_CODE_PROTOCOL_ERROR;
 
-            U_RETURN(status_code);
+            U_RETURN(U_WS_STATUS_CODE_PROTOCOL_ERROR);
             }
          }
       }
@@ -591,7 +600,7 @@ bool UWebSocket::sendData(USocket* socket, int type, const char* data, uint32_t 
    uint8_t opcode, masking_key[4];
    uint32_t header_length = 6U + (len > 125U ? 2U : 0) + (len > 0xffff ? 8U : 0), ncount = header_length + len;
 
-   UString tmp(ncount);
+   UString tmp(ncount), compressed;
    unsigned char* header = (unsigned char*)tmp.data();
 
    *((uint32_t*)masking_key) = u_get_num_random();
@@ -601,6 +610,24 @@ bool UWebSocket::sendData(USocket* socket, int type, const char* data, uint32_t 
       case U_WS_MESSAGE_TYPE_TEXT:
       case U_WS_MESSAGE_TYPE_INVALID:
          opcode = U_WS_OPCODE_TEXT;
+      break;
+
+      case U_WS_MESSAGE_TYPE_BROTLI:
+         {
+         opcode = U_WS_OPCODE_TEXT;
+
+#     ifdef USE_LIBBROTLI
+         if (compressed = UStringExt::brotli(data, len, (U_PARALLELIZATION_CHILD ? BROTLI_MAX_QUALITY : UHTTP::brotli_level_for_dynamic_content)))
+            {
+            opcode = U_WS_OPCODE_BROTLI;
+
+            len  = compressed.size();
+            data = compressed.data();
+
+            U_SRV_LOG("websocket compressed request: %u bytes - (%u%%) brotli compression ratio", len, 100-UStringExt::ratio);
+            }
+#     endif
+         }
       break;
 
       case U_WS_MESSAGE_TYPE_PING:   opcode = U_WS_OPCODE_PING;   break;
