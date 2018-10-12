@@ -192,6 +192,11 @@ SSL_CTX* USSLSocket::getContext(SSL_METHOD* method, bool bserver, long options)
       (void) U_SYSCALL(SSL_CTX_set_session_cache_mode, "%p,%d",    ctx, SSL_SESS_CACHE_SERVER);
       (void) U_SYSCALL(SSL_CTX_set_session_id_context, "%p,%p,%u", ctx, (const unsigned char*)u_progname, u_progname_len);
 
+#  ifdef TLS1_3_VERSION
+      (void) U_SYSCALL(SSL_CTX_set_min_proto_version, "%p,%d",  ctx, 0);
+      (void) U_SYSCALL(SSL_CTX_set_max_proto_version, "%p,%d",  ctx, TLS1_3_VERSION);
+#  endif
+
       // We need this to disable client-initiated renegotiation
 
       U_SYSCALL_VOID(SSL_CTX_set_info_callback, "%p,%p", ctx, USSLSocket::info_callback);
