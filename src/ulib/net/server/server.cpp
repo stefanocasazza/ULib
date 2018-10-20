@@ -2810,6 +2810,13 @@ int UServer_Base::loadPlugins(UString& plugin_dir, const UString& plugin_list)
 
             if (result == U_PLUGIN_HANDLER_ERROR)
                {
+               if (pcfg->empty())
+                  {
+                  U_SRV_LOG("WARNING: Configuration of plugin %V empty", item.rep);
+
+                  continue;
+                  }
+
                U_SRV_LOG("WARNING: Configuration phase of plugin %V failed", item.rep);
 
                U_RETURN(U_PLUGIN_HANDLER_ERROR);
