@@ -568,7 +568,7 @@ public:
             {
             (void) output0.reserve(100U + token.size());
 
-            output0.snprintf_add(U_CONSTANT_TO_PARAM("\n\t(void) UClientImage_Base::wbuffer->append((%v));\n"), token.rep);
+            output0.snprintf_add(U_CONSTANT_TO_PARAM("\n\tif (%v) (void) UClientImage_Base::wbuffer->append((%v));\n"), token.rep, token.rep);
             }
          }
       else if (strncmp(directive, U_CONSTANT_TO_PARAM("xmlputs")) == 0)
@@ -897,9 +897,16 @@ loop: distance = t.getDistance();
                "#define USP_SESSION_VAR_PUT(index,varname) \\\n"
                "   { \\\n"
                "   usp_sz = UObject2String(varname, usp_buffer, sizeof(usp_buffer)); \\\n"
-               "   UString varname##_value((void*)usp_buffer, usp_sz); \\\n"
-               "   UHTTP::data_session->putValueVar(index, varname##_value); \\\n"
-               "   U_INTERNAL_DUMP(\"%s(%u) = %V\", #varname, usp_sz, varname##_value.rep) \\\n"
+               "   if (usp_sz) \\\n"
+               "      { \\\n"
+               "      UString varname##_value((void*)usp_buffer, usp_sz); \\\n"
+               "      UHTTP::data_session->putValueVar(index, varname##_value); \\\n"
+               "      U_INTERNAL_DUMP(\"%s(%u) = %V\", #varname, usp_sz, varname##_value.rep) \\\n"
+               "      } \\\n"
+               "   else \\\n"
+               "      { \\\n"
+               "      UHTTP::data_session->putValueVar(index, UString::getStringNull()); \\\n"
+               "      } \\\n"
                "   }\n"));
             }
 
@@ -922,9 +929,16 @@ loop: distance = t.getDistance();
                "#define USP_STORAGE_VAR_PUT(index,varname) \\\n"
                "   { \\\n"
                "   usp_sz = UObject2String(varname, usp_buffer, sizeof(usp_buffer)); \\\n"
-               "   UString varname##_value((void*)usp_buffer, usp_sz); \\\n"
-               "   UHTTP::data_storage->putValueVar(index, varname##_value); \\\n"
-               "   U_INTERNAL_DUMP(\"%s(%u) = %V\", #varname, usp_sz, varname##_value.rep) \\\n"
+               "   if (usp_sz) \\\n"
+               "      { \\\n"
+               "      UString varname##_value((void*)usp_buffer, usp_sz); \\\n"
+               "      UHTTP::data_storage->putValueVar(index, varname##_value); \\\n"
+               "      U_INTERNAL_DUMP(\"%s(%u) = %V\", #varname, usp_sz, varname##_value.rep) \\\n"
+               "      } \\\n"
+               "   else \\\n"
+               "      { \\\n"
+               "      UHTTP::data_storage->putValueVar(index, UString::getStringNull()); \\\n"
+               "      } \\\n"
                "   }\n"));
             }
 

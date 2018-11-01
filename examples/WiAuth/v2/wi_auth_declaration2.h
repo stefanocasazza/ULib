@@ -965,11 +965,6 @@ static void sessionClean(const UString& key)
    lostSession(2);
 }
 
-static void GET_acceptTermsOfConditions()
-{
-   U_TRACE_NO_PARAM(5, "::GET_acceptTermsOfConditions()")
-}
-
 static void GET_acceptTermsOfConditionsExpirationList()
 {
    U_TRACE_NO_PARAM(5, "::GET_acceptTermsOfConditionsExpirationList()")
@@ -1423,6 +1418,11 @@ static void GET_welcome()
       }
 
    U_http_info.nResponseCode = HTTP_NO_CONTENT; // NB: to escape management after usp exit...
+}
+
+static void POST_acceptTermsOfConditions()
+{
+   U_TRACE_NO_PARAM(5, "::POST_acceptTermsOfConditions()")
 }
 
 static void POST_login()

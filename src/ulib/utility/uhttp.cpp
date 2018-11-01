@@ -8494,7 +8494,13 @@ UString UHTTP::getHeaderMimeType(const char* content, uint32_t size, const char*
 
    U_INTERNAL_DUMP("mime_index(%d) = %C", mime_index, mime_index)
 
-   if (u__isdigit(mime_index) == false) // NB: check for dynamic page...
+   if (u__isdigit(mime_index)) // NB: check for dynamic page (see https://paulcalvano.com/index.php/2018/03/14/http-heuristic-caching-missing-cache-control-and-expires-headers-explained)
+      {
+      (void) header.append(U_CONSTANT_TO_PARAM("Cache-Control: max-age=0, no-cache, no-store, must-revalidate\r\n"
+                                               "Pragma: no-cache\r\n"
+                                               "Expires: Sat, 1 Jan 2000 00:00:00 GMT\r\n"));
+      }
+   else
       {
       if (expire) header.snprintf_add(U_CONSTANT_TO_PARAM("Expires: %#8D\r\n"), expire);
 

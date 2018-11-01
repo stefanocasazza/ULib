@@ -2724,9 +2724,14 @@ template <> inline uint32_t UObject2String<UString>(UString& object, char* pbuff
 
    U_INTERNAL_ASSERT_MINOR(sz, buffer_size)
 
-   U_MEMCPY(pbuffer, object.data(), sz);
+   if (sz)
+      {
+      U_MEMCPY(pbuffer, object.data(), sz);
 
-   return sz;
+      return sz;
+      }
+
+   return 0;
 }
 
 // by Victor Stewart
