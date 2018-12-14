@@ -50,6 +50,7 @@
 class UHTTP;
 class USocket;
 class UCommand;
+class UHttpPlugIn;
 class UDataStorage;
 class UProxyPlugIn;
 class UWebSocketClient;
@@ -183,8 +184,8 @@ private:
    static uint32_t max_message_size;
    static URDBObjectHandler<UDataStorage*>* db;
 
-   static int status_code;
    static UString* rbuffer;
+   static int status_code, timeoutMS; // the time-out value in milliseconds for client request
    static const char* upgrade_settings;
    static WebSocketFrameData control_frame;
    static WebSocketFrameData message_frame;
@@ -199,6 +200,7 @@ private:
    U_DISALLOW_COPY_AND_ASSIGN(UWebSocket)
 
    friend class UHTTP;
+   friend class UHttpPlugIn;
    friend class UProxyPlugIn;
    friend class UWebSocketClient;
    friend class UWebSocketPlugIn;

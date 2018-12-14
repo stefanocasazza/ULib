@@ -41,9 +41,10 @@
 #define U_WS_GUID     "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
 #define U_WS_GUID_LEN 36
 
-int         UWebSocket::status_code;
 int         UWebSocket::fd_stderr;
+int         UWebSocket::status_code;
 int         UWebSocket::message_type;
+int         UWebSocket::timeoutMS;
 vPF         UWebSocket::on_message;
 vPFu        UWebSocket::on_message_param;
 UString*    UWebSocket::rbuffer;
@@ -171,7 +172,7 @@ int UWebSocket::handleDataFraming(USocket* socket)
 
 loop:
    if (rbuffer->empty() &&
-       USocketExt::read(socket, *rbuffer, U_SINGLE_READ, UServer_Base::timeoutMS) == false)
+       USocketExt::read(socket, *rbuffer, U_SINGLE_READ, UWebSocket::timeoutMS) == false)
       {
       status_code = U_WS_STATUS_CODE_INTERNAL_ERROR;
 

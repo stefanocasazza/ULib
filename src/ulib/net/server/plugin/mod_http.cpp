@@ -11,11 +11,10 @@
 //
 // ============================================================================
 
-#include <ulib/db/rdb.h>
 #include <ulib/command.h>
 #include <ulib/file_config.h>
 #include <ulib/utility/uhttp.h>
-#include <ulib/net/server/server.h>
+#include <ulib/utility/websocket.h>
 #include <ulib/utility/string_ext.h>
 #include <ulib/net/server/plugin/mod_http.h>
 
@@ -82,6 +81,7 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
    //
    // CGI_TIMEOUT            timeout for cgi execution
    // VIRTUAL_HOST           flag to activate practice of maintaining more than one server on one machine, as differentiated by their apparent hostname
+   // WEBSOCKET_TIMEOUT      timeout for websocket request
    // DIGEST_AUTHENTICATION  flag authentication method (yes = digest, no = basic)
    //
    // ENABLE_CACHING_BY_PROXY_SERVERS enable caching by proxy servers (add "Cache control: public" directive)
@@ -159,6 +159,10 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
          }
       }
 
+   UWebSocket::timeoutMS = cfg.readLong(U_CONSTANT_TO_PARAM("WEBSOCKET_TIMEOUT"), -1); // -1 => no timeout, i.e. an infinite wait
+
+   if (UWebSocket::timeoutMS > 0) UWebSocket::timeoutMS *= 1000;
+   
 # ifdef USE_LIBPCRE
    x = cfg.at(U_CONSTANT_TO_PARAM("REWRITE_RULE_NF"));
 

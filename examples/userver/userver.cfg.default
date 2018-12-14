@@ -189,6 +189,7 @@ userver {
 #
 # CGI_TIMEOUT                timeout for cgi execution
 # VIRTUAL_HOST               flag to activate practice of maintaining more than one server on one machine, as differentiated by their apparent hostname 
+# WEBSOCKET_TIMEOUT          timeout for websocket request
 # DIGEST_AUTHENTICATION      flag authentication method (yes = digest, no = basic)
 #
 # URI_PROTECTED_MASK         mask (DOS regexp) of URI protected from prying eyes (that needs authentication)
