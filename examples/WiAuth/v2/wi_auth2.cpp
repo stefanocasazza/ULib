@@ -28,7 +28,7 @@ extern U_EXPORT void runDynamicPage_wi_auth2();
    U_TRACE_NO_PARAM(0, "::runDynamicPage_wi_auth2()")
    
    static UHTTP::service_info GET_table[] = { // NB: the table must be ordered alphabetically for binary search...
-      GET_ENTRY(acceptTermsOfConditionsExpirationList),
+      GET_ENTRY(acceptTermsOfConditions),
       GET_ENTRY(acceptTermsOfConditionsRenew),
       GET_ENTRY(anagrafica),
       GET_ENTRY(checkCaptive),
@@ -41,7 +41,6 @@ extern U_EXPORT void runDynamicPage_wi_auth2();
    };
    
    static UHTTP::service_info POST_table[] = { // NB: the table must be ordered alphabetically for binary search...
-      POST_ENTRY(acceptTermsOfConditions),
       POST_ENTRY(info),
       POST_ENTRY(login),
       POST_ENTRY(notify),

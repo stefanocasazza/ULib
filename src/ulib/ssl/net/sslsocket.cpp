@@ -64,9 +64,9 @@ USSLSocket::stapling USSLSocket::staple;
  * requiring a bi-directional message exchange; both SSL_read() and SSL_write() will try to continue any pending handshake
  */
 
-USSLSocket::USSLSocket(bool bSocketIsIPv6, SSL_CTX* _ctx, bool bserver) : USocket(bSocketIsIPv6)
+USSLSocket::USSLSocket(bool bSocketIsIPv6, SSL_CTX* _ctx, bool bserver, int fd) : USocket(bSocketIsIPv6, fd)
 {
-   U_TRACE_CTOR(0, USSLSocket, "%b,%p,%b", bSocketIsIPv6, _ctx, bserver)
+   U_TRACE_CTOR(0, USSLSocket, "%b,%p,%b,%d", bSocketIsIPv6, _ctx, bserver, fd)
 
    ciphersuite_model = Intermediate;
 

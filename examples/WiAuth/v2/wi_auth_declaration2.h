@@ -32,11 +32,12 @@ static UPing* sockp;
 static bool ap_consume;
 static UString* policySessionId;
 static uint8_t vwelcome_index[2][3]; // policy: (DAILY|FLAT), SessionNotify: (0,notify) (1,no_notify) (2,strict_notify)
+static int facceptTermsOfConditionsRenew;
 static uint64_t counter, device_counter, max_traffic_daily;
 static uint8_t policySessionNotify, policySessionNotifyDefault;
-static uint32_t addr, old_addr, ip_peer, created, lastUpdate, lastReset, idx, vec_logout[8192];
+static uint32_t addr, old_addr, ip_peer, created, lastUpdate, lastReset, idx, duration_privacy_policy, vec_logout[8192];
 
-#define U_CLEAN_INTERVAL      (60U * 60U) // 1h 
+#define U_CLEAN_INTERVAL      (60U * 60U) // 1h
 #define U_MAX_TIME_NO_TRAFFIC (15U * 60U) // 15m
 
 #define U_LOGGER(fmt,args...) ULog::log(file_WARNING->getFd(), U_CONSTANT_TO_PARAM("%v: " fmt), UClientImage_Base::request_uri->rep , ##args)
@@ -177,6 +178,7 @@ static void usp_config_wi_auth2()
    // WELCOME_INDEX vector of index for html files - policy: (DAILY|FLAT), SessionNotify: (0,notify) (1,no_notify) (2,strict_notify)
    //
    // MAX_TRAFFIC_DAILY
+   // DURATION_PRIVACY_POLICY numbers of days for expiration privacy policy
    // POLICY_SESSION_NOTIFY_DEFAULT (0,notify) (1,no_notify) (2,strict_notify)
    // --------------------------------------------------------------------------------------------------------------------------------------
 
@@ -207,10 +209,11 @@ static void usp_config_wi_auth2()
       const char* ptr1 = x.data();
       uint8_t*    ptr2 = (uint8_t*)vwelcome_index;
 
-      for (uint32_t i = 0, n = x.size(); i < n; ++i) *ptr2 = *ptr1 - '0';
+      for (uint32_t i = 0, n = x.size(); i < n; ++i) ptr2[i] = ptr1[i] - '0';
       }
 
    max_traffic_daily          = UServer_Base::pcfg->readLong(U_CONSTANT_TO_PARAM("MAX_TRAFFIC_DAILY"), 500ULL * 1024ULL * 1024ULL); // 500M
+   duration_privacy_policy    = UServer_Base::pcfg->readLong(U_CONSTANT_TO_PARAM("DURATION_PRIVACY_POLICY"), 365L) * U_ONE_DAY_IN_SECOND; // 1 year
    policySessionNotifyDefault = UServer_Base::pcfg->readLong(U_CONSTANT_TO_PARAM("POLICY_SESSION_NOTIFY_DEFAULT"));
 }
 
@@ -556,8 +559,8 @@ static void setSessionPolicy()
 
       policySessionNotify = policySessionNotifyDefault;
 
-      (void) rc->hmset(U_CONSTANT_TO_PARAM("DEVICE:id:%v id %v pId DAILY pNotify 0 pCounter 0 lastAccess %u pLastReset %u created %u"),
-                       mac->rep, mac->rep, u_now->tv_sec, u_now->tv_sec, u_now->tv_sec);
+      (void) rc->hmset(U_CONSTANT_TO_PARAM("DEVICE:id:%v id %v pId DAILY pNotify %u pCounter 0 lastAccess %u pLastReset %u created %u"),
+                       mac->rep, mac->rep, policySessionNotifyDefault, u_now->tv_sec, u_now->tv_sec, u_now->tv_sec);
 
       (void) rc->zadd(U_CONSTANT_TO_PARAM("DEVICE:bylastAccess %u id:%v"), u_now->tv_sec, mac->rep);
       }
@@ -684,7 +687,7 @@ static void writeToLOG(const UString& label, const char* op, uint32_t op_len, co
    ULog::log(file_LOG->getFd(),
              U_CONSTANT_TO_PARAM("op: %.*s, mac: %v, ip: %v, ap: %.*s, policy: %v|%.*sconsume|%snotify%v"),
              op_len, op, mac->rep, ip->rep, getApInfo(label, buffer), buffer, policySessionId->rep, (ap_consume ? 0 : 3), "no_", (policySessionNotify == 0 ? ""     :
-                                                                                                                           policySessionNotify == 1 ? "no_" : "strict_"), opt.rep);
+                                                                                                                                  policySessionNotify == 1 ? "no_" : "strict_"), opt.rep);
 }
 
 static void writeSessionToLOG(const UString& label, const char* op, uint32_t op_len)
@@ -724,7 +727,7 @@ static void resetDeviceDailyCounter()
       {
       device_counter = 0;
 
-      (void) rc->hmset(U_CONSTANT_TO_PARAM("DEVICE:id:%v pCounter 0 pLastReset %u"), mac->rep, u_now->tv_sec);
+      (void) rc->hmset(U_CONSTANT_TO_PARAM("DEVICE:id:%v pLastReset %u"), mac->rep, u_now->tv_sec);
       }
 }
 
@@ -965,14 +968,99 @@ static void sessionClean(const UString& key)
    lostSession(2);
 }
 
-static void GET_acceptTermsOfConditionsExpirationList()
+static void GET_acceptTermsOfConditions()
 {
-   U_TRACE_NO_PARAM(5, "::GET_acceptTermsOfConditionsExpirationList()")
+   U_TRACE_NO_PARAM(5, "::GET_acceptTermsOfConditions()")
+
+   // $1 -> ap (with localization => '@')
+   // $2 -> mac
+
+   if (UHTTP::processForm() == 2*2)
+      {
+       ap->clear();
+      mac->clear();
+
+      UHTTP::getFormValue(*ap, U_CONSTANT_TO_PARAM("ap"), 0, 1, 4);
+
+      if (setAccessPoint())
+         {
+         UHTTP::getFormValue(*mac, U_CONSTANT_TO_PARAM("mac"), 0, 3, 4);
+
+         if (mac->isMacAddr())
+            {
+            char buffer[16];
+
+            u_getXMAC(mac->data(), buffer);
+
+            (void) mac->replace(buffer, 12);
+            }
+
+         U_ASSERT(mac->isXMacAddr())
+
+         (void) rc->hmset(U_CONSTANT_TO_PARAM("DEVICE:id:%v ExpirePrivacy %u"), mac->rep, u_now->tv_sec + duration_privacy_policy);
+         }
+      }
+}
+
+static void checkPrivacy(const UString& key)
+{
+   U_TRACE(5, "::checkPrivacy(%V)", key.rep)
+
+   (void) rc->hmget(U_CONSTANT_TO_PARAM("%v ExpirePrivacy pNotify"), key.rep);
+
+   uint32_t expire = rc->getULong(0);
+   uint8_t policy  = rc->getUInt8(1);
+
+   /**
+    * i) SE ["scadenza privacy policy" <= data corrente], ovvero è scaduta ALLORA [SET policy = "strict notify"] AND [SET "scadenza privacy policy" = null]
+    * (ovvero al prossimo accesso verrà ripresentata la richiesta di manifestazione del consenso)
+    *
+    * ii) SE ["scadenza privacy policy" = NULL] AND [policy = "notify"] ALLORA [SET policy = "strict notify"]
+    * (ovvero se si verifica che, per qualunque motivo, non è stato acquisito il consenso,
+    *  allora al prossimo accesso di quel device-utente verrà ripresentata la richiesta tramite la pagina associata alla policy "strict notify")
+    */
+
+   bool bexpired = (expire && expire <= u_now->tv_sec);
+
+   U_INTERNAL_DUMP("bexpired = %b expire = %u policy = %u", bexpired, expire, policy)
+
+   if (bexpired     ||
+       (expire == 0 &&
+        policy == 0))
+      {
+      const char* op = "RESET2";
+      const char* ptr = key.c_pointer(U_CONSTANT_SIZE("DEVICE:id:"));
+
+      (void) rc->hmset(U_CONSTANT_TO_PARAM("%v pNotify 2"), key.rep);
+
+      if (bexpired)
+         {
+         op = "RESET1";
+
+         (void) rc->hdel(U_CONSTANT_TO_PARAM("%v ExpirePrivacy"), key.rep);
+         }
+
+      ULog::log(facceptTermsOfConditionsRenew, U_CONSTANT_TO_PARAM("op: %s, mac: %.12s pNotify: %u, ExpirePrivacy: %#3D"), op, ptr, policy, expire);
+      }
 }
 
 static void GET_acceptTermsOfConditionsRenew()
 {
    U_TRACE_NO_PARAM(5, "::GET_acceptTermsOfConditionsRenew()")
+
+   if (UServer_Base::isLocalHost() == false) UHTTP::setBadRequest();
+   else
+      {
+      UString pathname(200U);
+
+      pathname.snprintf(U_CONSTANT_TO_PARAM("../log/acceptTermsOfConditionsRenew.%4D.log"), 0);
+
+      facceptTermsOfConditionsRenew = UFile::creat(pathname.data(), O_TRUNC | O_WRONLY | O_APPEND);
+
+      (void) rc->scan(checkPrivacy, U_CONSTANT_TO_PARAM("DEVICE:id:*"));
+
+      UFile::close(facceptTermsOfConditionsRenew);
+      }
 }
 
 static void GET_anagrafica()
@@ -1408,7 +1496,11 @@ static void GET_welcome()
       {
       // policy: (DAILY|FLAT), SessionNotify: (0,notify) (1,no_notify) (2,strict_notify)
 
-      UString x = vwelcome_file->at(vwelcome_index[policySessionId->equal(U_CONSTANT_TO_PARAM("FLAT"))][policySessionNotify]);
+      uint8_t index = vwelcome_index[policySessionId->equal(U_CONSTANT_TO_PARAM("FLAT"))][policySessionNotify];
+
+      U_INTERNAL_DUMP("index = %u policySessionId = %V policySessionNotify = %u", index, policySessionId->rep, policySessionNotify)
+
+      UString x = vwelcome_file->at(index);
 
       UHTTP::UFileCacheData* welcome_html = UHTTP::getFileCachePointer(U_STRING_TO_PARAM(x));
 
@@ -1418,11 +1510,6 @@ static void GET_welcome()
       }
 
    U_http_info.nResponseCode = HTTP_NO_CONTENT; // NB: to escape management after usp exit...
-}
-
-static void POST_acceptTermsOfConditions()
-{
-   U_TRACE_NO_PARAM(5, "::POST_acceptTermsOfConditions()")
 }
 
 static void POST_login()

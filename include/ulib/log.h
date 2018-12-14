@@ -201,7 +201,8 @@ public:
 
    // write without prefix
 
-   static void log(int lfd, const char* format, uint32_t fmt_size, ...); // (buffer write == 8196)
+   static void log(int lfd,         const char* format, uint32_t fmt_size, ...); // (buffer write == 8196)
+   static void log(UString& buffer, const char* format, uint32_t fmt_size, ...); // (buffer write == 8196)
 
    // logger
 

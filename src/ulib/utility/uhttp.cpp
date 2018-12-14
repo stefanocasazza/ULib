@@ -4511,6 +4511,7 @@ file_in_cache:
             setDynamicResponse();
             }
             }
+         else if (U_http_info.nResponseCode == HTTP_NO_CONTENT) U_http_info.nResponseCode = HTTP_OK; // NB: to escape management after usp exit...
 
          U_RESET_MODULE_NAME;
 

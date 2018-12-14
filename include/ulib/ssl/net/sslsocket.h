@@ -71,7 +71,7 @@ public:
       Old          = 0x002
    };
 
-    USSLSocket(bool bSocketIsIPv6 = false, SSL_CTX* ctx = U_NULLPTR, bool server = false);
+    USSLSocket(bool bSocketIsIPv6 = false, SSL_CTX* ctx = U_NULLPTR, bool server = false, int fd = -1);
    ~USSLSocket();
 
    bool secureConnection();

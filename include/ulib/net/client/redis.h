@@ -255,6 +255,24 @@ public:
       U_RETURN(ok);
       }
 
+   // HDEL key field [field ...]
+
+   bool hdel(const char* format, uint32_t fmt_size, ...)
+      {
+      U_TRACE(0, "UREDISClient_Base::hdel(%.*S,%u)", fmt_size, format, fmt_size)
+
+      bool ok;
+
+      va_list argp;
+      va_start(argp, fmt_size);
+
+      ok = (processMethod(U_RC_INT, U_CONSTANT_TO_PARAM("HDEL"), format, fmt_size, argp) ? getUInt8() : false);
+
+      va_end(argp);
+
+      U_RETURN(ok);
+      }
+
    bool set(const char* key, uint32_t keylen, const char* value, uint32_t valuelen) // Set the string value of a key
       {
       U_TRACE(0, "UREDISClient_Base::set(%.*S,%u,%.*S,%u)", keylen, key, keylen, valuelen, value, valuelen)

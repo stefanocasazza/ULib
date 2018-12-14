@@ -591,6 +591,35 @@ void ULog::log(int lfd, const char* fmt, uint32_t fmt_size, ...)
       }
 }
 
+void ULog::log(UString& lbuffer, const char* fmt, uint32_t fmt_size, ...)
+{
+   U_TRACE(0, "ULog::log(%V,%.*S,%u)", lbuffer.rep, fmt_size, fmt, fmt_size)
+
+   uint32_t len;
+   char buffer[8196];
+
+   va_list argp;
+   va_start(argp, fmt_size);
+
+   len = u__vsnprintf(buffer, U_CONSTANT_SIZE(buffer), fmt, fmt_size, argp);
+
+   va_end(argp);
+
+   U_INTERNAL_ASSERT_EQUALS(iov_vec[0].iov_len, 17)
+   U_INTERNAL_ASSERT_EQUALS(iov_vec[1].iov_len,  1)
+   U_INTERNAL_ASSERT_EQUALS(iov_vec[4].iov_len,  1)
+
+   iov_vec[3].iov_len  = len;
+   iov_vec[3].iov_base = (caddr_t)buffer;
+
+   updateDate1();
+
+   for (int i = 0; i < 5; ++i)
+      {
+      if (iov_vec[i].iov_len) (void) lbuffer.append((const char*)iov_vec[i].iov_base, iov_vec[i].iov_len);
+      }
+}
+
 void ULog::log(const struct iovec* iov, const char* type, int ncount, const char* msg, uint32_t msg_len, const char* format, uint32_t fmt_size, ...)
 {
    U_TRACE(0, "ULog::log(%p,%S,%d,%.*S,%u,%.*S,%u)", iov, type, ncount, msg_len, msg, msg_len, fmt_size, format, fmt_size)
