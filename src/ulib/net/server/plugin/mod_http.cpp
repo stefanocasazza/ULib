@@ -475,6 +475,9 @@ int UHttpPlugIn::handlerInit()
 {
    U_TRACE_NO_PARAM(0, "UHttpPlugIn::handlerInit()")
 
+   UServer_Base::update_date  =
+   UServer_Base::update_date3 = true;
+
    U_MEMCPY(ULog::date.header1, "HTTP/1.1 200 OK\r\n",
                 U_CONSTANT_SIZE("HTTP/1.1 200 OK\r\n")); // 17
 
@@ -549,13 +552,12 @@ int UHttpPlugIn::handlerRun() // NB: we use this method instead of handlerInit()
 #endif
    if (UServer_Base::handler_inotify) UHTTP::initDbNotFound();
 
-   UServer_Base::update_date  =
-   UServer_Base::update_date3 = true;
-
-#if defined(U_LINUX) && defined(ENABLE_THREAD) && !defined(U_SERVER_CAPTIVE_PORTAL)
+#if defined(U_LINUX) && defined(ENABLE_THREAD)
    U_INTERNAL_ASSERT_POINTER(UServer_Base::ptr_shared_data)
 
+# if !defined(U_SERVER_CAPTIVE_PORTAL)
    UClientImage_Base::callerHandlerCache  = UHTTP::handlerCache;
+# endif
    UClientImage_Base::iov_vec[1].iov_base = (caddr_t)UServer_Base::ptr_shared_data->log_date_shared.header1;
 #endif
 

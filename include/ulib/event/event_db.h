@@ -16,7 +16,7 @@
 
 #include <ulib/event/event_fd.h>
 
-#define U_QUERY_INFO_SZ 1024
+#define U_QUERY_INFO_SZ 168
 
 class UServer_Base;
 class UClientImage_Base;
@@ -26,6 +26,10 @@ public:
 
    // Check for memory error
    U_MEMORY_TEST
+
+   // Allocator e Deallocator
+   U_MEMORY_ALLOCATOR
+   U_MEMORY_DEALLOCATOR
 
     UEventDB();
    ~UEventDB();

@@ -171,8 +171,10 @@ int UWebSocket::handleDataFraming(USocket* socket)
    int framing_state = U_WS_DATA_FRAMING_START, payload_length_bytes_remaining = 0, mask_index = 0, masking = 0;
 
 loop:
+   U_INTERNAL_DUMP("timeoutMS = %d", timeoutMS)
+
    if (rbuffer->empty() &&
-       USocketExt::read(socket, *rbuffer, U_SINGLE_READ, UWebSocket::timeoutMS) == false)
+       USocketExt::read(socket, *rbuffer, U_SINGLE_READ, timeoutMS) == false)
       {
       status_code = U_WS_STATUS_CODE_INTERNAL_ERROR;
 

@@ -41,7 +41,7 @@ UEventDB::UEventDB()
    pthis = (void*)U_CHECK_MEMORY_SENTINEL;
 #endif
 
-// U_WARNING("UEventDB::UEventDB(): sizeof(UEventDB) = %u sizeof(query_info) = %u", sizeof(UEventDB), sizeof(query_info)); // sizeof(UEventDB) = 4072|4088 sizeof(query_info) = 24
+   U_DEBUG("UEventDB::UEventDB(): sizeof(UEventDB) = %u sizeof(query_info) = %u", sizeof(UEventDB), sizeof(query_info)); // sizeof(UEventDB) = 4072|4088 sizeof(query_info) = 24
 }
 
 UEventDB::~UEventDB()
@@ -151,9 +151,11 @@ void UEventDB::handlerQuery(vPFpvu handler, uint32_t num_query)
 
    U_INTERNAL_ASSERT_MINOR(num_result, 4096)
 
+#ifndef U_SERVER_CAPTIVE_PORTAL
    if (num_query > 20       ||
        (num_result  >= 2048 ||
         num_handler == U_QUERY_INFO_SZ))
+#endif
       {
       U_DEBUG("UEventDB::handlerQuery(%u): num_result(%u), num_handler(%u)", num_query, num_result, num_handler);
 

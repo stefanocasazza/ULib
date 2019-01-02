@@ -19,8 +19,14 @@
 #include <ulib/internal/config.h>
 #include <ulib/base/replace/replace.h>
 
+#ifndef U_PREFIXDIR
+#define U_PREFIXDIR "/usr/local"
+#endif
 #ifndef U_LIBEXECDIR
 #define U_LIBEXECDIR "/usr/local/libexec/ulib"
+#endif
+#ifndef U_SYSCONFDIR
+#define U_SYSCONFDIR "/usr/local/etc"
 #endif
 
 /*

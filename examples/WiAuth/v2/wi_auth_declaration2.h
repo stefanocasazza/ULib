@@ -972,33 +972,24 @@ static void GET_acceptTermsOfConditions()
 {
    U_TRACE_NO_PARAM(5, "::GET_acceptTermsOfConditions()")
 
-   // $1 -> ap (with localization => '@')
-   // $2 -> mac
+   // $1 -> mac
 
-   if (UHTTP::processForm() == 2*2)
+   if (UHTTP::processForm() == 2)
       {
-       ap->clear();
-      mac->clear();
+      UHTTP::getFormValue(*mac, U_CONSTANT_TO_PARAM("mac"), 0, 1, 2);
 
-      UHTTP::getFormValue(*ap, U_CONSTANT_TO_PARAM("ap"), 0, 1, 4);
-
-      if (setAccessPoint())
+      if (mac->isMacAddr())
          {
-         UHTTP::getFormValue(*mac, U_CONSTANT_TO_PARAM("mac"), 0, 3, 4);
+         char buffer[16];
 
-         if (mac->isMacAddr())
-            {
-            char buffer[16];
+         u_getXMAC(mac->data(), buffer);
 
-            u_getXMAC(mac->data(), buffer);
-
-            (void) mac->replace(buffer, 12);
-            }
-
-         U_ASSERT(mac->isXMacAddr())
-
-         (void) rc->hmset(U_CONSTANT_TO_PARAM("DEVICE:id:%v ExpirePrivacy %u"), mac->rep, u_now->tv_sec + duration_privacy_policy);
+         (void) mac->replace(buffer, 12);
          }
+
+      U_ASSERT(mac->isXMacAddr())
+
+      (void) rc->hmset(U_CONSTANT_TO_PARAM("DEVICE:id:%v ExpirePrivacy %u"), mac->rep, u_now->tv_sec + duration_privacy_policy);
       }
 }
 

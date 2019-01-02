@@ -257,6 +257,7 @@ http {
 
 # CGI_TIMEOUT           60
 # VIRTUAL_HOST          yes
+# WEBSOCKET_TIMEOUT     -1 
 # DIGEST_AUTHENTICATION yes
 
 # URI_PROTECTED_MASK       /RA/admin/cgi-bin/*
@@ -681,6 +682,34 @@ http {
 # Number of seconds after a client last login/renewal to terminate their connection
 # Probably do not want to set this to less than 60 or a lot of bandwidth is likely to get consumed by the client renewal attempts
 # LOGIN_TIMEOUT 86400 # one notification per day
+
+# Number of seconds to check if some client has terminate their connection
+# CHECK_EXPIRE_INTERVAL 360
+# }
+
+# -----------------------------------------------------------------------------------------------------------------------------------
+# nodog - plugin parameters
+# -----------------------------------------------------------------------------------------------------------------------------------
+# FW_CMD                shell script to manage the firewall
+# FW_ENV                environment for shell script to execute
+# DECRYPT_KEY           DES3 password stuff
+# ALLOWED_MEMBERS       file with list of allowed MAC/IP pairs or NETWORKS (default: /etc/nodog.allowed)
+# LOCAL_NETWORK_LABEL   access point localization tag to be used from portal
+# CHECK_EXPIRE_INTERVAL Number of seconds to send client info to portal
+# -----------------------------------------------------------------------------------------------------------------------------------
+
+# nodog {
+
+# shell script to manage the firewall
+# FW_CMD firewall/nodog.fw
+# FW_ENV "FW_CONF=/etc/nodog_fw.conf \
+# AuthServiceAddr=http://www.auth-firenze.com/login"
+
+# DES3 password stuff
+# DECRYPT_KEY PASSWORD
+
+# access point localization tag to be used from portal
+# LOCAL_NETWORK_LABEL "radio1 radio2"
 
 # Number of seconds to check if some client has terminate their connection
 # CHECK_EXPIRE_INTERVAL 360

@@ -11743,12 +11743,27 @@ U_NO_EXPORT bool UHTTP::compileUSP(const char* path, uint32_t len)
    U_TRACE(0, "UHTTP::compileUSP(%.*S,%u)", len, path, len)
 
    static int fd_stderr;
+   static UString* usp_compile_path;
 
-   UString command(200U);
+   if (usp_compile_path == U_NULLPTR)
+      {
+      struct stat st;
+
+      if (U_SYSCALL(stat, "%S,%p", U_PREFIXDIR "/bin/usp_compile.sh", &st) == 0)
+         {
+         U_NEW_ULIB_STRING(usp_compile_path, U_STRING_FROM_CONSTANT(U_PREFIXDIR "/bin/usp_compile.sh"));
+         }
+      else
+         {
+         U_NEW_ULIB_STRING(usp_compile_path, U_STRING_FROM_CONSTANT("usp_compile.sh"));
+         }
+      }
+
+   UString command(usp_compile_path->size());
 
    // Ex: usp_compile.sh -i /home/user/project/include -o /home/user/project/build <file.usp> so
 
-   command.snprintf(U_CONSTANT_TO_PARAM("usp_compile.sh %.*s %s"), len, path, U_LIB_SUFFIX);
+   command.snprintf(U_CONSTANT_TO_PARAM("%v %.*s %s"), usp_compile_path->rep, len, path, U_LIB_SUFFIX);
 
    UCommand cmd(command);
 
@@ -12018,8 +12033,6 @@ loop: while (u__isalpha(*++ptr1)) {}
       if (getUSP((const char*)ptr, sz))
          {
          old_sz = sz;
-
-         ULog::updateDate3(U_NULLPTR);
 
          U_http_info.nResponseCode = HTTP_OK;
 

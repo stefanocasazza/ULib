@@ -1112,7 +1112,7 @@ private:
    U_DISALLOW_COPY_AND_ASSIGN(UClientThread)
 };
 
-#  if defined(U_LINUX) && !defined(U_SERVER_CAPTIVE_PORTAL)
+#  ifdef U_LINUX
 class UTimeThread : public UThread {
 public:
 
@@ -1261,15 +1261,19 @@ public:
 
          sec = u_now->tv_sec;
 
+#     ifndef U_SERVER_CAPTIVE_PORTAL
          if (daylight &&
              (sec % U_ONE_HOUR_IN_SECOND) == 0)
             {
             (void) UTimeDate::checkForDaylightSavingTime(sec);
             }
+#     endif
 
          if (UServer_Base::update_date)
             {
+#        ifndef U_SERVER_CAPTIVE_PORTAL
             (void) U_SYSCALL(pthread_rwlock_wrlock, "%p", ULog::prwlock);
+#        endif
 
             if ((sec % U_ONE_HOUR_IN_SECOND) != 0)
                {
@@ -1286,7 +1290,9 @@ public:
                if (UServer_Base::update_date3) (void) u_strftime2(ULog::ptr_shared_date->date3+6, 29-4, U_CONSTANT_TO_PARAM("%a, %d %b %Y %T"), sec);
                }
 
+#        ifndef U_SERVER_CAPTIVE_PORTAL
             (void) U_SYSCALL(pthread_rwlock_unlock, "%p", ULog::prwlock);
+#        endif
             }
          }
       }
@@ -1797,14 +1803,12 @@ UServer_Base::~UServer_Base()
 # endif
 
 # if defined(U_LINUX)
-#  if !defined(U_SERVER_CAPTIVE_PORTAL)
    if (u_pthread_time)
       {
       U_DELETE((UTimeThread*)u_pthread_time)
 
       (void) pthread_rwlock_destroy(ULog::prwlock);
       }
-#  endif
 
 #  if defined(USE_LIBSSL) && !defined(OPENSSL_NO_OCSP) && defined(SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB)
    if (bssl)
@@ -2208,7 +2212,7 @@ void UServer_Base::loadConfigParam()
       port = _port;
       }
 
-   U_INTERNAL_DUMP("SOMAXCONN = %d FD_SETSIZE = %d", SOMAXCONN, FD_SETSIZE)
+   U_INTERNAL_DUMP("SOMAXCONN = %d FD_SETSIZE = %d timeoutMS = %d", SOMAXCONN, FD_SETSIZE, timeoutMS)
 
    set_tcp_keep_alive    = pcfg->readBoolean(U_CONSTANT_TO_PARAM("TCP_KEEP_ALIVE"));
    set_realtime_priority = pcfg->readBoolean(U_CONSTANT_TO_PARAM("SET_REALTIME_PRIORITY"), false);
@@ -3036,9 +3040,7 @@ void UServer_Base::suspendThread()
    U_TRACE_NO_PARAM(0, "UServer_Base::suspendThread()")
 
 #if defined(U_LINUX) && defined(ENABLE_THREAD)
-# if !defined(U_SERVER_CAPTIVE_PORTAL)
    if (u_pthread_time) ((UTimeThread*)u_pthread_time)->suspend();
-# endif
 
 # if defined(USE_LIBSSL) && !defined(OPENSSL_NO_OCSP) && defined(SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB)
    if (pthread_ocsp) pthread_ocsp->suspend();
@@ -3359,7 +3361,6 @@ next:
    if (budp == false)
 # endif
    {
-#  if !defined(U_SERVER_CAPTIVE_PORTAL)
    if (UServer_Base::update_date)
       {
       U_NEW_WITHOUT_CHECK_MEMORY(UTimeThread, u_pthread_time, UTimeThread);
@@ -3368,7 +3369,6 @@ next:
 
       ((UTimeThread*)u_pthread_time)->start(50);
       }
-#  endif
    }
 #endif
 
@@ -3632,9 +3632,7 @@ void UServer_Base::sendSignalToAllChildren(int signo, sighandler_t handler)
 #endif
 
 #if defined(U_LINUX) && defined(ENABLE_THREAD)
-# if !defined(U_SERVER_CAPTIVE_PORTAL)
    if (u_pthread_time) ((UTimeThread*)u_pthread_time)->resume();
-# endif
 
 # if defined(USE_LIBSSL) && !defined(OPENSSL_NO_OCSP) && defined(SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB)
    if (pthread_ocsp) pthread_ocsp->resume();
@@ -4483,6 +4481,7 @@ void UServer_Base::runLoop(const char* user)
    if (budp == false)
 #endif
    {
+# ifndef U_SERVER_CAPTIVE_PORTAL
    if (handler_db1)
       {
       UNotifier::min_connection++;
@@ -4498,6 +4497,7 @@ void UServer_Base::runLoop(const char* user)
       handler_db2->UEventFd::op_mask |=  EPOLLET;
       handler_db2->UEventFd::op_mask &= ~EPOLLRDHUP;
       }
+# endif
 
    if (handler_other)
       {
@@ -4532,7 +4532,9 @@ void UServer_Base::runLoop(const char* user)
          handler_db1->pbusy = U_SRV_DB1_BUSY+rkids;
 #     endif
 
+#     ifndef U_SERVER_CAPTIVE_PORTAL
          UNotifier::insert(handler_db1, EPOLLEXCLUSIVE | EPOLLROUNDROBIN); // NB: we ask to be notified for response from db
+#     endif
          }
 
       if (handler_db2)
@@ -4543,7 +4545,9 @@ void UServer_Base::runLoop(const char* user)
          handler_db2->pbusy = U_SRV_DB2_BUSY+rkids;
 #     endif
 
+#     ifndef U_SERVER_CAPTIVE_PORTAL
          UNotifier::insert(handler_db2, EPOLLEXCLUSIVE | EPOLLROUNDROBIN); // NB: we ask to be notified for response from db
+#     endif
          }
 
       if (handler_other) // NB: we ask to be notified for request from generic system
