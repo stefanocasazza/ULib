@@ -708,9 +708,12 @@ bool UWebSocket::sendControlFrame(USocket* socket, int opcode, const unsigned ch
       header[6+i] = (payload[i] ^ masking_key[i % 4]) & 0xff;
       }
 
-   U_SRV_LOG_WITH_ADDR("send control frame(%d) (6+%u bytes) %.*S to", opcode, payload_length, payload_length, payload)
+   if (USocketExt::write(socket, (const char*)header, ncount, UServer_Base::timeoutMS) == ncount)
+      {
+      U_SRV_LOG_WITH_ADDR("send control frame(%d) (6+%u bytes) %.*S to", opcode, payload_length, payload_length, payload)
 
-   if (USocketExt::write(socket, (const char*)header, ncount, UServer_Base::timeoutMS) == ncount) U_RETURN(true);
+      U_RETURN(true);
+      }
 
    U_RETURN(false);
 }

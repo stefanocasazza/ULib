@@ -51,6 +51,8 @@
 #include <ulib/event/event_fd.h>
 #include <ulib/event/event_time.h>
 
+#define U_NOTIFY_DELETE 0x010
+
 class USocket;
 class UTimeStat;
 class USocketExt;

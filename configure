@@ -1070,6 +1070,7 @@ enable_GSDS
 enable_HCRS
 enable_HPRS
 enable_SSE
+enable_websocket_parallelization
 enable_http2
 enable_check_time
 enable_classic
@@ -1807,7 +1808,8 @@ Optional Features:
   --enable-GSDS             enable GDB Stack Dump Support [default=no]
   --enable-HCRS             enable Cache Request Support [default=no]
   --enable-HPRS             enable Homogeneous Pipeline Request Support [default=no]
-  --enable-SSE              enable Server-Sent Events Support [default=no]
+  --enable-SSE              enable Server-Sent Events support [default=no]
+  --enable-websocket-parallelization enable Websocket parallelization support [default=yes]
   --enable-http2            enable HTTP/2 support [default=no]
   --enable-check-time       enable server check time between request for parallelization [default=no]
   --enable-classic          enable server classic model support [default=no]
@@ -28184,6 +28186,24 @@ $as_echo "#define U_SSE_ENABLE 1" >>confdefs.h
 	fi
 	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $enable_SSE" >&5
 $as_echo "$enable_SSE" >&6; }
+
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if you want to enable Websocket parallelization support" >&5
+$as_echo_n "checking if you want to enable Websocket parallelization support... " >&6; }
+	# Check whether --enable-websocket-parallelization was given.
+if test "${enable_websocket_parallelization+set}" = set; then :
+  enableval=$enable_websocket_parallelization;
+fi
+
+	if test -z "$enable_websocket_parallelization"; then
+		enable_websocket_parallelization="yes"
+	fi
+	if test "$enable_websocket_parallelization" = "yes"; then
+
+$as_echo "#define U_WEBSOCKET_PARALLELIZATION 1" >>confdefs.h
+
+	fi
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $enable_websocket_parallelization" >&5
+$as_echo "$enable_websocket_parallelization" >&6; }
 
 	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if you want to enable HTTP/2 support" >&5
 $as_echo_n "checking if you want to enable HTTP/2 support... " >&6; }

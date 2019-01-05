@@ -473,6 +473,18 @@ void UClientImage_Base::handlerDelete()
 
    U_INTERNAL_ASSERT_DIFFERS(U_ClientImage_parallelization, U_PARALLELIZATION_CHILD)
 
+   bool bdelete = (U_ClientImage_state == U_NOTIFY_DELETE);
+
+   U_INTERNAL_DUMP("U_ClientImage_state = %d %B bdelete = %b bsocket_open = %b", U_ClientImage_state, U_ClientImage_state, bdelete, bsocket_open)
+
+   if (bdelete &&
+       bsocket_open)
+      {
+      socket->close();
+
+      bsocket_open = false;
+      }
+
 #ifndef U_LOG_DISABLE
    if (UServer_Base::isLog())
       {
@@ -482,7 +494,7 @@ void UClientImage_Base::handlerDelete()
 
       char buffer[32];
       uint32_t len = UServer_Base::setNumConnection(buffer);
-      const char* agent = (bsocket_open == false || UServer_Base::isParallelizationParent() ? "Server" : "Client");
+      const char* agent = (bdelete || bsocket_open ? "Client" : "Server");
 
       UServer_Base::log->log(U_CONSTANT_TO_PARAM("%.6s close connection from %v, %.*s clients still connected"), agent, logbuf->rep, len, buffer);
 
@@ -514,10 +526,19 @@ void UClientImage_Base::handlerDelete()
    if (UServer_Base::isClassic()) U_EXIT(0);
 #endif
 
-#ifndef U_HTTP2_DISABLE
    U_INTERNAL_DUMP("U_ClientImage_http = %C U_http_version = %C", U_ClientImage_http(this), U_http_version)
 
+#ifndef U_HTTP2_DISABLE
    if (U_ClientImage_http(this) == '2') UHTTP2::handlerDelete(this, bsocket_open);
+#endif
+
+#ifndef U_WEBSOCKET_PARALLELIZATION
+   if (U_ClientImage_http(this) == '0')
+      {
+      if (bsocket_open) (void) UWebSocket::sendClose(socket);
+
+      UWebSocket::on_message_param(U_DPAGE_CLOSE);
+      }
 #endif
 
    if (bsocket_open) socket->close();
@@ -1297,11 +1318,29 @@ data_missing:
    if (U_ClientImage_parallelization == U_PARALLELIZATION_PARENT) U_RETURN(U_NOTIFIER_DELETE);
 #endif
 
+   U_INTERNAL_ASSERT_EQUALS(UServer_Base::csocket, UServer_Base::pClientImage->socket)
+
    resetBuffer();
 
-   size_request = 0;
+#ifndef U_WEBSOCKET_PARALLELIZATION
+   U_INTERNAL_DUMP("U_ClientImage_http = %C U_http_version = %C", U_ClientImage_http(this), U_http_version)
 
-   U_INTERNAL_ASSERT_EQUALS(UServer_Base::csocket, UServer_Base::pClientImage->socket)
+   if (U_ClientImage_http(this) == '0')
+      {
+      if (UWebSocket::handleDataFraming(socket) == U_WS_STATUS_CODE_OK)
+         {
+         UWebSocket::on_message();
+
+         UWebSocket::rbuffer->setEmpty();
+
+         if (U_http_info.nResponseCode == HTTP_INTERNAL_ERROR) U_RETURN(U_NOTIFIER_DELETE);
+         }
+
+      U_RETURN(U_NOTIFIER_OK);
+      }
+#endif
+
+   size_request = 0;
 
    U_ClientImage_state = callerHandlerRead();
 
@@ -1450,8 +1489,23 @@ check:            U_INTERNAL_DUMP("nrequest = %u resto = %u", nrequest, resto)
 
    if (isRequestNeedProcessing())
       {
-      U_INTERNAL_ASSERT_DIFFERS(U_ClientImage_parallelization, U_PARALLELIZATION_PARENT)
       U_INTERNAL_ASSERT_EQUALS(U_ClientImage_state & (U_PLUGIN_HANDLER_AGAIN | U_PLUGIN_HANDLER_ERROR), 0)
+
+#  ifdef U_WEBSOCKET_PARALLELIZATION
+      U_INTERNAL_ASSERT_DIFFERS(U_ClientImage_parallelization, U_PARALLELIZATION_PARENT)
+#  else
+      if (U_ClientImage_parallelization == U_PARALLELIZATION_PARENT)
+         {
+         U_ASSERT(wbuffer->empty())
+         U_INTERNAL_ASSERT_EQUALS(U_ClientImage_data_missing, false)
+
+         endRequest();
+
+         U_ClientImage_parallelization = 0;
+
+         U_RETURN(U_NOTIFIER_OK);
+         }
+#  endif
 
       callerHandlerRequest();
 

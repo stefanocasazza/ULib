@@ -4641,9 +4641,19 @@ from_cache:
          }
       else
          {
+#     ifdef U_WEBSOCKET_PARALLELIZATION
          UClientImage_Base::setRequestNoCache();
 
          if (UServer_Base::startParallelization() == false) UWebSocket::handlerRequest(); // child
+#     else
+         UWebSocket::checkForInitialData(); // check if we have read more data than necessary...
+
+         UWebSocket::on_message_param(U_DPAGE_OPEN);
+
+         U_ClientImage_http(UServer_Base::pClientImage) = '0';
+
+         U_ClientImage_parallelization = U_PARALLELIZATION_PARENT;
+#     endif
          }
 
       U_RETURN(U_PLUGIN_HANDLER_OK);

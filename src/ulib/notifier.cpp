@@ -568,6 +568,8 @@ loop0:
 
          if (bdelete)
             {
+            U_ClientImage_state = U_NOTIFY_DELETE;
+
             handlerDelete(handler_event);
 
 #        if defined(U_EPOLLET_POSTPONE_STRATEGY)

@@ -952,6 +952,9 @@
 /* enable server bandwidth throttling support */
 #undef U_THROTTLING_SUPPORT
 
+/* enable Websocket parallelization support */
+#undef U_WEBSOCKET_PARALLELIZATION
+
 /* enable welcome message support */
 #undef U_WELCOME_SUPPORT
 

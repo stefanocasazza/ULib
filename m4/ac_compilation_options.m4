@@ -211,7 +211,7 @@ AC_DEFUN([AC_COMPILATION_OPTIONS],[
 
 	AC_MSG_CHECKING(if you want to enable Server-Sent Events support)
 	AC_ARG_ENABLE(SSE,
-				[  --enable-SSE              enable Server-Sent Events Support [[default=no]]])
+				[  --enable-SSE              enable Server-Sent Events support [[default=no]]])
 	if test -z "$enable_SSE"; then
 		enable_SSE="no"
 	fi
@@ -219,6 +219,17 @@ AC_DEFUN([AC_COMPILATION_OPTIONS],[
 		AC_DEFINE(U_SSE_ENABLE, 1, [enable Server-Sent Events support])
 	fi
 	AC_MSG_RESULT([$enable_SSE])
+
+	AC_MSG_CHECKING(if you want to enable Websocket parallelization support)
+	AC_ARG_ENABLE(websocket-parallelization,
+				[  --enable-websocket-parallelization enable Websocket parallelization support [[default=yes]]])
+	if test -z "$enable_websocket_parallelization"; then
+		enable_websocket_parallelization="yes"
+	fi
+	if test "$enable_websocket_parallelization" = "yes"; then
+		AC_DEFINE(U_WEBSOCKET_PARALLELIZATION, 1, [enable Websocket parallelization support])
+	fi
+	AC_MSG_RESULT([$enable_websocket_parallelization])
 
 	AC_MSG_CHECKING(if you want to enable HTTP/2 support)
 	AC_ARG_ENABLE(http2,
