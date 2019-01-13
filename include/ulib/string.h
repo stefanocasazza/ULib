@@ -2290,6 +2290,25 @@ public:
       va_end(argp);
       }
 
+   void snprintf_pos(uint32_t pos, const char* format, uint32_t fmt_size, ...)
+      {
+      U_TRACE(0, "UString::snprintf_pos(%u,%.*S,%u)", pos, fmt_size, format, fmt_size)
+
+      U_INTERNAL_ASSERT_POINTER(format)
+      U_INTERNAL_ASSERT(pos <= rep->_length)
+
+      va_list argp;
+      va_start(argp, fmt_size);
+
+      rep->_length = pos + u__vsnprintf(c_pointer(pos), rep->_capacity+1-pos, format, fmt_size, argp); // NB: +1 because we want space for null-terminator...
+
+      U_INTERNAL_DUMP("ret = %u buffer_size = %u", rep->_length, rep->_capacity+1-pos)
+
+      U_INTERNAL_ASSERT(invariant())
+
+      va_end(argp);
+      }
+
    void size_adjust()                      { rep->size_adjust(); }
    void size_adjust(uint32_t value)        { rep->size_adjust(value); }
    void size_adjust(const char* ptr)       { rep->size_adjust(ptr); }

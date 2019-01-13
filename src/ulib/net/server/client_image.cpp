@@ -458,6 +458,8 @@ void UClientImage_Base::handlerDelete()
 
    bool bsocket_open = isOpen();
 
+   U_INTERNAL_DUMP("bsocket_open = %b", bsocket_open)
+
 #if !defined(USE_LIBEVENT) && defined(HAVE_EPOLL_WAIT) && defined(DEBUG)
    if (UNLIKELY(UNotifier::num_connection <= UNotifier::min_connection))
       {
@@ -475,15 +477,7 @@ void UClientImage_Base::handlerDelete()
 
    bool bdelete = (U_ClientImage_state == U_NOTIFY_DELETE);
 
-   U_INTERNAL_DUMP("U_ClientImage_state = %d %B bdelete = %b bsocket_open = %b", U_ClientImage_state, U_ClientImage_state, bdelete, bsocket_open)
-
-   if (bdelete &&
-       bsocket_open)
-      {
-      socket->close();
-
-      bsocket_open = false;
-      }
+   U_INTERNAL_DUMP("U_ClientImage_state = %d %B bdelete = %b", U_ClientImage_state, U_ClientImage_state, bdelete)
 
 #ifndef U_LOG_DISABLE
    if (UServer_Base::isLog())
@@ -526,6 +520,14 @@ void UClientImage_Base::handlerDelete()
    if (UServer_Base::isClassic()) U_EXIT(0);
 #endif
 
+   if (bdelete &&
+       bsocket_open)
+      {
+      socket->close();
+
+      bsocket_open = false;
+      }
+
    U_INTERNAL_DUMP("U_ClientImage_http = %C U_http_version = %C", U_ClientImage_http(this), U_http_version)
 
 #ifndef U_HTTP2_DISABLE
@@ -535,12 +537,16 @@ void UClientImage_Base::handlerDelete()
 #ifndef U_WEBSOCKET_PARALLELIZATION
    if (U_ClientImage_http(this) == '0')
       {
-      if (bsocket_open) (void) UWebSocket::sendClose(socket);
+      if (bsocket_open &&
+          UWebSocket::sendClose(socket))
+         {
+         socket->close();
+         }
 
       UWebSocket::on_message_param(U_DPAGE_CLOSE);
       }
+   else
 #endif
-
    if (bsocket_open) socket->close();
 
    --UNotifier::num_connection;
