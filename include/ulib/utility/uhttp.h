@@ -718,6 +718,8 @@ public:
    static int sse_pipe_fd;
    static const char* sse_corsbase;
 
+   static bool isValidationSSE();
+
 # ifdef USE_LIBSSL
    static UString SSE_event() { return UString::getStringNull(); }
 # endif

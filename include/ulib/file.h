@@ -50,6 +50,7 @@
 #define U_FILE_TO_TRACE(file)  (file).getPathRelativLen(),(file).getPathRelativ()
 #define U_FILE_TO_STRING(file) (file).getPath().substr((file).getPath().distance((file).getPathRelativ()),(file).getPathRelativLen())
 #define U_FILE_STREQ(file,str) U_STREQ((file).getPathRelativ(),(file).getPathRelativLen(),str)
+#define U_FILE_MEMEQ(file,str) (memcmp((file).getPathRelativ(),U_CONSTANT_TO_PARAM(str)) == 0)
 
 #define U_FILE_WRITE_TO_TMP(content,tmpfile,args...) (void) UFile::writeToTmp((content), O_RDWR | O_TRUNC, U_CONSTANT_TO_PARAM(tmpfile), ##args, 0);
 
@@ -249,7 +250,7 @@ public:
    UString& getPath()                 { return pathname; }
    UString  getSuffix() const         { return getSuffix(u_getsuffix(path_relativ, path_relativ_len)); }
    char*    getPathRelativ() const    { return (char*)path_relativ; }
-   int32_t  getPathRelativLen() const { return        path_relativ_len; }
+   uint32_t getPathRelativLen() const { return        path_relativ_len; }
 
    bool isName(const UString& name) const { return name.equal(getName()); }
 

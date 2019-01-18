@@ -1824,8 +1824,11 @@ bool UClientImage_Base::writeResponse()
       if (idx == 0) UServer_Base::log->log(iov, "response", ncount, "[pipeline] ", msg_len, U_CONSTANT_TO_PARAM(" to %v"), logbuf->rep);
       else
          {
-         UServer_Base::log->log(U_CONSTANT_TO_PARAM("%s send response (%u bytes) %.*s%#.*S to %v"),
-                                UServer_Base::mod_name[0], ncount, msg_len, "[pipeline] ", iov->iov_len, iov->iov_base, logbuf->rep);
+         char buf[32];
+         uint32_t buf_len = (UServer_Base::mod_name[0] ? u__snprintf(buf, sizeof(buf), U_CONSTANT_TO_PARAM("%s "), UServer_Base::mod_name[0]) : 0);
+
+         UServer_Base::log->log(U_CONSTANT_TO_PARAM("%.*ssend response (%u bytes) %.*s%#.*S to %v"),
+                                buf_len, buf, ncount, msg_len, "[pipeline] ", iov->iov_len, iov->iov_base, logbuf->rep);
          }
       }
 #endif

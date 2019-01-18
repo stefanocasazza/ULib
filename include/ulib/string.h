@@ -106,6 +106,7 @@ class UEscape;
 class UHexDump;
 class UOptions;
 class UTimeDate;
+class USSEThread;
 class UStringExt;
 class USocketExt;
 class UOrmDriver;
@@ -957,6 +958,28 @@ private:
       set(tlen, 0U, t);
       }
 
+   explicit UStringRep(uint32_t tlen, const char* t) // NB: to use only with new(UStringRep(tlen,t))...
+      {
+      U_TRACE_CTOR(0, UStringRep, "%u,%p", tlen, t)
+
+      U_CHECK_MEMORY
+
+      U_INTERNAL_ASSERT_POINTER(t)
+      U_INTERNAL_ASSERT_MAJOR(tlen, 0)
+
+#  if defined(U_SUBSTR_INC_REF) || defined(DEBUG)
+      parent = U_NULLPTR;
+#    ifdef DEBUG
+      child  = 0;
+#    endif
+#  endif
+
+      _length    = 0U;
+      _capacity  = tlen;
+      references = 1; // NB: this object cannot be destroyed...
+      str        = t;
+      }
+
    ~UStringRep();
 
    void _release();
@@ -1305,6 +1328,17 @@ protected:
       U_INTERNAL_ASSERT_MAJOR(need, tlen)
 
       rep = UStringRep::create(tlen, need, (const char*)t);
+
+      U_INTERNAL_ASSERT(invariant())
+      }
+
+   explicit UString(uint32_t tlen, const char* t) // NB: for USSEThread::run()...
+      {
+      U_TRACE_CTOR(0, UString, "%u,%p", tlen, t)
+
+      U_INTERNAL_ASSERT_MAJOR(tlen, 0)
+
+      U_NEW(UStringRep, rep, UStringRep(tlen, t));
 
       U_INTERNAL_ASSERT(invariant())
       }
@@ -2670,6 +2704,7 @@ private:
       }
 
    friend class UHTTP;
+   friend class USSEThread;
    friend class URDBClient_Base;
 
    template <class T> friend class UJsonTypeHandler;

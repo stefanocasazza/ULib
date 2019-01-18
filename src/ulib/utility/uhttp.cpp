@@ -4610,18 +4610,21 @@ from_cache:
 
 #ifdef U_SSE_ENABLE
    if (UClientImage_Base::isRequestNotFound() && // => 3)
-       U_FILE_STREQ(*file, "sse_event")       &&
+       U_FILE_MEMEQ(*file, "sse_event")       &&
        u_get_unalignedp64(U_http_info.accept+8) == U_MULTICHAR_CONSTANT64('n','t','-','s','t','r','e','a'))
       {
-      usp = U_NULLPTR;
+      if (isValidationSSE())
+         {
+         usp = U_NULLPTR;
 
-#  ifdef USE_LIBSSL
-      if (UServer_Base::bssl) sse_func = SSE_event;
-      else
-#  endif
-      sse_func = (UHTTP::strPF)(void*)1L;
+#     ifdef USE_LIBSSL
+         if (UServer_Base::bssl) sse_func = SSE_event;
+         else
+#     endif
+         sse_func = (UHTTP::strPF)(void*)1L;
 
-      manageSSE();
+         manageSSE();
+         }
 
       U_RETURN(U_PLUGIN_HANDLER_OK);
       }
@@ -7163,6 +7166,21 @@ void UHTTP::setUnAuthorized(bool bstale)
 // --------------------------------------------------------------------------------------------------------------------------------------
 
 #ifdef U_SSE_ENABLE // SERVER SENT EVENTS (SSE)
+bool UHTTP::isValidationSSE()
+{
+   U_TRACE_NO_PARAM(0, "UHTTP::isValidationSSE()")
+
+   U_ASSERT_EQUALS(getPathComponent(0), "sse_event")
+
+   if (file->getPathRelativLen() > U_CONSTANT_SIZE("sse_event") && // Ex: "sse_event/tutor"
+       processAuthorization() == false) // check if it's OK to do directory listing via authentication (digest|basic)
+      {
+      U_RETURN(false);
+      }
+
+   U_RETURN(true);
+}
+
 __noreturn void UHTTP::readSSE(int timeoutMS)
 {
    U_TRACE(0, "UHTTP::readSSE(%d)", timeoutMS)
@@ -7799,6 +7817,7 @@ U_NO_EXPORT bool UHTTP::processAuthorization(const char* request, uint32_t sz, c
    UTokenizer t;
    const char* ptr;
    uint32_t pos = 0;
+   UHTTP::UFileCacheData* ptr_file_data;
    UString buffer(U_CAPACITY), fpasswd, content, tmp;
    bool result = false, bpass = false, bstale = false;
 
@@ -7825,10 +7844,22 @@ U_NO_EXPORT bool UHTTP::processAuthorization(const char* request, uint32_t sz, c
 
          pos = (request + sz) - uri_suffix;
          }
+#  ifdef U_SSE_ENABLE // SERVER SENT EVENTS (SSE)
+      else if (sz > U_CONSTANT_SIZE("/sse_event") &&
+               memcmp(request, U_CONSTANT_TO_PARAM("/sse_event")) == 0) // Ex: "/sse_event/tutor"
+         {
+         ptr_file_data = getPasswdDB(request+U_CONSTANT_SIZE("/sse_event"), sz-U_CONSTANT_SIZE("/sse_event"), fpasswd);
+
+         goto next;
+         }
+#  endif
       }
 
-   UHTTP::UFileCacheData* ptr_file_data = getPasswdDB(request, sz-pos, fpasswd);
+   ptr_file_data = getPasswdDB(request, sz-pos, fpasswd);
 
+#ifdef USE_LIBSSL
+next:
+#endif
    if (fpasswd.empty()) goto end;
 
    bpass = true;

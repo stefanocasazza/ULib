@@ -723,11 +723,11 @@ static void resetDeviceDailyCounter()
    device_counter = rc->getUInt64();
    lastReset      = rc->getULong(1);
 
-   if ((u_get_localtime(lastReset) / U_ONE_DAY_IN_SECOND) < (u_getLocalTime() / U_ONE_DAY_IN_SECOND))
+   if (UTimeDate::compareLocalDay(lastReset) < 0)
       {
       device_counter = 0;
 
-      (void) rc->hmset(U_CONSTANT_TO_PARAM("DEVICE:id:%v pLastReset %u"), mac->rep, u_now->tv_sec);
+      (void) rc->hmset(U_CONSTANT_TO_PARAM("DEVICE:id:%v pCounter 0 pLastReset %u"), mac->rep, u_now->tv_sec);
       }
 }
 

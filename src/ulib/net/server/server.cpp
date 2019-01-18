@@ -1463,6 +1463,8 @@ public:
       {
       U_TRACE_NO_PARAM(0, "USSEThread::run()")
 
+      U_SRV_LOG("SSE thread activated (tid %u): %s(%d)", u_gettid(), UServer_Base::sse_fifo_name, UServer_Base::sse_event_fd);
+
       int fd;
       const char* ptr;
       USSEClient* client;
@@ -1477,7 +1479,8 @@ public:
       char buffer_input[ 64U * 1024U],
            buffer_output[64U * 1024U];
 
-      UString input(buffer_input, sizeof(buffer_input)), output(buffer_output, sizeof(buffer_output));
+      UString  input(sizeof(buffer_input),  buffer_input),
+              output(sizeof(buffer_output), buffer_output);
 
       while (U_SRV_FLAG_SIGTERM == false)
          {
@@ -1544,7 +1547,7 @@ public:
 
                         (void) U_FF_SYSCALL(write, "%u,%S,%u", UServer_Base::sse_event_fd, U_STRING_TO_PARAM(output));
 
-                        output.setEmpty();
+                        output.setEmptyForce();
                         }
 
                      if (bprocess == false)
@@ -1618,7 +1621,7 @@ public:
 
                      U_FILE_WRITE_TO_TMP(output, "SSE_message.txt");
 
-                     output.setEmpty();
+                     output.setEmptyForce();
 
                      ++k;
                      }
@@ -1705,7 +1708,7 @@ public:
                 tmp.clear();
               token.clear();
             message.clear();
-            input.setEmpty();
+            input.setEmptyForce();
             }
          }
       }
@@ -3565,8 +3568,6 @@ next:
    (void) U_SYSCALL(socketpair, "%d,%d,%d,%p", AF_UNIX, SOCK_STREAM, 0, sse_socketpair);
 
    U_INTERNAL_DUMP("sse_socketpair[0] = %u sse_socketpair[1] = %u", sse_socketpair[0], sse_socketpair[1])
-
-   U_SRV_LOG("SSE thread activated: %s(%d)", sse_fifo_name, sse_event_fd);
    }
 #endif
 

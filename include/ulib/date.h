@@ -517,6 +517,34 @@ public:
       return _ago(sec, granularity);
       }
 
+   static int compareDay(time_t sec)
+      {
+      U_TRACE(0, "UTimeDate::compareDay(%ld)", sec)
+
+      U_RETURN((sec / U_ONE_DAY_IN_SECOND) - (u_now->tv_sec / U_ONE_DAY_IN_SECOND));
+      }
+
+   static int compareDay(time_t sec1, time_t sec2)
+      {
+      U_TRACE(0, "UTimeDate::compareDay(%ld,%ld)", sec1, sec2)
+
+      U_RETURN((sec1 / U_ONE_DAY_IN_SECOND) - (sec2 / U_ONE_DAY_IN_SECOND));
+      }
+
+   static int compareLocalDay(time_t sec)
+      {
+      U_TRACE(0, "UTimeDate::compareLocalDay(%ld)", sec)
+
+      return compareDay(sec + *u_pnow_adjust, u_now->tv_sec + *u_pnow_adjust);
+      }
+
+   static int compareLocalDay(time_t sec1, time_t sec2)
+      {
+      U_TRACE(0, "UTimeDate::compareLocalDay(%ld,%ld)", sec1, sec2)
+
+      return compareDay(sec1 + *u_pnow_adjust, sec2 + *u_pnow_adjust);
+      }
+
    // OPERATOR
 
    bool operator==(UTimeDate& date)
