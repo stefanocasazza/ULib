@@ -46,7 +46,7 @@ NODOG_OPTIONS:= --disable-examples \
 					 --with-ssl --with-libz --with-libtdb \
 					 --without-expat --without-magic --without-pcre \
 					 --disable-static --disable-new-ldflags --disable-zip --disable-LFS \
-					 --enable-log --enable-captive-portal --enable-static-server-plugin="nocat http" \
+					 --enable-log --enable-captive-portal --enable-static-server-plugin="nodog http" \
 					 --disable-stdcpp --disable-thread --disable-HCRS --disable-HPRS --disable-HIS \
 					 $(if $(CONFIG_NODOG_DEBUG),--enable-debug) \
 					 $(if $(CONFIG_NODOG_UUID),--with-libuuid,--without-libuuid) \

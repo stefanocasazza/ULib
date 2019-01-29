@@ -714,6 +714,7 @@ public:
 #ifdef U_SSE_ENABLE // SERVER SENT EVENTS (SSE)
    typedef UString (*strPF)();
 
+   static bool sse_auth;
    static strPF sse_func;
    static int sse_pipe_fd;
    static const char* sse_corsbase;
@@ -1526,7 +1527,7 @@ private:
    static void putDataInCache(const UString& path, const UString& fmt, UString& content) U_NO_EXPORT;
    static void addContentLengthToHeader(UString& header, char* ptr, uint32_t size, const char* pEndHeader = U_NULLPTR) U_NO_EXPORT;
    static void setDataInCache(const UString& fmt, const UString& content, const char* encoding, uint32_t encoding_len) U_NO_EXPORT;
-   static bool processAuthorization(const char* ptr = U_NULLPTR, uint32_t sz = 0, const char* pattern = U_NULLPTR, uint32_t len = 0) U_NO_EXPORT;
+   static bool processAuthorization(const char* ptr, uint32_t sz, const char* pattern = U_NULLPTR, uint32_t len = 0) U_NO_EXPORT;
 
    static inline void resetFileCache() U_NO_EXPORT;
    static inline void setUpgrade(const char* ptr) U_NO_EXPORT;

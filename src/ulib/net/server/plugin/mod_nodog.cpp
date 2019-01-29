@@ -257,14 +257,6 @@ U_NO_EXPORT void UNoDogPlugIn::makeInfoData(UFlatBuffer* pfb, void* param)
 
          if (U_peer_allowed) continue;
 
-         if (peer->ctraffic &&
-             U_peer_permit == false)
-            {
-            U_SRV_LOG("WARNING: Peer IP %v MAC %v has made traffic(%u bytes) but it has status DENY", peer->ip.rep, peer->mac.rep, peer->ctraffic);
-
-            continue;
-            }
-
          // -----------------------------------------------------------------------------------------------------------------------------------------
          // $1 -> mac
          // $2 -> ip
@@ -286,10 +278,22 @@ U_NO_EXPORT void UNoDogPlugIn::makeInfoData(UFlatBuffer* pfb, void* param)
 
          if (peer->ctraffic)
             {
-            pfb->UInt(peer->ctraffic);
-                      peer->ctraffic = 0;
+            if (U_peer_permit)
+               {
+               pfb->UInt(peer->ctraffic);
 
-            peer->time_no_traffic = 0U;
+               peer->time_no_traffic = 0U;
+               }
+            else
+               {
+               pfb->UInt(0U);
+
+               peer->time_no_traffic += _ctime;
+
+               U_SRV_LOG("WARNING: Peer IP %v MAC %v has made traffic(%u bytes) but it has status DENY", peer->ip.rep, peer->mac.rep, peer->ctraffic);
+               }
+
+            peer->ctraffic = 0;
 
             /*
             pfb->UInt(_ctime);
@@ -1418,6 +1422,15 @@ next:             eraseTimer();
 
             goto end;
             }
+
+         /**
+         if ((peer->_ctime + U_ONE_HOUR_IN_SECOND) < u_now->tv_sec) // if too old change as NEW user...
+            {
+            U_SRV_LOG("request from OLD USER but it has status very OLD");
+
+            goto log;
+            }
+         */
 
          goto welcome;
          }

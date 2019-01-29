@@ -86,6 +86,7 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
    //
    // ENABLE_CACHING_BY_PROXY_SERVERS enable caching by proxy servers (add "Cache control: public" directive)
    //
+   // URI_PROTECTED_SSE        SSE needs authentication (/sse_event/<name_of_passwd_file>)
    // URI_PROTECTED_MASK       mask (DOS regexp) of URI protected from prying eyes
    // URI_PROTECTED_ALLOWED_IP list of comma separated client address for IP-based access control (IPADDR[/MASK]) for URI_PROTECTED_MASK
    //
@@ -337,6 +338,17 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
       }
 
    U_INTERNAL_DUMP("UHTTP::digest_authentication = %b", UHTTP::digest_authentication)
+
+# ifdef U_SSE_ENABLE // SERVER SENT EVENTS (SSE)
+   x = cfg.at(U_CONSTANT_TO_PARAM("URI_PROTECTED_SSE"));
+
+   if (x)
+      {
+      U_INTERNAL_ASSERT_EQUALS(UHTTP::sse_auth, false)
+
+      UHTTP::sse_auth = x.strtob();
+      }
+#  endif
 
 # ifdef USE_LIBSSL
    x = cfg.at(U_CONSTANT_TO_PARAM("URI_PROTECTED_MASK"));

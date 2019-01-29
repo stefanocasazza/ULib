@@ -176,6 +176,7 @@ URDBObjectHandler<UDataStorage*>* UHTTP::db_session_ssl;
 #endif
 #ifdef U_SSE_ENABLE // SERVER SENT EVENTS (SSE)
 int          UHTTP::sse_pipe_fd;
+bool         UHTTP::sse_auth;
 const char*  UHTTP::sse_corsbase = "*";
 UHTTP::strPF UHTTP::sse_func;
 #endif
@@ -5143,7 +5144,10 @@ void UHTTP::processRequest()
          {
          // check if it's OK to do directory listing via authentication (digest|basic)
 
-         if (processAuthorization()) setDynamicResponse(getHTMLDirectoryList());
+         uint32_t sz;
+         const char* ptr = UClientImage_Base::getRequestUri(sz);
+
+         if (processAuthorization(ptr, sz)) setDynamicResponse(getHTMLDirectoryList());
 
          return;
          }
@@ -7172,10 +7176,14 @@ bool UHTTP::isValidationSSE()
 
    U_ASSERT_EQUALS(getPathComponent(0), "sse_event")
 
-   if (file->getPathRelativLen() > U_CONSTANT_SIZE("sse_event") && // Ex: "sse_event/tutor"
-       processAuthorization() == false) // check if it's OK to do directory listing via authentication (digest|basic)
+   if (sse_auth)
       {
-      U_RETURN(false);
+      // check if it's OK to do directory listing via authentication (digest|basic)
+
+      uint32_t sz;
+      const char* ptr = UClientImage_Base::getRequestUri(sz);
+
+      if (processAuthorization(ptr, sz) == false) U_RETURN(false);
       }
 
    U_RETURN(true);
@@ -7812,7 +7820,8 @@ U_NO_EXPORT bool UHTTP::processAuthorization(const char* request, uint32_t sz, c
 {
    U_TRACE(0, "UHTTP::processAuthorization(%.*S,%u,%.*S,%u)", sz, request, sz, len, pattern, len)
 
-   if (sz == 0) request = UClientImage_Base::getRequestUri(sz);
+   U_INTERNAL_ASSERT_MAJOR(sz, 0)
+   U_INTERNAL_ASSERT_POINTER(request)
 
    UTokenizer t;
    const char* ptr;
@@ -7845,12 +7854,18 @@ U_NO_EXPORT bool UHTTP::processAuthorization(const char* request, uint32_t sz, c
          pos = (request + sz) - uri_suffix;
          }
 #  ifdef U_SSE_ENABLE // SERVER SENT EVENTS (SSE)
-      else if (sz > U_CONSTANT_SIZE("/sse_event") &&
-               memcmp(request, U_CONSTANT_TO_PARAM("/sse_event")) == 0) // Ex: "/sse_event/tutor"
+      else
          {
-         ptr_file_data = getPasswdDB(request+U_CONSTANT_SIZE("/sse_event"), sz-U_CONSTANT_SIZE("/sse_event"), fpasswd);
+         if (sz > U_CONSTANT_SIZE("/sse_event/")) // Ex: "/sse_event/tutor"
+            {
+            U_INTERNAL_ASSERT_EQUALS(memcmp(request, U_CONSTANT_TO_PARAM("/sse_event/")), 0)
 
-         goto next;
+            ptr_file_data = getPasswdDB(request+U_CONSTANT_SIZE("/sse_event"), sz-U_CONSTANT_SIZE("/sse_event"), fpasswd);
+
+            goto next;
+            }
+
+         goto end;
          }
 #  endif
       }

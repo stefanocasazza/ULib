@@ -192,6 +192,7 @@ userver {
 # WEBSOCKET_TIMEOUT          timeout for websocket request
 # DIGEST_AUTHENTICATION      flag authentication method (yes = digest, no = basic)
 #
+# URI_PROTECTED_SSE          SSE needs authentication (/sse_event/<name_of_passwd_file>)
 # URI_PROTECTED_MASK         mask (DOS regexp) of URI protected from prying eyes (that needs authentication)
 # URI_PROTECTED_ALLOWED_IP   list of comma separated client address for IP-based access control (IPADDR[/MASK]) for URI_PROTECTED_MASK
 #
@@ -260,6 +261,7 @@ http {
 # WEBSOCKET_TIMEOUT     -1 
 # DIGEST_AUTHENTICATION yes
 
+# URI_PROTECTED_SSE        yes
 # URI_PROTECTED_MASK       /RA/admin/cgi-bin/*
 # URI_PROTECTED_ALLOWED_IP 127.0.0.1,10.30.0.0/16
  
