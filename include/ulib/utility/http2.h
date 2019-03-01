@@ -253,6 +253,7 @@ protected:
    static Connection* vConnection;
    static Connection* pConnection;
    static const Settings settings;
+   static UString* http2_bug_client_txt;
    static uint32_t wait_for_continuation;
    static bool bcontinue100, bsetting_ack, bsetting_send;
 
@@ -274,6 +275,8 @@ protected:
       U_TRACE_NO_PARAM(0, "UHTTP2::dtor()")
 
       delete[] vConnection;
+
+      if (http2_bug_client_txt) delete http2_bug_client_txt;
       }
 
    static void sendPing();

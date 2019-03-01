@@ -7872,7 +7872,7 @@ U_NO_EXPORT bool UHTTP::processAuthorization(const char* request, uint32_t sz, c
 
    ptr_file_data = getPasswdDB(request, sz-pos, fpasswd);
 
-#ifdef USE_LIBSSL
+#ifdef U_SSE_ENABLE
 next:
 #endif
    if (fpasswd.empty()) goto end;

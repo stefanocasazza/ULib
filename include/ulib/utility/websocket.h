@@ -92,6 +92,19 @@ public:
       U_RETURN(false);
       }
 
+   static bool isOk()
+      {
+      U_TRACE_NO_PARAM(0, "UWebSocket::isOk()")
+
+      U_INTERNAL_DUMP("status_code = %d", status_code)
+
+      if (status_code == U_WS_STATUS_CODE_OK) U_RETURN(true);
+
+      U_RETURN(false);
+      }
+
+   static int getStatusCode() { return status_code; }
+
    // DB
 
    typedef struct uwrec {

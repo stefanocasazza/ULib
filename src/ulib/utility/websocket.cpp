@@ -516,8 +516,6 @@ loop:
                      {
                      if (sendControlFrame(socket, U_WS_OPCODE_PONG, application_data, application_data_offset) == false)
                         {
-                        status_code = U_WS_STATUS_CODE_PROTOCOL_ERROR;
-
                         U_RETURN(U_WS_STATUS_CODE_PROTOCOL_ERROR);
                         }
                      }
@@ -714,6 +712,8 @@ bool UWebSocket::sendControlFrame(USocket* socket, int opcode, const unsigned ch
 
       U_RETURN(true);
       }
+
+   status_code = U_WS_STATUS_CODE_PROTOCOL_ERROR;
 
    U_RETURN(false);
 }

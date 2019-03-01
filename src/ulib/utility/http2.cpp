@@ -25,6 +25,7 @@ uint8_t                       UHTTP2::priority_weight;     // 0 if not set
 uint32_t                      UHTTP2::priority_dependency; // 0 if not set
 uint32_t                      UHTTP2::hash_static_table[61];
 uint32_t                      UHTTP2::wait_for_continuation;
+UString*                      UHTTP2::http2_bug_client_txt;
 UHTTP2::Stream*               UHTTP2::pStream;
 UHTTP2::Stream*               UHTTP2::pStreamEnd;
 UHTTP2::FrameHeader           UHTTP2::frame;
@@ -318,6 +319,17 @@ void UHTTP2::ctor()
       (void) initRequest();
       }
 #endif
+
+   UString x = UFile::contentOf(U_STRING_FROM_CONSTANT("../http2_bug_client.txt"), O_RDWR);
+
+   if (x)
+      {
+      U_INTERNAL_ASSERT_EQUALS(http2_bug_client_txt, U_NULLPTR)
+
+      U_NEW_STRING(http2_bug_client_txt, UString);
+
+      *http2_bug_client_txt = UStringExt::substitute(x, '\n', '\0');
+      }
 }
 
 #ifdef DEBUG
@@ -3487,22 +3499,20 @@ loop: U_DUMP("pStream->id = %u pStream->state = (%u, %s) pStream->headers(%u) = 
 
 process_request:
          if (pStream == pConnection->streams &&
+             http2_bug_client_txt            &&
              u_clientimage_info.http_info.user_agent_len)
             {
+            // --------------------------------------------------------------------------------
             // NB: to avoid GOAWAY frame with error (6, FRAME_SIZE_ERROR) in writeResponse()...
+            // --------------------------------------------------------------------------------
+            // Spot/1.0 (iPhone; iOS 10.3.1; Scale/3.00)
+            // Mozilla/5.0 (iPad; CPU OS 9_3_5 like Mac OS X) AppleWebKit/601.1.46 (KHTML, like Gecko) Version/9.0 Mobile/13G36 Safari/601.1
+            // ...
+            // --------------------------------------------------------------------------------
 
-            if (u_get_unalignedp64(u_clientimage_info.http_info.user_agent) == U_MULTICHAR_CONSTANT64('M','o','z','i','l','l','a','/'))
-               {
-               pConnection->bug_client = "Mozilla"; // Mozilla/5.0 (iPad; CPU OS 9_3_5 like Mac OS X) AppleWebKit/601.1.46 (KHTML, like Gecko) Version/9.0 Mobile/13G36 Safari/601.1
-               }
-            else if (u_get_unalignedp32(u_clientimage_info.http_info.user_agent) == U_MULTICHAR_CONSTANT32('S','p','o','t'))
-               {
-               pConnection->bug_client = "Spot"; // "Spot/1.0 (iPhone; iOS 10.3.1; Scale/3.00)"
-               }
-            else if (u_get_unalignedp32(u_clientimage_info.http_info.user_agent) == U_MULTICHAR_CONSTANT32('n','g','h','t'))
-               {
-               pConnection->bug_client = "nghttp2";
-               }
+            uint32_t pos = http2_bug_client_txt->find(u_clientimage_info.http_info.user_agent, 0, u_clientimage_info.http_info.user_agent_len);
+
+            if (pos != U_NOT_FOUND) pConnection->bug_client = http2_bug_client_txt->c_pointer(pos);
             }
 
 #     ifndef U_LOG_DISABLE

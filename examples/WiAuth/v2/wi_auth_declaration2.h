@@ -1017,21 +1017,22 @@ static void checkPrivacy(const UString& key)
 
    if (bexpired     ||
        (expire == 0 &&
-        policy == 0))
+        policy != 2)) // strict notify
       {
-      const char* op = "RESET2";
+      const char* op = "ENFORCING_STRICT_NOTIFY";
       const char* ptr = key.c_pointer(U_CONSTANT_SIZE("DEVICE:id:"));
 
       (void) rc->hmset(U_CONSTANT_TO_PARAM("%v pNotify 2"), key.rep);
 
       if (bexpired)
          {
-         op = "RESET1";
+         op = "EXPIRATION_PRIVACY_RENEWED";
 
          (void) rc->hdel(U_CONSTANT_TO_PARAM("%v ExpirePrivacy"), key.rep);
          }
 
-      ULog::log(facceptTermsOfConditionsRenew, U_CONSTANT_TO_PARAM("op: %s, mac: %.12s pNotify: %u, ExpirePrivacy: %#3D"), op, ptr, policy, expire);
+      ULog::log(facceptTermsOfConditionsRenew, U_CONSTANT_TO_PARAM("op: %s, mac: %.12s policy: %snotify, ExpirePrivacy: %#3D"), op, ptr, (policy == 0 ? ""    :
+                                                                                                                                          policy == 1 ? "no_" : "strict_"), expire);
       }
 }
 
