@@ -617,9 +617,201 @@ int UREDISClient_Base::handlerRead()
    U_RETURN(U_NOTIFIER_OK);
 }
 
+#if defined(U_STDCPP_ENABLE)
+
+// by Victor Stewart
+
+#  if defined(HAVE_CXX17)
+void UREDISClusterClient::processResponse()
+{
+   U_TRACE_NO_PARAM(0, "UREDISClusterClient::processResponse()")
+
+   if (UClient_Base::response.find("MOVED", 0, 5) != U_NOT_FOUND)
+      {
+      // MOVED 3999 127.0.0.1:6381 => the hashslot has been moved to another master node
+
+      error = ClusterError::moved;
+
+      calculateNodeMap();
+      }
+   else if (UClient_Base::response.find("ASK", 0, 3) != U_NOT_FOUND)
+      {
+      // ASK 3999 127.0.0.1:6381 => this means that one of the hash slots is being migrated to another server
+
+      error = ClusterError::ask;
+
+      uint32_t _start = UClient_Base::response.find(' ', 8) + 1,
+                  end = UClient_Base::response.find(':', _start);
+
+      (void) temporaryASKip.assign(UClient_Base::response.substr(_start, end - _start));
+      }
+
+   else if (UClient_Base::response.find("TRYAGAIN", 0, 8) != U_NOT_FOUND)
+      {
+      /**
+       * during a resharding the multi-key operations targeting keys that all exist and are all still in the same node (either the source or destination node) are still available.
+       * Operations on keys that don't exist or are - during the resharding - split between the source and destination nodes, will generate a -TRYAGAIN error. The client can try
+       * the operation after some time, or report back the error. As soon as migration of the specified hash slot has terminated, all multi-key operations are available again for
+       * that hash slot
+       */
+
+      error = ClusterError::tryagain;
+
+      UTimeVal(0L, 1000L).nanosleep(); // 0 sec, 1000 microsec = 1ms
+      }
+   else
+      {
+      error = ClusterError::none;
+
+      UREDISClient<UTCPSocket>::processResponse();
+      }
+}
+
+const UVector<UString>& UREDISClusterClient::processPipeline(UString& pipeline, bool silence)
+{
+   U_TRACE(0, "UREDISClusterClient::processPipeline(%V,%b)", pipeline.rep, silence)
+
+   uint16_t hashslot = 0, workingHashslot;
+   UString command, workingString(U_CAPACITY);
+   UVector<UString> commands(pipeline, "\r\n");
+
+   for (uint32_t count = 0, index = 0, n = commands.size(); index < n; ++index)
+      {
+      command = commands[index];
+
+      workingHashslot = hashslotFromCommand(command);
+
+      if (workingHashslot == hashslot)
+         {
+         (void) workingString.append(command + "\r\n");
+
+         ++count;
+
+         if ((index + 1) < n) continue;
+         }
+
+      hashslot = workingHashslot;
+
+      if (silence)
+         {
+         if (count > 1)
+            {
+            (void) workingString.insert(0, U_CONSTANT_TO_PARAM("CLIENT REPLY OFF \r\n"));
+            (void) workingString.append(U_CONSTANT_TO_PARAM("CLIENT REPLY ON \r\n"));
+            }
+         else
+            {
+            (void) pipeline.insert(0, U_CONSTANT_TO_PARAM("CLIENT REPLY SKIP \r\n"));
+            }
+         }
+
+      UREDISClient<UTCPSocket>& client = clientForHashslot(hashslot);
+
+replay:
+      (void) client.processRequest(U_RC_MULTIBULK, U_STRING_TO_PARAM(workingString));
+
+      switch (error)
+         {
+         case ClusterError::moved:
+         case ClusterError::tryagain:
+            {
+            goto replay;
+            }
+         break;
+
+         case ClusterError::ask:
+            {
+            UREDISClient<UTCPSocket>& temporaryClient = clientForASKip();
+
+            (void) temporaryClient.processRequest(U_RC_MULTIBULK, U_STRING_TO_PARAM(workingString));
+            }
+         break;
+
+         case ClusterError::none: break;
+         }
+
+      if (silence == false) vitem.move(client.vitem);
+      }
+
+   return vitem;
+}
+
+void UREDISClusterClient::calculateNodeMap()
+{
+   U_TRACE_NO_PARAM(0, "UREDISClusterClient::calculateNodeMap()")
+
+   /*
+   127.0.0.1:30001> cluster slots
+   1) 1) (integer) 0
+      2) (integer) 5460
+      3) 1) "127.0.0.1"
+         2) (integer) 30001
+         3) "09dbe9720cda62f7865eabc5fd8857c5d2678366"
+      4) 1) "127.0.0.1"
+         2) (integer) 30004
+         3) "821d8ca00d7ccf931ed3ffc7e3db0599d2271abf"
+   2) 1) (integer) 5461
+      2) (integer) 10922
+      3) 1) "127.0.0.1"
+         2) (integer) 30002
+         3) "c9d93d9f2c0c524ff34cc11838c2003d8c29e013"
+      4) 1) "127.0.0.1"
+         2) (integer) 30005
+         3) "faadb3eb99009de4ab72ad6b6ed87634c7ee410f"
+   3) 1) (integer) 10923
+      2) (integer) 16383
+      3) 1) "127.0.0.1"
+         2) (integer) 30003
+         3) "044ec91f325b7595e76dbcb18cc688b6a5b434a1"
+      4) 1) "127.0.0.1"
+         2) (integer) 30006
+         3) "58e6e48d41228013e5d9c1c37c5060693925e97e"
+   */
+
+   bool findHashSlots = true;
+   uint16_t workingLowHashSlot;
+   uint16_t workingHighHashSlot;
+
+   (void) UREDISClient_Base::processRequest(U_RC_MULTIBULK, U_CONSTANT_TO_PARAM("CLUSTER SLOTS"));
+
+   const UVector<UString>& rawNodes = UREDISClient_Base::vitem;
+
+   for (uint32_t a = 0, b = rawNodes.size(); a < b; ++a)
+      {
+      if (findHashSlots)
+         {
+         if (rawNodes[a].isNumber() &&
+             rawNodes[a+1].isNumber())
+            {
+             workingLowHashSlot = rawNodes[a++].strtoul();
+            workingHighHashSlot = rawNodes[a].strtoul();
+
+            findHashSlots = false;
+            }
+         }
+      else
+         {
+         // the immediate next after hash slot is the master
+
+         RedisNode workingNode;
+
+         workingNode.lowHashSlot = workingLowHashSlot;
+         workingNode.highHashSlot = workingHighHashSlot;
+         (void) workingNode.ipAddress.assign(rawNodes[a]);
+
+         workingNode.client.connect(workingNode.ipAddress.c_str(), rawNodes[++a].strtoul());
+
+         redisNodes.push_back(std::move(workingNode));
+
+         findHashSlots = true;
+         }
+      }
+}
+#  endif
+
 // DEBUG
 
-#if defined(U_STDCPP_ENABLE) && defined(DEBUG)
+#  if defined(DEBUG)
 const char* UREDISClient_Base::dump(bool _reset) const
 {
    UClient_Base::dump(false);
@@ -637,4 +829,5 @@ const char* UREDISClient_Base::dump(bool _reset) const
 
    return U_NULLPTR;
 }
+#  endif
 #endif

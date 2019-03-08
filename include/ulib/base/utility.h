@@ -261,6 +261,7 @@ U_EXPORT char*    u_memoryDump( char* restrict bp, unsigned char* restrict cp, u
 U_EXPORT uint32_t u_memory_dump(char* restrict bp, unsigned char* restrict cp, uint32_t n);
 
 U_EXPORT uint8_t  u_get_loadavg(void); /* Get the load average of the system (over last 1 minute) */
+U_EXPORT uint16_t u_crc16(const char* a, uint32_t len); /* CRC16 implementation according to CCITT standards */
 U_EXPORT uint32_t u_printSize(char* restrict buffer, uint64_t bytes); /* print size using u_calcRate() */
 
 U_EXPORT int    u_getScreenWidth(void) __pure; /* Determine the width of the terminal we're running on */

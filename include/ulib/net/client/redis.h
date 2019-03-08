@@ -15,6 +15,7 @@
 #define ULIB_REDIS_H 1
 
 #include <ulib/notifier.h>
+#include <ulib/net/tcpsocket.h>
 #include <ulib/net/unixsocket.h>
 #include <ulib/net/client/client.h>
 
@@ -61,6 +62,8 @@
 
 typedef void (*vPFcs)  (const UString&);
 typedef void (*vPFcscs)(const UString&,const UString&);
+
+class UREDISClusterClient;
 
 class U_EXPORT UREDISClient_Base : public UClient_Base, UEventFd {
 public:
@@ -188,6 +191,45 @@ public:
    // Connect to REDIS server
 
    bool connect(const char* host = U_NULLPTR, unsigned int _port = 6379);
+
+   // by Victor Stewart
+
+   UString single(const UString& pipeline)
+      {
+      U_TRACE(0, "UREDISClient_Base::single(%V)", pipeline.rep)
+
+      (void) processRequest(U_RC_MULTIBULK, U_STRING_TO_PARAM(pipeline));
+
+      return vitem[0];
+      }
+
+   void silencedSingle(UString& pipeline)
+      {
+      U_TRACE(0, "UREDISClient_Base::silencedSingle(%V)", pipeline.rep)
+
+      (void) pipeline.insert(0, U_CONSTANT_TO_PARAM("CLIENT REPLY SKIP \r\n"));
+
+      (void) processRequest(U_RC_MULTIBULK, U_STRING_TO_PARAM(pipeline));
+      }
+
+   const UVector<UString>& multi(const UString& pipeline)
+      {
+      U_TRACE(0, "UREDISClient_Base::multi(%V)", pipeline.rep)
+
+      (void) processRequest(U_RC_MULTIBULK, U_STRING_TO_PARAM(pipeline));
+
+      return vitem;
+      }
+
+   void silencedMulti(UString& pipeline)
+      {
+      U_TRACE(0, "UREDISClient_Base::silencedMulti(%V)", pipeline.rep)
+
+      (void) pipeline.insert(0, U_CONSTANT_TO_PARAM("CLIENT REPLY OFF \r\n"));
+      (void) pipeline.append(U_CONSTANT_TO_PARAM("CLIENT REPLY ON \r\n"));
+
+      (void) processRequest(U_RC_MULTIBULK, U_STRING_TO_PARAM(pipeline));
+      }
 
    // STRING (@see http://redis.io/commands#string)
 
@@ -857,7 +899,9 @@ protected:
 private:
    bool getResponseItem() U_NO_EXPORT;
 
-   U_DISALLOW_COPY_AND_ASSIGN(UREDISClient_Base)
+   friend class UREDISClusterClient;
+
+// U_DISALLOW_COPY_AND_ASSIGN(UREDISClient_Base)
 };
 
 template <class Socket> class U_EXPORT UREDISClient : public UREDISClient_Base {
@@ -882,7 +926,7 @@ public:
 #endif
 
 private:
-   U_DISALLOW_COPY_AND_ASSIGN(UREDISClient)
+// U_DISALLOW_COPY_AND_ASSIGN(UREDISClient)
 };
 
 template <> class U_EXPORT UREDISClient<UUnixSocket> : public UREDISClient_Base {
@@ -931,4 +975,109 @@ public:
 private:
    U_DISALLOW_COPY_AND_ASSIGN(UREDISClient<UUnixSocket>)
 };
+
+// by Victor Stewart
+
+#if defined(U_STDCPP_ENABLE) && defined(HAVE_CXX17)
+#  include <vector>
+
+class U_EXPORT UREDISClusterClient : public UREDISClient<UTCPSocket> {
+private:
+   struct RedisNode {
+      UString ipAddress;
+      UREDISClient<UTCPSocket> client;
+      uint16_t lowHashSlot, highHashSlot;
+   };
+
+   enum class ClusterError : uint8_t {
+      none,
+      moved,
+      ask,
+      tryagain
+   };
+
+   ClusterError error;
+   UString temporaryASKip;
+   std::vector<RedisNode> redisNodes;
+
+   uint16_t hashslotForKey(const UString& hashableKey) { return u_crc16(U_STRING_TO_PARAM(hashableKey)); } 
+
+   uint16_t hashslotFromCommand(const UString& command) 
+      {
+      U_TRACE(0, "UREDISClusterClient::hashslotFromCommand(%V)", command.rep)
+
+      // expects hashable keys to be delivered as abc{hashableKey}xyz value blah \r\n
+
+      uint32_t beginning = command.find('{') + 1,
+                     end = command.find('}', beginning) - 1;
+
+      return hashslotForKey(command.substr(beginning, end - beginning));
+      }
+
+   UREDISClient<UTCPSocket>& clientForHashslot(uint16_t hashslot)
+      {
+      U_TRACE(0, "UREDISClusterClient::clientForHashslot(%u)", hashslot)
+
+      for (RedisNode& workingNode : redisNodes)
+         {
+         if ((workingNode.lowHashSlot <= hashslot) || (workingNode.highHashSlot >= hashslot)) return workingNode.client;
+         }
+
+      return redisNodes[0].client;
+      }
+
+   UREDISClient<UTCPSocket>& clientForASKip()
+      {
+      for (RedisNode& workingNode : redisNodes)
+         {
+         if (temporaryASKip == workingNode.ipAddress) return workingNode.client;
+         }
+
+      return redisNodes[0].client;
+      }
+
+   UREDISClient<UTCPSocket>& clientForHashableKey(const UString& hashableKey) {  return clientForHashslot(hashslotForKey(hashableKey)); }
+
+public:
+   UREDISClusterClient() : UREDISClient<UTCPSocket>()
+      {
+      U_TRACE_CTOR(0, UREDISClusterClient, "")
+      }
+
+   ~UREDISClusterClient()
+      {
+      U_TRACE_DTOR(0, UREDISClusterClient)
+      }
+
+   void processResponse();
+   void calculateNodeMap();
+
+   const UVector<UString>& processPipeline(UString& pipeline, bool silence);
+
+   // all of these multis require all keys to exist within a single hash slot (on the same node isn't good enough)
+
+   UString                 clusterSingle(const UString& hashableKey, const UString& pipeline) { return clientForHashableKey(hashableKey).single(pipeline); }
+   const UVector<UString>& clusterMulti( const UString& hashableKey, const UString& pipeline) { return clientForHashableKey(hashableKey).multi(pipeline); }
+
+   void clusterSilencedMulti( const UString& hashableKey, UString& pipeline) { clientForHashableKey(hashableKey).silencedMulti(pipeline); }
+   void clusterSilencedSingle(const UString& hashableKey, UString& pipeline) { clientForHashableKey(hashableKey).silencedSingle(pipeline); }
+
+   // anon multis are pipelined commands of various keys that might belong to many nodes. always processed in order. commands always delimined by \r\n
+
+   const UVector<UString>& clusterAnonMulti(        UString& pipeline) { return processPipeline(pipeline, false); }
+   void                    clusterSilencedAnonMulti(UString& pipeline) { (void) processPipeline(pipeline, true); }
+
+   bool clusterUnsubscribe(const UString& hashableKey, const UString& channel)                   { return clientForHashableKey(hashableKey).unsubscribe(channel); }
+   bool clusterSubscribe(  const UString& hashableKey, const UString& channel, vPFcscs callback) { return clientForHashableKey(hashableKey).subscribe(channel, callback); }
+
+   // DEBUG
+
+#if defined(U_STDCPP_ENABLE) && defined(DEBUG)
+   const char* dump(bool _reset) const { return UREDISClient_Base::dump(_reset); }
+#endif
+
+private:
+   U_DISALLOW_COPY_AND_ASSIGN(UREDISClusterClient)
+};
+#endif
 #endif

@@ -566,6 +566,22 @@ public:
 
    // EXTENSION
 
+   bool isNumber(uint32_t pos) const
+      {
+      U_TRACE(0, "UStringRep::isNumber(%u)", pos)
+
+      U_CHECK_MEMORY
+
+      if (_length)
+         {
+         U_INTERNAL_ASSERT_MINOR(pos, _length)
+
+         if (u_isNumber(str + pos, _length - pos)) U_RETURN(true);
+         }
+
+      U_RETURN(false);
+      }
+
    bool isBinary(uint32_t pos) const
       {
       U_TRACE(0, "UStringRep::isBinary(%u)", pos)
@@ -2098,6 +2114,7 @@ public:
    bool isText(uint32_t pos = 0) const                          { return rep->isText(pos); }
    bool isUTF8(uint32_t pos = 0) const                          { return rep->isUTF8(pos); }
    bool isUTF16(uint32_t pos = 0) const                         { return rep->isUTF16(pos); }
+   bool isNumber(uint32_t pos = 0) const                        { return rep->isNumber(pos); }
    bool isBinary(uint32_t pos = 0) const                        { return rep->isBinary(pos); }
    bool isBase64(uint32_t pos = 0) const                        { return rep->isBase64(pos); }
    bool isBase64Url(uint32_t pos = 0) const                     { return rep->isBase64Url(pos); }

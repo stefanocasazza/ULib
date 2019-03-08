@@ -206,8 +206,8 @@ plugin/product2.lo: plugin/product2.cpp /usr/include/stdc-predef.h \
  /usr/include/unicode/utf16.h /usr/include/unicode/utf_old.h \
  /usr/include/unicode/uenum.h /usr/include/unicode/localpointer.h \
  /usr/include/libxml2/libxml/xmlIO.h \
- /usr/include/libxml2/libxml/globals.h /usr/include/libxml2/libxml/SAX.h \
- /usr/include/libxml2/libxml/xlink.h /usr/include/libxml2/libxml/SAX2.h \
+ /usr/include/libxml2/libxml/globals.h /usr/include/libxml2/libxml/SAX2.h \
+ /usr/include/libxml2/libxml/xlink.h \
  /usr/include/libxml2/libxml/xmlmemory.h \
  /usr/include/libxml2/libxml/threads.h \
  ../../include/ulib/internal/macro.h \
@@ -809,11 +809,9 @@ plugin/product.h:
 
 /usr/include/libxml2/libxml/globals.h:
 
-/usr/include/libxml2/libxml/SAX.h:
+/usr/include/libxml2/libxml/SAX2.h:
 
 /usr/include/libxml2/libxml/xlink.h:
-
-/usr/include/libxml2/libxml/SAX2.h:
 
 /usr/include/libxml2/libxml/xmlmemory.h:
 

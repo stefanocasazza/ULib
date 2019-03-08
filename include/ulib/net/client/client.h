@@ -316,7 +316,7 @@ protected:
    ~UClient_Base();
 
 private:
-   U_DISALLOW_COPY_AND_ASSIGN(UClient_Base)
+// U_DISALLOW_COPY_AND_ASSIGN(UClient_Base)
 
    static USocket* csocket;
    static vPFu resize_response_buffer;
