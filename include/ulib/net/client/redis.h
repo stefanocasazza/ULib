@@ -985,7 +985,7 @@ class U_EXPORT UREDISClusterClient : public UREDISClient<UTCPSocket> {
 private:
 
    struct RedisNode {
-      UString ipAddress;
+      UString ipAddress, port;
       UREDISClient<UTCPSocket> client;
       uint16_t lowHashSlot, highHashSlot;
    };
@@ -1059,8 +1059,10 @@ public:
 
       UREDISClient<UTCPSocket>::connect(host, _port);
       calculateNodeMap();
-
-      subscriptionClient.connect(host, _port);
+		
+		// select random master node to be responsible for SUB/PUB traffic
+		const RedisNode& node = redisNodes[u_get_num_random_range0(redisNodes.size())];
+      subscriptionClient.connect(node.ipAddress, node.port);
    }
 
    const UVector<UString>& processPipeline(UString& pipeline, const bool silence, const bool reorderable);
