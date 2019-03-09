@@ -983,6 +983,7 @@ private:
 
 class U_EXPORT UREDISClusterClient : public UREDISClient<UTCPSocket> {
 private:
+
    struct RedisNode {
       UString ipAddress;
       UREDISClient<UTCPSocket> client;
@@ -999,6 +1000,8 @@ private:
    ClusterError error;
    UString temporaryASKip;
    std::vector<RedisNode> redisNodes;
+
+   UREDISClient<UTCPSocket> subscriptionClient;
 
    uint16_t hashslotForKey(const UString& hashableKey) { return u_crc16(U_STRING_TO_PARAM(hashableKey)); } 
 
@@ -1052,7 +1055,15 @@ public:
    void processResponse();
    void calculateNodeMap();
 
-   const UVector<UString>& processPipeline(UString& pipeline, bool silence);
+   bool connect(const char* host = U_NULLPTR, unsigned int _port = 6379) {
+
+      UREDISClient<UTCPSocket>::connect(host, _port);
+      calculateNodeMap();
+
+      subscriptionClient.connect(host, _port);
+   }
+
+   const UVector<UString>& processPipeline(UString& pipeline, const bool silence, const bool reorderable);
 
    // all of these multis require all keys to exist within a single hash slot (on the same node isn't good enough)
 
@@ -1063,12 +1074,15 @@ public:
    void clusterSilencedSingle(const UString& hashableKey, UString& pipeline) { clientForHashableKey(hashableKey).silencedSingle(pipeline); }
 
    // anon multis are pipelined commands of various keys that might belong to many nodes. always processed in order. commands always delimined by \r\n
+   // example ->     SET {abc}xyz 5 \r\n GET abc{xyz} \r\n SET xyz{abc} 9 \r\n
+   // if "abc" and "xyz" reside on different hashslots, if reorderable = false, this will generate 3 seperate pushes. if reorderable = true, only 2.
+   // currently supports CLIENT REPLY _____ type directives.... but any other commands without keys like {abc}, will break.
+   // if you wrap commands in CLIENT REPLY ____ directives and they DO NOT belong to the same hashslot, THESE WRITES WILL BREAK.
+   const UVector<UString>& clusterAnonMulti(        UString& pipeline, const bool reorderable) { return processPipeline(pipeline, false, reorderable); }
+   void                    clusterSilencedAnonMulti(UString& pipeline, const bool reorderable) { (void) processPipeline(pipeline, true,  reorderable); }
 
-   const UVector<UString>& clusterAnonMulti(        UString& pipeline) { return processPipeline(pipeline, false); }
-   void                    clusterSilencedAnonMulti(UString& pipeline) { (void) processPipeline(pipeline, true); }
-
-   bool clusterUnsubscribe(const UString& hashableKey, const UString& channel)                   { return clientForHashableKey(hashableKey).unsubscribe(channel); }
-   bool clusterSubscribe(  const UString& hashableKey, const UString& channel, vPFcscs callback) { return clientForHashableKey(hashableKey).subscribe(channel, callback); }
+   bool clusterUnsubscribe(const UString& hashableKey, const UString& channel)                   { return subscriptionClient.unsubscribe(channel); }
+   bool clusterSubscribe(  const UString& hashableKey, const UString& channel, vPFcscs callback) { return subscriptionClient.subscribe(channel, callback); }
 
    // DEBUG
 
