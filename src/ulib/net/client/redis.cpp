@@ -667,30 +667,15 @@ void UREDISClusterClient::processResponse()
       }
 }
 
-const UVector<UString>& UREDISClusterClient::processPipeline(UString& pipeline, bool silence)
+const UVector<UString>& UREDISClusterClient::processPipeline(UString& pipeline, const bool silence, const bool reorderable)
 {
-   U_TRACE(0, "UREDISClusterClient::processPipeline(%V,%b)", pipeline.rep, silence)
+   U_TRACE(0, "UREDISClusterClient::processPipeline(%V,%b,%b)", pipeline.rep, silence, reorderable)
 
-   uint16_t hashslot = 0, workingHashslot;
-   UString command, workingString(U_CAPACITY);
+   uint16_t hashslot, workingHashslot, count;
+   UString workingString(U_CAPACITY);
    UVector<UString> commands(pipeline, "\r\n");
 
-   for (uint32_t count = 0, index = 0, n = commands.size(); index < n; ++index)
-      {
-      command = commands[index];
-
-      workingHashslot = hashslotFromCommand(command);
-
-      if (workingHashslot == hashslot)
-         {
-         (void) workingString.append(command + "\r\n");
-
-         ++count;
-
-         if ((index + 1) < n) continue;
-         }
-
-      hashslot = workingHashslot;
+   auto pushPipeline = [&] (void) -> void {
 
       if (silence)
          {
@@ -707,7 +692,7 @@ const UVector<UString>& UREDISClusterClient::processPipeline(UString& pipeline, 
 
       UREDISClient<UTCPSocket>& client = clientForHashslot(hashslot);
 
-replay:
+   replay:
       (void) client.processRequest(U_RC_MULTIBULK, U_STRING_TO_PARAM(workingString));
 
       switch (error)
@@ -731,7 +716,69 @@ replay:
          }
 
       if (silence == false) vitem.move(client.vitem);
+
+      count = 0;
+      workingString.clear();
+   };
+
+   if (reorderable) {
+      
+      for (UVectorStringIter it = commands.begin(); it != commands.end(); ) {
+
+         if (it == commands.begin()) hashslot = hashslotFromCommand(*it);
+
+         while (it != commands.end()) {
+
+            const UString& command = *it;
+            if (command.find("CLIENT", 0, 6)) goto isADirective;
+
+            if (hashslotFromCommand(command) == hashslot)
+               {
+               
+               ++count;
+
+            goto isADirective;
+            
+               (void) workingString.append(command + "\r\n");
+               it = commands.erase(it);
+               }
+            else it++;
+         }
+         
+         pushPipeline();
+
+         if (commands.size() != 0) it = commands.begin()
       }
+   }
+   else {
+
+      for (uint32_t index = 0, n = commands.size(); index < n; index++)
+         {
+
+         if (index == 0) hashslot = hashslotFromCommand(commands[0]);
+
+         UString& command = commands[index];
+         command.trim();
+
+         if (command.find("CLIENT", 0, 6)) goto isADirective;
+
+         workingHashslot = hashslotFromCommand(command);
+
+         if (workingHashslot == hashslot) {
+               
+            ++count;
+
+         goto isADirective;
+
+            (void) workingString.append(command + "\r\n");
+            if ((index +1) < n) continue;
+         }
+
+         pushPipeline();
+         hashslot = workingHashslot;
+         count = 0;
+      }
+   }
 
    return vitem;
 }
