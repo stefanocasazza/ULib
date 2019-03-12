@@ -176,6 +176,7 @@ URDBObjectHandler<UDataStorage*>* UHTTP::db_session_ssl;
 #endif
 #ifdef U_SSE_ENABLE // SERVER SENT EVENTS (SSE)
 int          UHTTP::sse_pipe_fd;
+bool         UHTTP::sse_req;
 bool         UHTTP::sse_auth;
 const char*  UHTTP::sse_corsbase = "*";
 UHTTP::strPF UHTTP::sse_func;
@@ -7178,10 +7179,12 @@ bool UHTTP::isValidationSSE()
 
    if (sse_auth)
       {
-      // check if it's OK to do directory listing via authentication (digest|basic)
+      // check if it's OK via authentication (digest|basic)
 
       uint32_t sz;
       const char* ptr = UClientImage_Base::getRequestUri(sz);
+
+      sse_req = true;
 
       if (processAuthorization(ptr, sz) == false) U_RETURN(false);
       }
@@ -7854,12 +7857,14 @@ U_NO_EXPORT bool UHTTP::processAuthorization(const char* request, uint32_t sz, c
          pos = (request + sz) - uri_suffix;
          }
 #  ifdef U_SSE_ENABLE // SERVER SENT EVENTS (SSE)
-      else
+      else if (sse_req)
          {
+         U_INTERNAL_ASSERT_EQUALS(memcmp(request, U_CONSTANT_TO_PARAM("/sse_event")), 0)
+
+         sse_req = false;
+
          if (sz > U_CONSTANT_SIZE("/sse_event/")) // Ex: "/sse_event/tutor"
             {
-            U_INTERNAL_ASSERT_EQUALS(memcmp(request, U_CONSTANT_TO_PARAM("/sse_event/")), 0)
-
             ptr_file_data = getPasswdDB(request+U_CONSTANT_SIZE("/sse_event"), sz-U_CONSTANT_SIZE("/sse_event"), fpasswd);
 
             goto next;

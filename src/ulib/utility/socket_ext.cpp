@@ -13,7 +13,6 @@
 
 #include <ulib/file.h>
 #include <ulib/notifier.h>
-#include <ulib/net/client/client.h>
 #include <ulib/utility/interrupt.h>
 #include <ulib/net/server/server.h>
 
@@ -74,7 +73,6 @@ bool USocketExt::read(USocket* sk, UString& buffer, uint32_t count, int timeoutM
    if (UNLIKELY(ncount < chunk))
       {
            if (sk == UServer_Base::csocket) { UClientImage_Base::manageReadBufferResize(chunk); } // start = buffer.size(); }
-      else if (sk == UClient_Base::csocket)        UClient_Base::resize_response_buffer(chunk);
       else                              UString::_reserve(buffer, buffer.getReserveNeed(chunk));
 
       ncount = buffer.space();
@@ -200,7 +198,6 @@ error:   U_INTERNAL_DUMP("errno = %d", errno)
       buffer.rep->_length = start + byte_read;
 
            if (sk == UServer_Base::csocket) { UClientImage_Base::manageReadBufferResize(ncount * 2); } // start = buffer.size(); }
-      else if (sk == UClient_Base::csocket)        UClient_Base::resize_response_buffer(ncount * 2);
       else                              UString::_reserve(buffer, buffer.getReserveNeed(ncount * 2));
 
       ptr       = buffer.c_pointer(start);

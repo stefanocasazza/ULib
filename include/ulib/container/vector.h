@@ -927,24 +927,27 @@ private:
  */
 class UVectorStringIter { // this class is to make work Range-based for loop: for ( UString x : UVector<UString> ) loop_statement      
 public:
-   explicit UVectorStringIter(const UVector<UString>* p_vec, uint32_t pos) : _pos(pos), _p_vec(p_vec) {}
+   explicit UVectorStringIter(UVector<UString>* p_vec, uint32_t pos) : _pos(pos), _p_vec(p_vec) {}
 
    // these three methods form the basis of an iterator for use with a range-based for loop
+   bool operator==(const UVectorStringIter& other) const { return (_pos == other._pos); }
    bool operator!=(const UVectorStringIter& other) const { return (_pos != other._pos); }
 
    // this method must be defined after the definition of UVector<UString> since it needs to use it
    inline UString operator*() const;
 
-   const UVectorStringIter& operator++()
+   UVectorStringIter& operator++()
       {
       ++_pos;
 
       return *this; // although not strictly necessary for a range-based for loop following the normal convention of returning a value from operator++ is a good idea
       }
 
+   inline UVectorStringIter& erase();
+
 private:
    uint32_t _pos;
-   const UVector<UString>* _p_vec;
+   UVector<UString>* _p_vec;
 };
 #endif
 
@@ -974,8 +977,10 @@ public:
       }
 
 #if defined(U_STDCPP_ENABLE) && defined(HAVE_CXX11)
-    UVectorStringIter begin() const { return UVectorStringIter(this, 0); }
-    UVectorStringIter   end() const { return UVectorStringIter(this, _length); }
+   UVectorStringIter begin() { return UVectorStringIter(this, 0); }
+   UVectorStringIter   end() { return UVectorStringIter(this, _length); }
+
+   UVectorStringIter& erase(UVectorStringIter& it) { return it.erase(); }
 
 # ifdef U_COMPILER_RANGE_FOR
    explicit UVector(const std::initializer_list<UString>& l) : UVector<UStringRep*>(l.size())
@@ -1356,5 +1361,7 @@ private:
 
 #if defined(U_STDCPP_ENABLE) && defined(HAVE_CXX11)
 inline UString UVectorStringIter::operator* () const { return _p_vec->at(_pos); }
+
+inline UVectorStringIter& UVectorStringIter::erase() { _p_vec->erase(_pos); return *this; }
 #endif
 #endif

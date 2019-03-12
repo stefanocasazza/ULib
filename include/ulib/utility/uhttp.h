@@ -714,9 +714,9 @@ public:
 #ifdef U_SSE_ENABLE // SERVER SENT EVENTS (SSE)
    typedef UString (*strPF)();
 
-   static bool sse_auth;
    static strPF sse_func;
    static int sse_pipe_fd;
+   static bool sse_auth, sse_req;
    static const char* sse_corsbase;
 
    static bool isValidationSSE();

@@ -319,9 +319,6 @@ private:
 // U_DISALLOW_COPY_AND_ASSIGN(UClient_Base)
 
    static USocket* csocket;
-   static vPFu resize_response_buffer;
-
-   void setForResizeResponseBuffer(vPFu func) { csocket = socket; resize_response_buffer = func; }
 
    friend class UHTTP;
    friend class USocketExt;

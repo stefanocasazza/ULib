@@ -16,7 +16,6 @@
 #include <ulib/net/server/server.h>
 
 int            UClient_Base::queue_fd = -1;
-vPFu           UClient_Base::resize_response_buffer;
 bool           UClient_Base::bIPv6;
 bool           UClient_Base::log_shared_with_server;
 ULog*          UClient_Base::log;

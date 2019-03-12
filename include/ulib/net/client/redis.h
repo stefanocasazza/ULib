@@ -787,11 +787,6 @@ public:
                                           (withPayloads ? U_CONSTANT_SIZE("WITHPAYLOADS") : 0), "WITHPAYLOADS"));
       }
 
-   // PUB/SUB (@see http://redis.io/pubsub)
-
-   bool unsubscribe(const UString& channel);                   // unregister the callback for messages published to the given channels
-   bool   subscribe(const UString& channel, vPFcscs callback); //   register the callback for messages published to the given channels
-
    // define method VIRTUAL of class UEventFd
 
    virtual int handlerRead() U_DECL_FINAL;
@@ -805,16 +800,6 @@ public:
       UEventFd::fd = -1;
       }
 
-   void listenForEvents()
-      {
-      U_TRACE_NO_PARAM(0, "UREDISClient_Base::listenForEvents()")
-
-      UEventFd::op_mask |=  EPOLLET;
-      UEventFd::op_mask &= ~EPOLLRDHUP;
-
-      UNotifier::insert(this, EPOLLEXCLUSIVE | EPOLLROUNDROBIN); // NB: we ask to listen for events to a Redis publish channel... 
-      }
-
 #if defined(U_STDCPP_ENABLE) && defined(DEBUG)
    const char* dump(bool reset) const;
 #endif
@@ -826,6 +811,7 @@ protected:
    static ptrdiff_t diff;
    static UVector<UString>* pvec;
    static UREDISClient_Base* pthis;
+
    static UHashMap<void*>* pchannelCallbackMap;
 
    UREDISClient_Base() : UClient_Base(U_NULLPTR)
@@ -983,10 +969,11 @@ private:
 
 class U_EXPORT UREDISClusterClient : public UREDISClient<UTCPSocket> {
 private:
+
    struct RedisNode {
       UString ipAddress;
       UREDISClient<UTCPSocket> client;
-      uint16_t lowHashSlot, highHashSlot;
+      uint16_t port, lowHashSlot, highHashSlot;
    };
 
    enum class ClusterError : uint8_t {
@@ -999,6 +986,7 @@ private:
    ClusterError error;
    UString temporaryASKip;
    std::vector<RedisNode> redisNodes;
+   UREDISClient<UTCPSocket> subscriptionClient;
 
    uint16_t hashslotForKey(const UString& hashableKey) { return u_crc16(U_STRING_TO_PARAM(hashableKey)); } 
 
@@ -1052,7 +1040,9 @@ public:
    void processResponse();
    void calculateNodeMap();
 
-   const UVector<UString>& processPipeline(UString& pipeline, bool silence);
+   bool connect(const char* host = U_NULLPTR, unsigned int _port = 6379);
+
+   const UVector<UString>& processPipeline(UString& pipeline, bool silence, bool reorderable);
 
    // all of these multis require all keys to exist within a single hash slot (on the same node isn't good enough)
 
@@ -1062,13 +1052,17 @@ public:
    void clusterSilencedMulti( const UString& hashableKey, UString& pipeline) { clientForHashableKey(hashableKey).silencedMulti(pipeline); }
    void clusterSilencedSingle(const UString& hashableKey, UString& pipeline) { clientForHashableKey(hashableKey).silencedSingle(pipeline); }
 
-   // anon multis are pipelined commands of various keys that might belong to many nodes. always processed in order. commands always delimined by \r\n
+   // anon multis are pipelined commands of various keys that might belong to many nodes. always processed in order. Commands always delimined by \r\n
+   // example -> SET {abc}xyz 5 \r\n GET abc{xyz} \r\n SET xyz{abc} 9 \r\n
+   // if "abc" and "xyz" reside on different hashslots, if reorderable = false, this will generate 3 seperate pushes. if reorderable = true, only 2.
+   // currently supports CLIENT REPLY _____ type directives.... but any other commands without keys like {abc}, will break.
+   // if you wrap commands in CLIENT REPLY ____ directives and they DO NOT belong to the same hashslot, THESE WRITES WILL BREAK
 
-   const UVector<UString>& clusterAnonMulti(        UString& pipeline) { return processPipeline(pipeline, false); }
-   void                    clusterSilencedAnonMulti(UString& pipeline) { (void) processPipeline(pipeline, true); }
+   const UVector<UString>& clusterAnonMulti(        UString& pipeline, bool reorderable) { return processPipeline(pipeline, false, reorderable); }
+   void                    clusterSilencedAnonMulti(UString& pipeline, bool reorderable) { (void) processPipeline(pipeline, true,  reorderable); }
 
-   bool clusterUnsubscribe(const UString& hashableKey, const UString& channel)                   { return clientForHashableKey(hashableKey).unsubscribe(channel); }
-   bool clusterSubscribe(  const UString& hashableKey, const UString& channel, vPFcscs callback) { return clientForHashableKey(hashableKey).subscribe(channel, callback); }
+   bool clusterUnsubscribe(const UString& channel); 
+   bool clusterSubscribe(  const UString& channel, vPFcscs callback);
 
    // DEBUG
 
