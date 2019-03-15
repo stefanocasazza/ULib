@@ -593,6 +593,157 @@ public:
 
    static int  jreadArrayStep(const UString& jarray, UString& result); // assumes jarray points at the start of an array or array element
 
+// assumes perfect construction
+#include <functional>
+void consumeFieldsAndValues(const UString& json, std::function<void(const UString&, const UString&)> consumer)
+{
+   UString field, value;
+   bool lookingForField = true;
+
+   UTokenizer tok(json);
+   int jTok = jreadFindToken(tok);
+
+   while (jTok != U_JR_EOL) {
+
+      if (lookingForField) {
+
+         do {
+
+            // all fields must be encapsulated by quotations
+            if (jTok == U_STRING_VALUE) {
+
+               const char *fieldStart = tok.getPointer() + 1;
+
+               // find closing quotation
+               do {tok.advance(); jTok = jreadFindToken(tok);} while (jTok != U_STRING_VALUE);
+
+               // capture field name
+               field.assign(tok.substr(fieldStart));
+
+               // skip til colon
+               do {tok.advance(); jTok = jreadFindToken(tok);} while (jTok != U_JR_COLON);
+
+               lookingForField = false;
+            }
+            // aka skip opening bracket and commas
+            else {
+
+               tok.advance();
+               jTok = jreadFindToken(tok);
+            }
+
+         } while (lookingForField);
+         
+      }
+      // we're just looking for the next :
+      else {
+
+         // skip past the colon it enters on
+         tok.advance(); 
+         jTok = jreadFindToken(tok);
+
+         switch (jTok) {
+
+            case U_REAL_VALUE: {
+
+               // skip ahead til either we hit a space or a comma
+
+               const char *valueStart = tok.getPointer();
+
+               do {tok.advance(); jTok = jreadFindToken(tok);} while (jTok != U_REAL_VALUE);
+
+               value.assign(tok.substr(valueStart));
+               value.trim(); // possible space between end of value and comma
+
+               break;
+            }
+            case U_TRUE_VALUE: {
+
+               value.assign(U_CONSTANT_TO_PARAM("1"));
+               break;
+            }
+            case U_FALSE_VALUE: {
+
+               value.assign(U_CONSTANT_TO_PARAM("0"));
+               break;
+            }
+            case U_STRING_VALUE: {
+
+               const char *valueStart = tok.getPointer() + 1;
+
+               do {tok.advance(); jTok = jreadFindToken(tok);} while (jTok != U_STRING_VALUE);
+
+               value.assign(tok.substr(valueStart));
+
+               break;
+            }
+            case U_ARRAY_VALUE:
+            case U_OBJECT_VALUE: {
+
+               const char *valueStart = tok.getPointer();
+
+               int hunting = 1;
+
+               do {
+
+                  tok.advance();
+                  jTok = jreadFindToken(tok);
+
+                  switch (jTok) {
+
+                     case U_REAL_VALUE:
+                     case U_TRUE_VALUE:
+                     case U_FALSE_VALUE:
+                     //case U_NULL_VALUE:
+                     case U_STRING_VALUE:
+                     case U_JR_COLON:
+                     case U_JR_COMMA:
+                     //case U_JR_QPARAM: 
+                     {
+                        break;
+                     }
+                     case U_JR_EOBJECT:
+                     case U_JR_EARRAY: 
+                     {
+                        --hunting;
+                        break;
+                     }
+                     case U_OBJECT_VALUE:
+                     case U_ARRAY_VALUE: 
+                     {
+                        ++hunting;
+                        break;
+                     }
+                  }
+
+               } while (hunting > 0);
+
+               // we are on the ending char/boundary of a container
+               tok.advance();
+               value.assign(tok.substr(valueStart));
+
+               tok.advance();
+               jTok = jreadFindToken(tok);
+               break;
+            }
+            default: {
+
+               tok.advance();
+               jTok = jreadFindToken(tok);
+               break;
+            }
+         }
+
+         lookingForField = true;
+
+         consumer(field, value);
+
+         field.erase();
+         value.erase();
+      }
+   }
+}
+	
 #ifdef DEBUG
    const char* dump(bool _reset) const;
 
