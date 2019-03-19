@@ -138,6 +138,18 @@ U_EXPORT main (int argc, char* argv[], char* env[])
 
    U_TRACE(5, "main(%d)", argc)
  
+   UString workingString;
+
+   // by Victor Stewart
+
+#if defined(U_STDCPP_ENABLE) && defined(HAVE_CXX17)
+   workingString = U_STRING_FROM_CONSTANT("{\"ABC\":{\"eventKey\":0,\"eventTime\":18212931298},\"XYZ\":{\"eventKey\":1,\"eventTime\":1111131298}}");
+
+   UValue::consumeFieldsAndValues(workingString, [&] (const UString& field, const UString& value) -> void {
+      u__printf(STDERR_FILENO, U_CONSTANT_TO_PARAM("field = %V\nvalue = %V\n"), field.rep, value.rep);
+   });
+#endif
+
    UValue json;
    UCrono crono;
    char buffer[4096];
@@ -350,8 +362,8 @@ U_EXPORT main (int argc, char* argv[], char* env[])
 
    int city;
    double pricePoint;
-   UString workingString, query(U_STRING_FROM_CONSTANT("{ \"colorShifts\" : { \"H67\" : -1 }, \"name\" : \"Mr. Taka Ramen\", \"category\" : 39, \"grouping\" : 0,"
-                                                       " \"bumpUp\" : false, \"businessID\" : \"B5401\", \"foundationColor\" : 3, \"coordinates\" : [ -73.9888983, 40.7212405 ] }"));
+   UString query(U_STRING_FROM_CONSTANT("{ \"colorShifts\" : { \"H67\" : -1 }, \"name\" : \"Mr. Taka Ramen\", \"category\" : 39, \"grouping\" : 0,"
+                                        " \"bumpUp\" : false, \"businessID\" : \"B5401\", \"foundationColor\" : 3, \"coordinates\" : [ -73.9888983, 40.7212405 ] }"));
 
    (void) U_JFIND(U_STRING_FROM_CONSTANT("{ \"pricePoint\" : 2.48333333333333, \"socialWeight\" : 8.75832720587083, \"gender\" : 0, \"lessThan16\" : false }"),
                   "pricePoint", pricePoint);
@@ -361,6 +373,8 @@ U_EXPORT main (int argc, char* argv[], char* env[])
    (void) U_JFIND(U_STRING_FROM_CONSTANT("{ \"cityKey\" : 0 }"), "cityKey", city);
 
    U_INTERNAL_ASSERT_EQUALS(city, 0)
+
+   workingString.clear();
 
    (void) UValue::jread(query, U_STRING_FROM_CONSTANT("{'coordinates' [0"), workingString);
 
@@ -372,8 +386,8 @@ U_EXPORT main (int argc, char* argv[], char* env[])
 
    U_INTERNAL_ASSERT_EQUALS(workingString, "[ -73.9888983, 40.7212405 ]")
 
+         result1.clear();
    workingString.clear();
-   result1.clear();
 
    (void) U_JFIND(U_STRING_FROM_CONSTANT("{\"saltedHash\":\"f66113b5ed33f961219c\",\"osVersion\":\"10.3.1\",\"socials\":[{\"name\":\"victor]},\"t\":\"createAccount\"}"),
                   "t", result1);

@@ -40,6 +40,7 @@ const UString* UString::str_true;
 const UString* UString::str_false;
 const UString* UString::str_response;
 const UString* UString::str_zero;
+const UString* UString::str_one;
 const UString* UString::str_nostat;
 const UString* UString::str_tsa;
 const UString* UString::str_soap;
@@ -181,9 +182,9 @@ const UString* UString::str_ULib;
 #endif
 
 #ifdef U_HTTP2_DISABLE
-static ustringrep stringrep_storage[74] = {
+static ustringrep stringrep_storage[75] = {
 #else
-static ustringrep stringrep_storage[138] = {
+static ustringrep stringrep_storage[139] = {
 #endif
    { U_STRINGREP_FROM_CONSTANT("host") },
    { U_STRINGREP_FROM_CONSTANT("chunked") },
@@ -199,6 +200,7 @@ static ustringrep stringrep_storage[138] = {
    { U_STRINGREP_FROM_CONSTANT("false") },
    { U_STRINGREP_FROM_CONSTANT("response") },
    { U_STRINGREP_FROM_CONSTANT("0") },
+   { U_STRINGREP_FROM_CONSTANT("1") },
    { U_STRINGREP_FROM_CONSTANT("/nostat") },
    { U_STRINGREP_FROM_CONSTANT("/tsa") },
    { U_STRINGREP_FROM_CONSTANT("/soap") },
@@ -356,6 +358,7 @@ void UString::str_allocate(int which)
       U_INTERNAL_ASSERT_EQUALS(str_false, U_NULLPTR)
       U_INTERNAL_ASSERT_EQUALS(str_response, U_NULLPTR)
       U_INTERNAL_ASSERT_EQUALS(str_zero, U_NULLPTR)
+      U_INTERNAL_ASSERT_EQUALS(str_one, U_NULLPTR)
       U_INTERNAL_ASSERT_EQUALS(str_nostat, U_NULLPTR)
       U_INTERNAL_ASSERT_EQUALS(str_tsa, U_NULLPTR)
       U_INTERNAL_ASSERT_EQUALS(str_soap, U_NULLPTR)
@@ -377,13 +380,14 @@ void UString::str_allocate(int which)
       U_NEW_ULIB_STRING(str_false,            UString(stringrep_storage+11));
       U_NEW_ULIB_STRING(str_response,         UString(stringrep_storage+12));
       U_NEW_ULIB_STRING(str_zero,             UString(stringrep_storage+13));
-      U_NEW_ULIB_STRING(str_nostat,           UString(stringrep_storage+14));
-      U_NEW_ULIB_STRING(str_tsa,              UString(stringrep_storage+15));
-      U_NEW_ULIB_STRING(str_soap,             UString(stringrep_storage+16));
-      U_NEW_ULIB_STRING(str_path_root,        UString(stringrep_storage+17));
-      U_NEW_ULIB_STRING(str_asterisk,         UString(stringrep_storage+18));
+      U_NEW_ULIB_STRING(str_one,              UString(stringrep_storage+14));
+      U_NEW_ULIB_STRING(str_nostat,           UString(stringrep_storage+15));
+      U_NEW_ULIB_STRING(str_tsa,              UString(stringrep_storage+16));
+      U_NEW_ULIB_STRING(str_soap,             UString(stringrep_storage+17));
+      U_NEW_ULIB_STRING(str_path_root,        UString(stringrep_storage+18));
+      U_NEW_ULIB_STRING(str_asterisk,         UString(stringrep_storage+19));
 
-      uustringrep key1 = { stringrep_storage+19 };
+      uustringrep key1 = { stringrep_storage+20 };
 
       pkey = key1.p2;
 
@@ -530,7 +534,7 @@ void UString::str_allocate(int which)
    else if ((which & STR_ALLOCATE_HTTP2) != 0)
       {
       U_INTERNAL_ASSERT_EQUALS(str_authority, U_NULLPTR)
-      U_INTERNAL_ASSERT_EQUALS(U_NUM_ELEMENTS(stringrep_storage), 138)
+      U_INTERNAL_ASSERT_EQUALS(U_NUM_ELEMENTS(stringrep_storage), 139)
 
       U_NEW_ULIB_STRING(str_authority,                   UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+0));
       U_NEW_ULIB_STRING(str_method,                      UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+1));
@@ -598,7 +602,7 @@ void UString::str_allocate(int which)
       U_NEW_ULIB_STRING(str_ULib,                        UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+63));
       }
 #else
-   U_INTERNAL_ASSERT_EQUALS(U_NUM_ELEMENTS(stringrep_storage), 74)
+   U_INTERNAL_ASSERT_EQUALS(U_NUM_ELEMENTS(stringrep_storage), 75)
 #endif
 }
 
@@ -1072,29 +1076,6 @@ uint32_t UStringRep::copy(char* s, uint32_t n, uint32_t pos) const
    s[n] = '\0';
 
    U_RETURN(n);
-}
-
-void UStringRep::trim()
-{
-   U_TRACE_NO_PARAM(0, "UStringRep::trim()")
-
-   U_CHECK_MEMORY
-
-   U_INTERNAL_ASSERT_EQUALS(_capacity, 0)
-
-   // skip white space from start
-
-   while (_length && u__isspace(*str))
-      {
-      ++str;
-      --_length;
-      }
-
-   U_INTERNAL_DUMP("_length = %u", _length)
-
-   // skip white space from end
-
-   while (_length && u__isspace(str[_length-1])) --_length;
 }
 
 __pure int UStringRep::compare(const UStringRep* rep, uint32_t depth) const

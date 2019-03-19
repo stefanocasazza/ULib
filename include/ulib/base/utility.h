@@ -767,6 +767,34 @@ static inline unsigned long u_atoi(const char* restrict s)
 #endif
 }
 
+static inline bool u_trim(const char** restrict s, uint32_t* n)
+{
+   // skip white space from start
+
+   uint32_t _length = *n;
+   const char* restrict str = *s;
+
+   while (_length && u__isspace(*str))
+      {
+      ++str;
+      --_length;
+      }
+
+   // skip white space from end
+
+   while (_length && u__isspace(str[_length-1])) --_length;
+
+   if (_length != *n)
+      {
+      *n = _length;
+      *s = str;
+
+      return true;
+      }
+
+   return false;
+}
+
 U_EXPORT int8_t u_log2(uint64_t value) __pure;
 
 static inline unsigned u__octc2int(unsigned char c) { return ((c - '0') & 07); }

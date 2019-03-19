@@ -268,6 +268,28 @@ public:
       U_RETURN_STRING(result);
       }
 
+   UString substrTrim() const
+      {
+      U_TRACE_NO_PARAM(0, "UTokenizer::substrTrim()")
+
+      UString result;
+
+      if (s < end) result = str.substrTrim(str.distance(s));
+
+      U_RETURN_STRING(result);
+      }
+
+   UString substrTrim(const char* start) const
+      {
+      U_TRACE(0, "UTokenizer::substrTrim(%p)", start)
+
+      UString result;
+
+      if (start < end) result = str.substrTrim(start, s - start);
+
+      U_RETURN_STRING(result);
+      }
+
    UString getTokenQueryParser();
 
    int  getTokenId(UString* ptoken);

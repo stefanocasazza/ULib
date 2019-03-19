@@ -18,6 +18,10 @@
 
 #include <math.h>
 
+#if defined(U_STDCPP_ENABLE) && defined(HAVE_CXX17)
+#  include <functional>
+#endif
+
 /**
  * \brief Represents a <a HREF="http://www.json.org">JSON</a> value.
  *
@@ -593,6 +597,12 @@ public:
 
    static int  jreadArrayStep(const UString& jarray, UString& result); // assumes jarray points at the start of an array or array element
 
+   // by Victor Stewart
+
+#if defined(U_STDCPP_ENABLE) && defined(HAVE_CXX17)
+   static void consumeFieldsAndValues(const UString& json, std::function<void(const UString&, const UString&)> consumer); // assumes perfect construction
+#endif
+
 #ifdef DEBUG
    const char* dump(bool _reset) const;
 
@@ -1063,6 +1073,7 @@ protected:
 private:
    static int jread_skip(UTokenizer& tok) U_NO_EXPORT;
    static int jreadFindToken(UTokenizer& tok) U_NO_EXPORT;
+   static int jreadAdvanceAndFindToken(UTokenizer& tok) U_NO_EXPORT;
 
    static UString jread_string(UTokenizer& tok) U_NO_EXPORT;
    static UString jread_object(UTokenizer& tok) U_NO_EXPORT;

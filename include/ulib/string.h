@@ -31,7 +31,7 @@ enum StringAllocationType {
 };
 
 enum StringAllocationIndex {
-   STR_ALLOCATE_INDEX_SOAP         = 20,
+   STR_ALLOCATE_INDEX_SOAP         = 21,
    STR_ALLOCATE_INDEX_IMAP         = STR_ALLOCATE_INDEX_SOAP+14,
    STR_ALLOCATE_INDEX_SSI          = STR_ALLOCATE_INDEX_IMAP+4,
    STR_ALLOCATE_INDEX_NOCAT        = STR_ALLOCATE_INDEX_SSI+2,
@@ -810,7 +810,16 @@ public:
 
    // for constant string
 
-   void trim();
+   void trim()
+      {
+      U_TRACE_NO_PARAM(0, "UStringRep::trim()")
+
+      U_CHECK_MEMORY
+
+      U_INTERNAL_ASSERT_EQUALS(_capacity, 0)
+
+      (void) u_trim(&str, &_length);
+      }
 
    // if the string is quoted...
 
@@ -1149,6 +1158,7 @@ public:
    static const UString* str_false;
    static const UString* str_response;
    static const UString* str_zero;
+   static const UString* str_one;
    static const UString* str_nostat;
    static const UString* str_tsa;
    static const UString* str_soap;
@@ -1609,6 +1619,30 @@ public:
       U_INTERNAL_ASSERT(pos <= rep->_length)
 
       return substr(rep->str + pos, rep->fold(pos, n));
+      }
+
+   UString substrTrim(const char* t, uint32_t tlen) const
+      {
+      U_TRACE(0, "UString::substrTrim(%.*S,%u)", tlen, t, tlen)
+
+      if (tlen == 0 ||
+          (u_trim(&t, &tlen) && tlen == 0))
+         {
+         return *string_null;
+         }
+
+      UString result(rep, t, tlen);
+
+      U_RETURN_STRING(result);
+      }
+
+   UString substrTrim(uint32_t pos, uint32_t n = U_NOT_FOUND) const
+      {
+      U_TRACE(0, "UString::substrTrim(%u,%u)", pos, n)
+
+      U_INTERNAL_ASSERT(pos <= rep->_length)
+
+      return substrTrim(rep->str + pos, rep->fold(pos, n));
       }
 
    bool isSubStringOf(const UString& str) const { return rep->isSubStringOf(str.rep); }

@@ -1939,6 +1939,15 @@ U_NO_EXPORT int UValue::jreadFindToken(UTokenizer& tok)
    U_RETURN(-1);
 }
 
+U_NO_EXPORT int UValue::jreadAdvanceAndFindToken(UTokenizer& tok)
+{
+   U_TRACE(0, "UValue::jreadAdvanceAndFindToken(%p)", &tok)
+
+   tok.advance();
+
+   return jreadFindToken(tok);
+}
+
 U_NO_EXPORT int UValue::jread_skip(UTokenizer& tok)
 {
    U_TRACE(0, "UValue::jread_skip(%p)", &tok)
@@ -2612,6 +2621,113 @@ int UValue::jreadArrayStep(const UString& jarray, UString& result)
    U_RETURN(jTok);
 }
 
+// by Victor Stewart
+
+#if defined(U_STDCPP_ENABLE) && defined(HAVE_CXX17)
+void UValue::consumeFieldsAndValues(const UString& json, std::function<void(const UString&, const UString&)> consumer) // assumes perfect construction
+{
+   U_TRACE(0, "UValue::consumeFieldsAndValues(%V,%p)", json.rep, &consumer)
+
+   int jTok;
+   UTokenizer tok(json);
+   UString field, value;
+   const char* fieldStart;
+   const char* valueStart;
+
+   while ((jTok = jreadFindToken(tok)) != U_JR_EOL)
+      {
+      U_DUMP("jTok = (%d,%S)", jTok, getDataTypeDescription(jTok))
+
+      // all fields must be encapsulated by quotations
+      if (jTok != U_STRING_VALUE)
+         {
+         tok.advance(); // aka skip opening bracket and commas 
+
+         continue;
+         }
+
+      fieldStart = tok.getPointer() + 1;
+
+      // find closing quotation
+      while (jreadAdvanceAndFindToken(tok) != U_STRING_VALUE) {};
+
+      // capture field name
+      field = tok.substr(fieldStart);
+
+      // skip til colon
+      while (jreadAdvanceAndFindToken(tok) != U_JR_COLON) {};
+
+      // skip past the colon it enters on
+
+      switch (jreadAdvanceAndFindToken(tok))
+         {
+         case U_REAL_VALUE:
+            {
+            // skip ahead til either we hit a space or a comma
+
+            valueStart = tok.getPointer();
+
+            while (jreadAdvanceAndFindToken(tok) != U_REAL_VALUE) {};
+
+            value = tok.substrTrim(valueStart); // possible space between end of value and comma
+            }
+         break;
+
+         case  U_TRUE_VALUE: value = *UString::str_one;  break;
+         case U_FALSE_VALUE: value = *UString::str_zero; break;
+
+         case U_STRING_VALUE:
+            {
+            valueStart = tok.getPointer() + 1;
+
+            while (jreadAdvanceAndFindToken(tok) != U_STRING_VALUE) {};
+
+            value = tok.substr(valueStart);
+            }
+         break;
+
+         case U_ARRAY_VALUE:
+         case U_OBJECT_VALUE:
+            {
+            int hunting = 1;
+
+            valueStart = tok.getPointer();
+
+            do {
+               switch (jreadAdvanceAndFindToken(tok))
+                  {
+                  case U_REAL_VALUE:
+                  case U_TRUE_VALUE:
+                  case U_FALSE_VALUE:
+               // case U_NULL_VALUE:
+                  case U_STRING_VALUE:
+                  case U_JR_COLON:
+                  case U_JR_COMMA:
+               // case U_JR_QPARAM:
+                  break;
+                  case U_JR_EARRAY:   
+                  case U_JR_EOBJECT:   --hunting; break;
+                  case U_ARRAY_VALUE:
+                  case U_OBJECT_VALUE: ++hunting; break;
+                  }
+               }
+            while (hunting > 0);
+
+            // we are on the ending char/boundary of a container
+            tok.advance();
+            value = tok.substr(valueStart);
+            }
+         break;
+         }
+
+      consumer(field, value);
+
+      field.clear();
+      value.clear();
+      }
+}
+#endif
+   
 // DEBUG
 
 #ifdef DEBUG
