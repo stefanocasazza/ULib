@@ -70,8 +70,8 @@ The current version offers the following features :
        * [Algorithmic Complexity Attacks](http://lwn.net/Articles/474365/) prevention by randomizing hash seed.
        * [DNS rebinding](http://en.wikipedia.org/wiki/DNS_rebinding) prevention by RFC1918 filtering and Host header validation.
        * selective uri support (DOS regex) for [HTTP Strict Transport Security](https://developer.mozilla.org/en/Security/HTTP_Strict_Transport_Security).
-   * Immune to [Slow Read DoS attack](http://code.google.com/p/slowhttptest/)
-	* Provide evasive action in the event of an HTTP DoS or DDoS attack or brute force attack.
+   * Immune to [Slow Read DoS attack](http://code.google.com/p/slowhttptest/).
+   * Provide evasive action in the event of an HTTP DoS or DDoS attack or brute force attack.
    * [High SSL server quality score](https://www.ssllabs.com/ssltest/analyze.html?d=wifi-aaa2.comune.fi.it)
 
 ## Who is Using ULib
