@@ -208,8 +208,10 @@ public:
       U_TRACE(0, "UREDISClient_Base::silencedSingle(%V)", pipeline.rep)
 
       (void) pipeline.insert(0, U_CONSTANT_TO_PARAM("CLIENT REPLY SKIP \r\n"));
-
+		
+		ignoreResponse = true;
       (void) processRequest(U_RC_MULTIBULK, U_STRING_TO_PARAM(pipeline));
+		ignoreResponse = false;
       }
 
    const UVector<UString>& multi(const UString& pipeline)
@@ -227,8 +229,10 @@ public:
 
       (void) pipeline.insert(0, U_CONSTANT_TO_PARAM("CLIENT REPLY OFF \r\n"));
       (void) pipeline.append(U_CONSTANT_TO_PARAM("CLIENT REPLY ON \r\n"));
-
+		
+		ignoreResponse = true;
       (void) processRequest(U_RC_MULTIBULK, U_STRING_TO_PARAM(pipeline));
+		ignoreResponse = false;
       }
 
    // STRING (@see http://redis.io/commands#string)
@@ -806,7 +810,8 @@ public:
 
 protected:
    int err;
-
+	bool ignoreResponse;
+	
    static uint32_t start;
    static ptrdiff_t diff;
    static UVector<UString>* pvec;
@@ -817,8 +822,9 @@ protected:
    UREDISClient_Base() : UClient_Base(U_NULLPTR)
       {
       U_TRACE_CTOR(0, UREDISClient_Base, "")
-
+		
       err = 0;
+		ignoreResponse = false;
       }
 
    void init();
@@ -967,7 +973,7 @@ private:
 #if defined(U_STDCPP_ENABLE) && defined(HAVE_CXX17)
 #  include <vector>
 
-class U_EXPORT UREDISClusterClient : public UREDISClient<UTCPSocket> {
+class U_EXPORT UREDISClusterClient : protected UREDISClient<UTCPSocket> {
 private:
 
    struct RedisNode {
@@ -1041,8 +1047,9 @@ public:
    void calculateNodeMap();
 
    bool connect(const char* host = U_NULLPTR, unsigned int _port = 6379);
-
-   const UVector<UString>& processPipeline(UString& pipeline, bool silence, bool reorderable);
+	
+	template<bool silence>
+   const UVector<UString>& processPipeline(UString& pipeline, bool reorderable);
 
    // all of these multis require all keys to exist within a single hash slot (on the same node isn't good enough)
 
@@ -1058,8 +1065,8 @@ public:
    // currently supports CLIENT REPLY _____ type directives.... but any other commands without keys like {abc}, will break.
    // if you wrap commands in CLIENT REPLY ____ directives and they DO NOT belong to the same hashslot, THESE WRITES WILL BREAK
 
-   const UVector<UString>& clusterAnonMulti(        UString& pipeline, bool reorderable) { return processPipeline(pipeline, false, reorderable); }
-   void                    clusterSilencedAnonMulti(UString& pipeline, bool reorderable) { (void) processPipeline(pipeline, true,  reorderable); }
+   const UVector<UString>& clusterAnonMulti(        UString& pipeline, bool reorderable) { return processPipeline<false>(pipeline, reorderable); }
+   void                    clusterSilencedAnonMulti(UString& pipeline, bool reorderable) { (void) processPipeline<true>(pipeline, reorderable); }
 
    bool clusterUnsubscribe(const UString& channel); 
    bool clusterSubscribe(  const UString& channel, vPFcscs callback);
