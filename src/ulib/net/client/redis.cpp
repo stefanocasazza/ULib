@@ -354,24 +354,25 @@ bool UREDISClient_Base::processRequest(char recvtype)
 {
    U_TRACE(0, "UREDISClient_Base::processRequest(%C)", recvtype)
 
-   if (UClient_Base::sendRequest(false) &&
-       (clear(), UClient_Base::response.setEmpty(), UClient_Base::readResponse(U_SINGLE_READ)))
-      {
-      char prefix = UClient_Base::response[0];
+   if (UClient_Base::sendRequest(false))
+		{
+		if (!ignoreResponse && (clear(), UClient_Base::response.setEmpty(), UClient_Base::readResponse(U_SINGLE_READ)))
+			{
+			char prefix = UClient_Base::response[0];
 
-      if (  prefix != recvtype &&
-          recvtype != U_RC_ANY)
-         {
-         err = (prefix == U_RC_ERROR ? U_RC_ERROR
-                                     : U_RC_ERR_PROTOCOL);
+			if (  prefix != recvtype &&
+				 recvtype != U_RC_ANY)
+				{
+				err = (prefix == U_RC_ERROR ? U_RC_ERROR
+													 : U_RC_ERR_PROTOCOL);
 
-         U_RETURN(false);
-         }
+				U_RETURN(false);
+				}
 
-      err = U_RC_OK;
-
-      U_RETURN(true);
-      }
+			err = U_RC_OK;
+			}
+		U_RETURN(true);
+	}
 
    U_RETURN(false);
 }
@@ -765,7 +766,8 @@ void UREDISClusterClient::processResponse()
       }
 }
 
-const UVector<UString>& UREDISClusterClient::processPipeline(UString& pipeline, const bool silence, const bool reorderable)
+template <bool silence>
+const UVector<UString>& UREDISClusterClient::processPipeline(UString& pipeline, const bool reorderable)
 {
    U_TRACE(0, "UREDISClusterClient::processPipeline(%V,%b,%b)", pipeline.rep, silence, reorderable)
 
@@ -775,7 +777,7 @@ const UVector<UString>& UREDISClusterClient::processPipeline(UString& pipeline, 
 
    auto pushPipeline = [&] (void) -> void {
 
-      if (silence)
+      if constexpr (silence)
          {
          if (count > 1)
             {
@@ -784,7 +786,7 @@ const UVector<UString>& UREDISClusterClient::processPipeline(UString& pipeline, 
             }
          else
             {
-            (void) pipeline.insert(0, U_CONSTANT_TO_PARAM("CLIENT REPLY SKIP \r\n"));
+            (void) workingString.insert(0, U_CONSTANT_TO_PARAM("CLIENT REPLY SKIP \r\n"));
             }
          }
 
@@ -812,13 +814,15 @@ replay:
 
          case ClusterError::none: break;
          }
-
-      if (silence == false) vitem.move(client.vitem);
+		
+		if constexpr (silence == false) vitem.move(client.vitem);
 
       count = 0;
       workingString.clear();
    };
-
+	
+	if constexpr (silence) ignoreResponse = true;
+	
    /*
    */
    if (reorderable) {
@@ -879,7 +883,9 @@ replay:
          count = 0;
       }
    }
-
+	
+	if constexpr (silence) ignoreResponse = false;
+	
    return vitem;
 }
 #  endif
