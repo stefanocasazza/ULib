@@ -34,7 +34,7 @@ bool UTwilioClient::sendRequest(int method, const char* path, uint32_t path_len,
 
       // upload file to server and get response
 
-      if (client->upload(uri, file, U_NULLPTR, 0, 3)) U_RETURN(true);
+      if (client->uploadByPUT(uri, file)) U_RETURN(true);
       }
    else
       {

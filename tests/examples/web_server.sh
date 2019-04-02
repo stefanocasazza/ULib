@@ -78,7 +78,7 @@ userver {
 #CRASH_COUNT 1
 #CRASH_EMAIL_NOTIFY mail.unirel.com:stefano.casazza@unirel.com
 #DOS_SITE_COUNT 1
- DOS_WHITE_LIST 127.0.0.1
+#DOS_WHITE_LIST 127.0.0.1
 #DOS_LOGFILE /tmp/dos_blacklist.txt
 #REQ_TIMEOUT 300
 #PLUGIN "ssi http"
@@ -100,13 +100,13 @@ userver {
 http {
 #ALIAS "[ / /100.html ]"
 #VIRTUAL_HOST yes
- ENABLE_INOTIFY yes
+#ENABLE_INOTIFY yes
  LIMIT_REQUEST_BODY 3M
- REQUEST_READ_TIMEOUT 30
- APACHE_LIKE_LOG /var/log/httpd/access_log
- LOG_FILE_SZ 10M
- DIGEST_AUTHENTICATION yes
- URI_PROTECTED_MASK /tutor/*|/learner/*|/HOD/*
+#REQUEST_READ_TIMEOUT 30
+#APACHE_LIKE_LOG /var/log/httpd/access_log
+#LOG_FILE_SZ 10M
+#DIGEST_AUTHENTICATION yes
+#URI_PROTECTED_MASK /tutor/*|/learner/*|/HOD/*
 #CACHE_FILE_STORE nocat/webif.gz
 #CACHE_FILE_MASK inp/http/data/file1|*.flv|*.svgz
 #URI_REQUEST_STRICT_TRANSPORT_SECURITY_MASK *

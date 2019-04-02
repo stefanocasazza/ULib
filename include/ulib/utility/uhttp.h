@@ -371,6 +371,7 @@ public:
    // UPLOAD
 
    static vPF on_upload;
+   static uint32_t min_size_request_body_for_parallelization;
 
    static void setUploadDir(const UString& dir)
       {
@@ -383,8 +384,6 @@ public:
 
       if (result) *upload_dir = result;
       }
-
-   static void writeUploadData(const char* ptr, uint32_t len);
 
    static UString checkDirectoryForUpload(const char* ptr, uint32_t len);
 
@@ -534,7 +533,27 @@ public:
       {
       U_TRACE_NO_PARAM(0, "UHTTP::setEntityTooLarge()")
 
+      UClientImage_Base::resetPipelineAndSetCloseConnection();
+
       setErrorResponse(*UString::str_ctype_html, HTTP_ENTITY_TOO_LARGE, U_CONSTANT_TO_PARAM("Sorry, the data you requested is too large"), false);
+      }
+
+   static void setLengthRequired()
+      {
+      U_TRACE_NO_PARAM(0, "UHTTP::setLengthRequired()")
+
+      UClientImage_Base::resetPipelineAndSetCloseConnection();
+
+      setErrorResponse(*UString::str_ctype_html, HTTP_LENGTH_REQUIRED, U_CONSTANT_TO_PARAM("Sorry, you must give the length of your data in your header request"), false);
+      }
+
+   static void setUnavailable()
+      {
+      U_TRACE_NO_PARAM(0, "UHTTP::setUnavailable()")
+
+      UClientImage_Base::resetPipelineAndSetCloseConnection();
+
+      setErrorResponse(*UString::str_ctype_html, HTTP_UNAVAILABLE, U_CONSTANT_TO_PARAM("Sorry, the service you requested is unavailable"), false);
       }
 
    static void setUnAuthorized(bool bstale);
@@ -554,6 +573,8 @@ public:
    static void setServiceUnavailable()
       {
       U_TRACE_NO_PARAM(0, "UHTTP::setServiceUnavailable()")
+
+      UClientImage_Base::resetPipelineAndSetCloseConnection();
 
       setErrorResponse(*UString::str_ctype_html, HTTP_UNAVAILABLE,
                        U_CONSTANT_TO_PARAM("Sorry, the service you requested is not available at this moment. "
@@ -1503,7 +1524,6 @@ private:
    static bool checkPathName() U_NO_EXPORT;
    static void checkIPClient() U_NO_EXPORT;
    static bool runDynamicPage() U_NO_EXPORT;
-   static bool readBodyRequest() U_NO_EXPORT;
    static void processFileCache() U_NO_EXPORT;
    static bool readHeaderRequest() U_NO_EXPORT;
    static bool processGetRequest() U_NO_EXPORT;
@@ -1528,6 +1548,8 @@ private:
    static void addContentLengthToHeader(UString& header, char* ptr, uint32_t size, const char* pEndHeader = U_NULLPTR) U_NO_EXPORT;
    static void setDataInCache(const UString& fmt, const UString& content, const char* encoding, uint32_t encoding_len) U_NO_EXPORT;
    static bool processAuthorization(const char* ptr, uint32_t sz, const char* pattern = U_NULLPTR, uint32_t len = 0) U_NO_EXPORT;
+
+   static UString getPathToWriteUploadData(const char* ptr, uint32_t sz) U_NO_EXPORT;
 
    static inline void resetFileCache() U_NO_EXPORT;
    static inline void setUpgrade(const char* ptr) U_NO_EXPORT;

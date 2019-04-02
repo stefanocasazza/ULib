@@ -15,7 +15,10 @@ rm -f uclient.log $DOC_ROOT/webserver_uclient.log \
 #UTRACE="0 85M 0"
 #UOBJDUMP="0 10M 10"
 #USIMERR="error.sim"
- export UTRACE UOBJDUMP USIMERR
+UTRACE_FOLDER=/tmp
+TMPDIR=/tmp
+#UMEMUSAGE=yes
+export UTRACE UOBJDUMP USIMERR UTRACE_SIGNAL UMEMUSAGE UTRACE_FOLDER TMPDIR
 
 creat_link ../uploads $DOC_ROOT/uploads
 
@@ -23,9 +26,10 @@ cat <<EOF >inp/webserver.cfg
 userver {
  PORT 8080
 #RUN_AS_USER apache
- LOG_FILE webserver_uclient.log
+ LOG_FILE /tmp/webserver_uclient.log
  LOG_FILE_SZ 1M
  LOG_MSG_SIZE -1
+ PREFORK_CHILD 0
  DOCUMENT_ROOT $DOC_ROOT
  PLUGIN_DIR     ../../../src/ulib/net/server/plugin/.libs
  ORM_DRIVER_DIR ../../../src/ulib/orm/driver/.libs
@@ -38,6 +42,7 @@ http {
  APACHE_LIKE_LOG /var/log/httpd/access_log
  CACHE_FILE_MASK inp/http/data/file1|*.flv|*.svgz
  CACHE_AVOID_MASK SSI|benchmark|www.sito1.com|www.sito2.com
+ MIN_SIZE_REQUEST_BODY_FOR_PARALLELIZATION 50k
 }
 EOF
 
@@ -51,7 +56,7 @@ start_prg_background userver_tcp -c inp/webserver.cfg
 cat <<EOF >inp/webclient.cfg
 uclient {
  PORT 8080
- LOG_FILE uclient.log
+ LOG_FILE /tmp/uclient.log
  LOG_FILE_SZ 1M
  FOLLOW_REDIRECTS yes
 #USER Aladdin
@@ -62,14 +67,11 @@ EOF
 $SLEEP
 DIR_CMD="../../examples/uclient"
 
-#UTRACE="0 85M 0"
-#UOBJDUMP="0 10M 10"
-#USIMERR="error.sim"
- export UTRACE UOBJDUMP USIMERR
-
 mkdir -p uploads
 
-start_prg uclient -u inp/PEC/PEC.log -c inp/webclient.cfg http://localhost:8080/cgi-bin/uploader.sh # -q 10
+dd if=inp/PEC/PEC.log of=uploads/PEC.log count=10 2>/dev/null
+
+start_prg uclient -r -u inp/PEC/PEC.log -c inp/webclient.cfg http://localhost:8080
 
 diff inp/PEC/PEC.log uploads/PEC.log
 RESULT=$?

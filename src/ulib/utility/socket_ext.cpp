@@ -51,6 +51,9 @@
  * @time_limit specified the maximum execution time, in seconds. If set to zero, no time limit is imposed
  */
 
+uint32_t USocketExt::byte_read;
+uint32_t USocketExt::start_read;
+
 bool USocketExt::read(USocket* sk, UString& buffer, uint32_t count, int timeoutMS, uint32_t time_limit)
 {
    U_TRACE(0, "USocketExt::read(%p,%V,%u,%d,%u)", sk, buffer.rep, count, timeoutMS, time_limit)
@@ -62,24 +65,44 @@ bool USocketExt::read(USocket* sk, UString& buffer, uint32_t count, int timeoutM
 
    char* ptr;
    long timeout = 0;
-   int byte_read = 0;
    ssize_t value; // = -1;
    uint32_t start  = buffer.size(), // NB: read buffer can have previous data...
             ncount = buffer.space(),
             chunk  = count;
 
+   byte_read = 0;
+
    if (LIKELY(chunk < U_CAPACITY)) chunk = U_CAPACITY;
 
    if (UNLIKELY(ncount < chunk))
       {
-           if (sk == UServer_Base::csocket) { UClientImage_Base::manageReadBufferResize(chunk); } // start = buffer.size(); }
-      else                              UString::_reserve(buffer, buffer.getReserveNeed(chunk));
+      if (buffer.isMmap())
+         {
+         U_INTERNAL_ASSERT_EQUALS(count, start - start_read)
+
+         start  = start_read;
+         ncount = count;
+
+         goto next;
+         }
+
+      if (sk == UServer_Base::csocket)
+         {
+         UClientImage_Base::manageReadBufferResize(chunk);
+
+         U_INTERNAL_ASSERT(buffer.same(*UClientImage_Base::rbuffer))
+         }
+      else
+         {
+         UString::_reserve(buffer, buffer.getReserveNeed(chunk));
+         }
 
       ncount = buffer.space();
 
       U_INTERNAL_ASSERT_MAJOR(ncount, 0)
       }
 
+next:
    ptr = buffer.c_pointer(start);
 
 read:
@@ -113,7 +136,9 @@ read:
 #  endif
       }
 
-   value = sk->recv(ptr + byte_read, ncount);
+   U_INTERNAL_DUMP("ptr+byte_read(%u) = %p", byte_read, ptr+byte_read)
+
+   value = sk->recv(ptr+byte_read, ncount);
 
    if (value <= 0)
       {
@@ -155,7 +180,7 @@ error:   U_INTERNAL_DUMP("errno = %d", errno)
          if (byte_read == 0 ||
              sk->shutdown(SHUT_RD) == false)
             {
-            U_INTERNAL_DUMP("byte_read = %d errno = %d", byte_read, errno)
+            U_INTERNAL_DUMP("byte_read = %u errno = %d", byte_read, errno)
 
             if (U_ClientImage_parallelization != U_PARALLELIZATION_CHILD) sk->abortive_close();
 
@@ -170,11 +195,11 @@ error:   U_INTERNAL_DUMP("errno = %d", errno)
 
    byte_read += value;
 
-   U_INTERNAL_DUMP("byte_read = %d count = %u", byte_read, count)
+   U_INTERNAL_DUMP("byte_read = %u count = %u", byte_read, count)
 
    U_INTERNAL_ASSERT_MAJOR(byte_read, 0)
 
-   if (byte_read < (int)count)
+   if (byte_read < count)
       {
       U_INTERNAL_ASSERT_DIFFERS(count, U_SINGLE_READ)
 
@@ -193,12 +218,30 @@ error:   U_INTERNAL_DUMP("errno = %d", errno)
 
    if (value == (ssize_t)ncount)
       {
+      if (buffer.isMmap()) U_RETURN(true);
+
       // NB: may be there are available more bytes to read...
 
       buffer.rep->_length = start + byte_read;
 
-           if (sk == UServer_Base::csocket) { UClientImage_Base::manageReadBufferResize(ncount * 2); } // start = buffer.size(); }
-      else                              UString::_reserve(buffer, buffer.getReserveNeed(ncount * 2));
+      if (sk == UServer_Base::csocket)
+         {
+         U_INTERNAL_DUMP("ptr = %.14S", ptr)
+
+         if (u_get_unalignedp32(ptr)   == U_MULTICHAR_CONSTANT32('P','U','T',' ') &&
+             u_get_unalignedp64(ptr+4) == U_MULTICHAR_CONSTANT64('/','u','p','l','o','a','d','/'))
+            {
+            goto done;
+            }
+
+         UClientImage_Base::manageReadBufferResize(ncount * 2);
+
+         U_INTERNAL_ASSERT(buffer.same(*UClientImage_Base::rbuffer))
+         }
+      else
+         {
+         UString::_reserve(buffer, buffer.getReserveNeed(ncount * 2));
+         }
 
       ptr       = buffer.c_pointer(start);
       ncount    = buffer.space();
@@ -244,7 +287,7 @@ error:   U_INTERNAL_DUMP("errno = %d", errno)
    }
 
 done:
-   U_INTERNAL_DUMP("byte_read = %d", byte_read)
+   U_INTERNAL_DUMP("byte_read = %u", byte_read)
 
    if (byte_read)
       {
@@ -252,7 +295,7 @@ done:
 
       if (start > buffer.size()) buffer.size_adjust_force(start); // NB: we force because the string can be referenced...
 
-      if (byte_read >= (int)count &&
+      if (byte_read >= count &&
           sk->iState != USocket::CLOSE)
          {
          U_RETURN(true);

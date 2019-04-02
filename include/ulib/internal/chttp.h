@@ -55,6 +55,7 @@
 #define HTTP_NOT_MODIFIED                    304
 #define HTTP_USE_PROXY                       305
 #define HTTP_TEMP_REDIR                      307
+#define HTTP_PERMANENT_REDIRECT              308
 
 /* 4xx indicates an error on the client's part */
 #define HTTP_BAD_REQUEST                     400

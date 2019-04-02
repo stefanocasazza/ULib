@@ -52,9 +52,9 @@ mkdir -p       uploads
 $CHOWN nobody: uploads docroot 2>/dev/null
 chmod 777      uploads
 
-$CURL -m 3 -s -F 'file=@vuoto.txt'                                -F "name=prova" http://$1/cgi-bin/uploader.sh     >>out/web_server.out 2>>err/web_server.err
-$CURL -m 3 -s -F 'file=@inp/xml2txt/operazione.xml;type=text/xml' -F "name=prova" http://$1/cgi-bin/uploader.sh     >>out/web_server.out 2>>err/web_server.err
-$CURL -m 3 -s -T web_server.test                                                  http://$1/uploads/web_server.test >>out/web_server.out 2>>err/web_server.err
+$CURL -m 3 -s -F 'file=@vuoto.txt'                                -F "name=prova" http://$1/cgi-bin/uploader.sh    >>out/web_server.out 2>>err/web_server.err
+$CURL -m 3 -s -F 'file=@inp/xml2txt/operazione.xml;type=text/xml' -F "name=prova" http://$1/cgi-bin/uploader.sh    >>out/web_server.out 2>>err/web_server.err
+$CURL -m 3 -s -T web_server.test                                                  http://$1/upload/web_server.test >>out/web_server.out 2>>err/web_server.err
 
 if [ $? -ne 0 ]; then
    kill_server userver_tcp

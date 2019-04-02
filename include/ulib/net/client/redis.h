@@ -203,13 +203,13 @@ public:
       return vitem[0];
       }
 
-   void silencedSingle(UString& pipeline)
+   bool silencedSingle(UString& pipeline)
       {
       U_TRACE(0, "UREDISClient_Base::silencedSingle(%V)", pipeline.rep)
 
       (void) pipeline.insert(0, U_CONSTANT_TO_PARAM("CLIENT REPLY SKIP \r\n"));
 
-      (void) processRequest(U_RC_MULTIBULK, U_STRING_TO_PARAM(pipeline));
+      return sendRequest(pipeline);
       }
 
    const UVector<UString>& multi(const UString& pipeline)
@@ -221,14 +221,14 @@ public:
       return vitem;
       }
 
-   void silencedMulti(UString& pipeline)
+   bool silencedMulti(UString& pipeline)
       {
       U_TRACE(0, "UREDISClient_Base::silencedMulti(%V)", pipeline.rep)
 
       (void) pipeline.insert(0, U_CONSTANT_TO_PARAM("CLIENT REPLY OFF \r\n"));
       (void) pipeline.append(U_CONSTANT_TO_PARAM("CLIENT REPLY ON \r\n"));
 
-      (void) processRequest(U_RC_MULTIBULK, U_STRING_TO_PARAM(pipeline));
+      return sendRequest(pipeline);
       }
 
    // STRING (@see http://redis.io/commands#string)
@@ -825,6 +825,19 @@ protected:
    void processResponse();
    bool processRequest(char recvtype);
 
+   bool sendRequest(const UString& pipeline)
+      {
+      U_TRACE(0, "UREDISClient_Base::sendRequest(%V)", pipeline.rep)
+
+      UClient_Base::iov[0].iov_base = (caddr_t)pipeline.data();
+      UClient_Base::iov[0].iov_len  =          pipeline.size();
+      UClient_Base::iov[1].iov_base = (caddr_t)U_CRLF;
+      UClient_Base::iov[1].iov_len  =
+               UClient_Base::iovcnt = 2;
+
+      return UClient_Base::sendRequest(false);
+      }
+
    bool processRequest(char recvtype, const char* p1, uint32_t len1)
       {
       U_TRACE(0, "UREDISClient_Base::processRequest(%C,%.*S,%u)", recvtype, len1, p1, len1)
@@ -967,7 +980,7 @@ private:
 #if defined(U_STDCPP_ENABLE) && defined(HAVE_CXX17)
 #  include <vector>
 
-class U_EXPORT UREDISClusterClient : public UREDISClient<UTCPSocket> {
+class U_EXPORT UREDISClusterClient : protected UREDISClient<UTCPSocket> {
 private:
 
    struct RedisNode {
@@ -1042,7 +1055,8 @@ public:
 
    bool connect(const char* host = U_NULLPTR, unsigned int _port = 6379);
 
-   const UVector<UString>& processPipeline(UString& pipeline, bool silence, bool reorderable);
+   template<bool silence>
+   const UVector<UString>& processPipeline(UString& pipeline, bool reorderable);
 
    // all of these multis require all keys to exist within a single hash slot (on the same node isn't good enough)
 
@@ -1058,8 +1072,8 @@ public:
    // currently supports CLIENT REPLY _____ type directives.... but any other commands without keys like {abc}, will break.
    // if you wrap commands in CLIENT REPLY ____ directives and they DO NOT belong to the same hashslot, THESE WRITES WILL BREAK
 
-   const UVector<UString>& clusterAnonMulti(        UString& pipeline, bool reorderable) { return processPipeline(pipeline, false, reorderable); }
-   void                    clusterSilencedAnonMulti(UString& pipeline, bool reorderable) { (void) processPipeline(pipeline, true,  reorderable); }
+   const UVector<UString>& clusterAnonMulti(        UString& pipeline, bool reorderable) { return processPipeline<false>(pipeline, reorderable); }
+   void                    clusterSilencedAnonMulti(UString& pipeline, bool reorderable) { (void) processPipeline<true>( pipeline, reorderable); }
 
    bool clusterUnsubscribe(const UString& channel); 
    bool clusterSubscribe(  const UString& channel, vPFcscs callback);

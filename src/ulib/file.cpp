@@ -1072,6 +1072,25 @@ bool UFile::writeToTmp(const struct iovec* iov, int n, int flags, const char* fo
    U_RETURN(result);
 }
 
+UString UFile::contentToWrite(const UString& _pathname, uint32_t sz)
+{
+   U_TRACE(0, "UFile::contentToWrite(%V,%u)", _pathname.rep, sz)
+
+   setPath(_pathname);
+
+   if (creat(O_RDWR) &&
+       fallocate(sz))
+      {
+      UString fileContent;
+
+      (void) memmap(PROT_READ | PROT_WRITE, &fileContent, 0, sz);
+
+      U_RETURN_STRING(fileContent);
+      }
+
+   return UString::getStringNull();
+}
+
 bool UFile::lock(int fd, short l_type, uint32_t start, uint32_t len)
 {
    U_TRACE(1, "UFile::lock(%d,%d,%u,%u)", fd, l_type, start, len)

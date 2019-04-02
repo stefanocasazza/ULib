@@ -1938,7 +1938,7 @@ void UHTTP2::manageHeaders()
          return;
          }
 
-      // TODO
+      // TODO: implement priority for http2
 
       sz  -= 5;
       ptr += 5;
@@ -2353,7 +2353,7 @@ window_update:
 
          if (nerror == NO_ERROR)
             {
-            // TODO
+            // TODO: implement priority for http2
 
             goto ret;
             }

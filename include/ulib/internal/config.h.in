@@ -195,6 +195,9 @@
 /* has getpriority */
 #undef HAVE_GETPRIORITY
 
+/* has gettid */
+#undef HAVE_GETTID
+
 /* has gmtime_r */
 #undef HAVE_GMTIME_R
 

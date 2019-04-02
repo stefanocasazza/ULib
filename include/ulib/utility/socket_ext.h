@@ -175,6 +175,8 @@ private:
     * @param time_limit specified the maximum execution time, in seconds. If set to zero, no time limit is imposed
     */
 
+   static uint32_t byte_read, start_read;
+
    static bool read(USocket* sk, UString& buffer, uint32_t count = U_SINGLE_READ, int timeoutMS = -1, uint32_t time_limit = 0); // read while not received almost count data
 
    // read while received data

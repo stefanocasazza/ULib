@@ -86,6 +86,8 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
    //
    // ENABLE_CACHING_BY_PROXY_SERVERS enable caching by proxy servers (add "Cache control: public" directive)
    //
+   // MIN_SIZE_REQUEST_BODY_FOR_PARALLELIZATION enable parallelization for request with body size major of (default 100k)
+   //
    // URI_PROTECTED_SSE        SSE needs authentication (/sse_event/<name_of_passwd_file>)
    // URI_PROTECTED_MASK       mask (DOS regexp) of URI protected from prying eyes
    // URI_PROTECTED_ALLOWED_IP list of comma separated client address for IP-based access control (IPADDR[/MASK]) for URI_PROTECTED_MASK
@@ -94,7 +96,7 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
    // BANDWIDTH_THROTTLING_MASK                  lets you set maximum byte rates on URLs or URL groups (*.jpg|*.gif 50)
    // URI_REQUEST_STRICT_TRANSPORT_SECURITY_MASK mask (DOS regexp) of URI where use HTTP Strict Transport Security to force client to use only SSL
    //
-   // SESSION_COOKIE_OPTION  eventual params for session cookie (lifetime, path, domain, secure, HttpOnly)  
+   // SESSION_COOKIE_OPTION eventual params for session cookie (lifetime, path, domain, secure, HttpOnly)  
    // ----------------------------------------------------------------------------------------------------------------------------------------------------
    // This directive gives greater control over abnormal client request behavior, which may be useful for avoiding some forms of denial-of-service attacks
    // ----------------------------------------------------------------------------------------------------------------------------------------------------
@@ -190,12 +192,13 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
 # endif
 #endif
 
-   UHTTP::cgi_timeout                     = cfg.readLong(U_CONSTANT_TO_PARAM("CGI_TIMEOUT"));
-   UHTTP::limit_request_body              = cfg.readLong(U_CONSTANT_TO_PARAM("LIMIT_REQUEST_BODY"), U_STRING_MAX_SIZE);
-   UHTTP::request_read_timeout            = cfg.readLong(U_CONSTANT_TO_PARAM("REQUEST_READ_TIMEOUT"));
-   UHTTP::enable_caching_by_proxy_servers = cfg.readBoolean(U_CONSTANT_TO_PARAM("ENABLE_CACHING_BY_PROXY_SERVERS"));
+   UHTTP::cgi_timeout                               = cfg.readLong(U_CONSTANT_TO_PARAM("CGI_TIMEOUT"));
+   UHTTP::limit_request_body                        = cfg.readLong(U_CONSTANT_TO_PARAM("LIMIT_REQUEST_BODY"), U_STRING_MAX_SIZE);
+   UHTTP::request_read_timeout                      = cfg.readLong(U_CONSTANT_TO_PARAM("REQUEST_READ_TIMEOUT"));
+   UHTTP::enable_caching_by_proxy_servers           = cfg.readBoolean(U_CONSTANT_TO_PARAM("ENABLE_CACHING_BY_PROXY_SERVERS"));
+   UHTTP::min_size_request_body_for_parallelization = cfg.readLong(U_CONSTANT_TO_PARAM("MIN_SIZE_REQUEST_BODY_FOR_PARALLELIZATION"), 100 * 1024);
 
-   U_INTERNAL_DUMP("UHTTP::limit_request_body = %u", UHTTP::limit_request_body)
+   U_INTERNAL_DUMP("UHTTP::limit_request_body = %u UHTTP::min_size_request_body_for_parallelization = %u", UHTTP::limit_request_body, UHTTP::min_size_request_body_for_parallelization)
 
    // CACHE FILE
 

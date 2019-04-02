@@ -231,7 +231,7 @@ bool UIPAddress::setHostName(const UString& pcNewHostName, bool bIPv6)
 
    if (u_isIPAddr(bIPv6, name, pcNewHostName.size()))
       {
-#  ifndef _MSWINDOWS_ // TODO
+#  ifndef _MSWINDOWS_ // TODO: implement inet_pton() for WINDOWS
       union uupcAddress ia;
 
       if (U_SYSCALL(inet_pton, "%d,%p,%p", (bIPv6 ? AF_INET6 : AF_INET), name, &ia) == 1)
@@ -619,7 +619,7 @@ __pure bool UIPAddress::isLocalHost()
 #ifdef ENABLE_IPV6
    if (iAddressType == AF_INET6)
       {
-      // TODO
+      // TODO: local address for IPv6
 
       U_RETURN(false);
       }

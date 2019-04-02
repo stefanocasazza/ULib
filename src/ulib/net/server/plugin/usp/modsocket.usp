@@ -40,16 +40,12 @@ static bool isMessageForAnotherUSP(const UString& msg)
 {
    U_TRACE(5, "::isMessageForAnotherUSP(%V)", msg.rep)
 
-   // TODO
-
    U_RETURN(false);
 }
 
 static bool isMessageForAnotherWebSocket(const UString& msg)
 {
    U_TRACE(5, "::isMessageForAnotherWebSocket(%V)", msg.rep)
-
-   // TODO
 
    U_RETURN(true);
 }

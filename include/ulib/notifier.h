@@ -148,7 +148,7 @@ public:
 
       U_INTERNAL_ASSERT_POINTER(item)
 
-      // TODO
+      // TODO: implement suspend() for libevent
       }
 
    static void resume(UEventFd* item)
@@ -157,7 +157,7 @@ public:
 
       U_INTERNAL_ASSERT_POINTER(item)
 
-      // TODO
+      // TODO: implement resume() for libevent
       }
 
    static int waitForEvent(int fd_max, fd_set* read_set, fd_set* write_set, UEventTime* ptimeout)

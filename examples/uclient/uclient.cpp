@@ -18,6 +18,7 @@
 "purpose 'simple http client...'\n" \
 "option c config  1 'path of configuration file' ''\n" \
 "option u upload  1 'path of file to upload to url' ''\n" \
+"option r resume  0 'resume previous upload' ''\n" \
 "option o output  1 'path of file to write output' ''\n" \
 "option q queue   1 'time polling of queue mode' ''\n" \
 "option s stdin   0 'read the request to send from standard input' ''\n" \
@@ -53,14 +54,15 @@ public:
       const char* p;
       time_t queue_time = 0;
       UString outpath, result, req(U_CAPACITY);
-      bool ok = false, include = false, bstdin = false;
+      bool ok = false, include = false, bstdin = false, bresume = false;
 
       if (UApplication::isOptions())
          {
          cfg_str    =  opt['c'];
          upload     =  opt['u'];
-         bstdin     = (opt['s'] == U_STRING_FROM_CONSTANT("1"));
-         include    = (opt['i'] == U_STRING_FROM_CONSTANT("1"));
+         bstdin     = (opt['s'] == *UString::str_one);
+         bresume    = (opt['r'] == *UString::str_one);
+         include    = (opt['i'] == *UString::str_one);
          outpath    =  opt['o'];
          queue_time =  opt['q'].strtoul();
          }
@@ -113,7 +115,7 @@ loop: if (upload)
          {
          UFile file(upload);
 
-         if (client->upload(url, file)) ok = true;
+         if (client->uploadByPUT(url, file, bresume)) ok = true;
          }
       else if (client->connectServer(url))
          {

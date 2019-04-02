@@ -915,6 +915,8 @@ public:
    static char* shm_open(  const char* name, uint32_t length); // create/open POSIX shared memory object
    static void  shm_unlink(const char *name);                  //      unlink POSIX shared memory object
 
+   UString contentToWrite(const UString& pathname, uint32_t size);
+
    // MIME TYPE
 
    const char* getMimeType(const char* suffix = U_NULLPTR, int* pmime_index = U_NULLPTR);

@@ -942,6 +942,13 @@ public:
 
       return *this; // although not strictly necessary for a range-based for loop following the normal convention of returning a value from operator++ is a good idea
       }
+   
+   UVectorStringIter& operator+=(const uint32_t inc)
+      {
+      _pos += inc;
+
+      return *this; // although not strictly necessary for a range-based for loop following the normal convention of returning a value from operator++ is a good idea
+      }
 
    inline UVectorStringIter& erase();
 

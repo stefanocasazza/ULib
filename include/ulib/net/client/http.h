@@ -165,7 +165,8 @@ public:
    UString getSetCookie() const   { return setcookie; }
    UString getLastRequest() const { return last_request; }
 
-   bool upload(const UString& url, UFile& file, const char* filename = U_NULLPTR, uint32_t filename_len = 0, int method = 2); // 2 => POST
+   bool uploadByPUT( const UString& url, UFile& file, bool bresume = false);
+   bool uploadByPOST(const UString& url, UFile& file, const char* filename = U_NULLPTR, uint32_t filename_len = 0);
 
    // DEBUG
 

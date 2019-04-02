@@ -520,7 +520,7 @@ void UNoCatPlugIn::uploadFileToPortal(UFile& file)
 
       UClient_Base::queue_dir = UString::str_CLIENT_QUEUE_DIR;
 
-      result = client->upload(getUrlForSendMsgToPortal(0, U_NULLPTR, 0), file, U_STRING_TO_PARAM(filename), 3);
+      result = client->uploadByPUT(getUrlForSendMsgToPortal(0, U_NULLPTR, 0), file);
 
       U_SRV_LOG("%s to queue log file: %.*S", (result ? "success" : "FAILED"), U_FILE_TO_TRACE(file));
 

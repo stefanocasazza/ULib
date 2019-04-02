@@ -86,6 +86,7 @@ off_t    UHTTP::range_start;
 UFile*   UHTTP::file;
 time_t   UHTTP::htdigest_mtime;
 time_t   UHTTP::htpasswd_mtime;
+uint32_t UHTTP::min_size_request_body_for_parallelization;
 UString* UHTTP::ext;
 UString* UHTTP::etag;
 UString* UHTTP::body;
@@ -2049,7 +2050,7 @@ bool UHTTP::checkContentLength(const UString& response)
 {
    U_TRACE(0, "UHTTP::checkContentLength(%V)", response.rep)
 
-   uint32_t pos = U_STRING_FIND_EXT(response, U_http_info.startHeader, "Content-Length", U_http_info.endHeader-U_CONSTANT_SIZE(U_CRLF2)-U_http_info.startHeader);
+   uint32_t pos = U_STRING_FIND_EXT(response, U_http_info.startHeader, "Content-Length", U_http_info.endHeader - U_CONSTANT_SIZE(U_CRLF2) - U_http_info.startHeader);
 
    if (pos != U_NOT_FOUND)
       {
@@ -2415,98 +2416,6 @@ loop: U_INTERNAL_DUMP("inp = %.20S", inp) // Decode the hexadecimal chunk size i
       }
 
    U_RETURN(false);
-}
-
-U_NO_EXPORT bool UHTTP::readBodyRequest()
-{
-   U_TRACE_NO_PARAM(0, "UHTTP::readBodyRequest()")
-
-   U_INTERNAL_ASSERT_EQUALS(U_line_terminator_len, 2)
-
-   uint32_t body_byte_read = UClientImage_Base::request->size() - U_http_info.endHeader;
-
-   U_INTERNAL_DUMP("UClientImage_Base::request->size() = %u body_byte_read = %u Content-Length = %u U_http_data_chunked = %b",
-                    UClientImage_Base::request->size(),     body_byte_read, U_http_info.clength,    U_http_data_chunked)
-
-   if (U_http_info.clength > body_byte_read)
-      {
-      if (U_http_info.clength > limit_request_body)
-         {
-         UClientImage_Base::setCloseConnection();
-
-         U_http_info.nResponseCode = HTTP_ENTITY_TOO_LARGE;
-
-         setResponse();
-
-         U_RETURN(false);
-         }
-
-      // NB: check for 'Expect: 100-continue' (as curl does)...
-
-      if (body_byte_read == 0                                                                                                                                   &&
-          UClientImage_Base::request->find("Expect: 100-continue", U_http_info.startHeader,
-                           U_CONSTANT_SIZE("Expect: 100-continue"),  U_http_info.endHeader - U_CONSTANT_SIZE(U_CRLF2) - U_http_info.startHeader) != U_NOT_FOUND &&
-          USocketExt::write(UServer_Base::csocket, U_CONSTANT_TO_PARAM("HTTP/1.1 100 Continue\r\n\r\n"), UServer_Base::timeoutMS) == false)
-         {
-         U_INTERNAL_ASSERT_EQUALS(U_http_version, '1')
-
-         U_RETURN(false);
-         }
-
-      if (UClient_Base::csocket == U_NULLPTR && // NB: after forking we can have problem with the shared db connection...
-          UServer_Base::startParallelization())
-         {
-         U_RETURN(false); // parent
-         }
-
-      // NB: wait for other data to complete the read of the request...
-
-      if (USocketExt::read(UServer_Base::csocket, *UClientImage_Base::request, U_http_info.clength - body_byte_read, U_SSL_TIMEOUT_MS, request_read_timeout) == false)
-         {
-         U_INTERNAL_DUMP("UClientImage_Base::request->size() = %u Content-Length = %u", UClientImage_Base::request->size(), U_http_info.clength)
-
-         U_RETURN(false);
-         }
-      }
-   else if (U_http_info.clength == 0)
-      {
-      if (U_http_version == '1')
-         {
-         // HTTP/1.1 compliance: no missing Content-Length on POST requests
-
-         UClientImage_Base::setCloseConnection();
-
-         U_http_info.nResponseCode = HTTP_LENGTH_REQUIRED;
-
-         setResponse();
-
-         U_RETURN(false);
-         }
-
-      if (readDataChunked(UServer_Base::csocket, UClientImage_Base::request, *body)) U_RETURN(true);
-
-      U_INTERNAL_DUMP("U_http_data_chunked = %b", U_http_data_chunked)
-
-      if (U_http_data_chunked) U_RETURN(false);
-
-      if (UServer_Base::startParallelization()) U_RETURN(false); // parent
-
-      // NB: wait for other data (max 256k) to complete the read of the request...
-
-      if (USocketExt::read(UServer_Base::csocket, *UClientImage_Base::request, 256 * 1024, U_SSL_TIMEOUT_MS, request_read_timeout) == false) U_RETURN(false);
-
-      U_http_info.clength = (UClientImage_Base::request->size() - U_http_info.endHeader);
-      }
-
-   U_INTERNAL_DUMP("U_http_info.clength = %u", U_http_info.clength)
-
-   U_INTERNAL_ASSERT_MAJOR(U_http_info.clength, 0)
-
-   *body = UClientImage_Base::request->substr(U_http_info.endHeader, U_http_info.clength);
-
-   UClientImage_Base::setRequestNoCache();
-
-   U_RETURN(true);
 }
 
 bool UHTTP::readBodyResponse(USocket* sk, UString* pbuffer, UString& lbody)
@@ -3878,6 +3787,36 @@ U_NO_EXPORT inline bool UHTTP::setSendfile(int fd, off_t start, off_t count)
    U_RETURN(false);
 }
 
+U_NO_EXPORT UString UHTTP::getPathToWriteUploadData(const char* ptr, uint32_t sz)
+{
+   U_TRACE(0, "UHTTP::getPathToWriteUploadData(%.*S,%u)", sz, ptr, sz)
+
+   UString dir, dest(U_CAPACITY), basename = UStringExt::basename(ptr, sz);
+
+   U_INTERNAL_ASSERT(basename)
+
+   if (U_http_info.query_len == 0                             ||
+       memcmp(U_http_info.query, U_CONSTANT_TO_PARAM("dir=")) ||
+       (dir = checkDirectoryForUpload(U_http_info.query+U_CONSTANT_SIZE("dir="), U_http_info.query_len-U_CONSTANT_SIZE("dir="))).empty())
+      {
+      U_INTERNAL_DUMP("upload_dir = %V", upload_dir->rep)
+
+      U_INTERNAL_ASSERT(*upload_dir)
+
+      dir = *upload_dir;
+      }
+
+   U_INTERNAL_ASSERT_EQUALS(u_get_unalignedp16(dir.data()), U_MULTICHAR_CONSTANT16('u','p'))
+
+   (void) dest.append(dir);
+
+   if (dest.last_char() != '/') dest.push_back('/');
+
+   (void) dest.append(basename);
+
+   U_RETURN_STRING(dest);
+}
+
 int UHTTP::handlerREAD()
 {
    U_TRACE_NO_PARAM(0, "UHTTP::handlerREAD()")
@@ -3893,6 +3832,8 @@ int UHTTP::handlerREAD()
    // ....
    // ------------------------------
    U_HTTP_INFO_RESET(0);
+
+   U_http_info.nResponseCode = HTTP_OK;
 
 #ifndef U_HTTP2_DISABLE
    U_INTERNAL_DUMP("U_ClientImage_http = %C", U_ClientImage_http(UServer_Base::pClientImage))
@@ -4009,8 +3950,6 @@ int UHTTP::handlerREAD()
 
    if (U_http_method_type == HTTP_OPTIONS)
       {
-      U_http_info.nResponseCode = HTTP_OK;
-
       UClientImage_Base::setCloseConnection();
 
       UClientImage_Base::setRequestProcessed();
@@ -4034,17 +3973,6 @@ int UHTTP::handlerREAD()
 
    U_INTERNAL_DUMP("UClientImage_Base::size_request = %u U_http_info.clength = %u", UClientImage_Base::size_request, U_http_info.clength)
 
-   /**
-    * NB: readBodyRequest() depend on UClientImage_Base::request
-    *
-    * if (UClientImage_Base::size_request < UClientImage_Base::request->size())
-    * {
-    * *UClientImage_Base::request = UClientImage_Base::rbuffer->substr(UClientImage_Base::rstart, UClientImage_Base::size_request);
-    *
-    * U_INTERNAL_DUMP("UClientImage_Base::request(%u) = %V", UClientImage_Base::request->size(), UClientImage_Base::request->rep)
-    * }
-    */
-
    if (isGETorHEAD() == false)
       {
       U_http_flag |= HTTP_IS_NOCACHE_FILE;
@@ -4059,17 +3987,305 @@ int UHTTP::handlerREAD()
          if (UServer_Base::auth_ip->equal(U_CLIENT_ADDRESS_TO_PARAM))
 #     endif
          {
-         if (readBodyRequest() == false)
+         if (U_http_info.clength > limit_request_body)
             {
-            U_INTERNAL_DUMP("UServer_Base::csocket->isClosed() = %b UClientImage_Base::wbuffer(%u) = %V",
-                             UServer_Base::csocket->isClosed(),     UClientImage_Base::wbuffer->size(), UClientImage_Base::wbuffer->rep)
-
-            if (UServer_Base::csocket->isClosed()) U_RETURN(U_PLUGIN_HANDLER_ERROR);
-
-            if (UClientImage_Base::wbuffer->empty()) setBadRequest();
+            setEntityTooLarge();
 
             U_RETURN(U_PLUGIN_HANDLER_OK);
             }
+
+         uint32_t body_byte_read = UClientImage_Base::request->size() - U_http_info.endHeader;
+
+         U_INTERNAL_DUMP("UClientImage_Base::request->size() = %u body_byte_read = %u Content-Length = %u U_http_data_chunked = %b",
+                          UClientImage_Base::request->size(),     body_byte_read, U_http_info.clength,    U_http_data_chunked)
+
+         // NB: check for 'Expect: 100-continue' (as curl does)...
+
+         if (body_byte_read == 0 &&
+             U_http_info.clength &&
+             UClientImage_Base::request->find("Expect: 100-continue", U_http_info.startHeader,
+                              U_CONSTANT_SIZE("Expect: 100-continue"), U_http_info.endHeader - U_CONSTANT_SIZE(U_CRLF2) - U_http_info.startHeader) != U_NOT_FOUND &&
+             USocketExt::write(UServer_Base::csocket, U_CONSTANT_TO_PARAM("HTTP/1.1 100 Continue\r\n\r\n"), UServer_Base::timeoutMS) == false)
+            {
+            setBadRequest();
+
+            U_RETURN(U_PLUGIN_HANDLER_OK);
+            }
+
+         UString lbody;
+         uint32_t rsz = 0, count;
+         UFile* upload = U_NULLPTR;
+
+         if (isPUT())
+            {
+            uint32_t sz;
+            const char* ptr = UClientImage_Base::getRequestUri(sz);
+
+            if (u_get_unalignedp64(ptr) == U_MULTICHAR_CONSTANT64('/','u','p','l','o','a','d','/'))
+               {
+               /**
+                * The PUT method, though not as widely used as the POST method is perhaps the more efficient way of uploading files to a server.
+                * This is because in a POST upload the files need to be combined together into a multipart message and this message has to be
+                * decoded at the server. In contrast, the PUT method allows you to simply write the contents of the file to the socket connection
+                * that is established with the server.
+                *
+                * When using the POST method, all the files are combined together into a single multipart/form-data type object. This MIME message
+                * when transferred to the server, has to be decoded by the server side handler. The decoding process may consume significant amounts
+                * of memory and CPU cycles for very large files.
+                *
+                * The fundamental difference between the POST and PUT requests is reflected in the different meaning of the Request-URI. The URI in a
+                * POST request identifies the resource that will handle the enclosed entity. That resource might be a data-accepting process, a gateway
+                * to some other protocol, or a separate entity that accepts annotations. In contrast, the URI in a PUT request identifies the entity
+                * enclosed with the request
+                */
+
+               uint32_t pos;
+               const char* pend;
+               UString path = getPathToWriteUploadData(ptr, sz);
+
+               // ---------------------------------------------------------------------------------------------------------------------------------------------------
+               // To check how much of a file has transferred, perform the exact same PUT request without the file data and with the header: Content-Range: bytes */*
+               //
+               // An example request:
+               //
+               // PUT /upload/video.mp4
+               // Host: 1.2.li3.4:8080
+               // Content-Length: 0
+               // Content-Range: bytes */*
+               //
+               // If this file exists, this will return a response with a HTTP 308 status code and a Range header with the number of bytes on the server.
+               //
+               // HTTP/1.1 308
+               // Content-Length: 0
+               // Range: bytes=0-1000
+               // ---------------------------------------------------------------------------------------------------------------------------------------------------
+
+               if (U_http_info.clength == 0)
+                  {
+                  ptr = UClientImage_Base::request->c_pointer(U_http_info.endHeader - U_CONSTANT_SIZE("Content-Range: bytes */*\r\n\r\n"));
+
+                  if (u_get_unalignedp64(ptr)    == U_MULTICHAR_CONSTANT64('C','o','n','t','e','n','t','-') &&
+                      u_get_unalignedp64(ptr+8)  == U_MULTICHAR_CONSTANT64('R','a','n','g','e',':',' ','b') &&
+                      u_get_unalignedp64(ptr+16) == U_MULTICHAR_CONSTANT64('y','t','e','s',' ','*','/','*'))
+                     {
+                     goto found0;
+                     }
+
+                  pos = U_STRING_FIND_EXT(*UClientImage_Base::request, U_http_info.startHeader, "Content-Range: bytes */*",
+                                                                       U_http_info.endHeader - U_CONSTANT_SIZE(U_CRLF2) - U_http_info.startHeader);
+
+                  U_INTERNAL_DUMP("pos = %u", pos)
+
+                  if (pos != U_NOT_FOUND)
+                     {
+found0:              UString tmp(60U);
+
+                     tmp.snprintf(U_CONSTANT_TO_PARAM("Range: bytes=0-%I\r\n\r\n"), UFile::getSize(path.data()));
+
+                     (void) ext->insert(0, tmp);
+
+                     U_http_info.nResponseCode = HTTP_PERMANENT_REDIRECT;
+
+                     U_INTERNAL_DUMP("ext = %V", ext->rep)
+                     }
+
+                  handlerResponse();
+
+                  U_RETURN(U_PLUGIN_HANDLER_OK);
+                  }
+
+               // ---------------------------------------------------------------------------------------------------------------------------------------------------
+               // If you perform a request like above and find that the returned number is NOT the size of your uploaded file, then it is a good idea to
+               // resume where you left off. To resume, perform the same PUT you did before but with an additional header:
+               // Content-Range: bytes (last byte on server + 1)-(last byte I will be sending)/(total filesize) 
+               //
+               // As shown before our uploaded file was 339108 total bytes in size but our "Content-Range: bytes */*" verification call
+               // returned a value of 1000. To resume, we would send the following headers with the binary data of our file starting at byte 1001:
+               //
+               // PUT /upload/video.mp4
+               // Host: 1.2.3.4:8080
+               // Content-Length: 338108
+               // Content-Type: video/mp4
+               // Content-Range: bytes 1001-339108/339108
+               //
+               // .... binary data of your file here ....
+               //
+               // If all goes well, you will receive a 200 status code. A 400 code means the Content-Range header did not resume from the last byte on the server
+               // ---------------------------------------------------------------------------------------------------------------------------------------------------
+
+               ptr = UClientImage_Base::request->c_pointer(U_http_info.endHeader - U_CONSTANT_SIZE("Content-Range: bytes 1-99/100\r\n\r\n"));
+
+               while (*--ptr != '\n') {}
+
+               if (u_get_unalignedp64(ptr+1)  == U_MULTICHAR_CONSTANT64('C','o','n','t','e','n','t','-') &&
+                   u_get_unalignedp64(ptr+9)  == U_MULTICHAR_CONSTANT64('R','a','n','g','e',':',' ','b') &&
+                   u_get_unalignedp32(ptr+17) == U_MULTICHAR_CONSTANT32('y','t','e','s'))
+                  {
+                  ptr += U_CONSTANT_SIZE("\nContent-Range: bytes ");
+
+                  goto found1;
+                  }
+
+               pos = U_STRING_FIND_EXT(*UClientImage_Base::request, U_http_info.startHeader, "Content-Range: bytes ",
+                                                                    U_http_info.endHeader - U_CONSTANT_SIZE(U_CRLF2) - U_http_info.startHeader);
+
+               U_INTERNAL_DUMP("pos = %u", pos)
+
+               if (pos != U_NOT_FOUND)
+                  {
+                  ptr = UClientImage_Base::request->c_pointer(pos + U_CONSTANT_SIZE("Content-Range: bytes "));
+
+found1:           U_INTERNAL_DUMP("ptr = %.14S", ptr)
+
+                  U_INTERNAL_ASSERT(u__isdigit(*ptr))
+
+                  pend = ptr;
+
+                  while (*++pend != '-') {}
+
+                  rsz = u_strtol(ptr, pend) - 1;
+
+                  U_INTERNAL_DUMP("rsz = %u", rsz)
+
+                  U_INTERNAL_ASSERT_MAJOR(rsz, 0)
+                  }
+
+               U_NEW(UFile, upload, UFile);
+
+               lbody = upload->contentToWrite(path, rsz + U_http_info.clength);
+
+               if (lbody.empty())
+                  {
+                  setUnavailable();
+
+                  U_DELETE(upload)
+
+                  U_RETURN(U_PLUGIN_HANDLER_OK);
+                  }
+
+               U_INTERNAL_DUMP("on_upload = %p", on_upload)
+               }
+            }
+
+         if (U_http_info.clength <= body_byte_read)
+            {
+            if (upload)
+               {
+               U_MEMCPY(lbody.c_pointer(rsz), UClientImage_Base::request->c_pointer(U_http_info.endHeader), U_http_info.clength);
+
+               goto next0;
+               }
+
+            if (U_http_info.clength == 0)
+               {
+               if (U_http_version == '1')
+                  {
+                  // HTTP/1.1 compliance: no missing Content-Length on POST requests
+
+                  setLengthRequired();
+
+                  U_RETURN(U_PLUGIN_HANDLER_OK);
+                  }
+
+               if (readDataChunked(UServer_Base::csocket, UClientImage_Base::request, *UClientImage_Base::body)) goto next3;
+
+               U_INTERNAL_DUMP("U_http_data_chunked = %b", U_http_data_chunked)
+
+               if (U_http_data_chunked ||
+                   UServer_Base::startParallelization()) // parent
+                  {
+                  if (U_http_data_chunked) setBadRequest();
+
+                  U_RETURN(U_PLUGIN_HANDLER_OK);
+                  }
+
+               // NB: wait for other data (max 256k) to complete the read of the request...
+
+               if (USocketExt::read(UServer_Base::csocket, *UClientImage_Base::request, 256 * 1024, U_SSL_TIMEOUT_MS, request_read_timeout) == false)
+                  {
+                  UClientImage_Base::resetPipelineAndSetCloseConnection();
+
+                  setInternalError();
+
+                  U_RETURN(U_PLUGIN_HANDLER_OK);
+                  }
+
+               U_http_info.clength = (UClientImage_Base::request->size() - U_http_info.endHeader);
+
+               U_INTERNAL_DUMP("U_http_info.clength = %u", U_http_info.clength)
+
+               U_INTERNAL_ASSERT_MAJOR(U_http_info.clength, 0)
+               }
+
+            goto next2;
+            }
+
+         count = U_http_info.clength - body_byte_read;
+
+         U_INTERNAL_DUMP("count = %u min_size_request_body_for_parallelization = %u", count, min_size_request_body_for_parallelization)
+
+         U_INTERNAL_ASSERT_MAJOR(count, 0)
+
+         if ((upload                                              ||
+              UClient_Base::csocket == U_NULLPTR)                 && // NB: if POST after forking we can have problem with the shared db connection... (Ex: WiAuth2)
+             (count >= min_size_request_body_for_parallelization) &&
+             UServer_Base::startParallelization())
+            {
+            if (upload)
+               {
+               upload->close();
+
+               U_DELETE(upload)
+               }
+
+            U_RETURN(U_PLUGIN_HANDLER_OK); // parent
+            }
+
+         // NB: wait for other data to complete the read of the request...
+
+         if (upload)
+            {
+            if ((USocketExt::start_read = body_byte_read))
+               {
+               U_MEMCPY(lbody.c_pointer(rsz), UClientImage_Base::request->c_pointer(U_http_info.endHeader), body_byte_read);
+               }
+
+            USocketExt::start_read += rsz;
+
+            if (USocketExt::read(UServer_Base::csocket, lbody, count, U_SSL_TIMEOUT_MS, request_read_timeout) == false)
+               {
+               U_INTERNAL_DUMP("count = %u USocketExt::byte_read = %u", count, USocketExt::byte_read)
+
+               if (count > USocketExt::byte_read) upload->ftruncate(rsz + body_byte_read + USocketExt::byte_read);
+
+               U_http_info.nResponseCode = HTTP_INTERNAL_ERROR;
+               }
+
+next0:      lbody.clear();
+
+            upload->close();
+
+            U_DELETE(upload)
+
+            if (on_upload) on_upload();
+
+            goto next1;
+            }
+
+         if (USocketExt::read(UServer_Base::csocket, *UClientImage_Base::request, count, U_SSL_TIMEOUT_MS, request_read_timeout) == false)
+            {
+            U_http_info.nResponseCode = HTTP_INTERNAL_ERROR;
+
+next1:      setResponse();
+
+            UClientImage_Base::size_request += body_byte_read + USocketExt::byte_read;
+
+            U_RETURN(U_PLUGIN_HANDLER_OK);
+            }
+
+next2:   *body = UClientImage_Base::request->substr(U_http_info.endHeader, U_http_info.clength);
+
+next3:   UClientImage_Base::setRequestNoCache();
 
          UClientImage_Base::size_request += U_http_info.clength;
          }
@@ -4093,8 +4309,6 @@ int UHTTP::handlerREAD()
          U_SRV_LOG("we strike back sending gzip bomb...", 0);
 
          U_ASSERT(UClientImage_Base::body->empty())
-
-         U_http_info.nResponseCode = HTTP_OK;
 
 #     ifndef U_CACHE_REQUEST_DISABLE
          is_response_compressed = 1; // gzip
@@ -4303,8 +4517,6 @@ set_uri: U_http_info.uri     = alias->data();
 
    pathname->size_adjust_force(len);
    pathname->rep->setNullTerminated();
-
-   U_http_info.nResponseCode = HTTP_OK;
 
    if ((old_path_len = U_http_info.uri_len-1) == 0)
       {
@@ -4779,36 +4991,6 @@ UString UHTTP::checkDirectoryForUpload(const char* ptr, uint32_t len)
    U_RETURN_STRING(result);
 }
 
-void UHTTP::writeUploadData(const char* ptr, uint32_t sz)
-{
-   U_TRACE(0, "UHTTP::writeUploadData(%.*S,%u)", sz, ptr, sz)
-
-   UString dir, dest(U_CAPACITY), basename = UStringExt::basename(ptr, sz);
-
-   U_INTERNAL_ASSERT(basename)
-
-   if (U_http_info.query_len == 0                             ||
-       memcmp(U_http_info.query, U_CONSTANT_TO_PARAM("dir=")) ||
-       (dir = checkDirectoryForUpload(U_http_info.query+U_CONSTANT_SIZE("dir="), U_http_info.query_len-U_CONSTANT_SIZE("dir="))).empty())
-      {
-      U_INTERNAL_DUMP("upload_dir = %V", upload_dir->rep)
-
-      U_INTERNAL_ASSERT(*upload_dir)
-
-      dir = *upload_dir;
-      }
-
-   U_INTERNAL_ASSERT_EQUALS(u_get_unalignedp16(dir.data()), U_MULTICHAR_CONSTANT16('u','p'))
-
-   (void) dest.append(dir);
-
-   if (dest.last_char() != '/') dest.push_back('/');
-
-   (void) dest.append(basename);
-
-   if (UFile::writeTo(dest, *body) == false) U_http_info.nResponseCode = HTTP_INTERNAL_ERROR;
-}
-
 bool UHTTP::getFileInCache(const char* name, uint32_t len)
 {
    U_TRACE(0, "UHTTP::getFileInCache(%.*S,%u)", len, name, len)
@@ -4946,77 +5128,40 @@ void UHTTP::processRequest()
          return;
          }
 
+#  ifndef U_HTTP2_DISABLE
       if (isPUT())
          {
          uint32_t sz;
          const char* ptr = UClientImage_Base::getRequestUri(sz);
 
-         if (memcmp(ptr, U_CONSTANT_TO_PARAM("/upload")) == 0)
+         if (u_get_unalignedp64(ptr) == U_MULTICHAR_CONSTANT64('/','u','p','l','o','a','d','/'))
             {
-            /**
-             * The PUT method, though not as widely used as the POST method is perhaps the more efficient way of uploading files to a server.
-             * This is because in a POST upload the files need to be combined together into a multipart message and this message has to be
-             * decoded at the server. In contrast, the PUT method allows you to simply write the contents of the file to the socket connection
-             * that is established with the server.
-             *
-             * When using the POST method, all the files are combined together into a single multipart/form-data type object. This MIME message
-             * when transferred to the server, has to be decoded by the server side handler. The decoding process may consume significant amounts
-             * of memory and CPU cycles for very large files.
-             *
-             * The fundamental difference between the POST and PUT requests is reflected in the different meaning of the Request-URI. The URI in a
-             * POST request identifies the resource that will handle the enclosed entity. That resource might be a data-accepting process, a gateway
-             * to some other protocol, or a separate entity that accepts annotations. In contrast, the URI in a PUT request identifies the entity
-             * enclosed with the request
-             */
-
-            U_INTERNAL_DUMP("on_upload = %p", on_upload)
-
-            if (on_upload) on_upload();
-            else
+            if (*body)
                {
-               U_INTERNAL_DUMP("U_http_info.clength = %u", U_http_info.clength)
+               UFile upload;
+               UString lbody = upload.contentToWrite(getPathToWriteUploadData(ptr, sz), U_http_info.clength);
 
-               if (*body) writeUploadData(ptr, sz);
+               if (lbody.empty())
+                  {
+                  setUnavailable();
+
+                  return;
+                  }
+
+               U_MEMCPY(lbody.data(), body->data(), body->size());
+
+                lbody.clear();
+               upload.close();
+
+               U_INTERNAL_DUMP("on_upload = %p", on_upload)
+
+               if (on_upload) on_upload();
                }
-
-            // ---------------------------------------------------------------------------------------------------------------------------------------------------
-            // TODO
-            // ---------------------------------------------------------------------------------------------------------------------------------------------------
-            // To check how much of a file has transferred, perform the exact same PUT request without the file data and with the header: Content-Range: bytes */*
-            //
-            // An example request:
-            //
-            // PUT /upload/video.mp4
-            // Host: 1.2.3.4:8080
-            // Content-Length: 0
-            // Content-Range: bytes */*
-            //
-            // If this file exists, this will return a response with a HTTP 308 status code and a Range header with the number of bytes on the server.
-            //
-            // HTTP/1.1 308
-            // Content-Length: 0
-            // Range: bytes=0-1000
-            //
-            // If you perform a request like this and find that the returned number is NOT the size of your uploaded file, then it is a good idea to
-            // resume where you left off. To resume, perform the same PUT you did before but with an additional header:
-            // Content-Range: bytes (last byte on server + 1)-(last byte I will be sending)/(total filesize) 
-            //
-            // As shown before our uploaded file was 339108 total bytes in size but our "Content-Range: bytes */*" verification call
-            // returned a value of 1000. To resume, we would send the following headers with the binary data of our file starting at byte 1001:
-            //
-            // PUT /upload/video.mp4
-            // Host: 1.2.3.4:8080
-            // Content-Length: 338108
-            // Content-Type: video/mp4
-            // Content-Range: bytes 1001-339108/339108
-            // .... binary data of your file here ....
-            //
-            // If all goes well, you will receive a 200 status code. A 400 code means the Content-Range header did not resume from the last byte on the server
-            // ---------------------------------------------------------------------------------------------------------------------------------------------------
-
+         
             goto end;
             }
-         }
+        }
+#  endif
 
       U_http_flag |= HTTP_METHOD_NOT_IMPLEMENTED;
 
@@ -6147,6 +6292,7 @@ const char* UHTTP::getStatusDescription(uint32_t* plen)
       case U_HTTP_ENTRY(HTTP_NOT_MODIFIED,       plen, "Not Modified");
       case U_HTTP_ENTRY(HTTP_USE_PROXY,          plen, "Use Proxy");
       case U_HTTP_ENTRY(HTTP_TEMP_REDIR,         plen, "Temporary Redirect");
+      case U_HTTP_ENTRY(HTTP_PERMANENT_REDIRECT, plen, "Permanent Redirect");
 
       // 4xx indicates an error on the client's part
       case U_HTTP_ENTRY(HTTP_BAD_REQUEST,                     plen, "Bad Request");
@@ -6174,7 +6320,7 @@ const char* UHTTP::getStatusDescription(uint32_t* plen)
    // case U_HTTP_ENTRY(426,                                  plen, "Upgrade Required");
       case U_HTTP_ENTRY(HTTP_PRECONDITION_REQUIRED,           plen, "Precondition required");
       case U_HTTP_ENTRY(HTTP_TOO_MANY_REQUESTS,               plen, "Too many requests");
-      case U_HTTP_ENTRY(HTTP_REQUEST_HEADER_FIELDS_TOO_LARGE, plen, "Request_header_fields_too_large");
+      case U_HTTP_ENTRY(HTTP_REQUEST_HEADER_FIELDS_TOO_LARGE, plen, "Request_header fields too large");
    // case U_HTTP_ENTRY(449,                                  plen, "Retry With Appropriate Action");
 
       // 5xx indicates an error on the server's part
@@ -11595,7 +11741,7 @@ U_NO_EXPORT bool UHTTP::processGetRequest()
 #        ifndef U_HTTP2_DISABLE
             if (U_http_version == '2')
                {
-               // TODO...
+               // TODO: implement Flash pseudo-streaming for http2
                }
             else
 #        endif

@@ -86,8 +86,7 @@ void USSIPlugIn::setAlternativeRedirect(const char* fmt, ...)
 
    va_end(argp);
 
-   alternative_response      = 1;
-   U_http_info.nResponseCode = HTTP_OK;
+   alternative_response = 1;
 
    UClientImage_Base::setCloseConnection();
 
@@ -132,8 +131,6 @@ void USSIPlugIn::setAlternativeResponse(UString& _body)
       }
    else
       {
-      U_http_info.nResponseCode = HTTP_OK;
-
       UHTTP::setResponse(*(u_is_know(UHTTP::mime_index) ? UString::str_ctype_txt : UString::str_ctype_html), &_body);
       }
 }
@@ -1066,8 +1063,6 @@ int USSIPlugIn::handlerRequest()
          UString output = (U_HTTP_QUERY_STREQ("_nav_") ? *body : processSSIRequest(*body, 0));
 
          U_INTERNAL_DUMP("alternative_response = %d output(%u) = %V", alternative_response, output.size(), output.rep)
-
-         U_http_info.nResponseCode = HTTP_OK;
 
               if (alternative_response == 0) UHTTP::setDynamicResponse(output, *header);
          else if (alternative_response  > 1)

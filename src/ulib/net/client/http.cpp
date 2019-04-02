@@ -1060,9 +1060,9 @@ bool UHttpClient_Base::sendPOST(const UString& _url, const UString& _body, const
    U_RETURN(false);
 }
 
-bool UHttpClient_Base::upload(const UString& _url, UFile& file, const char* filename, uint32_t filename_len, int method)
+bool UHttpClient_Base::uploadByPOST(const UString& _url, UFile& file, const char* filename, uint32_t filename_len)
 {
-   U_TRACE(0, "UHttpClient_Base::upload(%V,%.*S,%.*S,%u,%d)", _url.rep, U_FILE_TO_TRACE(file), filename_len, filename, filename_len, method)
+   U_TRACE(0, "UHttpClient_Base::uploadByPOST(%V,%.*S,%.*S,%u)", _url.rep, U_FILE_TO_TRACE(file), filename_len, filename, filename_len)
 
    if (UClient_Base::connectServer(_url) == false) body = UClient_Base::response; // NB: it contains the error message...
    else
@@ -1078,6 +1078,68 @@ bool UHttpClient_Base::upload(const UString& _url, UFile& file, const char* file
 #     ifdef USE_LIBMAGIC
          if (UMagic::magic == U_NULLPTR) (void) UMagic::init();
 #     endif
+
+         if (filename_len == 0)
+            {
+            filename     = file.getPathRelativ();
+            filename_len = file.getPathRelativLen();
+            }
+
+         UString _body(filename_len + 300U);
+
+         _body.snprintf(U_CONSTANT_TO_PARAM("------------------------------b34551106891\r\n"
+                        "Content-Disposition: form-data; name=\"file\"; filename=\"%.*s\"\r\n"
+                        "Content-Type: %s\r\n"
+                        "\r\n"),
+                        filename_len, filename,
+                        file.getMimeType());
+
+         UClient_Base::iov[3].iov_base = (caddr_t)_body.data();
+         UClient_Base::iov[3].iov_len  = _body.size();
+         UClient_Base::iov[4].iov_base = (caddr_t)content.data();
+         UClient_Base::iov[4].iov_len  = sz;
+         UClient_Base::iov[5].iov_base = (caddr_t)       "\r\n"
+                                                         "------------------------------b34551106891--\r\n";
+         UClient_Base::iov[5].iov_len  = U_CONSTANT_SIZE("\r\n"
+                                                         "------------------------------b34551106891--\r\n");
+
+         (void) last_request.reserve(UClient_Base::uri.size() + UClient_Base::server.size() + 300U);
+
+         last_request.snprintf(U_CONSTANT_TO_PARAM("POST %v HTTP/1.1\r\n"
+                               "Host: %v:%u\r\n"
+                               "User-Agent: ULib/" ULIB_VERSION "\r\n"
+                               "Content-Length: %u\r\n"
+                               "Content-Type: multipart/form-data; boundary=----------------------------b34551106891\r\n"
+                               "\r\n"),
+                               UClient_Base::uri.rep, UClient_Base::server.rep, UClient_Base::port, _body.size() + sz + UClient_Base::iov[5].iov_len);
+
+         (void) parseRequest(6);
+
+         // send upload request to server and get response
+
+         if (sendRequest()) U_RETURN(true);
+         }
+      }
+
+   U_RETURN(false);
+}
+
+bool UHttpClient_Base::uploadByPUT(const UString& _url, UFile& file, bool bresume)
+{
+   U_TRACE(0, "UHttpClient_Base::uploadByPUT(%V,%.*S,%b)", _url.rep, U_FILE_TO_TRACE(file), bresume)
+
+   if (UClient_Base::connectServer(_url) == false) body = UClient_Base::response; // NB: it contains the error message...
+   else
+      {
+      UString content = file.getContent();
+
+      uint32_t sz = content.size();
+
+      if (sz)
+         {
+         char _buffer[U_PATH_MAX];
+
+         U_INTERNAL_ASSERT(UClient_Base::uri)
 
          /**
           * The PUT method, though not as widely used as the POST method is perhaps the more efficient way of uploading files to a server.
@@ -1095,75 +1157,124 @@ bool UHttpClient_Base::upload(const UString& _url, UFile& file, const char* file
           * enclosed with the request
           */
 
-         if (method == 3) // 3 => PUT
-            {
-            uint32_t nup = (filename_len == 0 ? 0
-                                              : U_CONSTANT_SIZE("/upload/"));
+         char*    pathname = UClient_Base::uri.data();
+         uint32_t pathlen  = UClient_Base::uri.size();
 
-            if (nup == 0)
+         if (pathlen == 0 ||
+             u_get_unalignedp64(pathname) != U_MULTICHAR_CONSTANT64('/','u','p','l','o','a','d','/'))
+            {
+            pathlen = u__snprintf(pathname = _buffer, U_PATH_MAX, U_CONSTANT_TO_PARAM("/upload/%v"), UStringExt::basename(file.getPath()).rep);
+            }
+
+         (void) last_request.reserve(pathlen + UClient_Base::server.size() + 300U);
+
+         if (bresume)
+            {
+            // ---------------------------------------------------------------------------------------------------------------------------------------------------
+            // To check how much of a file has transferred, perform the exact same PUT request without the file data and with the header: Content-Range: bytes */*
+            //
+            // An example request:
+            //
+            // PUT /upload/video.mp4
+            // Host: 1.2.li3.4:8080
+            // Content-Length: 0
+            // Content-Range: bytes */*
+            //
+            // If this file exists, this will return a response with a HTTP 308 status code and a Range header with the number of bytes on the server.
+            //
+            // HTTP/1.1 308
+            // Content-Length: 0
+            // Range: bytes=0-1000
+            // ---------------------------------------------------------------------------------------------------------------------------------------------------
+
+            last_request.snprintf(U_CONSTANT_TO_PARAM("PUT %.*s HTTP/1.1\r\n"
+                                  "Host: %v:%u\r\n"
+                                  "Content-Length: 0\r\n"
+                                  "Content-Range: bytes */*\r\n"
+                                  "\r\n"),
+                                  pathlen, pathname,
+                                  UClient_Base::server.rep, UClient_Base::port);
+
+            (void) parseRequest(3);
+
+            if (UClient_Base::sendRequestAndReadResponse())
                {
-               filename     = UClient_Base::uri.data();
-               filename_len = UClient_Base::uri.size();
+               responseHeader->clear();
+
+               if (UClient_Base::processHeader(responseHeader))
+                  {
+                  U_DUMP("HTTP status = (%d, %S)", U_http_info.nResponseCode, UHTTP::getStatusDescription())
+
+                  if (U_http_info.nResponseCode == HTTP_PERMANENT_REDIRECT)
+                     {
+                     UString range   = responseHeader->getRange();
+                     const char* ptr = range.c_pointer(U_CONSTANT_SIZE("bytes=0-")); 
+                     uint32_t rsz    = (*ptr == '0' ? 0 : u_strtol(ptr, range.pend()));
+
+                     U_INTERNAL_DUMP("ptr = %.8S rsz = %u sz = %u", ptr, rsz, sz)
+
+                     if (rsz == sz) U_RETURN(true);
+
+                     if (rsz == 0) goto next;
+
+                     // ---------------------------------------------------------------------------------------------------------------------------------------------------
+                     // If you perform a request like above and find that the returned number is NOT the size of your uploaded file, then it is a good idea to
+                     // resume where you left off. To resume, perform the same PUT you did before but with an additional header:
+                     // Content-Range: bytes (last byte on server + 1)-(last byte I will be sending)/(total filesize) 
+                     //
+                     // As shown before our uploaded file was 339108 total bytes in size but our "Content-Range: bytes */*" verification call
+                     // returned a value of 1000. To resume, we would send the following headers with the binary data of our file starting at byte 1001:
+                     //
+                     // PUT /upload/video.mp4
+                     // Host: 1.2.3.4:8080
+                     // Content-Length: 338108
+                     // Content-Type: video/mp4
+                     // Content-Range: bytes 1001-339108/339108
+                     //
+                     // .... binary data of your file here ....
+                     //
+                     // If all goes well, you will receive a 200 status code. A 400 code means the Content-Range header did not resume from the last byte on the server
+                     // ---------------------------------------------------------------------------------------------------------------------------------------------------
+
+                     last_request.snprintf(U_CONSTANT_TO_PARAM("PUT %.*s HTTP/1.1\r\n"
+                               "Host: %v:%u\r\n"
+                               "User-Agent: ULib/" ULIB_VERSION "\r\n"
+                               "Content-Length: %u\r\n"
+                               "Content-Range: bytes %u-%u/%u\r\n"
+                               "\r\n"),
+                               pathlen, pathname,
+                               UClient_Base::server.rep, UClient_Base::port,
+                               sz-rsz,
+                               rsz+1,sz,sz);
+
+                     UClient_Base::iov[3].iov_base = (caddr_t)content.c_pointer(rsz);
+                     UClient_Base::iov[3].iov_len  = sz-rsz;
+
+                     (void) parseRequest(4);
+
+                     // send upload request to server and get response
+
+                     if (sendRequest()) U_RETURN(true);
+                     }
+                  }
                }
 
-            (void) last_request.reserve(filename_len + UClient_Base::server.size() + 300U);
-
-            last_request.snprintf(U_CONSTANT_TO_PARAM("PUT %.*s%.*s HTTP/1.1\r\n"
-                                  "Host: %v:%u\r\n"
-                                  "User-Agent: ULib/" ULIB_VERSION "\r\n"
-                                  "Content-Length: %u\r\n"
-                                  "Content-Type: %s\r\n"
-                                  "\r\n"),
-                                  nup, "/upload/",
-                                  filename_len, filename,
-                                  UClient_Base::server.rep, UClient_Base::port,
-                                  sz, file.getMimeType());
-
-            UClient_Base::iov[3].iov_base = (caddr_t)content.data();
-            UClient_Base::iov[3].iov_len  = sz;
-
-            (void) parseRequest(4);
+            U_RETURN(false);
             }
-         else
-            {
-            U_INTERNAL_ASSERT_EQUALS(method, 2) // 2 => POST
 
-            if (filename_len == 0)
-               {
-               filename     = file.getPathRelativ();
-               filename_len = file.getPathRelativLen();
-               }
+next:    last_request.snprintf(U_CONSTANT_TO_PARAM("PUT %.*s HTTP/1.1\r\n"
+                               "Host: %v:%u\r\n"
+                               "User-Agent: ULib/" ULIB_VERSION "\r\n"
+                               "Content-Length: %u\r\n"
+                               "\r\n"),
+                               pathlen, pathname,
+                               UClient_Base::server.rep, UClient_Base::port,
+                               sz);
 
-            UString _body(filename_len + 300U);
+         UClient_Base::iov[3].iov_base = (caddr_t)content.data();
+         UClient_Base::iov[3].iov_len  = sz;
 
-            _body.snprintf(U_CONSTANT_TO_PARAM("------------------------------b34551106891\r\n"
-                           "Content-Disposition: form-data; name=\"file\"; filename=\"%.*s\"\r\n"
-                           "Content-Type: %s\r\n"
-                           "\r\n"),
-                           filename_len, filename,
-                           file.getMimeType());
-
-            UClient_Base::iov[3].iov_base = (caddr_t)_body.data();
-            UClient_Base::iov[3].iov_len  = _body.size();
-            UClient_Base::iov[4].iov_base = (caddr_t)content.data();
-            UClient_Base::iov[4].iov_len  = sz;
-            UClient_Base::iov[5].iov_base = (caddr_t)       "\r\n"
-                                                            "------------------------------b34551106891--\r\n";
-            UClient_Base::iov[5].iov_len  = U_CONSTANT_SIZE("\r\n"
-                                                            "------------------------------b34551106891--\r\n");
-
-            (void) last_request.reserve(UClient_Base::uri.size() + UClient_Base::server.size() + 300U);
-
-            last_request.snprintf(U_CONSTANT_TO_PARAM("POST %v HTTP/1.1\r\n"
-                                  "Host: %v:%u\r\n"
-                                  "User-Agent: ULib/" ULIB_VERSION "\r\n"
-                                  "Content-Length: %u\r\n"
-                                  "Content-Type: multipart/form-data; boundary=----------------------------b34551106891\r\n"
-                                  "\r\n"),
-                                  UClient_Base::uri.rep, UClient_Base::server.rep, UClient_Base::port, _body.size() + sz + UClient_Base::iov[5].iov_len);
-
-            (void) parseRequest(6);
-            }
+         (void) parseRequest(4);
 
          // send upload request to server and get response
 

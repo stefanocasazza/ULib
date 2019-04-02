@@ -181,8 +181,6 @@ int UStreamPlugIn::handlerRequest()
 
    if (U_HTTP_URI_EQUAL(*uri_path) == false) U_RETURN(U_PLUGIN_HANDLER_OK);
 
-   U_http_info.nResponseCode = HTTP_OK;
-
    UHTTP::setResponse(*content_type, U_NULLPTR);
 
    UClientImage_Base::setCloseConnection();

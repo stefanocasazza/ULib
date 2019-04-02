@@ -47,9 +47,9 @@ mkdir -p		   uploads
 $CHOWN nobody: uploads docroot 2>/dev/null
 chmod 777      uploads
 
-$CURL -m 5 -s -k -F 'file=@vuoto.txt'											-F "name=prova" https://$1/cgi-bin/uploader.sh     >>out/web_server_ssl.out 2>>err/web_server_ssl.err
-$CURL -m 5 -s -k -F 'file=@inp/xml2txt/operazione.xml;type=text/xml' -F "name=prova" https://$1/cgi-bin/uploader.sh     >>out/web_server_ssl.out 2>>err/web_server_ssl.err
-$CURL -m 5 -s -k -T web_server.test                                                  https://$1/uploads/web_server.test >>out/web_server_ssl.out 2>>err/web_server_ssl.err
+$CURL -m 5 -s -k -F 'file=@vuoto.txt'											-F "name=prova" https://$1/cgi-bin/uploader.sh    >>out/web_server_ssl.out 2>>err/web_server_ssl.err
+$CURL -m 5 -s -k -F 'file=@inp/xml2txt/operazione.xml;type=text/xml' -F "name=prova" https://$1/cgi-bin/uploader.sh    >>out/web_server_ssl.out 2>>err/web_server_ssl.err
+$CURL -m 5 -s -k -T web_server.test                                                  https://$1/upload/web_server.test >>out/web_server_ssl.out 2>>err/web_server_ssl.err
 
 if [ $? -ne 0 ]; then
 	kill_server userver_ssl

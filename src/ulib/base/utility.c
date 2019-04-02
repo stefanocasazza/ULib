@@ -376,7 +376,11 @@ uint32_t u_gettid(void)
 # elif defined(HAVE_PTHREAD_GETTHREADID_NP)
    pthread_getthreadid_np();
 # elif defined(U_LINUX)
+#  ifdef HAVE_GETTID
+   gettid();
+#  else
    syscall(SYS_gettid);
+#  endif
 # elif defined(__sun)
    pthread_self();
 # elif defined(__APPLE__)
@@ -836,7 +840,7 @@ __pure uint32_t u_findEndHeader(const char* restrict str, uint32_t n)
  * Output for "123456789"     : 31C3
  */
 
-uint16_t u_crc16(const char* buf, uint32_t len)
+__pure uint16_t u_crc16(const char* buf, uint32_t len)
 {
    static uint16_t crc16tab[256]= {
       0x0000,0x1021,0x2042,0x3063,0x4084,0x50a5,0x60c6,0x70e7,

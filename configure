@@ -26932,7 +26932,7 @@ fi
 rlib=""
 posix4_lib=""
 
-for func in accept4 atexit clock_gettime daemon dup3 epoll_create1 epoll_wait epoll_ctl_batch fallocate fallocate64 fnmatch getaddrinfo getnameinfo getopt_long getpriority inet_ntop kqueue kqueue1 lrintl memmem memrchr mkdtemp mremap pipe2 posix_spawn pread sched_getcpu sched_getaffinity sem_init sem_getvalue sem_timedwait sendfile sendfile64 strndup strptime strsignal strtof strtold strtoull gmtime_r timegm nanosleep strerror shm_open; do
+for func in accept4 atexit clock_gettime daemon dup3 epoll_create1 epoll_wait epoll_ctl_batch fallocate fallocate64 fnmatch getaddrinfo getnameinfo getopt_long getpriority gettid inet_ntop kqueue kqueue1 lrintl memmem memrchr mkdtemp mremap pipe2 posix_spawn pread sched_getcpu sched_getaffinity sem_init sem_getvalue sem_timedwait sendfile sendfile64 strndup strptime strsignal strtof strtold strtoull gmtime_r timegm nanosleep strerror shm_open; do
     found="no"
     as_ac_var=`$as_echo "ac_cv_func_$func" | $as_tr_sh`
 ac_fn_cxx_check_func "$LINENO" "$func" "$as_ac_var"
@@ -27201,6 +27201,11 @@ $as_echo "#define HAVE_GETOPT_LONG 1" >>confdefs.h
     getpriority)
 
 $as_echo "#define HAVE_GETPRIORITY 1" >>confdefs.h
+
+        ;;
+    gettid)
+
+$as_echo "#define HAVE_GETTID 1" >>confdefs.h
 
         ;;
     inet_ntop)

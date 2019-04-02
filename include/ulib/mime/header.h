@@ -235,6 +235,19 @@ public:
       U_RETURN_STRING(location);
       }
 
+   // Range
+
+   UString getRange()
+      {
+      U_TRACE_NO_PARAM(0, "UMimeHeader::getRange()")
+
+      U_ASSERT(empty() == false)
+
+      UString range = getHeader(U_CONSTANT_TO_PARAM("Range"));
+
+      U_RETURN_STRING(range);
+      }
+
    // Refresh
 
    UString getRefresh()

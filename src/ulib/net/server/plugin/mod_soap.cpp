@@ -92,8 +92,6 @@ int USoapPlugIn::handlerRequest()
          U_FILE_WRITE_TO_TMP(body, "soap.res");
 #     endif
 
-         U_http_info.nResponseCode = HTTP_OK;
-
          UHTTP::setResponse(*UString::str_ctype_soap, &body);
          }
 

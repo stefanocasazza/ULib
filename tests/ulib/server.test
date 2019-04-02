@@ -27,7 +27,7 @@ wait_server_ready localhost 8080
 
 #$TRUSS socat -u open:inp/http/form_enctype.http tcp4-connect:127.0.0.1:8080 >out/server.out 2>/tmp/trace.out
 
-send_req $NCAT localhost 8080 inp/http/form_enctype.http server 3 kill
+send_req $NCAT localhost 8080 inp/http/form_enctype.http server 5 kill
 
 kill_server test_server
 

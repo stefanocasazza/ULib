@@ -198,6 +198,8 @@ userver {
 #
 # ENABLE_CACHING_BY_PROXY_SERVERS enable caching by proxy servers (add Cache control: public directive on header response)
 #
+# MIN_SIZE_REQUEST_BODY_FOR_PARALLELIZATION enable parallelization for request with body size major of (default 100k)
+# 
 # URI_REQUEST_CERT_MASK                      mask (DOS regexp) of URI where client must comunicate a certificate in the SSL connection
 # BANDWIDTH_THROTTLING_MASK                  lets you set maximum byte rates on URLs or URL groups (*.jpg|*.gif 50)
 # URI_REQUEST_STRICT_TRANSPORT_SECURITY_MASK mask (DOS regexp) of URI where use HTTP Strict Transport Security to force client to use only SSL
@@ -266,6 +268,8 @@ http {
 # URI_PROTECTED_ALLOWED_IP 127.0.0.1,10.30.0.0/16
  
 # ENABLE_CACHING_BY_PROXY_SERVERS yes
+ 
+# MIN_SIZE_REQUEST_BODY_FOR_PARALLELIZATION 512000
 
 # URI_REQUEST_CERT_MASK                      /wi-auth/cgi-bin/cpe.sh
 # BANDWIDTH_THROTTLING_MASK                  @FILE:../throttling.txt
