@@ -48,7 +48,7 @@ static bool usp_bSESSION;
    { \
    UString varname##_value; \
    if (UHTTP::getDataSession(index, varname##_value) && \
-        (usp_sz = varname##_value.size())) \
+       (usp_sz = varname##_value.size())) \
       { \
       UString2Object(varname##_value.data(), usp_sz, varname); \
       } \

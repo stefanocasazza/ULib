@@ -33,7 +33,7 @@
 #  if defined(__NetBSD__) || defined(__UNIKERNEL__)
 #     include <lwp.h>
 #  endif
-#  ifdef HAVE_SYS_SYSCALL_H
+#  if !defined(HAVE_GETTID) && defined(HAVE_SYS_SYSCALL_H)
 #     include <sys/syscall.h>
 #  endif
 #endif
@@ -368,19 +368,17 @@ __pure int u__strncasecmp(const char* restrict s1, const char* restrict s2, size
 uint32_t u_gettid(void)
 {
 #ifndef ENABLE_THREAD
-   return getpid();
-#else
+   return u_pid;
+#elif defined(HAVE_GETTID)
+   return gettid();
+#else 
    uint32_t tid =
 # ifdef _MSWINDOWS_
    GetCurrentThreadId();
 # elif defined(HAVE_PTHREAD_GETTHREADID_NP)
    pthread_getthreadid_np();
 # elif defined(U_LINUX)
-#  ifdef HAVE_GETTID
-   gettid();
-#  else
    syscall(SYS_gettid);
-#  endif
 # elif defined(__sun)
    pthread_self();
 # elif defined(__APPLE__)

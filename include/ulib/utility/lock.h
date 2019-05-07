@@ -56,8 +56,6 @@ public:
          setLocked();
 
          getPointerToSemaphore()->lock();
-
-         U_ASSERT(isLocked())
          }
       }
 

@@ -295,39 +295,69 @@ case "$target_os" in
 		kernel=`uname -r`
 
 		case "$kernel" in
-			6.*)
-				AC_MSG_RESULT([5 family ($kernel)])
-#				AC_DEFINE([KERNEL_6], 1, [Define to 1 if you're using Linux 6.x])
+			0.*)
+				AC_MSG_RESULT([unsupported ($kernel)])
+				AC_MSG_ERROR([ULib works on kernels 2.\[4,6\].x,\[3,5\].x.x])
 			;;
-
-			5.*)
-				AC_MSG_RESULT([5 family ($kernel)])
-#				AC_DEFINE([KERNEL_5], 1, [Define to 1 if you're using Linux 5.x])
+			1.*)
+				AC_MSG_RESULT([unsupported ($kernel)])
+				AC_MSG_ERROR([ULib works on kernels 2.\[4,6\].x,\[3,5\].x.x])
 			;;
-
-			4.*)
-				AC_MSG_RESULT([4 family ($kernel)])
-#				AC_DEFINE([KERNEL_4], 1, [Define to 1 if you're using Linux 4.x])
+			2.1.*)
+				AC_MSG_RESULT([unsupported ($kernel)])
+				AC_MSG_ERROR([ULib works on kernels 2.\[4,6\].x,\[3,5\].x.x])
 			;;
-
-			3.*)
-				AC_MSG_RESULT([3 family ($kernel)])
-#				AC_DEFINE([KERNEL_3], 1, [Define to 1 if you're using Linux 3.x])
+			2.2.*)
+				AC_MSG_RESULT([unsupported ($kernel)])
+				AC_MSG_ERROR([ULib works on kernels 2.\[4,6\].x,\[3,5\].x.x])
 			;;
-
-			2.6.*)
-				AC_MSG_RESULT([2.6 family ($kernel)])
-#				AC_DEFINE([KERNEL_2_6], 1, [Define to 1 if you're using Linux 2.6.x])
+			2.3.*)
+				AC_MSG_RESULT([unsupported ($kernel)])
+				AC_MSG_ERROR([ULib works on kernels 2.\[4,6\].x,\[3,5\].x.x])
 			;;
-
+			2.5.*)
+				AC_MSG_RESULT([unsupported ($kernel)])
+				AC_MSG_ERROR([ULib works on kernels 2.\[4,6\].x,\[3,5\].x.x])
+			;;
 			2.4.*)
 				AC_MSG_RESULT([2.4 family ($kernel)])
 #				AC_DEFINE([KERNEL_2_4], 1, [Define to 1 if you're using Linux 2.4.x])
 			;;
-
+			2.6.*)
+				AC_MSG_RESULT([2.6 family ($kernel)])
+#				AC_DEFINE([KERNEL_2_6], 1, [Define to 1 if you're using Linux 2.6.x])
+			;;
+			3.*)
+				AC_MSG_RESULT([3 family ($kernel)])
+#				AC_DEFINE([KERNEL_3], 1, [Define to 1 if you're using Linux 3.x])
+			;;
+			4.*)
+				AC_MSG_RESULT([4 family ($kernel)])
+#				AC_DEFINE([KERNEL_4], 1, [Define to 1 if you're using Linux 4.x])
+			;;
+			5.*)
+				AC_MSG_RESULT([5 family ($kernel)])
+#				AC_DEFINE([KERNEL_5], 1, [Define to 1 if you're using Linux 5.x])
+			;;
+			6.*)
+				AC_MSG_RESULT([6 family ($kernel)])
+#				AC_DEFINE([KERNEL_6], 1, [Define to 1 if you're using Linux 6.x])
+			;;
+			7.*)
+				AC_MSG_RESULT([7 family ($kernel)])
+#				AC_DEFINE([KERNEL_7], 1, [Define to 1 if you're using Linux 7.x])
+			;;
+			8.*)
+				AC_MSG_RESULT([8 family ($kernel)])
+#				AC_DEFINE([KERNEL_8], 1, [Define to 1 if you're using Linux 8.x])
+			;;
+			9.*)
+				AC_MSG_RESULT([9 family ($kernel)])
+#				AC_DEFINE([KERNEL_9], 1, [Define to 1 if you're using Linux 9.x])
+			;;
 			*)
-				AC_MSG_RESULT([unsupported ($kernel)])
-				AC_MSG_ERROR([ULib works on kernels 2.\[4,6\].x,\[3-4\].x.x])
+				AC_MSG_RESULT([1x family ($kernel)])
+#				AC_DEFINE([KERNEL_1x], 1, [Define to 1 if you're using Linux 1x.x])
 			;;
 		esac
 

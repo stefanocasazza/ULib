@@ -137,7 +137,7 @@ static inline void u_setPid(void)
 {
    U_INTERNAL_TRACE("u_setPid()")
 
-   u_pid_str_len = u_num2str32(u_pid = u_gettid(), u_pid_str) - u_pid_str;
+   u_pid_str_len = u_num2str32(u_pid = getpid(), u_pid_str) - u_pid_str;
 }
 
 static inline uint8_t u_loadavg(const char* buffer)

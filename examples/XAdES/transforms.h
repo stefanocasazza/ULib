@@ -89,6 +89,8 @@ public:
             UBaseTransform();
    virtual ~UBaseTransform();
 
+   UBaseTransform(const UBaseTransform&) {}
+
    // method VIRTUAL to define
 
    virtual int         usage() { return 0; }         // the allowed transforms usages
@@ -548,6 +550,8 @@ public:
       readcallback  = readFunc;
       closecallback = closeFunc;
       }
+
+   UIOCallback(const UIOCallback&) {}
 
    ~UIOCallback()
       {

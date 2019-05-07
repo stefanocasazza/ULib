@@ -58,6 +58,20 @@ public:
 #  endif
       }
 
+   UThread(const UThread& t)
+      {
+      next         = t.next;
+      detachstate  = t.detachstate;
+      cancel       = t.cancel;
+      id           = t.id;
+      tid          = t.tid;
+#  ifdef _MSWINDOWS_
+      cancellation = t.cancellation;
+#  else
+      suspendCount = t.suspendCount;
+#  endif
+      }
+
    virtual ~UThread()
       {
       U_TRACE_DTOR(0, UThread)

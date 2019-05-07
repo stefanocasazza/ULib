@@ -85,6 +85,16 @@ public:
       U_TRACE_DTOR(0, UIPAllow)
       }
 
+   UIPAllow(const UIPAllow& a)
+      {
+      device  = a.device;
+      host    = a.host;
+      addr    = a.addr;
+      mask    = a.mask;
+      network = a.network;
+      bnot    = a.bnot;
+      }
+
    UIPAllow& operator=(const UIPAllow& a)
       {
       U_TRACE(0, "UIPAllow::operator=(%p)", &a)

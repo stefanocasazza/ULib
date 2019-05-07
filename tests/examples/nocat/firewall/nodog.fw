@@ -857,12 +857,6 @@ check_arp() {
 	exit $?
 }
 
-preautorize() {
-	egrep -v '^[ 	]*#' /etc/nodog.allowed | while read mac ip class up down; do
-		access_fw -A $mac $ip $class $up $down
-	done
-}
-
 do_cmd() {
 
 	# Note: your PATH is inherited from the gateway process
@@ -888,8 +882,7 @@ do_cmd() {
 		reset)      shift; reset_fw				 "$@" ;;
 		permit)		shift; access_fw       "-A" "$@" ;; # (CMD) (MAC) (IP) (Class) (UserDownloadRate) (UserUploadRate)
 #		permit)		shift; access_fw_check "-A" "$@" ;; # (CMD) (MAC) (IP) (Class) (UserDownloadRate) (UserUploadRate)
-#		initialize) shift; initialize_fw			 "$1"  ;;
-		initialize) shift; initialize_fw			 "$1"  ; preautorize ;;
+		initialize) shift; initialize_fw			 "$1" ;;
 
 		openlist)
 		 	$IPTABLES -t mangle -L NoCat_Permit -n | awk '/MARK set 0x2/{printf("%s\n", $4)}' | sort -u;

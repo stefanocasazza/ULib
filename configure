@@ -7662,46 +7662,85 @@ $as_echo_n "checking for the kernel version... " >&6; }
 		kernel=`uname -r`
 
 		case "$kernel" in
-			6.*)
-				{ $as_echo "$as_me:${as_lineno-$LINENO}: result: 5 family ($kernel)" >&5
-$as_echo "5 family ($kernel)" >&6; }
-#				AC_DEFINE([KERNEL_6], 1, [Define to 1 if you're using Linux 6.x])
+			0.*)
+				{ $as_echo "$as_me:${as_lineno-$LINENO}: result: unsupported ($kernel)" >&5
+$as_echo "unsupported ($kernel)" >&6; }
+				as_fn_error $? "ULib works on kernels 2.\4,6\.x,\3,5\.x.x" "$LINENO" 5
 			;;
-
-			5.*)
-				{ $as_echo "$as_me:${as_lineno-$LINENO}: result: 5 family ($kernel)" >&5
-$as_echo "5 family ($kernel)" >&6; }
-#				AC_DEFINE([KERNEL_5], 1, [Define to 1 if you're using Linux 5.x])
+			1.*)
+				{ $as_echo "$as_me:${as_lineno-$LINENO}: result: unsupported ($kernel)" >&5
+$as_echo "unsupported ($kernel)" >&6; }
+				as_fn_error $? "ULib works on kernels 2.\4,6\.x,\3,5\.x.x" "$LINENO" 5
 			;;
-
-			4.*)
-				{ $as_echo "$as_me:${as_lineno-$LINENO}: result: 4 family ($kernel)" >&5
-$as_echo "4 family ($kernel)" >&6; }
-#				AC_DEFINE([KERNEL_4], 1, [Define to 1 if you're using Linux 4.x])
+			2.1.*)
+				{ $as_echo "$as_me:${as_lineno-$LINENO}: result: unsupported ($kernel)" >&5
+$as_echo "unsupported ($kernel)" >&6; }
+				as_fn_error $? "ULib works on kernels 2.\4,6\.x,\3,5\.x.x" "$LINENO" 5
 			;;
-
-			3.*)
-				{ $as_echo "$as_me:${as_lineno-$LINENO}: result: 3 family ($kernel)" >&5
-$as_echo "3 family ($kernel)" >&6; }
-#				AC_DEFINE([KERNEL_3], 1, [Define to 1 if you're using Linux 3.x])
+			2.2.*)
+				{ $as_echo "$as_me:${as_lineno-$LINENO}: result: unsupported ($kernel)" >&5
+$as_echo "unsupported ($kernel)" >&6; }
+				as_fn_error $? "ULib works on kernels 2.\4,6\.x,\3,5\.x.x" "$LINENO" 5
 			;;
-
-			2.6.*)
-				{ $as_echo "$as_me:${as_lineno-$LINENO}: result: 2.6 family ($kernel)" >&5
-$as_echo "2.6 family ($kernel)" >&6; }
-#				AC_DEFINE([KERNEL_2_6], 1, [Define to 1 if you're using Linux 2.6.x])
+			2.3.*)
+				{ $as_echo "$as_me:${as_lineno-$LINENO}: result: unsupported ($kernel)" >&5
+$as_echo "unsupported ($kernel)" >&6; }
+				as_fn_error $? "ULib works on kernels 2.\4,6\.x,\3,5\.x.x" "$LINENO" 5
 			;;
-
+			2.5.*)
+				{ $as_echo "$as_me:${as_lineno-$LINENO}: result: unsupported ($kernel)" >&5
+$as_echo "unsupported ($kernel)" >&6; }
+				as_fn_error $? "ULib works on kernels 2.\4,6\.x,\3,5\.x.x" "$LINENO" 5
+			;;
 			2.4.*)
 				{ $as_echo "$as_me:${as_lineno-$LINENO}: result: 2.4 family ($kernel)" >&5
 $as_echo "2.4 family ($kernel)" >&6; }
 #				AC_DEFINE([KERNEL_2_4], 1, [Define to 1 if you're using Linux 2.4.x])
 			;;
-
+			2.6.*)
+				{ $as_echo "$as_me:${as_lineno-$LINENO}: result: 2.6 family ($kernel)" >&5
+$as_echo "2.6 family ($kernel)" >&6; }
+#				AC_DEFINE([KERNEL_2_6], 1, [Define to 1 if you're using Linux 2.6.x])
+			;;
+			3.*)
+				{ $as_echo "$as_me:${as_lineno-$LINENO}: result: 3 family ($kernel)" >&5
+$as_echo "3 family ($kernel)" >&6; }
+#				AC_DEFINE([KERNEL_3], 1, [Define to 1 if you're using Linux 3.x])
+			;;
+			4.*)
+				{ $as_echo "$as_me:${as_lineno-$LINENO}: result: 4 family ($kernel)" >&5
+$as_echo "4 family ($kernel)" >&6; }
+#				AC_DEFINE([KERNEL_4], 1, [Define to 1 if you're using Linux 4.x])
+			;;
+			5.*)
+				{ $as_echo "$as_me:${as_lineno-$LINENO}: result: 5 family ($kernel)" >&5
+$as_echo "5 family ($kernel)" >&6; }
+#				AC_DEFINE([KERNEL_5], 1, [Define to 1 if you're using Linux 5.x])
+			;;
+			6.*)
+				{ $as_echo "$as_me:${as_lineno-$LINENO}: result: 6 family ($kernel)" >&5
+$as_echo "6 family ($kernel)" >&6; }
+#				AC_DEFINE([KERNEL_6], 1, [Define to 1 if you're using Linux 6.x])
+			;;
+			7.*)
+				{ $as_echo "$as_me:${as_lineno-$LINENO}: result: 7 family ($kernel)" >&5
+$as_echo "7 family ($kernel)" >&6; }
+#				AC_DEFINE([KERNEL_7], 1, [Define to 1 if you're using Linux 7.x])
+			;;
+			8.*)
+				{ $as_echo "$as_me:${as_lineno-$LINENO}: result: 8 family ($kernel)" >&5
+$as_echo "8 family ($kernel)" >&6; }
+#				AC_DEFINE([KERNEL_8], 1, [Define to 1 if you're using Linux 8.x])
+			;;
+			9.*)
+				{ $as_echo "$as_me:${as_lineno-$LINENO}: result: 9 family ($kernel)" >&5
+$as_echo "9 family ($kernel)" >&6; }
+#				AC_DEFINE([KERNEL_9], 1, [Define to 1 if you're using Linux 9.x])
+			;;
 			*)
-				{ $as_echo "$as_me:${as_lineno-$LINENO}: result: unsupported ($kernel)" >&5
-$as_echo "unsupported ($kernel)" >&6; }
-				as_fn_error $? "ULib works on kernels 2.\4,6\.x,\3-4\.x.x" "$LINENO" 5
+				{ $as_echo "$as_me:${as_lineno-$LINENO}: result: 1x family ($kernel)" >&5
+$as_echo "1x family ($kernel)" >&6; }
+#				AC_DEFINE([KERNEL_1x], 1, [Define to 1 if you're using Linux 1x.x])
 			;;
 		esac
 

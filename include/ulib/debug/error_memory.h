@@ -27,6 +27,8 @@ public:
     UMemoryError() {                                                                    _this = (void*)U_CHECK_MEMORY_SENTINEL; }
    ~UMemoryError() { U_ASSERT_MACRO(invariant(), "ERROR ON MEMORY", getErrorType(this)) _this = U_NULLPTR; }
 
+    UMemoryError(const UMemoryError& m) { _this = m._this; }
+
    // ASSIGNMENT
 
    UMemoryError& operator=(const UMemoryError& o)

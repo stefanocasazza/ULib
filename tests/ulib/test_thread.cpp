@@ -10,18 +10,18 @@
 
 #define TEST_CHANGE(b) {if(!TestChange(b))return 1;}
 
-static volatile int n;
+static volatile int _n;
 static int time_to_sleep = 5;
 
 static bool WaitNValue(int value)
 {
    U_TRACE(5+256, "::WaitNValue(%d)", value)
 
-   U_INTERNAL_DUMP("n = %d", n)
+   U_INTERNAL_DUMP("_n = %d", _n)
 
    for (int i = 0; i < 100; ++i)
       {
-      if (n == value) U_RETURN(true);
+      if (_n == value) U_RETURN(true);
 
       UThread::nanosleep(100);
       }
@@ -33,11 +33,11 @@ static bool WaitChangeNValue(int value)
 {
    U_TRACE(5+256, "::WaitChangeNValue(%d)", value)
 
-   U_INTERNAL_DUMP("n = %d", n)
+   U_INTERNAL_DUMP("_n = %d", _n)
 
    for (int i = 0; i < 100; ++i)
       {
-      if (n != value) U_RETURN(true);
+      if (_n != value) U_RETURN(true);
 
       UThread::nanosleep(100);
       }
@@ -54,7 +54,7 @@ static bool TestChange(bool shouldChange)
 
    fflush(0);
 
-   if (WaitChangeNValue(n) == shouldChange)
+   if (WaitChangeNValue(_n) == shouldChange)
       {
       printf("ok\n");
 
@@ -77,7 +77,7 @@ public:
       {
       U_TRACE(5+256, "ThreadTest::run()")
 
-      n = 1;
+      _n = 1;
 
       if (WaitNValue(2)) // wait for main thread
          {
@@ -89,7 +89,7 @@ public:
             {
             yield();
 
-            ++n; // increment infinitely
+            ++_n; // increment infinitely
 
             sleep(time_to_sleep);
             }
@@ -209,7 +209,7 @@ int U_EXPORT main(int argc, char* argv[])
    printf("***********************************************\n");
 
    printf("Testing thread creation\n\n");
-   n = 0;
+   _n = 0;
    test.start();
 
    // wait for n == 1
@@ -219,7 +219,7 @@ int U_EXPORT main(int argc, char* argv[])
    printf("\nTesting thread is working\n\n");
 
    // increment number in thread
-   n = 2;
+   _n = 2;
    TEST_CHANGE(true);
    TEST_CHANGE(true);
 
