@@ -76,6 +76,8 @@ int      UHTTP::cgi_timeout;
 bool     UHTTP::bnph;
 bool     UHTTP::bcallInitForAllUSP;
 bool     UHTTP::digest_authentication;
+bool     UHTTP::uri_overload_authentication;
+bool     UHTTP::buri_overload_authentication;
 bool     UHTTP::skip_check_cookie_ip_address;
 bool     UHTTP::enable_caching_by_proxy_servers;
 char     UHTTP::response_buffer[64];
@@ -92,6 +94,7 @@ UString* UHTTP::etag;
 UString* UHTTP::body;
 UString* UHTTP::geoip;
 UString* UHTTP::tmpdir;
+UString* UHTTP::fpasswd;
 UString* UHTTP::htpasswd;
 UString* UHTTP::htdigest;
 UString* UHTTP::qcontent;
@@ -848,6 +851,7 @@ void UHTTP::init()
    U_INTERNAL_ASSERT_EQUALS(pcmd, U_NULLPTR)
    U_INTERNAL_ASSERT_EQUALS(geoip, U_NULLPTR)
    U_INTERNAL_ASSERT_EQUALS(tmpdir, U_NULLPTR)
+   U_INTERNAL_ASSERT_EQUALS(fpasswd, U_NULLPTR)
    U_INTERNAL_ASSERT_EQUALS(qcontent, U_NULLPTR)
    U_INTERNAL_ASSERT_EQUALS(pathname, U_NULLPTR)
    U_INTERNAL_ASSERT_EQUALS(rpathname, U_NULLPTR)
@@ -869,6 +873,7 @@ void UHTTP::init()
    U_NEW_STRING(body, UString);
    U_NEW_STRING(geoip, UString(U_CAPACITY));
    U_NEW_STRING(tmpdir, UString(U_PATH_MAX));
+   U_NEW_STRING(fpasswd, UString);
    U_NEW_STRING(qcontent, UString);
    U_NEW_STRING(pathname, UString(U_CAPACITY));
    U_NEW_STRING(rpathname, UString);
@@ -1413,6 +1418,7 @@ void UHTTP::dtor()
       U_DELETE(pcmd)
       U_DELETE(geoip)
       U_DELETE(tmpdir)
+      U_DELETE(fpasswd)
       U_DELETE(qcontent)
       U_DELETE(pathname)
       U_DELETE(rpathname)
@@ -7696,40 +7702,40 @@ end:
    handlerResponse();
 }
 
-U_NO_EXPORT __pure uint32_t UHTTP::getPosPasswd(UString& fpasswd, const UString& line)
+U_NO_EXPORT __pure uint32_t UHTTP::getPosPasswd(const UString& line)
 {
-   U_TRACE(0, "UHTTP::getPosPasswd(%V,%V)", fpasswd.rep, line.rep)
+   U_TRACE(0, "UHTTP::getPosPasswd(%V)", line.rep)
 
-   U_INTERNAL_ASSERT(fpasswd)
+   U_INTERNAL_ASSERT(*fpasswd)
 
-   uint32_t pos = fpasswd.find(line);
+   uint32_t pos = fpasswd->find(line);
 
    if (pos == U_NOT_FOUND) U_RETURN(U_NOT_FOUND);
 
    if (pos == 0 ||
-       fpasswd[pos-1] == '\n')
+       (*fpasswd)[pos-1] == '\n')
       {
       U_RETURN(pos);
       }
 
    while (true)
       {
-      pos = fpasswd.find(line, pos+1);
+      pos = fpasswd->find(line, pos+1);
 
       if (pos == U_NOT_FOUND) U_RETURN(U_NOT_FOUND);
 
-      if (fpasswd[pos-1] == '\n') U_RETURN(pos);
+      if ((*fpasswd)[pos-1] == '\n') U_RETURN(pos);
       }
 }
 
-U_NO_EXPORT uint32_t UHTTP::checkPasswd(UHTTP::UFileCacheData* ptr_file_data, UString& fpasswd, const UString& line)
+U_NO_EXPORT uint32_t UHTTP::checkPasswd(UHTTP::UFileCacheData* ptr_file_data, const UString& line)
 {
-   U_TRACE(0, "UHTTP::checkPasswd(%p,%V,%V)", ptr_file_data, fpasswd.rep, line.rep)
+   U_TRACE(0, "UHTTP::checkPasswd(%p,%V)", ptr_file_data, line.rep)
 
    // s.casazza:{SHA}Lkii1ZE7k.....\n
    // s.casazza:Protected Area:b9ee2af50be37...........\n
 
-   uint32_t pos = getPosPasswd(fpasswd, line);
+   uint32_t pos = getPosPasswd(line);
 
    if (pos == U_NOT_FOUND)
       {
@@ -7750,18 +7756,20 @@ U_NO_EXPORT uint32_t UHTTP::checkPasswd(UHTTP::UFileCacheData* ptr_file_data, US
                {
                ptr_file_data->array->erase(0);
 
-               fpasswd = tmp.getContent(true, false, true);
+               *fpasswd = tmp.getContent(true, false, true);
 
-               ptr_file_data->array->push_back(fpasswd);
+               ptr_file_data->array->push_back(*fpasswd);
 
-               U_SRV_LOG("File data users permission: %V reloaded - %u bytes", lpathname.rep, fpasswd.size());
+               U_SRV_LOG("File data users permission: %V reloaded - %u bytes", lpathname.rep, fpasswd->size());
 
-               pos = getPosPasswd(fpasswd, line);
+               pos = getPosPasswd(line);
                }
             }
          }
       else if (digest_authentication)
          {
+         if (uri_overload_authentication) U_RETURN(U_NOT_FOUND);
+
          U_INTERNAL_ASSERT(*htdigest)
 
          UFile tmp(*UString::str_htdigest);
@@ -7771,16 +7779,18 @@ U_NO_EXPORT uint32_t UHTTP::checkPasswd(UHTTP::UFileCacheData* ptr_file_data, US
             if ((tmp.st_mtime = htdigest_mtime, tmp.isModified()) == false) tmp.close();
             else
                {
-               fpasswd = *htdigest = tmp.getContent(true, false, true);
+               *fpasswd = *htdigest = tmp.getContent(true, false, true);
 
-               U_SRV_LOG("File data users permission: ../.htdigest reloaded - %u bytes", fpasswd.size());
+               U_SRV_LOG("File data users permission: ../.htdigest reloaded - %u bytes", fpasswd->size());
 
-               pos = getPosPasswd(fpasswd, line);
+               pos = getPosPasswd(line);
                }
             }
          }
       else
          {
+         if (uri_overload_authentication) U_RETURN(U_NOT_FOUND);
+
          U_INTERNAL_ASSERT(*htpasswd)
 
          UFile tmp(*UString::str_htpasswd);
@@ -7790,11 +7800,11 @@ U_NO_EXPORT uint32_t UHTTP::checkPasswd(UHTTP::UFileCacheData* ptr_file_data, US
             if ((tmp.st_mtime = htpasswd_mtime, tmp.isModified()) == false) tmp.close();
             else
                {
-               fpasswd = *htpasswd = tmp.getContent(true, false, true);
+               *fpasswd = *htpasswd = tmp.getContent(true, false, true);
 
-               U_SRV_LOG("File data users permission: ../.htpasswd reloaded - %u bytes", fpasswd.size());
+               U_SRV_LOG("File data users permission: ../.htpasswd reloaded - %u bytes", fpasswd->size());
 
-               pos = getPosPasswd(fpasswd, line);
+               pos = getPosPasswd(line);
                }
             }
          }
@@ -7806,19 +7816,51 @@ U_NO_EXPORT uint32_t UHTTP::checkPasswd(UHTTP::UFileCacheData* ptr_file_data, US
 // -----------------------------------------------------------------------------------------------
 // for Jonathan Kelly
 // -----------------------------------------------------------------------------------------------
-UHTTP::UFileCacheData* UHTTP::getPasswdDB(const char* name, uint32_t len, UString& fpasswd)
+UHTTP::UFileCacheData* UHTTP::getPasswdDB(const char* name, uint32_t len)
 {
-   U_TRACE(0, "UHTTP::getPasswdDB(%.*S,%u,%V)", len, name, len, fpasswd.rep)
-
-   U_ASSERT(fpasswd.empty())
+   U_TRACE(0, "UHTTP::getPasswdDB(%.*S,%u)", len, name, len)
 
    UHTTP::UFileCacheData* ptr_file_data = U_NULLPTR;
 
+   fpasswd->clear();
+
    if (len > 1)
       {
+      if (uri_overload_authentication)
+         {
+         U_INTERNAL_ASSERT_EQUALS(name[0], '/')
+
+         UHTTP::UServletPage* usp_save = usp;
+
+         if (getUSP(name+1, len-1))
+            {
+            /**
+             * Must set UHTTP::fpasswd as something like:
+             *
+             * s.casazza:{SHA}Lkii1ZE7k.....\n
+             * ...
+             *
+             * or (for digest auth)
+             *
+             * s.casazza:Protected Area:b9ee2af50be37...........\n
+             * ...
+             *
+             * NB: if UHTTP::buri_overload_authentication is set we authorize the request... 
+             */
+
+            usp->runDynamicPageParam(U_DPAGE_AUTH);
+
+            U_INTERNAL_DUMP("fpasswd = %V buri_overload_authentication = %b", fpasswd->rep, buri_overload_authentication)
+
+            usp = usp_save;
+
+            U_RETURN_POINTER(U_NULLPTR, UHTTP::UFileCacheData);
+            }
+         }
+
       ptr_file_data = getFileCachePointerVar(U_CONSTANT_TO_PARAM("..%.*s.ht%6s"), len, name, digest_authentication ? "digest" : "passwd");
 
-      if (ptr_file_data) fpasswd = ptr_file_data->array->operator[](0);
+      if (ptr_file_data) *fpasswd = ptr_file_data->array->operator[](0);
       }
 
    U_INTERNAL_DUMP("digest_authentication = %b ptr_file_data = %p htpasswd = %p", digest_authentication, ptr_file_data, htpasswd)
@@ -7827,24 +7869,24 @@ UHTTP::UFileCacheData* UHTTP::getPasswdDB(const char* name, uint32_t len, UStrin
       {
       if (digest_authentication)
          {
-         if (htdigest) fpasswd = *htdigest;
+         if (htdigest) *fpasswd = *htdigest;
          }
       else
          {
-         if (htpasswd) fpasswd = *htpasswd;
+         if (htpasswd) *fpasswd = *htpasswd;
          }
       }
 
    U_RETURN_POINTER(ptr_file_data, UHTTP::UFileCacheData);
 }
 
-bool UHTTP::savePasswdDB(const char* name, uint32_t len, const UString& fpasswd, UFileCacheData* ptr_file_data) // Save Changes to Disk and Cache
+bool UHTTP::savePasswdDB(const char* name, uint32_t len, UFileCacheData* ptr_file_data) // Save Changes to Disk and Cache
 {
-   U_TRACE(0, "UHTTP::savePasswdDB(%.*S,%u,%V,%p)", len, name, len, fpasswd.rep, ptr_file_data)
+   U_TRACE(0, "UHTTP::savePasswdDB(%.*S,%u,%p)", len, name, len, ptr_file_data)
 
    U_INTERNAL_DUMP("digest_authentication = %b htpasswd = %p", digest_authentication, htpasswd)
 
-   U_INTERNAL_ASSERT(fpasswd)
+   U_INTERNAL_ASSERT(*fpasswd)
 
    if (ptr_file_data)
       {
@@ -7852,12 +7894,12 @@ bool UHTTP::savePasswdDB(const char* name, uint32_t len, const UString& fpasswd,
 
       lpathname.snprintf(U_CONSTANT_TO_PARAM("..%.*s.ht%6s"), len, name, digest_authentication ? "digest" : "passwd");
 
-      if (UFile::writeTo(lpathname, fpasswd))
+      if (UFile::writeTo(lpathname, *fpasswd))
          {
          ptr_file_data->array->erase(0);
-         ptr_file_data->array->push_back(fpasswd);
+         ptr_file_data->array->push_back(*fpasswd);
 
-         U_SRV_LOG("File data users permission: %V reloaded - %u bytes", lpathname.rep, fpasswd.size());
+         U_SRV_LOG("File data users permission: %V reloaded - %u bytes", lpathname.rep, fpasswd->size());
 
          U_RETURN(true);
          }
@@ -7869,11 +7911,11 @@ bool UHTTP::savePasswdDB(const char* name, uint32_t len, const UString& fpasswd,
       {
       U_INTERNAL_ASSERT(*htdigest)
 
-      if (UFile::writeTo(*UString::str_htdigest, fpasswd))
+      if (UFile::writeTo(*UString::str_htdigest, *fpasswd))
          {
-         *htdigest = fpasswd;
+         *htdigest = *fpasswd;
 
-         U_SRV_LOG("File data users permission: ../.htdigest reloaded - %u bytes", fpasswd.size());
+         U_SRV_LOG("File data users permission: ../.htdigest reloaded - %u bytes", fpasswd->size());
 
          U_RETURN(true);
          }
@@ -7883,11 +7925,11 @@ bool UHTTP::savePasswdDB(const char* name, uint32_t len, const UString& fpasswd,
 
    U_INTERNAL_ASSERT(*htpasswd)
 
-   if (UFile::writeTo(*UString::str_htpasswd, fpasswd))
+   if (UFile::writeTo(*UString::str_htpasswd, *fpasswd))
       {
-      *htpasswd = fpasswd;
+      *htpasswd = *fpasswd;
 
-      U_SRV_LOG("File data users permission: ../.htpasswd reloaded - %u bytes", fpasswd.size());
+      U_SRV_LOG("File data users permission: ../.htpasswd reloaded - %u bytes", fpasswd->size());
 
       U_RETURN(true);
       }
@@ -7895,9 +7937,9 @@ bool UHTTP::savePasswdDB(const char* name, uint32_t len, const UString& fpasswd,
    U_RETURN(false);
 }
 
-void UHTTP::setPasswdUser(UString& fpasswd, const UString& username, const UString& password) // Add/Update passwd User
+void UHTTP::setPasswdUser(const UString& username, const UString& password) // Add/Update passwd User
 {
-   U_TRACE(0, "UHTTP::setPasswdUser(%V,%V,%V)", fpasswd.rep, username.rep, password.rep)
+   U_TRACE(0, "UHTTP::setPasswdUser(%V,%V)", username.rep, password.rep)
 
    if (username &&
        password)
@@ -7925,23 +7967,23 @@ void UHTTP::setPasswdUser(UString& fpasswd, const UString& username, const UStri
          user_token.snprintf(U_CONSTANT_TO_PARAM("%v:{SHA}%v\n"), username.rep, hash.rep);
          }
 
-      uint32_t pos_begin = getPosPasswd(fpasswd, buffer);
+      uint32_t pos_begin = getPosPasswd(buffer);
 
-      if (pos_begin == U_NOT_FOUND) (void) fpasswd.append(user_token);
+      if (pos_begin == U_NOT_FOUND) (void) fpasswd->append(user_token);
       else
          {
-         uint32_t pos_end = fpasswd.find('\n', pos_begin+1) - pos_begin+1;
+         uint32_t pos_end = fpasswd->find('\n', pos_begin+1) - pos_begin+1;
 
-         (void) fpasswd.replace(pos_begin, pos_end, user_token);
+         (void) fpasswd->replace(pos_begin, pos_end, user_token);
          }
       }
 }
 
-bool UHTTP::revokePasswdUser(UString& fpasswd, const UString& username) // Remove passwd User
+bool UHTTP::revokePasswdUser(const UString& username) // Remove passwd User
 {
-   U_TRACE(0, "UHTTP::revokePasswdUser(%V,%V)", fpasswd.rep, username.rep)
+   U_TRACE(0, "UHTTP::revokePasswdUser(%V)", username.rep)
 
-   if (fpasswd &&
+   if (*fpasswd &&
        username)
       {
       UString buffer(U_CAPACITY);
@@ -7949,13 +7991,13 @@ bool UHTTP::revokePasswdUser(UString& fpasswd, const UString& username) // Remov
       if (digest_authentication) buffer.snprintf(U_CONSTANT_TO_PARAM("%v:" U_HTTP_REALM ":"), username.rep); // s.casazza:Protected Area:b9ee2af50be37...........\n
       else                       buffer.snprintf(U_CONSTANT_TO_PARAM("%v:{SHA}"),             username.rep); // s.casazza:{SHA}Lkii1ZE7k.....\n
 
-      uint32_t pos_begin = getPosPasswd(fpasswd, buffer);
+      uint32_t pos_begin = getPosPasswd(buffer);
 
       if (pos_begin != U_NOT_FOUND)
          {
-         uint32_t pos_end = fpasswd.find('\n', pos_begin+1) - pos_begin;
+         uint32_t pos_end = fpasswd->find('\n', pos_begin+1) - pos_begin;
 
-         (void) fpasswd.erase(pos_begin, pos_end);
+         (void) fpasswd->erase(pos_begin, pos_end);
 
          U_RETURN(true);
          }
@@ -7976,7 +8018,7 @@ U_NO_EXPORT bool UHTTP::processAuthorization(const char* request, uint32_t sz, c
    const char* ptr;
    uint32_t pos = 0;
    UHTTP::UFileCacheData* ptr_file_data;
-   UString buffer(U_CAPACITY), fpasswd, content, tmp;
+   UString buffer(U_CAPACITY), content, tmp;
    bool result = false, bpass = false, bstale = false;
 
    if (pattern)
@@ -8011,7 +8053,7 @@ U_NO_EXPORT bool UHTTP::processAuthorization(const char* request, uint32_t sz, c
 
          if (sz > U_CONSTANT_SIZE("/sse_event/")) // Ex: "/sse_event/tutor"
             {
-            ptr_file_data = getPasswdDB(request+U_CONSTANT_SIZE("/sse_event"), sz-U_CONSTANT_SIZE("/sse_event"), fpasswd);
+            ptr_file_data = getPasswdDB(request+U_CONSTANT_SIZE("/sse_event"), sz-U_CONSTANT_SIZE("/sse_event"));
 
             goto next;
             }
@@ -8021,12 +8063,16 @@ U_NO_EXPORT bool UHTTP::processAuthorization(const char* request, uint32_t sz, c
 #  endif
       }
 
-   ptr_file_data = getPasswdDB(request, sz-pos, fpasswd);
+   ptr_file_data = getPasswdDB(request, sz-pos);
 
 #ifdef U_SSE_ENABLE
 next:
 #endif
-   if (fpasswd.empty()) goto end;
+   if (fpasswd->empty() &&
+       buri_overload_authentication == false)
+      {
+      goto end;
+      }
 
    bpass = true;
 
@@ -8185,21 +8231,32 @@ next:
                }
             }
 
+         if (buri_overload_authentication)
+            {
+            U_INTERNAL_ASSERT_EQUALS(ptr_file_data, U_NULLPTR)
+
+            buri_overload_authentication = false;
+
+            result = true;
+
+            goto end;
+            }
+
          // ha1 => MD5(user : realm : password)
 
          buffer.snprintf(U_CONSTANT_TO_PARAM("%v:" U_HTTP_REALM ":"), user_authentication->rep);
 
          // s.casazza:Protected Area:b9ee2af50be37...........\n
 
-         pos = checkPasswd(ptr_file_data, fpasswd, buffer);
+         pos = checkPasswd(ptr_file_data, buffer);
 
          if (pos == U_NOT_FOUND) goto end;
 
          pos += buffer.size();
 
-         ha1 = fpasswd.substr(pos, 32);
+         ha1 = fpasswd->substr(pos, 32);
 
-         U_INTERNAL_ASSERT_EQUALS(fpasswd.c_char(pos+32), '\n')
+         U_INTERNAL_ASSERT_EQUALS(fpasswd->c_char(pos+32), '\n')
 
          if (UServices::setDigestCalcResponse(ha1, nc, nonce, cnonce, uri, *user_authentication, ha3)) result = (ha3 == response);
 
@@ -8219,15 +8276,26 @@ next:
             if (t.next(*user_authentication, (bool*)U_NULLPTR) &&
                 t.next(password,             (bool*)U_NULLPTR))
                {
-               UString line(1000U), output(1000U);
+               if (buri_overload_authentication)
+                  {
+                  U_INTERNAL_ASSERT_EQUALS(ptr_file_data, U_NULLPTR)
 
-               UServices::generateDigest(U_HASH_SHA1, 0, password, output, true);
+                  buri_overload_authentication = false;
 
-               line.snprintf(U_CONSTANT_TO_PARAM("%v:{SHA}%v\n"), user_authentication->rep, output.rep);
+                  result = true;
+                  }
+               else
+                  {
+                  UString line(1000U), output(1000U);
 
-               // s.casazza:{SHA}Lkii1ZE7k.....\n
+                  UServices::generateDigest(U_HASH_SHA1, 0, password, output, true);
 
-               if (checkPasswd(ptr_file_data, fpasswd, line) != U_NOT_FOUND) result = true;
+                  line.snprintf(U_CONSTANT_TO_PARAM("%v:{SHA}%v\n"), user_authentication->rep, output.rep);
+
+                  // s.casazza:{SHA}Lkii1ZE7k.....\n
+
+                  if (checkPasswd(ptr_file_data, line) != U_NOT_FOUND) result = true;
+                  }
                }
             }
          }

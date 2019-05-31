@@ -196,6 +196,8 @@ userver {
 # URI_PROTECTED_MASK         mask (DOS regexp) of URI protected from prying eyes (that needs authentication)
 # URI_PROTECTED_ALLOWED_IP   list of comma separated client address for IP-based access control (IPADDR[/MASK]) for URI_PROTECTED_MASK
 #
+# URI_OVERLOAD_AUTHENTICATION enable use of usp services as alternative to .ht[digest|passwd] for URI_PROTECTED_MASK
+#
 # ENABLE_CACHING_BY_PROXY_SERVERS enable caching by proxy servers (add Cache control: public directive on header response)
 #
 # MIN_SIZE_REQUEST_BODY_FOR_PARALLELIZATION enable parallelization for request with body size major of (default 100k)
@@ -266,6 +268,8 @@ http {
 # URI_PROTECTED_SSE        yes
 # URI_PROTECTED_MASK       /RA/admin/cgi-bin/*
 # URI_PROTECTED_ALLOWED_IP 127.0.0.1,10.30.0.0/16
+
+# URI_OVERLOAD_AUTHENTICATION yes
  
 # ENABLE_CACHING_BY_PROXY_SERVERS yes
  

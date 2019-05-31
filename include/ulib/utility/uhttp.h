@@ -1369,22 +1369,23 @@ private:
 
    // URI PROTECTION (for example directory listing)
 
+   static UString*  fpasswd;
    static UString* htpasswd;
    static UString* htdigest;
-   static bool digest_authentication; // authentication method (digest|basic)
    static UString* user_authentication;
    static time_t htdigest_mtime, htpasswd_mtime;
+   static bool uri_overload_authentication, buri_overload_authentication, digest_authentication; // authentication method (digest|basic)
 
    static UString getUserAuthentication() { return *user_authentication; }
 
    // -----------------------------------------------------------------------------------------------
    // for Jonathan Kelly
    // -----------------------------------------------------------------------------------------------
-   static UFileCacheData* getPasswdDB(const char* name, uint32_t len,       UString& fpasswd);                                // ex. U_CONSTANT_TO_PARAM("tutor"), x
-   static bool           savePasswdDB(const char* name, uint32_t len, const UString& fpasswd, UFileCacheData* ptr_file_data); // Save Changes to Disk and Cache
+   static UFileCacheData* getPasswdDB(const char* name, uint32_t len);
+   static bool           savePasswdDB(const char* name, uint32_t len, UFileCacheData* ptr_file_data); // Save Changes to Disk and Cache
 
-   static void    setPasswdUser(UString& fpasswd, const UString& username, const UString& password); // Add/Update passwd User
-   static bool revokePasswdUser(UString& fpasswd, const UString& username);                          //     Remove passwd User
+   static void    setPasswdUser(const UString& username, const UString& password); // Add/Update passwd User
+   static bool revokePasswdUser(const UString& username);                          //     Remove passwd User
    // -----------------------------------------------------------------------------------------------
 
 #ifdef USE_LIBSSL
@@ -1572,8 +1573,8 @@ private:
    static inline void setXForwardedFor(const char* ptr, uint32_t len) U_NO_EXPORT;
    static inline void setXHttpForwardedFor(const char* ptr, uint32_t len) U_NO_EXPORT;
 
-   static uint32_t getPosPasswd(UString& fpasswd, const UString& line) __pure U_NO_EXPORT;
-   static uint32_t  checkPasswd(UFileCacheData* ptr_file_data, UString& fpasswd, const UString& line) U_NO_EXPORT;
+   static uint32_t getPosPasswd(const UString& line) __pure U_NO_EXPORT;
+   static uint32_t  checkPasswd(UFileCacheData* ptr_file_data, const UString& line) U_NO_EXPORT;
 
    U_DISALLOW_COPY_AND_ASSIGN(UHTTP)
 

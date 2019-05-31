@@ -92,6 +92,8 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
    // URI_PROTECTED_MASK       mask (DOS regexp) of URI protected from prying eyes
    // URI_PROTECTED_ALLOWED_IP list of comma separated client address for IP-based access control (IPADDR[/MASK]) for URI_PROTECTED_MASK
    //
+   // URI_OVERLOAD_AUTHENTICATION enable use of usp services as alternative to .ht[digest|passwd] for URI_PROTECTED_MASK
+   //
    // URI_REQUEST_CERT_MASK                      mask (DOS regexp) of URI where client must comunicate a certificate in the SSL connection
    // BANDWIDTH_THROTTLING_MASK                  lets you set maximum byte rates on URLs or URL groups (*.jpg|*.gif 50)
    // URI_REQUEST_STRICT_TRANSPORT_SECURITY_MASK mask (DOS regexp) of URI where use HTTP Strict Transport Security to force client to use only SSL
@@ -379,6 +381,15 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
 
          UHTTP::vallow_IP = U_NULLPTR;
          }
+      }
+
+   x = cfg.at(U_CONSTANT_TO_PARAM("URI_OVERLOAD_AUTHENTICATION"));
+
+   if (x)
+      {
+      U_INTERNAL_ASSERT_EQUALS(UHTTP::uri_overload_authentication, false)
+
+      UHTTP::uri_overload_authentication = x.strtob();
       }
 
    x = cfg.at(U_CONSTANT_TO_PARAM("URI_REQUEST_CERT_MASK"));

@@ -797,7 +797,8 @@ loop: distance = t.getDistance();
        * U_DPAGE_FORK    = 6,
        * U_DPAGE_OPEN    = 7,
        * U_DPAGE_CLOSE   = 8,
-       * U_DPAGE_ERROR   = 9 };
+       * U_DPAGE_ERROR   = 9,
+       * U_DPAGE_AUTH    = 10 };
        */
 
       bool bcfg,    // usp_config
@@ -808,17 +809,19 @@ loop: distance = t.getDistance();
            bfork,   // usp_fork
            bopen,   // usp_open
            bclose,  // usp_close
-           berror;  // usp_error
+           berror,  // usp_error
+           bauth;   // usp_auth
 
-      char ptr1[100] = { '\0' };
-      char ptr2[100] = { '\0' };
-      char ptr3[100] = { '\0' };
-      char ptr4[100] = { '\0' };
-      char ptr5[100] = { '\0' };
-      char ptr6[100] = { '\0' };
-      char ptr7[100] = { '\0' };
-      char ptr8[100] = { '\0' };
-      char ptr9[100] = { '\0' };
+      char ptr1[100]  = { '\0' };
+      char ptr2[100]  = { '\0' };
+      char ptr3[100]  = { '\0' };
+      char ptr4[100]  = { '\0' };
+      char ptr5[100]  = { '\0' };
+      char ptr6[100]  = { '\0' };
+      char ptr7[100]  = { '\0' };
+      char ptr8[100]  = { '\0' };
+      char ptr9[100]  = { '\0' };
+      char ptr10[100] = { '\0' };
 
 #  ifndef U_CACHE_REQUEST_DISABLE
       if (usp.c_char(4) == '#'      &&
@@ -840,6 +843,7 @@ loop: distance = t.getDistance();
          bopen   = (U_STRING_FIND(declaration, 0, "static void usp_open_")   != U_NOT_FOUND);
          bclose  = (U_STRING_FIND(declaration, 0, "static void usp_close_")  != U_NOT_FOUND);
          berror  = (U_STRING_FIND(declaration, 0, "static void usp_error_")  != U_NOT_FOUND);
+         bauth   = (U_STRING_FIND(declaration, 0, "static void usp_auth_")   != U_NOT_FOUND);
 
          if (breset) (void) u__snprintf(ptr2, 100, U_CONSTANT_TO_PARAM("\n\tif (param == U_DPAGE_RESET) { usp_reset_%.*s(); return; }\n"), basename_sz, basename_ptr);
 
@@ -852,12 +856,13 @@ loop: distance = t.getDistance();
             (void) u__snprintf(ptr3, 100, U_CONSTANT_TO_PARAM("\n\tif (param == U_DPAGE_DESTROY) { usp_end_%.*s(); return; }\n"), basename_sz, basename_ptr);
             }
 
-         if (bsighup) (void) u__snprintf(ptr4, 100, U_CONSTANT_TO_PARAM("\n\tif (param == U_DPAGE_SIGHUP) { usp_sighup_%.*s(); return; }\n"), basename_sz, basename_ptr);
-         if (bfork)   (void) u__snprintf(ptr5, 100, U_CONSTANT_TO_PARAM("\n\tif (param == U_DPAGE_FORK)   { usp_fork_%.*s();   return; }\n"), basename_sz, basename_ptr);
-         if (bopen)   (void) u__snprintf(ptr6, 100, U_CONSTANT_TO_PARAM("\n\tif (param == U_DPAGE_OPEN)   { usp_open_%.*s();   return; }\n"), basename_sz, basename_ptr);
-         if (bclose)  (void) u__snprintf(ptr7, 100, U_CONSTANT_TO_PARAM("\n\tif (param == U_DPAGE_CLOSE)  { usp_close_%.*s();  return; }\n"), basename_sz, basename_ptr);
-         if (berror)  (void) u__snprintf(ptr8, 100, U_CONSTANT_TO_PARAM("\n\tif (param == U_DPAGE_ERROR)  { usp_error_%.*s();  return; }\n"), basename_sz, basename_ptr);
-         if (bcfg)    (void) u__snprintf(ptr9, 100, U_CONSTANT_TO_PARAM("\n\tif (param == U_DPAGE_CONFIG) { usp_config_%.*s(); return; }\n"), basename_sz, basename_ptr);
+         if (bsighup) (void) u__snprintf(ptr4,  100, U_CONSTANT_TO_PARAM("\n\tif (param == U_DPAGE_SIGHUP) { usp_sighup_%.*s(); return; }\n"), basename_sz, basename_ptr);
+         if (bfork)   (void) u__snprintf(ptr5,  100, U_CONSTANT_TO_PARAM("\n\tif (param == U_DPAGE_FORK)   { usp_fork_%.*s();   return; }\n"), basename_sz, basename_ptr);
+         if (bopen)   (void) u__snprintf(ptr6,  100, U_CONSTANT_TO_PARAM("\n\tif (param == U_DPAGE_OPEN)   { usp_open_%.*s();   return; }\n"), basename_sz, basename_ptr);
+         if (bclose)  (void) u__snprintf(ptr7,  100, U_CONSTANT_TO_PARAM("\n\tif (param == U_DPAGE_CLOSE)  { usp_close_%.*s();  return; }\n"), basename_sz, basename_ptr);
+         if (berror)  (void) u__snprintf(ptr8,  100, U_CONSTANT_TO_PARAM("\n\tif (param == U_DPAGE_ERROR)  { usp_error_%.*s();  return; }\n"), basename_sz, basename_ptr);
+         if (bcfg)    (void) u__snprintf(ptr9,  100, U_CONSTANT_TO_PARAM("\n\tif (param == U_DPAGE_CONFIG) { usp_config_%.*s(); return; }\n"), basename_sz, basename_ptr);
+         if (bauth)   (void) u__snprintf(ptr10, 100, U_CONSTANT_TO_PARAM("\n\tif (param == U_DPAGE_AUTH)   { usp_auth_%.*s();   return; }\n"), basename_sz, basename_ptr);
          }
       else
          {
@@ -868,13 +873,14 @@ loop: distance = t.getDistance();
          bsighup =
          bfork   =
          bopen   =
-         bclose  = false;
+         bclose  =
+         bauth   = false;
          }
 
       bool bdatamod = (bsession || bstorage);
 
-      U_INTERNAL_DUMP("bcfg = %b binit = %b breset = %b bend = %b bsighup = %b bfork = %b bopen = %b bclose = %b bdatamod = %b",
-                       bcfg,     binit,     breset,     bend,     bsighup,     bfork,     bopen,     bclose,     bdatamod)
+      U_INTERNAL_DUMP("bcfg = %b binit = %b breset = %b bend = %b bsighup = %b bfork = %b bopen = %b bclose = %b bdatamod = %b bauth = %b",
+                       bcfg,     binit,     breset,     bend,     bsighup,     bfork,     bopen,     bclose,     bdatamod,     bauth)
 
       if (bdatamod)
          {
@@ -1028,6 +1034,7 @@ loop: distance = t.getDistance();
             "%s"
             "%s"
             "%s"
+            "%s"
             "\treturn;\n"
             "} }\n"
             "\t\n"
@@ -1060,6 +1067,7 @@ loop: distance = t.getDistance();
             ptr7,
             ptr8,
             ptr9,
+            ptr10,
             basename_sz, basename_ptr,
             basename_sz, basename_ptr,
             basename_sz, basename_ptr,
