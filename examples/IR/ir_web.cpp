@@ -2,6 +2,7 @@
    
 #include <ulib/net/server/usp_macro.h>
    
+   
 #include "ir_session.h"
 #include <ulib/debug/crono.h>
 #define IR_SESSION (*(IRDataSession*)UHTTP::data_session)
@@ -75,8 +76,6 @@ static void usp_body_ir_web()
    U_TRACE(5, "::usp_body_ir_web()")
    
    usp_bSESSION = (UHTTP::getDataSession() ? true : (UHTTP::setSessionCookie(), false));
-   
-   
    if (usp_bSESSION) {
    UHTTP::putDataSESSION();
    }

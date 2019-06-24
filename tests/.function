@@ -357,6 +357,7 @@ check_for_netcat() {
 			[ "$NC_TEST" = "Usage:" ]	|| \
 			[ "$NC_TEST" = "OpenBSD netcat " ] || \
 		   [ "$NC_TEST" = "usage: nc [-46DdhklnrStUuvzC] [-i interval] [-p source_port]" ] || \
+		   [ "$NC_TEST" = "usage: nc [-46CDdFhklNnrStUuvZz] [-I length] [-i interval] [-M ttl]" ] || \
 		   [ "$NC_TEST" = "This is nc from the netcat-openbsd package. An alternative nc is available in the netcat-traditional package." ]; then
 			NCAT=nc
 		fi

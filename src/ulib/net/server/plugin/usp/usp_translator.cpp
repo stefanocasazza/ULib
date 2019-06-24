@@ -107,11 +107,11 @@ public:
       {
       U_TRACE(5, "Application::manageDirectiveSessionOrStorage(%.*S,%u)", name_len, name, name_len)
 
-      (void) output0.reserve(500U + token.size());
+      (void) output0.reserve(500U);
       (void) output1.reserve(500U);
 
-      output0.snprintf_add(U_CONSTANT_TO_PARAM("\n\t%v\n\t\n\tif (usp_b%.*s) {\n"), token.rep, name_len, name);
-      output1.snprintf_add(U_CONSTANT_TO_PARAM(          "\n\tif (usp_b%.*s) {\n"),            name_len, name);
+      output0.snprintf_add(U_CONSTANT_TO_PARAM("\n\tif (usp_b%.*s) {\n"), name_len, name);
+      output1.snprintf_add(U_CONSTANT_TO_PARAM("\n\tif (usp_b%.*s) {\n"), name_len, name);
 
       if (token.empty()) output0.snprintf_add(U_CONSTANT_TO_PARAM("\n\tUHTTP::putData%.*s();\n"), name_len, name);
       else
@@ -119,6 +119,7 @@ public:
          UString id, tmp;
          const char* ptr;
          uint32_t pos, size;
+
          UVector<UString> vec(token, "\t\n;");
 
          bvar = true;
@@ -138,6 +139,10 @@ public:
 
             output0.snprintf_add(U_CONSTANT_TO_PARAM("\n\tUSP_%.*s_VAR_GET(%u,%.*s);\n"), name_len, name, i, size, ptr);
             output1.snprintf_add(U_CONSTANT_TO_PARAM("\n\tUSP_%.*s_VAR_PUT(%u,%.*s);\n"), name_len, name, i, size, ptr);
+
+            (void) static_vars.reserve(50U + size);
+
+            static_vars.snprintf_add(U_CONSTANT_TO_PARAM("static %v;\n"), tmp.rep);
 
 #        ifdef DEBUG
             id.clear(); // NB: to avoid DEAD OF SOURCE STRING WITH CHILD ALIVE...
@@ -198,6 +203,7 @@ public:
        * <!--#define ... -->
        * <!--#include ... -->
        * <!--#declaration ... -->
+       * <!--#login ... -->
        * <!--#session ... -->
        * <!--#storage ... -->
        * <!--#args ... -->
@@ -302,6 +308,44 @@ public:
          setDirectiveItem(directive, U_CONSTANT_SIZE("declaration"));
 
          if (token) declaration = token;
+         }
+      else if (strncmp(directive, U_CONSTANT_TO_PARAM("login")) == 0)
+         {
+         U_ASSERT(vcode.empty())
+         U_INTERNAL_ASSERT_EQUALS(bfirst_pass, false)
+
+         (void) output0.append(U_CONSTANT_TO_PARAM(
+               "\n\tU_http_info.endHeader = 0;"
+               "\n\tif (UHTTP::getLoginCookie() ||"
+               "\n\t    UHTTP::getPostLoginUserPasswd())"
+               "\n\t\t{"
+               "\n\t\tUHTTP::usp->runDynamicPageParam(U_DPAGE_AUTH);"
+               "\n\t\t}"
+               "\n\tif (UHTTP::loginCookie->empty())"
+               "\n\t\t{"
+               "\n\t\tUHTTP::UServletPage* usp_save = UHTTP::usp;"
+               "\n\t\tif (UHTTP::getUSP(U_CONSTANT_TO_PARAM(\"login_form\")))"
+               "\n\t\t\t{"
+               "\n\t\t\tUHTTP::usp->runDynamicPageParam(U_DPAGE_AUTH);"
+               "\n\t\t\tUHTTP::usp = usp_save;"
+               "\n\t\t\treturn;"
+               "\n\t\t\t}"
+               "\n\t\tUHTTP::UFileCacheData* login_form_html = UHTTP::getFileCachePointer(U_CONSTANT_TO_PARAM(\"login_form.html\"));"
+               "\n\t\tif (login_form_html)"
+               "\n\t\t\t{"
+               "\n\t\t\tUHTTP::setResponseFromFileCache(login_form_html);"
+               "\n\t\t\tU_http_info.nResponseCode = HTTP_NO_CONTENT; // NB: to escape management after usp exit..."
+               "\n\t\t\treturn;"
+               "\n\t\t\t}"
+               "\n\t\t(void) UClientImage_Base::wbuffer->append(U_CONSTANT_TO_PARAM("
+               "\n\"<form method=\\\"post\\\">\\n\""
+               "\n\" <p>Login</p>\\n\""
+               "\n\" <p>username <input name=\\\"user\\\" type=\\\"text\\\" class=\\\"inputbox\\\" title=\\\"Enter your username\\\"></p>\\n\""
+               "\n\" <p>password <input name=\\\"pass\\\" type=\\\"text\\\" class=\\\"inputbox\\\" title=\\\"Enter your password\\\"></p>\\n\""
+               "\n\" <p><input type=\\\"submit\\\" value=\\\"login\\\"></p>\\n\""
+               "\n\"</form>\"));"
+               "\n\t\treturn;"
+               "\n\t\t}\n\t\t"));
          }
       else if (strncmp(directive, U_CONSTANT_TO_PARAM("session")) == 0)
          {
@@ -782,7 +826,7 @@ loop: distance = t.getDistance();
 
       processUSP();
 
-      U_INTERNAL_DUMP("declaration = %V", declaration.rep)
+      U_INTERNAL_DUMP("static_vars = %V declaration = %V", static_vars.rep, declaration.rep)
 
       /**
        * Server-wide hooks
@@ -857,12 +901,12 @@ loop: distance = t.getDistance();
             }
 
          if (bsighup) (void) u__snprintf(ptr4,  100, U_CONSTANT_TO_PARAM("\n\tif (param == U_DPAGE_SIGHUP) { usp_sighup_%.*s(); return; }\n"), basename_sz, basename_ptr);
-         if (bfork)   (void) u__snprintf(ptr5,  100, U_CONSTANT_TO_PARAM("\n\tif (param == U_DPAGE_FORK)   { usp_fork_%.*s();   return; }\n"), basename_sz, basename_ptr);
-         if (bopen)   (void) u__snprintf(ptr6,  100, U_CONSTANT_TO_PARAM("\n\tif (param == U_DPAGE_OPEN)   { usp_open_%.*s();   return; }\n"), basename_sz, basename_ptr);
-         if (bclose)  (void) u__snprintf(ptr7,  100, U_CONSTANT_TO_PARAM("\n\tif (param == U_DPAGE_CLOSE)  { usp_close_%.*s();  return; }\n"), basename_sz, basename_ptr);
-         if (berror)  (void) u__snprintf(ptr8,  100, U_CONSTANT_TO_PARAM("\n\tif (param == U_DPAGE_ERROR)  { usp_error_%.*s();  return; }\n"), basename_sz, basename_ptr);
-         if (bcfg)    (void) u__snprintf(ptr9,  100, U_CONSTANT_TO_PARAM("\n\tif (param == U_DPAGE_CONFIG) { usp_config_%.*s(); return; }\n"), basename_sz, basename_ptr);
-         if (bauth)   (void) u__snprintf(ptr10, 100, U_CONSTANT_TO_PARAM("\n\tif (param == U_DPAGE_AUTH)   { usp_auth_%.*s();   return; }\n"), basename_sz, basename_ptr);
+         if (bfork)   (void) u__snprintf(ptr5,  100, U_CONSTANT_TO_PARAM("\n\tif (param == U_DPAGE_FORK) { usp_fork_%.*s(); return; }\n"),     basename_sz, basename_ptr);
+         if (bopen)   (void) u__snprintf(ptr6,  100, U_CONSTANT_TO_PARAM("\n\tif (param == U_DPAGE_OPEN) { usp_open_%.*s(); return; }\n"),     basename_sz, basename_ptr);
+         if (bclose)  (void) u__snprintf(ptr7,  100, U_CONSTANT_TO_PARAM("\n\tif (param == U_DPAGE_CLOSE) { usp_close_%.*s(); return; }\n"),   basename_sz, basename_ptr);
+         if (berror)  (void) u__snprintf(ptr8,  100, U_CONSTANT_TO_PARAM("\n\tif (param == U_DPAGE_ERROR) { usp_error_%.*s(); return; }\n"),   basename_sz, basename_ptr);
+         if (bcfg)    (void) u__snprintf(ptr9,  100, U_CONSTANT_TO_PARAM("\n\tif (param == U_DPAGE_CONFIG){ usp_config_%.*s(); return; }\n"),  basename_sz, basename_ptr);
+         if (bauth)   (void) u__snprintf(ptr10, 100, U_CONSTANT_TO_PARAM("\n\tif (param == U_DPAGE_AUTH) { usp_auth_%.*s(); return; }\n"),     basename_sz, basename_ptr);
          }
       else
          {
@@ -1009,13 +1053,15 @@ loop: distance = t.getDistance();
          output0.snprintf(U_CONSTANT_TO_PARAM("\n\tusp_body_%.*s();\n"), basename_sz, basename_ptr);
          }
 
-      UString result(1024U + declaration.size() + http_header.size() + vars.size() + output0.size() + output1.size());
+      UString result(1024U + static_vars.size() + declaration.size() + http_header.size() + vars.size() + output0.size() + output1.size());
 
       result.snprintf(U_CONSTANT_TO_PARAM(
             "// %.*s.cpp - dynamic page translation (%.*s.usp => %.*s.cpp)\n"
             "\t\n"
             "#include <ulib/net/server/usp_macro.h>\n"
             "\t\n"
+            "%v"
+            "\n\t\n"
             "%v"
             "\n\t\n"
             "extern \"C\" {\n"
@@ -1053,6 +1099,7 @@ loop: distance = t.getDistance();
             basename_sz, basename_ptr,
             basename_sz, basename_ptr,
             basename_sz, basename_ptr,
+            static_vars.rep,
             declaration.rep,
             basename_sz, basename_ptr,
             basename_sz, basename_ptr,
@@ -1087,7 +1134,7 @@ loop: distance = t.getDistance();
 private:
    UTokenizer t;
    UVector<UString> vdefine;
-   UString pinclude, usp, token, output0, output1, declaration, vcode, http_header, sseloop, vars;
+   UString pinclude, usp, token, output0, output1, static_vars, declaration, vcode, http_header, sseloop, vars;
    const char* basename_ptr;
    uint32_t basename_sz;
    bool bvar, breturn, bsession, bstorage, bfirst_pass, is_html, test_if_html, bhttp_header_empty, bpreprocessing_failed;

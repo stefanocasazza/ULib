@@ -689,6 +689,32 @@ public:
 
    static void setSessionCookie(UString* param = U_NULLPTR);
 
+   // LOGIN COOKIE
+
+   static UString* loginCookie;
+   static UString* loginCookieUser;
+   static UString* loginCookiePasswd;
+
+   static bool isPostLogin();
+   static bool getPostLoginUserPasswd();
+
+   static bool getLoginCookie()
+      {
+      U_TRACE_NO_PARAM(0, "UHTTP::getLoginCookie()")
+
+      loginCookie->clear();
+
+      if (U_http_info.cookie_len &&
+          getCookie(U_NULLPTR, loginCookie))
+         {
+         if (loginCookie->empty()) (void) loginCookie->replace(data_session->keyid);
+
+         U_RETURN(true);
+         }
+
+      U_RETURN(false);
+      }
+
    static bool getDataStorage();
    static bool getDataSession();
    static bool getDataStorage(uint32_t index, UString& value);

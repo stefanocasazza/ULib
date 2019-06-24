@@ -35479,7 +35479,7 @@ See include/ulib/internal/config.h for further configuration information
 
 # SECTION 16: `AC_CONFIG_FILES([FILE...])
 
-ac_config_files="$ac_config_files Makefile rpm.sh ULib.spec userver.service m4/Makefile doc/Makefile include/Makefile contrib/Makefile include/ulib/Makefile contrib/HCSP/Makefile contrib/RSIGN/Makefile contrib/signer/Makefile fuzz/Makefile src/ulib/net/server/plugin/v8/Makefile src/ulib/net/server/plugin/php/Makefile src/ulib/net/server/plugin/usp/Makefile src/ulib/net/server/plugin/ruby/Makefile src/ulib/net/server/plugin/mod_shib/Makefile src/ulib/net/server/plugin/mod_geoip/Makefile src/ulib/net/server/plugin/usp/usp_compile.sh src/ulib/net/server/plugin/page_speed/Makefile src/ulib/net/server/plugin/python/Makefile src/ulib/Makefile src/ulib/ULib.rc src/ulib/ULib.pc src/ulib/orm/driver/Makefile src/ulib/net/server/plugin/Makefile src/ulib/orm/driver/libpq/Makefile examples/Makefile examples/IR/Makefile examples/csp/Makefile examples/lcsp/Makefile examples/rsign/Makefile examples/hello/Makefile examples/serialize/Makefile examples/WiAuth/Makefile examples/WiAuth/v2/Makefile examples/xml2txt/Makefile examples/uclient/Makefile examples/userver/Makefile examples/PEC_log/Makefile examples/workflow/Makefile examples/doc_parse/Makefile examples/lrp_session/Makefile examples/http_header/Makefile examples/test_manager/Makefile examples/doc_classifier/Makefile examples/form_completion/Makefile examples/simple_client_server/Makefile examples/download_accelerator/Makefile examples/XAdES/Makefile examples/XAdES/XAdES.spec examples/xml2txt/xml2txt.spec examples/IR/searchengine-bin.spec examples/lcsp/lcsp.spec examples/lcsp/lcsp_rpc.spec examples/csp/cspclient.spec examples/csp/cspclient_rpc.spec examples/rsign/rsignclient.spec examples/rsign/rsignclient_rpc.spec examples/userver/web_server.spec examples/userver/wagsmserver.spec examples/workflow/workflow.spec examples/PEC_log/PEC_log.spec examples/userver/tsaserver.spec examples/userver/cspserver.spec examples/userver/rsignserver.spec examples/doc_parse/doc_parse.spec tests/Makefile tests/base/Makefile tests/debug/Makefile tests/ulib/Makefile tests/ulib/http2/Makefile tests/examples/Makefile tests/contrib/Makefile"
+ac_config_files="$ac_config_files Makefile rpm.sh ULib.spec userver.service m4/Makefile doc/Makefile include/Makefile contrib/Makefile include/ulib/Makefile contrib/HCSP/Makefile contrib/RSIGN/Makefile contrib/signer/Makefile fuzz/Makefile src/ulib/net/server/plugin/v8/Makefile src/ulib/net/server/plugin/php/Makefile src/ulib/net/server/plugin/usp/Makefile src/ulib/net/server/plugin/ruby/Makefile src/ulib/net/server/plugin/mod_shib/Makefile src/ulib/net/server/plugin/mod_geoip/Makefile src/ulib/net/server/plugin/usp/usp_compile.sh src/ulib/net/server/plugin/page_speed/Makefile src/ulib/net/server/plugin/python/Makefile src/ulib/Makefile src/ulib/ULib.rc src/ulib/ULib.pc src/ulib/orm/driver/Makefile src/ulib/net/server/plugin/Makefile src/ulib/orm/driver/libpq/Makefile examples/serialize/Makefile examples/WiAuth/Makefile examples/WiAuth/v2/Makefile examples/xml2txt/Makefile examples/uclient/Makefile examples/userver/Makefile examples/Makefile examples/IR/Makefile examples/csp/Makefile examples/lcsp/Makefile examples/rsign/Makefile examples/hello/Makefile examples/loginCookie/Makefile examples/PEC_log/Makefile examples/workflow/Makefile examples/doc_parse/Makefile examples/lrp_session/Makefile examples/http_header/Makefile examples/test_manager/Makefile examples/doc_classifier/Makefile examples/form_completion/Makefile examples/simple_client_server/Makefile examples/download_accelerator/Makefile examples/XAdES/Makefile examples/XAdES/XAdES.spec examples/xml2txt/xml2txt.spec examples/IR/searchengine-bin.spec examples/lcsp/lcsp.spec examples/lcsp/lcsp_rpc.spec examples/csp/cspclient.spec examples/csp/cspclient_rpc.spec examples/rsign/rsignclient.spec examples/rsign/rsignclient_rpc.spec examples/userver/web_server.spec examples/userver/wagsmserver.spec examples/workflow/workflow.spec examples/PEC_log/PEC_log.spec examples/userver/tsaserver.spec examples/userver/cspserver.spec examples/userver/rsignserver.spec examples/doc_parse/doc_parse.spec tests/Makefile tests/base/Makefile tests/debug/Makefile tests/ulib/Makefile tests/ulib/http2/Makefile tests/examples/Makefile tests/contrib/Makefile"
 
 
 #	examples/parser/Makefile \
@@ -37402,18 +37402,19 @@ do
     "src/ulib/orm/driver/Makefile") CONFIG_FILES="$CONFIG_FILES src/ulib/orm/driver/Makefile" ;;
     "src/ulib/net/server/plugin/Makefile") CONFIG_FILES="$CONFIG_FILES src/ulib/net/server/plugin/Makefile" ;;
     "src/ulib/orm/driver/libpq/Makefile") CONFIG_FILES="$CONFIG_FILES src/ulib/orm/driver/libpq/Makefile" ;;
-    "examples/Makefile") CONFIG_FILES="$CONFIG_FILES examples/Makefile" ;;
-    "examples/IR/Makefile") CONFIG_FILES="$CONFIG_FILES examples/IR/Makefile" ;;
-    "examples/csp/Makefile") CONFIG_FILES="$CONFIG_FILES examples/csp/Makefile" ;;
-    "examples/lcsp/Makefile") CONFIG_FILES="$CONFIG_FILES examples/lcsp/Makefile" ;;
-    "examples/rsign/Makefile") CONFIG_FILES="$CONFIG_FILES examples/rsign/Makefile" ;;
-    "examples/hello/Makefile") CONFIG_FILES="$CONFIG_FILES examples/hello/Makefile" ;;
     "examples/serialize/Makefile") CONFIG_FILES="$CONFIG_FILES examples/serialize/Makefile" ;;
     "examples/WiAuth/Makefile") CONFIG_FILES="$CONFIG_FILES examples/WiAuth/Makefile" ;;
     "examples/WiAuth/v2/Makefile") CONFIG_FILES="$CONFIG_FILES examples/WiAuth/v2/Makefile" ;;
     "examples/xml2txt/Makefile") CONFIG_FILES="$CONFIG_FILES examples/xml2txt/Makefile" ;;
     "examples/uclient/Makefile") CONFIG_FILES="$CONFIG_FILES examples/uclient/Makefile" ;;
     "examples/userver/Makefile") CONFIG_FILES="$CONFIG_FILES examples/userver/Makefile" ;;
+    "examples/Makefile") CONFIG_FILES="$CONFIG_FILES examples/Makefile" ;;
+    "examples/IR/Makefile") CONFIG_FILES="$CONFIG_FILES examples/IR/Makefile" ;;
+    "examples/csp/Makefile") CONFIG_FILES="$CONFIG_FILES examples/csp/Makefile" ;;
+    "examples/lcsp/Makefile") CONFIG_FILES="$CONFIG_FILES examples/lcsp/Makefile" ;;
+    "examples/rsign/Makefile") CONFIG_FILES="$CONFIG_FILES examples/rsign/Makefile" ;;
+    "examples/hello/Makefile") CONFIG_FILES="$CONFIG_FILES examples/hello/Makefile" ;;
+    "examples/loginCookie/Makefile") CONFIG_FILES="$CONFIG_FILES examples/loginCookie/Makefile" ;;
     "examples/PEC_log/Makefile") CONFIG_FILES="$CONFIG_FILES examples/PEC_log/Makefile" ;;
     "examples/workflow/Makefile") CONFIG_FILES="$CONFIG_FILES examples/workflow/Makefile" ;;
     "examples/doc_parse/Makefile") CONFIG_FILES="$CONFIG_FILES examples/doc_parse/Makefile" ;;

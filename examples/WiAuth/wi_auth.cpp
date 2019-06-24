@@ -2,6 +2,7 @@
    
 #include <ulib/net/server/usp_macro.h>
    
+   
 static void usp_end_wi_auth();
 static void usp_init_wi_auth();
 static void usp_sighup_wi_auth();

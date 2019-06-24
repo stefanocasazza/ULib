@@ -101,6 +101,9 @@ UString* UHTTP::qcontent;
 UString* UHTTP::pathname;
 UString* UHTTP::rpathname;
 UString* UHTTP::set_cookie;
+UString* UHTTP::loginCookie;
+UString* UHTTP::loginCookieUser;
+UString* UHTTP::loginCookiePasswd;
 UString* UHTTP::upload_dir;
 UString* UHTTP::fcgi_uri_mask;
 UString* UHTTP::scgi_uri_mask;
@@ -858,7 +861,10 @@ void UHTTP::init()
    U_INTERNAL_ASSERT_EQUALS(formMulti, U_NULLPTR)
    U_INTERNAL_ASSERT_EQUALS(upload_dir, U_NULLPTR)
    U_INTERNAL_ASSERT_EQUALS(set_cookie, U_NULLPTR)
+   U_INTERNAL_ASSERT_EQUALS(loginCookie, U_NULLPTR)
    U_INTERNAL_ASSERT_EQUALS(form_name_value, U_NULLPTR)
+   U_INTERNAL_ASSERT_EQUALS(loginCookieUser, U_NULLPTR)
+   U_INTERNAL_ASSERT_EQUALS(loginCookiePasswd, U_NULLPTR)
    U_INTERNAL_ASSERT_EQUALS(set_cookie_option, U_NULLPTR)
    U_INTERNAL_ASSERT_EQUALS(user_authentication, U_NULLPTR)
    U_INTERNAL_ASSERT_EQUALS(string_HTTP_Variables, U_NULLPTR)
@@ -879,7 +885,10 @@ void UHTTP::init()
    U_NEW_STRING(rpathname, UString);
    U_NEW_STRING(upload_dir, UString);
    U_NEW_STRING(set_cookie, UString);
+   U_NEW_STRING(loginCookie, UString(200U));
+   U_NEW_STRING(loginCookieUser, UString(200U));
    U_NEW_STRING(set_cookie_option, UString(200U));
+   U_NEW_STRING(loginCookiePasswd, UString(200U));
    U_NEW_STRING(user_authentication, UString);
    U_NEW_STRING(string_HTTP_Variables, UString(U_CAPACITY));
 
@@ -1425,8 +1434,11 @@ void UHTTP::dtor()
       U_DELETE(formMulti)
       U_DELETE(upload_dir)
       U_DELETE(set_cookie)
+      U_DELETE(loginCookie)
+      U_DELETE(loginCookieUser)
       U_DELETE(form_name_value)
       U_DELETE(cache_avoid_mask)
+      U_DELETE(loginCookiePasswd)
       U_DELETE(cgi_cookie_option)
       U_DELETE(set_cookie_option)
       U_DELETE(user_authentication)
@@ -6100,6 +6112,55 @@ remove:     removeCookieSession();
       }
 
    U_RETURN(result);
+}
+
+bool UHTTP::isPostLogin()
+{
+   U_TRACE_NO_PARAM(0, "UHTTP::isPostLogin()")
+
+   if (isPOST())
+      {
+      uint32_t sz;
+      const char* ptr = UClientImage_Base::getRequestUri(sz);
+
+      if (sz == U_CONSTANT_SIZE("/login") &&
+          u_get_unalignedp32(ptr)   == U_MULTICHAR_CONSTANT32('/','l','o','g') &&
+          u_get_unalignedp16(ptr+4) == U_MULTICHAR_CONSTANT16('i','n'))
+         {
+         U_RETURN(true);
+         }
+      }
+      
+   U_RETURN(false);
+}
+
+bool UHTTP::getPostLoginUserPasswd()
+{
+   U_TRACE_NO_PARAM(0, "UHTTP::getPostLoginUserPasswd()")
+
+   U_INTERNAL_ASSERT(loginCookieUser)
+   U_INTERNAL_ASSERT(loginCookiePasswd)
+
+   loginCookieUser->clear();
+   loginCookiePasswd->clear();
+
+   // $1 -> user
+   // $2 -> pass
+
+   if (isPostLogin() &&
+       processForm() >= 2*2)
+      {
+      UHTTP::getFormValue(*loginCookieUser, U_CONSTANT_TO_PARAM("user"), 0, 1, 4);
+
+      if (*loginCookieUser)
+         {
+         UHTTP::getFormValue(*loginCookiePasswd, U_CONSTANT_TO_PARAM("pass"), 0, 3, 4);
+
+         if (*loginCookiePasswd) U_RETURN(true);
+         }
+      }
+
+   U_RETURN(false);
 }
 
 U_NO_EXPORT bool UHTTP::checkDataSession(const UString& token, time_t expire, UString* data)

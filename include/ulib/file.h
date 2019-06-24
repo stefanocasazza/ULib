@@ -320,7 +320,7 @@ public:
       return creat(flags, mode);
       }
 
-   void reopen(int flags)
+   bool reopen(int flags)
       {
       U_TRACE(0, "UFile::reopen(%d)", flags)
 
@@ -334,7 +334,7 @@ public:
 
       U_INTERNAL_ASSERT(pathname.isNullTerminated())
 
-      fd = open(pathname.data(), flags, PERM_FILE);
+      return creat(flags, PERM_FILE);
       }
 
    bool isOpen()

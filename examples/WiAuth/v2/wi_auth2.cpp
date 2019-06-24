@@ -2,6 +2,7 @@
    
 #include <ulib/net/server/usp_macro.h>
    
+   
 static void usp_end_wi_auth2();
 static void usp_init_wi_auth2();
 static void usp_fork_wi_auth2();
@@ -16,8 +17,8 @@ extern U_EXPORT void runDynamicPageParam_wi_auth2(uint32_t param);
    
    if (param == U_DPAGE_INIT) { usp_init_wi_auth2(); return; }
    if (param == U_DPAGE_DESTROY) { usp_end_wi_auth2(); return; }
-   if (param == U_DPAGE_FORK)   { usp_fork_wi_auth2();   return; }
-   if (param == U_DPAGE_CONFIG) { usp_config_wi_auth2(); return; }
+   if (param == U_DPAGE_FORK) { usp_fork_wi_auth2(); return; }
+   if (param == U_DPAGE_CONFIG){ usp_config_wi_auth2(); return; }
    return;
 } }
    

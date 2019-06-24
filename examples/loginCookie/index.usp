@@ -1,0 +1,23 @@
+<!--#declaration
+static void usp_end_index();
+static void usp_init_index();
+static void usp_fork_index();
+static void usp_auth_index();
+static void usp_config_index();
+
+#include "example_declaration.h"
+-->
+<!--#login
+-->
+<!--#code
+static UHTTP::service_info GET_table[] = { // NB: the table must be ordered alphabetically for binary search...
+   GET_ENTRY(logout),
+   GET_ENTRY(welcome)
+};
+
+static UHTTP::service_info POST_table[] = { // NB: the table must be ordered alphabetically for binary search...
+   POST_ENTRY(service)
+};
+
+UHTTP::manageRequest(GET_table, U_NUM_ELEMENTS(GET_table), POST_table, U_NUM_ELEMENTS(POST_table));
+-->
