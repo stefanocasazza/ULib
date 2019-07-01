@@ -751,9 +751,7 @@ public:
       {
       U_TRACE(0, "UHTTP::getKeyIdDataSession(%V)", data.rep)
 
-      U_INTERNAL_ASSERT_POINTER(data_session)
-
-      UString keyid = data_session->setKeyIdDataSession(++sid_counter_gen, data);
+      UString keyid = UDataSession::getKeyIdDataSession(++sid_counter_gen, data);
 
       U_RETURN_STRING(keyid);
       }
@@ -988,6 +986,8 @@ private:
 
    static bool checkForUSP();
    static bool getUSP(const char* key, uint32_t key_len);
+   static bool runUSP(const char* key, uint32_t key_len);
+   static bool runUSP(const char* key, uint32_t key_len, int param);
 
    // CSP (C Servlet Page)
 

@@ -313,6 +313,9 @@ public:
          {
          U_ASSERT(vcode.empty())
          U_INTERNAL_ASSERT_EQUALS(bfirst_pass, false)
+         U_INTERNAL_ASSERT_EQUALS(bhttp_header_empty, false)
+
+         bhttp_header_empty = true;
 
          (void) output0.append(U_CONSTANT_TO_PARAM(
                "\n\tU_http_info.endHeader = 0;"
@@ -320,16 +323,11 @@ public:
                "\n\t    UHTTP::getPostLoginUserPasswd())"
                "\n\t\t{"
                "\n\t\tUHTTP::usp->runDynamicPageParam(U_DPAGE_AUTH);"
+               "\n\t\tif (*UClientImage_Base::wbuffer) return;"
                "\n\t\t}"
                "\n\tif (UHTTP::loginCookie->empty())"
                "\n\t\t{"
-               "\n\t\tUHTTP::UServletPage* usp_save = UHTTP::usp;"
-               "\n\t\tif (UHTTP::getUSP(U_CONSTANT_TO_PARAM(\"login_form\")))"
-               "\n\t\t\t{"
-               "\n\t\t\tUHTTP::usp->runDynamicPageParam(U_DPAGE_AUTH);"
-               "\n\t\t\tUHTTP::usp = usp_save;"
-               "\n\t\t\treturn;"
-               "\n\t\t\t}"
+               "\n\t\tif (UHTTP::runUSP(U_CONSTANT_TO_PARAM(\"login_form\"))) return;"
                "\n\t\tUHTTP::UFileCacheData* login_form_html = UHTTP::getFileCachePointer(U_CONSTANT_TO_PARAM(\"login_form.html\"));"
                "\n\t\tif (login_form_html)"
                "\n\t\t\t{"
@@ -340,8 +338,8 @@ public:
                "\n\t\t(void) UClientImage_Base::wbuffer->append(U_CONSTANT_TO_PARAM("
                "\n\"<form method=\\\"post\\\">\\n\""
                "\n\" <p>Login</p>\\n\""
-               "\n\" <p>username <input name=\\\"user\\\" type=\\\"text\\\" class=\\\"inputbox\\\" title=\\\"Enter your username\\\"></p>\\n\""
-               "\n\" <p>password <input name=\\\"pass\\\" type=\\\"text\\\" class=\\\"inputbox\\\" title=\\\"Enter your password\\\"></p>\\n\""
+               "\n\" <p>username <input name=\\\"username\\\" type=\\\"text\\\" class=\\\"inputbox\\\" title=\\\"Enter your username\\\"></p>\\n\""
+               "\n\" <p>password <input name=\\\"password\\\" type=\\\"text\\\" class=\\\"inputbox\\\" title=\\\"Enter your password\\\"></p>\\n\""
                "\n\" <p><input type=\\\"submit\\\" value=\\\"login\\\"></p>\\n\""
                "\n\"</form>\"));"
                "\n\t\treturn;"
@@ -870,7 +868,7 @@ loop: distance = t.getDistance();
 #  ifndef U_CACHE_REQUEST_DISABLE
       if (usp.c_char(4) == '#'      &&
           u__isspace(usp.c_char(5)) &&
-          u_get_unalignedp32(usp.data()) == U_MULTICHAR_CONSTANT32('<','!','-','-')) // <!--# --> (comment)
+          u_get_unalignedp32(usp.data()) == U_MULTICHAR_CONSTANT32('<','!','-','-')) // <!-- --> (comment)
          {
          (void) output1.append(U_CONSTANT_TO_PARAM("\n\tUClientImage_Base::setRequestNoCache();\n\t\n"));
          }

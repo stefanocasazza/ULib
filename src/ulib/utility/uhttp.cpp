@@ -6101,7 +6101,11 @@ remove:     removeCookieSession();
             continue;
             }
 
-         if (checkDataSession(token, expire, data)) result = true;
+         if (data_session == U_NULLPTR ||
+             checkDataSession(token, expire, data))
+            {
+            result = true;
+            }
          }
       else if (cookie)
          {
@@ -6141,20 +6145,20 @@ bool UHTTP::getPostLoginUserPasswd()
    U_INTERNAL_ASSERT(loginCookieUser)
    U_INTERNAL_ASSERT(loginCookiePasswd)
 
-   loginCookieUser->clear();
-   loginCookiePasswd->clear();
-
-   // $1 -> user
-   // $2 -> pass
+   // $1 -> username
+   // $2 -> password
 
    if (isPostLogin() &&
        processForm() >= 2*2)
       {
-      UHTTP::getFormValue(*loginCookieUser, U_CONSTANT_TO_PARAM("user"), 0, 1, 4);
+      loginCookieUser->clear();
+      loginCookiePasswd->clear();
+
+      UHTTP::getFormValue(*loginCookieUser, U_CONSTANT_TO_PARAM("username"), 0, 1, 4);
 
       if (*loginCookieUser)
          {
-         UHTTP::getFormValue(*loginCookiePasswd, U_CONSTANT_TO_PARAM("pass"), 0, 3, 4);
+         UHTTP::getFormValue(*loginCookiePasswd, U_CONSTANT_TO_PARAM("password"), 0, 3, 4);
 
          if (*loginCookiePasswd) U_RETURN(true);
          }
@@ -6168,7 +6172,6 @@ U_NO_EXPORT bool UHTTP::checkDataSession(const UString& token, time_t expire, US
    U_TRACE(0, "UHTTP::checkDataSession(%V,%ld,%p)", token.rep, expire, data)
 
    U_INTERNAL_ASSERT(token)
-   U_INTERNAL_ASSERT_POINTER(db_session)
    U_INTERNAL_ASSERT_POINTER(data_session)
 
    // NB: check for previous valid cookie...
@@ -6178,6 +6181,8 @@ U_NO_EXPORT bool UHTTP::checkDataSession(const UString& token, time_t expire, US
    if (data == U_NULLPTR ||
        data->empty())
       {
+      U_INTERNAL_ASSERT_POINTER(db_session)
+
       data_session->keyid = token;
 
       db_session->setPointerToDataStorage(data_session);
@@ -7891,9 +7896,7 @@ UHTTP::UFileCacheData* UHTTP::getPasswdDB(const char* name, uint32_t len)
          {
          U_INTERNAL_ASSERT_EQUALS(name[0], '/')
 
-         UHTTP::UServletPage* usp_save = usp;
-
-         if (getUSP(name+1, len-1))
+         if (runUSP(name+1, len-1, U_DPAGE_AUTH))
             {
             /**
              * Must set UHTTP::fpasswd as something like:
@@ -7909,11 +7912,7 @@ UHTTP::UFileCacheData* UHTTP::getPasswdDB(const char* name, uint32_t len)
              * NB: if UHTTP::buri_overload_authentication is set we authorize the request... 
              */
 
-            usp->runDynamicPageParam(U_DPAGE_AUTH);
-
             U_INTERNAL_DUMP("fpasswd = %V buri_overload_authentication = %b", fpasswd->rep, buri_overload_authentication)
-
-            usp = usp_save;
 
             U_RETURN_POINTER(U_NULLPTR, UHTTP::UFileCacheData);
             }
@@ -8658,8 +8657,9 @@ void UHTTP::manageRequest(service_info*  GET_table, uint32_t n1,
 
    const char* ptr;
    service_info* key;
-   uint32_t target_len;
+   const char* suffix;
    int32_t cmp, probe, low;
+   uint32_t len = 0, target_len;
    const char* target = UClientImage_Base::getRequestUri(target_len);
 
    U_INTERNAL_ASSERT_EQUALS(target[0], '/')
@@ -8681,22 +8681,28 @@ void UHTTP::manageRequest(service_info*  GET_table, uint32_t n1,
       return;
       }
 
-   ptr = (const char*) memchr(++target, PATH_SEPARATOR, target_len);
+   ptr = (const char*) memchr(++target, PATH_SEPARATOR, target_len-1);
 
-   if (ptr) target_len = ptr - target;
-
-   U_INTERNAL_DUMP("target(%u) = %.*S", target_len, target_len, target)
-
-   ptr = u_getsuffix(target, target_len);
-
-   if (ptr != U_NULLPTR)
+   if (ptr)
       {
-      if (memcmp(ptr+1, U_CONSTANT_TO_PARAM("shtml"))) return; // NB: if we have a suffix different from '.shtml' (Ex: process.sh) we go to the next phase of request processing...
+      cmp = ptr - target;
 
-      if (ptr) target_len = ptr - target;
+      len = target_len-cmp-1;
 
-      U_INTERNAL_DUMP("target(%u) = %.*S", target_len, target_len, target)
+      target_len = cmp;
       }
+
+   suffix = u_getsuffix(target, target_len);
+
+   if (suffix != U_NULLPTR)
+      {
+      if (memcmp(suffix+1, U_CONSTANT_TO_PARAM("shtml"))) return; // NB: if we have a suffix different from '.shtml' (Ex: process.sh) we go to the next phase of request processing...
+
+      if (suffix) target_len = suffix - target;
+      }
+
+retry:
+   U_INTERNAL_DUMP("target(%u) = %.*S", target_len, target_len, target)
 
    cmp =
    low = -1;
@@ -8723,6 +8729,18 @@ void UHTTP::manageRequest(service_info*  GET_table, uint32_t n1,
    if (low == -1 ||
        (key = table + low, key->len != target_len || memcmp(key->name, target, target_len)))
       {
+      if (ptr)
+         {
+         target = ptr+1;
+                  ptr = U_NULLPTR;
+
+         target_len = len;
+
+         high = (isGETorHEAD() ? n1 : n2);
+
+         goto retry;
+         }
+
       U_http_info.nResponseCode = HTTP_BAD_REQUEST;
 
       return;
@@ -12334,6 +12352,42 @@ found:
    U_INTERNAL_DUMP("USP found(%u) = %V", probe, usp->basename.rep)
 
    U_RETURN(true);
+}
+
+bool UHTTP::runUSP(const char* key, uint32_t key_len, int param)
+{
+   U_TRACE(0, "UHTTP::runUSP(%.*S,%u,%d)", key_len, key, key_len, param)
+
+   UHTTP::UServletPage* usp_save = usp;
+
+   if (getUSP(key, key_len))
+      {
+      usp->runDynamicPageParam(param);
+
+      usp = usp_save;
+
+      U_RETURN(true);
+      }
+
+   U_RETURN(false);
+}
+
+bool UHTTP::runUSP(const char* key, uint32_t key_len)
+{
+   U_TRACE(0, "UHTTP::runUSP(%.*S,%u)", key_len, key, key_len)
+
+   UHTTP::UServletPage* usp_save = usp;
+
+   if (getUSP(key, key_len))
+      {
+      usp->runDynamicPage();
+
+      usp = usp_save;
+
+      U_RETURN(true);
+      }
+
+   U_RETURN(false);
 }
 
 bool UHTTP::checkForUSP()

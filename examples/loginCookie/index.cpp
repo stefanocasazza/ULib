@@ -35,16 +35,11 @@ extern U_EXPORT void runDynamicPage_index();
        UHTTP::getPostLoginUserPasswd())
       {
       UHTTP::usp->runDynamicPageParam(U_DPAGE_AUTH);
+      if (*UClientImage_Base::wbuffer) return;
       }
    if (UHTTP::loginCookie->empty())
       {
-      UHTTP::UServletPage* usp_save = UHTTP::usp;
-      if (UHTTP::getUSP(U_CONSTANT_TO_PARAM("login_form")))
-         {
-         UHTTP::usp->runDynamicPageParam(U_DPAGE_AUTH);
-         UHTTP::usp = usp_save;
-         return;
-         }
+      if (UHTTP::runUSP(U_CONSTANT_TO_PARAM("login_form"))) return;
       UHTTP::UFileCacheData* login_form_html = UHTTP::getFileCachePointer(U_CONSTANT_TO_PARAM("login_form.html"));
       if (login_form_html)
          {
@@ -55,8 +50,8 @@ extern U_EXPORT void runDynamicPage_index();
       (void) UClientImage_Base::wbuffer->append(U_CONSTANT_TO_PARAM(
 "<form method=\"post\">\n"
 " <p>Login</p>\n"
-" <p>username <input name=\"user\" type=\"text\" class=\"inputbox\" title=\"Enter your username\"></p>\n"
-" <p>password <input name=\"pass\" type=\"text\" class=\"inputbox\" title=\"Enter your password\"></p>\n"
+" <p>username <input name=\"username\" type=\"text\" class=\"inputbox\" title=\"Enter your username\"></p>\n"
+" <p>password <input name=\"password\" type=\"text\" class=\"inputbox\" title=\"Enter your password\"></p>\n"
 " <p><input type=\"submit\" value=\"login\"></p>\n"
 "</form>"));
       return;
@@ -73,5 +68,4 @@ extern U_EXPORT void runDynamicPage_index();
    
    UHTTP::manageRequest(GET_table, U_NUM_ELEMENTS(GET_table), POST_table, U_NUM_ELEMENTS(POST_table));
    
-   U_http_info.endHeader = 0;
 } }

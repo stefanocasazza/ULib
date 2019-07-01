@@ -64,15 +64,15 @@ UString UDataSession::setKeyIdDataSession(uint32_t counter)
    U_RETURN_STRING(keyid);
 }
 
-UString UDataSession::setKeyIdDataSession(uint32_t counter, const UString& data)
+UString UDataSession::getKeyIdDataSession(uint32_t counter, const UString& data)
 {
    U_TRACE(0, "UDataSession::setKeyIdDataSession(%u,%V)", counter, data.rep)
 
-   keyid.setBuffer(100U + data.size());
+   UString _keyid(100U + data.size());
 
-   keyid.snprintf(U_CONSTANT_TO_PARAM("%.*s_%u_%P_%u:%v"), U_CLIENT_ADDRESS_TO_TRACE, UHTTP::getUserAgent(), counter, data.rep);
+   _keyid.snprintf(U_CONSTANT_TO_PARAM("%.*s_%u_%P_%u:%v"), U_CLIENT_ADDRESS_TO_TRACE, UHTTP::getUserAgent(), counter, data.rep);
 
-   U_RETURN_STRING(keyid);
+   U_RETURN_STRING(_keyid);
 }
 
 #ifdef U_STDCPP_ENABLE

@@ -240,7 +240,9 @@ public:
       }
 
    UString setKeyIdDataSession(uint32_t counter);
-   UString setKeyIdDataSession(uint32_t counter, const UString& data);
+   UString setKeyIdDataSession(uint32_t counter, const UString& data) { return (keyid = getKeyIdDataSession(counter, data)); }
+
+   static UString getKeyIdDataSession(uint32_t counter, const UString& data);
 
    // define method VIRTUAL of class UDataStorage
 
