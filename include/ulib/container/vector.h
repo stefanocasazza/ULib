@@ -925,36 +925,72 @@ private:
  * ...
  * } }
  */
-class UVectorStringIter { // this class is to make work Range-based for loop: for ( UString x : UVector<UString> ) loop_statement      
+
+class UVectorStringIter;
+class UVectorStringConstIter;
+
+class UVectorStringIterBase { // this class is to make work Range-based for loop: for ( UString x : UVector<UString> ) loop_statement      
 public:
-   explicit UVectorStringIter(UVector<UString>* p_vec, uint32_t pos) : _pos(pos), _p_vec(p_vec) {}
 
    // these three methods form the basis of an iterator for use with a range-based for loop
-   bool operator==(const UVectorStringIter& other) const { return (_pos == other._pos); }
-   bool operator!=(const UVectorStringIter& other) const { return (_pos != other._pos); }
+   bool operator==(const UVectorStringIterBase& other) const { return (_pos == other._pos); }
+   bool operator!=(const UVectorStringIterBase& other) const { return (_pos != other._pos); }
 
-   // this method must be defined after the definition of UVector<UString> since it needs to use it
-   inline UString operator*() const;
-
-   UVectorStringIter& operator++()
+   UVectorStringIterBase& operator++()
       {
       ++_pos;
 
       return *this; // although not strictly necessary for a range-based for loop following the normal convention of returning a value from operator++ is a good idea
       }
    
-   UVectorStringIter& operator+=(const uint32_t inc)
+   UVectorStringIterBase& operator+=(const uint32_t inc)
       {
       _pos += inc;
 
       return *this; // although not strictly necessary for a range-based for loop following the normal convention of returning a value from operator++ is a good idea
-      }
+   }
+   
+   UVectorStringIterBase() = delete; 
+
+private:
+   
+   explicit UVectorStringIterBase(uint32_t pos) : _pos(pos) {}
+   
+   uint32_t _pos;
+
+   friend class UVectorStringIter;
+   friend class UVectorStringConstIter;
+};
+
+class UVectorStringIter : public UVectorStringIterBase {
+public:
+   
+   explicit UVectorStringIter(UVector<UString>* p_vec, uint32_t pos) : UVectorStringIterBase(pos), _p_vec(p_vec) {}
+
+   // this method must be defined after the definition of UVector<UString> since it needs to use it
+   inline UString operator*() const;
 
    inline UVectorStringIter& erase();
 
 private:
-   uint32_t _pos;
+   
    UVector<UString>* _p_vec;
+
+   friend class UVectorStringConstIter;
+};
+
+
+class UVectorStringConstIter : public UVectorStringIterBase {
+public:
+   
+   explicit UVectorStringConstIter(const UVector<UString>* p_vec, uint32_t pos) : UVectorStringIterBase(pos), _p_vec(p_vec) {}
+
+   // this method must be defined after the definition of UVector<UString> since it needs to use it
+   inline UString operator*() const;
+
+private:
+
+   const UVector<UString>* _p_vec;
 };
 #endif
 
@@ -986,6 +1022,9 @@ public:
 #if defined(U_STDCPP_ENABLE) && defined(HAVE_CXX11)
    UVectorStringIter begin() { return UVectorStringIter(this, 0); }
    UVectorStringIter   end() { return UVectorStringIter(this, _length); }
+   
+   UVectorStringConstIter begin() const { return UVectorStringConstIter(this, 0); }
+   UVectorStringConstIter   end() const { return UVectorStringConstIter(this, _length); }
 
    UVectorStringIter& erase(UVectorStringIter& it) { return it.erase(); }
 
@@ -1367,7 +1406,8 @@ private:
 };
 
 #if defined(U_STDCPP_ENABLE) && defined(HAVE_CXX11)
-inline UString UVectorStringIter::operator* () const { return _p_vec->at(_pos); }
+inline UString UVectorStringIter::operator* ()  const { return _p_vec->at(_pos); }
+inline UString UVectorStringConstIter::operator* ()   const { return _p_vec->at(_pos); }
 
 inline UVectorStringIter& UVectorStringIter::erase() { _p_vec->erase(_pos); return *this; }
 #endif
