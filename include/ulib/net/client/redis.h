@@ -1087,5 +1087,9 @@ public:
 private:
    U_DISALLOW_COPY_AND_ASSIGN(UREDISClusterClient)
 };
+
+extern template const UVector<UString>& UREDISClusterClient::processPipeline<true>(UString& pipeline, bool reorderable);
+extern template const UVector<UString>& UREDISClusterClient::processPipeline<false>(UString& pipeline, bool reorderable);
+
 #endif
 #endif
