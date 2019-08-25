@@ -765,6 +765,9 @@ void UREDISClusterClient::processResponse()
       }
 }
 
+template const UVector<UString>& UREDISClusterClient::pripeline<true>(UString& pipeline, bool reorderable);
+template const UVector<UString>& UREDISClusterClient::processPipeline<false>(UString& pipeline, bool reorderable);
+
 template <bool silence>
 const UVector<UString>& UREDISClusterClient::processPipeline(UString& pipeline, const bool reorderable)
 {
