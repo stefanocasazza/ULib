@@ -209,13 +209,12 @@ U_NO_EXPORT bool UREDISClient_Base::getResponseItem()
       while (*ptr2 != '\r') ++ptr2;
 
       len = ptr2-ptr1;
+		
+		// U_RC_INLINE example -> +OK\r\n
+      // U_RC_INT    example -> :0\r\n
+      // U_RC_ERROR  example -> -Error message\r\n
 
-      if (len     != 1   ||
-          ptr1[0] != '0' ||
-          prefix != U_RC_INT)
-         {
-         pvec->push_back(UClient_Base::response.substr(ptr1, len));
-         }
+      pvec->push_back(UClient_Base::response.substr(ptr1, len));
 
       start += len + U_CONSTANT_SIZE(U_CRLF);
 
@@ -294,40 +293,13 @@ U_NO_EXPORT bool UREDISClient_Base::getResponseItem()
 
    U_INTERNAL_ASSERT_EQUALS(prefix, U_RC_MULTIBULK)
 
-   UVector<UString> vec1(len);
-   UVector<UString>* pvec1 = pvec;
-                             pvec = &vec1;
-
    start += (ptr2-ptr1);
 
    for (uint32_t i = 0; i < len; ++i)
       {
-      if (getResponseItem() == false)
-         {
-         if (UClient_Base::isConnected() == false)
-            {
-            (void) UClient_Base::connect();
-
-            U_RETURN(false);
-            }
-
-         pvec1->move(vec1);
-         }
-      else
-         {
-         typedef UVector<UString> uvectorstring;
-
-         char buffer_output[64U * 1024U];
-         uint32_t buffer_output_len = UObject2String<uvectorstring>(vec1, buffer_output, sizeof(buffer_output));
-
-         pvec1->push_back(UStringRep::create(buffer_output_len, buffer_output_len, (const char*)buffer_output));
-
-         vec1.clear();
-         }
+         getResponseItem();
       }
-
-   pvec = pvec1;
-
+	
    U_RETURN(true);
 }
 
@@ -629,8 +601,8 @@ void UREDISClusterClient::calculateNodeMap()
          if (rawNodes[a].isNumber() &&
              rawNodes[a+1].isNumber())
             {
-             workingLowHashSlot = rawNodes[a++].strtoul();
-            workingHighHashSlot = rawNodes[a].strtoul();
+             workingLowHashSlot  = rawNodes[a++].strtoul();
+             workingHighHashSlot = rawNodes[a].strtoul();
 
             findHashSlots = false;
             }
@@ -639,18 +611,7 @@ void UREDISClusterClient::calculateNodeMap()
          {
          // the immediate next after hash slot is the master
 
-         RedisNode workingNode;
-
-         workingNode.lowHashSlot  =  workingLowHashSlot;
-         workingNode.highHashSlot = workingHighHashSlot;
-
-         (void) workingNode.ipAddress.replace(rawNodes[a]);
-
-         workingNode.port = rawNodes[++a].strtoul();
-
-         workingNode.client.connect(workingNode.ipAddress.data(), workingNode.port);
-
-         redisNodes.push_back(std::move(workingNode));
+         redisNodes.emplace_back(rawNodes[a], rawNodes[++a].strtoul(), workingLowHashSlot, workingHighHashSlot);
 
          findHashSlots = true;
          }
