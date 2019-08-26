@@ -987,6 +987,11 @@ private:
       UString ipAddress;
       UREDISClient<UTCPSocket> client;
       uint16_t port, lowHashSlot, highHashSlot;
+		
+		RedisNode(const UString& _ipAddress, uint16_t _port, uint16_t _lowHashSlot, uint16_t _highHashSlot) : ipAddress(_ipAddress), port(_port), lowHashSlot(_lowHashSlot), highHashSlot(_highHashSlot)
+      {
+         client.connect(ipAddress.data(), port);
+      }
    };
 
    enum class ClusterError : uint8_t {
