@@ -598,7 +598,8 @@ void UREDISClusterClient::calculateNodeMap()
       {
       if (findHashSlots)
          {
-         if (rawNodes[a].isNumber() &&
+         if ((a + 1) < b && 
+				 rawNodes[a].isNumber() &&
              rawNodes[a+1].isNumber())
             {
              workingLowHashSlot  = rawNodes[a++].strtoul();
