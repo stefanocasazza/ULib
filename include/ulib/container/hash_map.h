@@ -1044,7 +1044,10 @@ private:
 #if defined(U_STDCPP_ENABLE) && defined(HAVE_CXX11)
 template <class T> class UHashMapAnonIter {
 public:
-   explicit UHashMapAnonIter(UHashMap<T*>* m, uint32_t l) : map(m), length(l) {}
+   explicit UHashMapAnonIter(UHashMap<T*>* m, uint32_t l) : map(m), length(l) 
+   {
+      if (length == 0) node = map->firstNode();
+   }
 
    bool operator!=(const UHashMapAnonIter& other) const { return (length != other.length); }
 
@@ -1052,8 +1055,8 @@ public:
 
    UHashMapAnonIter& operator++()
       {
-      node = (length++ ? map->nextNode() : map->firstNode());
-
+      length++;
+      node = map->nextNode();
       return *this;
       }
 

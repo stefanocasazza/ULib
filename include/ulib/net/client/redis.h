@@ -822,7 +822,7 @@ protected:
       }
 
    void init();
-   void processResponse();
+   virtual void processResponse();
    bool processRequest(char recvtype);
 
    bool sendRequest(const UString& pipeline)
@@ -987,6 +987,18 @@ private:
       UString ipAddress;
       UREDISClient<UTCPSocket> client;
       uint16_t port, lowHashSlot, highHashSlot;
+      
+      RedisNode(const UString& _ipAddress, uint16_t _port, uint16_t _lowHashSlot, uint16_t _highHashSlot) :
+            ipAddress(_ipAddress), port(_port), lowHashSlot(_lowHashSlot), highHashSlot(_highHashSlot)
+      {
+         client.connect(ipAddress.data(), port);
+      }
+
+   // DEBUG
+
+#if defined(U_STDCPP_ENABLE) && defined(DEBUG)
+   const char* dump(bool _reset) const { return ""; }
+#endif
    };
 
    enum class ClusterError : uint8_t {
@@ -998,8 +1010,7 @@ private:
 
    ClusterError error;
    UString temporaryASKip;
-   std::vector<RedisNode> redisNodes;
-   UREDISClient<UTCPSocket> subscriptionClient;
+   UHashMap<RedisNode *> redisNodes;
 
    uint16_t hashslotForKey(const UString& hashableKey) { return u_crc16(U_STRING_TO_PARAM(hashableKey)); } 
 
@@ -1019,22 +1030,26 @@ private:
       {
       U_TRACE(0, "UREDISClusterClient::clientForHashslot(%u)", hashslot)
 
-      for (RedisNode& workingNode : redisNodes)
+      for (UHashMapNode *node : redisNodes)
          {
-         if ((workingNode.lowHashSlot <= hashslot) || (workingNode.highHashSlot >= hashslot)) return workingNode.client;
+         RedisNode* workingNode = (RedisNode *)(node->elem);
+
+         if ((workingNode->lowHashSlot <= hashslot) || (workingNode->highHashSlot >= hashslot)) return workingNode->client;
          }
 
-      return redisNodes[0].client;
+      return *this; // never reached
       }
 
    UREDISClient<UTCPSocket>& clientForASKip()
       {
-      for (RedisNode& workingNode : redisNodes)
+      for (UHashMapNode *node : redisNodes)
          {
-         if (temporaryASKip == workingNode.ipAddress) return workingNode.client;
+         RedisNode* workingNode = (RedisNode *)(node->elem);
+
+         if (temporaryASKip == workingNode->ipAddress) return workingNode->client;
          }
 
-      return redisNodes[0].client;
+      return *this; // never reached
       }
 
    UREDISClient<UTCPSocket>& clientForHashableKey(const UString& hashableKey) {  return clientForHashslot(hashslotForKey(hashableKey)); }
@@ -1050,7 +1065,7 @@ public:
       U_TRACE_DTOR(0, UREDISClusterClient)
       }
 
-   void processResponse();
+   void processResponse() final;
    void calculateNodeMap();
 
    bool connect(const char* host = U_NULLPTR, unsigned int _port = 6379);
@@ -1087,5 +1102,9 @@ public:
 private:
    U_DISALLOW_COPY_AND_ASSIGN(UREDISClusterClient)
 };
+
+extern template const UVector<UString>& UREDISClusterClient::processPipeline<true>(UString& pipeline, bool reorderable);
+extern template const UVector<UString>& UREDISClusterClient::processPipeline<false>(UString& pipeline, bool reorderable);
+
 #endif
 #endif
