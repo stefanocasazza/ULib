@@ -592,31 +592,51 @@ void UREDISClusterClient::calculateNodeMap()
 
    (void) UREDISClient_Base::processRequest(U_RC_MULTIBULK, U_CONSTANT_TO_PARAM("CLUSTER SLOTS"));
 
+   UHashMap<RedisNode *> newNodes;
    const UVector<UString>& rawNodes = UREDISClient_Base::vitem;
 
-   for (uint32_t a = 0, b = rawNodes.size(); a < b; ++a)
-      {
+   for (uint32_t a = 0, b = rawNodes.size(); a < b; a+=2)
+   {
+      const UString& first = rawNodes[a];
+      const UString& second = rawNodes[a+1];
+
       if (findHashSlots)
+      {
+         if (first.isNumber() && second.isNumber())
          {
-         if ((a + 1) < b && 
-				 rawNodes[a].isNumber() &&
-             rawNodes[a+1].isNumber())
-            {
-             workingLowHashSlot  = rawNodes[a++].strtoul();
-             workingHighHashSlot = rawNodes[a].strtoul();
+            workingLowHashSlot = first.strtoul();
+            workingHighHashSlot = second.strtoul();
 
             findHashSlots = false;
-            }
-         }
-      else
-         {
-         // the immediate next after hash slot is the master
-
-         redisNodes.emplace_back(rawNodes[a], rawNodes[++a].strtoul(), workingLowHashSlot, workingHighHashSlot);
-
-         findHashSlots = true;
          }
       }
+      else
+      {
+         // first node in the array is the master
+
+         UString compositeAddress(50U);
+         compositeAddress.snprintf(U_CONSTANT_TO_PARAM("%v.%v"), first.rep, second.rep);
+
+         RedisNode *workingNode = redisNodes.erase(compositeAddress);
+
+         // in the case of MOVE some nodes will be new, but others we'll already be connected to
+         if (workingNode)
+         {  
+            workingNode->lowHashSlot = workingLowHashSlot;
+            workingNode->highHashSlot = workingHighHashSlot;
+         }
+         else workingNode = new RedisNode(first, second.strtoul(), workingLowHashSlot, workingHighHashSlot);
+        
+         newNodes.insert(compositeAddress, workingNode);
+
+         workingNode = newNodes[compositeAddress];
+
+         findHashSlots = true;
+      }
+   }
+
+   // if any nodes were taken offline, the clients would've disconnected by default
+   redisNodes.assign(newNodes);
 }
 
 bool UREDISClusterClient::connect(const char* host, unsigned int _port)
@@ -626,17 +646,12 @@ bool UREDISClusterClient::connect(const char* host, unsigned int _port)
    if (UREDISClient<UTCPSocket>::connect(host, _port))
       {
       calculateNodeMap();
+		
+		// self handles the SUB/PUB traffic. Must be a dedicated client pre-Redis 6
+      UEventFd::op_mask |=  EPOLLET;
+      UEventFd::op_mask &= ~EPOLLRDHUP;
 
-      // select random master node to be responsible for SUB/PUB traffic
-
-      const RedisNode& node = redisNodes[u_get_num_random_range0(redisNodes.size())];
-
-      subscriptionClient.connect(node.ipAddress.data(), node.port);
-
-      subscriptionClient.UEventFd::op_mask |=  EPOLLET;
-      subscriptionClient.UEventFd::op_mask &= ~EPOLLRDHUP;
-
-      UNotifier::insert(&subscriptionClient, EPOLLEXCLUSIVE | EPOLLROUNDROBIN); // NB: we ask to listen for events to a Redis publish channel... 
+      UNotifier::insert(this, EPOLLEXCLUSIVE | EPOLLROUNDROBIN); // NB: we ask to listen for events to a Redis publish channel... 
 
       U_RETURN(true);
       }
