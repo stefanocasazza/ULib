@@ -549,15 +549,57 @@ int UREDISClient_Base::handlerRead()
    U_RETURN(U_NOTIFIER_OK);
 }
 
-#if defined(U_STDCPP_ENABLE)
-
 // by Victor Stewart
 
 #  if defined(HAVE_CXX17)
-void UREDISClusterClient::calculateNodeMap()
-{
-   U_TRACE_NO_PARAM(0, "UREDISClusterClient::calculateNodeMap()")
 
+void UREDISClusterClient::processResponse()
+{
+   U_TRACE_NO_PARAM(0, "UREDISClusterClient::processResponse()")
+
+   if (UClient_Base::response.find("-MOVED", 0, 6) != U_NOT_FOUND)
+   {
+      // MOVED 3999 127.0.0.1:6381 => the hashslot has been moved to another master node
+
+      master->error = ClusterError::moved;
+
+      master->calculateNodeMap();
+   }
+   else if (UClient_Base::response.find("-ASK", 1, 4) != U_NOT_FOUND)
+   {
+      // ASK 3999 127.0.0.1:6381 => this means that one of the hash slots is being migrated to another server
+
+      master->error = ClusterError::ask;
+
+      uint32_t _start = UClient_Base::response.find(' ', 8) + 1,
+                  end = UClient_Base::response.find(':', _start);
+
+      (void)master->temporaryASKip.assign(UClient_Base::response.substr(_start, end - _start));
+   }
+   else if (UClient_Base::response.find("-TRYAGAIN", 0, 9) != U_NOT_FOUND)
+   {
+      //
+     //  * during a resharding the multi-key operations targeting keys that all exist and are all still in the same node (either the source or destination node) are still available.
+     //  * Operations on keys that don't exist or are - during the resharding - split between the source and destination nodes, will generate a -TRYAGAIN error. The client can try
+     //  * the operation after some time, or report back the error. As soon as migration of the specified hash slot has terminated, all multi-key operations are available again for
+     //  * that hash slot
+       
+
+      master->error = ClusterError::tryagain;
+
+      UTimeVal(0L, 1000L).nanosleep(); // 0 sec, 1000 microsec = 1ms
+   }
+   else
+   {
+      master->error = ClusterError::none;
+
+      UREDISClient_Base::processResponse();
+   }
+}
+
+void UREDISClusterMaster::calculateNodeMap()
+{
+   U_TRACE_NO_PARAM(0, "UREDISClusterMaster::calculateNodeMap()")
    /*
    127.0.0.1:30001> cluster slots
    1) 1) (integer) 0
@@ -586,14 +628,16 @@ void UREDISClusterClient::calculateNodeMap()
          3) "58e6e48d41228013e5d9c1c37c5060693925e97e"
    */
 
+   // the first node in each array is the master
+
    bool findHashSlots = true;
    uint16_t workingLowHashSlot;
    uint16_t workingHighHashSlot;
 
-   (void) UREDISClient_Base::processRequest(U_RC_MULTIBULK, U_CONSTANT_TO_PARAM("CLUSTER SLOTS"));
-
-   UHashMap<RedisNode *> newNodes;
-   const UVector<UString>& rawNodes = UREDISClient_Base::vitem;
+   (void) subscriptionClient.processRequest(U_RC_MULTIBULK, U_CONSTANT_TO_PARAM("CLUSTER SLOTS"));
+   
+   UHashMap<RedisClusterNode *> newNodes;
+   const UVector<UString>& rawNodes = subscriptionClient.vitem;
 
    for (uint32_t a = 0, b = rawNodes.size(); a < b; a+=2)
    {
@@ -612,12 +656,10 @@ void UREDISClusterClient::calculateNodeMap()
       }
       else
       {
-         // first node in the array is the master
-
          UString compositeAddress(50U);
          compositeAddress.snprintf(U_CONSTANT_TO_PARAM("%v.%v"), first.rep, second.rep);
 
-         RedisNode *workingNode = redisNodes.erase(compositeAddress);
+         RedisClusterNode *workingNode = clusterNodes.erase(compositeAddress);
 
          // in the case of MOVE some nodes will be new, but others we'll already be connected to
          if (workingNode)
@@ -625,8 +667,8 @@ void UREDISClusterClient::calculateNodeMap()
             workingNode->lowHashSlot = workingLowHashSlot;
             workingNode->highHashSlot = workingHighHashSlot;
          }
-         else workingNode = new RedisNode(first, second.strtoul(), workingLowHashSlot, workingHighHashSlot);
-        
+         else workingNode = new RedisClusterNode(first, second.strtoul(), workingLowHashSlot, workingHighHashSlot);
+			
          newNodes.insert(compositeAddress, workingNode);
 
          workingNode = newNodes[compositeAddress];
@@ -636,121 +678,71 @@ void UREDISClusterClient::calculateNodeMap()
    }
 
    // if any nodes were taken offline, the clients would've disconnected by default
-   redisNodes.assign(newNodes);
+   clusterNodes.assign(newNodes);
 }
 
-bool UREDISClusterClient::connect(const char* host, unsigned int _port)
+bool UREDISClusterMaster::connect(const char* host, unsigned int _port)
 {
-   U_TRACE(0, "UREDISClusterClient::connect(%S,%u)", host, _port)
+   U_TRACE(0, "UREDISClusterMaster::connect(%S,%u)", host, _port)
 
-   if (UREDISClient<UTCPSocket>::connect(host, _port))
-      {
+   if (subscriptionClient.connect(host, _port))
+   {
       calculateNodeMap();
-      
-      // self handles the SUB/PUB traffic. Must be a dedicated client pre-Redis 6
-      UEventFd::op_mask |=  EPOLLET;
-      UEventFd::op_mask &= ~EPOLLRDHUP;
 
-      UNotifier::insert(this, EPOLLEXCLUSIVE | EPOLLROUNDROBIN); // NB: we ask to listen for events to a Redis publish channel... 
+      subscriptionClient.UEventFd::fd = subscriptionClient.getFd();
+      subscriptionClient.UEventFd::op_mask |=  EPOLLET;
+      subscriptionClient.UEventFd::op_mask &= ~EPOLLRDHUP;
+
+      UNotifier::insert(&subscriptionClient, EPOLLEXCLUSIVE | EPOLLROUNDROBIN); // NB: we ask to listen for events to a Redis publish channel... 
 
       U_RETURN(true);
-      }
+   }
 
    U_RETURN(false);
 }
 
-bool UREDISClusterClient::clusterUnsubscribe(const UString& channel) // unregister the callback for messages published to the given channels
+bool UREDISClusterMaster::clusterUnsubscribe(const UString& channel) // unregister the callback for messages published to the given channels
 {
-   U_TRACE(0, "UREDISClusterClient::clusterUnsubscribe(%V)", channel.rep)
+   U_TRACE(0, "UREDISClusterMaster::clusterUnsubscribe(%V)", channel.rep)
 
-   if (processRequest(U_RC_MULTIBULK, U_CONSTANT_TO_PARAM("UNSUBSCRIBE"), U_STRING_TO_PARAM(channel)))
-      {
-      if (pchannelCallbackMap == U_NULLPTR)
-         {
-         U_NEW(UHashMap<void*>, pchannelCallbackMap, UHashMap<void*>);
-         }
-
-      (void) pchannelCallbackMap->erase(channel);
+   if (subscriptionClient.processRequest(U_RC_MULTIBULK, U_CONSTANT_TO_PARAM("UNSUBSCRIBE"), U_STRING_TO_PARAM(channel)))
+   {
+      (void)subscriptionClient.UREDISClient_Base::pchannelCallbackMap->erase(channel);
 
       U_RETURN(true);
-      }
+   }
 
    U_RETURN(false);
 }
 
-bool UREDISClusterClient::clusterSubscribe(const UString& channel, vPFcscs callback) // register the callback for messages published to the given channels
+bool UREDISClusterMaster::clusterSubscribe(const UString& channel, vPFcscs callback) // register the callback for messages published to the given channels
 {
-   U_TRACE(0, "UREDISClusterClient::clusterSubscribe(%V,%p)", channel.rep, callback)
+   U_TRACE(0, "UREDISClusterMaster::clusterSubscribe(%V,%p)", channel.rep, callback)
 
-   if (processRequest(U_RC_MULTIBULK, U_CONSTANT_TO_PARAM("SUBSCRIBE"), U_STRING_TO_PARAM(channel)))
+   if (subscriptionClient.processRequest(U_RC_MULTIBULK, U_CONSTANT_TO_PARAM("SUBSCRIBE"), U_STRING_TO_PARAM(channel)))
+   {
+      if (subscriptionClient.UREDISClient_Base::pchannelCallbackMap == U_NULLPTR)
       {
-      if (pchannelCallbackMap == U_NULLPTR)
-         {
-         U_NEW(UHashMap<void*>, pchannelCallbackMap, UHashMap<void*>);
-         }
+         U_NEW(UHashMap<void*>, subscriptionClient.UREDISClient_Base::pchannelCallbackMap, UHashMap<void*>);
+      }
 
-      pchannelCallbackMap->insert(channel, (const void*)callback);
+      subscriptionClient.UREDISClient_Base::pchannelCallbackMap->insert(channel, (const void*)callback);
 
       U_RETURN(true);
-      }
+   }
 
    U_RETURN(false);
 }
 
-void UREDISClusterClient::processResponse()
-{
-   U_TRACE_NO_PARAM(0, "UREDISClusterClient::processResponse()")
-
-   if (UClient_Base::response.find("MOVED", 0, 5) != U_NOT_FOUND)
-      {
-      // MOVED 3999 127.0.0.1:6381 => the hashslot has been moved to another master node
-
-      error = ClusterError::moved;
-
-      calculateNodeMap();
-      }
-   else if (UClient_Base::response.find("ASK", 0, 3) != U_NOT_FOUND)
-      {
-      // ASK 3999 127.0.0.1:6381 => this means that one of the hash slots is being migrated to another server
-
-      error = ClusterError::ask;
-
-      uint32_t _start = UClient_Base::response.find(' ', 8) + 1,
-                  end = UClient_Base::response.find(':', _start);
-
-      (void) temporaryASKip.replace(UClient_Base::response.substr(_start, end - _start));
-      }
-
-   else if (UClient_Base::response.find("TRYAGAIN", 0, 8) != U_NOT_FOUND)
-      {
-      /**
-       * during a resharding the multi-key operations targeting keys that all exist and are all still in the same node (either the source or destination node) are still available.
-       * Operations on keys that don't exist or are - during the resharding - split between the source and destination nodes, will generate a -TRYAGAIN error. The client can try
-       * the operation after some time, or report back the error. As soon as migration of the specified hash slot has terminated, all multi-key operations are available again for
-       * that hash slot
-       */
-
-      error = ClusterError::tryagain;
-
-      UTimeVal(0L, 1000L).nanosleep(); // 0 sec, 1000 microsec = 1ms
-      }
-   else
-      {
-      error = ClusterError::none;
-
-      UREDISClient<UTCPSocket>::processResponse();
-      }
-}
-
-template const UVector<UString>& UREDISClusterClient::processPipeline<true>(UString& pipeline, bool reorderable);
-template const UVector<UString>& UREDISClusterClient::processPipeline<false>(UString& pipeline, bool reorderable);
+template const UVector<UString>& UREDISClusterMaster::processPipeline<true>(UString& pipeline, bool reorderable);
+template const UVector<UString>& UREDISClusterMaster::processPipeline<false>(UString& pipeline, bool reorderable);
 
 template <bool silence>
-const UVector<UString>& UREDISClusterClient::processPipeline(UString& pipeline, const bool reorderable)
+const UVector<UString>& UREDISClusterMaster::processPipeline(UString& pipeline, const bool reorderable)
 {
-   U_TRACE(0, "UREDISClusterClient::processPipeline(%V,%b)", pipeline.rep, reorderable)
+   U_TRACE(0, "UREDISClusterMaster::processPipeline(%V,%b)", pipeline.rep, reorderable)
 
-   UString workingString(U_CAPACITY);
+   UString workingString(pipeline.size());
    UVector<UString> commands(pipeline, "\r\n");
    uint16_t hashslot, workingHashslot, count = 0;
 
@@ -769,7 +761,7 @@ const UVector<UString>& UREDISClusterClient::processPipeline(UString& pipeline, 
             }
          }
 
-      UREDISClient<UTCPSocket>& client = clientForHashslot(hashslot);
+      UREDISClusterClient& client = clientForHashslot(hashslot);
 
       if constexpr (silence) (void) client.sendRequest(workingString);
       else
@@ -787,7 +779,7 @@ replay:  (void) client.processRequest(U_RC_MULTIBULK, U_STRING_TO_PARAM(workingS
 
             case ClusterError::ask:
                {
-               UREDISClient<UTCPSocket>& temporaryClient = clientForASKip();
+               UREDISClusterClient& temporaryClient = clientForASKip();
 
                (void) temporaryClient.processRequest(U_RC_MULTIBULK, U_STRING_TO_PARAM(workingString));
                }
@@ -796,17 +788,15 @@ replay:  (void) client.processRequest(U_RC_MULTIBULK, U_STRING_TO_PARAM(workingS
             case ClusterError::none: break;
             }
 
-         if constexpr (silence == false) vitem.move(client.vitem);
+         if constexpr (silence == false) subscriptionClient.vitem.move(client.vitem);
 
          count = 0;
          workingString.clear();
          }
    };
 
-   /*
-   */
-   if (reorderable) {
-      
+   if (reorderable) 
+   {
       for (UVectorStringIter it = commands.begin(); it != commands.end(); ) {
 
          if (it == commands.begin()) hashslot = hashslotFromCommand(*it);
@@ -834,11 +824,10 @@ replay:  (void) client.processRequest(U_RC_MULTIBULK, U_STRING_TO_PARAM(workingS
          if (commands.size() != 0) it = commands.begin();
       }
    }
-   else {
-
+   else 
+   {
       for (uint32_t index = 0, n = commands.size(); index < n; index++)
-         {
-
+      {
          if (index == 0) hashslot = hashslotFromCommand(commands[0]);
 
          UString command = commands[index];
@@ -848,8 +837,8 @@ replay:  (void) client.processRequest(U_RC_MULTIBULK, U_STRING_TO_PARAM(workingS
 
          workingHashslot = hashslotFromCommand(command);
 
-         if (workingHashslot == hashslot) {
-               
+         if (workingHashslot == hashslot) 
+         {
             ++count;
 
        //  goto isADirective;
@@ -863,14 +852,14 @@ replay:  (void) client.processRequest(U_RC_MULTIBULK, U_STRING_TO_PARAM(workingS
          count = 0;
       }
    }
-
-   return vitem;
+   
+   return subscriptionClient.vitem;
 }
 #  endif
 
 // DEBUG
 
-#  if defined(DEBUG)
+##if defined(U_STDCPP_ENABLE) && defined(DEBUG)
 const char* UREDISClient_Base::dump(bool _reset) const
 {
    UClient_Base::dump(false);
@@ -888,5 +877,4 @@ const char* UREDISClient_Base::dump(bool _reset) const
 
    return U_NULLPTR;
 }
-#  endif
-#endif
+# endif
