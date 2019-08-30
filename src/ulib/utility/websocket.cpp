@@ -67,7 +67,7 @@ RETSIGTYPE UWebSocket::handlerForSigTERM(int signo)
    UInterrupt::sendOurselves(SIGTERM);
 }
 
-void UWebSocket::checkForInitialData()
+bool UWebSocket::checkForInitialData()
 {
    U_TRACE_NO_PARAM(0, "UWebSocket::checkForInitialData()")
 
@@ -85,7 +85,11 @@ void UWebSocket::checkForInitialData()
       (void) rbuffer->append(UClientImage_Base::rbuffer->c_pointer(UClientImage_Base::size_request), sz - UClientImage_Base::size_request);
 
       U_INTERNAL_DUMP("rbuffer(%u) = %V", rbuffer->size(), rbuffer->rep)
+
+      U_RETURN(true);
       }
+
+   U_RETURN(true);
 }
 
 bool UWebSocket::sendAccept(USocket* socket)
@@ -159,9 +163,11 @@ bool UWebSocket::sendAccept(USocket* socket)
  * +---------------------------------------------------------------+
  */
 
-int UWebSocket::handleDataFraming(USocket* socket)
+int UWebSocket::handleDataFraming(UString* pbuffer, USocket* socket)
 {
-   U_TRACE(0, "UWebSocket::handleDataFraming(%p)", socket)
+   U_TRACE(0, "UWebSocket::handleDataFraming(%V,%p)", pbuffer->rep, socket)
+
+   U_INTERNAL_ASSERT_POINTER(pbuffer)
 
    unsigned char* block;
    uint32_t block_offset, ncount = 0, block_size;
@@ -171,18 +177,18 @@ int UWebSocket::handleDataFraming(USocket* socket)
    int framing_state = U_WS_DATA_FRAMING_START, payload_length_bytes_remaining = 0, mask_index = 0, masking = 0;
 
 loop:
-   U_INTERNAL_DUMP("timeoutMS = %d", timeoutMS)
+   U_INTERNAL_DUMP("timeoutMS = %d buffer(%u) = %V", timeoutMS, pbuffer->size(), pbuffer->rep)
 
-   if (rbuffer->empty() &&
-       USocketExt::read(socket, *rbuffer, U_SINGLE_READ, timeoutMS) == false)
+   if (pbuffer->empty() &&
+       USocketExt::read(socket, *pbuffer, U_SINGLE_READ, timeoutMS) == false)
       {
       status_code = U_WS_STATUS_CODE_INTERNAL_ERROR;
 
       U_RETURN(U_WS_STATUS_CODE_INTERNAL_ERROR);
       }
 
-              block        = (unsigned char*) rbuffer->data();
-   ncount += (block_size   =                  rbuffer->size());
+              block        = (unsigned char*) pbuffer->data();
+   ncount += (block_size   =                  pbuffer->size());
               block_offset = 0;
 
    do {
@@ -589,7 +595,7 @@ next:
    U_INTERNAL_ASSERT(block_offset >= block_size)
    U_INTERNAL_ASSERT_DIFFERS(framing_state, U_WS_DATA_FRAMING_CLOSE) // 6
 
-   rbuffer->setEmpty();
+   pbuffer->setEmpty();
 
    goto loop;
 }
@@ -728,7 +734,7 @@ void UWebSocket::handlerRequest()
    int fdmax = 0; // NB: to avoid 'warning: fdmax may be used uninitialized in this function'...
    fd_set fd_set_read, read_set;
 
-   checkForInitialData(); // check if we have read more data than necessary...
+   (void) checkForInitialData(); // check if we have read more data than necessary...
 
    if (command == U_NULLPTR)
       {
@@ -779,7 +785,7 @@ loop:
          }
       else if (FD_ISSET(UServer_Base::csocket->iSockDesc, &read_set))
          {
-data:    if (handleDataFraming(UServer_Base::csocket) == U_WS_STATUS_CODE_OK)
+data:    if (handleDataFraming(rbuffer, UServer_Base::csocket) == U_WS_STATUS_CODE_OK)
             {
             if (command == U_NULLPTR)
                {
