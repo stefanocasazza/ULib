@@ -4881,13 +4881,19 @@ from_cache:
 
          if (UServer_Base::startParallelization() == false) UWebSocket::handlerRequest(); // child
 #     else
-         UWebSocket::checkForInitialData(); // check if we have read more data than necessary...
-
-         UWebSocket::on_message_param(U_DPAGE_OPEN);
-
          U_ClientImage_http(UServer_Base::pClientImage) = '0';
 
          U_ClientImage_parallelization = U_PARALLELIZATION_PARENT;
+
+         UWebSocket::on_message_param(U_DPAGE_OPEN);
+
+         if (UWebSocket::checkForInitialData() && // check if we have read more data than necessary...
+             UWebSocket::handleDataFraming(UWebSocket::rbuffer, UServer_Base::csocket) == U_WS_STATUS_CODE_OK)
+            {
+            UWebSocket::on_message();
+
+            if (U_http_info.nResponseCode == HTTP_INTERNAL_ERROR) U_RETURN(U_NOTIFIER_DELETE);
+            }
 #     endif
          }
 

@@ -1333,11 +1333,9 @@ data_missing:
 
    if (U_ClientImage_http(this) == '0')
       {
-      if (UWebSocket::handleDataFraming(socket) == U_WS_STATUS_CODE_OK)
+      if (UWebSocket::handleDataFraming(rbuffer, socket) == U_WS_STATUS_CODE_OK)
          {
          UWebSocket::on_message();
-
-         UWebSocket::rbuffer->setEmpty();
 
          if (U_http_info.nResponseCode == HTTP_INTERNAL_ERROR) U_RETURN(U_NOTIFIER_DELETE);
          }

@@ -71,7 +71,7 @@ public:
       unsigned int   utf8_state;
    } WebSocketFrameData;
 
-   static void checkForInitialData();
+   static bool checkForInitialData();
    static bool sendData(USocket* socket, int type, const char* data, uint32_t len);
 
    static bool sendData(USocket* socket, int type, const UString& data) { return sendData(socket, type, U_STRING_TO_PARAM(data)); }
@@ -206,8 +206,8 @@ private:
    static void initDb();
    static void handlerRequest();
    static bool sendAccept(USocket* socket);
-   static int handleDataFraming(USocket* socket);
    static RETSIGTYPE handlerForSigTERM(int signo);
+   static int handleDataFraming(UString* pbuffer, USocket* socket);
    static bool sendControlFrame(USocket* socket, int opcode, const unsigned char* payload, uint32_t payload_length);
 
    U_DISALLOW_COPY_AND_ASSIGN(UWebSocket)
