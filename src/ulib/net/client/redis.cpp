@@ -667,7 +667,7 @@ void UREDISClusterMaster::calculateNodeMap()
             workingNode->lowHashSlot = workingLowHashSlot;
             workingNode->highHashSlot = workingHighHashSlot;
          }
-         else workingNode = new RedisClusterNode(first, second.strtoul(), workingLowHashSlot, workingHighHashSlot);
+         else workingNode = new RedisClusterNode(first, second.strtoul(), workingLowHashSlot, workingHighHashSlot, this);
 			
          newNodes.insert(compositeAddress, workingNode);
 
@@ -859,7 +859,7 @@ replay:  (void) client.processRequest(U_RC_MULTIBULK, U_STRING_TO_PARAM(workingS
 
 // DEBUG
 
-##if defined(U_STDCPP_ENABLE) && defined(DEBUG)
+#if defined(U_STDCPP_ENABLE) && defined(DEBUG)
 const char* UREDISClient_Base::dump(bool _reset) const
 {
    UClient_Base::dump(false);
