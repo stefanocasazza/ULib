@@ -900,7 +900,7 @@ protected:
 private:
    bool getResponseItem() U_NO_EXPORT;
 
-   friend class UREDISClusterClient;
+	friend class UREDISClusterMaster;
 
 // U_DISALLOW_COPY_AND_ASSIGN(UREDISClient_Base)
 };
@@ -927,8 +927,6 @@ public:
 #endif
 
 private:
-	
-	friend UREDISClusterMaster;
 	
 // U_DISALLOW_COPY_AND_ASSIGN(UREDISClient)
 };
