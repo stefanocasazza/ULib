@@ -76,7 +76,7 @@ public:
 
    static bool sendData(const bool isServer, USocket* socket, int type, const UString& data) { return sendData(isServer, socket, type, U_STRING_TO_PARAM(data)); }
 
-   static bool sendClose(USocket* socket)
+   static bool sendClose(const bool isServer, USocket* socket)
       {
       U_TRACE(0, "UWebSocket::sendClose(%p)", socket)
 
@@ -87,7 +87,7 @@ public:
       unsigned char status_code_buffer[2] = { (unsigned char)((status_code >> 8) & 0xFF),
                                               (unsigned char)( status_code       & 0xFF) };
 
-      if (sendControlFrame(socket, U_WS_OPCODE_CLOSE, status_code_buffer, sizeof(status_code_buffer))) U_RETURN(true);
+      if (sendControlFrame(isServer, socket, U_WS_OPCODE_CLOSE, status_code_buffer, sizeof(status_code_buffer))) U_RETURN(true);
 
       U_RETURN(false);
       }
@@ -208,7 +208,7 @@ private:
    static bool sendAccept(USocket* socket);
    static RETSIGTYPE handlerForSigTERM(int signo);
    static int handleDataFraming(UString* pbuffer, USocket* socket);
-   static bool sendControlFrame(USocket* socket, int opcode, const unsigned char* payload, uint32_t payload_length);
+   static bool sendControlFrame(const bool isServer, USocket* socket, int opcode, const unsigned char* payload, uint32_t payload_length);
 
    U_DISALLOW_COPY_AND_ASSIGN(UWebSocket)
 
