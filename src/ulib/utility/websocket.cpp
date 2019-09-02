@@ -520,7 +520,8 @@ loop:
 
                   case U_WS_OPCODE_PING:
                      {
-                     if (sendControlFrame(socket, U_WS_OPCODE_PONG, application_data, application_data_offset) == false)
+							// implies only client initiates ping pong... so any pong is always server -> client
+                     if (sendControlFrame(true, socket, U_WS_OPCODE_PONG, application_data, application_data_offset) == false)
                         {
                         U_RETURN(U_WS_STATUS_CODE_PROTOCOL_ERROR);
                         }
@@ -751,27 +752,38 @@ bool UWebSocket::sendData(const bool isServer, USocket* socket, int type, const 
    U_RETURN(false);
 }
 
-bool UWebSocket::sendControlFrame(USocket* socket, int opcode, const unsigned char* payload, uint32_t payload_length)
+bool UWebSocket::sendControlFrame(const bool isServer, USocket* socket, int opcode, const unsigned char* payload, uint32_t payload_length)
 {
-   U_TRACE(0, "UWebSocket::sendControlFrame(%p,%d,%.*S,%u)", socket, opcode, payload_length, payload, payload_length)
+   U_TRACE(0, "UWebSocket::sendControlFrame(%s, %p,%d,%.*S,%u)", isServer ? "isServer" : "isClient", socket, opcode, payload_length, payload, payload_length)
 
    uint8_t masking_key[4];
-   uint32_t ncount = 6U + payload_length;
+   uint32_t ncount = (isServer ? 2U : 6U) + payload_length;
 
    UString tmp(ncount);
    unsigned char* header = (unsigned char*)tmp.data();
 
-   *((uint32_t*)masking_key) = u_get_num_random();
+   header[0] = (opcode | 0x80);
 
-   header[0] = (        opcode | 0x80);
-   header[1] = (payload_length | 0x80);
+   if (isServer)
+   {
+      header[1] = payload_length;
 
-   u_put_unalignedp32(header+2, *((uint32_t*)masking_key));
-
-   for (uint32_t i = 0; i < payload_length; ++i)
+      for (uint32_t i = 0; i < payload_length; ++i)
       {
-      header[6+i] = (payload[i] ^ masking_key[i % 4]) & 0xff;
+         header[2+i] = payload[i];
       }
+   }
+   else
+   {
+      header[1] = (payload_length | 0x80);
+
+      u_put_unalignedp32(header+2, *((uint32_t*)masking_key));
+
+      for (uint32_t i = 0; i < payload_length; ++i)
+      {
+         header[6+i] = (payload[i] ^ masking_key[i % 4]) & 0xff;
+      }
+   }
 
    if (USocketExt::write(socket, (const char*)header, ncount, UServer_Base::timeoutMS) == ncount)
       {
