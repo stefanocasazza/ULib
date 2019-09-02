@@ -884,7 +884,7 @@ data:    if (handleDataFraming(rbuffer, UServer_Base::csocket) == U_WS_STATUS_CO
    // Send server-side closing handshake
 
    if (UServer_Base::csocket->isOpen() &&
-       sendClose(UServer_Base::csocket))
+       sendClose(true, UServer_Base::csocket))
       {
       UClientImage_Base::close();
       }
