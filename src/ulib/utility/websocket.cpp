@@ -756,7 +756,6 @@ bool UWebSocket::sendControlFrame(const bool isServer, USocket* socket, int opco
 {
    U_TRACE(0, "UWebSocket::sendControlFrame(%s, %p,%d,%.*S,%u)", isServer ? "isServer" : "isClient", socket, opcode, payload_length, payload, payload_length)
 
-   uint8_t masking_key[4];
    uint32_t ncount = (isServer ? 2U : 6U) + payload_length;
 
    UString tmp(ncount);
@@ -776,7 +775,10 @@ bool UWebSocket::sendControlFrame(const bool isServer, USocket* socket, int opco
    else
    {
       header[1] = (payload_length | 0x80);
-
+		
+		uint8_t masking_key[4];
+		*((uint32_t*)masking_key) = u_get_num_random();
+		
       u_put_unalignedp32(header+2, *((uint32_t*)masking_key));
 
       for (uint32_t i = 0; i < payload_length; ++i)
