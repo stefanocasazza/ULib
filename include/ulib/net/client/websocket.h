@@ -82,7 +82,7 @@ public:
 
       U_INTERNAL_ASSERT_POINTER(client)
 
-      (void) UWebSocket::sendClose(client->UClient_Base::socket);
+      (void) UWebSocket::sendClose(false, client->UClient_Base::socket);
 
       client->UClient_Base::close();
       }
