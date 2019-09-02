@@ -72,9 +72,9 @@ public:
    } WebSocketFrameData;
 
    static bool checkForInitialData();
-   static bool sendData(USocket* socket, int type, const char* data, uint32_t len);
+   static bool sendData(const bool isServer, USocket* socket, int type, const char* data, uint32_t len);
 
-   static bool sendData(USocket* socket, int type, const UString& data) { return sendData(socket, type, U_STRING_TO_PARAM(data)); }
+   static bool sendData(const bool isServer, USocket* socket, int type, const UString& data) { return sendData(isServer, socket, type, U_STRING_TO_PARAM(data)); }
 
    static bool sendClose(USocket* socket)
       {
