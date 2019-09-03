@@ -80,7 +80,7 @@ else
    {
    // echo
 
-   if (UWebSocket::sendData(UServer_Base::csocket, UWebSocket::message_type, *UWebSocket::message) == false) U_http_info.nResponseCode = HTTP_INTERNAL_ERROR;
+   if (UWebSocket::sendData(false, UServer_Base::csocket, UWebSocket::message_type, *UWebSocket::message) == false) U_http_info.nResponseCode = HTTP_INTERNAL_ERROR;
    }
 #endif
 -->

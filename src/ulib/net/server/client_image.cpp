@@ -538,7 +538,7 @@ void UClientImage_Base::handlerDelete()
    if (U_ClientImage_http(this) == '0')
       {
       if (bsocket_open &&
-          UWebSocket::sendClose(socket))
+          UWebSocket::sendClose(true, socket))
          {
          socket->close();
          }

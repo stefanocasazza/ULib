@@ -90,6 +90,10 @@ int UWebSocketPlugIn::handlerRun()
    U_INTERNAL_ASSERT_EQUALS(UWebSocket::rbuffer, U_NULLPTR)
    U_INTERNAL_ASSERT_EQUALS(UWebSocket::message, U_NULLPTR)
 
+#ifndef USE_LIBSSL
+   U_ERROR("Sorry, I was compiled without SSL support so I can't use websocket");
+#endif
+
    U_NEW_STRING(UWebSocket::rbuffer, UString(U_CAPACITY));
    U_NEW_STRING(UWebSocket::message, UString(U_CAPACITY));
 

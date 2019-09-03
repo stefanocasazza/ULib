@@ -520,7 +520,8 @@ loop:
 
                   case U_WS_OPCODE_PING:
                      {
-                     if (sendControlFrame(socket, U_WS_OPCODE_PONG, application_data, application_data_offset) == false)
+                     // implies only client initiates ping pong... so any pong is always server -> client
+                     if (sendControlFrame(true, socket, U_WS_OPCODE_PONG, application_data, application_data_offset) == false)
                         {
                         U_RETURN(U_WS_STATUS_CODE_PROTOCOL_ERROR);
                         }
@@ -600,17 +601,31 @@ next:
    goto loop;
 }
 
-bool UWebSocket::sendData(USocket* socket, int type, const char* data, uint32_t len)
+bool UWebSocket::sendData(const bool isServer, USocket* socket, int type, const char* data, uint32_t len)
 {
-   U_TRACE(0, "UWebSocket::sendData(%p,%d,%.*S,%u)", socket, type, len, data, len)
+   U_TRACE(0, "UWebSocket::sendData(%b,%p,%d,%.*S,%u)", isServer, socket, type, len, data, len)
 
+   if (UNLIKELY(len > 0xffffffff))
+   {
+      status_code = U_WS_STATUS_CODE_MESSAGE_TOO_LARGE;
+
+      U_RETURN(false);
+   }
+
+   uint32_t header_length = (len > 125U ? 2U : 0) + (len > 0xffff ? 8U : 0);
    uint8_t opcode, masking_key[4];
-   uint32_t header_length = 6U + (len > 125U ? 2U : 0) + (len > 0xffff ? 8U : 0), ncount = header_length + len;
+
+   if (isServer) header_length += 2U;
+   else
+   {
+      header_length += 6U;
+      *((uint32_t*)masking_key) = u_get_num_random();
+   }
+
+   uint32_t ncount = header_length + len;
 
    UString tmp(ncount), compressed;
    unsigned char* header = (unsigned char*)tmp.data();
-
-   *((uint32_t*)masking_key) = u_get_num_random();
 
    switch (type)
       {
@@ -649,39 +664,86 @@ bool UWebSocket::sendData(USocket* socket, int type, const char* data, uint32_t 
 
    header[0] = (opcode | 0x80);
 
-   if (len <= 125)
-      {
-      header[1] = (len | 0x80);
+   // possible client header lengths
+   //    2  4  12
+   // possible server header lengths
+   //    6  8  16
 
-      u_put_unalignedp32(header+2, *((uint32_t*)masking_key));
-      }
-   else if (len >  125 &&
-            len <= 0xffff) // 125 && 65535
+   switch (header_length)
+   {
+      // server + len < 125
+      case 2:
       {
-      header[1] = (126 | 0x80);
-
-      u_put_unalignedp16(header+2, htons(len));
-      u_put_unalignedp32(header+4, *((uint32_t*)masking_key));
+         header[1] = len;
+         break;
       }
-   else if (len >  0xffff &&
-            len <= 0xffffffff)
+      // server + (len >  125 && len <= 0xffff) // 125 && 65535
+      case 4:
       {
-      header[1] = (127 | 0x80);
-
-      u_put_unalignedp64(header+2, htonl(len));
-      u_put_unalignedp32(header+10, *((uint32_t*)masking_key));
+         header[1] = 126;
+         u_put_unalignedp16(header+2, htons(len));
+         break;
       }
-   else
+      case 12:
       {
-      status_code = U_WS_STATUS_CODE_MESSAGE_TOO_LARGE;
-
-      U_RETURN(false);
+         header[1] = 127;
+         u_put_unalignedp64(header+2, htonl(len));
+         break;
       }
-
-   for (uint32_t i = 0; i < len; ++i)
+      // client + len < 125
+      case 6:
       {
-      header[6+i] = (data[i] ^ masking_key[i % 4]) & 0xff;
+         header[1] = (len | 0x80);
+         u_put_unalignedp32(header+2, *((uint32_t*)masking_key));
+         break;
       }
+      // client + (len >  125 && len <= 0xffff) // 125 && 65535
+      case 8:
+      {
+         header[1] = (126 | 0x80);
+
+         u_put_unalignedp16(header+2, htons(len));
+         u_put_unalignedp32(header+4, *((uint32_t*)masking_key));
+         break;
+      }
+      case 16:
+      {
+         header[1] = (127 | 0x80);
+
+         u_put_unalignedp64(header+2, htonl(len));
+         u_put_unalignedp32(header+10, *((uint32_t*)masking_key));
+         break;
+      }
+
+      default: break; // never reached
+   }
+   switch (header_length)
+   {
+      // server
+      case 2:
+      case 4:
+      case 12:
+      {
+         for (uint32_t i = 0; i < len; ++i)
+         {
+            header[2+i] = data[i];
+         }
+         break;
+      }
+      // client
+      case 6:
+      case 8:
+      case 16:
+      {  
+         for (uint32_t i = 0; i < len; ++i)
+         {
+            header[6+i] = (data[i] ^ masking_key[i % 4]) & 0xff;
+         }
+         break;
+      }
+
+      default: break; // never reached
+   }
 
    U_SRV_LOG_WITH_ADDR("send websocket data (%u+%u bytes) %.*S to", header_length, len, len, data)
 
@@ -690,27 +752,40 @@ bool UWebSocket::sendData(USocket* socket, int type, const char* data, uint32_t 
    U_RETURN(false);
 }
 
-bool UWebSocket::sendControlFrame(USocket* socket, int opcode, const unsigned char* payload, uint32_t payload_length)
+bool UWebSocket::sendControlFrame(const bool isServer, USocket* socket, int opcode, const unsigned char* payload, uint32_t payload_length)
 {
-   U_TRACE(0, "UWebSocket::sendControlFrame(%p,%d,%.*S,%u)", socket, opcode, payload_length, payload, payload_length)
+   U_TRACE(0, "UWebSocket::sendControlFrame(%b,%p,%d,%.*S,%u)", isServer, socket, opcode, payload_length, payload, payload_length)
 
-   uint8_t masking_key[4];
-   uint32_t ncount = 6U + payload_length;
+   uint32_t ncount = (isServer ? 2U : 6U) + payload_length;
 
    UString tmp(ncount);
    unsigned char* header = (unsigned char*)tmp.data();
 
-   *((uint32_t*)masking_key) = u_get_num_random();
+   header[0] = (opcode | 0x80);
 
-   header[0] = (        opcode | 0x80);
-   header[1] = (payload_length | 0x80);
+   if (isServer)
+   {
+      header[1] = payload_length;
 
-   u_put_unalignedp32(header+2, *((uint32_t*)masking_key));
-
-   for (uint32_t i = 0; i < payload_length; ++i)
+      for (uint32_t i = 0; i < payload_length; ++i)
       {
-      header[6+i] = (payload[i] ^ masking_key[i % 4]) & 0xff;
+         header[2+i] = payload[i];
       }
+   }
+   else
+   {
+      header[1] = (payload_length | 0x80);
+      
+      uint8_t masking_key[4];
+      *((uint32_t*)masking_key) = u_get_num_random();
+      
+      u_put_unalignedp32(header+2, *((uint32_t*)masking_key));
+
+      for (uint32_t i = 0; i < payload_length; ++i)
+      {
+         header[6+i] = (payload[i] ^ masking_key[i % 4]) & 0xff;
+      }
+   }
 
    if (USocketExt::write(socket, (const char*)header, ncount, UServer_Base::timeoutMS) == ncount)
       {
@@ -776,7 +851,7 @@ loop:
          rbuffer->setEmpty();
 
          if (UServices::read(UProcess::filedes[2], *rbuffer) &&
-             sendData(UServer_Base::csocket, message_type, *rbuffer))
+             sendData(true, UServer_Base::csocket, message_type, *rbuffer))
             {
             rbuffer->setEmpty();
 
@@ -811,7 +886,7 @@ data:    if (handleDataFraming(rbuffer, UServer_Base::csocket) == U_WS_STATUS_CO
    // Send server-side closing handshake
 
    if (UServer_Base::csocket->isOpen() &&
-       sendClose(UServer_Base::csocket))
+       sendClose(true, UServer_Base::csocket))
       {
       UClientImage_Base::close();
       }

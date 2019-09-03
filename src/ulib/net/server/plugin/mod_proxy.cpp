@@ -151,7 +151,7 @@ int UProxyPlugIn::handlerRequest()
 
          while (UWebSocket::handleDataFraming(UWebSocket::rbuffer, UServer_Base::csocket) == U_WS_STATUS_CODE_OK                                  &&
                 (client_http->UClient_Base::prepareRequest(*UClientImage_Base::wbuffer), client_http->UClient_Base::sendRequestAndReadResponse()) &&
-                UWebSocket::sendData(UServer_Base::csocket, UWebSocket::message_type, client_http->UClient_Base::response))
+                UWebSocket::sendData(false, UServer_Base::csocket, UWebSocket::message_type, client_http->UClient_Base::response))
             {
             client_http->UClient_Base::clearData();
 
