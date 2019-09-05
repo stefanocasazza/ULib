@@ -876,14 +876,13 @@ public:
          do {
             idx = index;
 
-            insert(t.key(), t.elem());
+            const UStringRep *key = t.key();
+            T* extractedElement = t.erase(key);
+
+            insert(key, extractedElement);
             }
-         while (index = idx, t.next());
+         while (index = idx, t.first());
          }
-
-      U_INTERNAL_DUMP("_length = %u", _length)
-
-      U_INTERNAL_ASSERT_EQUALS(_length, t._length)
       }
 
    // STREAMS
