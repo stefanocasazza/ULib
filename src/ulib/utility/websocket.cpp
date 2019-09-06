@@ -605,15 +605,17 @@ bool UWebSocket::sendData(const bool isServer, USocket* socket, int type, const 
 {
    U_TRACE(0, "UWebSocket::sendData(%b,%p,%d,%.*S,%u)", isServer, socket, type, len, data, len)
 
+   /*
    if (UNLIKELY(len > 0xffffffff))
    {
       status_code = U_WS_STATUS_CODE_MESSAGE_TOO_LARGE;
 
       U_RETURN(false);
    }
+   */
 
-   uint32_t header_length = (len > 125U ? 2U : 0) + (len > 0xffff ? 8U : 0);
    uint8_t opcode, masking_key[4];
+   uint32_t header_length = (len > 125U ? 2U : 0) + (len > 0xffff ? 8U : 0);
 
    if (isServer) header_length += 2U;
    else
