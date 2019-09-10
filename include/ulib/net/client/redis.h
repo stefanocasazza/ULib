@@ -1102,6 +1102,10 @@ public:
    bool clusterSubscribe(  const UString& channel, vPFcscs callback);
 
    UREDISClusterMaster() : subscriptionClient(this) {}
+	
+#if defined(U_STDCPP_ENABLE) && defined(DEBUG)
+   const char* dump(bool _reset) const { return UREDISClient_Base::dump(_reset); }
+#endif
 };
 
 extern template const UVector<UString>& UREDISClusterMaster::processPipeline<true>(UString& pipeline, bool reorderable);
