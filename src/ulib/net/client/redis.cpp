@@ -331,12 +331,9 @@ bool UREDISClient_Base::processRequest(char recvtype)
       {
       char prefix = UClient_Base::response[0];
 
-      if (  prefix != recvtype &&
-          recvtype != U_RC_ANY)
+      if (UNLIKELY(prefix == U_RC_ERROR))
          {
-         err = (prefix == U_RC_ERROR ? U_RC_ERROR
-                                     : U_RC_ERR_PROTOCOL);
-
+         err =  U_RC_ERROR;
          U_RETURN(false);
          }
 
