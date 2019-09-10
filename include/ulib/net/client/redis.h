@@ -63,9 +63,7 @@
 typedef void (*vPFcs)  (const UString&);
 typedef void (*vPFcscs)(const UString&,const UString&);
 
-#if defined(HAVE_CXX17)
 class UREDISClusterMaster;
-#endif
 
 class U_EXPORT UREDISClient_Base : public UClient_Base, UEventFd {
 public:
