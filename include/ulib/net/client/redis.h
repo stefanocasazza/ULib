@@ -1104,7 +1104,7 @@ public:
    UREDISClusterMaster() : subscriptionClient(this) {}
 	
 #if defined(U_STDCPP_ENABLE) && defined(DEBUG)
-   const char* dump(bool _reset) const { return UREDISClient_Base::dump(_reset); }
+   const char* dump(bool _reset) const { return subscriptionClient.UREDISClient_Base::dump(_reset); }
 #endif
 };
 
