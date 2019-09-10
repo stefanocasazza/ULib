@@ -821,6 +821,7 @@ protected:
       U_TRACE_CTOR(0, UREDISClient_Base, "")
 
       err = 0;
+      U_NEW(UHashMap<void*>, pchannelCallbackMap, UHashMap<void*>());
       }
 
    void init();
@@ -1021,6 +1022,9 @@ enum class ClusterError : uint8_t {
 class U_EXPORT UREDISClusterMaster {
 private:
 
+   U_MEMORY_ALLOCATOR
+   U_MEMORY_DEALLOCATOR
+   
    friend class UREDISClusterClient;
 
    ClusterError error;
