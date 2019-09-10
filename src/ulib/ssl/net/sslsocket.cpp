@@ -707,17 +707,20 @@ bool USSLSocket::setContext(const char* dh_file, const char* cert_file, const ch
       {
       case Modern:
          {
-         options |= SSL_OP_NO_SSLv2 |
-                    SSL_OP_NO_SSLv3 |
-                    SSL_OP_NO_TLSv1; 
 
 #     ifdef TLS1_3_VERSION
-         options |= SSL_OP_NO_TLSv2;
+
+          SSL_CTX_set_min_proto_version(ctx, TLS1_3_VERSION);
 
          ciphersuite = "TLS_AES_128_GCM_SHA256:TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256";
 
          //(void)U_SYSCALL(SSL_CTX_set1_sigalgs_list, "%p,%S", ctx, "ECDSA+SHA384:ECDSA+SHA512:ECDSA+SHA256:RSA+SHA384:RSA+SHA512:RSA+SHA256");
 #     else
+         
+         options |= SSL_OP_NO_SSLv2 |
+                    SSL_OP_NO_SSLv3 |
+                    SSL_OP_NO_TLSv1; 
+
          ciphersuite =
             "ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384:"
             "ECDHE-ECDSA-AES256-GCM-SHA384:DHE-RSA-AES128-GCM-SHA256:DHE-DSS-AES128-GCM-SHA256:kEDH+AESGCM:"
