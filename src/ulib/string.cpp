@@ -2121,58 +2121,59 @@ void UString::setFromData(const char** p, uint32_t sz, unsigned char delim)
          return;
          }
 
-      U_INTERNAL_ASSERT_EQUALS(memcmp(ptr, U_CONSTANT_TO_PARAM("@STRING:")), 0)
-
-      ptr += U_CONSTANT_SIZE("@STRING:");
-
-      const char* start;
-
-      if (*ptr == '"') // check if string is quoted...
+      if (u_get_unalignedp64(ptr) == U_MULTICHAR_CONSTANT64('@','S','T','R','I','N','G',':'))
          {
-         ptr = u_find_char((start = (ptr+1)), _pend, '"'); // find char '"' not quoted
+         ptr += U_CONSTANT_SIZE("@STRING:");
 
-         if (ptr == _pend)
+         const char* start;
+
+         if (*ptr == '"') // check if string is quoted...
             {
-            (void) append(ptr, _pend - ptr);
+            ptr = u_find_char((start = (ptr+1)), _pend, '"'); // find char '"' not quoted
 
-            *p = _pend;
+            if (ptr == _pend)
+               {
+               (void) append(ptr, _pend - ptr);
 
-            U_INTERNAL_DUMP("size = %u, str = %V", size(), rep)
+               *p = _pend;
 
-            U_INTERNAL_ASSERT(invariant())
+               U_INTERNAL_DUMP("size = %u, str = %V", size(), rep)
 
-            return;
+               U_INTERNAL_ASSERT(invariant())
+
+               return;
+               }
+
+            U_INTERNAL_ASSERT_EQUALS(*ptr, '"')
+
+            sz = ptr++ - start;
+            }
+         else
+            {
+            for (start = ptr; ptr < _pend; ++ptr)
+               {
+               c = *ptr;
+
+               if (u__isspace(c)) break;
+               }
+
+            sz = ptr - start;
             }
 
-         U_INTERNAL_ASSERT_EQUALS(*ptr, '"')
+         setBuffer(sz * 4);
 
-         sz = ptr++ - start;
+         UEscape::decode(start, sz, *this);
+
+         U_INTERNAL_ASSERT_MAJOR(rep->_length, 0)
+
+         *p = ptr;
+
+         U_INTERNAL_DUMP("size = %u, str = %V", size(), rep)
+
+         U_INTERNAL_ASSERT(invariant())
+
+         return;
          }
-      else
-         {
-         for (start = ptr; ptr < _pend; ++ptr)
-            {
-            c = *ptr;
-
-            if (u__isspace(c)) break;
-            }
-
-         sz = ptr - start;
-         }
-
-      setBuffer(sz * 4);
-
-      UEscape::decode(start, sz, *this);
-
-      U_INTERNAL_ASSERT_MAJOR(rep->_length, 0)
-
-      *p = ptr;
-
-      U_INTERNAL_DUMP("size = %u, str = %V", size(), rep)
-
-      U_INTERNAL_ASSERT(invariant())
-
-      return;
       }
 
 loop:
