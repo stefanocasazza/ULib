@@ -1013,7 +1013,7 @@ struct RedisClusterNode {
    RedisClusterNode(const UString& _ipAddress, uint16_t _port, uint16_t _lowHashSlot, uint16_t _highHashSlot, UREDISClusterMaster *master) : ipAddress(_ipAddress), port(_port), lowHashSlot(_lowHashSlot), highHashSlot(_highHashSlot)
    {
       U_NEW(UREDISClusterClient, client, UREDISClusterClient(master));
-      client.connect(ipAddress.c_str(), port);
+      client->connect(ipAddress.c_str(), port);
    }
 
 #if defined(U_STDCPP_ENABLE) && defined(DEBUG)
