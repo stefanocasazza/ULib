@@ -926,7 +926,7 @@ public:
 #endif
 
 private:
-	
+   
 // U_DISALLOW_COPY_AND_ASSIGN(UREDISClient)
 };
 
@@ -1086,11 +1086,11 @@ private:
    void calculateNodeMap();
    
 public:
-	
-	U_MEMORY_TEST
+   
+   U_MEMORY_TEST
    U_MEMORY_ALLOCATOR
    U_MEMORY_DEALLOCATOR
-		
+      
    bool connect(const char* host = U_NULLPTR, unsigned int _port = 6379);
 
    // all of these multis require all keys to exist within a single hash slot (on the same node isn't good enough)

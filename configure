@@ -1057,6 +1057,7 @@ with_userver_udp
 enable_plugins
 enable_memory_pool
 enable_LFS
+enable_rtti
 enable_coverage
 enable_gcc_optimized
 enable_final
@@ -1796,6 +1797,7 @@ Optional Features:
   --enable-plugins          enable building of plugins for userver [default=yes]
   --enable-memory-pool      enable memory pool features [default=yes]
   --enable-LFS              enable Large File Support [default=yes]
+  --enable-rtti             enable RTTI [default=no]
   --enable-coverage         enable coverage [default=no]
   --enable-gcc-optimized    compile with GCC optimizations flags enabled (-finline,-fstrict-aliasing,...) [default=yes]
   --enable-final            build size optimized apps (needs more amounts of memory) [default=yes]
@@ -27908,6 +27910,19 @@ $as_echo "#define ENABLE_LFS 1" >>confdefs.h
 	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $enable_LFS" >&5
 $as_echo "$enable_LFS" >&6; }
 
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if you want to enable use of RTTI" >&5
+$as_echo_n "checking if you want to enable use of RTTI... " >&6; }
+	# Check whether --enable-rtti was given.
+if test "${enable_rtti+set}" = set; then :
+  enableval=$enable_rtti;
+fi
+
+	if test -z "$enable_rtti"; then
+		enable_rtti="no"
+	fi
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $enable_rtti" >&5
+$as_echo "$enable_rtti" >&6; }
+
 	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if you want to enable use of coverage" >&5
 $as_echo_n "checking if you want to enable use of coverage... " >&6; }
 	# Check whether --enable-coverage was given.
@@ -34200,7 +34215,11 @@ fi
 
 fi
 
-CXXFLAGS="$CXXFLAGS -fno-exceptions -fno-rtti"
+CXXFLAGS="$CXXFLAGS -fno-exceptions"
+
+if test "$enable_rtti" != "yes"; then
+   CXXFLAGS="$CXXFLAGS -fno-rtti"
+fi
 
 # If gcc compiler add values to *FLAGS...
 

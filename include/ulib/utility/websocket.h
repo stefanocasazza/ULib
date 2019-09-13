@@ -78,7 +78,7 @@ public:
 
    static bool sendClose(const bool isServer, USocket* socket)
       {
-      U_TRACE(0, "UWebSocket::sendClose(%p)", socket)
+      U_TRACE(0, "UWebSocket::sendClose(%b,%p)", isServer, socket)
 
       // Send server-side closing handshake
 

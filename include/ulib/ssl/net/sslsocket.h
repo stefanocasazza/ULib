@@ -79,11 +79,16 @@ public:
 
    static long getOptions(const UVector<UString>& vec);
 
-   const char* getProtocolList()       { return (ciphersuite_model == 1 ? "TLSv1.2,TLSv1.1" :
-                                                 ciphersuite_model == 2 ? "TLSv1.2,TLSv1.1,TLSv1.0,SSLv3" : "TLSv1.2,TLSv1.1,TLSv1.0"); }
-
    const char* getConfigurationModel() { return (ciphersuite_model == 1 ? "Modern" :
                                                  ciphersuite_model == 2 ? "Old"    : "Intermediate"); }
+
+#ifdef TLS1_3_VERSION
+   const char* getProtocolList()       { return (ciphersuite_model == 1 ? "TLSv1.3" :
+                                                 ciphersuite_model == 2 ? "TLSv1.3,TLSv1.2,TLSv1.1,TLSv1.0" : "TLSv1.3,TLSv1.2"); }
+#else
+   const char* getProtocolList()       { return (ciphersuite_model == 1 ? "TLSv1.2,TLSv1.1" :
+                                                 ciphersuite_model == 2 ? "TLSv1.2,TLSv1.1,TLSv1.0,SSLv3" : "TLSv1.2,TLSv1.1,TLSv1.0"); }
+#endif
 
    /**
     * Load Diffie-Hellman parameters from file. These are used to generate a DH key exchange.

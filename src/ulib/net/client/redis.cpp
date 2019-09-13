@@ -333,7 +333,7 @@ bool UREDISClient_Base::processRequest(char recvtype)
 
       if (UNLIKELY(prefix == U_RC_ERROR))
          {
-         err = U_RC_ERROR;
+         err =  U_RC_ERROR;
          U_RETURN(false);
          }
 
@@ -665,7 +665,7 @@ void UREDISClusterMaster::calculateNodeMap()
             workingNode->highHashSlot = workingHighHashSlot;
          }
          else workingNode = new RedisClusterNode(first, second.strtoul(), workingLowHashSlot, workingHighHashSlot, this);
-			
+         
          newNodes.insert(compositeAddress, workingNode);
 
          workingNode = newNodes[compositeAddress];
@@ -682,30 +682,14 @@ bool UREDISClusterMaster::connect(const char* host, unsigned int _port)
 {
    U_TRACE(0, "UREDISClusterMaster::connect(%S,%u)", host, _port)
 
-   //U_WARNING("UREDISClusterMaster::connect() -> check point 1");
-
-   U_WARNING("UREDISClusterMaster:connect() -> this = %p", this)
-   U_WARNING("UREDISClusterMaster::connect() -> subscriptionClient = %p", subscriptionClient);
-
    if (subscriptionClient->connect(host, _port))
    {
-      //U_WARNING("UREDISClusterMaster::connect() -> check point 2");
       calculateNodeMap();
 
-      //U_WARNING("UREDISClusterMaster::connect() -> check point 3");
-      subscriptionClient->UEventFd::fd = subscriptionClient->getFd();
-      //U_WARNING("UREDISClusterMaster::connect() -> check point 4");
-      subscriptionClient->UEventFd::op_mask |=  EPOLLET;
-      //U_WARNING("UREDISClusterMaster::connect() -> check point 5");
-      subscriptionClient->UEventFd::op_mask &= ~EPOLLRDHUP;
-      //U_WARNING("UREDISClusterMaster::connect() -> check point 6");
-      //U_WARNING("UREDISClusterMaster::connect() -> subscriptionClient = %p", subscriptionClient);
-      UServer_Base::addHandlerEvent(subscriptionClient);
-      //UNotifier::insert(subscriptionClient, EPOLLEXCLUSIVE | EPOLLROUNDROBIN); // NB: we ask to listen for events to a Redis publish channel... 
-      //U_WARNING("UREDISClusterMaster::connect() -> check point 7");
+      UServer_Base::addHandlerEvent(subscriptionClient); // NB: we ask to listen for events to a Redis publish channel... 
+
       U_RETURN(true);
    }
-   //else U_WARNING("FAILED TO CONNECT");
 
    U_RETURN(false);
 }
@@ -718,6 +702,12 @@ bool UREDISClusterMaster::clusterUnsubscribe(const UString& channel) // unregist
    {
       (void)subscriptionClient->UREDISClient_Base::pchannelCallbackMap->erase(channel);
 
+      subscriptionClient->UEventFd::fd = subscriptionClient->getFd();
+      subscriptionClient->UEventFd::op_mask |=  EPOLLET;
+      subscriptionClient->UEventFd::op_mask &= ~EPOLLRDHUP;
+     
+      UServer_Base::addHandlerEvent(subscriptionClient);
+     
       U_RETURN(true);
    }
 
@@ -730,11 +720,6 @@ bool UREDISClusterMaster::clusterSubscribe(const UString& channel, vPFcscs callb
 
    if (subscriptionClient->processRequest(U_RC_MULTIBULK, U_CONSTANT_TO_PARAM("SUBSCRIBE"), U_STRING_TO_PARAM(channel)))
    {
-      if (subscriptionClient->UREDISClient_Base::pchannelCallbackMap == U_NULLPTR)
-      {
-         U_NEW(UHashMap<void*>, subscriptionClient->UREDISClient_Base::pchannelCallbackMap, UHashMap<void*>);
-      }
-
       subscriptionClient->UREDISClient_Base::pchannelCallbackMap->insert(channel, (const void*)callback);
 
       U_RETURN(true);

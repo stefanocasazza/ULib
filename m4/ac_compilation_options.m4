@@ -25,6 +25,14 @@ AC_DEFUN([AC_COMPILATION_OPTIONS],[
 	fi
 	AC_MSG_RESULT([$enable_LFS])
 
+	AC_MSG_CHECKING(if you want to enable use of RTTI)
+	AC_ARG_ENABLE(rtti,
+				[  --enable-rtti             enable RTTI [[default=no]]])
+	if test -z "$enable_rtti"; then
+		enable_rtti="no"
+	fi
+	AC_MSG_RESULT([$enable_rtti])
+
 	AC_MSG_CHECKING(if you want to enable use of coverage)
 	AC_ARG_ENABLE(coverage,
 				[  --enable-coverage         enable coverage [[default=no]]])

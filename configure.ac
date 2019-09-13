@@ -2470,7 +2470,11 @@ if test "$enable_http2" = "yes"; then
 	AM_CONDITIONAL(HTTP2, true)
 fi
 
-CXXFLAGS="$CXXFLAGS -fno-exceptions -fno-rtti"
+CXXFLAGS="$CXXFLAGS -fno-exceptions"
+
+if test "$enable_rtti" != "yes"; then
+   CXXFLAGS="$CXXFLAGS -fno-rtti"
+fi
 
 # If gcc compiler add values to *FLAGS...
 
