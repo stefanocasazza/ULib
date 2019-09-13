@@ -859,7 +859,7 @@ public:
       U_INTERNAL_DUMP("_length = %u", _length)
       }
 
-   void assign(UHashMap<T*>& t)
+	void assign(UHashMap<T*>& t)
       {
       U_TRACE(0, "UHashMap<T*>::assign(%p)", &t)
 
@@ -876,13 +876,14 @@ public:
          do {
             idx = index;
 
-            const UStringRep *key = t.key();
-            T* extractedElement = t.erase(key);
-
-            insert(key, extractedElement);
+            insert(t.key(), t.elem());
             }
-         while (index = idx, t.first());
+         while (index = idx, t.next());
          }
+
+      U_INTERNAL_DUMP("_length = %u", _length)
+
+      U_INTERNAL_ASSERT_EQUALS(_length, t._length)
       }
 
    // STREAMS
