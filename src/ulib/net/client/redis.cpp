@@ -686,6 +686,10 @@ bool UREDISClusterMaster::connect(const char* host, unsigned int _port)
    {
       calculateNodeMap();
 
+      subscriptionClient->UEventFd::fd = subscriptionClient->getFd();
+      subscriptionClient->UEventFd::op_mask |=  EPOLLET;
+      subscriptionClient->UEventFd::op_mask &= ~EPOLLRDHUP;
+
       UServer_Base::addHandlerEvent(subscriptionClient); // NB: we ask to listen for events to a Redis publish channel... 
 
       U_RETURN(true);
@@ -714,11 +718,6 @@ bool UREDISClusterMaster::clusterSubscribe(const UString& channel, vPFcscs callb
 
    if (subscriptionClient->processRequest(U_RC_MULTIBULK, U_CONSTANT_TO_PARAM("SUBSCRIBE"), U_STRING_TO_PARAM(channel)))
    {
-      if (subscriptionClient->UREDISClient_Base::pchannelCallbackMap == U_NULLPTR)
-      {
-         U_NEW(UHashMap<void*>, subscriptionClient->UREDISClient_Base::pchannelCallbackMap, UHashMap<void*>);
-      }
-
       subscriptionClient->UREDISClient_Base::pchannelCallbackMap->insert(channel, (const void*)callback);
 
       U_RETURN(true);
