@@ -819,6 +819,7 @@ protected:
       U_TRACE_CTOR(0, UREDISClient_Base, "")
 
       err = 0;
+      U_NEW(UHashMap<void*>, pchannelCallbackMap, UHashMap<void*>());
       }
 
    void init();
@@ -978,7 +979,9 @@ private:
 
 // by Victor Stewart
 
-#if defined(U_STDCPP_ENABLE) && defined(HAVE_CXX17)
+#if defined(HAVE_CXX17)
+
+class UREDISClusterMaster;
 
 class U_EXPORT UREDISClusterClient : public UREDISClient<UTCPSocket> {
 private:
@@ -999,7 +1002,7 @@ struct RedisClusterNode {
 
    RedisClusterNode(const UString& _ipAddress, uint16_t _port, uint16_t _lowHashSlot, uint16_t _highHashSlot, UREDISClusterMaster *master) : ipAddress(_ipAddress), client(master), port(_port), lowHashSlot(_lowHashSlot), highHashSlot(_highHashSlot)
    {
-      client.connect(ipAddress.data(), port);
+      client.connect(ipAddress.c_str(), port);
    }
 
 #if defined(U_STDCPP_ENABLE) && defined(DEBUG)
@@ -1017,6 +1020,9 @@ enum class ClusterError : uint8_t {
 class U_EXPORT UREDISClusterMaster {
 private:
 
+   U_MEMORY_ALLOCATOR
+   U_MEMORY_DEALLOCATOR
+   
    friend class UREDISClusterClient;
 
    ClusterError error;
@@ -1096,6 +1102,10 @@ public:
    bool clusterSubscribe(  const UString& channel, vPFcscs callback);
 
    UREDISClusterMaster() : subscriptionClient(this) {}
+   
+#if defined(U_STDCPP_ENABLE) && defined(DEBUG)
+   const char* dump(bool _reset) const { return subscriptionClient.UREDISClient_Base::dump(_reset); }
+#endif
 };
 
 extern template const UVector<UString>& UREDISClusterMaster::processPipeline<true>(UString& pipeline, bool reorderable);

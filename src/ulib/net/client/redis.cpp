@@ -331,12 +331,9 @@ bool UREDISClient_Base::processRequest(char recvtype)
       {
       char prefix = UClient_Base::response[0];
 
-      if (  prefix != recvtype &&
-          recvtype != U_RC_ANY)
+      if (UNLIKELY(prefix == U_RC_ERROR))
          {
-         err = (prefix == U_RC_ERROR ? U_RC_ERROR
-                                     : U_RC_ERR_PROTOCOL);
-
+         err =  U_RC_ERROR;
          U_RETURN(false);
          }
 
@@ -689,11 +686,7 @@ bool UREDISClusterMaster::connect(const char* host, unsigned int _port)
    {
       calculateNodeMap();
 
-      subscriptionClient.UEventFd::fd = subscriptionClient.getFd();
-      subscriptionClient.UEventFd::op_mask |=  EPOLLET;
-      subscriptionClient.UEventFd::op_mask &= ~EPOLLRDHUP;
-
-      UNotifier::insert(&subscriptionClient, EPOLLEXCLUSIVE | EPOLLROUNDROBIN); // NB: we ask to listen for events to a Redis publish channel... 
+      UServer_Base::addHandlerEvent(&subscriptionClient); // NB: we ask to listen for events to a Redis publish channel... 
 
       U_RETURN(true);
    }

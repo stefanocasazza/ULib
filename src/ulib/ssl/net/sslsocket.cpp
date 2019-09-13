@@ -192,11 +192,6 @@ SSL_CTX* USSLSocket::getContext(SSL_METHOD* method, bool bserver, long options)
       (void) U_SYSCALL(SSL_CTX_set_session_cache_mode, "%p,%d",    ctx, SSL_SESS_CACHE_SERVER);
       (void) U_SYSCALL(SSL_CTX_set_session_id_context, "%p,%p,%u", ctx, (const unsigned char*)u_progname, u_progname_len);
 
-#  ifdef TLS1_3_VERSION
-      (void) U_SYSCALL(SSL_CTX_set_min_proto_version, "%p,%d",  ctx, 0);
-      (void) U_SYSCALL(SSL_CTX_set_max_proto_version, "%p,%d",  ctx, TLS1_3_VERSION);
-#  endif
-
       // We need this to disable client-initiated renegotiation
 
       U_SYSCALL_VOID(SSL_CTX_set_info_callback, "%p,%p", ctx, USSLSocket::info_callback);
@@ -636,6 +631,72 @@ bool USSLSocket::setContext(const char* dh_file, const char* cert_file, const ch
     * Intermediate Firefox 1, Chrome 1, IE 7, Opera 5, Safari 1, Windows XP IE8, Android 2.3, Java 7
     * Old          Windows XP IE6, Java 6
     */
+   
+   /*
+      ECDSA over RSA
+   
+         https://blog.cloudflare.com/ecdsa-the-digital-signature-algorithm-of-a-better-internet/
+
+         ECC-enabled TLS is faster and more scalable on our servers and provides the same or better security than the default cryptography in use on the web.
+
+         According to the ECRYPT II recommendations on key length, a 256-bit elliptic curve key provides as much protection as a 3,248-bit asymmetric key. Typical RSA keys in website certificates are 2048-bits. If we compare the portion of the TLS handshake that happens on the server for 256-bit ECDSA keys against the cryptographically much weaker 2048-bit RSA keys we get the following:
+
+                                     sign/s
+         256 bit ecdsa (nistp256)    9516.8
+         rsa 2048 bits               1001.8
+
+         (openssl 1.0.2 beta on x86_64 with enable-ec_nistp_64_gcc_128)
+         That table shows the number of ECDSA and RSA signatures possible per second. On our servers, using an ECDSA certificate reduces the cost of the private key operation by a factor of 9.5x, saving a lot of CPU cycles.
+
+      ECDHE over RSA
+
+         https://www.cult-of-tech.net/2016/04/testing-tls-cipher-performance/
+            RSA is really fast... But it doesn’t support perfect forward security (PFS). ECDHE is slightly slower, but it supports PFS. DHE is considerably slower than either RSA or ECDHE, and supports PFS.
+
+      AES128 over AES256
+
+         https://www.cult-of-tech.net/2016/04/testing-tls-cipher-performance/
+            AES256 is ~11% slower than AES128.
+
+         https://github.com/ssllabs/research/wiki/SSL-and-TLS-Deployment-Best-Practices
+            There are no clear benefits of using encryption above 128 bits.
+
+      GCM over CBC
+
+         https://www.cult-of-tech.net/2016/04/testing-tls-cipher-performance/
+            AES-NI doubles CBC across the board. AES-NI also speeds up GCM by 4.2 to 8.5 times. Without AES-NI, CBC is faster than GCM in all packet sizes.
+   
+      SHA-512 (and SHA-384) over SHA-256
+
+         https://crypto.stackexchange.com/questions/26336/sha512-faster-than-sha256/26351#26351
+            SHA-512 has 25% more rounds than SHA-256. On a 64-bit processor each round takes the same amount of operations, yet can process double the data per round, because the instructions process 64-bit words instead of 32-bit words. Therefore, 2 / 1.25 = 1.6, which is how much faster SHA-512 can be under optimal conditions.
+
+      
+      CHACHA20_POLY1305 is preferred on older mobile devices (that lack AES hardware acceleration)
+         
+         https://github.com/henrinormak/Heimdall/issues/15
+
+             iOS Security—White Paper | June 2015: Every iOS device has a dedicated AES 256 crypto engine built into the DMA path between the flash storage and main system memory, making file encryption highly efficient.
+
+            Google engineer tweeted that on newer phones with ARMv8 chip AES GCM is faster than Chacha20 (due to hardware support for AES) and Chrome switches to AES GCM in such cases
+
+         https://blog.cloudflare.com/do-the-chacha-better-mobile-performance-with-cryptography/
+         
+            ChaCha20-Poly1305 is three times faster than AES-128-GCM on mobile devices
+
+            Intel processors since Westmere in 2010 come with AES hardware support that makes AES operations effectively free. This makes it an ideal cipher choice for both our servers and for web visitors using modern desktop and laptop computers. It’s not ideal for older computers and mobile devices. Phones and tablets don’t typically have cryptographic hardware for AES and are therefore required to use software implementations of ciphers. The AES-GCM cipher can be particularly costly when implemented in software. This is less than optimal on devices where every processor cycle can cost you precious battery life. 
+
+      https://crypto.stackexchange.com/questions/63796/why-does-tls-1-3-support-two-ccm-variants
+
+         CCM variants are for embedded devices
+
+      
+      AES128 + SHA256 still faster than AES256 + SHA384
+         https://jbp.io/2019/07/02/rustls-vs-openssl-bulk-performance.html
+            Receiving
+               ECDHE-RSA-AES128-GCM-SHA256   2138.1 MB/s
+               ECDHE-RSA-AES256-GCM-SHA384   1902.82 MB/s
+   */
 
    const char* ciphersuite;
    int options = SSL_CTX_get_options(ctx);
@@ -646,15 +707,17 @@ bool USSLSocket::setContext(const char* dh_file, const char* cert_file, const ch
       {
       case Modern:
          {
+#     ifdef TLS1_3_VERSION
+         (void) U_SYSCALL(SSL_CTX_set_min_proto_version, "%p,%d", ctx, TLS1_3_VERSION);
+
+         ciphersuite = "TLS_AES_128_GCM_SHA256:TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256";
+
+         // (void) U_SYSCALL(SSL_CTX_set1_sigalgs_list, "%p,%S", ctx, "ECDSA+SHA384:ECDSA+SHA512:ECDSA+SHA256:RSA+SHA384:RSA+SHA512:RSA+SHA256");
+#     else
          options |= SSL_OP_NO_SSLv2 |
                     SSL_OP_NO_SSLv3 |
                     SSL_OP_NO_TLSv1; 
 
-#     ifdef TLS1_3_VERSION
-         options |= SSL_OP_NO_TLSv2;
-
-         ciphersuite = "TLS_AES_128_GCM_SHA256:TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256";
-#     else
          ciphersuite =
             "ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384:"
             "ECDHE-ECDSA-AES256-GCM-SHA384:DHE-RSA-AES128-GCM-SHA256:DHE-DSS-AES128-GCM-SHA256:kEDH+AESGCM:"
