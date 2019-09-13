@@ -1036,7 +1036,7 @@ private:
    ClusterError error;
    UString temporaryASKip;
    UREDISClusterClient *subscriptionClient;
-   UHashMap<RedisClusterNode *> clusterNodes; // when these call they need to be processed... also when MOVED... we need to set up and recalculate
+   UHashMap<RedisClusterNode *> *clusterNodes; // when these call they need to be processed... also when MOVED... we need to set up and recalculate
 
    uint16_t hashslotForKey(const UString& hashableKey) { return u_crc16(U_STRING_TO_PARAM(hashableKey)); }
    
@@ -1116,6 +1116,12 @@ public:
    UREDISClusterMaster()
    {
       U_NEW(UREDISClusterClient, subscriptionClient, UREDISClusterClient(this));
+   }
+	
+	~UREDISClusterMaster()
+   {
+      U_DELETE(subscriptionClient);
+      if (clusterNodes) U_DELETE(clusterNodes);
    }
 
 #if defined(U_STDCPP_ENABLE) && defined(DEBUG)
