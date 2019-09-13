@@ -687,7 +687,9 @@ bool UREDISClusterMaster::connect(const char* host, unsigned int _port)
    if (subscriptionClient->connect(host, _port))
    {
       calculateNodeMap();
+     
       UServer_Base::addHandlerEvent(subscriptionClient);
+     
       U_RETURN(true);
    }
 
