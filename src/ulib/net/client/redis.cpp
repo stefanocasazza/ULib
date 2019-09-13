@@ -633,7 +633,9 @@ void UREDISClusterMaster::calculateNodeMap()
 
    (void) subscriptionClient->processRequest(U_RC_MULTIBULK, U_CONSTANT_TO_PARAM("CLUSTER SLOTS"));
    
-   UHashMap<RedisClusterNode *> newNodes;
+   UHashMap<RedisClusterNode *> *newNodes;
+   U_NEW(UHashMap<RedisClusterNode *>, newNodes, UHashMap<RedisClusterNode *>);
+
    const UVector<UString>& rawNodes = subscriptionClient->vitem;
 
    for (uint32_t a = 0, b = rawNodes.size(); a < b; a+=2)
@@ -656,7 +658,7 @@ void UREDISClusterMaster::calculateNodeMap()
          UString compositeAddress(50U);
          compositeAddress.snprintf(U_CONSTANT_TO_PARAM("%v.%v"), first.rep, second.rep);
 
-         RedisClusterNode *workingNode = clusterNodes.erase(compositeAddress);
+         RedisClusterNode *workingNode = clusterNodes ? clusterNodes->erase(compositeAddress) : U_NULLPTR;
 
          // in the case of MOVE some nodes will be new, but others we'll already be connected to
          if (workingNode)
@@ -664,18 +666,18 @@ void UREDISClusterMaster::calculateNodeMap()
             workingNode->lowHashSlot = workingLowHashSlot;
             workingNode->highHashSlot = workingHighHashSlot;
          }
-         else workingNode = new RedisClusterNode(first, second.strtoul(), workingLowHashSlot, workingHighHashSlot, this);
-         
-         newNodes.insert(compositeAddress, workingNode);
-
-         workingNode = newNodes[compositeAddress];
+         else U_NEW(RedisClusterNode, workingNode, RedisClusterNode(first, second.strtoul(), workingLowHashSlot, workingHighHashSlot, this));
+			
+         newNodes->insert(compositeAddress, workingNode);
 
          findHashSlots = true;
       }
    }
 
    // if any nodes were taken offline, the clients would've disconnected by default
-   clusterNodes.assign(newNodes);
+   if (clusterNodes) U_DELETE(clusterNodes);
+
+   clusterNodes = newNodes;
 }
 
 bool UREDISClusterMaster::connect(const char* host, unsigned int _port)
@@ -685,9 +687,7 @@ bool UREDISClusterMaster::connect(const char* host, unsigned int _port)
    if (subscriptionClient->connect(host, _port))
    {
       calculateNodeMap();
-
-      UServer_Base::addHandlerEvent(subscriptionClient); // NB: we ask to listen for events to a Redis publish channel... 
-
+      UServer_Base::addHandlerEvent(subscriptionClient);
       U_RETURN(true);
    }
 
@@ -702,12 +702,6 @@ bool UREDISClusterMaster::clusterUnsubscribe(const UString& channel) // unregist
    {
       (void)subscriptionClient->UREDISClient_Base::pchannelCallbackMap->erase(channel);
 
-      subscriptionClient->UEventFd::fd = subscriptionClient->getFd();
-      subscriptionClient->UEventFd::op_mask |=  EPOLLET;
-      subscriptionClient->UEventFd::op_mask &= ~EPOLLRDHUP;
-     
-      UServer_Base::addHandlerEvent(subscriptionClient);
-     
       U_RETURN(true);
    }
 
