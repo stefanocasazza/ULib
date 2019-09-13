@@ -688,6 +688,10 @@ bool UREDISClusterMaster::connect(const char* host, unsigned int _port)
    {
       calculateNodeMap();
      
+		subscriptionClient->UEventFd::fd = subscriptionClient->getFd();
+      subscriptionClient->UEventFd::op_mask |=  EPOLLET;
+      subscriptionClient->UEventFd::op_mask &= ~EPOLLRDHUP;
+		
       UServer_Base::addHandlerEvent(subscriptionClient);
      
       U_RETURN(true);
