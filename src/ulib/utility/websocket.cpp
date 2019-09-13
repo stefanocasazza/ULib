@@ -520,7 +520,7 @@ loop:
 
                   case U_WS_OPCODE_PING:
                      {
-							// implies only client initiates ping pong... so any pong is always server -> client
+                     // implies only client initiates ping pong... so any pong is always server -> client
                      if (sendControlFrame(true, socket, U_WS_OPCODE_PONG, application_data, application_data_offset) == false)
                         {
                         U_RETURN(U_WS_STATUS_CODE_PROTOCOL_ERROR);
@@ -603,17 +603,18 @@ next:
 
 bool UWebSocket::sendData(const bool isServer, USocket* socket, int type, const char* data, uint32_t len)
 {
-   U_TRACE(0, "UWebSocket::sendData(%s, %p,%d,%.*S,%u)", isServer ? "isServer" : "isClient", socket, type, len, data, len)
+   U_TRACE(0, "UWebSocket::sendData(%b,%p,%d,%.*S,%u)", isServer, socket, type, len, data, len)
 
+   /*
    if (UNLIKELY(len > 0xffffffff))
    {
       status_code = U_WS_STATUS_CODE_MESSAGE_TOO_LARGE;
-
       U_RETURN(false);
    }
+   */
 
-   uint32_t header_length = (len > 125U ? 2U : 0) + (len > 0xffff ? 8U : 0);
    uint8_t opcode, masking_key[4];
+   uint32_t header_length = (len > 125U ? 2U : 0) + (len > 0xffff ? 8U : 0);
 
    if (isServer) header_length += 2U;
    else
@@ -754,7 +755,7 @@ bool UWebSocket::sendData(const bool isServer, USocket* socket, int type, const 
 
 bool UWebSocket::sendControlFrame(const bool isServer, USocket* socket, int opcode, const unsigned char* payload, uint32_t payload_length)
 {
-   U_TRACE(0, "UWebSocket::sendControlFrame(%s, %p,%d,%.*S,%u)", isServer ? "isServer" : "isClient", socket, opcode, payload_length, payload, payload_length)
+   U_TRACE(0, "UWebSocket::sendControlFrame(%b,%p,%d,%.*S,%u)", isServer, socket, opcode, payload_length, payload, payload_length)
 
    uint32_t ncount = (isServer ? 2U : 6U) + payload_length;
 
@@ -775,10 +776,10 @@ bool UWebSocket::sendControlFrame(const bool isServer, USocket* socket, int opco
    else
    {
       header[1] = (payload_length | 0x80);
-		
-		uint8_t masking_key[4];
-		*((uint32_t*)masking_key) = u_get_num_random();
-		
+      
+      uint8_t masking_key[4];
+      *((uint32_t*)masking_key) = u_get_num_random();
+      
       u_put_unalignedp32(header+2, *((uint32_t*)masking_key));
 
       for (uint32_t i = 0; i < payload_length; ++i)
