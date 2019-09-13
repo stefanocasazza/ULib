@@ -631,10 +631,10 @@ void UREDISClusterMaster::calculateNodeMap()
    uint16_t workingLowHashSlot;
    uint16_t workingHighHashSlot;
 
-   (void) subscriptionClient.processRequest(U_RC_MULTIBULK, U_CONSTANT_TO_PARAM("CLUSTER SLOTS"));
+   (void) subscriptionClient->processRequest(U_RC_MULTIBULK, U_CONSTANT_TO_PARAM("CLUSTER SLOTS"));
    
    UHashMap<RedisClusterNode *> newNodes;
-   const UVector<UString>& rawNodes = subscriptionClient.vitem;
+   const UVector<UString>& rawNodes = subscriptionClient->vitem;
 
    for (uint32_t a = 0, b = rawNodes.size(); a < b; a+=2)
    {
@@ -682,11 +682,11 @@ bool UREDISClusterMaster::connect(const char* host, unsigned int _port)
 {
    U_TRACE(0, "UREDISClusterMaster::connect(%S,%u)", host, _port)
 
-   if (subscriptionClient.connect(host, _port))
+   if (subscriptionClient->connect(host, _port))
    {
       calculateNodeMap();
 
-      UServer_Base::addHandlerEvent(&subscriptionClient); // NB: we ask to listen for events to a Redis publish channel... 
+      UServer_Base::addHandlerEvent(subscriptionClient); // NB: we ask to listen for events to a Redis publish channel... 
 
       U_RETURN(true);
    }
@@ -698,9 +698,9 @@ bool UREDISClusterMaster::clusterUnsubscribe(const UString& channel) // unregist
 {
    U_TRACE(0, "UREDISClusterMaster::clusterUnsubscribe(%V)", channel.rep)
 
-   if (subscriptionClient.processRequest(U_RC_MULTIBULK, U_CONSTANT_TO_PARAM("UNSUBSCRIBE"), U_STRING_TO_PARAM(channel)))
+   if (subscriptionClient->processRequest(U_RC_MULTIBULK, U_CONSTANT_TO_PARAM("UNSUBSCRIBE"), U_STRING_TO_PARAM(channel)))
    {
-      (void)subscriptionClient.UREDISClient_Base::pchannelCallbackMap->erase(channel);
+      (void)subscriptionClient->UREDISClient_Base::pchannelCallbackMap->erase(channel);
 
       U_RETURN(true);
    }
@@ -712,14 +712,14 @@ bool UREDISClusterMaster::clusterSubscribe(const UString& channel, vPFcscs callb
 {
    U_TRACE(0, "UREDISClusterMaster::clusterSubscribe(%V,%p)", channel.rep, callback)
 
-   if (subscriptionClient.processRequest(U_RC_MULTIBULK, U_CONSTANT_TO_PARAM("SUBSCRIBE"), U_STRING_TO_PARAM(channel)))
+   if (subscriptionClient->processRequest(U_RC_MULTIBULK, U_CONSTANT_TO_PARAM("SUBSCRIBE"), U_STRING_TO_PARAM(channel)))
    {
-      if (subscriptionClient.UREDISClient_Base::pchannelCallbackMap == U_NULLPTR)
+      if (subscriptionClient->UREDISClient_Base::pchannelCallbackMap == U_NULLPTR)
       {
-         U_NEW(UHashMap<void*>, subscriptionClient.UREDISClient_Base::pchannelCallbackMap, UHashMap<void*>);
+         U_NEW(UHashMap<void*>, subscriptionClient->UREDISClient_Base::pchannelCallbackMap, UHashMap<void*>);
       }
 
-      subscriptionClient.UREDISClient_Base::pchannelCallbackMap->insert(channel, (const void*)callback);
+      subscriptionClient->UREDISClient_Base::pchannelCallbackMap->insert(channel, (const void*)callback);
 
       U_RETURN(true);
    }
@@ -754,12 +754,12 @@ const UVector<UString>& UREDISClusterMaster::processPipeline(UString& pipeline, 
             }
          }
 
-      UREDISClusterClient& client = clientForHashslot(hashslot);
+      UREDISClusterClient* client = clientForHashslot(hashslot);
 
-      if constexpr (silence) (void) client.sendRequest(workingString);
+      if constexpr (silence) (void) client->sendRequest(workingString);
       else
          {
-replay:  (void) client.processRequest(U_RC_MULTIBULK, U_STRING_TO_PARAM(workingString));
+replay:  (void) client->processRequest(U_RC_MULTIBULK, U_STRING_TO_PARAM(workingString));
 
          switch (error)
             {
@@ -772,16 +772,16 @@ replay:  (void) client.processRequest(U_RC_MULTIBULK, U_STRING_TO_PARAM(workingS
 
             case ClusterError::ask:
                {
-               UREDISClusterClient& temporaryClient = clientForASKip();
+               UREDISClusterClient* temporaryClient = clientForASKip();
 
-               (void) temporaryClient.processRequest(U_RC_MULTIBULK, U_STRING_TO_PARAM(workingString));
+               (void) temporaryClient->processRequest(U_RC_MULTIBULK, U_STRING_TO_PARAM(workingString));
                }
             break;
 
             case ClusterError::none: break;
             }
 
-         if constexpr (silence == false) subscriptionClient.vitem.move(client.vitem);
+         if constexpr (silence == false) subscriptionClient->vitem.move(client->vitem);
 
          count = 0;
          workingString.clear();
@@ -846,7 +846,7 @@ replay:  (void) client.processRequest(U_RC_MULTIBULK, U_STRING_TO_PARAM(workingS
       }
    }
    
-   return subscriptionClient.vitem;
+   return subscriptionClient->vitem;
 }
 #  endif
 
