@@ -747,7 +747,7 @@ const UVector<UString>& UREDISClusterMaster::processPipeline(UString& pipeline, 
          if (count > 1)
             {
             (void) workingString.insert(0, U_CONSTANT_TO_PARAM("CLIENT REPLY OFF \r\n"));
-            (void) workingString.append(U_CONSTANT_TO_PARAM("CLIENT REPLY ON \r\n"));
+            (void) workingString.append(U_CONSTANT_TO_PARAM("CLIENT REPLY SKIP \r\n CLIENT REPLY ON \r\n"));
             }
          else
             {
