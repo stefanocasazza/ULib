@@ -226,9 +226,14 @@ public:
       U_TRACE(0, "UREDISClient_Base::silencedMulti(%V)", pipeline.rep)
 
       (void) pipeline.insert(0, U_CONSTANT_TO_PARAM("CLIENT REPLY OFF \r\n"));
-      (void) pipeline.append(U_CONSTANT_TO_PARAM("CLIENT REPLY SKIP \r\n CLIENT REPLY ON \r\n"));
+      (void) pipeline.append(U_CONSTANT_TO_PARAM("CLIENT REPLY ON \r\n"));
 
-      return sendRequest(pipeline);
+      bool result = sendRequest(pipeline);
+
+      // CLIENT REPLY ON responds with "+OK\r\n" and no way to silence it
+      UClient_Base::readResponse();
+
+      return result;
       }
 
    // STRING (@see http://redis.io/commands#string)
