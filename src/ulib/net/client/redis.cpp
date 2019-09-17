@@ -27,6 +27,7 @@ UREDISClient_Base::~UREDISClient_Base()
    if (pchannelCallbackMap)
       {
       U_DELETE(pchannelCallbackMap)
+               pchannelCallbackMap = U_NULLPTR;
       }
 }
 
@@ -518,8 +519,6 @@ int UREDISClient_Base::handlerRead()
 {
    U_TRACE_NO_PARAM(0, "UREDISClient_Base::handlerRead()")
 
-   U_INTERNAL_ASSERT_POINTER(pchannelCallbackMap)
-
    if ((clear(), UClient_Base::response.setEmpty(), UClient_Base::readResponse(U_SINGLE_READ)))
       {
       char prefix = UClient_Base::response[0];
@@ -537,6 +536,8 @@ int UREDISClient_Base::handlerRead()
       processResponse();
 
       UString channel = vitem[1];
+
+      U_INTERNAL_ASSERT_POINTER(pchannelCallbackMap)
 
       vPFcscs callback = (vPFcscs) pchannelCallbackMap->at(channel); 
 
@@ -633,7 +634,9 @@ void UREDISClusterMaster::calculateNodeMap()
 
    (void) subscriptionClient->processRequest(U_RC_MULTIBULK, U_CONSTANT_TO_PARAM("CLUSTER SLOTS"));
    
-   UHashMap<RedisClusterNode *> newNodes;
+   UHashMap<RedisClusterNode *> *newNodes;
+   U_NEW(UHashMap<RedisClusterNode *>, newNodes, UHashMap<RedisClusterNode *>);
+
    const UVector<UString>& rawNodes = subscriptionClient->vitem;
 
    for (uint32_t a = 0, b = rawNodes.size(); a < b; a+=2)
@@ -656,7 +659,7 @@ void UREDISClusterMaster::calculateNodeMap()
          UString compositeAddress(50U);
          compositeAddress.snprintf(U_CONSTANT_TO_PARAM("%v.%v"), first.rep, second.rep);
 
-         RedisClusterNode *workingNode = clusterNodes.erase(compositeAddress);
+         RedisClusterNode *workingNode = clusterNodes ? clusterNodes->erase(compositeAddress) : U_NULLPTR;
 
          // in the case of MOVE some nodes will be new, but others we'll already be connected to
          if (workingNode)
@@ -664,18 +667,21 @@ void UREDISClusterMaster::calculateNodeMap()
             workingNode->lowHashSlot = workingLowHashSlot;
             workingNode->highHashSlot = workingHighHashSlot;
          }
-         else workingNode = new RedisClusterNode(first, second.strtoul(), workingLowHashSlot, workingHighHashSlot, this);
+         else
+         {  
+            U_NEW(RedisClusterNode, workingNode, RedisClusterNode(first, second.strtoul(), workingLowHashSlot, workingHighHashSlot, this));
+         }
          
-         newNodes.insert(compositeAddress, workingNode);
-
-         workingNode = newNodes[compositeAddress];
+         newNodes->insert(compositeAddress, workingNode);
 
          findHashSlots = true;
       }
    }
 
    // if any nodes were taken offline, the clients would've disconnected by default
-   clusterNodes.assign(newNodes);
+   if (clusterNodes) U_DELETE(clusterNodes);
+
+   clusterNodes = newNodes;
 }
 
 bool UREDISClusterMaster::connect(const char* host, unsigned int _port)
@@ -685,13 +691,16 @@ bool UREDISClusterMaster::connect(const char* host, unsigned int _port)
    if (subscriptionClient->connect(host, _port))
    {
       calculateNodeMap();
+     
+      U_INTERNAL_ASSERT_EQUALS(UREDISClient_Base::pchannelCallbackMap, U_NULLPTR)
+
+      U_NEW(UHashMap<void*>, UREDISClient_Base::pchannelCallbackMap, UHashMap<void*>());
 
       subscriptionClient->UEventFd::fd = subscriptionClient->getFd();
       subscriptionClient->UEventFd::op_mask |=  EPOLLET;
-      subscriptionClient->UEventFd::op_mask &= ~EPOLLRDHUP;
-
-      UServer_Base::addHandlerEvent(subscriptionClient); // NB: we ask to listen for events to a Redis publish channel... 
-
+      
+      UServer_Base::addHandlerEvent(subscriptionClient);
+     
       U_RETURN(true);
    }
 
@@ -755,7 +764,12 @@ const UVector<UString>& UREDISClusterMaster::processPipeline(UString& pipeline, 
 
       UREDISClusterClient* client = clientForHashslot(hashslot);
 
-      if constexpr (silence) (void) client->sendRequest(workingString);
+      if constexpr (silence)
+      {
+         (void) client->sendRequest(workingString);
+         // CLIENT REPLY ON responds with "+OK\r\n" and no way to silence it
+         client->UClient_Base::readResponse();
+      }
       else
          {
 replay:  (void) client->processRequest(U_RC_MULTIBULK, U_STRING_TO_PARAM(workingString));

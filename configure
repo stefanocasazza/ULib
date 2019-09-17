@@ -928,6 +928,7 @@ CXX
 PKG_CONFIG
 CROSS_COMPILING_FALSE
 CROSS_COMPILING_TRUE
+PORTNAME
 EGREP
 GREP
 CPP
@@ -5773,6 +5774,48 @@ ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
 ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
 
+
+template=
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking which template to use" >&5
+$as_echo_n "checking which template to use... " >&6; }
+
+case $host_os in
+   linux*|gnu*|k*bsd*-gnu)
+             template=linux ;;
+    mingw*)  template=win32 ;;
+   cygwin*)  template=cygwin ;;
+#     aix*)  template=aix ;;
+#  darwin*)  template=darwin ;;
+#dragonfly*) template=netbsd ;;
+# freebsd*)  template=freebsd ;;
+#    hpux*)  template=hpux ;;
+#  netbsd*)  template=netbsd ;;
+# openbsd*)  template=openbsd ;;
+#     sco*)  template=sco ;;
+# solaris*)  template=solaris ;;
+#   sysv5*)  template=unixware ;;
+esac
+
+  if test x"$template" = x"" ; then
+    as_fn_error $? "
+***************************************************************************
+ULib has apparently not been ported to your platform yet. Try a manual
+configuration. Please also contact <stefano.casazza@gmail.com> to see about
+rectifying this. Include the above 'checking host system type...' line.
+***************************************************************************
+" "$LINENO" 5
+  fi
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $template" >&5
+$as_echo "$template" >&6; }
+
+PORTNAME=$template
+
+
+#
+# Read the template
+#
+# . "$srcdir/src/template/$template" || exit
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking initial CXX" >&5
 $as_echo_n "checking initial CXX... " >&6; }
@@ -35199,6 +35242,82 @@ CXX=$CXX_save
 
 
 
+
+# Check if the compiler still works with the final flag settings
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the C compiler still works" >&5
+$as_echo_n "checking whether the C compiler still works... " >&6; }
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+return 0;
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_cxx_try_link "$LINENO"; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+   as_fn_error $? "cannot proceed" "$LINENO" 5
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+
+if test "$cross_compiling" != "yes"; then
+# This test makes sure that run tests work at all. Sometimes a shared
+# library is found by the linker, but the runtime linker can't find it.
+# This check should come after all modifications of compiler or linker
+# variables, and before any other run tests
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking test program" >&5
+$as_echo_n "checking test program... " >&6; }
+if test "$cross_compiling" = yes; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: cross-compiling" >&5
+$as_echo "cross-compiling" >&6; }
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+int main() { return 0; }
+_ACEOF
+if ac_fn_cxx_try_run "$LINENO"; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: ok" >&5
+$as_echo "ok" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: failed" >&5
+$as_echo "failed" >&6; }
+as_fn_error $? "
+Could not execute a simple test program. This may be a problem
+related to locating shared libraries. Check the file 'config.log'
+for the exact reason." "$LINENO" 5
+fi
+rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
+  conftest.$ac_objext conftest.beam conftest.$ac_ext
+fi
+
+fi
+
+# Create compiler version string
+if test x"$GCC" = x"yes" ; then
+  cc_string=`${CC} --version | sed q`
+  case $cc_string in [A-Za-z]*) ;; *) cc_string="GCC $cc_string";; esac
+elif test x"$SUN_STUDIO_CC" = x"yes" ; then
+  cc_string=`${CC} -V 2>&1 | sed q`
+else
+  cc_string=$CC
+fi
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: using compiler=$cc_string" >&5
+$as_echo "$as_me: using compiler=$cc_string" >&6;}
+{ $as_echo "$as_me:${as_lineno-$LINENO}: using CFLAGS=$CFLAGS" >&5
+$as_echo "$as_me: using CFLAGS=$CFLAGS" >&6;}
+{ $as_echo "$as_me:${as_lineno-$LINENO}: using CPPFLAGS=$CPPFLAGS" >&5
+$as_echo "$as_me: using CPPFLAGS=$CPPFLAGS" >&6;}
+{ $as_echo "$as_me:${as_lineno-$LINENO}: using LDFLAGS=$LDFLAGS" >&5
+$as_echo "$as_me: using LDFLAGS=$LDFLAGS" >&6;}
 
 
 cat >>confdefs.h <<_ACEOF

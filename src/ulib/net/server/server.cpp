@@ -4508,7 +4508,14 @@ void UServer_Base::runLoop(const char* user)
 
       UNotifier::min_connection += n;
 
-      for (uint32_t i = 0; i < n; ++i) (*handler_other)[i]->UEventFd::op_mask &= ~EPOLLRDHUP;
+      for (uint32_t i = 0; i < n; ++i)
+         {
+         U_INTERNAL_DUMP("(*handler_other)[%u]->UEventFd::fd = %d", i, (*handler_other)[i]->UEventFd::fd)
+
+         U_INTERNAL_ASSERT_DIFFERS((*handler_other)[i]->UEventFd::fd, -1)
+
+         (*handler_other)[i]->UEventFd::op_mask &= ~EPOLLRDHUP;
+         }
       }
 
    UNotifier::max_connection += (UNotifier::num_connection = UNotifier::min_connection);

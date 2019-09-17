@@ -8,17 +8,16 @@
 #
 #  AC_INIT
 #
-#  checks for programs
-#  checks for libraries
-#  checks for header files
-#  checks for typedefs
-#  checks for structures
-#  checks for variables
-#  checks for compiler characteristics
-#  checks for library functions
-#  checks for system services
+#  1. checks for programs
+#  2. checks for libraries
+#  3. checks for header files
+#  4. checks for typedefs
+#  5. checks for structures
+#  6. checks for compiler characteristics
+#  7. checks for library functions
+#  8. checks for system services
 #
-#  AC_CONFIG_FILES([FILE...])
+#  Read the Autoconf manual for details
 
 # SECTION 1: AC_INIT
 #
@@ -58,6 +57,46 @@ AC_USE_SYSTEM_EXTENSIONS
 
 dnl This is a C++ library after all
 AC_LANG([C++])
+
+template=
+AC_MSG_CHECKING([which template to use])
+
+case $host_os in
+   linux*|gnu*|k*bsd*-gnu)
+             template=linux ;;
+    mingw*)  template=win32 ;;
+   cygwin*)  template=cygwin ;;
+#     aix*)  template=aix ;;
+#  darwin*)  template=darwin ;;
+#dragonfly*) template=netbsd ;;
+# freebsd*)  template=freebsd ;;
+#    hpux*)  template=hpux ;;
+#  netbsd*)  template=netbsd ;;
+# openbsd*)  template=openbsd ;;
+#     sco*)  template=sco ;;
+# solaris*)  template=solaris ;;
+#   sysv5*)  template=unixware ;;
+esac
+
+  if test x"$template" = x"" ; then
+    AC_MSG_ERROR([[
+***************************************************************************
+ULib has apparently not been ported to your platform yet. Try a manual
+configuration. Please also contact <stefano.casazza@gmail.com> to see about
+rectifying this. Include the above 'checking host system type...' line.
+***************************************************************************
+]])
+  fi
+
+AC_MSG_RESULT([$template])
+
+PORTNAME=$template
+AC_SUBST(PORTNAME)
+
+#
+# Read the template
+#
+# . "$srcdir/src/template/$template" || exit
 
 dnl Initial CXX, CFLAGS, CXXFLAGS, CPPFLAGS, LDFLAGS, LIBS
 AC_MSG_CHECKING(initial CXX)
@@ -2879,6 +2918,44 @@ AC_SUBST(CXX)
 AC_SUBST(LDFLAGS)
 AC_SUBST(CXXFLAGS)
 AC_SUBST(CPPFLAGS)
+
+# Check if the compiler still works with the final flag settings
+AC_MSG_CHECKING([whether the C compiler still works])
+AC_LINK_IFELSE([AC_LANG_PROGRAM([], [return 0;])],
+  [AC_MSG_RESULT(yes)],
+  [AC_MSG_RESULT(no)
+   AC_MSG_ERROR([cannot proceed])])
+
+if test "$cross_compiling" != "yes"; then
+# This test makes sure that run tests work at all. Sometimes a shared
+# library is found by the linker, but the runtime linker can't find it.
+# This check should come after all modifications of compiler or linker
+# variables, and before any other run tests
+AC_MSG_CHECKING([test program])
+AC_RUN_IFELSE([AC_LANG_SOURCE([int main() { return 0; }])],
+[AC_MSG_RESULT(ok)],
+[AC_MSG_RESULT(failed)
+AC_MSG_ERROR([[
+Could not execute a simple test program. This may be a problem
+related to locating shared libraries. Check the file 'config.log'
+for the exact reason.]])],
+[AC_MSG_RESULT([cross-compiling])])
+fi
+
+# Create compiler version string
+if test x"$GCC" = x"yes" ; then
+  cc_string=`${CC} --version | sed q`
+  case $cc_string in [[A-Za-z]]*) ;; *) cc_string="GCC $cc_string";; esac
+elif test x"$SUN_STUDIO_CC" = x"yes" ; then
+  cc_string=`${CC} -V 2>&1 | sed q`
+else
+  cc_string=$CC
+fi
+
+AC_MSG_NOTICE([using compiler=$cc_string])
+AC_MSG_NOTICE([using CFLAGS=$CFLAGS])
+AC_MSG_NOTICE([using CPPFLAGS=$CPPFLAGS])
+AC_MSG_NOTICE([using LDFLAGS=$LDFLAGS])
 
 AC_DEFINE_UNQUOTED(CXX_VAR, 		"$CXX", [Compiler])
 AC_DEFINE_UNQUOTED(LIBS_VAR, 		"$ULIB_LIBS", [Libraries])

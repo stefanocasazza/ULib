@@ -884,6 +884,8 @@ public:
       U_INTERNAL_DUMP("_length = %u", _length)
 
       U_INTERNAL_ASSERT_EQUALS(_length, t._length)
+
+   // t.clear();
       }
 
    // STREAMS

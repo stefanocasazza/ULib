@@ -228,7 +228,12 @@ public:
       (void) pipeline.insert(0, U_CONSTANT_TO_PARAM("CLIENT REPLY OFF \r\n"));
       (void) pipeline.append(U_CONSTANT_TO_PARAM("CLIENT REPLY ON \r\n"));
 
-      return sendRequest(pipeline);
+      bool result = sendRequest(pipeline);
+
+      // CLIENT REPLY ON responds with "+OK\r\n" and no way to silence it
+      UClient_Base::readResponse();
+
+      return result;
       }
 
    // STRING (@see http://redis.io/commands#string)
@@ -819,7 +824,6 @@ protected:
       U_TRACE_CTOR(0, UREDISClient_Base, "")
 
       err = 0;
-      U_NEW(UHashMap<void*>, pchannelCallbackMap, UHashMap<void*>());
       }
 
    void init();
@@ -1036,7 +1040,7 @@ private:
    ClusterError error;
    UString temporaryASKip;
    UREDISClusterClient *subscriptionClient;
-   UHashMap<RedisClusterNode *> clusterNodes; // when these call they need to be processed... also when MOVED... we need to set up and recalculate
+   UHashMap<RedisClusterNode *> *clusterNodes; // when these call they need to be processed... also when MOVED... we need to set up and recalculate
 
    uint16_t hashslotForKey(const UString& hashableKey) { return u_crc16(U_STRING_TO_PARAM(hashableKey)); }
    
@@ -1056,7 +1060,7 @@ private:
    {
       U_TRACE(0, "UREDISClusterMaster::clientForHashslot(%u)", hashslot)
 
-      for (UHashMapNode *node : clusterNodes)
+      for (UHashMapNode *node : *clusterNodes)
       {
          RedisClusterNode* workingNode = (RedisClusterNode *)(node->elem);
 
@@ -1068,7 +1072,7 @@ private:
    
    UREDISClusterClient* clientForASKip()
    {
-      for (UHashMapNode *node : clusterNodes)
+      for (UHashMapNode *node : *clusterNodes)
       {
          RedisClusterNode* workingNode = (RedisClusterNode *)(node->elem);
 
@@ -1116,6 +1120,12 @@ public:
    UREDISClusterMaster()
    {
       U_NEW(UREDISClusterClient, subscriptionClient, UREDISClusterClient(this));
+   }
+   
+   ~UREDISClusterMaster()
+   {
+      U_DELETE(subscriptionClient);
+      if (clusterNodes) U_DELETE(clusterNodes);
    }
 
 #if defined(U_STDCPP_ENABLE) && defined(DEBUG)
