@@ -2844,7 +2844,7 @@ template <> inline uint32_t UObject2String<UString>(UString& object, char* pbuff
 #if defined(U_STDCPP_ENABLE) && defined(HAVE_CXX11)
 namespace std {
    template<> struct hash<UString> {
-      std::size_t operator()(UString const& str) const noexcept { return std::hash<char *>()(str.c_str()); }
+      std::size_t operator()(const UString& str) const noexcept { return str.hash(); } };
    };
 }
 #endif
