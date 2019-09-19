@@ -82,7 +82,9 @@ bool UWebSocket::checkForInitialData()
       {
       // we have read more data than necessary...
 
-      (void) rbuffer->append(UClientImage_Base::rbuffer->c_pointer(UClientImage_Base::size_request), sz - UClientImage_Base::size_request);
+      U_ASSERT(rbuffer->empty())
+
+      (void) rbuffer->assign(UClientImage_Base::rbuffer->c_pointer(UClientImage_Base::size_request), sz - UClientImage_Base::size_request);
 
       U_INTERNAL_DUMP("rbuffer(%u) = %V", rbuffer->size(), rbuffer->rep)
 
@@ -513,9 +515,9 @@ loop:
                      {
                      // framing_state = U_WS_DATA_FRAMING_CLOSE; // 6
 
-                     status_code = U_WS_STATUS_CODE_OK;
+                     status_code = U_WS_STATUS_CODE_GOING_AWAY;
 
-                     U_RETURN(U_WS_STATUS_CODE_OK);
+                     U_RETURN(U_WS_STATUS_CODE_GOING_AWAY);
                      }
 
                   case U_WS_OPCODE_PING:
@@ -811,6 +813,8 @@ void UWebSocket::handlerRequest()
    int fdmax = 0; // NB: to avoid 'warning: fdmax may be used uninitialized in this function'...
    fd_set fd_set_read, read_set;
 
+   rbuffer->setEmpty();
+
    (void) checkForInitialData(); // check if we have read more data than necessary...
 
    if (command == U_NULLPTR)
@@ -888,7 +892,7 @@ data:    if (handleDataFraming(rbuffer, UServer_Base::csocket) == U_WS_STATUS_CO
    // Send server-side closing handshake
 
    if (UServer_Base::csocket->isOpen() &&
-       sendClose(true, UServer_Base::csocket))
+       (status_code == U_WS_STATUS_CODE_GOING_AWAY || sendClose(true, UServer_Base::csocket)))
       {
       UClientImage_Base::close();
       }

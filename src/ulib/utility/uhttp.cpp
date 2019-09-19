@@ -1324,7 +1324,7 @@ void UHTTP::init()
 
    U_INTERNAL_DUMP("rlim = %u", rlim)
 
-   if (rlim > 1024)
+   if (rlim > 1024U)
       {
       /**
        * struct rlimit {
@@ -1333,19 +1333,31 @@ void UHTTP::init()
        * };
        */
 
-      struct rlimit nofile = { rlim, rlim };
+      struct rlimit nfile = { 0, 0 };
 
-      if (U_SYSCALL(setrlimit, "%d,%p", RLIMIT_NOFILE, &nofile) == 0)
+      if (U_SYSCALL(getrlimit, "%d,%p", RLIMIT_NOFILE, &nfile) == 0)
          {
-         U_SRV_LOG("Updated program fd_max: %u", rlim);
-         }
-      else
-         {
-         U_WARNING("Your DOCUMENT_ROOT cache may be require at least %u max file descriptors. I can't set maximum open files because of OS error", rlim);
+         U_INTERNAL_DUMP("nfile.rlim = {%u,%u}", nfile.rlim_cur, nfile.rlim_max)
 
-         if (U_SYSCALL(getrlimit, "%d,%p", RLIMIT_NOFILE, &nofile) == 0)
+         if (rlim > nfile.rlim_cur)
             {
-            U_WARNING("Current maximum open files is %u. If you need higher increase 'ulimit -n'", nofile.rlim_max);
+            if (rlim > nfile.rlim_max) rlim = nfile.rlim_max;
+
+            struct rlimit nofile = { rlim, rlim };
+
+            if (U_SYSCALL(setrlimit, "%d,%p", RLIMIT_NOFILE, &nofile) == 0)
+               {
+               U_SRV_LOG("Updated program fd_max: %u", rlim);
+               }
+            else
+               {
+               U_WARNING("Your DOCUMENT_ROOT cache may be require at least %u max file descriptors. I can't set maximum open files because of OS error", rlim);
+
+               if (U_SYSCALL(getrlimit, "%d,%p", RLIMIT_NOFILE, &nfile) == 0)
+                  {
+                  U_WARNING("Current maximum open files is %u. If you need higher increase 'ulimit -n'", nfile.rlim_max);
+                  }
+               }
             }
          }
       }
@@ -4885,12 +4897,16 @@ from_cache:
 
          U_ClientImage_parallelization = U_PARALLELIZATION_PARENT;
 
+         UWebSocket::rbuffer->setEmpty();
+
          UWebSocket::on_message_param(U_DPAGE_OPEN);
 
          if (UWebSocket::checkForInitialData() && // check if we have read more data than necessary...
              UWebSocket::handleDataFraming(UWebSocket::rbuffer, UServer_Base::csocket) == U_WS_STATUS_CODE_OK)
             {
             UWebSocket::on_message();
+
+            UWebSocket::message->setEmpty();
 
             if (U_http_info.nResponseCode == HTTP_INTERNAL_ERROR) U_RETURN(U_NOTIFIER_DELETE);
             }

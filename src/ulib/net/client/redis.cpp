@@ -549,7 +549,7 @@ int UREDISClient_Base::handlerRead()
 
 // by Victor Stewart
 
-#  if defined(HAVE_CXX17)
+#if defined(HAVE_CXX17)
 
 void UREDISClusterClient::processResponse()
 {
@@ -576,13 +576,11 @@ void UREDISClusterClient::processResponse()
    }
    else if (UClient_Base::response.find("-TRYAGAIN", 0, 9) != U_NOT_FOUND)
    {
-      //
-     //  * during a resharding the multi-key operations targeting keys that all exist and are all still in the same node (either the source or destination node) are still available.
-     //  * Operations on keys that don't exist or are - during the resharding - split between the source and destination nodes, will generate a -TRYAGAIN error. The client can try
-     //  * the operation after some time, or report back the error. As soon as migration of the specified hash slot has terminated, all multi-key operations are available again for
-     //  * that hash slot
+      // during a resharding the multi-key operations targeting keys that all exist and are all still in the same node (either the source or destination node) are still available.
+      // Operations on keys that don't exist or are - during the resharding - split between the source and destination nodes, will generate a -TRYAGAIN error. The client can try
+      // the operation after some time, or report back the error. As soon as migration of the specified hash slot has terminated, all multi-key operations are available again for
+      // that hash slot
        
-
       master->error = ClusterError::tryagain;
 
       UTimeVal(0L, 1000L).nanosleep(); // 0 sec, 1000 microsec = 1ms
@@ -598,6 +596,7 @@ void UREDISClusterClient::processResponse()
 void UREDISClusterMaster::calculateNodeMap()
 {
    U_TRACE_NO_PARAM(0, "UREDISClusterMaster::calculateNodeMap()")
+
    /*
    127.0.0.1:30001> cluster slots
    1) 1) (integer) 0
@@ -711,7 +710,7 @@ bool UREDISClusterMaster::clusterUnsubscribe(const UString& channel) // unregist
 {
    U_TRACE(0, "UREDISClusterMaster::clusterUnsubscribe(%V)", channel.rep)
 
-   if (subscriptionClient->processRequest(U_RC_MULTIBULK, U_CONSTANT_TO_PARAM("UNSUBSCRIBE"), U_STRING_TO_PARAM(channel)))
+   if (subscriptionClient->sendRequest(U_CONSTANT_TO_PARAM("UNSUBSCRIBE "), channel))
    {
       (void)subscriptionClient->UREDISClient_Base::pchannelCallbackMap->erase(channel);
 
@@ -725,7 +724,7 @@ bool UREDISClusterMaster::clusterSubscribe(const UString& channel, vPFcscs callb
 {
    U_TRACE(0, "UREDISClusterMaster::clusterSubscribe(%V,%p)", channel.rep, callback)
 
-   if (subscriptionClient->processRequest(U_RC_MULTIBULK, U_CONSTANT_TO_PARAM("SUBSCRIBE"), U_STRING_TO_PARAM(channel)))
+   if (subscriptionClient->sendRequest(U_CONSTANT_TO_PARAM("SUBSCRIBE "), channel))
    {
       subscriptionClient->UREDISClient_Base::pchannelCallbackMap->insert(channel, (const void*)callback);
 
@@ -810,15 +809,11 @@ replay:  (void) client->processRequest(U_RC_MULTIBULK, U_STRING_TO_PARAM(working
          while (it != commands.end()) {
 
             const UString& command = *it;
-          //  if (command.find("CLIENT", 0, 6)) goto isADirective;
 
             if (hashslotFromCommand(command) == hashslot)
                {
-               
                ++count;
 
-          //  goto isADirective;
-            
                (void) workingString.append(command + "\r\n");
                it = commands.erase(it);
                }
@@ -839,15 +834,11 @@ replay:  (void) client->processRequest(U_RC_MULTIBULK, U_STRING_TO_PARAM(working
          UString command = commands[index];
          command.trim();
 
-       //  if (command.find("CLIENT", 0, 6)) goto isADirective;
-
          workingHashslot = hashslotFromCommand(command);
 
          if (workingHashslot == hashslot) 
          {
             ++count;
-
-       //  goto isADirective;
 
             (void) workingString.append(command + "\r\n");
             if ((index +1) < n) continue;
@@ -861,7 +852,7 @@ replay:  (void) client->processRequest(U_RC_MULTIBULK, U_STRING_TO_PARAM(working
    
    return subscriptionClient->vitem;
 }
-#  endif
+#endif
 
 // DEBUG
 

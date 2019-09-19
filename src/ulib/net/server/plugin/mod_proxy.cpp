@@ -147,6 +147,8 @@ int UProxyPlugIn::handlerRequest()
 
       if (UHTTP::service->isWebSocket())
          {
+         UWebSocket::rbuffer->setEmpty();
+
          (void) UWebSocket::checkForInitialData(); // check if we have read more data than necessary...
 
          while (UWebSocket::handleDataFraming(UWebSocket::rbuffer, UServer_Base::csocket) == U_WS_STATUS_CODE_OK                                  &&
@@ -154,6 +156,8 @@ int UProxyPlugIn::handlerRequest()
                 UWebSocket::sendData(false, UServer_Base::csocket, UWebSocket::message_type, client_http->UClient_Base::response))
             {
             client_http->UClient_Base::clearData();
+
+            UWebSocket::rbuffer->setEmpty();
 
             UClientImage_Base::wbuffer->setEmpty();
             }

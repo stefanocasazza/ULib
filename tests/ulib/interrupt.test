@@ -26,4 +26,5 @@ start_cmd interrupt < tmp/c
 RESULT=0
 
 # Test against expected output
-test_output_wc l interrupt err/interrupt.err
+grep 'test_interrupt:' err/interrupt.err > out/interrupt.out
+test_output_wc w interrupt

@@ -538,12 +538,14 @@ void UClientImage_Base::handlerDelete()
    if (U_ClientImage_http(this) == '0')
       {
       if (bsocket_open &&
-          UWebSocket::sendClose(true, socket))
+          (UWebSocket::status_code == U_WS_STATUS_CODE_GOING_AWAY || UWebSocket::sendClose(true, socket)))
          {
          socket->close();
          }
 
       UWebSocket::on_message_param(U_DPAGE_CLOSE);
+
+      UWebSocket::rbuffer->setEmpty();
       }
    else
 #endif
@@ -1336,6 +1338,8 @@ data_missing:
       if (UWebSocket::handleDataFraming(rbuffer, socket) == U_WS_STATUS_CODE_OK)
          {
          UWebSocket::on_message();
+
+         UWebSocket::message->setEmpty();
 
          if (U_http_info.nResponseCode == HTTP_INTERNAL_ERROR) U_RETURN(U_NOTIFIER_DELETE);
          }

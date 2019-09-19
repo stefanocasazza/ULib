@@ -207,9 +207,7 @@ public:
       {
       U_TRACE(0, "UREDISClient_Base::silencedSingle(%V)", pipeline.rep)
 
-      (void) pipeline.insert(0, U_CONSTANT_TO_PARAM("CLIENT REPLY SKIP \r\n"));
-
-      return sendRequest(pipeline);
+      return sendRequest(U_CONSTANT_TO_PARAM("CLIENT REPLY SKIP \r\n"), pipeline);
       }
 
    const UVector<UString>& multi(const UString& pipeline)
@@ -225,10 +223,7 @@ public:
       {
       U_TRACE(0, "UREDISClient_Base::silencedMulti(%V)", pipeline.rep)
 
-      (void) pipeline.insert(0, U_CONSTANT_TO_PARAM("CLIENT REPLY OFF \r\n"));
-      (void) pipeline.append(U_CONSTANT_TO_PARAM("CLIENT REPLY ON \r\n"));
-
-      bool result = sendRequest(pipeline);
+      bool result = sendRequest(U_CONSTANT_TO_PARAM("CLIENT REPLY OFF \r\n"), pipeline + "CLIENT REPLY ON \r\n");
 
       // CLIENT REPLY ON responds with "+OK\r\n" and no way to silence it
       UClient_Base::readResponse();
@@ -839,6 +834,21 @@ protected:
       UClient_Base::iov[1].iov_base = (caddr_t)U_CRLF;
       UClient_Base::iov[1].iov_len  =
                UClient_Base::iovcnt = 2;
+
+      return UClient_Base::sendRequest(false);
+      }
+
+   bool sendRequest(const char* p1, uint32_t len1, const UString& pipeline)
+      {
+      U_TRACE(0, "UREDISClient_Base::sendRequest(%.*S,%u,%V)", len1, p1, len1, pipeline.rep)
+
+      UClient_Base::iov[0].iov_base = (caddr_t)p1;
+      UClient_Base::iov[0].iov_len  =          len1;
+      UClient_Base::iov[1].iov_base = (caddr_t)pipeline.data();
+      UClient_Base::iov[1].iov_len  =          pipeline.size();
+      UClient_Base::iov[2].iov_base = (caddr_t)U_CRLF;
+      UClient_Base::iov[2].iov_len  =
+               UClient_Base::iovcnt = 3;
 
       return UClient_Base::sendRequest(false);
       }
