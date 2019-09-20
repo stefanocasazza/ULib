@@ -710,7 +710,7 @@ bool UREDISClusterMaster::clusterUnsubscribe(const UString& channel) // unregist
 {
    U_TRACE(0, "UREDISClusterMaster::clusterUnsubscribe(%V)", channel.rep)
 
-   if (subscriptionClient->sendRequest(U_CONSTANT_TO_PARAM("UNSUBSCRIBE "), channel))
+   if (subscriptionClient->processRequest(U_RC_MULTIBULK, U_CONSTANT_TO_PARAM("UNSUBSCRIBE"), U_STRING_TO_PARAM(channel)))
    {
       (void)subscriptionClient->UREDISClient_Base::pchannelCallbackMap->erase(channel);
 
@@ -724,7 +724,7 @@ bool UREDISClusterMaster::clusterSubscribe(const UString& channel, vPFcscs callb
 {
    U_TRACE(0, "UREDISClusterMaster::clusterSubscribe(%V,%p)", channel.rep, callback)
 
-   if (subscriptionClient->sendRequest(U_CONSTANT_TO_PARAM("SUBSCRIBE "), channel))
+   if (subscriptionClient->processRequest(U_RC_MULTIBULK, U_CONSTANT_TO_PARAM("SUBSCRIBE"), U_STRING_TO_PARAM(channel)))
    {
       subscriptionClient->UREDISClient_Base::pchannelCallbackMap->insert(channel, (const void*)callback);
 

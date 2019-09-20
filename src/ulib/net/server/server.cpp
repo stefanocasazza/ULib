@@ -2414,7 +2414,11 @@ void UServer_Base::loadConfigParam()
    if (budp == false)
 #endif
    {
-   if (setDocumentRoot(pcfg->at(U_CONSTANT_TO_PARAM("DOCUMENT_ROOT"))) == false) U_ERROR("Setting DOCUMENT ROOT to %V failed", document_root->rep);
+   x = pcfg->at(U_CONSTANT_TO_PARAM("DOCUMENT_ROOT"));
+
+   if (x.empty()) x = U_STRING_FROM_CONSTANT("/var/www"); 
+
+   if (setDocumentRoot(x) == false) U_ERROR("Setting DOCUMENT ROOT to %V failed", document_root->rep);
    }
 
 #ifndef U_LOG_DISABLE
