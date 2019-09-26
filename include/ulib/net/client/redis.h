@@ -1129,7 +1129,7 @@ public:
 
    UREDISClusterMaster()
    {
-      error = 0;
+      error = ClusterError::none;
       clusterNodes = U_NULLPTR;
       U_NEW(UREDISClusterClient, subscriptionClient, UREDISClusterClient(this));
    }
