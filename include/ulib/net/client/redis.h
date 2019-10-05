@@ -1052,7 +1052,7 @@ private:
    UREDISClusterClient *subscriptionClient;
    UHashMap<RedisClusterNode *> *clusterNodes; // when these call they need to be processed... also when MOVED... we need to set up and recalculate
 
-   uint16_t hashslotForKey(const UString& hashableKey) { return u_crc16(U_STRING_TO_PARAM(hashableKey)); }
+   uint16_t hashslotForKey(const UString& hashableKey) { return u_crc16(U_STRING_TO_PARAM(hashableKey)) % 16384; }
    
    uint16_t hashslotFromCommand(const UString& command) 
    {
@@ -1129,6 +1129,8 @@ public:
 
    UREDISClusterMaster()
    {
+      error = ClusterError::none;
+      clusterNodes = U_NULLPTR;
       U_NEW(UREDISClusterClient, subscriptionClient, UREDISClusterClient(this));
    }
    
