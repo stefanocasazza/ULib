@@ -76,7 +76,7 @@ bool UWebSocket::checkForInitialData()
 
    uint32_t sz = UClientImage_Base::rbuffer->size();
 
-   U_INTERNAL_DUMP("UClientImage_Base::rbuffer(%u) = %V", sz, UClientImage_Base::rbuffer->rep)
+   U_INTERNAL_DUMP("UClientImage_Base::size_request = %u UClientImage_Base::rbuffer(%u) = %V", UClientImage_Base::size_request, sz, UClientImage_Base::rbuffer->rep)
 
    if (UClientImage_Base::size_request < sz)
       {
@@ -91,7 +91,7 @@ bool UWebSocket::checkForInitialData()
       U_RETURN(true);
       }
 
-   U_RETURN(true);
+   U_RETURN(false);
 }
 
 bool UWebSocket::sendAccept(USocket* socket)
