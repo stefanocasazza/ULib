@@ -1166,7 +1166,7 @@ public:
 
       va_list args;
       va_start(args, fmt_size);
-      pipeline.snprintf_add(format, fmt_size, args);
+      pipeline.vsnprintf_add(format, fmt_size, args);
       va_end(args);
 
       spans.emplace_back(UREDISClusterMaster::hashslotForKey(hashableKey), beginning, pipeline.size(), spans.size());
