@@ -1037,18 +1037,6 @@ private:
 
    static uint16_t hashslotForKey(const UString& hashableKey) { return u_crc16(U_STRING_TO_PARAM(hashableKey)) % 16384; }
    
-   uint16_t hashslotFromCommand(const UString& command) 
-   {
-      U_TRACE(0, "UREDISClusterMaster::hashslotFromCommand(%V)", command.rep)
-
-      uint32_t beginning = command.find('{') + 1,
-                     end = command.find('}', beginning);
-
-      U_DUMP("hashableKey = %v", command.substr(beginning, end - beginning).rep);
-
-      return hashslotForKey(command.substr(beginning, end - beginning));
-   }
-   
    UREDISClusterClient* clientForHashslot(uint16_t hashslot)
    {
       U_TRACE(0, "UREDISClusterMaster::clientForHashslot(%u)", hashslot)
