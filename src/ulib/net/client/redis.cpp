@@ -715,7 +715,7 @@ bool UREDISClusterMaster::clusterSubscribe(const UString& channel, vPFcscs callb
    U_RETURN(false);
 }
 
-void UREDISClusterMaster::sendToCluster(UREDISClusterClient* workingClient, const UString& hashableKey, const UString& pipeline)
+void UREDISClusterMaster::sendToCluster(UREDISClusterClient*& workingClient, const UString& hashableKey, const UString& pipeline)
    {
       ClusterError error;
       workingClient = clientForHashableKey(hashableKey);
