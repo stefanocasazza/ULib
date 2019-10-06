@@ -1146,6 +1146,17 @@ private:
    std::vector<Span> spans;
 
 public:
+	
+	void append(const UString& hashableKey, const UString& command)
+   {
+      size_t beginning = pipeline.size();
+
+      pipeline.reserve(pipeline.size() + command.size());
+
+      pipeline.append(command);
+
+      spans.emplace_back(UREDISClusterMaster::hashslotForKey(hashableKey), beginning, pipeline.size(), spans.size());
+   }
 
    void append(size_t increaseCapacityBy, const UString& hashableKey, const char* format, uint32_t fmt_size, ...)
    {
