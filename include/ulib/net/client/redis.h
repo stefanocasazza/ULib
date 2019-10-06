@@ -1147,6 +1147,11 @@ private:
 
 public:
 	
+	size_t size()
+	{
+		return pipeline.size();
+	}
+	
 	void setEmpty()
 	{
 		pipeline.setEmpty();
