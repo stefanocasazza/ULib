@@ -1147,6 +1147,12 @@ private:
 
 public:
 	
+	void setEmpty()
+	{
+		pipeline.setEmpty();
+		spans.clear();
+	}
+	
 	void append(const UString& hashableKey, const UString& command)
    {
       size_t beginning = pipeline.size();
