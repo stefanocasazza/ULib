@@ -1103,6 +1103,7 @@ public:
 
    UREDISClusterMaster()
    {
+		clusterNodes = U_NULLPTR;
       U_NEW(UREDISClusterClient, subscriptionClient, UREDISClusterClient);
    }
    
