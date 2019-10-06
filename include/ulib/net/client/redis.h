@@ -1068,7 +1068,7 @@ private:
    // this might delete cluster nodes so be careful of client pointers after
    void calculateNodeMap();
 
-   void sendToCluster(UREDISClusterClient* workingClient, const UString& hashableKey, const UString& pipeline);
+   void sendToCluster(UREDISClusterClient*& workingClient, const UString& hashableKey, const UString& pipeline);
    
 public:
    
