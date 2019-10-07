@@ -1033,6 +1033,7 @@ private:
    friend class AnonymousClusterPipeline;
 
    UREDISClusterClient *subscriptionClient;
+	UREDISClusterClient *managementClient;
    UHashMap<RedisClusterNode *> *clusterNodes;
 
    static uint16_t hashslotForKey(const UString& hashableKey) { return u_crc16(U_STRING_TO_PARAM(hashableKey)) % 16384; }
@@ -1048,7 +1049,7 @@ private:
          if ((workingNode->lowHashSlot <= hashslot) && (workingNode->highHashSlot >= hashslot)) return workingNode->client;
       }
 
-      return subscriptionClient; // never reached
+      return managementClient; // never reached
    }
    
    UREDISClusterClient* clientForIP(const UString& ip)
@@ -1060,7 +1061,7 @@ private:
          if (ip == workingNode->ipAddress) return workingNode->client;
       }
 
-      return subscriptionClient; // never reached
+      return managementClient; // never reached
    }
 
    UREDISClusterClient* clientForHashableKey(const UString& hashableKey) { return clientForHashslot(hashslotForKey(hashableKey)); }
@@ -1104,6 +1105,7 @@ public:
    UREDISClusterMaster()
    {
 		clusterNodes = U_NULLPTR;
+		U_NEW(UREDISClusterClient, managementClient, UREDISClusterClient);
       U_NEW(UREDISClusterClient, subscriptionClient, UREDISClusterClient);
    }
    
