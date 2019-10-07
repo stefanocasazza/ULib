@@ -611,12 +611,12 @@ void UREDISClusterMaster::calculateNodeMap()
    uint16_t workingLowHashSlot;
    uint16_t workingHighHashSlot;
 
-   (void) subscriptionClient->processRequest(U_RC_MULTIBULK, U_CONSTANT_TO_PARAM("CLUSTER SLOTS"));
+   (void) managementClient->processRequest(U_RC_MULTIBULK, U_CONSTANT_TO_PARAM("CLUSTER SLOTS"));
    
    UHashMap<RedisClusterNode *> *newNodes;
    U_NEW(UHashMap<RedisClusterNode *>, newNodes, UHashMap<RedisClusterNode *>);
 
-   const UVector<UString>& rawNodes = subscriptionClient->vitem;
+   const UVector<UString>& rawNodes = managementClient->vitem;
 
    for (uint32_t a = 0, b = rawNodes.size(); a < b; a+=2)
    {
@@ -661,16 +661,19 @@ void UREDISClusterMaster::calculateNodeMap()
    if (clusterNodes) U_DELETE(clusterNodes);
 
    clusterNodes = newNodes;
-   subscriptionClient->UClient_Base::response.setEmpty();
+   managementClient->UClient_Base::response.setEmpty();
 }
 
 bool UREDISClusterMaster::connect(const char* host, unsigned int _port)
 {
    U_TRACE(0, "UREDISClusterMaster::connect(%S,%u)", host, _port)
 
-   if (subscriptionClient->connect(host, _port))
+   if (managementClient->connect(host, _port))
    {
       calculateNodeMap();
+		
+		RedisClusterNode *randomNode = clusterNodes.randomElement();
+      subscriptionClient->connect(randomNode->ipAddress.c_str(), randomNode->port);
      
       U_INTERNAL_ASSERT_EQUALS(UREDISClient_Base::pchannelCallbackMap, U_NULLPTR)
 
@@ -866,7 +869,7 @@ const UVector<UString>& UREDISClusterMaster::clusterAnonMulti(const AnonymousClu
                   workingString.setEmpty();
 
                   UString& workingClientBuffer = workingClient->UClient_Base::response;
-                  UString& masterBuffer = subscriptionClient->UClient_Base::response;
+                  UString& masterBuffer = managementClient->UClient_Base::response;
                   masterBuffer.reserve(masterBuffer.size() + workingClientBuffer.size());
 
                   masterBuffer.append(workingClientBuffer);
@@ -999,7 +1002,7 @@ const UVector<UString>& UREDISClusterMaster::clusterAnonMulti(const AnonymousClu
          }
       }
 
-      UString& masterBuffer = subscriptionClient->UClient_Base::response;
+      UString& masterBuffer = managementClient->UClient_Base::response;
       masterBuffer.reserve(totalBufferSize);
 
       for (size_t index = 0; index < pipeline.spans.size(); index++)
@@ -1071,11 +1074,11 @@ const UVector<UString>& UREDISClusterMaster::clusterAnonMulti(const AnonymousClu
    }
 finish:
    
-   U_DUMP("UREDISClusterMaster::clusterAnonMulti(%b), finished. masterBuffer = %v", reorderable, subscriptionClient->UClient_Base::response.rep);
+   U_DUMP("UREDISClusterMaster::clusterAnonMulti(%b), finished. masterBuffer = %v", reorderable, managementClient->UClient_Base::response.rep);
 
-   subscriptionClient->UREDISClient_Base::processResponse();
+   managementClient->UREDISClient_Base::processResponse();
    
-   return subscriptionClient->vitem;
+   return managementClient->vitem;
 }
 #endif
 
