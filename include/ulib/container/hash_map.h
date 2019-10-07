@@ -806,6 +806,14 @@ public:
    T* at(const UString& k)             { return (T*) UHashMap<void*>::at(k.rep); }
    T* at(const UStringRep* k)          { return (T*) UHashMap<void*>::at(k); }
    T* at(const char* k, uint32_t klen) { return (T*) UHashMap<void*>::at(k, klen); }
+	
+	T* randomElement()
+   {
+      UVector<UString> keys(_length);
+      getKeys(keys);
+      
+      return at(keys[u_get_num_random_range0(_length)]);
+   }
 
    void clear() // erase all element
       {
