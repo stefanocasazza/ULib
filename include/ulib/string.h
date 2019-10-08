@@ -2365,20 +2365,6 @@ public:
    static vpFpcu printValueToBuffer;
 
    void printKeyValue(const char* key, uint32_t keylen, const char* data, uint32_t datalen);
-	
-	void snprintf_ct(UCompileTimeString format, ...)
-      {
-      U_TRACE(0, "UString::snprintf_ct(%.*S,%u)", format.size(), format, format.size())
-
-      U_INTERNAL_ASSERT_POINTER(format)
-
-      va_list argp;
-      va_start(argp, format.size());
-
-      UString::vsnprintf(format, format.size(), argp); 
-
-      va_end(argp);
-      }
 
    void snprintf(const char* format, uint32_t fmt_size, ...)
       {
@@ -2393,6 +2379,12 @@ public:
 
       va_end(argp);
       }
+	
+	template<class...Args>
+   void snprintf_ct(UCompileTimeString format, Args&&...args)
+   {
+      snprintf(format, format.size(), std::forward<Args>(args)...);
+   }
 
    void snprintf_add(const char* format, uint32_t fmt_size, ...)
       {
@@ -2407,6 +2399,12 @@ public:
 
       va_end(argp);
       }
+	
+	template<class...Args>
+   void snprintf_add_ct(UCompileTimeString format, Args&&...args)
+   {
+      snprintf_add(format, format.size(), std::forward<Args>(args)...);
+   }
 
    void snprintf_pos(uint32_t pos, const char* format, uint32_t fmt_size, ...)
       {
@@ -2426,6 +2424,12 @@ public:
 
       va_end(argp);
       }
+	
+	template<class...Args>
+   void snprintf_pos_ct(uint32_t pos, UCompileTimeString format, Args&&...args)
+   {
+      snprintf_pos(format, format.size(), std::forward<Args>(args)...);
+   }
 
    void size_adjust()                      { rep->size_adjust(); }
    void size_adjust(uint32_t value)        { rep->size_adjust(value); }
