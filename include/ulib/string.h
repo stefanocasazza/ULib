@@ -134,6 +134,25 @@ template <class T> class UJsonTypeHandler;
 typedef void (*vPFprpv)(UStringRep*,void*);
 typedef bool (*bPFprpv)(UStringRep*,void*);
 
+class UCompileTimeString {
+private:
+
+   const char * const string;
+   size_t length;
+
+public:
+
+   template<size_t N>
+   constexpr UCompileTimeString(const char(&literal)[N]) : string(literal), length(N - 1) {}
+
+   constexpr char operator[](size_t index) { return string[index]; }
+
+   // implicit cast to zero-terminated C-string
+   constexpr operator const char *() const { return string; }
+
+   constexpr size_t size() { return length; }
+};
+
 class U_EXPORT UStringRep {
 public:
 
@@ -2346,6 +2365,20 @@ public:
    static vpFpcu printValueToBuffer;
 
    void printKeyValue(const char* key, uint32_t keylen, const char* data, uint32_t datalen);
+	
+	void snprintf_ct(UCompileTimeString format, ...)
+      {
+      U_TRACE(0, "UString::snprintf_ct(%.*S,%u)", format.size(), format, format.size())
+
+      U_INTERNAL_ASSERT_POINTER(format)
+
+      va_list argp;
+      va_start(argp, format.size());
+
+      UString::vsnprintf(format, format.size(), argp); 
+
+      va_end(argp);
+      }
 
    void snprintf(const char* format, uint32_t fmt_size, ...)
       {
