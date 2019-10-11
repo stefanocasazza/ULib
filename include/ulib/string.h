@@ -1985,10 +1985,14 @@ public:
       {
       U_TRACE_NO_PARAM(0, "UString::c_str()")
 
-      if (isNull()           == false &&
-          isNullTerminated() == false)
+      if (rep                                &&
+          rep != UStringRep::string_rep_null &&
+          rep->str[rep->_length] != '\0')
          {
-         setNullTerminated();
+         U_INTERNAL_DUMP("rep = %p rep->parent = %p rep->references = %u rep->child = %d rep->_length = %u rep->_capacity = %u",
+                          rep,     rep->parent,     rep->references,     rep->child,     rep->_length,     rep->_capacity)
+
+         ((char*)rep->str)[rep->_length] = '\0';
          }
 
       return (char*)rep->str;

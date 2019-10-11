@@ -16,14 +16,31 @@
 
 #include <ulib/container/vector.h>
 
+//#define U_SHERWOOD_V8 1 // don't work!
+#ifdef U_SHERWOOD_V8
+/**
+ * Chaining hash table in a flat array
+ *
+ * Algorithm from https://github.com/skarupke/flat_hash_map
+ */
+#  define U_MAGIC_FOR_EMPTY      0xff  // 0b11111111
+#  define U_MAGIC_FOR_RESERVED   0xfe  // 0b11111110
+#  define U_BITS_FOR_DIRECT_HIT  0x80  // 0b10000000
+#  define U_MAGIC_FOR_DIRECT_HIT 0x00  // 0b00000000  
+#  define U_MAGIC_FOR_LIST_ENTRY 0x80  // 0b10000000
+#  define U_BITS_FOR_DISTANCE    0x7f  // 0b01111111
+
+#  define U_MAX_LOAD_FACTOR    0.9375f 
+#  define U_NUM_JUMP_DISTANCES 126
+#else
 /**
  * Modified, highly optimized Robin Hood Hashtable
  *
  * Algorithm from https://github.com/martinus/robin-hood-hashing/
  */
-
-#define U_MAX_LOAD_FACTOR       0.90f // 0.50f
-#define U_IS_BUCKET_TAKEN_MASK (1 << 7)
+#  define U_MAX_LOAD_FACTOR       0.90f // 0.50f
+#  define U_IS_BUCKET_TAKEN_MASK (1 << 7)
+#endif
 
 template <class T> class UHashMap;
 
@@ -320,7 +337,7 @@ public:
          {
          for (index = 0; index < _capacity; ++index)
             {
-            if ((info[index] & U_IS_BUCKET_TAKEN_MASK) != 0)
+            if (isNoEmpty(index))
                {
                setNodePointer();
 
@@ -340,7 +357,7 @@ public:
 
       for (++index; index < _capacity; ++index)
          {
-         if ((info[index] & U_IS_BUCKET_TAKEN_MASK) != 0)
+         if (isNoEmpty(index))
             {
             setNodePointer();
 
@@ -364,7 +381,7 @@ public:
 
       for (uint32_t idx = 0; idx < _capacity; ++idx)
          {
-         if ((info[idx] & U_IS_BUCKET_TAKEN_MASK) != 0)
+         if (isNoEmpty(idx))
             {
             setNodePointer(idx);
 
@@ -381,7 +398,7 @@ public:
 
       for (uint32_t idx = 0; idx < _capacity; ++idx)
          {
-         if ((info[idx] & U_IS_BUCKET_TAKEN_MASK) != 0)
+         if (isNoEmpty(idx))
             {
             setNodePointer(idx);
 
@@ -425,7 +442,7 @@ public:
 
       for (uint32_t idx = 0; idx < _capacity; ++idx)
          {
-         if ((info[idx] & U_IS_BUCKET_TAKEN_MASK) != 0)
+         if (isNoEmpty(idx))
             {
             setNodePointer(idx);
 
@@ -439,6 +456,27 @@ public:
          }
 
       U_INTERNAL_DUMP("_length = %u", _length)
+      }
+
+   void* randomElement()
+      {
+      U_TRACE_NO_PARAM(0, "UHashMap<void*>::randomElement()")
+
+      U_INTERNAL_DUMP("_length = %u", _length)
+
+      U_INTERNAL_ASSERT_MAJOR(_length, 0)
+
+      for (uint32_t idx = 0, i = 0, n = u_get_num_random_range0(_length); idx < _capacity; ++idx)
+         {
+         if (isNoEmpty(idx) && i++ == n)
+            {
+            setNodePointer(idx);
+
+            return (void*)node->elem;
+            }
+         }
+
+      return U_NULLPTR;
       }
 
 #ifdef DEBUG
@@ -509,34 +547,6 @@ protected:
       ((UStringRep*)lkey)->_length = klen;
       }
 
-   void putNode()
-      {
-      U_TRACE_NO_PARAM(0, "UHashMap<void*>::putNode()")
-
-      U_INTERNAL_DUMP("linfo = %u info[%u] = %u", linfo, index, info[index])
-
-      info[index] = linfo;
-
-      setNodePointer();
-
-      node->set();
-
-      U_ASSERT(checkAt(lkey, lelem))
-      }
-
-   void swapInfo()
-      {
-      U_TRACE_NO_PARAM(0, "UHashMap<void*>::swapInfo()")
-
-      U_INTERNAL_ASSERT_MAJOR(linfo, info[index])
-
-      uint8_t tmp = linfo;
-      linfo       = info[index];
-      info[index] = tmp;
-
-      U_INTERNAL_DUMP("linfo = %u info[%u] = %u", linfo, index, info[index])
-      }
-
    void _insert(const void* e)
       {
       U_TRACE(0, "UHashMap<void*>::_insert(%p)", e)
@@ -554,9 +564,7 @@ protected:
          }
       }
 
-   void swapNode();
    void insertAfterFind();
-   void swapNodeInResize();
 
    // Find a elem in the array with key
 
@@ -686,6 +694,184 @@ protected:
       U_RETURN(true);
       }
 
+   bool comparesEqual(bool ignore_case, bool bIntHash)
+      {
+      U_TRACE(0, "UHashMap<void*>::comparesEqual(%b,%b)", ignore_case, bIntHash)
+
+      setNodePointer();
+
+      if (bIntHash == false)
+         {
+         if (UStringRep::equal_lookup(lkey, node->key, ignore_case)) U_RETURN(true);
+         }
+      else
+         {
+         U_INTERNAL_ASSERT_POINTER(node->key)
+         U_INTERNAL_ASSERT_EQUALS(     lkey->size(), sizeof(uint32_t))
+         U_INTERNAL_ASSERT_EQUALS(node->key->size(), sizeof(uint32_t))
+
+         const char* s1 =      lkey->data();
+         const char* s2 = node->key->data();
+
+         if (*(uint32_t*)s1 == *(uint32_t*)s2) U_RETURN(true);
+         }
+
+      U_RETURN(false);
+      }
+
+   void resizeAndTryAgain() // Overflow: resize and try again
+      {
+      U_TRACE_NO_PARAM(0, "UHashMap<void*>::resizeAndTryAgain()")
+
+      const void*       tmp1 = lelem;
+      const UStringRep* tmp2 = lkey;
+
+      increase_size();
+
+      lelem = tmp1;
+      lkey  = tmp2;
+
+      (void) lookup();
+      }
+
+   void setEmpty()
+      {
+      U_TRACE_NO_PARAM(0, "UHashMap<void*>::setEmpty()")
+
+#  ifdef U_SHERWOOD_V8
+      (void) U_SYSCALL(memset, "%p,%d,%u", info, U_MAGIC_FOR_EMPTY, _capacity);
+#  else
+      (void) U_SYSCALL(memset, "%p,%d,%u", info, 0,                 _capacity);
+#  endif
+      }
+
+   bool isNoEmpty(uint32_t index_metadata) const
+      {
+      U_TRACE(0, "UHashMap<void*>::isNoEmpty(%u)", index_metadata)
+
+      U_INTERNAL_DUMP("info[%u] = %u", index_metadata, info[index_metadata])
+
+#  ifdef U_SHERWOOD_V8
+      uint8_t metadata = info[index_metadata];
+
+      if (metadata != U_MAGIC_FOR_EMPTY &&
+          metadata != U_MAGIC_FOR_RESERVED)
+         {
+         U_RETURN(true);
+         }
+
+      U_RETURN(false);
+#  else
+      U_RETURN((info[index_metadata] & U_IS_BUCKET_TAKEN_MASK) != 0);
+#  endif
+      }
+
+   void putNode()
+      {
+      U_TRACE_NO_PARAM(0, "UHashMap<void*>::putNode()")
+
+      U_INTERNAL_DUMP("linfo = %u info[%u] = %u", linfo, index, info[index])
+
+#  ifndef U_SHERWOOD_V8
+      info[index] = linfo;
+#  elif defined(DEBUG)
+      U_DUMP("isNoEmpty(%u) = %b", index, isNoEmpty(index))
+      U_ASSERT(isNoEmpty(index))
+#  endif
+
+      setNodePointer();
+
+      node->set();
+
+      U_ASSERT(checkAt(lkey, lelem))
+      }
+
+#ifndef U_SHERWOOD_V8
+   void swapNode();
+   void swapNodeInResize();
+
+   void swapInfo()
+      {
+      U_TRACE_NO_PARAM(0, "UHashMap<void*>::swapInfo()")
+
+      U_INTERNAL_ASSERT_MAJOR(linfo, info[index])
+
+      uint8_t tmp = linfo;
+      linfo       = info[index];
+      info[index] = tmp;
+
+      U_INTERNAL_DUMP("linfo = %u info[%u] = %u", linfo, index, info[index])
+      }
+#else
+   static uint64_t jump_distances[U_NUM_JUMP_DISTANCES];
+
+   int distance_from_metadata(uint32_t index_metadata) const
+      {
+      U_TRACE(0, "UHashMap<void*>::distance_from_metadata(%u)", index_metadata)
+
+      U_RETURN(info[index_metadata] & U_BITS_FOR_DISTANCE);
+      }
+
+   uint32_t next(uint32_t index_metadata) const
+      {
+      U_TRACE(0, "UHashMap<void*>::next(%u)", index_metadata)
+
+      uint32_t next_index = ((uint64_t)index_metadata + jump_distances[distance_from_metadata(index_metadata)]) & (uint64_t)mask;
+
+      U_RETURN(next_index);
+      }
+
+   uint32_t find_parent_block(uint32_t child) const
+      {
+      U_TRACE(0, "UHashMap<void*>::find_parent_block(%u)", child)
+
+      uint32_t parent_block = child;
+
+      for (;;)
+         {
+         uint32_t next_index = next(parent_block);
+
+         if (next_index == child) U_RETURN(parent_block);
+
+         parent_block = next_index;
+         }
+
+      U_RETURN(parent_block);
+      }
+
+   int8_t find_free_index(uint32_t& block) const
+      {
+      U_TRACE(0, "UHashMap<void*>::find_free_index(%u)", block)
+
+      for (int8_t jump_index = 1; jump_index < U_NUM_JUMP_DISTANCES; ++jump_index)
+         {
+         uint32_t free_block = ((uint64_t)block + jump_distances[jump_index]) & (uint64_t)mask;
+
+         if (info[free_block] == U_MAGIC_FOR_EMPTY)
+            {
+            block = free_block;
+
+            U_INTERNAL_DUMP("free_block[%u] = %u", free_block, info[free_block])
+
+            U_RETURN(jump_index);
+            }
+         }
+
+      U_RETURN(U_NUM_JUMP_DISTANCES);
+      }
+
+   void set_next(uint32_t index_metadata, int8_t jump_index)
+      {
+      U_TRACE(0, "UHashMap<void*>::set_next(%u,%u)", index_metadata, jump_index)
+
+      info[index_metadata] = (info[index_metadata] & ~U_BITS_FOR_DISTANCE) | jump_index;
+
+      U_INTERNAL_DUMP("info[%u] = %u", index_metadata, info[index_metadata])
+
+      U_INTERNAL_ASSERT_DIFFERS(info[index_metadata], U_MAGIC_FOR_EMPTY)
+      }
+#endif
+
 private:
    U_DISALLOW_COPY_AND_ASSIGN(UHashMap<void*>)
 
@@ -807,6 +993,8 @@ public:
    T* at(const UStringRep* k)          { return (T*) UHashMap<void*>::at(k); }
    T* at(const char* k, uint32_t klen) { return (T*) UHashMap<void*>::at(k, klen); }
 
+   T* randomElement() { return (T*) UHashMap<void*>::randomElement(); }
+
    void clear() // erase all element
       {
       U_TRACE_NO_PARAM(0+256, "UHashMap<T*>::clear()")
@@ -817,7 +1005,7 @@ public:
 
          for (uint32_t idx = 0; idx < _capacity; ++idx)
             {
-            if ((info[idx] & U_IS_BUCKET_TAKEN_MASK) != 0)
+            if (isNoEmpty(idx))
                {
                setNodePointer(idx);
 
@@ -829,7 +1017,7 @@ public:
 
          _length = 0;
 
-         (void) U_SYSCALL(memset, "%p,%d,%u", info, 0, _capacity);
+         setEmpty();
          }
       }
 
@@ -843,7 +1031,7 @@ public:
 
       for (uint32_t idx = 0; idx < _capacity; ++idx)
          {
-         if ((info[idx] & U_IS_BUCKET_TAKEN_MASK) != 0)
+         if (isNoEmpty(idx))
             {
             setNodePointer(idx);
 
@@ -998,7 +1186,7 @@ public:
 
       for (uint32_t idx = 0; idx < t._capacity; ++idx)
          {
-         if ((t.info[idx] & U_IS_BUCKET_TAKEN_MASK) != 0)
+         if (t.isNoEmpty(idx))
             {
             t.setNodePointer(idx);
 
@@ -1088,7 +1276,7 @@ public:
 
       for (uint32_t idx = 0; idx < t._capacity; ++idx)
          {
-         if ((t.info[idx] & U_IS_BUCKET_TAKEN_MASK) != 0)
+         if (t.isNoEmpty(idx))
             {
             t.setNodePointer(idx);
 
@@ -1170,6 +1358,15 @@ public:
    UString at(const UString& k)             { return (lkey = k.rep,    at()); }
    UString at(const UStringRep* k)          { return (lkey = k,        at()); }
    UString at(const char* k, uint32_t klen) { return (setKey(k, klen), at()); }
+
+   UString randomElement()
+      {
+      U_TRACE_NO_PARAM(0, "UHashMap<UString>::randomElement()")
+
+      UString str(UHashMap<UStringRep*>::randomElement());
+
+      U_RETURN_STRING(str);
+      }
 
    UString operator[](const char* k)
       {

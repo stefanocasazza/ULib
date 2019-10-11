@@ -191,7 +191,7 @@ protected:
 
       U_INTERNAL_ASSERT_MAJOR(nuint, 0)
 
-      vec       = (uint32_t*) UMemoryPool::_malloc(&nuint, sizeof(uint32_t), true);
+      vec       = (uint32_t*) UMemoryPool::pmalloc(&nuint, sizeof(uint32_t), true);
       _capacity = nuint;
       }
 

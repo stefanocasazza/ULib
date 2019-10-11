@@ -13,6 +13,10 @@
 
 #include <ulib/date.h>
 
+#if defined(__FreeBSD__)
+extern int daylight;
+#endif
+
 const char*    UTimeDate::periods[8]    = { "second", "minute", "hour", "day", "week", "month",   "year", "decade" };
 const uint32_t UTimeDate::lengths[8]    = {        1,       60,   3600, 86400, 604800, 2630880, 31570560, 315705600 };
 const short    UTimeDate::monthDays[13] = { 0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };

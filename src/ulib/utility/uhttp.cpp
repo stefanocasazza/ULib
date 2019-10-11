@@ -787,7 +787,7 @@ bool UHTTP::UCServletPage::compile(UString& program)
 
       if (size > 0)
          {
-         relocated = UMemoryPool::_malloc((uint32_t*)&size);
+         relocated = UMemoryPool::pmalloc((uint32_t*)&size);
 
          (void) U_SYSCALL(tcc_relocate, "%p,%p", s, relocated);
 

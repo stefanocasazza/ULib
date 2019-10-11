@@ -993,26 +993,9 @@ private:
 
 // by Victor Stewart
 
-#if defined(HAVE_CXX17)
+#if defined(U_STDCPP_ENABLE) && defined(HAVE_CXX17)
 
-class UREDISClusterMaster;
-
-class U_EXPORT UREDISClusterClient : public UREDISClient<UTCPSocket> {
-private:
-
-   UREDISClusterMaster *master;
-
-public:
-
-   U_MEMORY_TEST
-   U_MEMORY_ALLOCATOR
-   U_MEMORY_DEALLOCATOR
-
-   void processResponse();
-
-   UREDISClusterClient() = delete;
-   UREDISClusterClient(UREDISClusterMaster *_master) : master(_master) {}
-};
+typedef UREDISClient<UTCPSocket> UREDISClusterClient;
 
 struct RedisClusterNode {
 
@@ -1024,9 +1007,9 @@ struct RedisClusterNode {
    UREDISClusterClient *client;
    uint16_t port, lowHashSlot, highHashSlot;
 
-   RedisClusterNode(const UString& _ipAddress, uint16_t _port, uint16_t _lowHashSlot, uint16_t _highHashSlot, UREDISClusterMaster *master) : ipAddress(_ipAddress), port(_port), lowHashSlot(_lowHashSlot), highHashSlot(_highHashSlot)
+   RedisClusterNode(const UString& _ipAddress, uint16_t _port, uint16_t _lowHashSlot, uint16_t _highHashSlot) : ipAddress(_ipAddress), port(_port), lowHashSlot(_lowHashSlot), highHashSlot(_highHashSlot)
    {
-      U_NEW(UREDISClusterClient, client, UREDISClusterClient(master));
+      U_NEW(UREDISClusterClient, client, UREDISClusterClient);
       client->connect(ipAddress.c_str(), port);
    }
 
@@ -1042,29 +1025,18 @@ enum class ClusterError : uint8_t {
    tryagain
 };
 
+class AnonymousClusterPipeline;
+
 class U_EXPORT UREDISClusterMaster {
 private:
-   
-   friend class UREDISClusterClient;
 
-   ClusterError error;
-   UString temporaryASKip;
+   friend class AnonymousClusterPipeline;
+
    UREDISClusterClient *subscriptionClient;
-   UHashMap<RedisClusterNode *> *clusterNodes; // when these call they need to be processed... also when MOVED... we need to set up and recalculate
+   UREDISClusterClient *managementClient;
+   UHashMap<RedisClusterNode *> *clusterNodes;
 
-   uint16_t hashslotForKey(const UString& hashableKey) { return u_crc16(U_STRING_TO_PARAM(hashableKey)) % 16384; }
-   
-   uint16_t hashslotFromCommand(const UString& command) 
-   {
-      U_TRACE(0, "UREDISClusterMaster::hashslotFromCommand(%V)", command.rep)
-
-      // expects hashable keys to be delivered as abc{hashableKey}xyz value blah \r\n
-
-      uint32_t beginning = command.find('{') + 1,
-                     end = command.find('}', beginning) - 1;
-
-      return hashslotForKey(command.substr(beginning, end - beginning));
-   }
+   static uint16_t hashslotForKey(const UString& hashableKey) { return u_crc16(U_STRING_TO_PARAM(hashableKey)) % 16384; }
    
    UREDISClusterClient* clientForHashslot(uint16_t hashslot)
    {
@@ -1077,27 +1049,27 @@ private:
          if ((workingNode->lowHashSlot <= hashslot) && (workingNode->highHashSlot >= hashslot)) return workingNode->client;
       }
 
-      return subscriptionClient; // never reached
+      return managementClient; // never reached
    }
    
-   UREDISClusterClient* clientForASKip()
+   UREDISClusterClient* clientForIP(const UString& ip)
    {
       for (UHashMapNode *node : *clusterNodes)
       {
          RedisClusterNode* workingNode = (RedisClusterNode *)(node->elem);
 
-         if (temporaryASKip == workingNode->ipAddress) return workingNode->client;
+         if (ip == workingNode->ipAddress) return workingNode->client;
       }
 
-      return subscriptionClient; // never reached
+      return managementClient; // never reached
    }
 
    UREDISClusterClient* clientForHashableKey(const UString& hashableKey) { return clientForHashslot(hashslotForKey(hashableKey)); }
-   
-   template<bool silence>
-   const UVector<UString>& processPipeline(UString& pipeline, bool reorderable);
 
+   // this might delete cluster nodes so be careful of client pointers after
    void calculateNodeMap();
+
+   void sendToCluster(UREDISClusterClient*& workingClient, const UString& hashableKey, const UString& pipeline);
    
 public:
    
@@ -1107,31 +1079,34 @@ public:
       
    bool connect(const char* host = U_NULLPTR, unsigned int _port = 6379);
 
-   // all of these multis require all keys to exist within a single hash slot (on the same node isn't good enough)
+   UString clusterSingle(const UString& hashableKey, const UString& pipeline)
+   { 
+      UREDISClusterClient* workingClient;
+      sendToCluster(workingClient, hashableKey, pipeline);
+      return workingClient->UREDISClient_Base::vitem[0];
+   }
 
-   UString clusterSingle(const UString& hashableKey, const UString& pipeline) { return clientForHashableKey(hashableKey)->single(pipeline); }
-   const UVector<UString>& clusterMulti( const UString& hashableKey, const UString& pipeline) { return clientForHashableKey(hashableKey)->multi(pipeline); }
+   // both of these multis require all keys to exist within a single hash slot (on the same node isn't good enough)
+   const UVector<UString>& clusterMulti( const UString& hashableKey, const UString& pipeline)
+   { 
+      UREDISClusterClient* workingClient;
+      sendToCluster(workingClient, hashableKey, pipeline);
+      return workingClient->UREDISClient_Base::vitem;
+   }
 
-   void clusterSilencedMulti( const UString& hashableKey, UString& pipeline) { clientForHashableKey(hashableKey)->silencedMulti(pipeline); }
-   void clusterSilencedSingle(const UString& hashableKey, UString& pipeline) { clientForHashableKey(hashableKey)->silencedSingle(pipeline); }
+   // if reorderable == false, commands are grouped and pushed SEQUENTIALLY BY HASHSLOT. even if other commands point to hashslots on the same cluster node, we are unable to garuntee ordering since Redis only checks for -MOVED etc errors command by command as it executes them, and does not fail upon reaching a -MOVED etc error. this requires waiting for each response, to ensure no errors occured, before moving onto the next batch of commands.
 
-   // anon multis are pipelined commands of various keys that might belong to many nodes. always processed in order. Commands always delimined by \r\n
-   // example -> SET {abc}xyz 5 \r\n GET abc{xyz} \r\n SET xyz{abc} 9 \r\n
-   // if "abc" and "xyz" reside on different hashslots, if reorderable = false, this will generate 3 seperate pushes. if reorderable = true, only 2.
-   // currently supports CLIENT REPLY _____ type directives.... but any other commands without keys like {abc}, will break.
-   // if you wrap commands in CLIENT REPLY ____ directives and they DO NOT belong to the same hashslot, THESE WRITES WILL BREAK
-
-   const UVector<UString>& clusterAnonMulti(        UString& pipeline, bool reorderable) { return processPipeline<false>(pipeline, reorderable); }
-   void                    clusterSilencedAnonMulti(UString& pipeline, bool reorderable) { (void) processPipeline<true>( pipeline, reorderable); }
+   // if reorderable == true, we are able to group and push commands BY NODE regardless of sequence. we assume the fast-path 99.999% occurance that -MOVED and other errors did not occur, and push commands to redis as rapidly as possible without waiting on responses. we same a copy of all commands, and then at the end, check for -MOVED or other errors, and correct those if need be, while we process all resposnes.
+   const UVector<UString>& clusterAnonMulti(const AnonymousClusterPipeline& pipeline, bool reorderable);
 
    bool clusterUnsubscribe(const UString& channel); 
    bool clusterSubscribe(  const UString& channel, vPFcscs callback);
 
    UREDISClusterMaster()
    {
-      error = ClusterError::none;
       clusterNodes = U_NULLPTR;
-      U_NEW(UREDISClusterClient, subscriptionClient, UREDISClusterClient(this));
+      U_NEW(UREDISClusterClient, managementClient, UREDISClusterClient);
+      U_NEW(UREDISClusterClient, subscriptionClient, UREDISClusterClient);
    }
    
    ~UREDISClusterMaster()
@@ -1145,7 +1120,61 @@ public:
 #endif
 };
 
-extern template const UVector<UString>& UREDISClusterMaster::processPipeline<true>(UString& pipeline, bool reorderable);
-extern template const UVector<UString>& UREDISClusterMaster::processPipeline<false>(UString& pipeline, bool reorderable);
+class AnonymousClusterPipeline {
+private:
+
+   friend class UREDISClusterMaster;
+
+   struct Span {
+
+      int16_t hashslot;
+      size_t beginning, end, index;
+
+      Span(uint16_t _hashslot, size_t _beginning, size_t _end, size_t _index) : hashslot(_hashslot), beginning(_beginning), end(_end), index(_index) {}
+   };
+
+   UString pipeline;
+   std::vector<Span> spans;
+
+public:
+   
+   size_t size()
+   {
+      return pipeline.size();
+   }
+   
+   void setEmpty()
+   {
+      pipeline.setEmpty();
+      spans.clear();
+   }
+   
+   void append(const UString& hashableKey, const UString& command)
+   {
+      size_t beginning = pipeline.size();
+
+      pipeline.reserve(pipeline.size() + command.size());
+
+      pipeline.append(command);
+
+      spans.emplace_back(UREDISClusterMaster::hashslotForKey(hashableKey), beginning, pipeline.size(), spans.size());
+   }
+
+   void append(size_t increaseCapacityBy, const UString& hashableKey, const char* format, uint32_t fmt_size, ...)
+   {
+      size_t beginning = pipeline.size();
+
+      if (increaseCapacityBy > 0) pipeline.reserve(pipeline.size() + increaseCapacityBy);
+
+      va_list args;
+      va_start(args, fmt_size);
+      pipeline.vsnprintf_add(format, fmt_size, args);
+      va_end(args);
+
+      spans.emplace_back(UREDISClusterMaster::hashslotForKey(hashableKey), beginning, pipeline.size(), spans.size());
+   }
+
+   AnonymousClusterPipeline() : pipeline(300U) {}
+};
 #endif
 #endif

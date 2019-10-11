@@ -279,8 +279,8 @@ next:
    U_INTERNAL_ASSERT_EQUALS(kqevents, 0)
    U_INTERNAL_ASSERT_EQUALS(kqrevents, 0)
 
-   kqevents  = (struct kevent*) UMemoryPool::_malloc(max_connection, sizeof(struct kevent), true);
-   kqrevents = (struct kevent*) UMemoryPool::_malloc(max_connection, sizeof(struct kevent), true);
+   kqevents  = (struct kevent*) UMemoryPool::pmalloc(max_connection, sizeof(struct kevent), true);
+   kqrevents = (struct kevent*) UMemoryPool::pmalloc(max_connection, sizeof(struct kevent), true);
 
    // Check for Mac OS X kqueue bug. If kqueue works, then kevent will succeed, and it will stick an error in events[0].
    // If kqueue is broken, then kevent will fail (This detects an old bug in Mac OS X 10.4, fixed in 10.5)
@@ -303,7 +303,7 @@ next:
       U_INTERNAL_ASSERT_EQUALS(events, U_NULLPTR)
 
        events =
-      pevents = (struct epoll_event*) UMemoryPool::_malloc(max_connection+1, sizeof(struct epoll_event), true);
+      pevents = (struct epoll_event*) UMemoryPool::pmalloc(max_connection+1, sizeof(struct epoll_event), true);
 
 #  ifdef HAVE_EPOLL_CTL_BATCH
       for (int i = 0; i < U_EPOLL_CTL_CMD_SIZE; ++i)
@@ -498,7 +498,7 @@ loop0:
 
       U_INTERNAL_DUMP("i = %d handler_event->fd = %d", i, handler_event->fd)
 
-      U_INTERNAL_ASSERT_DIFFERS((handler_event->fd, -1)
+      U_INTERNAL_ASSERT_DIFFERS(handler_event->fd, -1)
 
    // if (handler_event->fd != -1)
          {
@@ -716,7 +716,7 @@ void UNotifier::createMapFd()
    U_INTERNAL_ASSERT_EQUALS(hi_map_fd, U_NULLPTR)
 
    lo_map_fd_len = 20+max_connection;
-   lo_map_fd     = (UEventFd**) UMemoryPool::_malloc(&lo_map_fd_len, sizeof(UEventFd*), true);
+   lo_map_fd     = (UEventFd**) UMemoryPool::pmalloc(&lo_map_fd_len, sizeof(UEventFd*), true);
 
    U_INTERNAL_DUMP("lo_map_fd_len = %u", lo_map_fd_len)
 

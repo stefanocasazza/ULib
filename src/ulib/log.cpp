@@ -14,7 +14,7 @@
 #include <ulib/date.h>
 #include <ulib/net/server/server.h>
 
-#ifndef _MSWINDOWS_
+#ifdef U_LINUX
 #  ifdef __clang__
 #  undef  NULL
 #  define NULL 0
@@ -40,7 +40,7 @@ const char*       ULog::prefix;
 struct iovec      ULog::iov_vec[5];
 ULog::log_date    ULog::date;
 ULog::log_date*   ULog::ptr_shared_date;
-#if defined(ENABLE_THREAD) && !defined(_MSWINDOWS_)
+#if defined(ENABLE_THREAD) && defined(U_LINUX)
 pthread_rwlock_t* ULog::prwlock;
 #endif
 
@@ -75,7 +75,7 @@ ULog::ULog(const UString& path, uint32_t _size) : UFile(path, U_NULLPTR)
       {
       U_Log_syslog(this) = true;
 
-#  ifndef _MSWINDOWS_
+#  ifdef U_LINUX
       openlog(u_progname, LOG_PID, LOG_LOCAL0);
 #  endif
 
@@ -174,7 +174,7 @@ void ULog::startup()
 
    log(U_CONSTANT_TO_PARAM("Building Environment: " PLATFORM_VAR " (" __DATE__ ")"), 0);
 
-#ifndef _MSWINDOWS_
+#ifdef U_LINUX
    struct utsname u;
 
    (void) U_SYSCALL(uname, "%p", &u);
@@ -526,7 +526,7 @@ void ULog::write(const char* msg, uint32_t len)
 
    if (U_Log_syslog(this))
       {
-#  ifndef _MSWINDOWS_
+#  ifdef U_LINUX
       U_SYSCALL_VOID(syslog, "%d,%S,%d,%p", LOG_INFO, "%.*s", (int)len, (char*)msg);
 #  endif
 
@@ -757,7 +757,7 @@ void ULog::logger(const char* ident, int priority, const char* format, uint32_t 
 {
    U_TRACE(1, "ULog::logger(%S,%d,%.*S,%u)", ident, priority, fmt_size, format, fmt_size)
 
-#ifndef _MSWINDOWS_
+#ifdef U_LINUX
    U_INTERNAL_ASSERT(U_Log_syslog(this))
 
    if (format == U_NULLPTR)
@@ -787,12 +787,22 @@ __pure U_NO_EXPORT int ULog::decode(const char* name, uint32_t len, bool bfacili
 {
    U_TRACE(0, "ULog::decode(%.*S,%u,%b)", len, name, len, bfacility)
 
-#ifndef _MSWINDOWS_
+#ifdef U_LINUX
    for (CODE* c = (bfacility ? facilitynames : prioritynames); c->c_name; ++c) if (u__strncasecmp(name, c->c_name, len) == 0) U_RETURN(c->c_val);
 #endif
 
    U_RETURN(-1);
 }
+
+#ifndef LOG_USER
+#define LOG_USER (1<<3) /* random user-level messages */
+#endif
+#ifndef LOG_PRIMASK
+#define LOG_PRIMASK 0x07 /* mask to extract priority part (internal) */
+#endif
+#ifndef LOG_FACMASK
+#define LOG_FACMASK 0x03f8 /* mask to extract facility part */
+#endif
 
 __pure int ULog::getPriorityForLogger(const char* s)
 {
@@ -836,7 +846,7 @@ void ULog::closeLogInternal()
 
    if (U_Log_syslog(this))
       {
-#  ifndef _MSWINDOWS_
+#  ifdef U_LINUX
       U_SYSCALL_VOID_NO_PARAM(closelog);
 #  endif
       }

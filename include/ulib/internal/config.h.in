@@ -99,6 +99,9 @@
 /* C++ atomic header */
 #undef HAVE_ATOMIC_H
 
+/* Define if you have BSD sendfile() semantics */
+#undef HAVE_BSD_SENDFILE
+
 /* there are the built-in functions to detect run-time CPU type and ISA */
 #undef HAVE_BUILTIN_CPU_INIT
 

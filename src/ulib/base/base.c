@@ -80,6 +80,10 @@ void u_debug_at_exit(void);
 #  endif
 #endif
 
+#if defined(__FreeBSD__)
+extern int daylight;
+#endif
+
 static bool ldaylight;
 static int now_adjust; /* GMT based time */
 static struct timeval tv;

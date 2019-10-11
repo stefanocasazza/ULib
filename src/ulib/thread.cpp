@@ -99,7 +99,11 @@ void UThread::close()
 #   ifdef HAVE_PTHREAD_YIELD
       else
          {
+#     if defined(__FreeBSD__)
+         U_SYSCALL_VOID_NO_PARAM(pthread_yield);
+#     else
          (void) U_SYSCALL_NO_PARAM(pthread_yield);
+#     endif
          }
 #   endif
 #  endif
@@ -141,7 +145,11 @@ void UThread::yield()
 #endif
 
 #ifdef HAVE_PTHREAD_YIELD
+# if defined(__FreeBSD__)
+   U_SYSCALL_VOID_NO_PARAM(pthread_yield);
+# else
    (void) U_SYSCALL_NO_PARAM(pthread_yield);
+# endif
 #endif
 
 #if !defined(HAVE_PTHREAD_CANCEL) && !defined(_MSWINDOWS_) && !defined(__UNIKERNEL__)

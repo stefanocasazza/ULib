@@ -754,7 +754,7 @@ void UHTTP2::addHpackDynTblEntry(HpackDynamicTable* dyntbl, const UString& name,
 
       if (new_capacity < 16) new_capacity = 16;
 
-      HpackHeaderTableEntry* new_entries = (HpackHeaderTableEntry*) UMemoryPool::_malloc(&new_capacity, sizeof(HpackHeaderTableEntry));
+      HpackHeaderTableEntry* new_entries = (HpackHeaderTableEntry*) UMemoryPool::pmalloc(&new_capacity, sizeof(HpackHeaderTableEntry));
 
       if (dyntbl->num_entries > 0)
          {

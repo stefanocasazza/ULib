@@ -108,7 +108,7 @@ You can contact the author at :
 /* Modify the local functions below should you wish to use some other memory routines */
 /* for malloc(), free() */
 #include <stdlib.h>
-static void* XXH_malloc(size_t s) { return malloc(s); }
+static void* XXHpmalloc(size_t s) { return malloc(s); }
 static void  XXH_free  (void* p)  { free(p); }
 /* for memcpy() */
 #include <string.h>
@@ -599,7 +599,7 @@ struct XXH64_state_s
 XXH_PUBLIC_API XXH32_state_t* XXH32_createState(void)
 {
     XXH_STATIC_ASSERT(sizeof(XXH32_stateBody_t) >= sizeof(XXH32_state_t));   /* A compilation error here means XXH32_state_t is not large enough */
-    return (XXH32_state_t*)XXH_malloc(sizeof(XXH32_state_t));
+    return (XXH32_state_t*)XXHpmalloc(sizeof(XXH32_state_t));
 }
 XXH_PUBLIC_API XXH_errorcode XXH32_freeState(XXH32_state_t* statePtr)
 {
@@ -610,7 +610,7 @@ XXH_PUBLIC_API XXH_errorcode XXH32_freeState(XXH32_state_t* statePtr)
 XXH_PUBLIC_API XXH64_state_t* XXH64_createState(void)
 {
     XXH_STATIC_ASSERT(sizeof(XXH64_stateBody_t) >= sizeof(XXH64_state_t));   /* A compilation error here means XXH64_state_t is not large enough */
-    return (XXH64_state_t*)XXH_malloc(sizeof(XXH64_state_t));
+    return (XXH64_state_t*)XXHpmalloc(sizeof(XXH64_state_t));
 }
 XXH_PUBLIC_API XXH_errorcode XXH64_freeState(XXH64_state_t* statePtr)
 {

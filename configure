@@ -5784,13 +5784,13 @@ case $host_os in
              template=linux ;;
     mingw*)  template=win32 ;;
    cygwin*)  template=cygwin ;;
-#     aix*)  template=aix ;;
-#  darwin*)  template=darwin ;;
-#dragonfly*) template=netbsd ;;
-# freebsd*)  template=freebsd ;;
-#    hpux*)  template=hpux ;;
-#  netbsd*)  template=netbsd ;;
+   darwin*)  template=darwin ;;
+  freebsd*)  template=freebsd ;;
 # openbsd*)  template=openbsd ;;
+#  netbsd*)  template=netbsd ;;
+#dragonfly*) template=netbsd ;;
+#     aix*)  template=aix ;;
+#    hpux*)  template=hpux ;;
 #     sco*)  template=sco ;;
 # solaris*)  template=solaris ;;
 #   sysv5*)  template=unixware ;;
@@ -27561,7 +27561,7 @@ $as_echo "#define HAVE_SHM_OPEN 1" >>confdefs.h
 done
 
 if test "$ac_cv_func_sendfile" = "yes"; then
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+    cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
  #include <sys/types.h>
         #include <sys/socket.h>
@@ -27582,6 +27582,31 @@ _ACEOF
 if ac_fn_cxx_try_link "$LINENO"; then :
 
 $as_echo "#define HAVE_MACOSX_SENDFILE 1" >>confdefs.h
+
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+    cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+ #include <sys/types.h>
+        #include <sys/socket.h>
+        #include <sys/uio.h>
+
+int
+main ()
+{
+ int i;
+        off_t o, n;
+        struct sf_hdtr h;
+        (void)sendfile(i,i,o,10,&h,&n,i);
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_cxx_try_link "$LINENO"; then :
+
+$as_echo "#define HAVE_BSD_SENDFILE 1" >>confdefs.h
 
 fi
 rm -f core conftest.err conftest.$ac_objext \
@@ -28005,7 +28030,7 @@ if test "${enable_final+set}" = set; then :
   enableval=$enable_final;
 fi
 
-	if test -z "$enable_final" ; then
+	if test -z "$enable_final" -a x"$template" = x"linux" ; then
 		enable_final="yes"
 	fi
 	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $enable_final" >&5

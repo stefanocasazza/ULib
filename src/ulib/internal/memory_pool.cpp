@@ -156,7 +156,7 @@ public:
          }
       else
          {
-         char* pblock = (char*) UMemoryPool::_malloc(&num_entry, type);
+         char* pblock = (char*) UMemoryPool::pmalloc(&num_entry, type);
 
          uint32_t new_len = len + num_entry;
 
@@ -427,9 +427,9 @@ bool UMemoryPool::check(void* ptr)
 #  endif
 #endif
 
-void* UMemoryPool::_malloc(uint32_t num, uint32_t type_size, bool bzero)
+void* UMemoryPool::pmalloc(uint32_t num, uint32_t type_size, bool bzero)
 {
-   U_TRACE(0, "UMemoryPool::_malloc(%u,%u,%b)", num, type_size, bzero)
+   U_TRACE(0, "UMemoryPool::pmalloc(%u,%u,%b)", num, type_size, bzero)
 
    U_INTERNAL_ASSERT_MAJOR(num, 0)
    U_INTERNAL_ASSERT_MAJOR(type_size, 0)
@@ -467,9 +467,9 @@ void* UMemoryPool::_malloc(uint32_t num, uint32_t type_size, bool bzero)
    U_RETURN(ptr);
 }
 
-void* UMemoryPool::_malloc(uint32_t* pnum, uint32_t type_size, bool bzero)
+void* UMemoryPool::pmalloc(uint32_t* pnum, uint32_t type_size, bool bzero)
 {
-   U_TRACE(1, "UMemoryPool::_malloc(%p,%u,%b)", pnum, type_size, bzero)
+   U_TRACE(1, "UMemoryPool::pmalloc(%p,%u,%b)", pnum, type_size, bzero)
 
    U_INTERNAL_ASSERT_POINTER(pnum)
    U_INTERNAL_ASSERT_MAJOR(type_size, 0)

@@ -421,7 +421,11 @@ protected:
 
       if (state != PTHREAD_CREATE_DETACHED) (void) U_SYSCALL(pthread_join, "%p,%p", _tid, U_NULLPTR);
 #   ifdef HAVE_PTHREAD_YIELD
+#    if defined(__FreeBSD__)
+      else U_SYSCALL_VOID_NO_PARAM(pthread_yield);
+#    else
       else (void) U_SYSCALL_NO_PARAM(pthread_yield);
+#    endif
 #   endif
       }
 #endif

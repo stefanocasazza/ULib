@@ -414,7 +414,7 @@ uint32_t USocketExt::sendfile(USocket* sk, int in_fd, off_t* poffset, off_t coun
 
    U_INTERNAL_ASSERT_EQUALS(sk->isSSLActive(), false)
 
-#if defined(HAVE_MACOSX_SENDFILE)
+#if defined(HAVE_MACOSX_SENDFILE) || defined(HAVE_BSD_SENDFILE)
    off_t len;
 #endif
    ssize_t value;
@@ -430,9 +430,7 @@ loop:
       }
    */
 
-#ifndef HAVE_MACOSX_SENDFILE
-   value = U_SYSCALL(sendfile, "%d,%d,%p,%I", sk->getFd(), in_fd, poffset, count);
-#else
+#ifdef HAVE_MACOSX_SENDFILE
    /**
     * struct sf_hdtr {
     *  struct iovec *headers;  // pointer to  header iovecs
@@ -452,13 +450,28 @@ loop:
    if (value == -1) goto error;
 
    poffset += (value = len);
+#elif defined(HAVE_BSD_SENDFILE)
+   /**
+    * int sendfile(int fd, int s, off_t offset, size_t nbytes, struct sf_hdtr* hdtr, off_t* sbytes, int flags);
+    */
+
+   len   = count;
+   value = U_SYSCALL(sendfile, "%d,%d,%I,%u,%p,%p,%d", sk->getFd(), in_fd, *poffset, len, U_NULLPTR, &len, 0);
+
+   if (value == -1) goto error;
+
+   poffset += (value = len);
+#else
+   value = U_SYSCALL(sendfile, "%d,%d,%p,%I", sk->getFd(), in_fd, poffset, count);
 #endif
 
    if (value <= 0)
       {
       if (value == -1)
          {
-//error:  
+#if defined(HAVE_MACOSX_SENDFILE) || defined(HAVE_BSD_SENDFILE)
+error:  
+#endif
          U_INTERNAL_DUMP("errno = %d", errno)
 
          if (errno != EAGAIN)

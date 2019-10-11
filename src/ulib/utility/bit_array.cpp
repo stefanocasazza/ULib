@@ -27,7 +27,7 @@ void UBitArray::reserve(uint32_t nbits)
 
    uint32_t* old_vec = vec;
 
-   vec = (uint32_t*) UMemoryPool::_malloc(&nuint, sizeof(uint32_t));
+   vec = (uint32_t*) UMemoryPool::pmalloc(&nuint, sizeof(uint32_t));
 
    U_MEMCPY(vec, old_vec, getNumBytes());
 

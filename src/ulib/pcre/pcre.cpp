@@ -361,7 +361,7 @@ bool UPCRE::search(const char* stuff, uint32_t stuff_len, int offset, int option
    reset();
 
    if (sub_vec)         UMemoryPool::_free(sub_vec,      sub_len, sizeof(int));
-       sub_vec = (int*) UMemoryPool::_malloc((uint32_t*)&sub_len, sizeof(int));
+       sub_vec = (int*) UMemoryPool::pmalloc((uint32_t*)&sub_len, sizeof(int));
 
    if (stuff_len == 0) stuff_len = u__strlen(stuff, __PRETTY_FUNCTION__);
 

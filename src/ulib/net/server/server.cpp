@@ -28,7 +28,9 @@
 #  include <ws2tcpip.h>
 #else
 #  include <pwd.h>
-#  include <sys/prctl.h>
+#  ifdef U_LINUX
+#     include <sys/prctl.h>
+#  endif
 #  include <sys/resource.h>
 #  include <ulib/net/unixsocket.h>
 #  ifdef HAVE_SCHED_GETCPU

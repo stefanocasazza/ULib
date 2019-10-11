@@ -55,6 +55,10 @@
 #  endif
 #endif
 
+#if defined(__FreeBSD__)
+#  include <sys/thr.h>
+#endif
+
 __pure unsigned long u_hex2int(const char* restrict s, uint32_t len) /* handle up to 16 digits */
 {
    unsigned long val = 0UL;

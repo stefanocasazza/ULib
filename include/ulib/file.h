@@ -872,8 +872,12 @@ public:
       void* result =
 #  if defined(__NetBSD__) || defined(__UNIKERNEL__)
       U_SYSCALL(mremap, "%p,%I,%p,%I,%d", old_address, old_size, 0, new_size, 0);
+#  elif defined(__FreeBSD__)
+      0;
+
+      U_WARNING("Sorry, mremap() kernel implementation missing...")
 #  else
-      U_SYSCALL(mremap, "%p,%I,%u,%I",    old_address, old_size,    new_size, flags);
+      U_SYSCALL(mremap, "%p,%I,%u,%I", old_address, old_size, new_size, flags);
 #  endif
 
       U_RETURN((char*)result);
@@ -1275,7 +1279,7 @@ protected:
 
       if ((uint64_t)count > U_STRING_MAX_SIZE)
          {
-         U_WARNING("Sorry, I  can't manage string size bigger than 4G...") // limit of UString
+         U_WARNING("Sorry, I can't manage string size bigger than 4G...") // limit of UString
 
          return UString::getStringNull();
          }

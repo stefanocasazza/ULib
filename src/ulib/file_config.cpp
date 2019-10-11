@@ -18,7 +18,7 @@
 #include <ulib/net/server/server.h>
 #include <ulib/utility/string_ext.h>
 
-#if defined(__NetBSD__) || defined(__UNIKERNEL__) || defined(__OSX__)
+#if defined(__OSX__) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__UNIKERNEL__)
 extern char** environ;
 #endif
 

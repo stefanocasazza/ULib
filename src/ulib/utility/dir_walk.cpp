@@ -255,10 +255,10 @@ found_file:
          U_INTERNAL_ASSERT_MAJOR(max, 0)
 
          qdir.max    = max;
-         qdir.dp     = (dirent_s*) UMemoryPool::_malloc(&qdir.max, sizeof(dirent_s));
+         qdir.dp     = (dirent_s*) UMemoryPool::pmalloc(&qdir.max, sizeof(dirent_s));
 
          qdir.szfree = qdir.max * 128;
-         qdir.free   = (char*) UMemoryPool::_malloc(&qdir.szfree);
+         qdir.free   = (char*) UMemoryPool::pmalloc(&qdir.szfree);
          qdir.nfree  =                               qdir.szfree;
          qdir.pfree  = 0;
          }
@@ -296,7 +296,7 @@ found_file:
 
                   U_INTERNAL_DUMP("Reallocating dirent (%u => %u)", old_max, qdir.max)
 
-                  qdir.dp = (dirent_s*) UMemoryPool::_malloc(&qdir.max, sizeof(dirent_s));
+                  qdir.dp = (dirent_s*) UMemoryPool::pmalloc(&qdir.max, sizeof(dirent_s));
 
                   U_MEMCPY(qdir.dp, old_block, old_max * sizeof(dirent_s));
 
@@ -310,7 +310,7 @@ found_file:
 
                   qdir.szfree <<= 1;
 
-                  qdir.free  = (char*) UMemoryPool::_malloc(&qdir.szfree);
+                  qdir.free  = (char*) UMemoryPool::pmalloc(&qdir.szfree);
                   qdir.nfree = (qdir.szfree - qdir.pfree);
 
                   U_INTERNAL_DUMP("Reallocating dirname (%u => %u) nfree = %u", old_free, qdir.szfree, qdir.nfree)

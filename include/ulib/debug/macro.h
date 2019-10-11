@@ -89,8 +89,7 @@
 #  define U_SYSCALL_NO_PARAM(name) (utr.trace_syscall(U_CONSTANT_TO_PARAM("::"#name"()"),0), \
                                     utr.trace_sysreturn_type(::name()))
 
-#  define U_SYSCALL_VOID_NO_PARAM(name) { utr.trace_syscall(U_CONSTANT_TO_PARAM("::"#name"()"),0); \
-                                          name(); utr.trace_sysreturn(false,U_NULLPTR,0); }
+#  define U_SYSCALL_VOID_NO_PARAM(name) { utr.trace_syscall(U_CONSTANT_TO_PARAM("::"#name"()"),0); name(); utr.trace_sysreturn(false,U_NULLPTR,0); }
 
 #  define U_SYSCALL_VOID(name,format,args...) { utr.suspend();               utr.trace_syscall(U_CONSTANT_TO_PARAM("::"#name"(" format ")") , ##args); \
                                                 utr.resume();  ::name(args); utr.trace_sysreturn(false,U_NULLPTR,0); }

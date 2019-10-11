@@ -59,6 +59,9 @@ void UFile::chk_num_file_object()       { if (num_file_object) U_WARNING("UFile:
 void UFile::dec_num_file_object(int fd) {   --num_file_object; if (fd != -1) U_WARNING("File descriptor %d not closed...", fd); }
 #endif
 
+#ifndef MAP_NORESERVE
+#define MAP_NORESERVE 0
+#endif
 #ifndef MREMAP_MAYMOVE
 #define MREMAP_MAYMOVE 1
 #endif
@@ -1101,7 +1104,7 @@ bool UFile::lock(int fd, short l_type, uint32_t start, uint32_t len)
     * Advisory file segment locking data type - information passed to system by user
     */
 
-#if defined(__NetBSD__) || defined(__UNIKERNEL__) || defined(__OSX__)
+#if defined(__OSX__) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__UNIKERNEL__)
    /**
     * struct flock {
     *    off_t l_start;  // starting offset

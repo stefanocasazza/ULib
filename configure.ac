@@ -66,13 +66,13 @@ case $host_os in
              template=linux ;;
     mingw*)  template=win32 ;;
    cygwin*)  template=cygwin ;;
-#     aix*)  template=aix ;;
-#  darwin*)  template=darwin ;;
-#dragonfly*) template=netbsd ;;
-# freebsd*)  template=freebsd ;;
-#    hpux*)  template=hpux ;;
-#  netbsd*)  template=netbsd ;;
+   darwin*)  template=darwin ;;
+  freebsd*)  template=freebsd ;;
 # openbsd*)  template=openbsd ;;
+#  netbsd*)  template=netbsd ;;
+#dragonfly*) template=netbsd ;;
+#     aix*)  template=aix ;;
+#    hpux*)  template=hpux ;;
 #     sco*)  template=sco ;;
 # solaris*)  template=solaris ;;
 #   sysv5*)  template=unixware ;;
@@ -1248,8 +1248,8 @@ for func in accept4 atexit clock_gettime daemon dup3 epoll_create1 epoll_wait ep
     esac
 done
 
-dnl Mac OSX (10.5 and later)
 if test "$ac_cv_func_sendfile" = "yes"; then
+  dnl Mac OSX (10.5 and later)
   AC_TRY_LINK(
       [ #include <sys/types.h>
         #include <sys/socket.h>
@@ -1261,6 +1261,18 @@ if test "$ac_cv_func_sendfile" = "yes"; then
         (void)sendfile(i,i,o,&n,&h,i);
       ],
 		AC_DEFINE([HAVE_MACOSX_SENDFILE], [1], [Define if you have Mac OSX sendfile() semantics]) )
+  dnl FreeBSB
+  AC_TRY_LINK(
+      [ #include <sys/types.h>
+        #include <sys/socket.h>
+        #include <sys/uio.h>
+      ],
+      [ int i;
+        off_t o, n;
+        struct sf_hdtr h;
+        (void)sendfile(i,i,o,10,&h,&n,i);
+      ],
+		AC_DEFINE([HAVE_BSD_SENDFILE], [1], [Define if you have BSD sendfile() semantics]) )
 fi
 
 # C++ stuff must done after library and header (some C++ define require some header)

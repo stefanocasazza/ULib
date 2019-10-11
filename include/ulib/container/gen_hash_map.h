@@ -493,7 +493,7 @@ protected:
 
       U_CHECK_MEMORY
 
-      table     = (UGenericHashMapNode**) UMemoryPool::_malloc(&n, sizeof(UGenericHashMapNode*), true);
+      table     = (UGenericHashMapNode**) UMemoryPool::pmalloc(&n, sizeof(UGenericHashMapNode*), true);
       _capacity = n;
       }
 

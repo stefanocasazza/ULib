@@ -37,7 +37,7 @@ void UVector<void*>::push_back(const void* elem) // add to end
 
       _capacity <<= 1; // x 2...
 
-      vec = (const void**) UMemoryPool::_malloc(&_capacity, sizeof(void*));
+      vec = (const void**) UMemoryPool::pmalloc(&_capacity, sizeof(void*));
 
       if (_length) U_MEMCPY(vec, old_vec, _length * sizeof(void*));
 
@@ -62,7 +62,7 @@ void UVector<void*>::move(UVector<void*>& source) // add to end and reset source
 
       _capacity <<= 1; // x 2...
 
-      vec = (const void**) UMemoryPool::_malloc(&_capacity, sizeof(void*));
+      vec = (const void**) UMemoryPool::pmalloc(&_capacity, sizeof(void*));
 
       if (_length) U_MEMCPY(vec, old_vec, _length * sizeof(void*));
 
@@ -97,7 +97,7 @@ void UVector<void*>::insert(uint32_t pos, const void* elem) // add elem before p
 
       _capacity <<= 1; // x 2...
 
-      vec = (const void**) UMemoryPool::_malloc(&_capacity, sizeof(void*));
+      vec = (const void**) UMemoryPool::pmalloc(&_capacity, sizeof(void*));
 
       U_MEMCPY(vec,           old_vec,                  pos  * sizeof(void*));
       U_MEMCPY(vec + pos + 1, old_vec + pos, (_length - pos) * sizeof(void*));
@@ -133,7 +133,7 @@ void UVector<void*>::insert(uint32_t pos, uint32_t n, const void* elem) // add n
 
       _capacity = new_length << 1; // x 2...
 
-      vec = (const void**) UMemoryPool::_malloc(&_capacity, sizeof(void*));
+      vec = (const void**) UMemoryPool::pmalloc(&_capacity, sizeof(void*));
 
       U_MEMCPY(vec,           old_vec,                  pos  * sizeof(void*));
       U_MEMCPY(vec + pos + n, old_vec + pos, (_length - pos) * sizeof(void*));

@@ -178,7 +178,7 @@ UOptions::UOptions(uint32_t n)
    U_TRACE_CTOR(0, UOptions, "%u", n)
 
    length   = 0;
-   item     = (option_item*) UMemoryPool::_malloc(&n, sizeof(option_item));
+   item     = (option_item*) UMemoryPool::pmalloc(&n, sizeof(option_item));
    capacity = n;
 }
 
@@ -268,7 +268,7 @@ void UOptions::add(const UString& desc, const UString& long_opt, const UString& 
 
                               capacity <<= 1; // x 2...
 
-      item = (option_item*) UMemoryPool::_malloc(&capacity, sizeof(option_item));
+      item = (option_item*) UMemoryPool::pmalloc(&capacity, sizeof(option_item));
 
       U_MEMCPY(item, old_item, old_size);
 
