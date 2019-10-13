@@ -134,6 +134,52 @@ template <class T> class UJsonTypeHandler;
 typedef void (*vPFprpv)(UStringRep*,void*);
 typedef bool (*bPFprpv)(UStringRep*,void*);
 
+#if defined(HAVE_CXX17)
+
+template <char... Chars>
+class UCompileTimeStringView {
+private:
+
+	template <size_t Offset, size_t... Indexs> constexpr
+   auto substr(std::index_sequence<Indexs...>) const
+   {
+  		return UCompileTimeStringView<string[Indexs + Offset]...>{};
+   }
+
+public:
+
+	static constexpr char string[sizeof...(Chars)+1] = {Chars..., '\0'};
+   static constexpr size_t length = sizeof...(Chars);
+
+   constexpr char operator[](size_t index) const { return string[index]; }
+
+   static constexpr UCompileTimeStringView instance = {};
+
+   // implicit cast to zero-terminated C-string
+   //constexpr operator const char *() const { return string; }
+
+   static constexpr char const * cbegin() noexcept { return &string[0]; }
+    
+   static constexpr char const * cend() noexcept { return &string[length]; }
+
+   template <char... OChars> constexpr
+   UCompileTimeStringView<Chars..., OChars...> operator+(UCompileTimeStringView<OChars...> const &) const { return {}; }
+
+   template <size_t From, size_t To> constexpr
+   auto substr() const
+   {
+   	return substr<From>(std::make_index_sequence<To - From>{});
+   }
+};
+
+template <class Char, Char... Chars>
+constexpr auto operator""_ctv() // compile time view
+{
+   return UCompileTimeStringView<static_cast<char>(Chars)...>{};
+}
+
+#endif
+
 class U_EXPORT UStringRep {
 public:
 
