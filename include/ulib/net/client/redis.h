@@ -1178,3 +1178,268 @@ public:
 };
 #endif
 #endif
+
+#if defined(HAVE_CXX20)
+
+class UCompileTimeRESPEncoder {
+private:
+		
+	template <class X>
+	static constexpr size_t countSegments(X rawFormat)
+	{
+		size_t index = 0;
+
+		while (rawFormat[index] == ' ') ++index;
+
+		size_t segmentCount = 0;
+		bool inSegment = true;
+
+		while (index < rawFormat.length)
+		{		
+			char ch = rawFormat[index];
+
+			if (ch == '\r') return segmentCount;
+
+			if (inSegment && ch == ' ')
+			{
+				inSegment = false;
+			}
+			else if (!inSegment && ch != ' ')
+			{
+				inSegment = true;
+				++segmentCount;
+			}
+
+			++index;
+		}
+
+		return segmentCount;
+	}
+
+	enum class ParameterType {
+
+		none,
+		ustring,	 // v
+		cstring,  // s
+		int32,    // ld
+		int64     // lld
+	};
+
+	struct SegmentOutline {
+
+		const size_t start;
+		const size_t length;
+		const size_t lengthCorrection;
+		const ParameterType parameter;
+	};
+
+	template <auto rawFormat, size_t argumentCount, size_t segmentCount = countSegments(rawFormat)>
+	struct RESPFormatter {
+	private:
+
+		// HMSET {%v}.cache firstname %v lastname %v birthdayEpoch %lld \r\n
+		//     HMSET {%v}.cache firstname %v lastname %v birthdayEpoch %lld\r\n
+		// HMSET {%v}.cache firstname %v lastname %v birthdayEpoch %lld
+		
+		template<ssize_t number, bool terminate = false, typename ...DigitStrings>
+		static constexpr auto integerToString(DigitStrings... digitStrings)
+		{
+			if constexpr (terminate) return ((""_ctv + digitStrings) + ...);
+			else
+			{
+				if constexpr (number < 0) return integerToString<number * -1>("-"_ctv, std::forward<DigitStrings>(digitStrings) ...);
+				else
+				{
+					constexpr size_t digitValue = number % 10;
+					constexpr bool newTerminate = number < 10;
+					constexpr size_t newNumber = number / 10;
+
+					     if constexpr (digitValue == 0) return integerToString<newNumber, newTerminate>("0"_ctv, std::forward<DigitStrings>(digitStrings) ...);
+					else if constexpr (digitValue == 1) return integerToString<newNumber, newTerminate>("1"_ctv, std::forward<DigitStrings>(digitStrings) ...);
+					else if constexpr (digitValue == 2) return integerToString<newNumber, newTerminate>("2"_ctv, std::forward<DigitStrings>(digitStrings) ...);
+					else if constexpr (digitValue == 3) return integerToString<newNumber, newTerminate>("3"_ctv, std::forward<DigitStrings>(digitStrings) ...);
+					else if constexpr (digitValue == 4) return integerToString<newNumber, newTerminate>("4"_ctv, std::forward<DigitStrings>(digitStrings) ...);
+					else if constexpr (digitValue == 5) return integerToString<newNumber, newTerminate>("5"_ctv, std::forward<DigitStrings>(digitStrings) ...);
+					else if constexpr (digitValue == 6) return integerToString<newNumber, newTerminate>("6"_ctv, std::forward<DigitStrings>(digitStrings) ...);
+					else if constexpr (digitValue == 7) return integerToString<newNumber, newTerminate>("7"_ctv, std::forward<DigitStrings>(digitStrings) ...);
+					else if constexpr (digitValue == 8) return integerToString<newNumber, newTerminate>("8"_ctv, std::forward<DigitStrings>(digitStrings) ...);
+					else if constexpr (digitValue == 9) return integerToString<newNumber, newTerminate>("9"_ctv, std::forward<DigitStrings>(digitStrings) ...);
+				}
+			}
+		}
+
+		template <size_t ... n>
+		static constexpr auto generateSegmentMarkersHelper(std::integer_sequence<size_t, n...>)
+		{
+			size_t start = 0;
+			return std::array<SegmentOutline, segmentCount>{getNextSegmentOutline(start, n) ...};
+		}
+
+		static constexpr auto generateSegmentMarkers()
+		{
+			return generateSegmentMarkersHelper(std::make_integer_sequence<size_t, segmentCount>{});
+		}
+
+		static constexpr SegmentOutline getNextSegmentOutline(size_t& start, size_t segmentIndex) // just to use parameter pack expansion
+		{
+			while (rawFormat[start] == ' ') ++start;
+
+			size_t segmentStart = start;
+			size_t lengthCorrection = 0;
+			ParameterType parameter = ParameterType::none;
+
+			while (start < rawFormat.length)
+			{		
+				char ch = rawFormat[start];
+
+				if (ch == ' ' || ch == '\r') break;
+
+				if (ch == '%')
+				{
+					ch = rawFormat[++start];
+
+					/*
+					enum class ParameterType {
+
+						none,
+						ustring,	 // v
+						cstring,  // s
+						int32,    // ld
+						int64     // lld
+					};*/
+
+					switch (ch)
+					{
+						case 'v':
+						{
+							lengthCorrection += 2;
+							parameter = ParameterType::ustring;
+							break;
+						}
+						case 's':
+						{
+							lengthCorrection += 2;
+							parameter = ParameterType::cstring;
+							break;
+						}
+						case 'l':
+						{
+							ch = rawFormat[++start];
+
+							if (ch == 'd')
+							{
+								lengthCorrection += 3;
+								parameter = ParameterType::int32;
+							}
+							else
+							{
+								lengthCorrection += 4;
+								parameter = ParameterType::int64;
+								++start;
+							}
+							break;
+						}
+					}
+				}
+				
+				++start;
+			}
+
+			size_t segmentLength = start - segmentStart;
+			return {segmentStart, segmentLength, lengthCorrection, parameter};
+		}
+
+		template <auto segmentOutlines, size_t segmentIndex = 0, class StringClass, typename ...StringClasses>
+		static constexpr auto parse(StringClass raw, std::array<size_t, argumentCount>& surplusByArgument, size_t argumentIndex = 0, StringClasses... strings)
+		{
+			if constexpr (segmentIndex >= segmentCount) return (strings + ... );
+			else
+			{
+				constexpr SegmentOutline segmentOutline = segmentOutlines[segmentIndex];
+
+				if constexpr (segmentOutline.parameter == ParameterType::none)
+				{
+					constexpr auto segmentString = "$"_ctv + integerToString<segmentOutline.length>() + "\r\n"_ctv + StringClass::instance.template substr<segmentOutline.start, segmentOutline.start + segmentOutline.length>() + "\r\n"_ctv;
+
+					return parse<segmentOutlines, segmentIndex + 1>(raw, surplusByArgument, argumentIndex, std::forward<StringClasses>(strings)..., segmentString);
+				}
+				else if constexpr (segmentOutline.parameter == ParameterType::int32 && segmentOutline.length == 3)
+				{
+					return parse<segmentOutlines, segmentIndex + 1>(raw, surplusByArgument, ++argumentIndex, std::forward<StringClasses>(strings)..., ":%ld\r\n"_ctv);
+				}
+				else if constexpr (segmentOutline.parameter == ParameterType::int64 && segmentOutline.length == 4)
+				{
+					return parse<segmentOutlines, segmentIndex + 1>(raw, surplusByArgument, ++argumentIndex, std::forward<StringClasses>(strings)..., ":%lld\r\n"_ctv);
+				}
+				else
+				{
+					surplusByArgument[argumentIndex] = segmentOutline.length - segmentOutline.lengthCorrection;
+
+					constexpr auto segmentString = "$%d\r\n"_ctv + StringClass::instance.template substr<segmentOutline.start, segmentOutline.start + segmentOutline.length>() + "\r\n"_ctv;
+					return parse<segmentOutlines, segmentIndex + 1>(raw, surplusByArgument, ++argumentIndex, std::forward<StringClasses>(strings)..., segmentString);
+				}
+			}
+		}
+
+	public:
+
+		static constexpr auto parseToRESP()
+		{
+			constexpr std::array<SegmentOutline, segmentCount> segmentOutlines = generateSegmentMarkers();
+
+			std::array<size_t, argumentCount> surplusByArgument = {};
+			
+			return std::make_tuple("*"_ctv + integerToString<segmentCount>() + "\r\n"_ctv + parse<segmentOutlines>(rawFormat, surplusByArgument), surplusByArgument);
+		}
+	};
+
+	template <typename T, typename U>
+	struct decay_equiv : std::is_same<typename std::decay<T>::type, U>::type {};
+
+	template< class T, class U >
+	static inline constexpr bool decay_equiv_v = decay_equiv<T, U>::value;
+
+	template <class X>
+	static void fill(X respformat, UString& workingString, size_t argumentCount, size_t workingCount)
+	{
+		const auto& [format, surplusByArgument] = respformat;
+
+		workingString.snprintf(format.string, format.length);
+	}
+
+	template <class X, typename T, typename ... Ts>
+	static void fill(X respformat, UString& workingString, size_t argumentCount, size_t workingCount, T t, Ts... ts)
+	{
+		const auto& [format, surplusByArgument] = respformat;
+
+		if (workingCount++ < argumentCount)
+		{
+		   if constexpr (decay_equiv_v<T, UString>)
+		   {	
+		   	if constexpr (std::is_pointer_v<T>) // will only accept single pointer depth
+		   	{
+		   		fill(respformat, workingString, argumentCount, workingCount, std::forward<Ts>(ts)..., t->size() + surplusByArgument[workingCount - 1], t->rep);
+		   	}
+		   	else fill(respformat, workingString, argumentCount, workingCount, std::forward<Ts>(ts)..., t.size() + surplusByArgument[workingCount - 1], t.rep);
+		   }
+		   else if constexpr (std::is_integral_v<T>) 
+		   {
+		   	fill(respformat, workingString, argumentCount, workingCount, std::forward<T>(t), std::forward<Ts>(ts)...);
+		   }
+		}
+		else workingString.snprintf(format.string, format.length, std::forward<T>(t), std::forward<Ts>(ts)...);
+	}
+
+public:
+
+	template<auto rawFormat, typename ... Args>
+	static void encode(UString& workingString, Args... args)
+	{
+		constexpr size_t argumentCount = sizeof...(Args);
+		constexpr auto respformat = RESPFormatter<rawFormat, argumentCount>::parseToRESP();
+
+		fill(respformat, workingString, argumentCount, 0, std::forward<Args>(args)...);
+	}
+};
+
+#endif
