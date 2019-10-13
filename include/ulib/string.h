@@ -136,6 +136,8 @@ typedef bool (*bPFprpv)(UStringRep*,void*);
 
 #if defined(HAVE_CXX17)
 
+#include <utility> // std::index_sequence
+
 template <char... Chars>
 class UCompileTimeStringView {
 private:
