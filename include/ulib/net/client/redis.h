@@ -1177,7 +1177,6 @@ public:
    AnonymousClusterPipeline() : pipeline(300U) {}
 };
 #endif
-#endif
 
 #if defined(HAVE_CXX20)
 
@@ -1513,4 +1512,5 @@ public:
 		fill(respformat, workingString, argumentCount, 0, std::forward<Args>(args)...);
 	}
 };
+#endif
 #endif
