@@ -2938,7 +2938,7 @@ if test "x$HAVE_CXX17" = x1; then
     AC_MSG_NOTICE([No compiler with C++20 support was found])
   fi
   AC_SUBST(HAVE_CXX20)
-  rm -f "/tmp/adhoc.*" > /dev/null 2>&1
+  rm -f /tmp/adhoc.* > /dev/null 2>&1
 fi
 
 CXX=$CXX_save

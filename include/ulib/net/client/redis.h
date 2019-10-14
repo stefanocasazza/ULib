@@ -993,7 +993,8 @@ private:
 
 // by Victor Stewart
 
-#if defined(U_STDCPP_ENABLE) && defined(HAVE_CXX17) && defined(U_LINUX)
+#if defined(U_STDCPP_ENABLE) && defined(U_LINUX)
+#  if defined(HAVE_CXX17)
 
 typedef UREDISClient<UTCPSocket> UREDISClusterClient;
 
@@ -1176,9 +1177,8 @@ public:
 
    AnonymousClusterPipeline() : pipeline(300U) {}
 };
-#endif
-
-#if defined(U_STDCPP_ENABLE) && defined(HAVE_CXX20)
+#  endif
+#  if defined(HAVE_CXX20)
 
 class UCompileTimeRESPEncoder {
 private:
@@ -1512,5 +1512,6 @@ public:
       fill(respformat, workingString, argumentCount, 0, std::forward<Args>(args)...);
    }
 };
+#  endif
 #endif
 #endif

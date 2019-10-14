@@ -550,7 +550,8 @@ int UREDISClient_Base::handlerRead()
 
 // by Victor Stewart
 
-#if defined(HAVE_CXX17)
+#if defined(U_STDCPP_ENABLE) && defined(U_LINUX)
+#  if defined(HAVE_CXX17)
 
 static ClusterError checkResponseForClusterErrors(const UString& response, size_t offset)
 {
@@ -1084,6 +1085,7 @@ finish:
    
    return managementClient->vitem;
 }
+#  endif
 #endif
 
 // DEBUG

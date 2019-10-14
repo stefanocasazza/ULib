@@ -33702,7 +33702,7 @@ $as_echo "$as_me: The compiler has C++20 support" >&6;}
 $as_echo "$as_me: No compiler with C++20 support was found" >&6;}
   fi
 
-  rm -f "/tmp/adhoc.*" > /dev/null 2>&1
+  rm -f /tmp/adhoc.* > /dev/null 2>&1
 fi
 
 CXX=$CXX_save
