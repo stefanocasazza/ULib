@@ -1601,7 +1601,7 @@ U_EXPORT main(int argc, char* argv[])
    cout << UStringExt::evalExpression(expressions, UString::getStringNull()) << "\n";
    expressions = U_STRING_FROM_CONSTANT("false"); // = false
    cout << UStringExt::evalExpression(expressions, UString::getStringNull()) << "\n";
-   expressions = U_STRING_FROM_CONSTANT("rand() == 0"); // = false
+   expressions = UString((void*)U_CONSTANT_TO_PARAM("rand() == 0")); // = false
    cout << UStringExt::evalExpression(expressions, UString::getStringNull()) << "\n";
 
    // expressions = U_STRING_FROM_CONSTANT("/pippo/pluto == UStringExt::expandEnvironmentVar('$HOME', 5, 0)/pluto"); // = false

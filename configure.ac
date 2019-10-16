@@ -2906,7 +2906,7 @@ STD_GNU11=
 if test "x$ax_cv_cxx_compile_cxx11" = xno -a "x$ax_cv_cxx_compile_cxx11__std_gnupp11" = xyes; then
 	CXXFLAGS="-std=gnu++11 $CXXFLAGS"
 
-	AC_MSG_CHECKING(for workaround to enable on Sabayon)
+	AC_MSG_CHECKING(foTMPDIRr workaround to enable on Sabayon)
 	to_match='gcc (Gentoo Hardened 4.9.3*'
 	case `gcc --version | head -n 1` in
 		$to_match)
@@ -2923,6 +2923,22 @@ if test "x$ax_cv_cxx_compile_cxx14" = xno -a "x$ax_cv_cxx_compile_cxx14__std_gnu
 fi
 if test "x$ax_cv_cxx_compile_cxx17" = xno -a "x$ax_cv_cxx_compile_cxx17__std_gnupp17" = xyes; then
 	CXXFLAGS="-std=gnu++17 $CXXFLAGS"
+fi
+
+if test "x$HAVE_CXX17" = x1; then
+	echo "int main() { return 0; }" > /tmp/adhoc.cpp
+	"$CXX_save" -std=c++2a /tmp/adhoc.cpp -o /tmp/adhoc.exe > /dev/null 2>&1
+	if [[ "$?" -eq 0 ]]; then
+    HAVE_CXX20=1
+	 CXXFLAGS="-std=c++2a $CXXFLAGS"
+    AC_DEFINE(HAVE_CXX20,1, [define if the compiler supports basic C++20 syntax])
+    AC_MSG_NOTICE([The compiler has C++20 support])
+	else
+    HAVE_CXX20=0
+    AC_MSG_NOTICE([No compiler with C++20 support was found])
+  fi
+  AC_SUBST(HAVE_CXX20)
+  rm -f /tmp/adhoc.* > /dev/null 2>&1
 fi
 
 CXX=$CXX_save
