@@ -170,7 +170,8 @@ public:
    template <size_t From, size_t To> constexpr
    auto substr() const
    {
-   	return substr<From>(std::make_index_sequence<To - From>{});
+      if constexpr (From == To)  return UCompileTimeStringView<>();
+      else                       return substr<From>(std::make_index_sequence<To - From>{});
    }
 };
 
