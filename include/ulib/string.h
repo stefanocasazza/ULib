@@ -2845,11 +2845,57 @@ template <> inline uint32_t UObject2String<UString>(UString& object, char* pbuff
 
 // by Victor Stewart
 
-#if defined(U_STDCPP_ENABLE) && defined(HAVE_CXX11)
+#if defined(U_STDCPP_ENABLE)
+#  if defined(HAVE_CXX11)
 namespace std {
    template<> struct hash<UString> {
       std::size_t operator()(const UString& str) const noexcept { return str.hash(); }
    };
 }
+#  endif
+#  if defined(HAVE_CXX17) && defined(U_LINUX)
+#     include <utility> // std::index_sequence
+template <char... Chars>
+class UCompileTimeStringView {
+private:
+
+   template <size_t Offset, size_t... Indexs> constexpr
+   auto substr(std::index_sequence<Indexs...>) const
+   {
+      return UCompileTimeStringView<string[Indexs + Offset]...>{};
+   }
+
+public:
+
+   static constexpr char string[sizeof...(Chars)+1] = {Chars..., '\0'};
+   static constexpr size_t length = sizeof...(Chars);
+
+   constexpr char operator[](size_t index) const { return string[index]; }
+
+   static constexpr UCompileTimeStringView instance = {};
+
+   // implicit cast to zero-terminated C-string
+   // constexpr operator const char *() const { return string; }
+
+   static constexpr char const * cbegin() noexcept { return &string[0]; }
+    
+   static constexpr char const * cend() noexcept { return &string[length]; }
+
+   template <char... OChars> constexpr
+   UCompileTimeStringView<Chars..., OChars...> operator+(UCompileTimeStringView<OChars...> const &) const { return {}; }
+
+   template <size_t From, size_t To> constexpr
+   auto substr() const
+   {
+      return substr<From>(std::make_index_sequence<To - From>{});
+   }
+};
+
+template <class Char, Char... Chars>
+constexpr auto operator""_ctv() // compile time view
+{
+   return UCompileTimeStringView<static_cast<char>(Chars)...>{};
+}
+#  endif
 #endif
 #endif

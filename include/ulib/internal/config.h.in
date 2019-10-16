@@ -132,6 +132,9 @@
 /* define if the compiler supports basic C++17 syntax */
 #undef HAVE_CXX17
 
+/* define if the compiler supports basic C++20 syntax */
+#undef HAVE_CXX20
+
 /* has daemon */
 #undef HAVE_DAEMON
 
