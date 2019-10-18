@@ -301,7 +301,7 @@ uint32_t UCDB::makeFinish(bool _reset)
          uint32_t index;
       };
 
-      cdb_tmp*  tmp = (cdb_tmp*) UMemoryPool::pmalloc(nrecord, sizeof(cdb_tmp));
+      cdb_tmp*  tmp = (cdb_tmp*) UMemoryPool::malloc(nrecord, sizeof(cdb_tmp));
       cdb_tmp* ptmp = tmp;
 
       cdb_hash_table_slot* pslot;

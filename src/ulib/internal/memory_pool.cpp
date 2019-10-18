@@ -427,9 +427,9 @@ bool UMemoryPool::check(void* ptr)
 #  endif
 #endif
 
-void* UMemoryPool::pmalloc(uint32_t num, uint32_t type_size, bool bzero)
+void* UMemoryPool::malloc(uint32_t num, uint32_t type_size, bool bzero)
 {
-   U_TRACE(0, "UMemoryPool::pmalloc(%u,%u,%b)", num, type_size, bzero)
+   U_TRACE(0, "UMemoryPool::malloc(%u,%u,%b)", num, type_size, bzero)
 
    U_INTERNAL_ASSERT_MAJOR(num, 0)
    U_INTERNAL_ASSERT_MAJOR(type_size, 0)
