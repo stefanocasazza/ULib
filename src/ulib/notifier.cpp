@@ -279,8 +279,8 @@ next:
    U_INTERNAL_ASSERT_EQUALS(kqevents, 0)
    U_INTERNAL_ASSERT_EQUALS(kqrevents, 0)
 
-   kqevents  = (struct kevent*) UMemoryPool::pmalloc(max_connection, sizeof(struct kevent), true);
-   kqrevents = (struct kevent*) UMemoryPool::pmalloc(max_connection, sizeof(struct kevent), true);
+   kqevents  = (struct kevent*) UMemoryPool::malloc(max_connection, sizeof(struct kevent), true);
+   kqrevents = (struct kevent*) UMemoryPool::malloc(max_connection, sizeof(struct kevent), true);
 
    // Check for Mac OS X kqueue bug. If kqueue works, then kevent will succeed, and it will stick an error in events[0].
    // If kqueue is broken, then kevent will fail (This detects an old bug in Mac OS X 10.4, fixed in 10.5)
@@ -303,7 +303,7 @@ next:
       U_INTERNAL_ASSERT_EQUALS(events, U_NULLPTR)
 
        events =
-      pevents = (struct epoll_event*) UMemoryPool::pmalloc(max_connection+1, sizeof(struct epoll_event), true);
+      pevents = (struct epoll_event*) UMemoryPool::malloc(max_connection+1, sizeof(struct epoll_event), true);
 
 #  ifdef HAVE_EPOLL_CTL_BATCH
       for (int i = 0; i < U_EPOLL_CTL_CMD_SIZE; ++i)

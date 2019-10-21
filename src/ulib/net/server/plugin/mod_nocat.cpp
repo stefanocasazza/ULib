@@ -2175,7 +2175,7 @@ int UNoCatPlugIn::handlerInit()
    U_INTERNAL_ASSERT_EQUALS(UPing::addrmask, U_NULLPTR)
 
 // UPing::addrmask = (fd_set*) UServer_Base::getOffsetToDataShare(sizeof(fd_set) + sizeof(uint32_t));
-   UPing::addrmask = (fd_set*) UMemoryPool::pmalloc(1, sizeof(fd_set) + sizeof(uint32_t));
+   UPing::addrmask = (fd_set*) UMemoryPool::malloc(1, sizeof(fd_set) + sizeof(uint32_t));
 
    // crypto cmd
 
@@ -2280,8 +2280,8 @@ int UNoCatPlugIn::handlerFork()
 
    U_INTERNAL_DUMP("num_radio = %u", num_radio)
 
-// sockp = (UPing**)                UMemoryPool::pmalloc(num_radio, sizeof(UPing*));
-   vaddr = (UVector<UIPAddress*>**) UMemoryPool::pmalloc(num_radio, sizeof(UVector<UIPAddress*>*));
+// sockp = (UPing**)                UMemoryPool::malloc(num_radio, sizeof(UPing*));
+   vaddr = (UVector<UIPAddress*>**) UMemoryPool::malloc(num_radio, sizeof(UVector<UIPAddress*>*));
 
 // UPing::addrmask = (fd_set*) UServer_Base::getPointerToDataShare(UPing::addrmask);
 

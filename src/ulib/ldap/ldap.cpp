@@ -28,8 +28,8 @@ ULDAPEntry::ULDAPEntry(int num_names, const char** names, int num_entry)
    n_entry   = num_entry;
    attr_name = names;
 
-   dn       =    (char**) UMemoryPool::pmalloc(num_entry,             sizeof(char*),    true);
-   attr_val = (UString**) UMemoryPool::pmalloc(num_entry * num_names, sizeof(UString*), true);
+   dn       =    (char**) UMemoryPool::malloc(num_entry,             sizeof(char*),    true);
+   attr_val = (UString**) UMemoryPool::malloc(num_entry * num_names, sizeof(UString*), true);
 }
 
 ULDAPEntry::~ULDAPEntry()
