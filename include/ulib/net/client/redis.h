@@ -1182,359 +1182,175 @@ public:
 
 #  if defined(HAVE_CXX20)
 
-class UCompileTimeRESPEncoder {
-private:
-   
-   template <class X>
-   static constexpr size_t countSegments(X rawFormat)
+template <typename T>
+struct LengthSurplusPackage {
+
+   size_t lengthSurplus;
+   T binding;
+
+   size_t size() 
    {
-      size_t index = 0;
+      return UCompileTimeStringFormatter::getLength(binding) + lengthSurplus;
+   }
+};
 
-      while (rawFormat[index] == ' ') ++index;
+template<typename Lambda, typename T>
+static void snprintf_specialization(Lambda&& lambda, LengthSurplusPackage<T>& t) 
+{
+   static char working[UCompileTimeStringFormatter::countDigits(INT64_MAX)];
 
-      size_t segmentCount = 1;
-      bool inSegment = true;
+   char *end = u_num2str64s(t.size(), working);
 
-      while (index < rawFormat.length)
-      {     
-         char ch = rawFormat[index];
+   lambda(working, end - working);
+}
 
-         if (ch == '\r') return segmentCount;
+class UCompileTimeRESPEncoder : public UCompileTimeStringFormatter {
+private:
 
-         if (inSegment && ch == ' ')
+   template <typename T> friend struct LengthSurplusPackage;
+
+   template<ssize_t number, bool terminate = false, typename ...DigitStrings>
+   static constexpr auto integerToString(DigitStrings... digitStrings)
+   {
+      if constexpr (terminate) return ((""_ctv + digitStrings) + ...);
+      else
+      {
+         if constexpr (number < 0) return integerToString<number * -1>("-"_ctv, std::forward<DigitStrings>(digitStrings) ...);
+         else
          {
-            inSegment = false;
-         }
-         else if (!inSegment && ch != ' ')
-         {
-            inSegment = true;
-            ++segmentCount;
-         }
+            constexpr size_t digitValue = number % 10;
+            constexpr bool newTerminate = number < 10;
+            constexpr size_t newNumber = number / 10;
 
-         ++index;
+                 if constexpr (digitValue == 0) return integerToString<newNumber, newTerminate>("0"_ctv, std::forward<DigitStrings>(digitStrings) ...);
+            else if constexpr (digitValue == 1) return integerToString<newNumber, newTerminate>("1"_ctv, std::forward<DigitStrings>(digitStrings) ...);
+            else if constexpr (digitValue == 2) return integerToString<newNumber, newTerminate>("2"_ctv, std::forward<DigitStrings>(digitStrings) ...);
+            else if constexpr (digitValue == 3) return integerToString<newNumber, newTerminate>("3"_ctv, std::forward<DigitStrings>(digitStrings) ...);
+            else if constexpr (digitValue == 4) return integerToString<newNumber, newTerminate>("4"_ctv, std::forward<DigitStrings>(digitStrings) ...);
+            else if constexpr (digitValue == 5) return integerToString<newNumber, newTerminate>("5"_ctv, std::forward<DigitStrings>(digitStrings) ...);
+            else if constexpr (digitValue == 6) return integerToString<newNumber, newTerminate>("6"_ctv, std::forward<DigitStrings>(digitStrings) ...);
+            else if constexpr (digitValue == 7) return integerToString<newNumber, newTerminate>("7"_ctv, std::forward<DigitStrings>(digitStrings) ...);
+            else if constexpr (digitValue == 8) return integerToString<newNumber, newTerminate>("8"_ctv, std::forward<DigitStrings>(digitStrings) ...);
+            else if constexpr (digitValue == 9) return integerToString<newNumber, newTerminate>("9"_ctv, std::forward<DigitStrings>(digitStrings) ...);
+         }
       }
+   }
+
+   template<auto format, bool notChar = false, size_t terminationIndex = format.length>
+   static constexpr size_t findChar(size_t workingIndex, char ch, char chOther)
+   {
+      if constexpr (notChar)
+      {
+            while (workingIndex < terminationIndex && ((format[workingIndex] == ch) || (format[workingIndex] == ch))) workingIndex++;
+      }
+      else  while (workingIndex < terminationIndex && ((format[workingIndex] != ch) || (format[workingIndex] != ch))) workingIndex++;
+
+      return workingIndex;
+   }
+
+   template<auto format, bool notChar = false, size_t terminationIndex = format.length>
+   static constexpr size_t findChar(size_t workingIndex, char ch)
+   {
+      return findChar<format, notChar, terminationIndex>(workingIndex, ch, ch);
+   }
+
+   template<bool isPartial, size_t workingIndex = 0, typename StringClass, typename T, typename... Ts>
+   static constexpr auto generateSegments(StringClass format, size_t& outputSegmentCount, T&& t, Ts&&... ts)
+   {
+      // "HSET {}.cache firstname {} lastname {} picture {} \r\n"
+
+      constexpr size_t formatLength = StringClass::instance.length;
+      constexpr size_t segmentStart = findChar<StringClass::instance, true>(workingIndex, ' '); 
+
+      if constexpr (workingIndex == 0) static_assert(segmentStart == 0, "segmentStart != 0");
+
+      if constexpr (StringClass::instance[segmentStart] == '\r' || segmentStart == formatLength)
+      {
+         if constexpr (isPartial)   return std::make_tuple(std::forward<T>(t), std::forward<Ts>(ts)...);
+         else                       return std::make_tuple("*"_ctv, outputSegmentCount, "\r\n"_ctv, std::forward<T>(t), std::forward<Ts>(ts)...);
+      }
+      else
+      {
+         constexpr size_t segmentEnd = findChar<StringClass::instance>(segmentStart, ' ', '\r');
+
+         if constexpr (workingIndex == 0) static_assert(segmentEnd == 4, "segmentEnd != 4");
+
+         constexpr size_t formatStart = findChar<StringClass::instance, false, segmentEnd>(segmentStart, '{');
+         if constexpr (workingIndex == 0) static_assert(formatStart == segmentEnd, "formatStart != segmentEnd");
+         // in the future we'll add formatting options in the middle
+         constexpr size_t formatTermination = findChar<StringClass::instance, false, segmentEnd>(formatStart, '}');
+         if constexpr (workingIndex == 0) static_assert(formatTermination == segmentEnd, "formatTermination != segmentEnd");
+
+         // if there was a format
+         if constexpr (formatStart != formatTermination)
+         {
+            return generateSegments<isPartial, segmentEnd + 1>(format, ++outputSegmentCount, std::forward<Ts>(ts)..., "$"_ctv, LengthSurplusPackage<T>{(segmentEnd + formatStart) - (segmentStart + formatTermination) - 1, t}, "\r\n"_ctv, StringClass::instance.template substr<segmentStart, formatStart>(), t, StringClass::instance.template substr<std::min(formatTermination + 1, segmentEnd), segmentEnd>() + "\r\n"_ctv);
+         }
+         else
+         {
+            constexpr auto segmentString = "$"_ctv + integerToString<segmentEnd - segmentStart>() + "\r\n"_ctv + StringClass::instance.template substr<segmentStart, segmentEnd>() + "\r\n"_ctv;
+
+            return generateSegments<isPartial, segmentEnd + 1>(format, ++outputSegmentCount, std::forward<T>(t), std::forward<Ts>(ts)..., segmentString);
+         }
+      }
+   }
+
+   template<bool isPartial, auto format, typename... Ts>
+   static size_t encode_impl(size_t writePosition, UString& workingString, Ts&&... ts)
+   {  
+      size_t segmentCount = 0;
+
+      std::apply([&] (auto... params) {
+
+         snprintf_impl(writePosition, workingString, params...);
+         
+      }, generateSegments<isPartial>(format, segmentCount, std::forward<Ts>(ts)...));
 
       return segmentCount;
    }
 
-   enum class ParameterType {
-
-      none,
-      _ustring,   // %v
-      cstring,    // %s
-      fstring,    // %fbs  flatbuffer string
-      fbinary,    // %fbb  flatbuffer binary
-      uinteger,   // %iu   unsigned integer
-      sinteger,   // %is   signed integer
-      boolean     // %b
-   };
-
-   struct Range {
-
-      size_t start;
-      size_t length;
-   };
-
-   struct SegmentOutline {
-
-      const size_t length;
-      const ParameterType parameter;
-      const Range ranges[2]; // parameter always fits in the middle. regardless of ordering this collapses to correctness
-   };
-
-   template <ParameterType parameter>
-   static constexpr auto formatSpecifierTranslation(void) // RESPFormatter -> UString::snprintf
-   { 
-      // no-op
-           if constexpr (parameter == ParameterType::none)      return ""_ctv;
-      // no change
-      else if constexpr (parameter == ParameterType::_ustring)  return "%v"_ctv;
-      else if constexpr (parameter == ParameterType::cstring)   return "%s"_ctv;
-      // change
-      else if constexpr (parameter == ParameterType::boolean)   return "%hhu"_ctv;
-      else if constexpr (parameter == ParameterType::fstring)   return "%.*s"_ctv;
-      else if constexpr (parameter == ParameterType::fbinary)   return "%.*s"_ctv;
-      else if constexpr (parameter == ParameterType::uinteger)  return "%llu"_ctv; // size up all integers to max
-      else if constexpr (parameter == ParameterType::sinteger)  return "%lld"_ctv;
-   }
-
-   template <ParameterType parameter>
-   static constexpr size_t parameterToLengthCorrection(void)
-   { 
-      // no-op
-           if constexpr (parameter == ParameterType::_ustring)  return 2;  // %v
-      else if constexpr (parameter == ParameterType::cstring)   return 2;  // %s
-      else if constexpr (parameter == ParameterType::boolean)   return 2;  // %b
-      // change
-      else if constexpr (parameter == ParameterType::fstring)   return 4;  // %fbs
-      else if constexpr (parameter == ParameterType::fbinary)   return 4;  // %fbb
-      else if constexpr (parameter == ParameterType::uinteger)  return 3;  // %iu
-      else if constexpr (parameter == ParameterType::sinteger)  return 3;  // %is
-
-      return 0;
-   }
-
-   // runtime
-   // faster implementations exist but they're long and ugly
-   template <typename IntegralType, typename = std::enable_if_t<std::is_integral_v<IntegralType>>>
-   static size_t countDigits(IntegralType number)
-   {
-      size_t digits = 0;
-
-      if (number < 0)
-      {
-         ++digits;
-         number *= -1;
-      }
-
-      while (number != 0) { number /= 10; digits++; }
-
-      return digits;
-   }
-
-   template <auto rawFormat, size_t argumentCount, size_t segmentCount = countSegments(rawFormat)>
-   struct RESPFormatter {
-   private:
-      
-      template<ssize_t number, bool terminate = false, typename ...DigitStrings>
-      static constexpr auto integerToString(DigitStrings... digitStrings)
-      {
-         if constexpr (terminate) return ((""_ctv + digitStrings) + ...);
-         else
-         {
-            if constexpr (number < 0) return integerToString<number * -1>("-"_ctv, std::forward<DigitStrings>(digitStrings) ...);
-            else
-            {
-               constexpr size_t digitValue = number % 10;
-               constexpr bool newTerminate = number < 10;
-               constexpr size_t newNumber = number / 10;
-
-                    if constexpr (digitValue == 0) return integerToString<newNumber, newTerminate>("0"_ctv, std::forward<DigitStrings>(digitStrings) ...);
-               else if constexpr (digitValue == 1) return integerToString<newNumber, newTerminate>("1"_ctv, std::forward<DigitStrings>(digitStrings) ...);
-               else if constexpr (digitValue == 2) return integerToString<newNumber, newTerminate>("2"_ctv, std::forward<DigitStrings>(digitStrings) ...);
-               else if constexpr (digitValue == 3) return integerToString<newNumber, newTerminate>("3"_ctv, std::forward<DigitStrings>(digitStrings) ...);
-               else if constexpr (digitValue == 4) return integerToString<newNumber, newTerminate>("4"_ctv, std::forward<DigitStrings>(digitStrings) ...);
-               else if constexpr (digitValue == 5) return integerToString<newNumber, newTerminate>("5"_ctv, std::forward<DigitStrings>(digitStrings) ...);
-               else if constexpr (digitValue == 6) return integerToString<newNumber, newTerminate>("6"_ctv, std::forward<DigitStrings>(digitStrings) ...);
-               else if constexpr (digitValue == 7) return integerToString<newNumber, newTerminate>("7"_ctv, std::forward<DigitStrings>(digitStrings) ...);
-               else if constexpr (digitValue == 8) return integerToString<newNumber, newTerminate>("8"_ctv, std::forward<DigitStrings>(digitStrings) ...);
-               else if constexpr (digitValue == 9) return integerToString<newNumber, newTerminate>("9"_ctv, std::forward<DigitStrings>(digitStrings) ...);
-            }
-         }
-      }
-      
-      template <size_t ... n>
-      static constexpr auto generateSegmentMarkersHelper(std::integer_sequence<size_t, n...>)
-      {
-         size_t workingIndex = 0;
-         return std::array<SegmentOutline, segmentCount>{getNextSegmentOutline(workingIndex, n) ...};
-      }
-
-      static constexpr auto generateSegmentMarkers()
-      {
-         return generateSegmentMarkersHelper(std::make_integer_sequence<size_t, segmentCount>{});
-      }
-
-      static constexpr SegmentOutline getNextSegmentOutline(size_t& workingIndex, size_t segmentIndex) // just to use parameter pack expansion
-      {
-         while (rawFormat[workingIndex] == ' ') ++workingIndex;
-
-         // if we encounter a format... always switch to range 2
-
-         Range ranges[2] = {};
-         const size_t segmentStart = workingIndex;
-         size_t subSegmentStart = workingIndex;  
-         ParameterType parameter = ParameterType::none;
-
-         while (workingIndex < rawFormat.length)
-         {     
-            char ch = rawFormat[workingIndex];
-
-            if (ch == ' ' || ch == '\r') break;
-
-            if (ch == '%')
-            {
-               // aka there were charaters before the format
-               if (subSegmentStart != workingIndex)
-               {
-                  ranges[0].start = subSegmentStart;
-                  ranges[0].length = (workingIndex - subSegmentStart);
-               }
-
-               ch = rawFormat[++workingIndex];
-
-               switch (ch)
-               {
-                  case 'v':
-                  {
-                     // %v
-                     parameter = ParameterType::_ustring;
-                     break;
-                  }
-                  case 'b':
-                  {
-                     // %b
-                     parameter = ParameterType::boolean;
-                     break;
-                  }
-                  case 's':
-                  {
-                     //%s
-                     parameter = ParameterType::cstring;
-                     break;
-                  }
-                  case 'f':
-                  {
-                     ch = rawFormat[++(++workingIndex)];
-
-                     // %fbs
-                     if (ch == 's') parameter = ParameterType::fstring;
-                     // %fbb
-                     else           parameter = ParameterType::fbinary;
-
-                     break;
-                  }
-                  case 'i':
-                  {
-                     ch = rawFormat[++workingIndex];
-
-                     // %is
-                     if (ch == 's') parameter = ParameterType::sinteger;
-                     // $iu
-                     else           parameter = ParameterType::uinteger;
-            
-                     break;
-                  }
-               }
-
-               subSegmentStart = workingIndex + 1;
-            }
-            
-            ++workingIndex;
-         }
-
-         if (parameter == ParameterType::none)
-         {
-            ranges[0].start = subSegmentStart;
-            ranges[0].length = (workingIndex - subSegmentStart);
-         }
-         else if (subSegmentStart != workingIndex)
-         {
-            ranges[1].start = subSegmentStart;
-            ranges[1].length = (workingIndex - subSegmentStart);
-         }
-
-         return {workingIndex - segmentStart, parameter, {ranges[0], ranges[1]}};
-      }
-
-      template <auto segmentOutlines, size_t segmentIndex = 0, class StringClass, typename ...StringClasses>
-      static constexpr auto parse(StringClass raw, std::array<size_t, argumentCount>& argumentToSegment, size_t argumentIndex = 0, StringClasses... strings)
-      {
-         if constexpr (segmentIndex >= segmentCount) return (strings + ... );
-         else
-         {
-            constexpr SegmentOutline segmentOutline = segmentOutlines[segmentIndex];
-            constexpr Range range0 = segmentOutline.ranges[0];
-            constexpr Range range1 = segmentOutline.ranges[1];
-
-            if constexpr (segmentOutline.parameter == ParameterType::none)
-            {
-               constexpr auto segmentString = "$"_ctv + integerToString<segmentOutline.length>() + "\r\n"_ctv + StringClass::instance.template substr<range0.start, range0.start + range0.length>() + "\r\n"_ctv;
-
-               return parse<segmentOutlines, segmentIndex + 1>(raw, argumentToSegment, argumentIndex, std::forward<StringClasses>(strings)..., segmentString);
-            }
-            else
-            {
-               argumentToSegment[argumentIndex] = segmentIndex;
-
-               constexpr auto segmentString = "$%d\r\n"_ctv + StringClass::instance.template substr<range0.start, range0.start + range0.length>() + formatSpecifierTranslation<segmentOutline.parameter>() + StringClass::instance.template substr<range1.start, range1.start + range1.length>() + "\r\n"_ctv;
-
-               return parse<segmentOutlines, segmentIndex + 1>(raw, argumentToSegment, ++argumentIndex, std::forward<StringClasses>(strings)..., segmentString);
-            }
-         }
-      }
-
-   public:
-
-      static constexpr auto parseToRESP()
-      {
-         constexpr std::array<SegmentOutline, segmentCount> segmentOutlines = generateSegmentMarkers();
-
-         std::array<size_t, argumentCount> argumentToSegment = {};
-         
-         return std::make_tuple("*"_ctv + integerToString<segmentCount>() + "\r\n"_ctv + parse<segmentOutlines>(rawFormat, argumentToSegment), segmentOutlines, argumentToSegment);
-      }
-   };
-
-   template <typename T, typename U>
-   struct decay_equiv : std::is_same<typename std::decay<T>::type, U>::type {};
-
-   template< class T, class U >
-   static inline constexpr bool decay_equiv_v = decay_equiv<T, U>::value;
-
-   template <auto respformat, size_t argumentCount, size_t workingCount, typename T, typename ... Ts>
-   static void fill(UString& workingString, T t, Ts... ts)
-   {
-      constexpr auto format            = std::get<0>(respformat);
-      constexpr auto segmentOutlines   = std::get<1>(respformat);
-      constexpr auto argumentToSegment = std::get<2>(respformat);
-
-      if constexpr (workingCount < argumentCount)
-      {
-         constexpr SegmentOutline outline = segmentOutlines[argumentToSegment[workingCount]];
-         constexpr size_t lengthSurplus = outline.length - parameterToLengthCorrection<outline.parameter>();
-
-         if constexpr (decay_equiv_v<T, UString>)
-         {  
-            if constexpr (std::is_pointer_v<T>) // will only accept single pointer depth
-            {
-               fill<respformat, argumentCount, workingCount + 1>(workingString, ts..., t->size() + lengthSurplus, t->rep);
-            }
-            else 
-            {
-               fill<respformat, argumentCount, workingCount + 1>(workingString, ts..., t.size() + lengthSurplus, t.rep);
-            }
-         }
-         else if constexpr (outline.parameter == ParameterType::boolean)
-         {
-            fill<respformat, argumentCount, workingCount + 1>(workingString, ts..., 1 + lengthSurplus, t);
-         }
-         else if constexpr (decay_equiv_v<T, char>)
-         {
-            fill<respformat, argumentCount, workingCount + 1>(workingString, ts..., strlen(t) + lengthSurplus, t);
-         }
-         else if constexpr (std::is_integral_v<T>) 
-         {
-            fill<respformat, argumentCount, workingCount + 1>(workingString, ts..., countDigits(t) + lengthSurplus, t);
-         }
-         else if constexpr (outline.parameter == ParameterType::fstring)
-         {
-            fill<respformat, argumentCount, workingCount + 1>(workingString, ts..., t->size() + lengthSurplus, t->size() + lengthSurplus, t->c_str());
-         }
-         else if constexpr (outline.parameter == ParameterType::fbinary)
-         {
-            fill<respformat, argumentCount, workingCount + 1>(workingString, ts..., t->size() + lengthSurplus, t->size() + lengthSurplus, t->Data());
-         }
-      }
-      else workingString.snprintf(format.string, format.length, t, ts...);
-   }
-
 public:
 
-   // only one parameter per segment allowed for now... aka {%v}.cache but not {%v%v}.cache
+   // CLIENT REPLY ON
+   static constexpr auto CLIENTREPLYON  = "*3\r\n$6\r\nCLIENT\r\n$5\r\nREPLY\r\n$2\r\nON\r\n"_ctv;
+   // CLIENT REPLY OFF
+   static constexpr auto CLIENTREPLYOFF = "*3\r\n$6\r\nCLIENT\r\n$5\r\nREPLY\r\n$3\r\nOFF\r\n"_ctv;
 
-   // call this like this... 
-   //
-   // UString workingString, first, last;
-   // UCompileTimeRESPEncoder::encode<"HSET {%v}.cache firstname %v lastname %v \r\n"_ctv>(workingString, first, last);
-
-   template<auto rawFormat, typename ... Args>
-   static void encode(UString& workingString, Args... args)
+// fulls
+   template<auto format, typename ... Ts>
+   static void encode(UString& workingString, Ts&&... ts)
    {
-      constexpr size_t argumentCount = sizeof...(Args);
-      constexpr auto respformat = RESPFormatter<rawFormat, argumentCount>::parseToRESP();
+      (void)encode_impl<false, format>(0, workingString, std::forward<Ts>(ts)...);
+   }
 
-      fill<respformat, argumentCount, 0>(workingString, args...);
+   template<auto format, typename ... Ts>
+   static void encode_add(UString& workingString, Ts&&... ts)
+   {
+      (void)encode_impl<false, format>(workingString.size(), workingString, std::forward<Ts>(ts)...);
+   }
+   
+   template<auto format, typename ... Ts>
+   static void encode_pos(size_t writePosition, UString& workingString, Ts&&... ts)
+   {
+      (void)encode_impl<false, format>(writePosition, workingString, std::forward<Ts>(ts)...);
+   }
+
+// partials
+   template<auto format, typename... Ts>
+   static void encode_partial_pos(size_t& segmentCountAccumulator, size_t writePosition, UString& workingString, Ts&&... ts)
+   {
+      segmentCountAccumulator += encode_impl<true, format>(writePosition, workingString, std::forward<Ts>(ts)...);
+   }
+
+   template<auto format, typename... Ts>
+   static void encode_partial_add(size_t& segmentCountAccumulator, UString& workingString, Ts&&... ts)
+   {
+      segmentCountAccumulator += encode_impl<true, format>(workingString.size(), workingString, std::forward<Ts>(ts)...);
+   }
+
+   static void encode_partial_count(UString& workingString, size_t segmentCount)
+   {
+      snprintf_impl(0, workingString, "*"_ctv, segmentCount, "\r\n"_ctv);
    }
 };
 #  endif
