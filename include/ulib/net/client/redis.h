@@ -1207,9 +1207,9 @@ static void snprintf_specialization(Lambda&& lambda, LengthSurplusPackage<T>& t)
 class UCompileTimeRESPEncoder : public UCompileTimeStringFormatter {
 private:
 
-   template <typename T> friend struct LengthSurplusPackage;
+	template <typename T> friend struct LengthSurplusPackage;
 
-   template<ssize_t number, bool terminate = false, typename ...DigitStrings>
+	template<ssize_t number, bool terminate = false, typename ...DigitStrings>
    static constexpr auto integerToString(DigitStrings... digitStrings)
    {
       if constexpr (terminate) return ((""_ctv + digitStrings) + ...);
@@ -1236,74 +1236,46 @@ private:
       }
    }
 
-   template<auto format, bool notChar = false, size_t terminationIndex = format.length>
-   static constexpr size_t findChar(size_t workingIndex, char ch, char chOther)
-   {
-      if constexpr (notChar)
-      {
-            while (workingIndex < terminationIndex && ((format[workingIndex] == ch) || (format[workingIndex] == ch))) workingIndex++;
-      }
-      else  while (workingIndex < terminationIndex && ((format[workingIndex] != ch) || (format[workingIndex] != ch))) workingIndex++;
-
-      return workingIndex;
-   }
-
-   template<auto format, bool notChar = false, size_t terminationIndex = format.length>
-   static constexpr size_t findChar(size_t workingIndex, char ch)
-   {
-      return findChar<format, notChar, terminationIndex>(workingIndex, ch, ch);
-   }
-
    template<bool isPartial, size_t workingIndex = 0, typename StringClass, typename T, typename... Ts>
    static constexpr auto generateSegments(StringClass format, size_t& outputSegmentCount, T&& t, Ts&&... ts)
    {
-      // "HSET {}.cache firstname {} lastname {} picture {} \r\n"
+   	// "HSET {{}}.cache firstname {} lastname {} picture {} \r\n"
+   	constexpr size_t segmentStart = findChar<StringClass::instance, notChar>(workingIndex, ' '); 
 
-      constexpr size_t formatLength = StringClass::instance.length;
-      constexpr size_t segmentStart = findChar<StringClass::instance, true>(workingIndex, ' '); 
-
-      if constexpr (workingIndex == 0) static_assert(segmentStart == 0, "segmentStart != 0");
-
-      if constexpr (StringClass::instance[segmentStart] == '\r' || segmentStart == formatLength)
+      if constexpr (StringClass::instance[segmentStart] == '\r' || segmentStart == StringClass::instance.length)
       {
-         if constexpr (isPartial)   return std::make_tuple(std::forward<T>(t), std::forward<Ts>(ts)...);
-         else                       return std::make_tuple("*"_ctv, outputSegmentCount, "\r\n"_ctv, std::forward<T>(t), std::forward<Ts>(ts)...);
+      	if constexpr (isPartial) 	return std::make_tuple(std::forward<T>(t), std::forward<Ts>(ts)...);
+      	else 								return std::make_tuple("*"_ctv, outputSegmentCount, "\r\n"_ctv, std::forward<T>(t), std::forward<Ts>(ts)...);
       }
       else
       {
          constexpr size_t segmentEnd = findChar<StringClass::instance>(segmentStart, ' ', '\r');
+         constexpr size_t formatStart = findChar<StringClass::instance, skipDoubles, segmentEnd>(segmentStart, '{');
 
-         if constexpr (workingIndex == 0) static_assert(segmentEnd == 4, "segmentEnd != 4");
-
-         constexpr size_t formatStart = findChar<StringClass::instance, false, segmentEnd>(segmentStart, '{');
-         if constexpr (workingIndex == 0) static_assert(formatStart == segmentEnd, "formatStart != segmentEnd");
-         // in the future we'll add formatting options in the middle
-         constexpr size_t formatTermination = findChar<StringClass::instance, false, segmentEnd>(formatStart, '}');
-         if constexpr (workingIndex == 0) static_assert(formatTermination == segmentEnd, "formatTermination != segmentEnd");
-
-         // if there was a format
-         if constexpr (formatStart != formatTermination)
+         if constexpr (formatStart < segmentEnd)
          {
-            return generateSegments<isPartial, segmentEnd + 1>(format, ++outputSegmentCount, std::forward<Ts>(ts)..., "$"_ctv, LengthSurplusPackage<T>{(segmentEnd + formatStart) - (segmentStart + formatTermination) - 1, t}, "\r\n"_ctv, StringClass::instance.template substr<segmentStart, formatStart>(), t, StringClass::instance.template substr<std::min(formatTermination + 1, segmentEnd), segmentEnd>() + "\r\n"_ctv);
+         	constexpr size_t formatTermination = formatStart + 1;
+
+         	return generateSegments<isPartial, segmentEnd + 1>(format, ++outputSegmentCount, std::forward<Ts>(ts)..., "$"_ctv, LengthSurplusPackage<T>{(segmentEnd + formatStart) - (segmentStart + formatTermination) - 1, t}, "\r\n"_ctv, StringClass::instance.template substr<segmentStart, formatStart>(), t, StringClass::instance.template substr<std::min(formatTermination + 1, segmentEnd), segmentEnd>() + "\r\n"_ctv);
          }
          else
          {
-            constexpr auto segmentString = "$"_ctv + integerToString<segmentEnd - segmentStart>() + "\r\n"_ctv + StringClass::instance.template substr<segmentStart, segmentEnd>() + "\r\n"_ctv;
+         	constexpr auto segmentString = "$"_ctv + integerToString<segmentEnd - segmentStart>() + "\r\n"_ctv + StringClass::instance.template substr<segmentStart, segmentEnd>() + "\r\n"_ctv;
 
-            return generateSegments<isPartial, segmentEnd + 1>(format, ++outputSegmentCount, std::forward<T>(t), std::forward<Ts>(ts)..., segmentString);
+         	return generateSegments<isPartial, segmentEnd + 1>(format, outputSegmentCount, std::forward<T>(t), std::forward<Ts>(ts)..., segmentString);
          }
       }
    }
 
    template<bool isPartial, auto format, typename... Ts>
    static size_t encode_impl(size_t writePosition, UString& workingString, Ts&&... ts)
-   {  
-      size_t segmentCount = 0;
+   {	
+   	size_t segmentCount = 0;
 
-      std::apply([&] (auto... params) {
+   	std::apply([&] (auto... params) {
 
-         snprintf_impl(writePosition, workingString, params...);
-         
+   		UCompileTimeStringFormatter::snprintf_impl(writePosition, workingString, params...);
+   		
       }, generateSegments<isPartial>(format, segmentCount, std::forward<Ts>(ts)...));
 
       return segmentCount;
@@ -1311,13 +1283,13 @@ private:
 
 public:
 
-   // CLIENT REPLY ON
+	// CLIENT REPLY ON
    static constexpr auto CLIENTREPLYON  = "*3\r\n$6\r\nCLIENT\r\n$5\r\nREPLY\r\n$2\r\nON\r\n"_ctv;
    // CLIENT REPLY OFF
    static constexpr auto CLIENTREPLYOFF = "*3\r\n$6\r\nCLIENT\r\n$5\r\nREPLY\r\n$3\r\nOFF\r\n"_ctv;
 
 // fulls
-   template<auto format, typename ... Ts>
+	template<auto format, typename ... Ts>
    static void encode(UString& workingString, Ts&&... ts)
    {
       (void)encode_impl<false, format>(0, workingString, std::forward<Ts>(ts)...);
@@ -1332,25 +1304,25 @@ public:
    template<auto format, typename ... Ts>
    static void encode_pos(size_t writePosition, UString& workingString, Ts&&... ts)
    {
-      (void)encode_impl<false, format>(writePosition, workingString, std::forward<Ts>(ts)...);
+   	(void)encode_impl<false, format>(writePosition, workingString, std::forward<Ts>(ts)...);
    }
 
 // partials
-   template<auto format, typename... Ts>
+	template<auto format, typename... Ts>
    static void encode_partial_pos(size_t& segmentCountAccumulator, size_t writePosition, UString& workingString, Ts&&... ts)
    {
-      segmentCountAccumulator += encode_impl<true, format>(writePosition, workingString, std::forward<Ts>(ts)...);
+   	segmentCountAccumulator += encode_impl<true, format>(writePosition, workingString, std::forward<Ts>(ts)...);
    }
 
    template<auto format, typename... Ts>
    static void encode_partial_add(size_t& segmentCountAccumulator, UString& workingString, Ts&&... ts)
    {
-      segmentCountAccumulator += encode_impl<true, format>(workingString.size(), workingString, std::forward<Ts>(ts)...);
+   	segmentCountAccumulator += encode_impl<true, format>(workingString.size(), workingString, std::forward<Ts>(ts)...);
    }
 
    static void encode_partial_count(UString& workingString, size_t segmentCount)
    {
-      snprintf_impl(0, workingString, "*"_ctv, segmentCount, "\r\n"_ctv);
+      UCompileTimeStringFormatter::snprintf_impl(0, workingString, "*"_ctv, segmentCount, "\r\n"_ctv);
    }
 };
 #  endif
