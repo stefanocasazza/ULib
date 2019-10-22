@@ -1262,7 +1262,7 @@ private:
          {
          	constexpr auto segmentString = "$"_ctv + integerToString<segmentEnd - segmentStart>() + "\r\n"_ctv + StringClass::instance.template substr<segmentStart, segmentEnd>() + "\r\n"_ctv;
 
-         	return generateSegments<isPartial, segmentEnd + 1>(format, outputSegmentCount, std::forward<T>(t), std::forward<Ts>(ts)..., segmentString);
+         	return generateSegments<isPartial, segmentEnd + 1>(format, ++outputSegmentCount, std::forward<T>(t), std::forward<Ts>(ts)..., segmentString);
          }
       }
    }
