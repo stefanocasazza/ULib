@@ -2910,12 +2910,35 @@ static void snprintf_specialization(Lambda&& lambda, T t)
 class UCompileTimeStringFormatter {
 protected:
 
-   template<typename StringClass>
-   static constexpr size_t findChar(StringClass format, size_t workingIndex, char ch)
+	static constexpr uint8_t notChar = 0x1;
+	static constexpr uint8_t skipDoubles = 0x2;
+
+	template<auto format, uint8_t options = 0, size_t terminationIndex = format.length>
+   static constexpr size_t findChar(size_t workingIndex, char ch, char chOther)
    {
-      while (workingIndex < format.length && format[workingIndex] != ch) workingIndex++;
+      if constexpr (options & notChar)
+      {
+      	// search until we find not some character 
+      	while (workingIndex < terminationIndex && (format[workingIndex] == ch) || (format[workingIndex] == chOther)) workingIndex++;
+      }
+      else if constexpr (options & skipDoubles)
+      {
+      	// {{}}.cache
+      	while (workingIndex < terminationIndex && ((format[workingIndex] != ch) || (workingIndex < terminationIndex && format[workingIndex + 1] == ch))) workingIndex++;
+      }
+      else if constexpr (options == 0)
+      {
+      	// search until we find some character
+      	while (workingIndex < terminationIndex && (format[workingIndex] != ch) && (format[workingIndex] != chOther)) workingIndex++;
+      }
 
       return workingIndex;
+   }
+
+	template<auto format, uint8_t options = 0, size_t terminationIndex = format.length>
+   static constexpr size_t findChar(size_t workingIndex, char ch)
+   {
+   	return findChar<format, options, terminationIndex>(workingIndex, ch, ch);
    }
 
    template<size_t workingIndex, size_t argumentCount, typename StringClass, typename T, typename... Ts>
@@ -2925,9 +2948,8 @@ protected:
       else
       {
          constexpr size_t startingIndex = workingIndex;
-         constexpr size_t nextFormat = findChar(format, workingIndex, '{');
-         // in the future we'll add formatting options in the middle
-         constexpr size_t formatTermination = findChar(format, workingIndex, '}'); 
+         constexpr size_t nextFormat = findChar<StringClass::instance, skipDoubles>(workingIndex, '{');
+         constexpr size_t formatTermination = nextFormat + 1;
 
          return generateSegments<formatTermination + 1, argumentCount - 1>(format, std::forward<Ts>(ts)..., StringClass::instance.template substr<workingIndex, nextFormat>(), std::forward<T>(t));
       }
@@ -2940,17 +2962,17 @@ protected:
    static inline constexpr bool decay_equiv_v = decay_equiv<T, U>::value;
 
    template <typename T, template <char... CharsB> class Template>
-   struct is_ctv : std::false_type {};
+	struct is_ctv : std::false_type {};
 
-   template <char... CharsA, template <char... CharsB> class Template>
-   struct is_ctv<Template<CharsA...>, Template> : std::true_type {};
+	template <char... CharsA, template <char... CharsB> class Template>
+	struct is_ctv<Template<CharsA...>, Template> : std::true_type {};
 
    template <typename T>
    static void writeBytes(void*& writeTo, T t)
    {
       if constexpr (is_ctv<T, UCompileTimeStringView>::value)
       {
-         writeTo = (char *)memcpy(writeTo, t.string, t.length) + t.length;
+         writeTo = memcpy(writeTo, t.string, t.length) + t.length;
       }
       else if constexpr (decay_equiv_v<T, UString>)
       {
@@ -2995,17 +3017,17 @@ protected:
    template <typename T>
    static size_t getLength(T t)
    {
-           if constexpr (is_ctv<T, UCompileTimeStringView>::value) return t.length;
-      else if constexpr (decay_equiv_v<T, UString>)                return t.size();
-      else if constexpr (std::is_integral_v<T>)                    return countDigits(t);
-      else if constexpr (decay_equiv_v<T, char>)                   return strlen(t);
+      	  if constexpr (is_ctv<T, UCompileTimeStringView>::value) return t.length;
+      else if constexpr (decay_equiv_v<T, UString>)					 return t.size();
+      else if constexpr (std::is_integral_v<T>)							 return countDigits(t);
+      else if constexpr (decay_equiv_v<T, char>) 						 return strlen(t);
       else
       {
-         size_t length = 0;
+      	size_t length = 0;
 
          auto lambda = [&] (const void *buffer, size_t bufferSize)
          {
-            length = bufferSize;
+         	length = bufferSize;
          };
 
          snprintf_specialization(lambda, t);
@@ -3017,15 +3039,15 @@ protected:
    template<typename... Ts>
    static void snprintf_impl(size_t writePosition, UString& workingString, Ts... ts)
    {
-      size_t lengths = (getLength(ts) + ...);
+   	size_t lengths = (getLength(ts) + ...);
 
-      // grow string to accomodate new size if necessary
-      workingString.reserve(workingString.size() + lengths);
+   	// grow string to accomodate new size if necessary
+		workingString.reserve(workingString.size() + lengths);
 
-      void *target = workingString.data() + writePosition;
+		void *target = workingString.data() + writePosition;
 
-      // shift over existing contents
-      if (writePosition < workingString.size()) memcpy((char *)target + lengths, target, lengths);
+		// shift over existing contents
+		if (writePosition < workingString.size()) memcpy(target + lengths, target, lengths);
 
       (writeBytes(target, ts), ...);
       workingString.size_adjust_force((char *)target - workingString.data());
@@ -3033,28 +3055,28 @@ protected:
 
 public:
 
-   template <auto format, typename... Ts>
+	template <auto format, typename... Ts>
    static void snprintf_pos(size_t writePosition, UString& workingString, Ts... ts)
    {
-      std::apply([&] (auto... params) {
+   	std::apply([&] (auto... params) {
 
-      // adding this extra level of indirection allowing for the building of higher level abstraction parsers on top
+   	// adding this extra level of indirection allowing for the building of higher level abstraction parsers on top
 
-         snprintf_impl(writePosition, workingString, params...);
+   		snprintf_impl(writePosition, workingString, params...);
 
       }, generateSegments<0, sizeof...(Ts)>(format, std::forward<Ts>(ts)...));
    }
 
-   template <auto format, typename... Ts>
+	template <auto format, typename... Ts>
    static void snprintf(UString& workingString, Ts... ts)
    {
-      snprintf_pos<format>(0, workingString, std::forward<Ts>(ts)...);
+   	snprintf_pos<format>(0, workingString, std::forward<Ts>(ts)...);
    }
 
    template <auto format, typename... Ts>
    static void snprintf_add(UString& workingString, Ts... ts)
    {
-      snprintf_pos<format>(workingString.size(), workingString, std::forward<Ts>(ts)...);
+   	snprintf_pos<format>(workingString.size(), workingString, std::forward<Ts>(ts)...);
    }
 };
 #  endif
