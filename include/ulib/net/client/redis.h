@@ -1180,7 +1180,7 @@ public:
 };
 #  endif
 
-#  if defined(HAVE_CXX20)
+#if defined(HAVE_CXX20)
 
 template <typename T>
 struct LengthSurplusPackage {
@@ -1207,9 +1207,9 @@ static void snprintf_specialization(Lambda&& lambda, LengthSurplusPackage<T>& t)
 class UCompileTimeRESPEncoder : public UCompileTimeStringFormatter {
 private:
 
-	template <typename T> friend struct LengthSurplusPackage;
+   template <typename T> friend struct LengthSurplusPackage;
 
-	template<ssize_t number, bool terminate = false, typename ...DigitStrings>
+   template<ssize_t number, bool terminate = false, typename ...DigitStrings>
    static constexpr auto integerToString(DigitStrings... digitStrings)
    {
       if constexpr (terminate) return ((""_ctv + digitStrings) + ...);
@@ -1239,13 +1239,13 @@ private:
    template<bool isPartial, size_t workingIndex = 0, typename StringClass, typename T, typename... Ts>
    static constexpr auto generateSegments(StringClass format, size_t& outputSegmentCount, T&& t, Ts&&... ts)
    {
-   	// "HSET {{}}.cache firstname {} lastname {} picture {} \r\n"
-   	constexpr size_t segmentStart = findChar<StringClass::instance, notChar>(workingIndex, ' '); 
+      // "HSET {{}}.cache firstname {} lastname {} picture {} \r\n"
+      constexpr size_t segmentStart = findChar<StringClass::instance, notChar>(workingIndex, ' '); 
 
       if constexpr (StringClass::instance[segmentStart] == '\r' || segmentStart == StringClass::instance.length)
       {
-      	if constexpr (isPartial) 	return std::make_tuple(std::forward<T>(t), std::forward<Ts>(ts)...);
-      	else 								return std::make_tuple("*"_ctv, outputSegmentCount, "\r\n"_ctv, std::forward<T>(t), std::forward<Ts>(ts)...);
+         if constexpr (isPartial)   return std::make_tuple(std::forward<T>(t), std::forward<Ts>(ts)...);
+         else                       return std::make_tuple("*"_ctv, outputSegmentCount, "\r\n"_ctv, std::forward<T>(t), std::forward<Ts>(ts)...);
       }
       else
       {
@@ -1254,28 +1254,28 @@ private:
 
          if constexpr (formatStart < segmentEnd)
          {
-         	constexpr size_t formatTermination = formatStart + 1;
+            constexpr size_t formatTermination = formatStart + 1;
 
-         	return generateSegments<isPartial, segmentEnd + 1>(format, ++outputSegmentCount, std::forward<Ts>(ts)..., "$"_ctv, LengthSurplusPackage<T>{(segmentEnd + formatStart) - (segmentStart + formatTermination) - 1, t}, "\r\n"_ctv, StringClass::instance.template substr<segmentStart, formatStart>(), t, StringClass::instance.template substr<std::min(formatTermination + 1, segmentEnd), segmentEnd>() + "\r\n"_ctv);
+            return generateSegments<isPartial, segmentEnd + 1>(format, ++outputSegmentCount, std::forward<Ts>(ts)..., "$"_ctv, LengthSurplusPackage<T>{(segmentEnd + formatStart) - (segmentStart + formatTermination) - 1, t}, "\r\n"_ctv, StringClass::instance.template substr<segmentStart, formatStart>(), t, StringClass::instance.template substr<std::min(formatTermination + 1, segmentEnd), segmentEnd>() + "\r\n"_ctv);
          }
          else
          {
-         	constexpr auto segmentString = "$"_ctv + integerToString<segmentEnd - segmentStart>() + "\r\n"_ctv + StringClass::instance.template substr<segmentStart, segmentEnd>() + "\r\n"_ctv;
+            constexpr auto segmentString = "$"_ctv + integerToString<segmentEnd - segmentStart>() + "\r\n"_ctv + StringClass::instance.template substr<segmentStart, segmentEnd>() + "\r\n"_ctv;
 
-         	return generateSegments<isPartial, segmentEnd + 1>(format, ++outputSegmentCount, std::forward<T>(t), std::forward<Ts>(ts)..., segmentString);
+            return generateSegments<isPartial, segmentEnd + 1>(format, ++outputSegmentCount, std::forward<T>(t), std::forward<Ts>(ts)..., segmentString);
          }
       }
    }
 
    template<bool isPartial, auto format, typename... Ts>
    static size_t encode_impl(size_t writePosition, UString& workingString, Ts&&... ts)
-   {	
-   	size_t segmentCount = 0;
+   {  
+      size_t segmentCount = 0;
 
-   	std::apply([&] (auto... params) {
+      std::apply([&] (auto... params) {
 
-   		UCompileTimeStringFormatter::snprintf_impl(writePosition, workingString, params...);
-   		
+         UCompileTimeStringFormatter::snprintf_impl(writePosition, workingString, params...);
+         
       }, generateSegments<isPartial>(format, segmentCount, std::forward<Ts>(ts)...));
 
       return segmentCount;
@@ -1283,13 +1283,13 @@ private:
 
 public:
 
-	// CLIENT REPLY ON
+   // CLIENT REPLY ON
    static constexpr auto CLIENTREPLYON  = "*3\r\n$6\r\nCLIENT\r\n$5\r\nREPLY\r\n$2\r\nON\r\n"_ctv;
    // CLIENT REPLY OFF
    static constexpr auto CLIENTREPLYOFF = "*3\r\n$6\r\nCLIENT\r\n$5\r\nREPLY\r\n$3\r\nOFF\r\n"_ctv;
 
 // fulls
-	template<auto format, typename ... Ts>
+   template<auto format, typename ... Ts>
    static void encode(UString& workingString, Ts&&... ts)
    {
       (void)encode_impl<false, format>(0, workingString, std::forward<Ts>(ts)...);
@@ -1304,20 +1304,20 @@ public:
    template<auto format, typename ... Ts>
    static void encode_pos(size_t writePosition, UString& workingString, Ts&&... ts)
    {
-   	(void)encode_impl<false, format>(writePosition, workingString, std::forward<Ts>(ts)...);
+      (void)encode_impl<false, format>(writePosition, workingString, std::forward<Ts>(ts)...);
    }
 
 // partials
-	template<auto format, typename... Ts>
+   template<auto format, typename... Ts>
    static void encode_partial_pos(size_t& segmentCountAccumulator, size_t writePosition, UString& workingString, Ts&&... ts)
    {
-   	segmentCountAccumulator += encode_impl<true, format>(writePosition, workingString, std::forward<Ts>(ts)...);
+      segmentCountAccumulator += encode_impl<true, format>(writePosition, workingString, std::forward<Ts>(ts)...);
    }
 
    template<auto format, typename... Ts>
    static void encode_partial_add(size_t& segmentCountAccumulator, UString& workingString, Ts&&... ts)
    {
-   	segmentCountAccumulator += encode_impl<true, format>(workingString.size(), workingString, std::forward<Ts>(ts)...);
+      segmentCountAccumulator += encode_impl<true, format>(workingString.size(), workingString, std::forward<Ts>(ts)...);
    }
 
    static void encode_partial_count(UString& workingString, size_t segmentCount)
