@@ -1162,16 +1162,12 @@ public:
       spans.emplace_back(UREDISClusterMaster::hashslotForKey(hashableKey), beginning, pipeline.size(), spans.size());
    }
 
-   void append(size_t increaseCapacityBy, const UString& hashableKey, const char* format, uint32_t fmt_size, ...)
+   template <auto format, typename... Ts>
+   void append(const UString& hashableKey, Ts... ts)
    {
       size_t beginning = pipeline.size();
 
-      if (increaseCapacityBy > 0) pipeline.reserve(pipeline.size() + increaseCapacityBy);
-
-      va_list args;
-      va_start(args, fmt_size);
-      pipeline.vsnprintf_add(format, fmt_size, args);
-      va_end(args);
+      UCompileTimeStringFormatter::snprintf_add<format>(pipeline, std::forward<Ts>(ts)...);
 
       spans.emplace_back(UREDISClusterMaster::hashslotForKey(hashableKey), beginning, pipeline.size(), spans.size());
    }
