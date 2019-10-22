@@ -2972,7 +2972,7 @@ protected:
    {
       if constexpr (is_ctv<T, UCompileTimeStringView>::value)
       {
-         writeTo = memcpy(writeTo, t.string, t.length) + t.length;
+         writeTo = (char *)memcpy(writeTo, t.string, t.length) + t.length;
       }
       else if constexpr (decay_equiv_v<T, UString>)
       {
@@ -3042,12 +3042,13 @@ protected:
    	size_t lengths = (getLength(ts) + ...);
 
    	// grow string to accomodate new size if necessary
-		workingString.reserve(workingString.size() + lengths);
+		workingString.reserve(workingString.size() 
+									);
 
 		void *target = workingString.data() + writePosition;
 
 		// shift over existing contents
-		if (writePosition < workingString.size()) memcpy(target + lengths, target, lengths);
+		if (writePosition < workingString.size()) memcpy((char *)target + lengths, target, lengths);
 
       (writeBytes(target, ts), ...);
       workingString.size_adjust_force((char *)target - workingString.data());
