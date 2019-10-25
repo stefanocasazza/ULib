@@ -244,26 +244,16 @@ private:
 
 #if defined(U_STDCPP_ENABLE) && defined(HAVE_CXX20) && defined(USE_MONGODB) && defined(U_LINUX)
 
-template <typename StringType>
-static void bson_append_utf8(bson_t *doc, UStringType&& fieldname, StringType&& value)
+template <UStringType A, UStringType B>
+static void bson_append_utf8(bson_t *doc, A&& fieldname, B&& value)
 {  
-   if constexpr (UStringType<StringType>)
-   {
-      (void)bson_append_utf8(doc, U_STRING_TO_PARAM(fieldname), U_STRING_TO_PARAM(value));
-   }
-   // else any string type that conforms to this paradigm
-   else (void)bson_append_utf8(doc, U_STRING_TO_PARAM(fieldname), value->Data(), value->size());
+   void)bson_append_utf8(doc, U_STRING_TO_PARAM(fieldname), U_STRING_TO_PARAM(value));
 }
 
-template <class StringType>
-static void bson_append_binary(bson_t *doc, UCompileTimeStringType&& fieldname, StringType&& value)
+template <UStringType A, UStringType B>
+static void bson_append_binary(bson_t *doc, A&& fieldname, B&& value)
 {
-   if constexpr (UStringType<StringType>)
-   {
-      (void)bson_append_binary(doc, U_STRING_TO_PARAM(fieldname), BSON_SUBTYPE_BINARY, U_BINARY_TO_PARAM(value));
-   }
-   // else any string type that conforms to this paradigm
-   else (void)bson_append_binary(doc, U_STRING_TO_PARAM(fieldname), BSON_SUBTYPE_BINARY, value->Data(), value->size());
+   (void)bson_append_binary(doc, U_STRING_TO_PARAM(fieldname), BSON_SUBTYPE_BINARY, U_BINARY_TO_PARAM(value));
 }
 
 static void bson_append_bool(				bson_t *doc, UStringType&& fieldname, 	  bool value)	{ (void) ::bson_append_bool(				doc, U_STRING_TO_PARAM(fieldname), value); }
