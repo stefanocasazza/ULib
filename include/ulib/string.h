@@ -61,6 +61,7 @@ enum StringAllocationIndex {
 #endif
 #define   U_STRING_TO_PARAM(str)            (str).data(), (str).size()
 #define   U_STRING_TO_RANGE(str)            (str).data(), (str).pend()
+#define   U_BINARY_TO_PARAM(str)            (const uint8_t*)str.data(), str.size()
 
 /**
  * UStringRep: string representation
