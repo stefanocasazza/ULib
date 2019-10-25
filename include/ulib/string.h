@@ -2923,7 +2923,7 @@ public:
          ++index;
       }
 
-      return -1;                                                
+      return index;                                                
    }
 };
 
