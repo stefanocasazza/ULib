@@ -1037,7 +1037,7 @@ private:
    UREDISClusterClient *managementClient;
    UHashMap<RedisClusterNode *> *clusterNodes;
 
-   static uint16_t hashslotForKey(const UString& hashableKey) { return u_crc16(U_STRING_TO_PARAM(hashableKey)) % 16384; }
+   static uint16_t hashslotForKey(UStringType&& hashableKey) {return u_crc16(U_STRING_TO_PARAM(hashableKey)) % 16384;}
    
    UREDISClusterClient* clientForHashslot(uint16_t hashslot)
    {
@@ -1070,8 +1070,9 @@ private:
    // this might delete cluster nodes so be careful of client pointers after
    void calculateNodeMap();
 
-   void sendToCluster(UREDISClusterClient*& workingClient, const UString& hashableKey, const UString& pipeline);
-   
+   template<bool single, UStringType A, UStringType B>
+   auto sendToCluster(A&& hashableKey, B&& pipeline);
+
 public:
    
    U_MEMORY_TEST
@@ -1080,19 +1081,17 @@ public:
       
    bool connect(const char* host = U_NULLPTR, unsigned int _port = 6379);
 
-   UString clusterSingle(const UString& hashableKey, const UString& pipeline)
-   { 
-      UREDISClusterClient* workingClient;
-      sendToCluster(workingClient, hashableKey, pipeline);
-      return workingClient->UREDISClient_Base::vitem[0];
+   template<UStringType A, UStringType B>
+   UString clusterSingle(A&& hashableKey, B&& pipeline)
+   {
+      return sendToCluster<true>(std::forward<A>(hashableKey), std::forward<B>(pipeline));
    }
 
    // both of these multis require all keys to exist within a single hash slot (on the same node isn't good enough)
-   const UVector<UString>& clusterMulti( const UString& hashableKey, const UString& pipeline)
+   template<UStringType A, UStringType B>
+   const UVector<UString>& clusterMulti(A&& hashableKey, B&& pipeline)
    { 
-      UREDISClusterClient* workingClient;
-      sendToCluster(workingClient, hashableKey, pipeline);
-      return workingClient->UREDISClient_Base::vitem;
+      return sendToCluster<false>(std::forward<A>(hashableKey), std::forward<B>(pipeline));
    }
 
    // if reorderable == false, commands are grouped and pushed SEQUENTIALLY BY HASHSLOT. even if other commands point to hashslots on the same cluster node, we are unable to garuntee ordering since Redis only checks for -MOVED etc errors command by command as it executes them, and does not fail upon reaching a -MOVED etc error. this requires waiting for each response, to ensure no errors occured, before moving onto the next batch of commands.
@@ -1121,103 +1120,67 @@ public:
 #endif
 };
 
-class AnonymousClusterPipeline {
-private:
-
-   friend class UREDISClusterMaster;
-
-   struct Span {
-
-      int16_t hashslot;
-      size_t beginning, end, index;
-
-      Span(uint16_t _hashslot, size_t _beginning, size_t _end, size_t _index) : hashslot(_hashslot), beginning(_beginning), end(_end), index(_index) {}
-   };
-
-   UString pipeline;
-   std::vector<Span> spans;
-
-public:
-   
-   size_t size()
-   {
-      return pipeline.size();
-   }
-   
-   void setEmpty()
-   {
-      pipeline.setEmpty();
-      spans.clear();
-   }
-   
-   void append(const UString& hashableKey, const UString& command)
-   {
-      size_t beginning = pipeline.size();
-
-      pipeline.reserve(pipeline.size() + command.size());
-
-      pipeline.append(command);
-
-      spans.emplace_back(UREDISClusterMaster::hashslotForKey(hashableKey), beginning, pipeline.size(), spans.size());
-   }
-
-   template <auto format, typename... Ts>
-   void append(const UString& hashableKey, Ts... ts)
-   {
-      size_t beginning = pipeline.size();
-
-      UCompileTimeStringFormatter::snprintf_add<format>(pipeline, std::forward<Ts>(ts)...);
-
-      spans.emplace_back(UREDISClusterMaster::hashslotForKey(hashableKey), beginning, pipeline.size(), spans.size());
-   }
-
-   AnonymousClusterPipeline() : pipeline(300U) {}
-};
-
 class UCompileTimeRESPEncoder : public UCompileTimeStringFormatter {
 private:
 
-   template<bool isPartial, size_t workingIndex = 0, typename StringClass, typename T, typename... Ts>
-   static constexpr auto generateSegments(StringClass format, size_t& outputSegmentCount, T&& t, Ts&&... ts)
+   template<bool isPartial, size_t workingIndex = 0, size_t workingSegmentCount = 0, typename StringClass, typename... Xs, typename T, typename... Ts>
+   static constexpr auto generateSegments(std::tuple<Xs...>&& workingCommand, StringClass format, size_t& outputSegmentCount, T&& t, Ts&&... ts)
    {
-      // "HSET {{}}.cache firstname {} lastname {} picture {} \r\n"
-      constexpr size_t segmentStart = findChar<StringClass::instance, notChar>(workingIndex, ' '); 
+      constexpr size_t segmentStart = StringClass::instance.find(workingIndex, " "_ctv, StringClass::notChars);
 
-      if constexpr (StringClass::instance[segmentStart] == '\r' || segmentStart == StringClass::instance.length)
-      {
-         if constexpr (isPartial)   return std::make_tuple(std::forward<T>(t), std::forward<Ts>(ts)...);
-         else                       return std::make_tuple("*"_ctv, outputSegmentCount, "\r\n"_ctv, std::forward<T>(t), std::forward<Ts>(ts)...);
+      if constexpr (segmentStart == StringClass::length || StringClass::string[segmentStart] == '\r')
+      {  
+         if constexpr (isPartial)
+         {
+            outputSegmentCount = workingSegmentCount;
+            return workingCommand;
+         }
+         else
+         {  
+            constexpr auto segmentCountString = "*"_ctv + integerToString<workingSegmentCount>() + "\r\n"_ctv;
+            constexpr size_t nextCommand = StringClass::instance.find(segmentStart, " \r\n"_ctv, StringClass::notChars);
+
+            if constexpr (nextCommand < StringClass::length)
+            {
+               return std::apply([&] (auto... params) {
+
+                  return generateSegments<isPartial, nextCommand>(std::tuple(), format, outputSegmentCount, std::forward<T>(t), std::forward<Ts>(ts)..., segmentCountString, params...);
+
+               }, workingCommand);
+            }
+            else return std::tuple_cat(std::forward_as_tuple(t, ts...), std::tie(segmentCountString), workingCommand);
+         }                
       }
       else
       {
-         constexpr size_t segmentEnd = findChar<StringClass::instance>(segmentStart, ' ', '\r');
-         constexpr size_t formatStart = findChar<StringClass::instance, skipDoubles, segmentEnd>(segmentStart, '{');
+         constexpr size_t segmentEnd = StringClass::instance.find(segmentStart, " \r"_ctv);
+         constexpr size_t formatStart = StringClass::instance.find(segmentStart, "{"_ctv, StringClass::skipDoubles, segmentEnd);
 
          if constexpr (formatStart < segmentEnd)
          {
             constexpr size_t formatTermination = formatStart + 1;
 
-            return generateSegments<isPartial, segmentEnd + 1>(format, ++outputSegmentCount, std::forward<Ts>(ts)..., "$"_ctv, LengthSurplusPackage<T>{(segmentEnd + formatStart) - (segmentStart + formatTermination) - 1, t}, "\r\n"_ctv, StringClass::instance.template substr<segmentStart, formatStart>(), t, StringClass::instance.template substr<std::min(formatTermination + 1, segmentEnd), segmentEnd>() + "\r\n"_ctv);
+            return generateSegments<isPartial, segmentEnd, workingSegmentCount + 1>(std::tuple_cat(workingCommand, std::make_tuple("$"_ctv, LengthSurplusPackage<T>{(segmentEnd + formatStart) - (segmentStart + formatTermination) - 1, std::forward<T>(t)}, "\r\n"_ctv, StringClass::instance.template substr<segmentStart, formatStart>(), std::forward<T>(t), StringClass::instance.template substr<(std::min(formatTermination + 1, segmentEnd)), segmentEnd>() + "\r\n"_ctv)), format, outputSegmentCount, std::forward<Ts>(ts)..., ""_ctv); // ""_ctv so that there are always enough arguments
          }
          else
          {
             constexpr auto segmentString = "$"_ctv + integerToString<segmentEnd - segmentStart>() + "\r\n"_ctv + StringClass::instance.template substr<segmentStart, segmentEnd>() + "\r\n"_ctv;
 
-            return generateSegments<isPartial, segmentEnd + 1>(format, ++outputSegmentCount, std::forward<T>(t), std::forward<Ts>(ts)..., segmentString);
+            return generateSegments<isPartial, segmentEnd, workingSegmentCount + 1>(std::tuple_cat(workingCommand, std::tie(segmentString)), format,outputSegmentCount, std::forward<T>(t), std::forward<Ts>(ts)...);
          }
       }
    }
 
    template<bool isPartial, auto format, typename... Ts>
    static size_t encode_impl(size_t writePosition, UString& workingString, Ts&&... ts)
-   {  
+   {
       size_t segmentCount = 0;
 
       std::apply([&] (auto... params) {
 
          UCompileTimeStringFormatter::snprintf_impl(writePosition, workingString, params...);
          
-      }, generateSegments<isPartial>(format, segmentCount, std::forward<Ts>(ts)...));
+      }, generateSegments<isPartial>(std::tuple(), format, segmentCount, std::forward<Ts>(ts)...));
 
       return segmentCount;
    }
@@ -1225,9 +1188,11 @@ private:
 public:
 
    // CLIENT REPLY ON
-   static constexpr auto CLIENTREPLYON  = "*3\r\n$6\r\nCLIENT\r\n$5\r\nREPLY\r\n$2\r\nON\r\n"_ctv;
+   static constexpr auto CLIENTREPLYON    = "*3\r\n$6\r\nCLIENT\r\n$5\r\nREPLY\r\n$2\r\nON\r\n"_ctv;
    // CLIENT REPLY OFF
-   static constexpr auto CLIENTREPLYOFF = "*3\r\n$6\r\nCLIENT\r\n$5\r\nREPLY\r\n$3\r\nOFF\r\n"_ctv;
+   static constexpr auto CLIENTREPLYOFF   = "*3\r\n$6\r\nCLIENT\r\n$5\r\nREPLY\r\n$3\r\nOFF\r\n"_ctv;
+   // CLIENT REPLY SKIP
+   static constexpr auto CLIENTREPLYSKIP  = "*3\r\n$6\r\nCLIENT\r\n$5\r\nREPLY\r\n$4\r\nSKIP\r\n"_ctv;
 
 // fulls
    template<auto format, typename ... Ts>
@@ -1265,6 +1230,60 @@ public:
    {
       UCompileTimeStringFormatter::snprintf_impl(0, workingString, "*"_ctv, segmentCount, "\r\n"_ctv);
    }
+};
+
+class AnonymousClusterPipeline {
+private:
+
+   friend class UREDISClusterMaster;
+
+   struct Span {
+
+      int16_t hashslot;
+      size_t beginning, end, index;
+
+      Span(uint16_t _hashslot, size_t _beginning, size_t _end, size_t _index) : hashslot(_hashslot), beginning(_beginning), end(_end), index(_index) {}
+   };
+
+   UString pipeline;
+   std::vector<Span> spans;
+
+public:
+   
+   size_t size()
+   {
+      return pipeline.size();
+   }
+   
+   void setEmpty()
+   {
+      pipeline.setEmpty();
+      spans.clear();
+   }
+         
+   template <UStringType A>
+   void append(A&& hashableKey, const UString& command)
+   {
+      size_t beginning = pipeline.size();
+
+      pipeline.reserve(pipeline.size() + command.size());
+
+      pipeline.append(command);
+
+      spans.emplace_back(UREDISClusterMaster::hashslotForKey(std::forward<A>(hashableKey)), beginning, pipeline.size(), spans.size());
+   }
+
+   template <auto format, UStringType A, typename... Ts>
+   void append(A&& hashableKey, Ts&&... ts)
+   {
+      size_t beginning = pipeline.size();
+
+      UCompileTimeRESPEncoder::encode_add<format>(pipeline, std::forward<Ts>(ts)...);
+
+      spans.emplace_back(UREDISClusterMaster::hashslotForKey(std::forward<A>(hashableKey)), beginning, pipeline.size(), spans.size());
+   }
+
+   AnonymousClusterPipeline() : pipeline(300U) {}
 };
 #endif
 #endif
