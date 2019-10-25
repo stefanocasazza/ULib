@@ -1215,7 +1215,7 @@ public:
 
 // partials
    template<auto format, typename... Ts>
-   static void encode_partial_pos(size_t& segmentCountAccumulator, size_t writePosition, UString& workingString, Ts&&... ts)
+   static void encode_partial_pos(size_t writePosition, size_t& segmentCountAccumulator, UString& workingString, Ts&&... ts)
    {
       segmentCountAccumulator += encode_impl<true, format>(writePosition, workingString, std::forward<Ts>(ts)...);
    }
