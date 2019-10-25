@@ -2935,6 +2935,16 @@ constexpr auto operator""_ctv() // compile time view
 
 #define U_CTV_TO_PARAM(ct_string) ct_string.string, ct_string.length
 
+template <typename T, template <char... CharsB> class Template>
+struct is_ctv : std::false_type {};
+
+template <char... CharsA, template <char... CharsB> class Template>
+struct is_ctv<Template<CharsA...>, Template> : std::true_type {};
+
+template <typename T>
+static inline constexpr bool is_ctv_v = is_ctv<T, UCompileTimeStringView>::value;
+
+
 template<typename Lambda, typename T>
 static void snprintf_specialization(Lambda&& lambda, T t) 
 {
@@ -2967,15 +2977,6 @@ protected:
 
    template <class T, class U>
    static inline constexpr bool decay_equiv_v = decay_equiv<T, U>::value;
-
-   template <typename T, template <char... CharsB> class Template>
-   struct is_ctv : std::false_type {};
-
-   template <char... CharsA, template <char... CharsB> class Template>
-   struct is_ctv<Template<CharsA...>, Template> : std::true_type {};
-
-   template <typename T>
-   static inline constexpr bool is_ctv_v = is_ctv<T, UCompileTimeStringView>::value;
 
    template <typename T>
    static void writeBytes(char*& writeTo, T t)
