@@ -3142,13 +3142,13 @@ static void snprintf_specialization(Lambda&& lambda, UCompileTimeStringFormatter
 
 template<typename T>
 concept bool UCompileTimeStringType = requires(T string) {
-   UCompileTimeStringFormatter::is_ctv_v<T>;
+   is_ctv_v<T>;
 };
 
 template<typename T>
 concept bool UStringType = requires(T string)
 {
-   (std::is_same_v<T, UString> || UCompileTimeStringFormatter::is_ctv_v<T>);
+   (std::is_same_v<T, UString> || is_ctv_v<T>);
 };
 #  endif
 #endif
