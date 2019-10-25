@@ -723,53 +723,58 @@ bool UREDISClusterMaster::clusterSubscribe(const UString& channel, vPFcscs callb
    U_RETURN(false);
 }
 
-void UREDISClusterMaster::sendToCluster(UREDISClusterClient*& workingClient, const UString& hashableKey, const UString& pipeline)
+template<bool single, UStringType A, UStringType B>
+auto UREDISClusterMaster::sendToCluster(A&& hashableKey, B&& pipeline)
+{
+   ClusterError error;
+   UREDISClusterClient* workingClient = clientForHashableKey(std::forward<A>(hashableKey));
+
+retry:
+   
+   workingClient->clear();
+
+   workingClient->UREDISClient_Base::sendRequest(pipeline);
+
+   workingClient->UClient_Base::response.setEmpty();
+   workingClient->UClient_Base::readResponse(U_SINGLE_READ);
+
+   error = checkResponseForClusterErrors(workingClient->UClient_Base::response, 0);
+
+   while (error != ClusterError::none)
    {
-      ClusterError error;
-      workingClient = clientForHashableKey(hashableKey);
-
-   retry:
-      
-      workingClient->clear();
-
-      workingClient->UREDISClient_Base::sendRequest(pipeline);
-
-      workingClient->UClient_Base::response.setEmpty();
-      workingClient->UClient_Base::readResponse(U_SINGLE_READ);
-
-      error = checkResponseForClusterErrors(workingClient->UClient_Base::response, 0);
-
-      while (error != ClusterError::none)
+      switch (error)
       {
-         switch (error)
+         case ClusterError::moved:
          {
-            case ClusterError::moved:
-            {
-               calculateNodeMap();
-               workingClient = clientForHashableKey(hashableKey);
-               break;
-            }
-            case ClusterError::ask:
-            {
-               uint32_t _start = workingClient->UClient_Base::response.find(' ', U_CONSTANT_SIZE("-ASK 3999")) + 1,
-                           end = workingClient->UClient_Base::response.find(':', _start);
-
-               workingClient = clientForIP(workingClient->UClient_Base::response.substr(_start, end - _start));
-               break;
-            }
-            case ClusterError::tryagain:
-            {
-               UTimeVal(0L, 1000L).nanosleep(); // 0 sec, 1000 microsec = 1ms
-               break;
-            }
-            case ClusterError::none: break;
+            calculateNodeMap();
+            workingClient = clientForHashableKey(std::forward<A>(hashableKey));
+            break;
          }
+         case ClusterError::ask:
+         {
+            uint32_t _start = workingClient->UClient_Base::response.find(' ', U_CONSTANT_SIZE("-ASK 3999")) + 1,
+                        end = workingClient->UClient_Base::response.find(':', _start);
 
-         goto retry;
+            workingClient = clientForIP(workingClient->UClient_Base::response.substr(_start, end - _start));
+            break;
+         }
+         case ClusterError::tryagain:
+         {
+            UTimeVal(0L, 1000L).nanosleep(); // 0 sec, 1000 microsec = 1ms
+            break;
+         }
+         case ClusterError::none: break;
       }
 
-      workingClient->UREDISClient_Base::processResponse();
+      goto retry;
    }
+
+   workingClient->UREDISClient_Base::processResponse();
+
+   if constexpr (single) return workingClient->UREDISClient_Base::vitem[0];
+   // multi
+   else                  return workingClient->UREDISClient_Base::vitem;
+}
 
 static void getNextMark(const UString& string, size_t& marker)
 {
