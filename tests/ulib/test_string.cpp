@@ -1490,12 +1490,37 @@ void U_EXPORT check_mmap(uint32_t map_size)
 
 //#define U_USE_STRTOD // Parse number in full precision (but slower)
 
+#if defined(U_STDCPP_ENABLE) && defined(HAVE_CXX20)
+#  include <ulib/net/client/redis.h>
+#endif
+
 int
 U_EXPORT main(int argc, char* argv[])
 {
    U_ULIB_INIT(argv);
 
    U_TRACE(5, "main(%d)", argc)
+
+#if defined(U_STDCPP_ENABLE) && defined(HAVE_CXX20) && defined(U_LINUX)
+   UString token     = U_STRING_FROM_CONSTANT("a"),
+           firstname = U_STRING_FROM_CONSTANT("Victor"),
+           lastname  = U_STRING_FROM_CONSTANT("Stewart"),
+           payload   = U_STRING_FROM_CONSTANT("\xf4\x26\x3a\x79\xa1\x2f\xfd\xf5\xb0\x48");
+
+   UString redisString(300U);
+
+   UCompileTimeStringFormatter::snprintf<"HSET {{}}.cache firstname {} lastname {} picture {} \r\n"_ctv>(redisString, token, firstname, lastname, payload);
+
+   U_INTERNAL_DUMP("redisString = %V", redisString.rep);
+
+   // HSET {a}.cache firstname Victor lastname Stewart picture binary data here
+
+   redisString.setEmpty();
+
+   UCompileTimeRESPEncoder::encode<"HSET {{}}.cache firstname {} lastname {} picture {} \r\n"_ctv>(redisString, token, firstname, lastname, payload);
+
+   U_INTERNAL_DUMP("redisString = %V", redisString.rep);
+#endif
 
 #if defined(U_STDCPP_ENABLE) && defined(HAVE_CXX11)
    std::unordered_map<UString, uint64_t> arounds;
