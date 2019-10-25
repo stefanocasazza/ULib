@@ -240,4 +240,19 @@ private:
    U_DISALLOW_COPY_AND_ASSIGN(UMongoDBClient)
 };
 
+// by Victor Stewart
+
+#if defined(U_STDCPP_ENABLE) && defined(HAVE_CXX20) && defined(USE_MONGODB) && defined(U_LINUX)
+template <class StringType>
+   static void bson_append_utf8(bson_t* doc, UCompileTimeStringType&& fieldname, StringType&& value)
+      {
+           if constexpr (std::is_same_v<StringType, UString>)               (void) bson_append_utf8(doc, U_CTV_TO_PARAM(fieldname), U_STRING_TO_PARAM(value));
+      else if constexpr (UCompileTimeStringFormatter::is_ctv_v<StringType>) (void) bson_append_utf8(doc, U_CTV_TO_PARAM(fieldname),    U_CTV_TO_PARAM(value));
+      }
+
+static void bson_append_bool(     bson_t* doc, UCompileTimeStringType&& fieldname,    bool value) { (void) ::bson_append_bool(     doc, U_CTV_TO_PARAM(fieldname), value); }
+static void bson_append_int32(    bson_t* doc, UCompileTimeStringType&& fieldname, int32_t value) { (void) ::bson_append_int32(    doc, U_CTV_TO_PARAM(fieldname), value); }
+static void bson_append_date_time(bson_t* doc, UCompileTimeStringType&& fieldname, int64_t value) { (void) ::bson_append_date_time(doc, U_CTV_TO_PARAM(fieldname), value); }
+#endif
+
 #endif

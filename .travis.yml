@@ -1,4 +1,5 @@
-dist: trusty
+os: linux
+dist: xenial
 language: cpp
 
 #matrix:

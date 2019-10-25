@@ -2890,7 +2890,7 @@ AC_CXX_OLD_IOSTREAM
 
 AC_DEFINE_UNQUOTED(ULIB_VERSION, "$PACKAGE_VERSION", [ULib version])
 
-TWOCAN_CONF_MSG(Output Substitution)
+TWOCAN_CONF_MSG(Final check)
 
 ULIB_VERSION="$PACKAGE_VERSION"
 
@@ -2903,36 +2903,55 @@ AC_SUBST(USP_FLAGS)
 AC_SUBST(USP_LDFLAGS)
 
 STD_GNU11=
-if test "x$ax_cv_cxx_compile_cxx11" = xno -a "x$ax_cv_cxx_compile_cxx11__std_gnupp11" = xyes; then
-	CXXFLAGS="-std=gnu++11 $CXXFLAGS"
-
-	AC_MSG_CHECKING(foTMPDIRr workaround to enable on Sabayon)
-	to_match='gcc (Gentoo Hardened 4.9.3*'
-	case `gcc --version | head -n 1` in
-		$to_match)
-			STD_GNU11="-std=gnu++11"
-
-			AC_MSG_RESULT(enabled)
-		;;
-		*)	AC_MSG_RESULT(no) ;;
-	esac
+COMPILE_CXX11=
+COMPILE_CXX14=
+COMPILE_CXX17=
+if test "x$ax_cv_cxx_compile_cxx17" = x -o "x$ax_cv_cxx_compile_cxx17" = xno; then
+	COMPILE_CXX17="no"
+fi
+if test "x$COMPILE_CXX17" = xno -a "x$ax_cv_cxx_compile_cxx17__std_gnupp17" = xyes; then
+	CXXFLAGS="-std=gnu++17 $CXXFLAGS"
+else
+	if test "x$ax_cv_cxx_compile_cxx14" = x -o "x$ax_cv_cxx_compile_cxx14" = xno; then
+		COMPILE_CXX14="no"
+	fi
+	if test "x$COMPILE_CXX14" = xno -a "x$ax_cv_cxx_compile_cxx14__std_gnupp14" = xyes; then
+		CXXFLAGS="-std=gnu++14 $CXXFLAGS"
+	else
+		if test "x$ax_cv_cxx_compile_cxx11" = x -o "x$ax_cv_cxx_compile_cxx11" = xno; then
+			COMPILE_CXX11="no"
+		fi
+		if test "x$COMPILE_CXX11" = xno -a "x$ax_cv_cxx_compile_cxx11__std_gnupp11" = xyes; then
+			CXXFLAGS="-std=gnu++11 $CXXFLAGS"
+			AC_MSG_CHECKING(for workaround to enable on Sabayon)
+			to_match='gcc (Gentoo Hardened 4.9.3*'
+			case `gcc --version | head -n 1` in
+				$to_match)
+					STD_GNU11="-std=gnu++11"
+					AC_MSG_RESULT(enabled)
+				;;
+				*)	AC_MSG_RESULT(no) ;;
+			esac
+		fi
+	fi
 fi
 AC_SUBST(STD_GNU11)
-if test "x$ax_cv_cxx_compile_cxx14" = xno -a "x$ax_cv_cxx_compile_cxx14__std_gnupp14" = xyes; then
-	CXXFLAGS="-std=gnu++14 $CXXFLAGS"
-fi
-if test "x$ax_cv_cxx_compile_cxx17" = xno -a "x$ax_cv_cxx_compile_cxx17__std_gnupp17" = xyes; then
-	CXXFLAGS="-std=gnu++17 $CXXFLAGS"
-fi
 
 if test "x$HAVE_CXX17" = x1; then
 	echo "int main() { return 0; }" > /tmp/adhoc.cpp
 	"$CXX_save" -std=c++2a /tmp/adhoc.cpp -o /tmp/adhoc.exe > /dev/null 2>&1
 	if [[ "$?" -eq 0 ]]; then
     HAVE_CXX20=1
-	 CXXFLAGS="-std=c++2a $CXXFLAGS"
+	 CXXFLAGS="$CXXFLAGS -std=c++2a"
     AC_DEFINE(HAVE_CXX20,1, [define if the compiler supports basic C++20 syntax])
     AC_MSG_NOTICE([The compiler has C++20 support])
+	 "$CXX_save" -std=c++2a -fconcepts /tmp/adhoc.cpp -o /tmp/adhoc.exe > /dev/null 2>&1
+	 if [[ "$?" -eq 0 ]]; then
+	   CXXFLAGS="$CXXFLAGS -fconcepts"
+		AC_MSG_NOTICE([The compiler has C++ concepts support])
+	 else
+		AC_MSG_NOTICE([No compiler with C++ concepts support was found])
+    fi
 	else
     HAVE_CXX20=0
     AC_MSG_NOTICE([No compiler with C++20 support was found])
@@ -2969,6 +2988,8 @@ related to locating shared libraries. Check the file 'config.log'
 for the exact reason.]])],
 [AC_MSG_RESULT([cross-compiling])])
 fi
+
+TWOCAN_CONF_MSG(Output Substitution)
 
 # Create compiler version string
 if test x"$GCC" = x"yes" ; then

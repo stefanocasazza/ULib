@@ -2853,7 +2853,7 @@ namespace std {
    };
 }
 #  endif
-#  if defined(HAVE_CXX17) && defined(U_LINUX)
+#  if defined(HAVE_CXX20) && defined(U_LINUX)
 #     include <utility> // std::index_sequence
 template <char... Chars>
 class UCompileTimeStringView {
@@ -2897,6 +2897,245 @@ constexpr auto operator""_ctv() // compile time view
 {
    return UCompileTimeStringView<static_cast<char>(Chars)...>{};
 }
+
+#define U_CTV_TO_PARAM(ct_string) ct_string.string, ct_string.length
+
+template<typename Lambda, typename T>
+static void snprintf_specialization(Lambda&& lambda, T t) 
+{
+   lambda(U_NULLPTR, 0);
+}
+
+#include <tuple>
+
+class UCompileTimeStringFormatter {
+protected:
+
+   static constexpr uint8_t notChar = 0x1;
+   static constexpr uint8_t skipDoubles = 0x2;
+
+   template<auto format, uint8_t options = 0, size_t terminationIndex = format.length>
+   static constexpr size_t findChar(size_t workingIndex, char ch, char chOther)
+   {
+      if constexpr (options & notChar)
+      {
+         // search until we find not some character 
+         while (workingIndex < terminationIndex && ((format[workingIndex] == ch) || (format[workingIndex] == chOther))) workingIndex++;
+      }
+      else if constexpr (options & skipDoubles)
+      {
+         // {{}}.cache
+         while (workingIndex < terminationIndex && ((format[workingIndex] != ch) || (workingIndex < terminationIndex && format[workingIndex + 1] == ch))) workingIndex++;
+      }
+      else if constexpr (options == 0)
+      {
+         // search until we find some character
+         while (workingIndex < terminationIndex && ((format[workingIndex] != ch) && (format[workingIndex] != chOther))) workingIndex++;
+      }
+
+      return workingIndex;
+   }
+
+   template<auto format, uint8_t options = 0, size_t terminationIndex = format.length>
+   static constexpr size_t findChar(size_t workingIndex, char ch)
+   {
+      return findChar<format, options, terminationIndex>(workingIndex, ch, ch);
+   }
+
+   template<size_t workingIndex, size_t argumentCount, typename StringClass, typename T, typename... Ts>
+   static constexpr auto generateSegments(StringClass format, T&& t, Ts&&... ts)
+   {
+      if constexpr (argumentCount == 0) return std::make_tuple(std::forward<T>(t), std::forward<Ts>(ts)...);
+      else
+      {
+         constexpr size_t nextFormat = findChar<StringClass::instance, skipDoubles>(workingIndex, '{');
+         constexpr size_t formatTermination = nextFormat + 1;
+
+         return generateSegments<formatTermination + 1, argumentCount - 1>(format, std::forward<Ts>(ts)..., StringClass::instance.template substr<workingIndex, nextFormat>(), std::forward<T>(t));
+      }
+   }
+
+   template <typename T, typename U>
+   struct decay_equiv : std::is_same<typename std::decay<T>::type, U>::type {};
+
+   template <class T, class U>
+   static inline constexpr bool decay_equiv_v = decay_equiv<T, U>::value;
+
+   template <typename T, template <char... CharsB> class Template>
+   struct is_ctv : std::false_type {};
+
+   template <char... CharsA, template <char... CharsB> class Template>
+   struct is_ctv<Template<CharsA...>, Template> : std::true_type {};
+
+   template <typename T>
+   static inline constexpr bool is_ctv_v = is_ctv<T, UCompileTimeStringView>::value;
+
+   template <typename T>
+   static void writeBytes(char*& writeTo, T t)
+   {
+      if constexpr (is_ctv_v<T>)
+      {
+         writeTo = (char*)memcpy(writeTo, t.string, t.length) + t.length;
+      }
+      else if constexpr (decay_equiv_v<T, UString>)
+      {
+         writeTo = (char*)memcpy(writeTo, t.data(), t.size()) + t.size();
+      }
+      else if constexpr (std::is_integral_v<T>)
+      {
+         writeTo = u_num2str64s(t, writeTo);
+      }
+      else if constexpr (decay_equiv_v<T, char>) // assumes char pointer
+      {
+         size_t length = strlen(t);
+         writeTo = (char*)memcpy(writeTo, t, length) + length;
+      }
+      else
+      {
+         auto lambda = [&] (const void *buffer, size_t bufferSize)
+         {
+            writeTo = (char*)memcpy(writeTo, buffer, bufferSize) + bufferSize;
+         };
+
+         snprintf_specialization(lambda, t);
+      }
+   }
+
+   template<ssize_t number, bool terminate = false, typename ...DigitStrings>
+   static constexpr auto integerToString(DigitStrings... digitStrings)
+   {
+      if constexpr (terminate) return ((""_ctv + digitStrings) + ...);
+      else
+      {
+         if constexpr (number < 0) return integerToString<number * -1>("-"_ctv, std::forward<DigitStrings>(digitStrings) ...);
+         else
+         {
+            constexpr size_t newNumber  = number / 10,
+                             digitValue = number % 10;
+            constexpr bool newTerminate = number < 10;
+
+                 if constexpr (digitValue == 0) return integerToString<newNumber, newTerminate>("0"_ctv, std::forward<DigitStrings>(digitStrings) ...);
+            else if constexpr (digitValue == 1) return integerToString<newNumber, newTerminate>("1"_ctv, std::forward<DigitStrings>(digitStrings) ...);
+            else if constexpr (digitValue == 2) return integerToString<newNumber, newTerminate>("2"_ctv, std::forward<DigitStrings>(digitStrings) ...);
+            else if constexpr (digitValue == 3) return integerToString<newNumber, newTerminate>("3"_ctv, std::forward<DigitStrings>(digitStrings) ...);
+            else if constexpr (digitValue == 4) return integerToString<newNumber, newTerminate>("4"_ctv, std::forward<DigitStrings>(digitStrings) ...);
+            else if constexpr (digitValue == 5) return integerToString<newNumber, newTerminate>("5"_ctv, std::forward<DigitStrings>(digitStrings) ...);
+            else if constexpr (digitValue == 6) return integerToString<newNumber, newTerminate>("6"_ctv, std::forward<DigitStrings>(digitStrings) ...);
+            else if constexpr (digitValue == 7) return integerToString<newNumber, newTerminate>("7"_ctv, std::forward<DigitStrings>(digitStrings) ...);
+            else if constexpr (digitValue == 8) return integerToString<newNumber, newTerminate>("8"_ctv, std::forward<DigitStrings>(digitStrings) ...);
+            else if constexpr (digitValue == 9) return integerToString<newNumber, newTerminate>("9"_ctv, std::forward<DigitStrings>(digitStrings) ...);
+         }
+      }
+   }
+
+   template <typename T>
+   static size_t getLength(T t)
+   {
+           if constexpr (is_ctv_v<T>)               return t.length;
+      else if constexpr (decay_equiv_v<T, UString>) return t.size();
+      else if constexpr (std::is_integral_v<T>)     return countDigits(t);
+      else if constexpr (decay_equiv_v<T, char>)    return strlen(t);
+      else
+      {
+         size_t length = 0;
+
+         auto lambda = [&] (const void *buffer, size_t bufferSize)
+         {
+            length = bufferSize;
+         };
+
+         snprintf_specialization(lambda, t);
+
+         return length;
+      }
+   }
+
+   template <typename T>
+   struct LengthSurplusPackage
+   {
+      size_t lengthSurplus;
+      T binding;
+
+      size_t size() 
+      {
+         return getLength(binding) + lengthSurplus;
+      }
+   };
+
+   template<typename... Ts>
+   static void snprintf_impl(size_t writePosition, UString& workingString, Ts... ts)
+   {
+      size_t lengths = (getLength(ts) + ...);
+
+      // grow string to accomodate new size if necessary
+      workingString.reserve(workingString.size() + lengths);
+
+      char* target = workingString.data() + writePosition;
+
+      // shift over existing contents
+      if (writePosition < workingString.size()) (void) memcpy(target + lengths, target, lengths);
+
+      (writeBytes(target, ts), ...);
+      workingString.size_adjust_force(target - workingString.data());
+   }
+
+public:
+
+   template <typename IntegralType, typename = std::enable_if_t<std::is_integral_v<IntegralType>>>
+   static constexpr size_t countDigits(IntegralType number)
+   {
+      size_t digits = 0;
+
+      if (number < 0)
+      {
+         ++digits;
+         number *= -1;
+      }
+
+      while (number != 0) { number /= 10; digits++; }
+
+      return digits;
+   }
+
+   template <auto format, typename... Ts>
+   static void snprintf_pos(size_t writePosition, UString& workingString, Ts... ts)
+   {
+      std::apply([&] (auto... params) {
+
+      // adding this extra level of indirection allowing for the building of higher level abstraction parsers on top
+
+         snprintf_impl(writePosition, workingString, params...);
+
+      }, generateSegments<0, sizeof...(Ts)>(format, std::forward<Ts>(ts)...));
+   }
+
+   template <auto format, typename... Ts>
+   static void snprintf(UString& workingString, Ts... ts)
+   {
+      snprintf_pos<format>(0, workingString, std::forward<Ts>(ts)...);
+   }
+
+   template <auto format, typename... Ts>
+   static void snprintf_add(UString& workingString, Ts... ts)
+   {
+      snprintf_pos<format>(workingString.size(), workingString, std::forward<Ts>(ts)...);
+   }
+};
+
+template<typename Lambda, typename T>
+static void snprintf_specialization(Lambda&& lambda, UCompileTimeStringFormatter::LengthSurplusPackage<T>& t) 
+{
+   static char working[UCompileTimeStringFormatter::countDigits(INT64_MAX)];
+
+   char *end = u_num2str64s(t.size(), working);
+
+   lambda(working, end - working);
+}
+
+template<typename T>
+concept bool UCompileTimeStringType = requires(T string) {
+   UCompileTimeStringFormatter::is_ctv_v<T>;
+};
 #  endif
 #endif
 #endif

@@ -33645,8 +33645,8 @@ _ACEOF
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: " >&5
 $as_echo "" >&6; }
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: ${T_MD}Output Substitution:${T_ME}" >&5
-$as_echo "${T_MD}Output Substitution:${T_ME}" >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: ${T_MD}Final check:${T_ME}" >&5
+$as_echo "${T_MD}Final check:${T_ME}" >&6; }
 
 
 ULIB_VERSION="$PACKAGE_VERSION"
@@ -33660,42 +33660,63 @@ ULIB_VERSION="$PACKAGE_VERSION"
 
 
 STD_GNU11=
-if test "x$ax_cv_cxx_compile_cxx11" = xno -a "x$ax_cv_cxx_compile_cxx11__std_gnupp11" = xyes; then
-	CXXFLAGS="-std=gnu++11 $CXXFLAGS"
-
-	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking foTMPDIRr workaround to enable on Sabayon" >&5
-$as_echo_n "checking foTMPDIRr workaround to enable on Sabayon... " >&6; }
-	to_match='gcc (Gentoo Hardened 4.9.3*'
-	case `gcc --version | head -n 1` in
-		$to_match)
-			STD_GNU11="-std=gnu++11"
-
-			{ $as_echo "$as_me:${as_lineno-$LINENO}: result: enabled" >&5
-$as_echo "enabled" >&6; }
-		;;
-		*)	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; } ;;
-	esac
+COMPILE_CXX11=
+COMPILE_CXX14=
+COMPILE_CXX17=
+if test "x$ax_cv_cxx_compile_cxx17" = x -o "x$ax_cv_cxx_compile_cxx17" = xno; then
+	COMPILE_CXX17="no"
 fi
-
-if test "x$ax_cv_cxx_compile_cxx14" = xno -a "x$ax_cv_cxx_compile_cxx14__std_gnupp14" = xyes; then
-	CXXFLAGS="-std=gnu++14 $CXXFLAGS"
-fi
-if test "x$ax_cv_cxx_compile_cxx17" = xno -a "x$ax_cv_cxx_compile_cxx17__std_gnupp17" = xyes; then
+if test "x$COMPILE_CXX17" = xno -a "x$ax_cv_cxx_compile_cxx17__std_gnupp17" = xyes; then
 	CXXFLAGS="-std=gnu++17 $CXXFLAGS"
+else
+	if test "x$ax_cv_cxx_compile_cxx14" = x -o "x$ax_cv_cxx_compile_cxx14" = xno; then
+		COMPILE_CXX14="no"
+	fi
+	if test "x$COMPILE_CXX14" = xno -a "x$ax_cv_cxx_compile_cxx14__std_gnupp14" = xyes; then
+		CXXFLAGS="-std=gnu++14 $CXXFLAGS"
+	else
+		if test "x$ax_cv_cxx_compile_cxx11" = x -o "x$ax_cv_cxx_compile_cxx11" = xno; then
+			COMPILE_CXX11="no"
+		fi
+		if test "x$COMPILE_CXX11" = xno -a "x$ax_cv_cxx_compile_cxx11__std_gnupp11" = xyes; then
+			CXXFLAGS="-std=gnu++11 $CXXFLAGS"
+			{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for workaround to enable on Sabayon" >&5
+$as_echo_n "checking for workaround to enable on Sabayon... " >&6; }
+			to_match='gcc (Gentoo Hardened 4.9.3*'
+			case `gcc --version | head -n 1` in
+				$to_match)
+					STD_GNU11="-std=gnu++11"
+					{ $as_echo "$as_me:${as_lineno-$LINENO}: result: enabled" >&5
+$as_echo "enabled" >&6; }
+				;;
+				*)	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; } ;;
+			esac
+		fi
+	fi
 fi
+
 
 if test "x$HAVE_CXX17" = x1; then
 	echo "int main() { return 0; }" > /tmp/adhoc.cpp
 	"$CXX_save" -std=c++2a /tmp/adhoc.cpp -o /tmp/adhoc.exe > /dev/null 2>&1
 	if [ "$?" -eq 0 ]; then
     HAVE_CXX20=1
-	 CXXFLAGS="-std=c++2a $CXXFLAGS"
+	 CXXFLAGS="$CXXFLAGS -std=c++2a"
 
 $as_echo "#define HAVE_CXX20 1" >>confdefs.h
 
     { $as_echo "$as_me:${as_lineno-$LINENO}: The compiler has C++20 support" >&5
 $as_echo "$as_me: The compiler has C++20 support" >&6;}
+	 "$CXX_save" -std=c++2a -fconcepts /tmp/adhoc.cpp -o /tmp/adhoc.exe > /dev/null 2>&1
+	 if [ "$?" -eq 0 ]; then
+	   CXXFLAGS="$CXXFLAGS -fconcepts"
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: The compiler has C++ concepts support" >&5
+$as_echo "$as_me: The compiler has C++ concepts support" >&6;}
+	 else
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: No compiler with C++ concepts support was found" >&5
+$as_echo "$as_me: No compiler with C++ concepts support was found" >&6;}
+    fi
 	else
     HAVE_CXX20=0
     { $as_echo "$as_me:${as_lineno-$LINENO}: No compiler with C++20 support was found" >&5
@@ -33767,6 +33788,13 @@ rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
 fi
 
 fi
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: " >&5
+$as_echo "" >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: ${T_MD}Output Substitution:${T_ME}" >&5
+$as_echo "${T_MD}Output Substitution:${T_ME}" >&6; }
+
 
 # Create compiler version string
 if test x"$GCC" = x"yes" ; then
