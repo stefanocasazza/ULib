@@ -1070,8 +1070,8 @@ private:
    // this might delete cluster nodes so be careful of client pointers after
    void calculateNodeMap();
 
-   template<bool single, UStringType A, UStringType B>
-   auto sendToCluster(A&& hashableKey, B&& pipeline);
+   template<bool single, typename T, UStringType A, UStringType B>
+   const T& sendToCluster(A&& hashableKey, B&& pipeline);
 
 public:
    
@@ -1082,16 +1082,16 @@ public:
    bool connect(const char* host = U_NULLPTR, unsigned int _port = 6379);
 
    template<UStringType A, UStringType B>
-   UString clusterSingle(A&& hashableKey, B&& pipeline)
+   const UString& clusterSingle(A&& hashableKey, B&& pipeline)
    {
-      return sendToCluster<true>(std::forward<A>(hashableKey), std::forward<B>(pipeline));
+      return sendToCluster<true, UString>(std::forward<A>(hashableKey), std::forward<B>(pipeline));
    }
 
    // both of these multis require all keys to exist within a single hash slot (on the same node isn't good enough)
    template<UStringType A, UStringType B>
    const UVector<UString>& clusterMulti(A&& hashableKey, B&& pipeline)
    { 
-      return sendToCluster<false>(std::forward<A>(hashableKey), std::forward<B>(pipeline));
+      return sendToCluster<false, UVector<UString>>(std::forward<A>(hashableKey), std::forward<B>(pipeline));
    }
 
    // if reorderable == false, commands are grouped and pushed SEQUENTIALLY BY HASHSLOT. even if other commands point to hashslots on the same cluster node, we are unable to garuntee ordering since Redis only checks for -MOVED etc errors command by command as it executes them, and does not fail upon reaching a -MOVED etc error. this requires waiting for each response, to ensure no errors occured, before moving onto the next batch of commands.
@@ -1160,13 +1160,13 @@ private:
          {
             constexpr size_t formatTermination = formatStart + 1;
 
-            return generateSegments<isPartial, segmentEnd, workingSegmentCount + 1>(std::tuple_cat(workingCommand, std::make_tuple("$"_ctv, LengthSurplusPackage<T>{(segmentEnd + formatStart) - (segmentStart + formatTermination) - 1, std::forward<T>(t)}, "\r\n"_ctv, StringClass::instance.template substr<segmentStart, formatStart>(), std::forward<T>(t), StringClass::instance.template substr<(std::min(formatTermination + 1, segmentEnd)), segmentEnd>() + "\r\n"_ctv)), format, outputSegmentCount, std::forward<Ts>(ts)..., ""_ctv); // ""_ctv so that there are always enough arguments
-         }
+            return generateSegments<isPartial, segmentEnd, workingSegmentCount + 1>(std::tuple_cat(workingCommand, std::make_tuple("$"_ctv, LengthSurplusPackage<T>{(segmentEnd + formatStart) - (segmentStart + formatTermination) - 1, std::forward<T>(t)}, "\r\n"_ctv, StringClass::instance.template substr<segmentStart, formatStart>(), std::forward<T>(t), StringClass::instance.template substr<(std::min(formatTermination + 1, segmentEnd)), segmentEnd>() + "\r\n"_ctv)), format, outputSegmentCount, std::forward<Ts>(ts)..., ""_ctv);
+         }  // , ""_ctv
          else
          {
             constexpr auto segmentString = "$"_ctv + integerToString<segmentEnd - segmentStart>() + "\r\n"_ctv + StringClass::instance.template substr<segmentStart, segmentEnd>() + "\r\n"_ctv;
 
-            return generateSegments<isPartial, segmentEnd, workingSegmentCount + 1>(std::tuple_cat(workingCommand, std::tie(segmentString)), format,outputSegmentCount, std::forward<T>(t), std::forward<Ts>(ts)...);
+            return generateSegments<isPartial, segmentEnd, workingSegmentCount + 1>(std::tuple_cat(workingCommand, std::tie(segmentString)), format,outputSegmentCount, std::forward<T>(t), std::forward<Ts>(ts)..., ""_ctv);
          }
       }
    }
@@ -1180,7 +1180,7 @@ private:
 
          UCompileTimeStringFormatter::snprintf_impl(writePosition, workingString, params...);
          
-      }, generateSegments<isPartial>(std::tuple(), format, segmentCount, std::forward<Ts>(ts)...));
+      }, generateSegments<isPartial>(std::tuple(), format, segmentCount, std::forward<Ts>(ts)..., ""_ctv));
 
       return segmentCount;
    }
