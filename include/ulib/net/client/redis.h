@@ -1220,14 +1220,14 @@ private:
       }
    }
 
-   template<bool isPartial, auto format, typename... Ts>
+   template<bool isPartial, bool overwrite, auto format, typename... Ts>
    static size_t encode_impl(size_t writePosition, UString& workingString, Ts&&... ts)
    {
       size_t segmentCount = 0;
 
       std::apply([&] (auto... params) {
 
-         UCompileTimeStringFormatter::snprintf_impl(writePosition, workingString, params...);
+         UCompileTimeStringFormatter::snprintf_impl<overwrite>(writePosition, workingString, params...);
          
       }, generateSegments<isPartial>(std::tuple(), format, segmentCount, std::forward<Ts>(ts)..., ""_ctv));
 
@@ -1247,37 +1247,37 @@ public:
    template<auto format, typename ... Ts>
    static void encode(UString& workingString, Ts&&... ts)
    {
-      (void)encode_impl<false, format>(0, workingString, std::forward<Ts>(ts)...);
+      (void)encode_impl<false, true, format>(0, workingString, std::forward<Ts>(ts)...);
    }
 
    template<auto format, typename ... Ts>
    static void encode_add(UString& workingString, Ts&&... ts)
    {
-      (void)encode_impl<false, format>(workingString.size(), workingString, std::forward<Ts>(ts)...);
+      (void)encode_impl<false, false, format>(workingString.size(), workingString, std::forward<Ts>(ts)...);
    }
    
    template<auto format, typename ... Ts>
    static void encode_pos(size_t writePosition, UString& workingString, Ts&&... ts)
    {
-      (void)encode_impl<false, format>(writePosition, workingString, std::forward<Ts>(ts)...);
+      (void)encode_impl<false, false, format>(writePosition, workingString, std::forward<Ts>(ts)...);
    }
 
 // partials
    template<auto format, typename... Ts>
    static void encode_partial_pos(size_t writePosition, size_t& segmentCountAccumulator, UString& workingString, Ts&&... ts)
    {
-      segmentCountAccumulator += encode_impl<true, format>(writePosition, workingString, std::forward<Ts>(ts)...);
+      segmentCountAccumulator += encode_impl<true, false, format>(writePosition, workingString, std::forward<Ts>(ts)...);
    }
 
    template<auto format, typename... Ts>
    static void encode_partial_add(size_t& segmentCountAccumulator, UString& workingString, Ts&&... ts)
    {
-      segmentCountAccumulator += encode_impl<true, format>(workingString.size(), workingString, std::forward<Ts>(ts)...);
+      segmentCountAccumulator += encode_impl<true, false, format>(workingString.size(), workingString, std::forward<Ts>(ts)...);
    }
 
    static void encode_partial_count(UString& workingString, size_t segmentCount)
    {
-      UCompileTimeStringFormatter::snprintf_impl(0, workingString, "*"_ctv, segmentCount, "\r\n"_ctv);
+      UCompileTimeStringFormatter::snprintf_impl<false>(0, workingString, "*"_ctv, segmentCount, "\r\n"_ctv);
    }
 };
 
