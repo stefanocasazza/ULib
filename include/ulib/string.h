@@ -3075,14 +3075,17 @@ protected:
    {
       size_t lengths = (getLength(ts) + ...);
 
-      // grow string to accomodate new size if necessary
-      if constexpr (overwrite)   workingString.reserve(lengths);
-      else                       workingString.reserve(workingString.size() + lengths);
-
       char* target = workingString.data() + writePosition;
 
-      // shift over existing contents
-      if (writePosition < workingString.size()) (void) memcpy(target + lengths, target, lengths);
+      // grow string to accomodate new size if necessary
+      if constexpr (overwrite) workingString.reserve(lengths);
+      else 
+      {
+         workingString.reserve(workingString.size() + lengths);
+
+         // shift over existing contents
+         if (writePosition < workingString.size()) (void) memcpy(target + lengths, target, lengths);
+      }
 
       (writeBytes(target, ts), ...);
 
