@@ -1131,7 +1131,7 @@ public:
    bool connect(const char* host = U_NULLPTR, unsigned int _port = 6379);
 
    template<UStringType A, UStringType B>
-   const UString& clusterSingle(A&& hashableKey, B&& pipeline)
+   const UString clusterSingle(A&& hashableKey, B&& pipeline)
    {
       return sendToCluster(std::forward<A>(hashableKey), std::forward<B>(pipeline))->vitem[0];
    }
