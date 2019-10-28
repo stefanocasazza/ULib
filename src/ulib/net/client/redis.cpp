@@ -723,8 +723,8 @@ bool UREDISClusterMaster::clusterSubscribe(const UString& channel, vPFcscs callb
    U_RETURN(false);
 }
 
-template<bool single, UStringType A, UStringType B>
-auto UREDISClusterMaster::sendToCluster(A&& hashableKey, B&& pipeline)
+template<bool single, typename T, UStringType A, UStringType B>
+const T& UREDISClusterMaster::sendToCluster(A&& hashableKey, B&& pipeline)
 {
    ClusterError error;
    UREDISClusterClient* workingClient = clientForHashableKey(std::forward<A>(hashableKey));
