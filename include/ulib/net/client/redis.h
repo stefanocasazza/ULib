@@ -825,10 +825,8 @@ protected:
    void processResponse();
    bool processRequest(char recvtype);
 
-   bool sendRequest(const UString& pipeline)
+   bool sendRequest(UStringType&& pipeline)
       {
-      U_TRACE(0, "UREDISClient_Base::sendRequest(%V)", pipeline.rep)
-
       UClient_Base::iov[0].iov_base = (caddr_t)pipeline.data();
       UClient_Base::iov[0].iov_len  =          pipeline.size();
       UClient_Base::iov[1].iov_base = (caddr_t)U_CRLF;
@@ -1065,14 +1063,66 @@ private:
       return managementClient; // never reached
    }
 
-   UREDISClusterClient* clientForHashableKey(const UString& hashableKey) { return clientForHashslot(hashslotForKey(hashableKey)); }
+   template <UStringType A>
+   UREDISClusterClient* clientForHashableKey(A&& hashableKey) { return clientForHashslot(hashslotForKey(std::forward<A>(hashableKey)));}
 
    // this might delete cluster nodes so be careful of client pointers after
    void calculateNodeMap();
 
-   template<bool single, typename T, UStringType A, UStringType B>
-   const T& sendToCluster(A&& hashableKey, B&& pipeline);
+   static ClusterError checkResponseForClusterErrors(const UString& response, size_t offset);
 
+   template<bool single, typename T, UStringType A, UStringType B>
+   const T& sendToCluster(A&& hashableKey, B&& pipeline)
+   {
+      ClusterError error;
+      UREDISClusterClient* workingClient = clientForHashableKey(std::forward<A>(hashableKey));
+
+   retry:
+      
+      workingClient->clear();
+
+      workingClient->UREDISClient_Base::sendRequest(pipeline);
+
+      workingClient->UClient_Base::response.setEmpty();
+      workingClient->UClient_Base::readResponse(U_SINGLE_READ);
+
+      error = checkResponseForClusterErrors(workingClient->UClient_Base::response, 0);
+
+      while (error != ClusterError::none)
+      {
+         switch (error)
+         {
+            case ClusterError::moved:
+            {
+               calculateNodeMap();
+               workingClient = clientForHashableKey(std::forward<A>(hashableKey));
+               break;
+            }
+            case ClusterError::ask:
+            {
+               uint32_t _start = workingClient->UClient_Base::response.find(' ', U_CONSTANT_SIZE("-ASK 3999")) + 1,
+                           end = workingClient->UClient_Base::response.find(':', _start);
+
+               workingClient = clientForIP(workingClient->UClient_Base::response.substr(_start, end - _start));
+               break;
+            }
+            case ClusterError::tryagain:
+            {
+               UTimeVal(0L, 1000L).nanosleep(); // 0 sec, 1000 microsec = 1ms
+               break;
+            }
+            case ClusterError::none: break;
+         }
+
+         goto retry;
+      }
+
+      workingClient->UREDISClient_Base::processResponse();
+
+      if constexpr (single) return workingClient->UREDISClient_Base::vitem[0];
+      // multi
+      else                  return workingClient->UREDISClient_Base::vitem;
+   }
 public:
    
    U_MEMORY_TEST
