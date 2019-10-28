@@ -3070,13 +3070,14 @@ protected:
       }
    };
 
-   template<typename... Ts>
+   template<bool overwrite, typename... Ts>
    static void snprintf_impl(size_t writePosition, UString& workingString, Ts... ts)
    {
       size_t lengths = (getLength(ts) + ...);
 
       // grow string to accomodate new size if necessary
-      workingString.reserve(workingString.size() + lengths);
+      if constexpr (overwrite)   workingString.reserve(lengths);
+      else                       workingString.reserve(workingString.size() + lengths);
 
       char* target = workingString.data() + writePosition;
 
@@ -3084,7 +3085,9 @@ protected:
       if (writePosition < workingString.size()) (void) memcpy(target + lengths, target, lengths);
 
       (writeBytes(target, ts), ...);
-      workingString.size_adjust_force(target - workingString.data());
+
+      if constexpr (overwrite)   workingString.size_adjust_force(lengths);
+      else                       workingString.size_adjust_force(workingString.size() + lengths);
    }
 
 public:
@@ -3105,14 +3108,14 @@ public:
       return digits;
    }
 
-   template <auto format, typename... Ts>
+   template <auto format, bool overwrite = false, typename... Ts>
    static void snprintf_pos(size_t writePosition, UString& workingString, Ts... ts)
    {
       std::apply([&] (auto... params) {
 
       // adding this extra level of indirection allowing for the building of higher level abstraction parsers on top
 
-         snprintf_impl(writePosition, workingString, params...);
+         snprintf_impl<overwrite>(writePosition, workingString, params...);
 
       }, generateSegments<0, sizeof...(Ts)>(format, std::forward<Ts>(ts)...));
    }
@@ -3120,13 +3123,13 @@ public:
    template <auto format, typename... Ts>
    static void snprintf(UString& workingString, Ts... ts)
    {
-      snprintf_pos<format>(0, workingString, std::forward<Ts>(ts)...);
+      snprintf_pos<format, true>(0, workingString, std::forward<Ts>(ts)...);
    }
 
    template <auto format, typename... Ts>
    static void snprintf_add(UString& workingString, Ts... ts)
    {
-      snprintf_pos<format>(workingString.size(), workingString, std::forward<Ts>(ts)...);
+      snprintf_pos<format, false>(workingString.size(), workingString, std::forward<Ts>(ts)...);
    }
 };
 
