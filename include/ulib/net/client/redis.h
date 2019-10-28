@@ -1071,8 +1071,8 @@ private:
 
    static ClusterError checkResponseForClusterErrors(const UString& response, size_t offset);
 
-   template<bool single, typename T, UStringType A, UStringType B>
-   const T& sendToCluster(A&& hashableKey, B&& pipeline)
+   template<UStringType A, UStringType B>
+   UREDISClusterClient* sendToCluster(A&& hashableKey, B&& pipeline)
    {
       ClusterError error;
       UREDISClusterClient* workingClient = clientForHashableKey(std::forward<A>(hashableKey));
@@ -1119,10 +1119,9 @@ private:
 
       workingClient->UREDISClient_Base::processResponse();
 
-      if constexpr (single) return workingClient->UREDISClient_Base::vitem[0];
-      // multi
-      else                  return workingClient->UREDISClient_Base::vitem;
+      return workingClient;
    }
+
 public:
    
    U_MEMORY_TEST
@@ -1134,14 +1133,14 @@ public:
    template<UStringType A, UStringType B>
    const UString& clusterSingle(A&& hashableKey, B&& pipeline)
    {
-      return sendToCluster<true, UString>(std::forward<A>(hashableKey), std::forward<B>(pipeline));
+      return sendToCluster(std::forward<A>(hashableKey), std::forward<B>(pipeline))->vitem[0];
    }
 
    // both of these multis require all keys to exist within a single hash slot (on the same node isn't good enough)
    template<UStringType A, UStringType B>
    const UVector<UString>& clusterMulti(A&& hashableKey, B&& pipeline)
    { 
-      return sendToCluster<false, UVector<UString>>(std::forward<A>(hashableKey), std::forward<B>(pipeline));
+      return sendToCluster(std::forward<A>(hashableKey), std::forward<B>(pipeline))->vitem;
    }
 
    // if reorderable == false, commands are grouped and pushed SEQUENTIALLY BY HASHSLOT. even if other commands point to hashslots on the same cluster node, we are unable to garuntee ordering since Redis only checks for -MOVED etc errors command by command as it executes them, and does not fail upon reaching a -MOVED etc error. this requires waiting for each response, to ensure no errors occured, before moving onto the next batch of commands.
