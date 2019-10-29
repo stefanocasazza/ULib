@@ -825,7 +825,11 @@ protected:
    void processResponse();
    bool processRequest(char recvtype);
 
+#if defined(HAVE_CXX20)
    bool sendRequest(UStringType&& pipeline)
+#else
+   bool sendRequest(const UString& pipeline)
+#endif
       {
       UClient_Base::iov[0].iov_base = (caddr_t)pipeline.data();
       UClient_Base::iov[0].iov_len  =          pipeline.size();
