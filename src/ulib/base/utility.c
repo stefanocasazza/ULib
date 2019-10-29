@@ -3980,7 +3980,7 @@ typedef struct mimeentry {
    uint32_t name_len;
 } mimeentry;
 
-#define MIME_ENTRY(name,type) { type, name+1, U_CONSTANT_SIZE(name)-1 }
+#define MIME_ENTRY(name,type) { type, &name[0]+1, U_CONSTANT_SIZE(name)-1 }
 
 /**
  * Complete list of MIME types

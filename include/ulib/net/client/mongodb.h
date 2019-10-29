@@ -241,18 +241,19 @@ private:
 };
 
 // by Victor Stewart
-
 #if defined(U_STDCPP_ENABLE) && defined(HAVE_CXX20) && defined(USE_MONGODB) && defined(U_LINUX)
-template <class StringType>
-   static void bson_append_utf8(bson_t* doc, UCompileTimeStringType&& fieldname, StringType&& value)
-      {
-           if constexpr (std::is_same_v<StringType, UString>)               (void) bson_append_utf8(doc, U_CTV_TO_PARAM(fieldname), U_STRING_TO_PARAM(value));
-      else if constexpr (UCompileTimeStringFormatter::is_ctv_v<StringType>) (void) bson_append_utf8(doc, U_CTV_TO_PARAM(fieldname),    U_CTV_TO_PARAM(value));
-      }
 
-static void bson_append_bool(     bson_t* doc, UCompileTimeStringType&& fieldname,    bool value) { (void) ::bson_append_bool(     doc, U_CTV_TO_PARAM(fieldname), value); }
-static void bson_append_int32(    bson_t* doc, UCompileTimeStringType&& fieldname, int32_t value) { (void) ::bson_append_int32(    doc, U_CTV_TO_PARAM(fieldname), value); }
-static void bson_append_date_time(bson_t* doc, UCompileTimeStringType&& fieldname, int64_t value) { (void) ::bson_append_date_time(doc, U_CTV_TO_PARAM(fieldname), value); }
+template <UStringType A, UStringType B>
+static void bson_append_utf8(          bson_t *doc, A&& fieldname,               B&& value)  { (void) ::bson_append_utf8(doc, U_STRING_TO_PARAM(fieldname), U_STRING_TO_PARAM(value));}
+template <UStringType A, UStringType B>
+static void bson_append_binary(        bson_t *doc,           A&& fieldname,     B&& value)  { (void) ::bson_append_binary(         doc, U_STRING_TO_PARAM(fieldname), BSON_SUBTYPE_BINARY, U_BINARY_TO_PARAM(value));}
+static void bson_append_bool(          bson_t *doc, UStringType&& fieldname,    bool value)  { (void) ::bson_append_bool(           doc, U_STRING_TO_PARAM(fieldname), value); }
+static void bson_append_int32(         bson_t *doc, UStringType&& fieldname, int32_t value)  { (void) ::bson_append_int32(          doc, U_STRING_TO_PARAM(fieldname), value); }
+static void bson_append_double(        bson_t *doc, UStringType&& fieldname,  double value)  { (void) ::bson_append_double(         doc, U_STRING_TO_PARAM(fieldname), value); }
+static void bson_append_date_time(     bson_t *doc, UStringType&& fieldname, int64_t value)  { (void) ::bson_append_date_time(      doc, U_STRING_TO_PARAM(fieldname), value); }
+static void bson_append_now_utc(       bson_t *doc, UStringType&& fieldname)                 { (void) ::bson_append_now_utc(        doc, U_STRING_TO_PARAM(fieldname)       ); }
+static void bson_append_document_begin(bson_t *doc, UStringType&& fieldname, bson_t *sub)    { (void) ::bson_append_document_begin( doc, U_STRING_TO_PARAM(fieldname),   sub); }
+static void bson_append_array_begin(   bson_t *doc, UStringType&& fieldname, bson_t *sub)    { (void) ::bson_append_array_begin(    doc, U_STRING_TO_PARAM(fieldname),   sub); }
 #endif
 
 #endif
