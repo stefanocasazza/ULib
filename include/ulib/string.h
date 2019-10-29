@@ -3084,7 +3084,7 @@ protected:
          workingString.reserve(workingString.size() + lengths);
 
          // shift over existing contents
-         if (writePosition < workingString.size()) (void) memcpy(target + lengths, target, lengths);
+         if (writePosition < workingString.size()) (void) memcpy(target + lengths, target, workingString.size() - writePosition);
       }
 
       (writeBytes(target, ts), ...);
