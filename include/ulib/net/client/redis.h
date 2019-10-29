@@ -1173,7 +1173,7 @@ class UCompileTimeRESPEncoder : public UCompileTimeStringFormatter {
 private:
 
    template<bool isPartial, size_t workingIndex = 0, size_t workingSegmentCount = 0, typename StringClass, typename... Xs, typename T, typename... Ts>
-   static constexpr auto generateSegments(std::tuple<Xs...>&& workingCommand, StringClass format, size_t& outputSegmentCount, T&& t, Ts&&... ts)
+   static constexpr auto generateSegments(StringClass format, size_t& outputSegmentCount, std::tuple<Xs...>&& workingCommand, T&& t, Ts&&... ts)
    {
       constexpr size_t segmentStart = StringClass::instance.find(workingIndex, " "_ctv, StringClass::notChars);
 
@@ -1193,11 +1193,11 @@ private:
             {
                return std::apply([&] (auto... params) {
 
-                  return generateSegments<isPartial, nextCommand>(std::tuple(), format, outputSegmentCount, std::forward<T>(t), std::forward<Ts>(ts)..., segmentCountString, params...);
+                  return generateSegments<isPartial, nextCommand>(format, outputSegmentCount, std::tuple(), std::forward<T>(t), std::forward<Ts>(ts)..., segmentCountString, params...);
 
                }, workingCommand);
             }
-            else return std::tuple_cat(std::forward_as_tuple(t, ts...), std::tie(segmentCountString), workingCommand);
+            else return std::tuple_cat(std::forward_as_tuple(ts...), std::tie(segmentCountString), workingCommand);
          }                
       }
       else
@@ -1209,13 +1209,13 @@ private:
          {
             constexpr size_t formatTermination = formatStart + 1;
 
-            return generateSegments<isPartial, segmentEnd, workingSegmentCount + 1>(std::tuple_cat(workingCommand, std::make_tuple("$"_ctv, LengthSurplusPackage<T>{(segmentEnd + formatStart) - (segmentStart + formatTermination) - 1, std::forward<T>(t)}, "\r\n"_ctv, StringClass::instance.template substr<segmentStart, formatStart>(), std::forward<T>(t), StringClass::instance.template substr<(std::min(formatTermination + 1, segmentEnd)), segmentEnd>() + "\r\n"_ctv)), format, outputSegmentCount, std::forward<Ts>(ts)..., ""_ctv);
-         }  // , ""_ctv
+            return generateSegments<isPartial, segmentEnd, workingSegmentCount + 1>(format, outputSegmentCount, std::tuple_cat(workingCommand, std::make_tuple("$"_ctv, LengthSurplusPackage<T>{(segmentEnd + formatStart) - (segmentStart + formatTermination) - 1, std::forward<T>(t)}, "\r\n"_ctv, StringClass::instance.template substr<segmentStart, formatStart>(), std::forward<T>(t), StringClass::instance.template substr<(std::min(formatTermination + 1, segmentEnd)), segmentEnd>() + "\r\n"_ctv)), std::forward<Ts>(ts)...);
+         }
          else
          {
             constexpr auto segmentString = "$"_ctv + integerToString<segmentEnd - segmentStart>() + "\r\n"_ctv + StringClass::instance.template substr<segmentStart, segmentEnd>() + "\r\n"_ctv;
 
-            return generateSegments<isPartial, segmentEnd, workingSegmentCount + 1>(std::tuple_cat(workingCommand, std::tie(segmentString)), format,outputSegmentCount, std::forward<T>(t), std::forward<Ts>(ts)..., ""_ctv);
+            return generateSegments<isPartial, segmentEnd, workingSegmentCount + 1>(format, outputSegmentCount, std::tuple_cat(workingCommand, std::tie(segmentString)), std::forward<T>(t), std::forward<Ts>(ts)...);
          }
       }
    }
@@ -1229,7 +1229,7 @@ private:
 
          UCompileTimeStringFormatter::snprintf_impl<overwrite>(writePosition, workingString, params...);
          
-      }, generateSegments<isPartial>(std::tuple(), format, segmentCount, std::forward<Ts>(ts)..., ""_ctv));
+      }, generateSegments<isPartial>(format, segmentCount, std::tuple(), std::forward<Ts>(ts)..., ""_ctv));
 
       return segmentCount;
    }
