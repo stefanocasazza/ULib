@@ -825,7 +825,7 @@ protected:
    void processResponse();
    bool processRequest(char recvtype);
 
-#if defined(HAVE_CXX20) && !defined(__clang__)
+#if defined(U_STDCPP_ENABLE) && defined(U_LINUX) && defined(HAVE_CXX20) && !defined(__clang__)
    bool sendRequest(UStringType&& pipeline)
 #else
    bool sendRequest(const UString& pipeline)
