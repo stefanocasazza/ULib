@@ -479,16 +479,10 @@ void* UMemoryPool::pmalloc(uint32_t* pnum, uint32_t type_size, bool bzero)
 
    U_INTERNAL_DUMP("length = %u", length)
 
-#ifndef ENABLE_MEMPOOL
 # ifndef HAVE_ARCH64
    U_INTERNAL_ASSERT_MINOR(length, 1U * 1024U * 1024U * 1024U) // NB: over 1G is very suspect on 32bit...
 # endif
-   if (length == 0) length = type_size;
 
-   ptr = U_SYSCALL(malloc, "%u", length);
-
-   U_INTERNAL_ASSERT_POINTER_MSG(ptr, "cannot allocate memory, exiting...")
-#else
    if (length > U_MAX_SIZE_PREALLOCATE) ptr = UFile::mmap(&length, -1, PROT_READ | PROT_WRITE, MAP_PRIVATE | U_MAP_ANON, 0);
    else
       {
@@ -501,7 +495,6 @@ void* UMemoryPool::pmalloc(uint32_t* pnum, uint32_t type_size, bool bzero)
    *pnum = length / type_size;
 
    U_INTERNAL_DUMP("*pnum = %u length = %u", *pnum, length)
-#endif
 
    if (bzero) (void) U_SYSCALL(memset, "%p,%d,%u", ptr, 0, length);
 

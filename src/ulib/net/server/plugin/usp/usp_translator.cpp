@@ -31,42 +31,7 @@
 #include <ulib/application.h>
 
 #ifdef USE_FSTACK
-#  include <ff_api.h>
-#  include <ff_epoll.h>
-
-extern "C" {
-extern U_EXPORT int ff_epoll_create(int size)                                                                          { return 0; /* epoll_create(size); */ }
-extern U_EXPORT int ff_epoll_ctl(int epfd, int op, int fd, struct epoll_event* event)                                  { return 0; /* epoll_ctl(epfd, op, fd, event); */ }
-extern U_EXPORT int ff_epoll_wait(int epfd, struct epoll_event* events, int maxevents, int timeout)                    { return 0; /* epoll_wait(epfd, events, maxevents, timeout); */ }
-extern U_EXPORT int ff_close(int fd)                                                                                   { return 0; /* close(fd); */ }
-extern U_EXPORT int ff_shutdown(int s, int how)                                                                        { return 0; /* shutdown(s, how); */ }
-extern U_EXPORT int ff_listen(int s, int backlog)                                                                      { return 0; /* listen(s, backlog); */ }
-extern U_EXPORT int ff_socket(int domain, int type, int protocol)                                                      { return 0; /* socket(domain, type, protocol); */ }
-extern U_EXPORT int ff_poll(struct pollfd fds[], nfds_t nfds, int timeout)                                             { return 0; /* poll(fds, nfds, timeout); */ }
-extern U_EXPORT int ff_accept(int s, struct linux_sockaddr* addr, socklen_t* addrlen)                                  { return 0; /* accept(s, (sockaddr*)addr, addrlen); */ }
-extern U_EXPORT int ff_bind(int s, const struct linux_sockaddr* addr, socklen_t addrlen)                               { return 0; /* bind(s, (sockaddr*)addr, addrlen); */ }
-extern U_EXPORT int ff_getpeername(int s, struct linux_sockaddr* name, socklen_t* namelen)                             { return 0; /* getpeername(s, (sockaddr*)name, namelen); */ }
-extern U_EXPORT int ff_getsockname(int s, struct linux_sockaddr* name, socklen_t* namelen)                             { return 0; /* getsockname(s, (sockaddr*)name, namelen); */ }
-extern U_EXPORT int ff_connect(int s, const struct linux_sockaddr* name, socklen_t namelen)                            { return 0; /* connect(s, (sockaddr*)name, namelen); */ }
-extern U_EXPORT int ff_getsockopt(int s, int level, int optname, void* optval, socklen_t* optlen)                      { return 0; /* getsockopt(s, level, optname, optval, optlen); */ }
-extern U_EXPORT int ff_setsockopt(int s, int level, int optname, const void* optval, socklen_t optlen)                 { return 0; /* setsockopt(s, level, optname, optval, optlen); */ }
-extern U_EXPORT int ff_select(int nfds, fd_set* readfds, fd_set* writefds, fd_set* exceptfds, struct timeval* timeout) { return 0; /* select(nfds, readfds, writefds, exceptfds, timeout); */ }
-
-extern U_EXPORT ssize_t ff_recv(int s, void* buf, size_t len, int flags)       { return 0; /* recv(s, buf, len, flags); */ }
-extern U_EXPORT ssize_t ff_recvmsg(int s, struct msghdr* msg, int flags)       { return 0; /* recvmsg(s, msg, flags); */ }
-extern U_EXPORT ssize_t ff_write(int fd, const void* buf, size_t nbytes)       { return 0; /* write(fd, buf, nbytes); */ }
-extern U_EXPORT ssize_t ff_writev(int fd, const struct iovec* iov, int iovcnt) { return 0; /* writev(fd, iov, iovcnt); */ }
-extern U_EXPORT ssize_t ff_send(int s, const void* buf, size_t len, int flags) { return 0; /* send(s, buf, len, flags); */ }
-
-extern U_EXPORT ssize_t ff_recvfrom(int s, void* buf, size_t len, int flags, struct linux_sockaddr* from, socklen_t* fromlen)
-{ return 0; /* recvfrom(s, buf, len, flags, (sockaddr*)from, fromlen); */ }
-
-extern U_EXPORT ssize_t ff_sendto(int s, const void* buf, size_t len, int flags, const struct linux_sockaddr* to, socklen_t tolen)
-{ return 0; /* sendto(s, buf, len, flags, (sockaddr*)to, tolen); */ }
-
-extern U_EXPORT int ff_fcntl(int fd, int cmd, ...)               { return 0; /* fcntl(fd, cmd, argp); */ }
-extern U_EXPORT int ff_ioctl(int fd, unsigned long request, ...) { return 0; /* ioctl(fd, request, argp); */ }
-}
+#  include <ulib/internal/ff_link.h>
 #endif
 
 class Application : public UApplication {
@@ -77,6 +42,7 @@ public:
       U_TRACE_NO_PARAM(5, "Application::Application()")
 
       bvar                  = 
+      blogin                =
       breturn               =
       bsession              =
       bstorage              =
@@ -135,10 +101,10 @@ public:
             size = (pos == U_NOT_FOUND ? id.size() : pos);
 
             (void) output0.reserve(50U + size);
-            (void) output1.reserve(50U + size);
+            (void) output2.reserve(50U + size);
 
             output0.snprintf_add(U_CONSTANT_TO_PARAM("\n\tUSP_%.*s_VAR_GET(%u,%.*s);\n"), name_len, name, i, size, ptr);
-            output1.snprintf_add(U_CONSTANT_TO_PARAM("\n\tUSP_%.*s_VAR_PUT(%u,%.*s);\n"), name_len, name, i, size, ptr);
+            output2.snprintf_add(U_CONSTANT_TO_PARAM("\n\tUSP_%.*s_VAR_PUT(%u,%.*s);\n"), name_len, name, i, size, ptr);
 
             (void) static_vars.reserve(50U + size);
 
@@ -149,6 +115,8 @@ public:
 #        endif
             }
          }
+
+      (void) output1.append(output2);
 
       output0.snprintf_add(U_CONSTANT_TO_PARAM(                         "\n\t}\n\tusp_b%.*s = true;\n"),                 name_len, name);
       output1.snprintf_add(U_CONSTANT_TO_PARAM("\n\tUHTTP::putData%.*s();\n\t}\n\tusp_b%.*s = true;\n"), name_len, name, name_len, name);
@@ -315,15 +283,59 @@ public:
          U_INTERNAL_ASSERT_EQUALS(bfirst_pass, false)
          U_INTERNAL_ASSERT_EQUALS(bhttp_header_empty, false)
 
-         bhttp_header_empty = true;
+         blogin = true;
 
-         (void) output0.append(U_CONSTANT_TO_PARAM(
-               "\n\tU_http_info.endHeader = 0;"
+         // -----------------------------------------------------------------------------------------------------------------------------------
+         // param: "[ data expire path domain secure HttpOnly ]"
+         // -----------------------------------------------------------------------------------------------------------------------------------
+         // string -- key_id or data to put in cookie    -- must
+         // int    -- lifetime of the cookie in HOURS    -- must (0 -> valid until browser exit)
+         // string -- path where the cookie can be used  --  opt
+         // string -- domain which can read the cookie   --  opt
+         // bool   -- secure mode                        --  opt
+         // bool   -- only allow HTTP usage              --  opt
+         // -----------------------------------------------------------------------------------------------------------------------------------
+         // RET: Set-Cookie: ulib.s<counter>=data&expire&HMAC-MD5(data&expire); expires=expire(GMT); path=path; domain=domain; secure; HttpOnly
+         // -----------------------------------------------------------------------------------------------------------------------------------
+
+         uint32_t lifetime = 0;
+         UString path   = *UString::str_path_root,
+                 domain = *UString::str_localhost; 
+
+         setDirectiveItem(directive, U_CONSTANT_SIZE("login"));
+
+         if (token)
+            {
+            UString id, value;
+            UVector<UString> vec(token, "=\n");
+
+            for (uint32_t i = 0, n = vec.size(); i < n;)
+               {
+               id    = vec[i++];
+               value = vec[i++];
+
+                    if (id.equal(U_CONSTANT_TO_PARAM("lifetime"))) lifetime = value.strtoul();
+               else if (id.equal(U_CONSTANT_TO_PARAM("path")))         path = value;
+               else if (id.equal(U_CONSTANT_TO_PARAM("domain")))     domain = value;
+               }
+            }
+
+         UString filler(U_CAPACITY);
+
+         filler.snprintf(U_CONSTANT_TO_PARAM(
                "\n\tif (UHTTP::getLoginCookie() ||"
                "\n\t    UHTTP::getPostLoginUserPasswd())"
                "\n\t\t{"
                "\n\t\tUHTTP::usp->runDynamicPageParam(U_DPAGE_AUTH);"
-               "\n\t\tif (*UClientImage_Base::wbuffer) return;"
+               "\n\t\tif (*UHTTP::loginCookie)"
+               "\n\t\t\t{"
+               "\n\t\t\tif (UHTTP::isPostLogin())"
+               "\n\t\t\t\t{"
+               "\n\t\t\t\tUHTTP::setCookie(U_CONSTANT_TO_PARAM(\"[ %%v %u %v %v ]\"), UHTTP::getKeyIdDataSession(*UHTTP::loginCookie).rep);"
+               "\n\t\t\t\tUHTTP::usp->runDynamicPageParam(U_DPAGE_LOGIN);"
+               "\n\t\t\t\treturn;"
+               "\n\t\t\t\t}"
+               "\n\t\t\t}"
                "\n\t\t}"
                "\n\tif (UHTTP::loginCookie->empty())"
                "\n\t\t{"
@@ -343,7 +355,9 @@ public:
                "\n\" <p><input type=\\\"submit\\\" value=\\\"login\\\"></p>\\n\""
                "\n\"</form>\"));"
                "\n\t\treturn;"
-               "\n\t\t}\n\t\t"));
+               "\n\t\t}\n\t\t"), lifetime, path.rep, domain.rep);
+
+         (void) output0.insert(0, filler);
          }
       else if (strncmp(directive, U_CONSTANT_TO_PARAM("session")) == 0)
          {
@@ -840,7 +854,8 @@ loop: distance = t.getDistance();
        * U_DPAGE_OPEN    = 7,
        * U_DPAGE_CLOSE   = 8,
        * U_DPAGE_ERROR   = 9,
-       * U_DPAGE_AUTH    = 10 };
+       * U_DPAGE_AUTH    = 10,
+       * U_DPAGE_LOGIN   = 11 };
        */
 
       bool bcfg,    // usp_config
@@ -852,6 +867,7 @@ loop: distance = t.getDistance();
            bopen,   // usp_open
            bclose,  // usp_close
            berror,  // usp_error
+           blog,    // usp_login
            bauth;   // usp_auth
 
       char ptr1[100]  = { '\0' };
@@ -864,6 +880,7 @@ loop: distance = t.getDistance();
       char ptr8[100]  = { '\0' };
       char ptr9[100]  = { '\0' };
       char ptr10[100] = { '\0' };
+      char ptr11[100] = { '\0' };
 
 #  ifndef U_CACHE_REQUEST_DISABLE
       if (usp.c_char(4) == '#'      &&
@@ -886,6 +903,7 @@ loop: distance = t.getDistance();
          bclose  = (U_STRING_FIND(declaration, 0, "static void usp_close_")  != U_NOT_FOUND);
          berror  = (U_STRING_FIND(declaration, 0, "static void usp_error_")  != U_NOT_FOUND);
          bauth   = (U_STRING_FIND(declaration, 0, "static void usp_auth_")   != U_NOT_FOUND);
+         blog    = (U_STRING_FIND(declaration, 0, "static void usp_login_")  != U_NOT_FOUND);
 
          if (breset) (void) u__snprintf(ptr2, 100, U_CONSTANT_TO_PARAM("\n\tif (param == U_DPAGE_RESET) { usp_reset_%.*s(); return; }\n"), basename_sz, basename_ptr);
 
@@ -905,6 +923,7 @@ loop: distance = t.getDistance();
          if (berror)  (void) u__snprintf(ptr8,  100, U_CONSTANT_TO_PARAM("\n\tif (param == U_DPAGE_ERROR) { usp_error_%.*s(); return; }\n"),   basename_sz, basename_ptr);
          if (bcfg)    (void) u__snprintf(ptr9,  100, U_CONSTANT_TO_PARAM("\n\tif (param == U_DPAGE_CONFIG){ usp_config_%.*s(); return; }\n"),  basename_sz, basename_ptr);
          if (bauth)   (void) u__snprintf(ptr10, 100, U_CONSTANT_TO_PARAM("\n\tif (param == U_DPAGE_AUTH) { usp_auth_%.*s(); return; }\n"),     basename_sz, basename_ptr);
+         if (blog)    (void) u__snprintf(ptr11, 100, U_CONSTANT_TO_PARAM("\n\tif (param == U_DPAGE_LOGIN) { usp_login_%.*s(); return; }\n"),   basename_sz, basename_ptr);
          }
       else
          {
@@ -916,19 +935,25 @@ loop: distance = t.getDistance();
          bfork   =
          bopen   =
          bclose  =
+         blog    =
          bauth   = false;
          }
 
       bool bdatamod = (bsession || bstorage);
 
-      U_INTERNAL_DUMP("bcfg = %b binit = %b breset = %b bend = %b bsighup = %b bfork = %b bopen = %b bclose = %b bdatamod = %b bauth = %b",
-                       bcfg,     binit,     breset,     bend,     bsighup,     bfork,     bopen,     bclose,     bdatamod,     bauth)
+      U_INTERNAL_DUMP("bcfg = %b binit = %b breset = %b bend = %b bsighup = %b bfork = %b bopen = %b bclose = %b bdatamod = %b bauth = %b blog = %b",
+                       bcfg,     binit,     breset,     bend,     bsighup,     bfork,     bopen,     bclose,     bdatamod,     bauth,     blog)
 
       if (bdatamod)
          {
          if (bsession)
             {
-            (void) declaration.append(U_CONSTANT_TO_PARAM(
+            if (blogin)
+               {
+               U_ERROR("Sorry, with <!--#login--> you must use <!--#storage--> in place of <!--#session-->");
+               }
+
+            (void) static_vars.append(U_CONSTANT_TO_PARAM(
                "\n\t\nstatic bool usp_bSESSION;\n"
                "\n\t\n"
                "#define USP_SESSION_VAR_GET(index,varname) \\\n"
@@ -960,7 +985,7 @@ loop: distance = t.getDistance();
 
          if (bstorage)
             {
-            (void) declaration.append(U_CONSTANT_TO_PARAM(
+            (void) static_vars.append(U_CONSTANT_TO_PARAM(
                "\n\t\nstatic bool usp_bSTORAGE;\n"
                "\n\t\n"
                "#define USP_STORAGE_VAR_GET(index,varname) \\\n"
@@ -988,6 +1013,35 @@ loop: distance = t.getDistance();
                "      UHTTP::data_storage->putValueVar(index, UString::getStringNull()); \\\n"
                "      } \\\n"
                "   }\n"));
+            }
+
+         if (blogin &&
+             bstorage)
+            {
+            UString filler(U_CAPACITY);
+
+            filler.snprintf(U_CONSTANT_TO_PARAM(
+               "\n\t\t\t\t%v"
+               "\n\t\t\t\tUHTTP::putDataSTORAGE();"), UStringExt::substitute(output2.substr(2), U_CONSTANT_TO_PARAM("\n\t"), U_CONSTANT_TO_PARAM("\n\t\t\t\t")).rep);
+
+            (void) output0.insert(U_CONSTANT_SIZE(
+               "\n\tif (UHTTP::getLoginCookie() ||"
+               "\n\t    UHTTP::getPostLoginUserPasswd())"
+               "\n\t\t{"
+               "\n\t\tUHTTP::usp->runDynamicPageParam(U_DPAGE_AUTH);"
+               "\n\t\tif (*UHTTP::loginCookie)"
+               "\n\t\t\t{"), U_CONSTANT_TO_PARAM("\n\t\t\tUHTTP::setKeyIdDataStorage(*UHTTP::loginCookie);"));
+
+            (void) output0.insert(U_CONSTANT_SIZE(
+               "\n\tif (UHTTP::getLoginCookie() ||"
+               "\n\t    UHTTP::getPostLoginUserPasswd())"
+               "\n\t\t{"
+               "\n\t\tUHTTP::usp->runDynamicPageParam(U_DPAGE_AUTH);"
+               "\n\t\tif (*UHTTP::loginCookie)"
+               "\n\t\t\t{"
+               "\n\t\t\tUHTTP::setKeyIdDataStorage(*UHTTP::loginCookie);"
+               "\n\t\t\tif (UHTTP::isPostLogin())"
+               "\n\t\t\t\t{"), filler);
             }
 
          if (binit == false)
@@ -1079,6 +1133,7 @@ loop: distance = t.getDistance();
             "%s"
             "%s"
             "%s"
+            "%s"
             "\treturn;\n"
             "} }\n"
             "\t\n"
@@ -1113,6 +1168,7 @@ loop: distance = t.getDistance();
             ptr8,
             ptr9,
             ptr10,
+            ptr11,
             basename_sz, basename_ptr,
             basename_sz, basename_ptr,
             basename_sz, basename_ptr,
@@ -1132,10 +1188,10 @@ loop: distance = t.getDistance();
 private:
    UTokenizer t;
    UVector<UString> vdefine;
-   UString pinclude, usp, token, output0, output1, static_vars, declaration, vcode, http_header, sseloop, vars;
+   UString pinclude, usp, token, output0, output1, output2, static_vars, declaration, vcode, http_header, sseloop, vars;
    const char* basename_ptr;
    uint32_t basename_sz;
-   bool bvar, breturn, bsession, bstorage, bfirst_pass, is_html, test_if_html, bhttp_header_empty, bpreprocessing_failed;
+   bool bvar, breturn, bsession, blogin, bstorage, bfirst_pass, is_html, test_if_html, bhttp_header_empty, bpreprocessing_failed;
 
    U_DISALLOW_COPY_AND_ASSIGN(Application)
 };

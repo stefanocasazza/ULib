@@ -30,12 +30,19 @@ extern U_EXPORT void runDynamicPage_index();
 {
    U_TRACE_NO_PARAM(0, "::runDynamicPage_index()")
    
-   U_http_info.endHeader = 0;
    if (UHTTP::getLoginCookie() ||
        UHTTP::getPostLoginUserPasswd())
       {
       UHTTP::usp->runDynamicPageParam(U_DPAGE_AUTH);
-      if (*UClientImage_Base::wbuffer) return;
+      if (*UHTTP::loginCookie)
+         {
+         if (UHTTP::isPostLogin())
+            {
+            UHTTP::setCookie(U_CONSTANT_TO_PARAM("[ %v 0 / localhost ]"), UHTTP::getKeyIdDataSession(*UHTTP::loginCookie).rep);
+            UHTTP::usp->runDynamicPageParam(U_DPAGE_LOGIN);
+            return;
+            }
+         }
       }
    if (UHTTP::loginCookie->empty())
       {
@@ -68,4 +75,5 @@ extern U_EXPORT void runDynamicPage_index();
    
    UHTTP::manageRequest(GET_table, U_NUM_ELEMENTS(GET_table), POST_table, U_NUM_ELEMENTS(POST_table));
    
+   U_http_info.endHeader = 0;
 } }

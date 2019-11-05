@@ -462,6 +462,7 @@ public:
    static void _free(void* ptr, uint32_t num, uint32_t type_size = 1);
 
    static void allocateMemoryBlocks(const char* list);
+   static void* pmalloc(uint32_t* pnum, uint32_t type_size = sizeof(char), bool bzero = false);
 #else
    static void* pop(int stack_index)
       {
@@ -494,10 +495,36 @@ public:
 
       U_INTERNAL_ASSERT_POINTER(ptr)
       }
+
+   static void* UMemoryPool::pmalloc(uint32_t* pnum, uint32_t type_size = sizeof(char), bool bzero = false)
+      {
+      U_TRACE(1, "UMemoryPool::pmalloc(%p,%u,%b)", pnum, type_size, bzero)
+
+      U_INTERNAL_ASSERT_POINTER(pnum)
+      U_INTERNAL_ASSERT_MAJOR(type_size, 0)
+
+      uint32_t length = (*pnum * type_size); // in bytes
+
+      U_INTERNAL_DUMP("length = %u", length)
+
+#  ifndef HAVE_ARCH64
+      U_INTERNAL_ASSERT_MINOR(length, 1U * 1024U * 1024U * 1024U) // NB: over 1G is very suspect on 32bit...
+#  endif
+
+      if (length == 0) length = type_size;
+
+      ptr = U_SYSCALL(malloc, "%u", length);
+
+      U_INTERNAL_ASSERT_POINTER_MSG(ptr, "cannot allocate memory, exiting...")
+
+      if (bzero) (void) U_SYSCALL(memset, "%p,%d,%u", ptr, 0, length);
+
+      U_RETURN(ptr);
+      }
+
 #endif
 
    static void*  malloc(uint32_t   num, uint32_t type_size = sizeof(char), bool bzero = false);
-   static void* pmalloc(uint32_t* pnum, uint32_t type_size = sizeof(char), bool bzero = false);
 
 #ifdef DEBUG
    static const char* obj_class;

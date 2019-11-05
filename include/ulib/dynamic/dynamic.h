@@ -47,7 +47,8 @@ enum DynamicPageType {
    U_DPAGE_OPEN    = 7,
    U_DPAGE_CLOSE   = 8,
    U_DPAGE_ERROR   = 9,
-   U_DPAGE_AUTH    = 10
+   U_DPAGE_AUTH    = 10,
+   U_DPAGE_LOGIN   = 11
 };
 
 /**

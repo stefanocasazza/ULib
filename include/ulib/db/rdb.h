@@ -607,6 +607,8 @@ public:
 
       pDataStorage = ptr;
 
+      U_INTERNAL_DUMP("pDataStorage->keyid(%u) = %V", ptr->keyid.size(), ptr->keyid.rep)
+
 #  ifdef DEBUG
       if (bdirect == false &&
           ptr              &&

@@ -664,6 +664,23 @@ public:
    // -----------------------------------------------------------------------------------------------------------------------------------
 
    static void setCookie(const UString& param);
+   static void setCookie(const char* format, uint32_t fmt_size, ...)
+      {
+      U_TRACE(0, "UHTTP::setCookie(%.*S,%u)", fmt_size, format, fmt_size)
+
+      U_INTERNAL_ASSERT_POINTER(format)
+
+      UString param(U_CAPACITY);
+
+      va_list argp;
+      va_start(argp, fmt_size);
+
+      param.vsnprintf(format, fmt_size, argp);
+
+      setCookie(param);
+
+      va_end(argp);
+      }
 
    // HTTP SESSION
 
@@ -754,6 +771,15 @@ public:
       UString keyid = UDataSession::getKeyIdDataSession(++sid_counter_gen, data);
 
       U_RETURN_STRING(keyid);
+      }
+
+   static void setKeyIdDataStorage(const UString& key)
+      {
+      U_TRACE(0, "UHTTP::setKeyIdDataStorage(%V)", key.rep)
+
+      U_INTERNAL_ASSERT_POINTER(data_storage)
+
+      data_storage->UDataStorage::setKeyIdDataSession(key);
       }
 
 #ifdef U_SSE_ENABLE // SERVER SENT EVENTS (SSE)
@@ -1589,12 +1615,12 @@ private:
 
    static inline bool checkDataChunked(UString* pbuffer) U_NO_EXPORT;
    static inline void setRange(const char* ptr, uint32_t len) U_NO_EXPORT;
-   static inline void setCookie(const char* ptr, uint32_t len) U_NO_EXPORT;
    static inline void setUserAgent(const char* ptr, uint32_t len) U_NO_EXPORT;
    static inline void setAccept(const char* ptr, uint32_t len) U_NO_EXPORT;
    static inline void setReferer(const char* ptr, uint32_t len) U_NO_EXPORT;
    static inline void setXRealIP(const char* ptr, uint32_t len) U_NO_EXPORT;
    static inline void setContentType(const char* ptr, uint32_t len) U_NO_EXPORT;
+   static inline void setCookieHeader(const char* ptr, uint32_t len) U_NO_EXPORT;
    static inline void setAcceptLanguage(const char* ptr, uint32_t len) U_NO_EXPORT;
    static inline void setXForwardedFor(const char* ptr, uint32_t len) U_NO_EXPORT;
    static inline void setXHttpForwardedFor(const char* ptr, uint32_t len) U_NO_EXPORT;
