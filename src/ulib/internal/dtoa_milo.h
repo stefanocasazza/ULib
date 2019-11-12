@@ -353,12 +353,16 @@ inline void Prettify(char* buffer, int length, int k) {
 		buffer[kk] = '.';
 		buffer[kk + 1] = '0';
 		buffer[kk + 2] = '\0';
+
+		buffer += kk + 2;
 	}
 	else if (0 < kk && kk <= 21) {
 		// 1234e-2 -> 12.34
 		memmove(&buffer[kk + 1], &buffer[kk], length - kk);
 		buffer[kk] = '.';
 		buffer[length + 1] = '\0';
+
+		buffer += length + 2;
 	}
 	else if (-6 < kk && kk <= 0) {
 		// 1234e-6 -> 0.001234
@@ -369,6 +373,8 @@ inline void Prettify(char* buffer, int length, int k) {
 		for (int i = 2; i < offset; i++)
 			buffer[i] = '0';
 		buffer[length + offset] = '\0';
+
+		buffer += length + offset + 1;
 	}
 	else if (length == 1) {
 		// 1e30
@@ -394,6 +400,8 @@ inline char* dtoa_milo(double value, char* buffer) {
 		buffer[1] = '.';
 		buffer[2] = '0';
 		buffer[3] = '\0';
+
+		buffer += 4;
 	}
 	else {
 		if (value < 0) {
