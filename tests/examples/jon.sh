@@ -11,6 +11,8 @@ rm -f JONATHAN/log/* /tmp/trace.*userver_tcp*.[0-9]* /tmp/object.*userver_tcp*.[
 #USIMERR="error.sim"
  export UTRACE UTRACE_SIGNAL UOBJDUMP USIMERR UTRACE_FOLDER
 
+#export UMEMPOOL="581,0,0,59,16409,-7,-20,-23,31"
+
 export ORM_DRIVER="sqlite"
 export ORM_OPTION="host=localhost user=dbuser password=dbpass character-set=utf8 dbname=../db/concise-ile"
 

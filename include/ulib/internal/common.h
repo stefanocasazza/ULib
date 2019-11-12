@@ -32,12 +32,14 @@
 #  else
 #     define U_openmode std::ios_base::out
 #  endif
-#  ifdef __clang__
-#     define ios        std::ios
+#  if defined(__clang__)
 #     define istream    std::istream
 #     define ostream    std::ostream
 #     define streambuf  std::streambuf
 #     define streamsize std::streamsize
+#     if !defined(__OSX__)
+#        define ios     std::ios
+#     endif
 #  endif
 #else
 typedef char istream;

@@ -3,6 +3,34 @@
 #include <ulib/net/server/usp_macro.h>
    
    
+static bool usp_bSESSION;
+   
+#define USP_SESSION_VAR_GET(index,varname) \
+   { \
+   UString varname##_value; \
+   if (UHTTP::getDataSession(index, varname##_value) && \
+       (usp_sz = varname##_value.size())) \
+      { \
+      UString2Object(varname##_value.data(), usp_sz, varname); \
+      } \
+   U_INTERNAL_DUMP("%s(%u) = %V", #varname, usp_sz, varname##_value.rep) \
+   }
+   
+#define USP_SESSION_VAR_PUT(index,varname) \
+   { \
+   usp_sz = UObject2String(varname, usp_buffer, sizeof(usp_buffer)); \
+   if (usp_sz) \
+      { \
+      UString varname##_value((void*)usp_buffer, usp_sz); \
+      UHTTP::data_session->putValueVar(index, varname##_value); \
+      U_INTERNAL_DUMP("%s(%u) = %V", #varname, usp_sz, varname##_value.rep) \
+      } \
+   else \
+      { \
+      UHTTP::data_session->putValueVar(index, UString::getStringNull()); \
+      } \
+   }
+   
 #include "ir_session.h"
 #include <ulib/debug/crono.h>
 #define IR_SESSION (*(IRDataSession*)UHTTP::data_session)
@@ -42,34 +70,6 @@ static void usp_end_ir_web()
    U_DELETE(crono)
    U_DELETE(footer)
 }
-   
-static bool usp_bSESSION;
-   
-#define USP_SESSION_VAR_GET(index,varname) \
-   { \
-   UString varname##_value; \
-   if (UHTTP::getDataSession(index, varname##_value) && \
-       (usp_sz = varname##_value.size())) \
-      { \
-      UString2Object(varname##_value.data(), usp_sz, varname); \
-      } \
-   U_INTERNAL_DUMP("%s(%u) = %V", #varname, usp_sz, varname##_value.rep) \
-   }
-   
-#define USP_SESSION_VAR_PUT(index,varname) \
-   { \
-   usp_sz = UObject2String(varname, usp_buffer, sizeof(usp_buffer)); \
-   if (usp_sz) \
-      { \
-      UString varname##_value((void*)usp_buffer, usp_sz); \
-      UHTTP::data_session->putValueVar(index, varname##_value); \
-      U_INTERNAL_DUMP("%s(%u) = %V", #varname, usp_sz, varname##_value.rep) \
-      } \
-   else \
-      { \
-      UHTTP::data_session->putValueVar(index, UString::getStringNull()); \
-      } \
-   }
    
 static void usp_body_ir_web()
 {

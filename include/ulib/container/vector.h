@@ -416,7 +416,8 @@ protected:
 
       U_INTERNAL_ASSERT_MINOR(n, ((0xfffffff / sizeof(void*)) - sizeof(UVector<void*>)))
 
-      vec       = (const void**) UMemoryPool::pmalloc(&n, sizeof(void*));
+      vec = (const void**) UMemoryPool::pmalloc(&n, sizeof(void*));
+
       _capacity = n;
       }
 

@@ -61,6 +61,7 @@ enum StringAllocationIndex {
 #endif
 #define   U_STRING_TO_PARAM(str)            (str).data(), (str).size()
 #define   U_STRING_TO_RANGE(str)            (str).data(), (str).pend()
+#define   U_BINARY_TO_PARAM(str)            (const uint8_t*)str.data(), str.size()
 
 /**
  * UStringRep: string representation
@@ -2853,7 +2854,7 @@ namespace std {
    };
 }
 #  endif
-#  if defined(HAVE_CXX20) && defined(U_LINUX)
+#  if defined(HAVE_CXX20) && defined(U_LINUX) && !defined(__clang__)
 #     include <utility> // std::index_sequence
 template <char... Chars>
 class UCompileTimeStringView {
@@ -2890,6 +2891,40 @@ public:
       if constexpr (From == To)  return UCompileTimeStringView<>();
       else                       return substr<From>(std::make_index_sequence<To - From>{});
    }
+   
+   template<size_t index = 0>
+   constexpr bool contains(char value) const
+   {
+           if constexpr (index >= length)         return false;
+      else if           (string[index] == value)  return true;
+      else                                        return contains<index+1>(value);
+   }
+
+// so that CTV is transparently a UString to U_STRING_TO_PARAM
+   char const *data() const noexcept { return string; }
+   size_t      size() const noexcept { return length; }
+
+   static constexpr uint8_t notChars = 0x1;
+   static constexpr uint8_t skipDoubles = 0x2;
+
+   template <class String>
+   constexpr ssize_t find(size_t index, String findTheseChars, uint8_t options = 0, size_t terminalIndex = length) const
+   {
+      while (index < terminalIndex)
+      {
+         char ch = string[index];
+
+         if (options == skipDoubles)
+         {
+            if (findTheseChars.contains(ch) && ((index + 1 < terminalIndex) ? !findTheseChars.contains(string[index + 1]) : true)) return index;
+         }
+         else if ((options == notChars) == !findTheseChars.contains(ch)) return index;
+         
+         ++index;
+      }
+
+      return index;                                                
+   }
 };
 
 template <class Char, Char... Chars>
@@ -2899,6 +2934,16 @@ constexpr auto operator""_ctv() // compile time view
 }
 
 #define U_CTV_TO_PARAM(ct_string) ct_string.string, ct_string.length
+
+template <typename T, template <char... CharsB> class Template>
+struct is_ctv : std::false_type {};
+
+template <char... CharsA, template <char... CharsB> class Template>
+struct is_ctv<Template<CharsA...>, Template> : std::true_type {};
+
+template <typename T>
+static inline constexpr bool is_ctv_v = is_ctv<T, UCompileTimeStringView>::value;
+
 
 template<typename Lambda, typename T>
 static void snprintf_specialization(Lambda&& lambda, T t) 
@@ -2911,44 +2956,16 @@ static void snprintf_specialization(Lambda&& lambda, T t)
 class UCompileTimeStringFormatter {
 protected:
 
-   static constexpr uint8_t notChar = 0x1;
-   static constexpr uint8_t skipDoubles = 0x2;
-
-   template<auto format, uint8_t options = 0, size_t terminationIndex = format.length>
-   static constexpr size_t findChar(size_t workingIndex, char ch, char chOther)
-   {
-      if constexpr (options & notChar)
-      {
-         // search until we find not some character 
-         while (workingIndex < terminationIndex && ((format[workingIndex] == ch) || (format[workingIndex] == chOther))) workingIndex++;
-      }
-      else if constexpr (options & skipDoubles)
-      {
-         // {{}}.cache
-         while (workingIndex < terminationIndex && ((format[workingIndex] != ch) || (workingIndex < terminationIndex && format[workingIndex + 1] == ch))) workingIndex++;
-      }
-      else if constexpr (options == 0)
-      {
-         // search until we find some character
-         while (workingIndex < terminationIndex && ((format[workingIndex] != ch) && (format[workingIndex] != chOther))) workingIndex++;
-      }
-
-      return workingIndex;
-   }
-
-   template<auto format, uint8_t options = 0, size_t terminationIndex = format.length>
-   static constexpr size_t findChar(size_t workingIndex, char ch)
-   {
-      return findChar<format, options, terminationIndex>(workingIndex, ch, ch);
-   }
-
    template<size_t workingIndex, size_t argumentCount, typename StringClass, typename T, typename... Ts>
    static constexpr auto generateSegments(StringClass format, T&& t, Ts&&... ts)
    {
-      if constexpr (argumentCount == 0) return std::make_tuple(std::forward<T>(t), std::forward<Ts>(ts)...);
+      if constexpr (argumentCount == 0) 
+      {
+         return std::make_tuple(std::forward<T>(t), std::forward<Ts>(ts)..., StringClass::instance.template substr<workingIndex, StringClass::length>());
+      }
       else
       {
-         constexpr size_t nextFormat = findChar<StringClass::instance, skipDoubles>(workingIndex, '{');
+         constexpr size_t nextFormat = StringClass::instance.find(workingIndex, "{"_ctv, StringClass::skipDoubles);
          constexpr size_t formatTermination = nextFormat + 1;
 
          return generateSegments<formatTermination + 1, argumentCount - 1>(format, std::forward<Ts>(ts)..., StringClass::instance.template substr<workingIndex, nextFormat>(), std::forward<T>(t));
@@ -2960,15 +2977,6 @@ protected:
 
    template <class T, class U>
    static inline constexpr bool decay_equiv_v = decay_equiv<T, U>::value;
-
-   template <typename T, template <char... CharsB> class Template>
-   struct is_ctv : std::false_type {};
-
-   template <char... CharsA, template <char... CharsB> class Template>
-   struct is_ctv<Template<CharsA...>, Template> : std::true_type {};
-
-   template <typename T>
-   static inline constexpr bool is_ctv_v = is_ctv<T, UCompileTimeStringView>::value;
 
    template <typename T>
    static void writeBytes(char*& writeTo, T t)
@@ -3062,21 +3070,27 @@ protected:
       }
    };
 
-   template<typename... Ts>
+   template<bool overwrite, typename... Ts>
    static void snprintf_impl(size_t writePosition, UString& workingString, Ts... ts)
    {
       size_t lengths = (getLength(ts) + ...);
 
-      // grow string to accomodate new size if necessary
-      workingString.reserve(workingString.size() + lengths);
-
       char* target = workingString.data() + writePosition;
 
-      // shift over existing contents
-      if (writePosition < workingString.size()) (void) memcpy(target + lengths, target, lengths);
+      // grow string to accomodate new size if necessary
+      if constexpr (overwrite) workingString.reserve(lengths);
+      else 
+      {
+         workingString.reserve(workingString.size() + lengths);
+
+         // shift over existing contents
+         if (writePosition < workingString.size()) (void) memcpy(target + lengths, target, workingString.size() - writePosition);
+      }
 
       (writeBytes(target, ts), ...);
-      workingString.size_adjust_force(target - workingString.data());
+
+      if constexpr (overwrite)   workingString.size_adjust_force(lengths);
+      else                       workingString.size_adjust_force(workingString.size() + lengths);
    }
 
 public:
@@ -3097,14 +3111,14 @@ public:
       return digits;
    }
 
-   template <auto format, typename... Ts>
+   template <auto format, bool overwrite = false, typename... Ts>
    static void snprintf_pos(size_t writePosition, UString& workingString, Ts... ts)
    {
       std::apply([&] (auto... params) {
 
       // adding this extra level of indirection allowing for the building of higher level abstraction parsers on top
 
-         snprintf_impl(writePosition, workingString, params...);
+         snprintf_impl<overwrite>(writePosition, workingString, params...);
 
       }, generateSegments<0, sizeof...(Ts)>(format, std::forward<Ts>(ts)...));
    }
@@ -3112,13 +3126,13 @@ public:
    template <auto format, typename... Ts>
    static void snprintf(UString& workingString, Ts... ts)
    {
-      snprintf_pos<format>(0, workingString, std::forward<Ts>(ts)...);
+      snprintf_pos<format, true>(0, workingString, std::forward<Ts>(ts)...);
    }
 
    template <auto format, typename... Ts>
    static void snprintf_add(UString& workingString, Ts... ts)
    {
-      snprintf_pos<format>(workingString.size(), workingString, std::forward<Ts>(ts)...);
+      snprintf_pos<format, false>(workingString.size(), workingString, std::forward<Ts>(ts)...);
    }
 };
 
@@ -3134,7 +3148,13 @@ static void snprintf_specialization(Lambda&& lambda, UCompileTimeStringFormatter
 
 template<typename T>
 concept bool UCompileTimeStringType = requires(T string) {
-   UCompileTimeStringFormatter::is_ctv_v<T>;
+   is_ctv_v<T>;
+};
+
+template<typename T>
+concept bool UStringType = requires(T string)
+{
+   (std::is_same_v<T, UString> || is_ctv_v<T>);
 };
 #  endif
 #endif

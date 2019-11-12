@@ -2521,9 +2521,9 @@ U_NO_EXPORT inline void UHTTP::setRange(const char* ptr, uint32_t len)
    U_INTERNAL_DUMP("Range = %.*S", U_HTTP_RANGE_TO_TRACE)
 }
 
-U_NO_EXPORT inline void UHTTP::setCookie(const char* ptr, uint32_t len)
+U_NO_EXPORT inline void UHTTP::setCookieHeader(const char* ptr, uint32_t len)
 {
-   U_TRACE(0, "UHTTP::setCookie(%.*S,%u)", len, ptr, len)
+   U_TRACE(0, "UHTTP::setCookieHeader(%.*S,%u)", len, ptr, len)
 
    U_http_info.cookie     = ptr;
    U_http_info.cookie_len = len;
@@ -2864,7 +2864,7 @@ U_NO_EXPORT bool UHTTP::checkRequestForHeader()
             {
             SET_POINTER_CHECK_REQUEST_FOR_HEADER
 
-            setCookie(ptr1, pn-ptr1);
+            setCookieHeader(ptr1, pn-ptr1);
 
             goto next;
             }
@@ -3126,7 +3126,7 @@ U_NO_EXPORT bool UHTTP::checkRequestForHeader()
                }
             else if (memcmp(p, U_CONSTANT_TO_PARAM("ookie")) == 0)
                {
-               if (p[5] != '2') setCookie(ptr1, pn-ptr1); // "Cookie2"
+               if (p[5] != '2') setCookieHeader(ptr1, pn-ptr1); // "Cookie2"
                }
             }
          break;
