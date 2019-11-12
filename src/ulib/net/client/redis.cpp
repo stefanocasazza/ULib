@@ -175,7 +175,9 @@ void UREDISClient_Base::manageResponseBufferResize(uint32_t n)
 void UREDISClient_Base::processResponse()
 {
    U_TRACE_NO_PARAM(0, "UREDISClient_Base::processResponse()")
-
+	
+	// looping always faster than recursion... no stack building/teardown
+		
    // for now alwasys process from beginning
    size_t index = 0;
    char prefix;
@@ -460,8 +462,7 @@ int UREDISClient_Base::handlerRead()
 
 // by Victor Stewart
 
-#if defined(U_STDCPP_ENABLE) && defined(U_LINUX)
-#  if defined(HAVE_CXX17)
+#if defined(U_STDCPP_ENABLE) && defined(HAVE_CXX20) && defined(U_LINUX) && !defined(__clang__)
 
 ClusterError UREDISClusterMaster::checkResponseForClusterErrors(const UString& response, size_t offset)
 {
@@ -932,7 +933,6 @@ finish:
    
    return managementClient->vitem;
 }
-#  endif
 #endif
 
 // DEBUG
