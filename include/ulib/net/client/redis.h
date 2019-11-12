@@ -824,7 +824,7 @@ protected:
    void processResponse();
    bool processRequest(char recvtype);
 
-#if defined(HAVE_CXX20)
+#if defined(U_STDCPP_ENABLE) && defined(HAVE_CXX20) && defined(U_LINUX) && !defined(__clang__)
    bool sendRequest(UStringType&& pipeline)
 #else
    bool sendRequest(const UString& pipeline)
@@ -994,7 +994,7 @@ private:
 
 // by Victor Stewart
 
-#if defined(U_STDCPP_ENABLE) && defined(U_LINUX) && defined(HAVE_CXX20)
+#if defined(U_STDCPP_ENABLE) && defined(HAVE_CXX20) && defined(U_LINUX) && !defined(__clang__)
 
 typedef UREDISClient<UTCPSocket> UREDISClusterClient;
 
