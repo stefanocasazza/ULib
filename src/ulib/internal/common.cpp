@@ -98,7 +98,8 @@ const double u_pow10[309] = { // 1e-0...1e308: 309 * 8 bytes = 2472 bytes
 #endif
 
 #ifndef HAVE_OLD_IOSTREAM
-#  include "./dtoa.h"
+#  include "./dtoa_milo.h"
+#  include "./branchlut.h"
 #endif
 
 static struct ustringrep u_empty_string_rep_storage = {
@@ -149,7 +150,9 @@ void ULib::init(char** argv, const char* mempool)
    // conversion number => string
 
 #ifndef HAVE_OLD_IOSTREAM
-   u_dbl2str = dtoa_rapidjson;
+   u_dbl2str = dtoa_milo;
+   u_num2str32 = u32toa_branchlut;
+   u_num2str64 = u64toa_branchlut;
 #endif
 #ifdef DEBUG
    char buffer[32];
