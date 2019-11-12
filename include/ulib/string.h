@@ -2854,7 +2854,8 @@ namespace std {
    };
 }
 #  endif
-#  if defined(HAVE_CXX20) && defined(U_LINUX)
+
+#if defined(HAVE_CXX20) && defined(U_LINUX) && !defined(__clang__)
 #     include <utility> // std::index_sequence
 template <char... Chars>
 class UCompileTimeStringView {
@@ -3042,14 +3043,8 @@ protected:
    template <typename T>
    static size_t getLength(T t)
    {
-      if constexpr (is_ctv_v<T>)
-      {
-         return t.length;
-      }
-      else if constexpr (decay_equiv_v<T, UString>) 
-      {
-         return t.size();
-      }
+           if constexpr (is_ctv_v<T>)                 return t.length;
+      else if constexpr (decay_equiv_v<T, UString>)   return t.size();
       else if constexpr (std::is_integral_v<T>)
       {
          static char buffer[64];
