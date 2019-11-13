@@ -686,6 +686,7 @@ const UVector<UString>& UREDISClusterMaster::clusterAnonMulti(const AnonymousClu
    U_TRACE(0, "UREDISClusterMaster::clusterAnonMulti(%b)", reorderable)
 
    U_DUMP("pipeline = %v", pipeline.pipeline.rep);
+	managementClient->vitem.clear();
 
    static UString workingString(500U);
    workingString.reserve(pipeline.pipeline.size() * 1.5);
