@@ -2854,7 +2854,8 @@ namespace std {
    };
 }
 #  endif
-#  if defined(HAVE_CXX20) && defined(U_LINUX) && !defined(__clang__)
+
+#if defined(HAVE_CXX20) && defined(U_LINUX) && !defined(__clang__)
 #     include <utility> // std::index_sequence
 template <char... Chars>
 class UCompileTimeStringView {
@@ -2891,8 +2892,8 @@ public:
       if constexpr (From == To)  return UCompileTimeStringView<>();
       else                       return substr<From>(std::make_index_sequence<To - From>{});
    }
-   
-   template<size_t index = 0>
+	
+	template<size_t index = 0>
    constexpr bool contains(char value) const
    {
            if constexpr (index >= length)         return false;
@@ -2908,7 +2909,7 @@ public:
    static constexpr uint8_t skipDoubles = 0x2;
 
    template <class String>
-   constexpr ssize_t find(size_t index, String findTheseChars, uint8_t options = 0, size_t terminalIndex = length) const
+   constexpr size_t find(size_t index, String findTheseChars, uint8_t options = 0, size_t terminalIndex = length) const
    {
       while (index < terminalIndex)
       {
@@ -2923,7 +2924,7 @@ public:
          ++index;
       }
 
-      return index;                                                
+      return index;                                            
    }
 };
 
@@ -2932,8 +2933,6 @@ constexpr auto operator""_ctv() // compile time view
 {
    return UCompileTimeStringView<static_cast<char>(Chars)...>{};
 }
-
-#define U_CTV_TO_PARAM(ct_string) ct_string.string, ct_string.length
 
 template <typename T, template <char... CharsB> class Template>
 struct is_ctv : std::false_type {};
@@ -2944,6 +2943,7 @@ struct is_ctv<Template<CharsA...>, Template> : std::true_type {};
 template <typename T>
 static inline constexpr bool is_ctv_v = is_ctv<T, UCompileTimeStringView>::value;
 
+#define U_CTV_TO_PARAM(ct_string) ct_string.string, ct_string.length
 
 template<typename Lambda, typename T>
 static void snprintf_specialization(Lambda&& lambda, T t) 
@@ -2991,7 +2991,11 @@ protected:
       }
       else if constexpr (std::is_integral_v<T>)
       {
-         writeTo = u_num2str64s(t, writeTo);
+         writeTo = u_num2str64s(t,  writeTo);
+      }
+      else if constexpr (std::is_floating_point_v<T>)
+      {
+         writeTo = u_dtoa(t, writeTo);
       }
       else if constexpr (decay_equiv_v<T, char>) // assumes char pointer
       {
@@ -3039,10 +3043,22 @@ protected:
    template <typename T>
    static size_t getLength(T t)
    {
-           if constexpr (is_ctv_v<T>)               return t.length;
-      else if constexpr (decay_equiv_v<T, UString>) return t.size();
-      else if constexpr (std::is_integral_v<T>)     return countDigits(t);
-      else if constexpr (decay_equiv_v<T, char>)    return strlen(t);
+           if constexpr (is_ctv_v<T>)                 return t.length;
+      else if constexpr (decay_equiv_v<T, UString>)   return t.size();
+      else if constexpr (std::is_integral_v<T>)
+      {
+         static char buffer[64];
+         return u_num2str64s(t, buffer) - buffer;
+      }
+      else if constexpr (std::is_floating_point_v<T>)
+      {
+         static char buffer[64];
+         return u_dtoa(t, buffer) - buffer;
+      }
+      else if constexpr (decay_equiv_v<T, char>) 
+      {
+         return strlen(t);
+      }
       else
       {
          size_t length = 0;
@@ -3062,7 +3078,7 @@ protected:
    struct LengthSurplusPackage
    {
       size_t lengthSurplus;
-      T binding;
+      const T& binding;
 
       size_t size() 
       {
@@ -3095,22 +3111,6 @@ protected:
 
 public:
 
-   template <typename IntegralType, typename = std::enable_if_t<std::is_integral_v<IntegralType>>>
-   static constexpr size_t countDigits(IntegralType number)
-   {
-      size_t digits = 0;
-
-      if (number < 0)
-      {
-         ++digits;
-         number *= -1;
-      }
-
-      while (number != 0) { number /= 10; digits++; }
-
-      return digits;
-   }
-
    template <auto format, bool overwrite = false, typename... Ts>
    static void snprintf_pos(size_t writePosition, UString& workingString, Ts... ts)
    {
@@ -3139,11 +3139,8 @@ public:
 template<typename Lambda, typename T>
 static void snprintf_specialization(Lambda&& lambda, UCompileTimeStringFormatter::LengthSurplusPackage<T>& t) 
 {
-   static char working[UCompileTimeStringFormatter::countDigits(INT64_MAX)];
-
-   char *end = u_num2str64s(t.size(), working);
-
-   lambda(working, end - working);
+   static char working[64];
+   lambda(working, u_num2str64s(t.size(), working) - working);
 }
 
 template<typename T>
