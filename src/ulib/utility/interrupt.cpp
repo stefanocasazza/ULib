@@ -257,6 +257,9 @@ retry:
    (void) U_SYSCALL(sigaction, "%d,%p,%p", SIGSEGV, old + SIGSEGV, U_NULLPTR);
 }
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wsuggest-attribute=noreturn"
+
 RETSIGTYPE UInterrupt::handlerSegvWithInfo(int signo, siginfo_t* info, void* context)
 {
    if (u_recursion == false) // NB: maybe recursion occurs...
@@ -291,6 +294,8 @@ RETSIGTYPE UInterrupt::handlerSegvWithInfo(int signo, siginfo_t* info, void* con
 
    ::abort();
 }
+
+#pragma GCC diagnostic pop
 
 void UInterrupt::getSignalInfo(int signo, siginfo_t* info)
 {
