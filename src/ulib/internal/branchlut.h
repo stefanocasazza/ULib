@@ -26,7 +26,8 @@ const char gDigitsLut[200] = {
 // Branching for different cases (forward)
 // Use lookup table of two digits
 
-// static char* num2str32(uint32_t u, char* restrict p)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmissing-declarations"
 
 char* u32toa_branchlut(uint32_t value, char* buffer) {
     if (value < 10000) {
@@ -280,3 +281,5 @@ void i64toa_branchlut(int64_t value, char* buffer) {
 
     u64toa_branchlut(u, buffer);
 }
+
+#pragma GCC diagnostic pop
