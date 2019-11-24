@@ -2893,6 +2893,9 @@ public:
       else                       return substr<From>(std::make_index_sequence<To - From>{});
    }
 	
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-but-set-parameter"
+
 	template<size_t index = 0>
    constexpr bool contains(char value) const
    {
@@ -2900,6 +2903,8 @@ public:
       else if           (string[index] == value)  return true;
       else                                        return contains<index+1>(value);
    }
+
+#pragma GCC diagnostic pop
 
 // so that CTV is transparently a UString to U_STRING_TO_PARAM
    char const *data() const noexcept { return string; }
@@ -2956,6 +2961,9 @@ static void snprintf_specialization(Lambda&& lambda, T t)
 class UCompileTimeStringFormatter {
 protected:
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-but-set-parameter"
+
    template<size_t workingIndex, size_t argumentCount, typename StringClass, typename T, typename... Ts>
    static constexpr auto generateSegments(StringClass format, T&& t, Ts&&... ts)
    {
@@ -2971,6 +2979,8 @@ protected:
          return generateSegments<formatTermination + 1, argumentCount - 1>(format, std::forward<Ts>(ts)..., StringClass::instance.template substr<workingIndex, nextFormat>(), std::forward<T>(t));
       }
    }
+
+#pragma GCC diagnostic pop
 
    template <typename T, typename U>
    struct decay_equiv : std::is_same<typename std::decay<T>::type, U>::type {};
