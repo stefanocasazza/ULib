@@ -436,8 +436,7 @@ bool UREDISClient_Base::deleteKeys(const char* pattern, uint32_t len) // Delete 
 
 // by Victor Stewart
 
-#if defined(U_STDCPP_ENABLE) && defined(U_LINUX)
-#  if defined(HAVE_CXX17)
+#if defined(U_STDCPP_ENABLE) && defined(HAVE_CXX20) && defined(U_LINUX) && !defined(__clang__)
 
 // this is called for subscribed channels
 int UREDISClient_Base::handlerRead()
@@ -893,7 +892,6 @@ finish:
    
    return managementClient->vitem;
 }
-#  endif
 #endif
 
 // DEBUG
