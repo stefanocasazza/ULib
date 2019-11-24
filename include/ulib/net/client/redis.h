@@ -825,7 +825,7 @@ protected:
    void processResponse();
    bool processRequest(char recvtype);
 
-#if defined(HAVE_CXX20)
+#if defined(U_STDCPP_ENABLE) && defined(HAVE_CXX20) && defined(U_LINUX) && !defined(__clang__)
    bool sendRequest(UStringType&& pipeline)
 #else
    bool sendRequest(const UString& pipeline)
@@ -995,7 +995,7 @@ private:
 
 // by Victor Stewart
 
-#if defined(U_STDCPP_ENABLE) && defined(U_LINUX) && defined(HAVE_CXX20)
+#if defined(U_STDCPP_ENABLE) && defined(HAVE_CXX20) && defined(U_LINUX) && !defined(__clang__)
 
 class UREDISClusterClient : public UREDISClient<UTCPSocket> {
 public:
@@ -1056,8 +1056,7 @@ private:
    UREDISClusterClient *managementClient;
    UHashMap<RedisClusterNode *> *clusterNodes;
 
-   // any managment related calls will be keyless
-   static uint16_t hashslotForKey(UStringType&& hashableKey) {return (hashableKey.size() ? u_crc16(U_STRING_TO_PARAM(hashableKey)) % 16384 : 0);}
+   static uint16_t hashslotForKey(UStringType&& hashableKey) {return u_crc16(U_STRING_TO_PARAM(hashableKey)) % 16384;}
    
    UREDISClusterClient* clientForHashslot(uint16_t hashslot)
    {
