@@ -2981,32 +2981,17 @@ protected:
    template <typename T>
    static void writeBytes(char*& writeTo, T t)
    {
-      if constexpr (is_ctv_v<T>)
-      {
-         writeTo = (char*)memcpy(writeTo, t.string, t.length) + t.length;
-      }
-      else if constexpr (decay_equiv_v<T, UString>)
-      {
-         writeTo = (char*)memcpy(writeTo, t.data(), t.size()) + t.size();
-      }
-      else if constexpr (std::is_integral_v<T>)
-      {
-         writeTo = u_num2str64s(t,  writeTo);
-      }
-      else if constexpr (std::is_floating_point_v<T>)
-      {
-         writeTo = u_dtoa(t, writeTo);
-      }
-      else if constexpr (decay_equiv_v<T, char>) // assumes char pointer
-      {
-         size_t length = strlen(t);
-         writeTo = (char*)memcpy(writeTo, t, length) + length;
-      }
+           if constexpr (is_ctv_v<T>)                 writeTo = (char*)mempcpy(writeTo, t.data(), t.size());
+      else if constexpr (decay_equiv_v<T, UString>)   writeTo = (char*)mempcpy(writeTo, t.data(), t.size());
+      else if constexpr (std::is_integral_v<T>)       writeTo = u_num2str64s(t,  writeTo);
+      else if constexpr (std::is_floating_point_v<T>) writeTo = u_dtoa(t, writeTo);
+      else if constexpr (decay_equiv_v<T, char>)      writeTo = (char*)mempcpy(writeTo, t, strlen(t));
       else
       {
          auto lambda = [&] (const void *buffer, size_t bufferSize)
          {
-            writeTo = (char*)memcpy(writeTo, buffer, bufferSize) + bufferSize;
+            //writeTo = (char*)memcpy(writeTo, buffer, bufferSize) + bufferSize;
+            writeTo = (char*)mempcpy(writeTo, buffer, bufferSize);
          };
 
          snprintf_specialization(lambda, t);
@@ -3087,11 +3072,9 @@ protected:
    };
 
    template<bool overwrite, typename... Ts>
-   static void snprintf_impl(size_t writePosition, UString& workingString, Ts... ts)
+   static void snprintf_impl(size_t writePosition, UString& workingString, Ts&&... ts)
    {
       size_t lengths = (getLength(ts) + ...);
-
-      char* target = workingString.data() + writePosition;
 
       // grow string to accomodate new size if necessary
       if constexpr (overwrite) workingString.reserve(lengths);
@@ -3100,8 +3083,10 @@ protected:
          workingString.reserve(workingString.size() + lengths);
 
          // shift over existing contents
-         if (writePosition < workingString.size()) (void) memcpy(target + lengths, target, workingString.size() - writePosition);
+         if (writePosition < workingString.size()) (void) memcpy(workingString.data() + writePosition + lengths, workingString.data() + writePosition, workingString.size() - writePosition);
       }
+
+      char* target = workingString.data() + writePosition;
 
       (writeBytes(target, ts), ...);
 
@@ -3112,7 +3097,7 @@ protected:
 public:
 
    template <auto format, bool overwrite = false, typename... Ts>
-   static void snprintf_pos(size_t writePosition, UString& workingString, Ts... ts)
+   static void snprintf_pos(size_t writePosition, UString& workingString, Ts&&... ts)
    {
       std::apply([&] (auto... params) {
 
@@ -3124,13 +3109,13 @@ public:
    }
 
    template <auto format, typename... Ts>
-   static void snprintf(UString& workingString, Ts... ts)
+   static void snprintf(UString& workingString, Ts&&... ts)
    {
       snprintf_pos<format, true>(0, workingString, std::forward<Ts>(ts)...);
    }
 
    template <auto format, typename... Ts>
-   static void snprintf_add(UString& workingString, Ts... ts)
+   static void snprintf_add(UString& workingString, Ts&&... ts)
    {
       snprintf_pos<format, false>(workingString.size(), workingString, std::forward<Ts>(ts)...);
    }
@@ -3153,6 +3138,10 @@ concept bool UStringType = requires(T string)
 {
    (std::is_same_v<T, UString> || is_ctv_v<T>);
 };
+
+inline bool operator==(const UString& lhs, const UCompileTimeStringType& rhs){ return lhs.equal(rhs.string); }
+inline bool operator==(const UCompileTimeStringType& lhs, const UString& rhs){ return rhs.equal(lhs.string); }
+
 #  endif
 #endif
 #endif
