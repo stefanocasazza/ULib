@@ -1277,7 +1277,7 @@ static void test_stream_01()
    char buffer[1024];
    ostrstream ostrs01(buffer, sizeof(buffer));
    ostrs01 << str01 << '\0';
-   U_ASSERT( str01 == ostrs01.str() )
+   U_ASSERT( str01.equal(ostrs01.str()) )
 #endif
 }
 
@@ -1429,7 +1429,7 @@ static void test_stream_09()
 #ifdef U_STDCPP_ENABLE
    ostrstream oss1(buffer, sizeof(buffer));
    oss1 << foo << '\0';
-   U_ASSERT( foo == oss1.str() )
+   U_ASSERT( foo.equal(oss1.str()) )
 
    ostrstream oss2(buffer, sizeof(buffer));
    oss2.width(20);

@@ -789,12 +789,15 @@ public:
 
    // define method VIRTUAL of class UEventFd
 
+#if defined(U_STDCPP_ENABLE) && defined(HAVE_CXX20) && defined(U_LINUX) && !defined(__clang__)
    virtual int handlerRead() U_DECL_FINAL;
+#endif
 
-   virtual void handlerDelete() U_DECL_FINAL
+   virtual void handlerDelete()
       {
       U_TRACE_NO_PARAM(0, "UREDISClient_Base::handlerDelete()")
 
+      U_INTERNAL_DUMP("UREDISClient_Base::handlerDelete() -> client = %p", this);
       U_INTERNAL_DUMP("UEventFd::fd = %d", UEventFd::fd)
 
       UEventFd::fd = -1;
@@ -809,7 +812,6 @@ protected:
 
    static uint32_t start;
    static ptrdiff_t diff;
-   static UVector<UString>* pvec;
    static UREDISClient_Base* pthis;
 
    static UHashMap<void*>* pchannelCallbackMap;
@@ -825,7 +827,7 @@ protected:
    void processResponse();
    bool processRequest(char recvtype);
 
-#if defined(U_STDCPP_ENABLE) && defined(U_LINUX) && defined(HAVE_CXX20) && !defined(__clang__)
+#if defined(U_STDCPP_ENABLE) && defined(HAVE_CXX20) && defined(U_LINUX) && !defined(__clang__)
    bool sendRequest(UStringType&& pipeline)
 #else
    bool sendRequest(const UString& pipeline)
@@ -995,9 +997,25 @@ private:
 
 // by Victor Stewart
 
-#if defined(U_STDCPP_ENABLE) && defined(U_LINUX) && defined(HAVE_CXX20) && !defined(__clang__)
+#if defined(U_STDCPP_ENABLE) && defined(HAVE_CXX20) && defined(U_LINUX) && !defined(__clang__)
 
-typedef UREDISClient<UTCPSocket> UREDISClusterClient;
+class UREDISClusterClient : public UREDISClient<UTCPSocket> {
+public:
+
+   enum class ClientType : uint8_t {
+
+      subscription,
+      management,
+      node
+   };
+
+   const ClientType type;
+   UREDISClusterMaster *master;
+
+   //virtual void handlerDelete() U_DECL_FINAL;
+
+   UREDISClusterClient(UREDISClusterMaster *_master, const ClientType _type) : UREDISClient<UTCPSocket>(), type(_type), master(_master) {}
+};
 
 struct RedisClusterNode {
 
@@ -1009,9 +1027,9 @@ struct RedisClusterNode {
    UREDISClusterClient *client;
    uint16_t port, lowHashSlot, highHashSlot;
 
-   RedisClusterNode(const UString& _ipAddress, uint16_t _port, uint16_t _lowHashSlot, uint16_t _highHashSlot) : ipAddress(_ipAddress), port(_port), lowHashSlot(_lowHashSlot), highHashSlot(_highHashSlot)
+   RedisClusterNode(UREDISClusterMaster *master, const UString& _ipAddress, uint16_t _port, uint16_t _lowHashSlot, uint16_t _highHashSlot) : ipAddress(U_STRING_FROM_CONSTANT("3.3.0.3")), port(_port), lowHashSlot(_lowHashSlot), highHashSlot(_highHashSlot)
    {
-      U_NEW(UREDISClusterClient, client, UREDISClusterClient);
+      U_NEW(UREDISClusterClient, client, UREDISClusterClient(master, UREDISClusterClient::ClientType::node));
       client->setHostPort(ipAddress, _port);
       client->connect(ipAddress.c_str(), port);
    }
@@ -1034,6 +1052,7 @@ class U_EXPORT UREDISClusterMaster {
 private:
 
    friend class AnonymousClusterPipeline;
+   friend class UREDISClusterClient;
 
    UREDISClusterClient *subscriptionClient;
    UREDISClusterClient *managementClient;
@@ -1043,16 +1062,17 @@ private:
    
    UREDISClusterClient* clientForHashslot(uint16_t hashslot)
    {
-      U_TRACE(0, "UREDISClusterMaster::clientForHashslot(%u)", hashslot)
-
       for (UHashMapNode *node : *clusterNodes)
       {
          RedisClusterNode* workingNode = (RedisClusterNode *)(node->elem);
 
-         if ((workingNode->lowHashSlot <= hashslot) && (workingNode->highHashSlot >= hashslot)) return workingNode->client;
+         if ((workingNode->lowHashSlot <= hashslot) && (workingNode->highHashSlot >= hashslot)) 
+         {
+            return workingNode->client;
+         }
       }
-
-      return managementClient; // never reached
+      
+      return U_NULLPTR; // never reached
    }
    
    UREDISClusterClient* clientForIP(const UString& ip)
@@ -1064,7 +1084,7 @@ private:
          if (ip == workingNode->ipAddress) return workingNode->client;
       }
 
-      return managementClient; // never reached
+      return U_NULLPTR; // never reached
    }
 
    template <UStringType A>
@@ -1075,22 +1095,20 @@ private:
 
    static ClusterError checkResponseForClusterErrors(const UString& response, size_t offset);
 
-   template<UStringType A, UStringType B>
-   UREDISClusterClient* sendToCluster(A&& hashableKey, B&& pipeline)
+   template<bool psuedoSilence>
+   UREDISClusterClient* sendToCluster(uint16_t hashslot, UStringType&& pipeline, UREDISClusterClient* workingClient)
    {
       ClusterError error;
-      UREDISClusterClient* workingClient = clientForHashableKey(std::forward<A>(hashableKey));
 
-   retry:
-      
-      workingClient->clear();
+    retry:
 
-      workingClient->UREDISClient_Base::sendRequest(pipeline);
+      workingClient->response.setEmpty();
+      workingClient->vitem.clear();
 
-      workingClient->UClient_Base::response.setEmpty();
-      workingClient->UClient_Base::readResponse(U_SINGLE_READ);
+      workingClient->sendRequest(pipeline);
+      workingClient->readResponse(U_SINGLE_READ);
 
-      error = checkResponseForClusterErrors(workingClient->UClient_Base::response, 0);
+      error = checkResponseForClusterErrors(workingClient->response, 0);
 
       while (error != ClusterError::none)
       {
@@ -1098,16 +1116,17 @@ private:
          {
             case ClusterError::moved:
             {
+              // U_DUMP("(D) calling calculateNodeMap");
                calculateNodeMap();
-               workingClient = clientForHashableKey(std::forward<A>(hashableKey));
+               workingClient = clientForHashslot(hashslot);
                break;
             }
             case ClusterError::ask:
             {
-               uint32_t _start = workingClient->UClient_Base::response.find(' ', U_CONSTANT_SIZE("-ASK 3999")) + 1,
-                           end = workingClient->UClient_Base::response.find(':', _start);
+               uint32_t _start = workingClient->response.find(' ', U_CONSTANT_SIZE("-ASK 3999")) + 1,
+                           end = workingClient->response.find(':', _start);
 
-               workingClient = clientForIP(workingClient->UClient_Base::response.substr(_start, end - _start));
+               workingClient = clientForIP(workingClient->response.substr(_start, end - _start));
                break;
             }
             case ClusterError::tryagain:
@@ -1121,13 +1140,20 @@ private:
          goto retry;
       }
 
-      workingClient->UREDISClient_Base::processResponse();
+      if constexpr (!psuedoSilence) workingClient->processResponse();
 
       return workingClient;
    }
 
+   template<bool psuedoSilence, UStringType A, UStringType B>
+   inline UREDISClusterClient* routeToCluster(A&& hashableKey, B&& pipeline)
+   {
+      uint16_t hashslot = UREDISClusterMaster::hashslotForKey(std::forward<A>(hashableKey));
+      return sendToCluster<psuedoSilence>(hashslot, std::forward<B>(pipeline), clientForHashslot(hashslot));
+   }
+
 public:
-   
+
    U_MEMORY_TEST
    U_MEMORY_ALLOCATOR
    U_MEMORY_DEALLOCATOR
@@ -1135,31 +1161,31 @@ public:
    bool connect(const char* host = U_NULLPTR, unsigned int _port = 6379);
 
    template<UStringType A, UStringType B>
-   const UString clusterSingle(A&& hashableKey, B&& pipeline)
-   {
-      return sendToCluster(std::forward<A>(hashableKey), std::forward<B>(pipeline))->vitem[0];
-   }
+   const UString clusterSingle(A&& hashableKey, B&& pipeline) {return routeToCluster<false>(std::forward<A>(hashableKey), std::forward<B>(pipeline))->vitem[0];}
 
    // both of these multis require all keys to exist within a single hash slot (on the same node isn't good enough)
    template<UStringType A, UStringType B>
-   const UVector<UString>& clusterMulti(A&& hashableKey, B&& pipeline)
-   { 
-      return sendToCluster(std::forward<A>(hashableKey), std::forward<B>(pipeline))->vitem;
-   }
+   const UVector<UString>& clusterMulti(A&& hashableKey, B&& pipeline) {return routeToCluster<false>(std::forward<A>(hashableKey), std::forward<B>(pipeline))->vitem;}
+
+// these are "psuedo-silenced", aka we wait on responses to ensure no cluster errors, but don't waste resources processing the responses
+   template<UStringType A, UStringType B>
+   void clusterSilencedSingle(A&& hashableKey, B&& pipeline) {routeToCluster<true>(std::forward<A>(hashableKey), std::forward<B>(pipeline));}
+   template<UStringType A, UStringType B>
+   void clusterSilencedMulti(A&& hashableKey, B&& pipeline)  {routeToCluster<true>(std::forward<A>(hashableKey), std::forward<B>(pipeline));}
 
    // if reorderable == false, commands are grouped and pushed SEQUENTIALLY BY HASHSLOT. even if other commands point to hashslots on the same cluster node, we are unable to garuntee ordering since Redis only checks for -MOVED etc errors command by command as it executes them, and does not fail upon reaching a -MOVED etc error. this requires waiting for each response, to ensure no errors occured, before moving onto the next batch of commands.
 
    // if reorderable == true, we are able to group and push commands BY NODE regardless of sequence. we assume the fast-path 99.999% occurance that -MOVED and other errors did not occur, and push commands to redis as rapidly as possible without waiting on responses. we same a copy of all commands, and then at the end, check for -MOVED or other errors, and correct those if need be, while we process all resposnes.
    const UVector<UString>& clusterAnonMulti(const AnonymousClusterPipeline& pipeline, bool reorderable);
 
-   bool clusterUnsubscribe(const UString& channel); 
-   bool clusterSubscribe(  const UString& channel, vPFcscs callback);
+   void clusterUnsubscribe(const UString& channel); 
+   void clusterSubscribe(  const UString& channel, vPFcscs callback);
 
    UREDISClusterMaster()
    {
       clusterNodes = U_NULLPTR;
-      U_NEW(UREDISClusterClient, managementClient, UREDISClusterClient);
-      U_NEW(UREDISClusterClient, subscriptionClient, UREDISClusterClient);
+      U_NEW(UREDISClusterClient, managementClient, UREDISClusterClient(this, UREDISClusterClient::ClientType::management));
+      U_NEW(UREDISClusterClient, subscriptionClient, UREDISClusterClient(this, UREDISClusterClient::ClientType::subscription));
    }
    
    ~UREDISClusterMaster()
@@ -1177,7 +1203,7 @@ class UCompileTimeRESPEncoder : public UCompileTimeStringFormatter {
 private:
 
    template<bool isPartial, size_t workingIndex = 0, size_t workingSegmentCount = 0, typename StringClass, typename... Xs, typename T, typename... Ts>
-   static constexpr auto generateSegments(StringClass format, size_t& outputSegmentCount, std::tuple<Xs...>&& workingCommand, T&& t, Ts&&... ts)
+   static constexpr auto generateSegments(StringClass format, size_t& outputCount, std::tuple<Xs...>&& workingCommand, T&& t, Ts&&... ts)
    {
       constexpr size_t segmentStart = StringClass::instance.find(workingIndex, " "_ctv, StringClass::notChars);
 
@@ -1185,7 +1211,7 @@ private:
       {  
          if constexpr (isPartial)
          {
-            outputSegmentCount = workingSegmentCount;
+            outputCount = workingSegmentCount;
             return workingCommand;
          }
          else
@@ -1193,11 +1219,13 @@ private:
             constexpr auto segmentCountString = "*"_ctv + integerToString<workingSegmentCount>() + "\r\n"_ctv;
             constexpr size_t nextCommand = StringClass::instance.find(segmentStart, " \r\n"_ctv, StringClass::notChars);
 
+            outputCount += 1;
+
             if constexpr (nextCommand < StringClass::length)
             {
                return std::apply([&] (auto... params) {
 
-                  return generateSegments<isPartial, nextCommand>(format, outputSegmentCount, std::tuple(), std::forward<T>(t), std::forward<Ts>(ts)..., segmentCountString, params...);
+                  return generateSegments<isPartial, nextCommand>(format, outputCount, std::tuple(), std::forward<T>(t), std::forward<Ts>(ts)..., segmentCountString, params...);
 
                }, workingCommand);
             }
@@ -1212,30 +1240,36 @@ private:
          if constexpr (formatStart < segmentEnd)
          {
             constexpr size_t formatTermination = formatStart + 1;
-
-            return generateSegments<isPartial, segmentEnd, workingSegmentCount + 1>(format, outputSegmentCount, std::tuple_cat(workingCommand, std::make_tuple("$"_ctv, LengthSurplusPackage<T>{(segmentEnd + formatStart) - (segmentStart + formatTermination) - 1, std::forward<T>(t)}, "\r\n"_ctv, StringClass::instance.template substr<segmentStart, formatStart>(), std::forward<T>(t), StringClass::instance.template substr<(std::min(formatTermination + 1, segmentEnd)), segmentEnd>() + "\r\n"_ctv)), std::forward<Ts>(ts)...);
+            constexpr size_t lengthSurplus = (segmentEnd + formatStart) - (segmentStart + formatTermination) - 1;
+            
+            // some ocassional bug where the length surplus ctor seems to pull references and the first number value in overflowing, so bypass it for now
+            return generateSegments<isPartial, segmentEnd, workingSegmentCount + 1>(format, outputCount, std::tuple_cat(workingCommand, std::make_tuple("$"_ctv, getLength(t) + lengthSurplus, "\r\n"_ctv, StringClass::instance.template substr<segmentStart, formatStart>(), std::forward<T>(t), StringClass::instance.template substr<(std::min(formatTermination + 1, segmentEnd)), segmentEnd>() + "\r\n"_ctv)), std::forward<Ts>(ts)...);
          }
          else
          {
             constexpr auto segmentString = "$"_ctv + integerToString<segmentEnd - segmentStart>() + "\r\n"_ctv + StringClass::instance.template substr<segmentStart, segmentEnd>() + "\r\n"_ctv;
 
-            return generateSegments<isPartial, segmentEnd, workingSegmentCount + 1>(format, outputSegmentCount, std::tuple_cat(workingCommand, std::tie(segmentString)), std::forward<T>(t), std::forward<Ts>(ts)...);
+            return generateSegments<isPartial, segmentEnd, workingSegmentCount + 1>(format, outputCount, std::tuple_cat(workingCommand, std::tie(segmentString)), std::forward<T>(t), std::forward<Ts>(ts)...);
          }
       }
    }
 
    template<bool isPartial, bool overwrite, auto format, typename... Ts>
    static size_t encode_impl(size_t writePosition, UString& workingString, Ts&&... ts)
-   {
-      size_t segmentCount = 0;
+   {  
+      U_TRACE_NO_PARAM(0, "UCompileTimeRESPEncoder::encode_impl()");
+
+      // if partial will output segment count
+      // if full, will output command count
+      size_t count = 0;
 
       std::apply([&] (auto... params) {
 
          UCompileTimeStringFormatter::snprintf_impl<overwrite>(writePosition, workingString, params...);
-         
-      }, generateSegments<isPartial>(format, segmentCount, std::tuple(), std::forward<Ts>(ts)..., ""_ctv));
 
-      return segmentCount;
+      }, generateSegments<isPartial>(format, count, std::tuple(), std::forward<Ts>(ts)..., ""_ctv));
+
+      return count;
    }
 
 public:
@@ -1249,21 +1283,21 @@ public:
 
 // fulls
    template<auto format, typename ... Ts>
-   static void encode(UString& workingString, Ts&&... ts)
+   static size_t encode(UString& workingString, Ts&&... ts)
    {
-      (void)encode_impl<false, true, format>(0, workingString, std::forward<Ts>(ts)...);
+      return encode_impl<false, true, format>(0, workingString, std::forward<Ts>(ts)...);
    }
 
    template<auto format, typename ... Ts>
-   static void encode_add(UString& workingString, Ts&&... ts)
+   static size_t encode_add(UString& workingString, Ts&&... ts)
    {
-      (void)encode_impl<false, false, format>(workingString.size(), workingString, std::forward<Ts>(ts)...);
+      return encode_impl<false, false, format>(workingString.size(), workingString, std::forward<Ts>(ts)...);
    }
    
    template<auto format, typename ... Ts>
-   static void encode_pos(size_t writePosition, UString& workingString, Ts&&... ts)
+   static size_t encode_pos(size_t writePosition, UString& workingString, Ts&&... ts)
    {
-      (void)encode_impl<false, false, format>(writePosition, workingString, std::forward<Ts>(ts)...);
+      return encode_impl<false, false, format>(writePosition, workingString, std::forward<Ts>(ts)...);
    }
 
 // partials
@@ -1292,16 +1326,17 @@ private:
 
    struct Span {
 
+      uint8_t commandCount;
       int16_t hashslot;
       size_t beginning, end, index;
 
-      Span(uint16_t _hashslot, size_t _beginning, size_t _end, size_t _index) : hashslot(_hashslot), beginning(_beginning), end(_end), index(_index) {}
+      Span(uint8_t _commandCount, uint16_t _hashslot, size_t _beginning, size_t _end, size_t _index) : commandCount(_commandCount), hashslot(_hashslot), beginning(_beginning), end(_end), index(_index) {}
    };
+
+public:
 
    UString pipeline;
    std::vector<Span> spans;
-
-public:
    
    size_t size()
    {
@@ -1315,28 +1350,33 @@ public:
    }
          
    template <UStringType A>
-   void append(A&& hashableKey, const UString& command)
+   void append(A&& hashableKey, const UString& command, uint8_t commandCount = 1)
    {
+      U_TRACE_NO_PARAM(0, "AnonymousClusterPipeline::append(ustring)")
+
       size_t beginning = pipeline.size();
 
       pipeline.reserve(pipeline.size() + command.size());
 
       pipeline.append(command);
 
-      spans.emplace_back(UREDISClusterMaster::hashslotForKey(std::forward<A>(hashableKey)), beginning, pipeline.size(), spans.size());
+      spans.emplace_back(commandCount, UREDISClusterMaster::hashslotForKey(std::forward<A>(hashableKey)), beginning, pipeline.size(), spans.size());
    }
 
    template <auto format, UStringType A, typename... Ts>
    void append(A&& hashableKey, Ts&&... ts)
    {
+      U_TRACE_NO_PARAM(0, "AnonymousClusterPipeline::append(variadic)")
+
       size_t beginning = pipeline.size();
 
-      UCompileTimeRESPEncoder::encode_add<format>(pipeline, std::forward<Ts>(ts)...);
+      size_t commandCount = UCompileTimeRESPEncoder::encode_add<format>(pipeline, std::forward<Ts>(ts)...);
 
-      spans.emplace_back(UREDISClusterMaster::hashslotForKey(std::forward<A>(hashableKey)), beginning, pipeline.size(), spans.size());
+      spans.emplace_back(commandCount, UREDISClusterMaster::hashslotForKey(std::forward<A>(hashableKey)), beginning, pipeline.size(), spans.size());
    }
 
    AnonymousClusterPipeline() : pipeline(300U) {}
 };
+
 #endif
 #endif

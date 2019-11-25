@@ -677,6 +677,9 @@ public:
 
    // INIT
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+
    static void setStack(uint8_t* ptr, uint32_t len)
       {
       U_TRACE(0, "UFlatBuffer::setStack(%p,%u)", ptr, len)
@@ -684,6 +687,8 @@ public:
       stack_str = ptr;
       stack_max = len / UFlatBufferValue::size();
       }
+      
+#pragma GCC diagnostic pop
 
    static void setBuffer(uint8_t* ptr, uint32_t len)
       {

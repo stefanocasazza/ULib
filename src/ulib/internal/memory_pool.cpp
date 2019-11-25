@@ -525,7 +525,17 @@ void UMemoryPool::deallocate(void* ptr, uint32_t length)
    if (UFile::nr_hugepages == 0) // NB: MADV_DONTNEED cannot be applied to locked pages, Huge TLB pages, or VM_PFNMAP pages...
 # endif
    {
-   (void) U_SYSCALL(madvise, "%p,%lu,%d", (void*)ptr, length, MADV_DONTNEED); // causes the kernel to reclaim the indicated pages immediately and drop their contents
+   /**
+    * MADV_PAGEOUT can be used by a process to mark a memory range as not expected to be used for a long time so that kernel reclaims *any LRU* pages instantly.
+    * The hint can help kernel in deciding which pages to evict proactively. Access in the range after successful operation could cause major page fault but never
+    * lose the up-to-date contents unlike MADV_DONTNEED
+    */
+
+#  ifndef MADV_PAGEOUT
+#  define MADV_PAGEOUT MADV_DONTNEED
+#  endif
+
+   (void) U_SYSCALL(madvise, "%p,%lu,%d", (void*)ptr, length, MADV_PAGEOUT); // causes the kernel to reclaim the indicated pages immediately and drop their contents
 
    return;
    }

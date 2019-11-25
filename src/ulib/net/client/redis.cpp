@@ -17,7 +17,6 @@
 uint32_t           UREDISClient_Base::start;
 ptrdiff_t          UREDISClient_Base::diff;
 UHashMap<void*>*   UREDISClient_Base::pchannelCallbackMap;
-UVector<UString>*  UREDISClient_Base::pvec;
 UREDISClient_Base* UREDISClient_Base::pthis;
 
 UREDISClient_Base::~UREDISClient_Base()
@@ -173,155 +172,76 @@ void UREDISClient_Base::manageResponseBufferResize(uint32_t n)
       }
 }
 
-U_NO_EXPORT bool UREDISClient_Base::getResponseItem()
-{
-   U_TRACE_NO_PARAM(0, "UREDISClient_Base::getResponseItem()")
-
-   char prefix;
-   uint32_t len;
-   const char* ptr1;
-   const char* ptr2;
-   
-   // this start == size guards against reading upon every loop
-   if (start == UClient_Base::response.size() &&
-       UClient_Base::readResponse() == false)
-   {
-      U_RETURN(false);
-   }
-
-   U_INTERNAL_DUMP("start = %u (%.20S)", start, UClient_Base::response.c_pointer(start))
-
-   U_INTERNAL_ASSERT(memcmp(UClient_Base::response.c_pointer(start), U_CRLF, U_CONSTANT_SIZE(U_CRLF)))
-
-   prefix = UClient_Base::response.c_char(start++);
-
-   U_INTERNAL_DUMP("prefix = %C", prefix)
-
-   ptr1 =
-   ptr2 = UClient_Base::response.c_pointer(start);
-
-   if (prefix != U_RC_BULK &&    // "$15\r\nmy-value-tester\r\n"
-       prefix != U_RC_MULTIBULK) // "*2\r\n$10\r\n1439822796\r\n$6\r\n311090\r\n"
-   {
-      U_INTERNAL_ASSERT(prefix == U_RC_ANY   || // '?'
-                        prefix == U_RC_INT   || // ':'
-                        prefix == U_RC_ERROR || // '-'
-                        prefix == U_RC_INLINE)  // '+'
-
-      while (*ptr2 != '\r') ++ptr2;
-
-      len = ptr2-ptr1;
-      
-      // U_RC_INLINE example -> +OK\r\n
-      // U_RC_INT    example -> :0\r\n
-      // U_RC_ERROR  example -> -Error message\r\n
-
-      pvec->push_back(UClient_Base::response.substr(ptr1, len));
-
-      start += len + U_CONSTANT_SIZE(U_CRLF);
-
-      U_RETURN(false);
-   }
-
-   if (ptr2[0] == '-')
-   {
-      U_INTERNAL_ASSERT_EQUALS(ptr2[1], '1')
-      U_INTERNAL_ASSERT_EQUALS(prefix, U_RC_BULK) // "$-1\r\n" (Null Bulk String)
-
-      pvec->push_back(UString::getStringNull());
-
-      start += (ptr2-ptr1) + 2 + U_CONSTANT_SIZE(U_CRLF);
-
-      U_RETURN(false);
-   }
-
-   len = u_strtoulp(&ptr2);
-
-   ++ptr2;
-
-   U_INTERNAL_DUMP("len = %u ptr2 = %#.2S", len, ptr2-2)
-
-   U_INTERNAL_ASSERT_EQUALS(memcmp(ptr2-2, U_CRLF, U_CONSTANT_SIZE(U_CRLF)), 0)
-
-   if (prefix == U_RC_BULK) // "$15\r\nmy-value-tester\r\n"
-   {
-      len += U_CONSTANT_SIZE(U_CRLF);
-
-      while (len > (uint32_t)UClient_Base::response.remain(ptr2))
-      {
-         uint32_t d = UClient_Base::response.distance(ptr2);
-
-         manageResponseBufferResize(len);
-
-         if (UClient_Base::readResponse() == false)
-         {
-            U_RETURN(false);
-         }
-
-         ptr1 = UClient_Base::response.c_pointer(start);
-         ptr2 = UClient_Base::response.c_pointer(d);
-      }
-
-      pvec->push_back(UClient_Base::response.substr(ptr2, len-U_CONSTANT_SIZE(U_CRLF)));
-
-      start += (ptr2-ptr1) + len;
-
-      U_RETURN(false);
-   }
-
-   /**
-    * Ex: "*2\r\n$10\r\n1439822796\r\n$6\r\n311090\r\n"
-    *
-    * Only certain commands (especially those returning list of values) return multi-bulk replies, you can try by using LRANGE for example
-    * but you can check the command reference for more details. Usually multi-bulk replies are only 1-level deep but some Redis commands can
-    * return nested multi-bulk replies, notably EXEC (depending on the commands executed while inside the transaction context) and both
-    * EVAL / EVALSHA (depending on the value returned by the Lua script). Here is an example using EXEC:
-    *
-    * redis 127.0.0.1:6379> MULTI
-    * OK
-    * redis 127.0.0.1:6379> LPUSH metavars foo foobar hoge
-    * QUEUED
-    * redis 127.0.0.1:6379> LRANGE metavars 0 -1
-    * QUEUED
-    * redis 127.0.0.1:6379> EXEC
-    * 1) (integer) 4
-    * 2) 1) "hoge"
-    *    2) "foobar"
-    *    3) "foo"
-    *    4) "metavars"
-    *
-    * The second element of the multi-bulk reply to EXEC is a multi-bulk itself
-    */
-
-   U_INTERNAL_ASSERT_EQUALS(prefix, U_RC_MULTIBULK)
-
-   start += (ptr2-ptr1);
-
-   for (uint32_t i = 0; i < len; ++i)
-   {
-      getResponseItem();
-   }
-   
-   U_RETURN(true);
-}
-
 void UREDISClient_Base::processResponse()
 {
    U_TRACE_NO_PARAM(0, "UREDISClient_Base::processResponse()")
 
-   U_INTERNAL_DUMP("err = %d", err)
+   U_DUMP_CONTAINER(vitem);
 
-   U_INTERNAL_ASSERT_EQUALS(err, U_RC_OK)
+   // for now alwasys process from beginning
+   size_t index = 0;
+   char prefix;
+   uint32_t len;
+   const char* ptr1;
+   const char* ptr2;
 
-   start = 0;
-   pvec  = &vitem;
+   while (index < UClient_Base::response.size())
+   {
+      prefix = UClient_Base::response.c_char(index++);
+      len = UClient_Base::response.size() - index + 1;
 
-   do {
-      getResponseItem();
+      ptr1 =
+      ptr2 = UClient_Base::response.c_pointer(index);
 
-      U_DUMP_CONTAINER(vitem)
+      while (*ptr2 != '\r') ++ptr2;
+
+      //*3\r\n*4\r\n:5461\r\n:10922\r\n*3\r\n$9\r\n127.0.0.1\r\n:7001\r\n$40\r\ncd153c9c98419c156db43b91f20464d0feaed1b7\r\n*3\r\n$9\r\n127.0.0.1\r\n:7003\r\n$40\r\n5
+
+      switch (prefix)
+      {
+         // :0\r\n
+         case U_RC_INT:
+         // -Error message\r\n
+         case U_RC_ERROR:
+         // +OK\r\n
+         case U_RC_INLINE:
+         {
+            len = ptr2-ptr1;
+            vitem.push_back(UClient_Base::response.substr(ptr1, len));
+            index += len + U_CONSTANT_SIZE(U_CRLF);
+            break;
+         }
+         case U_RC_BULK:
+         {
+            // $-1\r\n (Null Bulk String)
+            if (ptr1[0] == '-')
+            {
+               vitem.push_back(UString::getStringNull());
+               index += 2 + U_CONSTANT_SIZE(U_CRLF);
+            }
+            else
+            {
+               len = u_strtoul(ptr1, ptr2);
+               ptr2 += U_CONSTANT_SIZE(U_CRLF);
+               vitem.push_back(UClient_Base::response.substr(ptr2, len));
+               index += (ptr2 - ptr1) + len + U_CONSTANT_SIZE(U_CRLF);
+            }
+            break;
+         }
+         // *2\r\n$10\r\n1439822796\r\n$6\r\n311090\r\n
+         case U_RC_MULTIBULK:
+         {
+            index += (ptr2 - ptr1) + U_CONSTANT_SIZE(U_CRLF);
+            break;
+         }
+         // never
+         default: break;
       }
-   while (start < UClient_Base::response.size());
+   }
+
+   UClient_Base::response.setEmpty();
+
+   U_DUMP_CONTAINER(vitem);
 }
 
 bool UREDISClient_Base::processRequest(char recvtype)
@@ -514,43 +434,37 @@ bool UREDISClient_Base::deleteKeys(const char* pattern, uint32_t len) // Delete 
    U_RETURN(true);
 }
 
-// define method VIRTUAL of class UEventFd
+// by Victor Stewart
 
+#if defined(U_STDCPP_ENABLE) && defined(HAVE_CXX20) && defined(U_LINUX) && !defined(__clang__)
+
+// this is called for subscribed channels
 int UREDISClient_Base::handlerRead()
 {
+   // BytesRead(100) = "*3\r\n$7\r\nmessage\r\n$19\r\n{ABC}.trafficSignal\r\n$1\r\n1\r\n*3\r\n$7\r\nmessage\r\n$19\r\n{DEF}.trafficSignal\r\n$1\r\n1\r\n"
+
    U_TRACE_NO_PARAM(0, "UREDISClient_Base::handlerRead()")
 
    if ((clear(), UClient_Base::response.setEmpty(), UClient_Base::readResponse(U_SINGLE_READ)))
-      {
-      char prefix = UClient_Base::response[0];
-
-      if (prefix != U_RC_MULTIBULK)
-         {
-         err = (prefix == U_RC_ERROR ? U_RC_ERROR
-                                     : U_RC_ERR_PROTOCOL);
-
-         U_RETURN(false);
-         }
-
-      err = U_RC_OK;
-
+   {
       processResponse();
 
-      UString channel = vitem[1];
+      // [0]   message
+      // [1]   channel
+      // [2]   payload  
 
-      U_INTERNAL_ASSERT_POINTER(pchannelCallbackMap)
-
-      vPFcscs callback = (vPFcscs) pchannelCallbackMap->at(channel); 
-
-      if (callback) callback(channel, vitem[2]);
+      for (size_t index = 0, n = vitem.size(); index < n; index += 3)
+      {
+         if (vitem[index] == "message"_ctv)
+         {
+            vPFcscs callback = (vPFcscs)pchannelCallbackMap->at(vitem[index + 1]);
+            if (callback) callback(vitem[index + 1], vitem[index + 2]);
+         }
       }
+   }
 
    U_RETURN(U_NOTIFIER_OK);
 }
-
-// by Victor Stewart
-
-#if defined(U_STDCPP_ENABLE) && defined(U_LINUX) && defined(HAVE_CXX20) && !defined(__clang__)
 
 ClusterError UREDISClusterMaster::checkResponseForClusterErrors(const UString& response, size_t offset)
 {
@@ -577,91 +491,97 @@ void UREDISClusterMaster::calculateNodeMap()
 {
    U_TRACE_NO_PARAM(0, "UREDISClusterMaster::calculateNodeMap()")
 
-   /*
-   127.0.0.1:30001> cluster slots
-   1) 1) (integer) 0
-      2) (integer) 5460
-      3) 1) "127.0.0.1"
-         2) (integer) 30001
-         3) "09dbe9720cda62f7865eabc5fd8857c5d2678366"
-      4) 1) "127.0.0.1"
-         2) (integer) 30004
-         3) "821d8ca00d7ccf931ed3ffc7e3db0599d2271abf"
-   2) 1) (integer) 5461
-      2) (integer) 10922
-      3) 1) "127.0.0.1"
-         2) (integer) 30002
-         3) "c9d93d9f2c0c524ff34cc11838c2003d8c29e013"
-      4) 1) "127.0.0.1"
-         2) (integer) 30005
-         3) "faadb3eb99009de4ab72ad6b6ed87634c7ee410f"
-   3) 1) (integer) 10923
-      2) (integer) 16383
-      3) 1) "127.0.0.1"
-         2) (integer) 30003
-         3) "044ec91f325b7595e76dbcb18cc688b6a5b434a1"
-      4) 1) "127.0.0.1"
-         2) (integer) 30006
-         3) "58e6e48d41228013e5d9c1c37c5060693925e97e"
-   */
-
    // the first node in each array is the master
+   // currently we ignore slaves
 
-   bool findHashSlots = true;
-   uint16_t workingLowHashSlot;
-   uint16_t workingHighHashSlot;
+   managementClient->sendRequest("*2\r\n$7\r\nCLUSTER\r\n$5\r\nSLOTS\r\n"_ctv);
+   managementClient->response.setEmpty();
+   managementClient->readResponse(U_SINGLE_READ);
 
-   (void) managementClient->processRequest(U_RC_MULTIBULK, U_CONSTANT_TO_PARAM("CLUSTER SLOTS"));
-   
+   UString& response = managementClient->response;
+
+   U_WARNING("CLUSTER SLOTS response = %.*s", response.size(), response.data());
+
+   uint16_t lowHashSlot;
+   uint16_t highHashSlot;
+   UString compositeAddress(50U);
+
    UHashMap<RedisClusterNode *> *newNodes;
    U_NEW(UHashMap<RedisClusterNode *>, newNodes, UHashMap<RedisClusterNode *>);
 
-   const UVector<UString>& rawNodes = managementClient->vitem;
+   size_t index = response.find('\r', 0) + 2, workingEnd;
 
-   for (uint32_t a = 0, b = rawNodes.size(); a < b; a+=2)
+   auto extractNumber = [&] (size_t startOfNumber) -> size_t
    {
-      const UString& first = rawNodes[a];
-      const UString& second = rawNodes[a+1];
+      workingEnd = response.find('\r', startOfNumber);
+      index = workingEnd + 2; // lands on next prefix
+      return response.substr(startOfNumber, workingEnd - startOfNumber).strtoul();
+   };
 
-      if (findHashSlots)
-      {
-         if (first.isNumber() && second.isNumber())
-         {
-            workingLowHashSlot = first.strtoul();
-            workingHighHashSlot = second.strtoul();
+   while (index < response.size())
+   {  
+      // *4
+      //    :0
+      //    :5460
+      //    *3
+      //       $9
+      //       127.0.0.1
+      //       :7000
+      //       $40
+      //       c4869fd1346c4731d2980f46a3dd934627d5dbb4
+      //    *3
+      //       $9
+      //       127.0.0.1
+      //       :7005
+      //       $40
+      //       576ce7f8a927b00bb191344f6a167e6615569587
 
-            findHashSlots = false;
-         }
+      // *4
+      ++index; // skip over prefix
+      int16_t slaveCount = extractNumber(index) - 3;
+
+      // :0
+      ++index; // skip over prefix
+      lowHashSlot = extractNumber(index);
+
+      // :5460
+      ++index; // skip over prefix
+      highHashSlot = extractNumber(index);
+
+      // skip to length of address
+      index = response.find('$', index) + 1;
+      size_t lengthOfAddress = extractNumber(index);
+
+      UString address = response.substr(index, lengthOfAddress);
+      uint16_t port = extractNumber(index + lengthOfAddress + 3);
+
+      UCompileTimeStringFormatter::snprintf<"{}.{}"_ctv>(compositeAddress, address, port);
+
+      RedisClusterNode *workingNode = clusterNodes ? clusterNodes->erase(compositeAddress) : U_NULLPTR;
+
+      // in the case of MOVE some nodes will be new, but others we'll already be connected to
+      if (workingNode)
+      {  
+         workingNode->lowHashSlot = lowHashSlot;
+         workingNode->highHashSlot = highHashSlot;
       }
       else
-      {
-         UString compositeAddress(50U);
-         compositeAddress.snprintf(U_CONSTANT_TO_PARAM("%v.%v"), first.rep, second.rep);
-
-         RedisClusterNode *workingNode = clusterNodes ? clusterNodes->erase(compositeAddress) : U_NULLPTR;
-
-         // in the case of MOVE some nodes will be new, but others we'll already be connected to
-         if (workingNode)
-         {  
-            workingNode->lowHashSlot = workingLowHashSlot;
-            workingNode->highHashSlot = workingHighHashSlot;
-         }
-         else
-         {  
-            U_NEW(RedisClusterNode, workingNode, RedisClusterNode(first, second.strtoul(), workingLowHashSlot, workingHighHashSlot));
-         }
-         
-         newNodes->insert(compositeAddress, workingNode);
-
-         findHashSlots = true;
+      {  
+         U_NEW(RedisClusterNode, workingNode, RedisClusterNode(this, address, port, lowHashSlot, highHashSlot));
       }
+
+      newNodes->insert(compositeAddress, workingNode);
+
+      // scan til we hit the beginning of the next node cluster
+      do { index = response.find('*', index + 1); } while ((--slaveCount) > -1);
    }
 
    // if any nodes were taken offline, the clients would've disconnected by default
    if (clusterNodes) U_DELETE(clusterNodes);
 
    clusterNodes = newNodes;
-   managementClient->UClient_Base::response.setEmpty();
+
+   response.setEmpty();
 }
 
 bool UREDISClusterMaster::connect(const char* host, unsigned int _port)
@@ -671,11 +591,11 @@ bool UREDISClusterMaster::connect(const char* host, unsigned int _port)
    if (managementClient->connect(host, _port))
    {
       calculateNodeMap();
-      
+   
       RedisClusterNode *randomNode = clusterNodes->randomElement();
 
       if (randomNode)
-         {
+      {
          subscriptionClient->connect(randomNode->ipAddress.c_str(), randomNode->port);
         
          U_INTERNAL_ASSERT_EQUALS(UREDISClient_Base::pchannelCallbackMap, U_NULLPTR)
@@ -683,97 +603,77 @@ bool UREDISClusterMaster::connect(const char* host, unsigned int _port)
          U_NEW(UHashMap<void*>, UREDISClient_Base::pchannelCallbackMap, UHashMap<void*>());
 
          subscriptionClient->UEventFd::fd = subscriptionClient->getFd();
-         subscriptionClient->UEventFd::op_mask |=  EPOLLET;
+         
+         subscriptionClient->UEventFd::op_mask |= EPOLLET;
+            
+         U_DUMP("subscriptionClient = %p", subscriptionClient);
          
          UServer_Base::addHandlerEvent(subscriptionClient);
-        
+         
          U_RETURN(true);
-         }
+      }
    }
 
    U_RETURN(false);
 }
 
-bool UREDISClusterMaster::clusterUnsubscribe(const UString& channel) // unregister the callback for messages published to the given channels
+void UREDISClusterMaster::clusterUnsubscribe(const UString& channel) // unregister the callback for messages published to the given channels
 {
    U_TRACE(0, "UREDISClusterMaster::clusterUnsubscribe(%V)", channel.rep)
 
-   if (subscriptionClient->processRequest(U_RC_MULTIBULK, U_CONSTANT_TO_PARAM("UNSUBSCRIBE"), U_STRING_TO_PARAM(channel)))
-   {
-      (void)subscriptionClient->UREDISClient_Base::pchannelCallbackMap->erase(channel);
-
-      U_RETURN(true);
-   }
-
-   U_RETURN(false);
+   subscriptionClient->sendRequest(U_CTV_TO_PARAM("UNSUBSCRIBE "_ctv), channel);
+   (void)subscriptionClient->pchannelCallbackMap->erase(channel);
 }
 
-bool UREDISClusterMaster::clusterSubscribe(const UString& channel, vPFcscs callback) // register the callback for messages published to the given channels
+void UREDISClusterMaster::clusterSubscribe(const UString& channel, vPFcscs callback) // register the callback for messages published to the given channels
 {
    U_TRACE(0, "UREDISClusterMaster::clusterSubscribe(%V,%p)", channel.rep, callback)
 
-   if (subscriptionClient->processRequest(U_RC_MULTIBULK, U_CONSTANT_TO_PARAM("SUBSCRIBE"), U_STRING_TO_PARAM(channel)))
-   {
-      subscriptionClient->UREDISClient_Base::pchannelCallbackMap->insert(channel, (const void*)callback);
-
-      U_RETURN(true);
-   }
-
-   U_RETURN(false);
+   subscriptionClient->sendRequest(U_CTV_TO_PARAM("SUBSCRIBE "_ctv), channel);
+   subscriptionClient->pchannelCallbackMap->insert(channel, (const void*)callback);
 }
 
-static void getNextMark(const UString& string, size_t& marker)
+static void getNextCommandResponse(const UString& string, size_t& marker)
 {
    int8_t depth = 0;
    char prefix;
    const char *pointer1, *pointer2;
 
-loop:
-   
-   prefix = string.c_char(marker++);
-   pointer1 = pointer2 = string.c_pointer(marker);
-
-   switch (prefix)
+   do
    {
-      // :0\r\n
-      case U_RC_INT:
-      // +OK\r\n
-      case U_RC_INLINE:
-      // -MOVED 3999 127.0.0.1:6381\r\n
-      case U_RC_ERROR:
-      {
-         while (*pointer2 != '\r') ++pointer2;
-         marker += (pointer2-pointer1) + U_CONSTANT_SIZE(U_CRLF);
-         break;
-      }
-      // $-1\r\n                       (Null Bulk String)
-      // $15\r\nmy-value-tester\r\n
-      case U_RC_BULK:
-      {
-         if (*pointer2 == '-')
-         {
-            marker += 2 + U_CONSTANT_SIZE(U_CRLF);
-         }
-         else
-         {
-            while (*pointer2 != '\r') ++pointer2;
-            marker += (pointer2-pointer1) + U_CONSTANT_SIZE(U_CRLF) + u_strtol(pointer1, pointer2) + U_CONSTANT_SIZE(U_CRLF);
-         }
-         
-         break;
-      }
-      // *2\r\n$10\r\n1439822796\r\n$6\r\n311090\r\n
-      case U_RC_MULTIBULK:
-      {
-         while (*pointer2 != '\r') ++pointer2;
-         depth += u_strtol(pointer1, pointer2);
-         break;
-      }
-   }
+      prefix = string.c_char(marker++);
+      pointer1 = pointer2 = string.c_pointer(marker);
 
-   depth--;
-   
-   if (depth > -1)  goto loop;
+      while (*pointer2 != '\r') ++pointer2;
+      marker += (pointer2-pointer1) + U_CONSTANT_SIZE(U_CRLF);
+
+      switch (prefix)
+      {
+         // :0\r\n
+         case U_RC_INT:
+         // +OK\r\n
+         case U_RC_INLINE:
+         // -MOVED 3999 127.0.0.1:6381\r\n
+         case U_RC_ERROR: break;
+         // $-1\r\n                      
+         // $15\r\nmy-value-tester\r\n
+         case U_RC_BULK:
+         {
+            ssize_t length = u_strtol(pointer1, pointer2);
+            if (length > -1) marker += length + U_CONSTANT_SIZE(U_CRLF);
+            break;
+         }
+         // *2\r\n$10\r\n1439822796\r\n$6\r\n311090\r\n
+         case U_RC_MULTIBULK:
+         {
+            depth += u_strtol(pointer1, pointer2);
+            break;
+         }
+      }
+
+      depth--;
+
+   } while (depth > -1);
 }
 
 const UVector<UString>& UREDISClusterMaster::clusterAnonMulti(const AnonymousClusterPipeline& pipeline, const bool reorderable)
@@ -782,7 +682,10 @@ const UVector<UString>& UREDISClusterMaster::clusterAnonMulti(const AnonymousClu
 
    U_DUMP("pipeline = %v", pipeline.pipeline.rep);
 
+   managementClient->vitem.clear();
+
    static UString workingString(500U);
+   workingString.setEmpty();
    workingString.reserve(pipeline.pipeline.size() * 1.5);
 
    // if reorderable == false, commands are grouped and pushed SEQUENTIALLY BY HASHSLOT. even if other commands point to hashslots on the same cluster node, we are unable to garuntee ordering since Redis only checks for -MOVED etc errors command by command as it executes them, and does not fail upon reaching a -MOVED etc error. this requires waiting for each response, to ensure no errors occured, before moving onto the next batch of commands.
@@ -804,79 +707,32 @@ const UVector<UString>& UREDISClusterMaster::clusterAnonMulti(const AnonymousClu
             it++;
 
             // if end, fall through
-            if (UNLIKELY(it == pipeline.spans.end())) goto retryPush;
+            if (UNLIKELY(it == pipeline.spans.end())) goto push;
          }
          else
          {
-         retryPush:
 
-            // push
-            workingClient->sendRequest(workingString);
-            workingClient->UClient_Base::response.setEmpty();
-            workingClient->UClient_Base::readResponse();
+         push:
 
-         // bweare: if the wrong hashable key is passed, this will loop forever.
-            switch (checkResponseForClusterErrors(workingClient->UClient_Base::response, 0))
+            // returns when no error. might change client
+            workingClient = sendToCluster<true>(workingHashslot, workingString, workingClient);
+
+            workingString.setEmpty();
+
+            UString& workingClientBuffer = workingClient->UClient_Base::response;
+            UString& masterBuffer = managementClient->UClient_Base::response;
+            masterBuffer.reserve(masterBuffer.size() + workingClientBuffer.size());
+
+            masterBuffer.append(workingClientBuffer);
+            workingClientBuffer.setEmpty();
+
+            if (LIKELY(it != pipeline.spans.end()))
             {
-               case ClusterError::none:
-               {
-                  U_DUMP("UREDISClusterMaster::clusterAnonMulti(%b), ClusterError::none", reorderable);
-
-                  workingString.setEmpty();
-
-                  UString& workingClientBuffer = workingClient->UClient_Base::response;
-                  UString& masterBuffer = managementClient->UClient_Base::response;
-                  masterBuffer.reserve(masterBuffer.size() + workingClientBuffer.size());
-
-                  masterBuffer.append(workingClientBuffer);
-                  workingClientBuffer.setEmpty();
-
-                  if (LIKELY(it != pipeline.spans.end()))
-                  {
-                     workingHashslot = it->hashslot;
-                     workingClient = clientForHashslot(workingHashslot);
-                     goto startNoReorder;
-                  }
-                  else goto finish;
-
-                  break;
-               }
-               case ClusterError::moved:
-               {
-                  U_DUMP("UREDISClusterMaster::clusterAnonMulti(%b), ClusterError::moved", reorderable);
-
-                  workingClient->UClient_Base::response.setEmpty();
-
-                  calculateNodeMap();
-
-                  workingClient = clientForHashslot(workingHashslot);
-                  break;
-               }
-               case ClusterError::ask:
-               {
-                  U_DUMP("UREDISClusterMaster::clusterAnonMulti(%b), ClusterError::ask", reorderable);
-
-                  // -ASK 3999 127.0.0.1:6381
-                  uint32_t _start = workingClient->UClient_Base::response.find(' ', U_CONSTANT_SIZE("-ASK 3999")) + 1,
-                              end = workingClient->UClient_Base::response.find(':', _start);
-
-                  const UString& ip = workingClient->UClient_Base::response.substr(_start, end - _start);
-
-                  workingClient->UClient_Base::response.setEmpty();
-
-                  workingClient = clientForIP(ip);
-                  break;
-               }
-               case ClusterError::tryagain:
-               {
-                  U_DUMP("UREDISClusterMaster::clusterAnonMulti(%b), ClusterError::tryagain", reorderable);
-
-                  UTimeVal(0L, 1000L).nanosleep(); // 0 sec, 1000 microsec = 1ms
-                  break;
-               }
+               workingHashslot = it->hashslot;
+               workingClient = clientForHashslot(workingHashslot);
+               goto startNoReorder;
             }
-
-            goto retryPush;
+            else goto finish;
          }
       }
    }
@@ -889,8 +745,9 @@ const UVector<UString>& UREDISClusterMaster::clusterAnonMulti(const AnonymousClu
 
          UREDISClusterClient *client;
          size_t ordering;
+         uint8_t numberOfCommands;
 
-         ExecutionMapping(UREDISClusterClient *_client, size_t _ordering) : client(_client), ordering(_ordering) {}
+         ExecutionMapping(UREDISClusterClient *_client, size_t _ordering, uint8_t _numberOfCommands) : client(_client), ordering(_ordering), numberOfCommands(_numberOfCommands) {}
       };
 
       // copy spans
@@ -910,13 +767,14 @@ const UVector<UString>& UREDISClusterMaster::clusterAnonMulti(const AnonymousClu
       goto startReorder;
 
       while (it != spans.end())
-      {  
+      {
          if (clientForHashslot(it->hashslot) == workingClient)
          {
       startReorder:
             workingString.append(pipeline.pipeline.data() + it->beginning, it->end - it->beginning);
             
-            spanToExeuction.insert_or_assign(it->index, ExecutionMapping(workingClient, executionCount++));
+            spanToExeuction.insert_or_assign(it->index, ExecutionMapping(workingClient, executionCount, it->commandCount));
+            executionCount += it->commandCount;
 
             it = spans.erase(it);
          }
@@ -924,41 +782,45 @@ const UVector<UString>& UREDISClusterMaster::clusterAnonMulti(const AnonymousClu
       }
 
       touchedClients.insert_or_assign(workingClient, true);
+   
       workingClient->sendRequest(workingString);
       // we'll get here once having exhausted the commands for a given node
       if (spans.size() > 0) goto rinseAndRepeat;
 
-      struct Mark {
+      struct CommandResponse {
 
          size_t beginning, ending;
       };
 
       size_t totalBufferSize = 0;
-      std::unordered_map<UREDISClusterClient*, std::vector<Mark>> marksByClient;
+      std::unordered_map<UREDISClusterClient*, std::vector<CommandResponse>> commandResponsesByClient;
 
       for (const auto& [touchedClient, meaninglessFlag] : touchedClients)
-      {     
-         touchedClient->UClient_Base::readResponse();
+      {
          UString& clientBuffer = touchedClient->UClient_Base::response;
+
+         touchedClient->UClient_Base::readResponse();
 
          size_t clientBufferSize = clientBuffer.size();
          totalBufferSize += clientBufferSize;
 
          size_t marker = 0;
-         std::vector<Mark>& marks = marksByClient[touchedClient];
+
+         std::vector<CommandResponse> commandResponses;
 
          while (marker < clientBufferSize)
          {
             size_t beginning = marker;
-            getNextMark(clientBuffer, marker);
+            getNextCommandResponse(clientBuffer, marker);
 
-            U_DUMP("UREDISClusterMaster::clusterAnonMulti(%b), mark, [%lu, %lu)", reorderable, beginning, marker);
-
-            marks.push_back({beginning, marker});
+            commandResponses.push_back({beginning, marker});
          }
+
+         (void)commandResponsesByClient.insert_or_assign(touchedClient, commandResponses);
       }
 
       UString& masterBuffer = managementClient->UClient_Base::response;
+
       masterBuffer.reserve(totalBufferSize);
 
       for (size_t index = 0; index < pipeline.spans.size(); index++)
@@ -966,35 +828,31 @@ const UVector<UString>& UREDISClusterMaster::clusterAnonMulti(const AnonymousClu
          const ExecutionMapping& mapping = spanToExeuction.at(index);
          UString* clientBuffer = &mapping.client->UClient_Base::response;
 
-         Mark& mark = marksByClient[mapping.client][mapping.ordering];
-         size_t beginning = mark.beginning;
-         size_t ending = mark.ending;
-
+         std::vector<CommandResponse>& commandResponses = commandResponsesByClient[mapping.client];
+         
+         size_t beginning = commandResponses[mapping.ordering].beginning;
+         size_t ending = commandResponses[(mapping.ordering + mapping.numberOfCommands - 1)].ending;
+         
       checkAgain:
 
-         workingClient = 0;
+         U_DUMP("response = %.*s", ending - beginning, clientBuffer->data() + beginning);
 
+         workingClient = 0;
          switch (checkResponseForClusterErrors(*clientBuffer, beginning))
          {
             case ClusterError::none:
             {
-               U_DUMP("UREDISClusterMaster::clusterAnonMulti(%b), ClusterError::none", reorderable);
-
                masterBuffer.append(clientBuffer->data() + beginning, ending - beginning);
 
                continue;
             }
             case ClusterError::moved:
             {
-               U_DUMP("UREDISClusterMaster::clusterAnonMulti(%b), ClusterError::moved", reorderable);
-
                calculateNodeMap();
                break;
             }
             case ClusterError::ask:
             {
-               U_DUMP("UREDISClusterMaster::clusterAnonMulti(%b), ClusterError::ask", reorderable);
-
                uint32_t _start = clientBuffer->find(' ', beginning + U_CONSTANT_SIZE("-ASK 3999")) + 1,
                            _end = clientBuffer->find(':', _start);
 
@@ -1003,7 +861,6 @@ const UVector<UString>& UREDISClusterMaster::clusterAnonMulti(const AnonymousClu
             }
             case ClusterError::tryagain:
             {
-               U_DUMP("UREDISClusterMaster::clusterAnonMulti(%b), ClusterError::tryagain", reorderable);
                UTimeVal(0L, 1000L).nanosleep(); // 0 sec, 1000 microsec = 1ms
                break;
             }
@@ -1016,7 +873,6 @@ const UVector<UString>& UREDISClusterMaster::clusterAnonMulti(const AnonymousClu
          clientBuffer = &workingClient->UClient_Base::response;
 
          beginning = clientBuffer->size();
-
          workingString.setEmpty();
          workingString.append(pipeline.pipeline.data() + span.beginning, span.end - span.beginning);
 
@@ -1030,7 +886,7 @@ const UVector<UString>& UREDISClusterMaster::clusterAnonMulti(const AnonymousClu
    }
 finish:
    
-   U_DUMP("UREDISClusterMaster::clusterAnonMulti(%b), finished. masterBuffer = %v", reorderable, managementClient->UClient_Base::response.rep);
+   U_DUMP("UREDISClusterMaster::clusterAnonMulti(%b), masterBuffer = %v", reorderable, managementClient->UClient_Base::response.rep);
 
    managementClient->UREDISClient_Base::processResponse();
    
@@ -1058,4 +914,4 @@ const char* UREDISClient_Base::dump(bool _reset) const
 
    return U_NULLPTR;
 }
-#endif
+# endif

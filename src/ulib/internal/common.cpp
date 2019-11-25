@@ -50,11 +50,7 @@
 #  include <ulib/event/event_time.h>
 #endif
 
-#ifdef U_STDCPP_ENABLE
-# if defined(HAVE_CXX14) && GCC_VERSION_NUM > 60100 && defined(HAVE_ARCH64)
-#  include "./itoa.h"
-# endif
-#else
+#ifndef U_STDCPP_ENABLE
 U_EXPORT bool __cxa_guard_acquire() { return 1; }
 U_EXPORT bool __cxa_guard_release() { return 1; }
 
@@ -98,8 +94,12 @@ const double u_pow10[309] = { // 1e-0...1e308: 309 * 8 bytes = 2472 bytes
 #endif
 
 #ifndef HAVE_OLD_IOSTREAM
-#  include "./dtoa.h"
+#  include "./dtoa.h" // NB: dtoa_milo.h break serialize test...
 #endif
+# if defined(HAVE_CXX14) && GCC_VERSION_NUM > 60100 && defined(HAVE_ARCH64)
+#  include "./itoa.h"
+# endif
+// #include "./branchlut.h" // NB: break json test...
 
 static struct ustringrep u_empty_string_rep_storage = {
 # ifdef DEBUG
@@ -151,6 +151,11 @@ void ULib::init(char** argv, const char* mempool)
 #ifndef HAVE_OLD_IOSTREAM
    u_dbl2str = dtoa_rapidjson;
 #endif
+#if defined(HAVE_CXX14) && GCC_VERSION_NUM > 60100 && defined(HAVE_ARCH64)
+   u_num2str32 = itoa_fwd;
+   u_num2str64 = itoa_fwd;
+#endif
+
 #ifdef DEBUG
    char buffer[32];
 
@@ -164,12 +169,7 @@ void ULib::init(char** argv, const char* mempool)
    U_INTERNAL_ASSERT_EQUALS(u_num2str64(1234567890, buffer)-buffer, 10)
    U_INTERNAL_DUMP("buffer = %.10S", buffer)
    U_INTERNAL_ASSERT_EQUALS(memcmp(buffer, "1234567890", 10), 0)
-#endif
-
-#if defined(HAVE_CXX14) && GCC_VERSION_NUM > 60100 && defined(HAVE_ARCH64)
-   u_num2str32 = itoa_fwd;
-   u_num2str64 = itoa_fwd;
-
+      
    U_INTERNAL_ASSERT_EQUALS(u_num2str64(1234567890, buffer)-buffer, 10)
    U_INTERNAL_DUMP("buffer = %.10S", buffer)
    U_INTERNAL_ASSERT_EQUALS(memcmp(buffer, "1234567890", 10), 0)
