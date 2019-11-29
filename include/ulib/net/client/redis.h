@@ -65,10 +65,10 @@ typedef void (*vPFcscs)(const UString&,const UString&);
 
 class UREDISClusterMaster;
 
-class U_EXPORT UREDISClient_Base : public UClient_Base, UEventFd {
+class U_EXPORT UREDISClient_Base : public UClient_Base {
 public:
 
-   ~UREDISClient_Base();
+   ~UREDISClient_Base() { U_TRACE_DTOR(0, UREDISClient_Base); }
 
    // RESPONSE
 
@@ -787,22 +787,6 @@ public:
                                           (withPayloads ? U_CONSTANT_SIZE("WITHPAYLOADS") : 0), "WITHPAYLOADS"));
       }
 
-   // define method VIRTUAL of class UEventFd
-
-#if defined(U_STDCPP_ENABLE) && defined(HAVE_CXX20) && defined(U_LINUX) && !defined(__clang__)
-   virtual int handlerRead() U_DECL_FINAL;
-#endif
-
-   virtual void handlerDelete()
-      {
-      U_TRACE_NO_PARAM(0, "UREDISClient_Base::handlerDelete()")
-
-      U_INTERNAL_DUMP("UREDISClient_Base::handlerDelete() -> client = %p", this);
-      U_INTERNAL_DUMP("UEventFd::fd = %d", UEventFd::fd)
-
-      UEventFd::fd = -1;
-      }
-
 #if defined(U_STDCPP_ENABLE) && defined(DEBUG)
    const char* dump(bool reset) const;
 #endif
@@ -813,8 +797,6 @@ protected:
    static uint32_t start;
    static ptrdiff_t diff;
    static UREDISClient_Base* pthis;
-
-   static UHashMap<void*>* pchannelCallbackMap;
 
    UREDISClient_Base() : UClient_Base(U_NULLPTR)
       {
@@ -999,7 +981,7 @@ private:
 
 #if defined(U_STDCPP_ENABLE) && defined(HAVE_CXX20) && defined(U_LINUX) && !defined(__clang__)
 
-class UREDISClusterClient : public UREDISClient<UTCPSocket> {
+class U_EXPORT UREDISClusterClient : public UREDISClient<UTCPSocket>, public UEventFd {
 public:
 
    enum class ClientType : uint8_t {
@@ -1012,9 +994,23 @@ public:
    const ClientType type;
    UREDISClusterMaster *master;
 
-   //virtual void handlerDelete() U_DECL_FINAL;
+   virtual int handlerRead() U_DECL_FINAL;
+
+   virtual void handlerDelete() U_DECL_FINAL
+   {
+      U_TRACE_NO_PARAM(0, "UREDISClusterClient::handlerDelete()")
+
+      U_INTERNAL_DUMP("UREDISClusterClient::handlerDelete() -> client = %p", this);
+      U_INTERNAL_DUMP("UEventFd::fd = %d", UEventFd::fd)
+
+      UEventFd::fd = -1;
+   }
 
    UREDISClusterClient(UREDISClusterMaster *_master, const ClientType _type) : UREDISClient<UTCPSocket>(), type(_type), master(_master) {}
+
+#if defined(U_STDCPP_ENABLE) && defined(DEBUG)
+   const char* dump(bool _reset) const { return UREDISClient_Base::dump(_reset); }
+#endif
 };
 
 struct RedisClusterNode {
@@ -1057,6 +1053,7 @@ private:
    UREDISClusterClient *subscriptionClient;
    UREDISClusterClient *managementClient;
    UHashMap<RedisClusterNode *> *clusterNodes;
+   UHashMap<void*>* pchannelCallbackMap;
 
    static uint16_t hashslotForKey(UStringType&& hashableKey) {return u_crc16(U_STRING_TO_PARAM(hashableKey)) % 16384;}
    
@@ -1071,7 +1068,7 @@ private:
             return workingNode->client;
          }
       }
-      
+
       return U_NULLPTR; // never reached
    }
    
@@ -1082,7 +1079,7 @@ private:
          RedisClusterNode* workingNode = (RedisClusterNode *)(node->elem);
 
          if (ip == workingNode->ipAddress) return workingNode->client;
-      }
+      }  
 
       return U_NULLPTR; // never reached
    }
@@ -1098,6 +1095,10 @@ private:
    template<bool psuedoSilence>
    UREDISClusterClient* sendToCluster(uint16_t hashslot, UStringType&& pipeline, UREDISClusterClient* workingClient)
    {
+      U_TRACE_NO_PARAM(0, "UREDISClusterMaster::sendToCluster");
+
+      U_DUMP("pipeline = %.*s", pipeline.size(), pipeline.data());
+
       ClusterError error;
 
     retry:
@@ -1116,7 +1117,6 @@ private:
          {
             case ClusterError::moved:
             {
-              // U_DUMP("(D) calling calculateNodeMap");
                calculateNodeMap();
                workingClient = clientForHashslot(hashslot);
                break;
@@ -1152,7 +1152,7 @@ private:
       return sendToCluster<psuedoSilence>(hashslot, std::forward<B>(pipeline), clientForHashslot(hashslot));
    }
 
-public:
+//public:
 
    U_MEMORY_TEST
    U_MEMORY_ALLOCATOR
@@ -1191,7 +1191,9 @@ public:
    ~UREDISClusterMaster()
    {
       U_DELETE(subscriptionClient);
+		U_DELETE(managementClient);
       if (clusterNodes) U_DELETE(clusterNodes);
+      if (pchannelCallbackMap) U_DELETE(pchannelCallbackMap);
    }
 
 #if defined(DEBUG)
@@ -1201,6 +1203,9 @@ public:
 
 class UCompileTimeRESPEncoder : public UCompileTimeStringFormatter {
 private:
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-but-set-parameter"
 
    template<bool isPartial, size_t workingIndex = 0, size_t workingSegmentCount = 0, typename StringClass, typename... Xs, typename T, typename... Ts>
    static constexpr auto generateSegments(StringClass format, size_t& outputCount, std::tuple<Xs...>&& workingCommand, T&& t, Ts&&... ts)
@@ -1253,6 +1258,7 @@ private:
          }
       }
    }
+#pragma GCC diagnostic pop
 
    template<bool isPartial, bool overwrite, auto format, typename... Ts>
    static size_t encode_impl(size_t writePosition, UString& workingString, Ts&&... ts)
@@ -1361,6 +1367,8 @@ public:
       pipeline.append(command);
 
       spans.emplace_back(commandCount, UREDISClusterMaster::hashslotForKey(std::forward<A>(hashableKey)), beginning, pipeline.size(), spans.size());
+
+      U_DUMP("appended, %.*s", pipeline.size() - beginning, pipeline.data());
    }
 
    template <auto format, UStringType A, typename... Ts>
@@ -1373,6 +1381,8 @@ public:
       size_t commandCount = UCompileTimeRESPEncoder::encode_add<format>(pipeline, std::forward<Ts>(ts)...);
 
       spans.emplace_back(commandCount, UREDISClusterMaster::hashslotForKey(std::forward<A>(hashableKey)), beginning, pipeline.size(), spans.size());
+
+      U_DUMP("appended, %.*s", pipeline.size() - beginning, pipeline.data());
    }
 
    AnonymousClusterPipeline() : pipeline(300U) {}
