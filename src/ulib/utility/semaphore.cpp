@@ -17,7 +17,8 @@
 #include <ulib/utility/semaphore.h>
 
 #ifdef U_LINUX
-U_DUMP_KERNEL_VERSION(LINUX_VERSION_CODE)
+// socket already dumps this
+//U_DUMP_KERNEL_VERSION(LINUX_VERSION_CODE)
 #endif
 
 USemaphore* USemaphore::first;
