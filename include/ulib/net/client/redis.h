@@ -1152,7 +1152,7 @@ private:
       return sendToCluster<psuedoSilence>(hashslot, std::forward<B>(pipeline), clientForHashslot(hashslot));
    }
 
-//public:
+	public:
 
    U_MEMORY_TEST
    U_MEMORY_ALLOCATOR
