@@ -702,7 +702,7 @@ bool UWebSocket::sendData(const bool isServer, USocket* socket, int type, const 
       case 12:
       {
          header[1] = 127;
-         u_put_unalignedp32(header+2, htonl(len));
+         u_put_unalignedp64(header+2, htonl(len));
          break;
       }
       // client + len < 125
