@@ -2,70 +2,82 @@
 
 # nodog.fw
 
-networkMatchIface_do() {
-	awk -f - $* <<EOF
+networkMatchIface() {
+	_RES=`awk -v "NET=$1" -- '
 function ip2int(ip) {
-	for (ret=0,n=split(ip,a,"\."),x=1;x<=n;x++) ret=or(lshift(ret,8),a[x]) 
+	ret=0;split(ip,a,".");
+	for(x in a)ret=or(lshift(ret,8),a[x]);
+	return ret;
+}
+BEGIN { i=1; be=-1; }
+$6 ~ /^[0-9][0-9]*$/ {
+	iface[i]=$1;dest[i]=$2;mask[i]=$8;i++;
+	if(be==-1){if($8~/^[Ff]/ && ($8~/0$/))be=1;else{if($8~/[Ff]$/ && $8~/^0/)be=0;}}
+}
+END {
+	n=split(NET,tnet,"/");
+	if(n==1){ipaddr=ip2int(tnet[1]);}
+	else{if(n==2){tnm=and(xor(lshift(0xffffffff,32-int(tnet[2])),0),0xffffffff);ipaddr=and(ip2int(tnet[1]),tnm);}
+	else{exit(2);}}
+	found=0;cipaddr=0;cnetmask=0;cnetaddr=0;ciface="";
+	for(i in iface){
+		if(be==0){
+			t=dest[i];tnetaddr=or(or(lshift("0x" substr(t,7,2),24),lshift("0x" substr(t,5,2),16)),or(lshift("0x" substr(t,3,2),8),"0x" substr(t,1,2)));
+			t=mask[i];tnetmask=or(or(lshift("0x" substr(t,7,2),24),lshift("0x" substr(t,5,2),16)),or(lshift("0x" substr(t,3,2),8),"0x" substr(t,1,2)));
+		} else {
+			t=dest[i];tnetaddr=or(lshift(int("0x" substr(t,1,4)),16),int("0x" substr(t,5,4)));
+			t=mask[i];tnetmask=or(lshift(int("0x" substr(t,1,4)),16),int("0x" substr(t,5,4)));
+		}
+		if((and(ipaddr,tnetmask)==tnetaddr) && (cnetmask<tnetmask)){
+			found=1;
+			cipaddr=ipaddr;
+			cnetmask=tnetmask;
+			cnetaddr=tnetaddr;
+			ciface=iface[i];
+		}
+	}
+	if(found==0)exit(1);
+	printf("%s\t%04x%04x\t%04x%04x\t%04x%04x\n",ciface,rshift(cipaddr,16),and(cipaddr,0xffff),rshift(cnetaddr,16),and(cnetaddr,0xffff),rshift(cnetmask,16),and(cnetmask,0xffff));
+	exit(0);
+}' </proc/net/route`
+	[ $? -eq 0 ] || return $?
+	read $2 $3 $4 $5 _DUMMY <<EOL
+$_RES
+EOL
+	return 0
+}
+
+networkMatchIP() {
+	_RES=`awk -v "IP=$1" -v "NETS=$2" -- '
+function ip2int(ip) {
+	ret=0;split(ip,a,".");
+	for(x in a)ret=or(lshift(ret,8),a[x]);
 	return ret
 }
-
-BEGIN {
-	slpos=index(ARGV[1],"/")
-	tipaddr=ip2int(substr(ARGV[1],0,slpos-1))
-	tnetmask=compl(2**(32-int(substr(ARGV[1],slpos+1)))-1)
-	tnetwork=and(tipaddr,tnetmask)
-
-	slpos=index(ARGV[2],"/")
-	if (slpos == 0) {
-		ipaddr=ip2int(ARGV[2])
-		netmask=ip2int(ARGV[3])
-	} else {
-		ipaddr=ip2int(substr(ARGV[2],0,slpos-1))
-		netmask=compl(2**(32-int(substr(ARGV[2],slpos+1)))-1)
+END {
+	ipaddr=ip2int(IP);
+	found=0;cnetmask=0;cnetaddr=0;cnetwork=0;
+	split(NETS,NETSa,"  *");
+	for(i in NETSa) {
+		if(split(NETSa[i],tnet,"/")!=2)exit(2);
+		tnetmask=and(xor(lshift(0xffffffff,32-int(tnet[2])),0),0xffffffff);
+		tnetaddr=and(ip2int(tnet[1]),tnetmask);
+		if((and(ipaddr,tnetmask)==tnetaddr) && (cnetmask<tnetmask)){
+			found=1;
+			cnetmask=tnetmask;
+			cnetaddr=tnetaddr;
+			cnetwork=NETSa[i];
+		}
 	}
-	network=and(ipaddr,netmask)
-
-	if (network == tnetwork)
-		exit(1)
-
-	m=and(tipaddr,netmask)
-	if (m == network)
-		exit(2)
-
-	m=and(ipaddr,tnetmask)
-	if (m == tnetwork)
-		exit(3)
-	exit(0)
-}
-EOF
-}
-
-networkMatchIface() {
-	iface=$1
-	net=$2
-
-	match=0
-	if which ip >/dev/null; then
-		#ip addr show dev $iface | awk '/inet/{print $2}' | while read ip; do
-		ip route show | grep "dev $iface " |  awk '{print $1}' | while read ip; do
-			networkMatchIface_do $net $ip
-			match=$?
-			if [ $match -eq 1 -o $match -eq 2 ]; then
-				exit 1 
-			fi
-		done
-		match=$?
-	else
-		#ifconfig $iface | awk '/inet/{i=$2;n=$4;gsub("^[^:]*:","",i);gsub("^[^:]*:","",n);print i" "n}' | while read ip nm; do
-		route | awk '{if($8=="$iface"){print $1" "$3}}' | while read ip nm; do
-			networkMatchIface_do $net $ip $nm
-			if [ $match -eq 1 -o $match -eq 2 ]; then
-				exit 1
-			fi
-		done
-		match=$?
-	fi
-	return $match
+	if(found==0)exit(1);
+	printf("%04x%04x\t%04x%04x\t%s\n",rshift(cnetaddr,16),and(cnetaddr,0xffff),rshift(cnetmask,16),and(cnetmask,0xffff),cnetwork);
+	exit(0);
+}' </dev/null`
+	[ $? -eq 0 ] || return $?
+	read $3 $4 $5 _DUMMY <<EOL
+$_RES
+EOL
+	return 0
 }
 
 loadKernelModules() {
@@ -152,238 +164,264 @@ initialize_fw() {
 
 	clear_fw
 
-	# Flush all user-defined chains
-
-	$IPTABLES -t filter -N NoCat 2>/dev/null
-	$IPTABLES -t filter -F NoCat
-	$IPTABLES -t filter -A NoCat -p tcp -m conntrack --ctstate INVALID -j DROP || $IPTABLES -t filter -A NoCat -p tcp -m state --state INVALID -j DROP
-	for ifacein in $InternalDevice; do
-		for ifaceout in $ExternalDevice; do
-			$IPTABLES -t filter -D FORWARD -i $ifacein  -o $ifaceout -j NoCat 2>/dev/null
-			$IPTABLES -t filter -D FORWARD -i $ifaceout -o $ifacein  -j NoCat 2>/dev/null
-			$IPTABLES -t filter -A FORWARD -i $ifacein  -o $ifaceout -j NoCat
-			$IPTABLES -t filter -A FORWARD -i $ifaceout -o $ifacein  -j NoCat
-		done
-	done
-
-	if [ "$BlockRFC1918" = 1 ]; then
-		$IPTABLES -t filter -N NoCat_RFC1918 2>/dev/null
-		$IPTABLES -t filter -F NoCat_RFC1918
-		for net in $FullPrivateNetwork; do
-			$IPTABLES -t filter -A NoCat_RFC1918 -d $net -j ACCEPT
-		done
-		$IPTABLES -t filter -A NoCat_RFC1918 -d 10.0.0.0/8 -j RETURN
-		$IPTABLES -t filter -A NoCat_RFC1918 -d 172.16.0.0/12 -j RETURN
-		$IPTABLES -t filter -A NoCat_RFC1918 -d 192.168.0.0/16 -j RETURN
-		$IPTABLES -t filter -A NoCat_RFC1918 -d 127.0.0.0/8 -j RETURN
-		$IPTABLES -t filter -A NoCat_RFC1918 -j ACCEPT
-	fi
-
-	$IPTABLES -t filter -N NoCat_Ports 2>/dev/null
-	$IPTABLES -t filter -F NoCat_Ports
-	$IPTABLES -t filter -D NoCat -j NoCat_Ports 2>/dev/null
-	$IPTABLES -t filter -A NoCat -j NoCat_Ports
-
-	$IPTABLES -t filter -N NoCat_Inbound 2>/dev/null
-	$IPTABLES -t filter -F NoCat_Inbound
-	$IPTABLES -t filter -D NoCat -j NoCat_Inbound 2>/dev/null
-	$IPTABLES -t filter -A NoCat -j NoCat_Inbound
-
-	$IPTABLES -t nat -N NoCat_Capture 2>/dev/null
-	$IPTABLES -t nat -F NoCat_Capture
-	$IPTABLES -t nat -D PREROUTING -j NoCat_Capture 2>/dev/null
-	$IPTABLES -t nat -A PREROUTING -j NoCat_Capture
-
-	$IPTABLES -t nat -N NoCat_NAT  2>/dev/null
-	$IPTABLES -t nat -F NoCat_NAT
-
-	# Only nat if we're not routing
-
-	$IPTABLES -t nat -D POSTROUTING -j NoCat_NAT 2>/dev/null
-	[ $RouteOnly -gt 0 ] || $IPTABLES -t nat -A POSTROUTING -j NoCat_NAT
-
-	$IPTABLES -t mangle -N NoCat 2>/dev/null
-	$IPTABLES -t mangle -F NoCat
-	$IPTABLES -t mangle -N NoCat_Permit 2>/dev/null
-	$IPTABLES -t mangle -F NoCat_Permit
-	$IPTABLES -t mangle -D PREROUTING -j NoCat 2>/dev/null
-	$IPTABLES -t mangle -A PREROUTING -j NoCat
-
-	if [ $MembersOnly -gt 0 ]; then
-	  classes="1 2"
+	# First mark for unauthorized after mark for authorized
+	# BEGIN ND_m_pre
+	$IPTABLES -t mangle -N ND_m_pre && \
+	$IPTABLES -t mangle -A ND_m_pre -j MARK --set-mark 4 || exit 2
+	if [ "$EnableIpset" = 1 ]; then
+		if [ "$EnableIpsetAuth" = "bitmap:ip,mac" ]; then
+			$IPSET create ND_s_permit_in_1 list:set && \
+			$IPSET create ND_s_permit_in_2 list:set && \
+			$IPSET create ND_s_permit_in_3 list:set || exit 2
+			for net in $LocalNetwork; do
+				networkMatchIface $net ifacein netid
+				[ $? -eq 0 ] || exit 1
+				$IPSET create ND_s_permit_in_1_$netid bitmap:ip,mac range $net && \
+				$IPSET add ND_s_permit_in_1 ND_s_permit_in_1_$netid && \
+				$IPSET create ND_s_permit_in_2_$netid bitmap:ip,mac range $net && \
+				$IPSET add ND_s_permit_in_2 ND_s_permit_in_2_$netid && \
+				$IPSET create ND_s_permit_in_3_$netid bitmap:ip,mac range $net && \
+				$IPSET add ND_s_permit_in_3 ND_s_permit_in_3_$netid || exit 2
+			done
+			$IPTABLES -t mangle -A ND_m_pre -m set --match-set ND_s_permit_in_1 src,src -j MARK --set-mark 1 && \
+			$IPTABLES -t mangle -A ND_m_pre -m set --match-set ND_s_permit_in_2 src,src -j MARK --set-mark 2 && \
+			$IPTABLES -t mangle -A ND_m_pre -m set --match-set ND_s_permit_in_3 src,src -j MARK --set-mark 3 || exit 2
+		elif [ "$EnableIpsetAuth" = "hash:ip,mac" ]; then
+			$IPSET create ND_s_permit_in_1 hash:ip,mac && \
+			$IPSET create ND_s_permit_in_2 hash:ip,mac && \
+			$IPSET create ND_s_permit_in_3 hash:ip,mac && \
+			$IPTABLES -t mangle -A ND_m_pre -m set --match-set ND_s_permit_in_1 src,src -j MARK --set-mark 1 && \
+			$IPTABLES -t mangle -A ND_m_pre -m set --match-set ND_s_permit_in_2 src,src -j MARK --set-mark 2 && \
+			$IPTABLES -t mangle -A ND_m_pre -m set --match-set ND_s_permit_in_3 src,src -j MARK --set-mark 3 || exit 2
+		elif [ "$EnableIpsetAuth" = "hash:ip" ]; then
+			$IPSET create ND_s_permit_in_1 hash:ip && \
+			$IPSET create ND_s_permit_in_2 hash:ip && \
+			$IPSET create ND_s_permit_in_3 hash:ip && \
+			$IPTABLES -t mangle -A ND_m_pre -m set --match-set ND_s_permit_in_1 src -j MARK --set-mark 1 && \
+			$IPTABLES -t mangle -A ND_m_pre -m set --match-set ND_s_permit_in_2 src -j MARK --set-mark 2 && \
+			$IPTABLES -t mangle -A ND_m_pre -m set --match-set ND_s_permit_in_3 src -j MARK --set-mark 3 || exit 2
+		else
+			$IPSET create ND_s_permit_in_1 hash:mac && \
+			$IPSET create ND_s_permit_in_2 hash:mac && \
+			$IPSET create ND_s_permit_in_3 hash:mac && \
+			$IPTABLES -t mangle -A ND_m_pre -m set --match-set ND_s_permit_in_1 src -j MARK --set-mark 1 && \
+			$IPTABLES -t mangle -A ND_m_pre -m set --match-set ND_s_permit_in_2 src -j MARK --set-mark 2 && \
+			$IPTABLES -t mangle -A ND_m_pre -m set --match-set ND_s_permit_in_3 src -j MARK --set-mark 3 || exit 2
+		fi
 	else
-	  classes="1 2 3"
+		$IPTABLES -t mangle -N ND_m_permit_in &&
+		$IPTABLES -t mangle -A ND_m_pre -j ND_m_permit_in || exit 2
 	fi
+	# END ND_m_pre
 
-	# Handle tagged traffic. The current service classes by fwmark are:
-	# -----------------------------------------------------------------
-	# 1: Owner
-	# 2: Co-op
-	# 3: Public
-	# 4: Free
-	# -----------------------------------------------------------------
-	for iface in $InternalDevice; do
-		ifaceinout=0
-		for ifaceout in $ExternalDevice; do
-			if [ "$iface" == "$ifaceout" ]; then
-				ifaceinout=1
-			fi
-		done
+	# Allow web hosts and traffic to portal, also manage DNS traffic
+	# BEGIN ND_n_notify
+	if [ "$EnableIpset" != 1 ]; then
+		$IPTABLES -t nat -N ND_n_notify || exit 2
+	fi
+	# END ND_n_notify
 
-		for net in $LocalNetwork; do
-			networkMatchIface $iface $net
-			[ $? -eq 1 ] || continue
-
-			# check se evitare il mascheramento del traffico verso portale autorizzativo
-			if [ "$AvoidMasqueradeAuthServiceIP" = "1" ]; then
-				for ifaceout in $MasqueradeDevice; do
-					$nat -o $ifaceout -s $net -d $AuthServiceIP -j RETURN
-				done
-			fi
-
-			for fwmark in $classes; do
-				# Only forward tagged traffic per class
-				if [ "$BlockRFC1918" = 1 ]; then
-					$fwd -i $iface -s $net -m mark --mark $fwmark -j NoCat_RFC1918
-				else
-					$fwd -i $iface -s $net -m mark --mark $fwmark -j ACCEPT
-				fi
-
-				# Masquerade permitted connections.
-				for ifaceout in $MasqueradeDevice; do
-					$nat -o $ifaceout -s $net -m mark --mark $fwmark -j MASQUERADE
-				done
-			done
-			if [ $MembersOnly -gt 0 ]; then
-				for ifaceout in $MasqueradeDevice; do
-					$nat -o $ifaceout -s $net -m mark --mark 3 -j MASQUERADE
-				done
-			fi
-
-			# Allow web traffic to the specified hosts, and don't capture connections intended for them
-			open_fw "$AuthServiceIP $1 $AllowedWebHosts"
-
-			# Accept forward and back traffic to/from DNSAddr
-			if [ "$DNSAddr" ]; then
-				dns_item=""
-				for dns in $DNSAddr; do
-					$fwd -o $iface -d $net -s $dns -j ACCEPT
-
-					for prot in tcp udp; do
-						$fwd -i $iface -s $net -d $dns -p $prot --dport 53 -j ACCEPT
-						$nat -p  $prot -s $net -d $dns          --dport 53 -j MASQUERADE
-
-						# allow authenticated DNS traffic through this server.
-						$redirect -i $iface -m mark --mark 4 -p $prot --dport 53 -s $net -d $dns -j RETURN
-					done
-					dns_item=$dns
-				done
-				# Force unauthenticated DNS traffic through this server.
-				# Of course, only the first rule of this type will match.
-				# But it's easier to leave them all in ATM.
-				for prot in tcp udp; do
-					$redirect -i $iface -m mark --mark 4 -p $prot --dport 53 -s $net -j DNAT --to-destination $dns_item:53
-				done
-			else
-				for prot in tcp udp; do
-					$redirect -i $iface -m mark --mark 4 -p $prot --dport 53 -s $net -j REDIRECT --to-port 53
-				done
-			fi
-			for prot in tcp udp; do
-				$redirect -i $iface -d $FullPrivateNetwork  -p $prot --dport 53 -s $net -j REDIRECT --to-port 53
-			done
-
-			if [ "$ifaceinout" == "1" ]; then
-				# Set packets from internal devices to fw mark 4, or 'denied', by default.
-				$mangle -i $iface -s $net -j MARK --set-mark 4
-				$mangle -i $iface -j NoCat_Permit
-			fi
-		done
-
-		if [ "$ifaceinout" != "1" ]; then
-			# Set packets from internal devices to fw mark 4, or 'denied', by default
-			$mangle -i $iface -j MARK --set-mark 4
-			$mangle -i $iface -j NoCat_Permit
+	# BEGIN ND_n_pre
+	$IPTABLES -t nat -N ND_n_pre || exit 2
+	if [ "$EnableIpset" = 1 ]; then
+		$IPSET create ND_s_allow_http hash:net && \
+		$IPTABLES -t nat -A ND_n_pre -p tcp -m multiport --dports 80,443 -m set --match-set ND_s_allow_http dst -j RETURN || exit 2
+	fi
+	for host in $AuthServiceIP $1 $AllowedWebHosts; do
+		if [ "$EnableIpset" = 1 ]; then
+			# Non torna errore per supportare nell'elenco lo stesso IP
+			$IPSET add ND_s_allow_http $host
+		else
+			#for port in 80 443; do
+			#	$IPTABLES -t nat -A ND_n_pre -d $host -p tcp --dport $port -j RETURN
+			#done
+			$IPTABLES -t nat -A ND_n_pre -p tcp -m multiport --dports 80,443 -d $host -j RETURN || exit 2
 		fi
 	done
-
-	# Redirect outbound non-auth web traffic to the local gateway process except to windowsupdate.microsoft.com, which is broken.
-	# If MembersOnly is active, then redirect public class as well
-	#
-	#if [ $MembersOnly -gt 0 ]; then
-	#  nonauth="3 4"
-	#else
-		nonauth="4"
-	#fi
-
-	for iface in $InternalDevice; do
-		for mark in $nonauth; do
-			$redirect -m mark --mark $mark -i $iface -p tcp --dport 80 -j REDIRECT --to-port $GatewayPort
+	if [ "$EnableIpset" = 1 ]; then
+		$IPSET create ND_s_notify hash:ip && \
+		$IPTABLES -t nat -A ND_n_pre -p tcp --dport 80 -m mark ! --mark 4 -m set --match-set ND_s_notify src -j REDIRECT --to-port $ProxyPort || exit 2
+	else
+		$IPTABLES -t nat -A ND_n_pre -j ND_n_notify || exit 2
+	fi
+	if [ "$DNSAddr" ]; then
+		if [ "$EnableIpset" = 1 ]; then
+			$IPSET create ND_s_allow_dns hash:ip && \
+			$IPTABLES -t nat -A ND_n_pre -p udp --dport 53 -m mark --mark 4 -m set --match-set ND_s_allow_dns dst -j RETURN && \
+			$IPTABLES -t nat -A ND_n_pre -p tcp --dport 53 -m mark --mark 4 -m set --match-set ND_s_allow_dns dst -j RETURN || exit 2
+		fi
+		for dns in $DNSAddr; do
+			if [ "$EnableIpset" = 1 ]; then
+				$IPSET add ND_s_allow_dns $dns
+			else
+				$IPTABLES -t nat -A ND_n_pre -p udp --dport 53 -m mark --mark 4 -d $dns -j RETURN && \
+				$IPTABLES -t nat -A ND_n_pre -p tcp --dport 53 -m mark --mark 4 -d $dns -j RETURN || exit 2
+			fi
+			if [ -z "$dns_item" ]; then
+				dns_item=$dns
+			fi
 		done
-	done
+		# Force unauthenticated DNS traffic through fist server.
+		# Of course, only the first rule of this type will match.
+		# But it's easier to leave them all in ATM.
+		for prot in tcp udp; do
+			$IPTABLES -t nat -A ND_n_pre -p $prot --dport 53 -m mark --mark 4       -j DNAT --to-destination $dns_item:53 && \
+			$IPTABLES -t nat -A ND_n_pre -p $prot --dport 53 -d $FullPrivateNetwork -j DNAT --to-destination $dns_item:53 || exit 2
+		done
+	else
+		for prot in tcp udp; do
+			$IPTABLES -t nat -A ND_n_pre -p $prot --dport 53 -m mark --mark 4       -j REDIRECT --to-port 53 && \
+			$IPTABLES -t nat -A ND_n_pre -p $prot --dport 53 -d $FullPrivateNetwork -j REDIRECT --to-port 53 || exit 2
+		done
+	fi
+	$IPTABLES -t nat -A ND_n_pre -p tcp --dport 80 -m mark --mark 4 -j REDIRECT --to-port $GatewayPort || exit 2
+	# END ND_n_pre
+
+	# Accept authorized IP
+	# BEGIN ND_f_permit_ou
+	if [ "$EnableIpset" = 1 ]; then
+		$IPSET create ND_s_permit_ou hash:ip || exit 2
+	else
+		$IPTABLES -t filter -N ND_f_permit_ou || exit 2
+	fi
+	# END ND_f_permit_ou
+
+	# Filter allowed or denied traffic for authorized and not autorized from external devices and networks
+	# BEGIN ND_f_fwd_ou
+	$IPTABLES -t filter -N ND_f_fwd_ou || exit 2
+	if [ "$EnableIpset" = 1 ]; then
+		$IPTABLES -t filter -A ND_f_fwd_ou -m set --match-set ND_s_permit_ou dst -j ACCEPT || exit 2
+	else
+		$IPTABLES -t filter -A ND_f_fwd_ou -j ND_f_permit_ou || exit 2
+	fi
+	if [ "$EnableIpset" = 1 ]; then
+		$IPTABLES -t filter -A ND_f_fwd_ou -p tcp -m multiport --sports 80,443 -m set --match-set ND_s_allow_http src -j ACCEPT || exit 2
+	else
+		for host in $AuthServiceIP $1 $AllowedWebHosts; do
+			#for port in 80 443; do
+			#	$IPTABLES -t filter -A ND_f_fwd_ou -d $host -p tcp --dport $port -j ACCPET
+			#done
+			$IPTABLES -t filter -A ND_f_fwd_ou -p tcp -m multiport --sports 80,443 -s $host -j ACCEPT || exit 2
+		done
+	fi
+	if [ "$DNSAddr" ]; then
+		if [ "$EnableIpset" = 1 ]; then
+			$IPTABLES -t filter -A ND_f_fwd_ou -m set --match-set ND_s_allow_dns src -j ACCEPT || exit 2
+		else
+			for dns in $DNSAddr; do
+				$IPTABLES -t filter -A ND_f_fwd_ou -s $dns -j ACCEPT || exit 2
+			done
+		fi
+	fi
+	$IPTABLES -t filter -A ND_f_fwd_ou -j DROP || exit 2
+	# END ND_f_fwd_ou
+
+	# Block RFC1918 traffic
+	# BEGIN ND_f_RFC1918
+	if [ "$BlockRFC1918" = 1 ]; then
+		$IPTABLES -t filter -N ND_f_RFC1918
+		for net in $FullPrivateNetwork; do
+			$IPTABLES -t filter -A ND_f_RFC1918 -d $net   -j ACCEPT || exit 2
+		done
+		$IPTABLES -t filter -A ND_f_RFC1918 -d 10.0.0.0/8     -j RETURN && \
+		$IPTABLES -t filter -A ND_f_RFC1918 -d 172.16.0.0/12  -j RETURN && \
+		$IPTABLES -t filter -A ND_f_RFC1918 -d 192.168.0.0/16 -j RETURN && \
+		$IPTABLES -t filter -A ND_f_RFC1918 -d 127.0.0.0/8    -j RETURN && \
+		$IPTABLES -t filter -A ND_f_RFC1918                   -j ACCEPT || exit 2
+	fi
+	# END ND_f_RFC1918
 
 	# Lock down more ports for public users, if specified. Port restrictions are not applied to co-op and owner class users
-	#
 	# There are two philosophies in restricting access:
-	#
 	# That Which Is Not Specifically Permitted Is Denied
 	# That Which Is Not Specifically    Denied Is Permitted
-	#
 	# If "IncludePorts" is defined, the default policy will be to  deny all traffic, and only allow the ports mentioned
 	# If "ExcludePorts" is defined, the default policy will be to allow all traffic,      except to the ports mentioned
-	#
 	# If both are defined, ExcludePorts will be ignored, and the default policy
 	# will be to deny all traffic, allowing everything in IncludePorts, and issue a warning
-
+	# BEGIN ND_f_ports
 	if [ "$IncludePorts" ]; then
 		if [ "$ExcludePorts" ]; then
 			echo "WARNING: ExcludePorts and IncludePorts are both defined"
 			echo "Ignoring 'ExcludePorts'. Please check your configuration"
 		fi
 
-		# Enable all ports in IncludePorts
-		for iface in $InternalDevice; do
-			for port in $IncludePorts; do
-				$ports -p tcp -i $iface --dport $port -m mark --mark 3 -j ACCEPT
-				$ports -p udp -i $iface --dport $port -m mark --mark 3 -j ACCEPT
-			done
-
-			# Always permit access to the GatewayPort (or we can't logout)
-			$ports -p tcp -i $iface --dport $GatewayPort -j ACCEPT
-			$ports -p udp -i $iface --dport $GatewayPort -j ACCEPT
-
-			# ...and disable access to the rest
-			$ports -p tcp -i $iface -m mark --mark 3 -j DROP
-			$ports -p udp -i $iface -m mark --mark 3 -j DROP
-
-			# supporto anti DoS sul captive portal
-			if [ $DosPrevention -gt 0 ]; then
-				$local -p tcp -i $iface --dport $GatewayPort -m state --state NEW -m recent --set	 --name NoCat
-				$local -p tcp -i $iface --dport $GatewayPort -m state --state NEW -m recent --update --name NoCat \
-												--seconds $DosTimeInterval --hitcount `expr $DosAllowTries + 1` -j DROP
-			fi
+		$IPTABLES -t filter -N ND_f_ports || exit 2
+		for port in $IncludePorts; do
+			$IPTABLES -t filter -A ND_f_ports -p tcp --dport $port -j ACCEPT && \
+			$IPTABLES -t filter -A ND_f_ports -p udp --dport $port -j ACCEPT || exit 2
 		done
+		$IPTABLES -t filter -A ND_f_ports -p tcp -j DROP && \
+		$IPTABLES -t filter -A ND_f_ports -p udp -j DROP || exit 2
+
 
 	elif [ "$ExcludePorts" ]; then
-		# If ExcludePorts has entries, simply deny access to them
-		for iface in $InternalDevice; do
-			for port in $ExcludePorts; do
-				$ports -p tcp -i $iface --dport $port -m mark --mark 3 -j DROP
-				$ports -p udp -i $iface --dport $port -m mark --mark 3 -j DROP
-			done
+		$IPTABLES -t filter -N ND_f_ports || exit 2
+		for port in $ExcludePorts; do
+			$IPTABLES -t filter -A ND_f_ports -p tcp --dport $port -j DROP && \
+			$IPTABLES -t filter -A ND_f_ports -p udp --dport $port -j DROP || exit 2
 		done
 	fi
+	# END ND_f_ports
 
-	# Disable access on the external to GatewayPort from anything but the AuthServiceIP
+	# Filter allowed or denied traffic for authorized and not autorized from internal devices and networks
+	# BEGIN ND_f_fwd_in
+	$IPTABLES -t filter -N ND_f_fwd_in || exit 2
+	$IPTABLES -t filter -A ND_f_fwd_in -p tcp -m state --state INVALID -j DROP
+	if [ "$BlockRFC1918" = 1 ]; then
+		$IPTABLES -t filter -A ND_f_fwd_in -m mark --mark 2 -j ND_f_RFC1918 || exit 2
+	else
+		$IPTABLES -t filter -A ND_f_fwd_in -m mark --mark 2 -j ACCEPT || exit 2
+	fi
+	if [ "$EnableIpset" = 1 ]; then
+		$IPTABLES -t filter -A ND_f_fwd_in -p tcp -m multiport --dports 80,443 -m set --match-set ND_s_allow_http dst -j ACCEPT || exit 2
+	else
+		for host in $AuthServiceIP $1 $AllowedWebHosts; do
+			#for port in 80 443; do
+			#	$IPTABLES -t filter -A ND_f_fwd_in -d $host -p tcp --dport $port -j ACCPET
+			#done
+			$IPTABLES -t filter -A ND_f_fwd_in -p tcp -m multiport --dports 80,443 -d $host -j ACCEPT || exit 2
+		done
+	fi
+	if [ "$DNSAddr" ]; then
+		if [ "$EnableIpset" = 1 ]; then
+			$IPTABLES -t filter -A ND_f_fwd_in -p udp --dport 53 -m set --match-set ND_s_allow_dns dst -j ACCEPT && \
+			$IPTABLES -t filter -A ND_f_fwd_in -p tcp --dport 53 -m set --match-set ND_s_allow_dns dst -j ACCEPT || exit 2
+		else
+			for dns in $DNSAddr; do
+				$IPTABLES -t filter -A ND_f_fwd_in -p tcp --dport 53 -d $dns -j ACCEPT && \
+				$IPTABLES -t filter -A ND_f_fwd_in -p udp --dport 53 -d $dns -j ACCEPT || exit 2
+			done
+		fi
+	fi
+	if [ -n "$IncludePorts" -o -n "$ExcludePorts" ]; then
+		$IPTABLES -t filter -A ND_f_fwd_in -m mark --mark 3 -j ND_f_ports || exit 2
+	fi
+	$IPTABLES -t filter -A ND_f_fwd_in -j DROP || exit 2
+	# END ND_f_fwd_in
+
+	# Filter input traffic for captive
+	# BEGIN ND_f_in
+	$IPTABLES -t filter -N ND_f_in || exit 2
 	for src in $AuthServiceIP; do
 		for ifaceout in $ExternalDevice; do
-			$fwd -i $ifaceout ! -s $src -p tcp --dport $GatewayPort -j DROP
+			$IPTABLES -t filter -A ND_f_in -i $ifaceout ! -s $src -p tcp --dport $GatewayPort -j DROP || exit 2
 		done
 	done
+	# supporto anti DoS sul captive portal
+	if [ $DosPrevention -gt 0 ]; then
+		for ifacein in $InternalDevice; do
+			$IPTABLES -t filter -A ND_f_in -p tcp -i $ifacein --dport $GatewayPort -m state --state NEW -m recent --set --name NoDog && \
+			$IPTABLES -t filter -A ND_f_in -p tcp -i $ifacein --dport $GatewayPort -m state --state NEW -m recent --update --name NoDog \
+				--seconds $DosTimeInterval --hitcount `expr $DosAllowTries + 1` -j DROP || exit 2
+		done
+	fi
+	# END ND_f_in
 
-	# Filter policy
-	$fwd -j DROP
-
+	# Account traffic
+	# BEGIN ND_m_acc_in ND_m_acc_ou
+	$IPTABLES -t mangle -N ND_m_acc_in && \
+	$IPTABLES -t mangle -N ND_m_acc_ou || exit 2
 	# --------------------------------------------------------------------------------------------------------------------------------------------------
 	# Automatically sets the proper value of MSS (Maximum Segment Size) of TCP SYN packets that the firewall sees of all outgoing packets.
 	# --------------------------------------------------------------------------------------------------------------------------------------------------
@@ -399,111 +437,192 @@ initialize_fw() {
 	# The --clamp-mss-to-pmtu automatically sets the MSS to the proper value, hence you don't need to explicitly set it. It is automatically set to PMTU
 	# (Path Maximum Transfer Unit) minus 40 bytes, which should be a reasonable value for most applications. 
 	# --------------------------------------------------------------------------------------------------------------------------------------------------
-
 	if [ $MaxSegmentSize -gt 0 ]; then
 		for iface in $ExternalDevice; do
-			$IPTABLES -t mangle -A POSTROUTING -p tcp --tcp-flags SYN,RST SYN -o $iface -j TCPMSS --clamp-mss-to-pmtu
+			$IPTABLES -t mangle -A ND_m_acc_ou -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --clamp-mss-to-pmtu || exit 2
 		done
 	fi
-
-	# Account traffic
-	$IPTABLES -t mangle -N AccountIn 2>/dev/null
-	$IPTABLES -t mangle -F AccountIn
-	$IPTABLES -t mangle -N AccountOu 2>/dev/null
-	$IPTABLES -t mangle -F AccountOu
-
-	for iface in $InternalDevice; do
-		 $IPTABLES -t mangle -D POSTROUTING -o $iface -j AccountIn 2>/dev/null
-		 $IPTABLES -t mangle -A POSTROUTING -o $iface -j AccountIn
+	if [ "$EnableIpset" = 1 ]; then
+		$IPTABLES -t mangle -A ND_m_acc_in -m set --match-set ND_s_allow_http src -j RETURN && \
+		$IPTABLES -t mangle -A ND_m_acc_ou -m set --match-set ND_s_allow_http dst -j RETURN || exit 2
+	else
+		for host in $AuthServiceIP $1 $AllowedWebHosts; do
+			$IPTABLES -t mangle -A ND_m_acc_in -s "$host" -j RETURN && \
+			$IPTABLES -t mangle -A ND_m_acc_ou -d "$host" -j RETURN || exit 2
+		done
+	fi
+	for net in $LocalNetwork; do
+		$IPTABLES -t mangle -A ND_m_acc_in -s "$net" -j RETURN && \
+		$IPTABLES -t mangle -A ND_m_acc_in -j ACCOUNT --addr "$net" --tname "$net" && \
+		$IPTABLES -t mangle -A ND_m_acc_ou -d "$net" -j RETURN && \
+		$IPTABLES -t mangle -A ND_m_acc_ou -j ACCOUNT --addr "$net" --tname "$net" || exit 2
 	done
+	# END ND_m_acc_in ND_m_acc_ou
 
-	for iface in $ExternalDevice; do
-		 $IPTABLES -t mangle -D POSTROUTING -o $iface -j AccountOu 2>/dev/null
-		 $IPTABLES -t mangle -A POSTROUTING -o $iface -j AccountOu
-	done
+	# Masquering
+	# BEGIN ND_n_post
+	$IPTABLES -t nat -N ND_n_post || exit 2
+	if [ "$AvoidMasqueradeAuthServiceIP" = "1" ]; then
+		$IPTABLES -t nat -A ND_n_post -d $AuthServiceIP -j RETURN || exit 2
+	fi
+	$IPTABLES -t nat -A ND_n_post -j MASQUERADE || exit 2
+	# END ND_n_post
 
-	for srv in "$AuthServiceIP"; do
-		$IPTABLES -t mangle -A AccountIn -s "$srv" -j RETURN
-		$IPTABLES -t mangle -A AccountOu -d "$srv" -j RETURN
-	done
+	$IPTABLES -t filter -A INPUT -j ND_f_in || exit 2
 
 	for net in $LocalNetwork; do
-		$IPTABLES -t mangle -A AccountIn -s "$net" -j RETURN
-		$IPTABLES -t mangle -A AccountOu -d "$net" -j RETURN
-		$IPTABLES -t mangle -A AccountIn -j ACCOUNT --addr "$net" --tname "$net"
-		$IPTABLES -t mangle -A AccountOu -j ACCOUNT --addr "$net" --tname "$net"
+		networkMatchIface $net ifacein
+		[ $? -eq 0 ] || exit 1
+
+		ifaceinout=0
+		for ifaceout in $ExternalDevice; do
+			if [ "$ifacein" = "$ifaceout" ]; then
+				ifaceinout=1
+			fi
+		done
+
+		if [ "$ifaceinout" == "1" ]; then
+			for ifaceout in $ExternalDevice; do
+				$IPTABLES -t filter -A FORWARD     -i $ifacein  -s $net -o $ifaceout -j ND_f_fwd_in && \
+				$IPTABLES -t filter -A FORWARD     -i $ifaceout -d $net -o $ifacein  -j ND_f_fwd_ou && \
+	 			$IPTABLES -t mangle -A POSTROUTING -o $ifaceout -s $net -j ND_m_acc_ou || exit 2
+			done
+			$IPTABLES -t mangle -A PREROUTING  -i $ifacein -s $net -j ND_m_pre && \
+			$IPTABLES -t nat    -A PREROUTING  -i $ifacein -s $net -j ND_n_pre && \
+	 		$IPTABLES -t mangle -A POSTROUTING -o $ifacein -d $net -j ND_m_acc_in || exit 2
+		else
+			for ifaceout in $ExternalDevice; do
+				$IPTABLES -t filter -A FORWARD     -i $ifacein          -o $ifaceout -j ND_f_fwd_in && \
+				$IPTABLES -t filter -A FORWARD     -i $ifaceout         -o $ifacein  -j ND_f_fwd_ou && \
+	 			$IPTABLES -t mangle -A POSTROUTING -o $ifaceout -s $net -j ND_m_acc_ou || exit 2
+			done
+			$IPTABLES -t mangle -A PREROUTING  -i $ifacein         -j ND_m_pre && \
+			$IPTABLES -t nat    -A PREROUTING  -i $ifacein         -j ND_n_pre && \
+	 		$IPTABLES -t mangle -A POSTROUTING -o $ifacein         -j ND_m_acc_in || exit 2
+		fi
+		if [ $RouteOnly -eq 0 ]; then
+			for ifacemsq in $MasqueradeDevice; do
+				$IPTABLES -t nat -A POSTROUTING -o $ifacemsq -s $net -j ND_n_post || exit 2
+			done
+		fi
 	done
+
 	# --------------------------------------------------------------------------
 
 	[ -S /tmp/evfwdsock ] && /usr/sbin/fwevhandler i
 
 	# Bandwidth limits
 	# --------------------------------------------------------------------------
-	[ $EnableBandwidthLimits -gt 0 ] || return
+	if [ $EnableBandwidthLimits -gt 0 ]; then
 
-	if [ $IMQdisabled -eq 0 ]; then
-		extra_modules=ipt_IMQ
-	fi
-	if [ $IFBdisabled -eq 0 ]; then
-		extra_modules="ifb em_u32 act_connmark act_mirred sch_ingress"
-	fi
+		if [ $IMQdisabled -eq 0 ]; then
+			extra_modules=ipt_IMQ
+		fi
+		if [ $IFBdisabled -eq 0 ]; then
+			extra_modules="ifb em_u32 act_connmark act_mirred sch_ingress"
+		fi
 
-	loadKernelModules "xt_CONNMARK xt_CLASSIFY sch_red sch_sfq sch_hfsc cls_basic cls_fw cls_u32 $extra_modules"
+		loadKernelModules "xt_CONNMARK xt_CLASSIFY sch_red sch_sfq sch_hfsc cls_basic cls_fw cls_u32 $extra_modules"
 
-	if [ ${UploadRate} -gt 0 ]; then
-		for ifaceq in ${IQdevice}; do
-			[ $IMQdisabled -eq 0 -o $IFBdisabled -eq 0 ] && ifconfig ${ifaceq} up txqueuelen 5
-			tc qdisc del dev ${ifaceq} root
-			tc qdisc add dev ${ifaceq} root handle 1: hfsc default 10
-			tc class add dev ${ifaceq} parent 1:  classid 1:1  hfsc sc rate ${UploadRate}kbit ul rate ${UploadRate}kbit
+		if [ ${UploadRate} -gt 0 ]; then
+			for ifaceq in ${IQdevice}; do
+				[ $IMQdisabled -eq 0 -o $IFBdisabled -eq 0 ] && ifconfig ${ifaceq} up txqueuelen 5
+				tc qdisc del dev ${ifaceq} root
+				tc qdisc add dev ${ifaceq} root handle 1: hfsc default 10
+				tc class add dev ${ifaceq} parent 1:  classid 1:1  hfsc sc rate ${UploadRate}kbit ul rate ${UploadRate}kbit
+				echo "${ReservedClass}:${ReservedPriority}:${ReservedAverageRate}:${ReservedPacketSize}:${ReservedDelay}:${ReservedRatio}" | awk \
+					-v device="${ifaceq}" \
+					-v linespeed="${UploadRate}" \
+					-f firewall/tcrules.awk \
+				| while read CMD; do $CMD; done
+				tc filter del dev ${ifaceq} parent 1: protocol ip pref 1 fw
+			done
+		fi
+
+		for ifacein in $InternalDevice; do
+			if [ ${UploadRate} -gt 0 ]; then
+				if [ $IMQdisabled -eq 0 ]; then
+					for ifaceq in ${IQdevice}; do
+						$IPTABLES -t mangle -D PREROUTING   -i $ifacein -j IMQ --todev ${ifaceq:3:1}
+						$IPTABLES -t mangle -I PREROUTING 1 -i $ifacein -j IMQ --todev ${ifaceq:3:1}
+					done
+				fi
+			fi
+			ifconfig $ifacein up txqueuelen 5
+			tc qdisc del dev $ifacein root
+			tc qdisc add dev $ifacein root handle 1: hfsc default 10
+			tc class add dev $ifacein parent 1: classid 1:1 hfsc sc rate ${DownloadRate}kbit ul rate ${DownloadRate}kbit
 			echo "${ReservedClass}:${ReservedPriority}:${ReservedAverageRate}:${ReservedPacketSize}:${ReservedDelay}:${ReservedRatio}" | awk \
-				-v device="${ifaceq}" \
-				-v linespeed="${UploadRate}" \
+				-v device="$ifacein" \
+				-v linespeed="${DownloadRate}" \
 				-f firewall/tcrules.awk \
 			| while read CMD; do $CMD; done
-			tc filter del dev ${ifaceq} parent 1: protocol ip pref 1 fw
+			tc filter del dev $ifacein parent 1: protocol ip pref 1 fw
+			if [ ${UploadRate} -gt 0 ]; then
+				if [ $IFBdisabled -eq 0 ]; then
+					tc qdisc add dev $ifacein handle ffff: ingress
+					for ifaceq in ${IQdevice}; do
+						tc filter add dev $ifacein parent ffff: protocol ip prio 1 u32 \
+							match u32 0 0 flowid 1:1 \
+							action connmark \
+							action mirred egress redirect dev ${ifaceq}
+					done
+				fi
+			fi
 		done
+		# --------------------------------------------------------------------------
 	fi
 
-	for ifacein in $InternalDevice; do
-		if [ ${UploadRate} -gt 0 ]; then
-			if [ $IMQdisabled -eq 0 ]; then
-				for ifaceq in ${IQdevice}; do
-					$IPTABLES -t mangle -D PREROUTING   -i $ifacein -j IMQ --todev ${ifaceq:3:1}
-					$IPTABLES -t mangle -I PREROUTING 1 -i $ifacein -j IMQ --todev ${ifaceq:3:1}
-				done
-			fi
-		fi
-		ifconfig $ifacein up txqueuelen 5
-		tc qdisc del dev $ifacein root
-		tc qdisc add dev $ifacein root handle 1: hfsc default 10
-		tc class add dev $ifacein parent 1: classid 1:1 hfsc sc rate ${DownloadRate}kbit ul rate ${DownloadRate}kbit
-		echo "${ReservedClass}:${ReservedPriority}:${ReservedAverageRate}:${ReservedPacketSize}:${ReservedDelay}:${ReservedRatio}" | awk \
-			-v device="$ifacein" \
-			-v linespeed="${DownloadRate}" \
-			-f firewall/tcrules.awk \
-		| while read CMD; do $CMD; done
-		tc filter del dev $ifacein parent 1: protocol ip pref 1 fw
-		if [ ${UploadRate} -gt 0 ]; then
-			if [ $IFBdisabled -eq 0 ]; then
-				tc qdisc add dev $ifacein handle ffff: ingress
-				for ifaceq in ${IQdevice}; do
-					tc filter add dev $ifacein parent ffff: protocol ip prio 1 u32 \
-						match u32 0 0 flowid 1:1 \
-						action connmark \
-						action mirred egress redirect dev ${ifaceq}
-				done
-			fi
-		fi
-	done
-	# --------------------------------------------------------------------------
+	(
+		echo RouteOnly=$RouteOnly
+		echo DNSAddr=$DNSAddr
+		echo IncludePorts=$IncludePorts
+		echo ExcludePorts=$ExcludePorts
+		echo AllowedWebHosts=$AllowedWebHosts
+		echo ExternalDevice=$ExternalDevice
+		echo InternalDevice=$InternalDevice
+		echo LocalNetwork=$LocalNetwork
+		echo GatewayPort=$GatewayPort
+		echo ProxyPort=$ProxyPort
+		echo AuthServiceIP=$AuthServiceIP
+		echo MembersOnly=$MembersOnly
+		echo MaxSegmentSize=$MaxSegmentSize
+		echo MasqueradeDevice=$MasqueradeDevice
+		echo AvoidMasqueradeAuthServiceIP=$AvoidMasqueradeAuthServiceIP
+		echo IMQdevice=$IMQdevice
+		echo IFBdevice=$IFBdevice
+		echo UploadRate=$UploadRate
+		echo DownloadRate=$DownloadRate
+		echo UserDelay=$UserDelay
+		echo UserPriority=$UserPriority
+		echo UserUploadRate=$UserUploadRate
+		echo UserPacketSize=$UserPacketSize
+		echo UserAverageRate=$UserAverageRate
+		echo UserDownloadRate=$UserDownloadRate
+		echo ReservedRatio=$ReservedRatio
+		echo ReservedClass=$ReservedClass
+		echo ReservedDelay=$ReservedDelay
+		echo ReservedPriority=$ReservedPriority
+		echo ReservedPacketSize=$ReservedPacketSize
+		echo ReservedAverageRate=$ReservedAverageRate
+		echo EnableBandwidthLimits=$EnableBandwidthLimits
+		echo FullPrivateNetwork=$FullPrivateNetwork
+		echo BlockRFC1918=$BlockRFC1918
+		echo EnableIpset=$EnableIpset
+		echo EnableIpsetAuth=$EnableIpsetAuth
+		echo DosPrevention=$DosPrevention
+		echo DosAllowTries=$DosAllowTries
+		echo DosTimeInterval=$DosTimeInterval
+	) > /tmp/nodog_fw.cur.env
 }
 
 access_fw() {
 
 	cmd=$1
- 	mac=$2
- 	mac=`echo $2 | tr '[A-Z]' '[a-z]'`
+ 	mac=`tr '[A-Z]' '[a-z]' <<EOT
+$2
+EOT
+`
 	ip=$3
 	class=$4
 
@@ -569,68 +688,118 @@ access_fw() {
 	fi
 
 	if [ "$action" = "permit" ]; then
-		tFOUND=0
-		tDIRTY=0
-		tFOUNDMARK=""
+		if [ "$EnableIpset" = 1 ]; then
+			if [ "$EnableIpsetAuth" = "bitmap:ip,mac" ]; then
+				networkMatchIP $ip "$LocalNetwork" netid
+				[ $? -eq 0 ] || exit 1
+				$IPSET del -exist ND_s_permit_in_1_$netid $ip,$mac
+				$IPSET del -exist ND_s_permit_in_2_$netid $ip,$mac
+				$IPSET del -exist ND_s_permit_in_3_$netid $ip,$mac
+			elif [ "$EnableIpsetAuth" = "hash:ip,mac" ]; then
+				$IPSET del -exist ND_s_permit_in_1 $ip
+				$IPSET del -exist ND_s_permit_in_2 $ip
+				$IPSET del -exist ND_s_permit_in_3 $ip
+			elif [ "$EnableIpsetAuth" = "hash:ip" ]; then
+				$IPSET del -exist ND_s_permit_in_1 $ip
+				$IPSET del -exist ND_s_permit_in_2 $ip
+				$IPSET del -exist ND_s_permit_in_3 $ip
+			else
+				$IPSET del -exist ND_s_permit_in_1 $mac
+				$IPSET del -exist ND_s_permit_in_2 $mac
+				$IPSET del -exist ND_s_permit_in_3 $mac
+			fi
+			$IPSET del -exist ND_s_permit_ou $ip
+		else
+			tFOUND=0
+			tDIRTY=0
+			tFOUNDMARK=""
 
-		# restituisce MAC + mark
-		$IPTABLES -t mangle -n -L NoCat_Permit | \
-		awk -v i=$ip '/[ \t]MAC /{if($4==i){print tolower($7) " " $10};next } {if($4==i){print "00:00:00:00:00:00 " $8 }}' | \
-		while read tMAC tMARK;
-		do
-			if [ "$tMAC"   == "00:00:00:00:00:00" ]; then
+			# restituisce MAC + mark
+			$IPTABLES -t mangle -n -L ND_m_permit_in | \
+			awk -v i=$ip '/[ \t]MAC /{if($4==i){print tolower($7) " " $10};next } {if($4==i){print "00:00:00:00:00:00 " $8 }}' | \
+			while read tMAC tMARK;
+			do
+				if [ "$tMAC"   == "00:00:00:00:00:00" ]; then
+					if [ "$mac" == "00:00:00:00:00:00" ]; then
+						tFOUND=1
+						tFOUNDMARK=$tMARK
+					else
+						tDIRTY=1
+						$IPTABLES -t mangle -D ND_m_permit_in -s $ip                           -j MARK --set-mark $tMARK
+					fi
+				else
+					if [ "$tMAC" == "$mac" ]; then
+						tFOUND=1
+						tFOUNDMARK=$tMARK
+					else
+						tDIRTY=1
+						$IPTABLES -t mangle -D ND_m_permit_in -s $ip -m mac --mac-source $tMAC -j MARK --set-mark $tMARK
+					fi
+				fi
+			done
+
+			[ $tDIRTY -eq 0 -a $tFOUND -eq 1 ] && return
+
+			if [ $tFOUND -eq 1 ]; then
 				if [ "$mac" == "00:00:00:00:00:00" ]; then
-					tFOUND=1
-					tFOUNDMARK=$tMARK
+					$IPTABLES -t mangle -D ND_m_permit_in -s $ip                          -j MARK --set-mark $tFOUNDMARK
 				else
-					tDIRTY=1
-					$IPTABLES -t mangle -D NoCat_Permit -s $ip                           -j MARK --set-mark $tMARK
-				fi
-			else
-				if [ "$tMAC" == "$mac" ]; then
-					tFOUND=1
-					tFOUNDMARK=$tMARK
-				else
-					tDIRTY=1
-					$IPTABLES -t mangle -D NoCat_Permit -s $ip -m mac --mac-source $tMAC -j MARK --set-mark $tMARK
+					$IPTABLES -t mangle -D ND_m_permit_in -s $ip -m mac --mac-source $mac -j MARK --set-mark $tFOUNDMARK
 				fi
 			fi
-		done
 
-		[ $tDIRTY -eq 0 -a $tFOUND -eq 1 ] && return
-
-		if [ $tFOUND -eq 1 ]; then
-			if [ "$mac" == "00:00:00:00:00:00" ]; then
-				$IPTABLES -t mangle -D NoCat_Permit -s $ip                          -j MARK --set-mark $tFOUNDMARK
-			else
-				$IPTABLES -t mangle -D NoCat_Permit -s $ip -m mac --mac-source $mac -j MARK --set-mark $tFOUNDMARK
-			fi
+			# -----------------------------------------------------------------------------------------------------
+			# this command often give this message 'iptables: Bad rule (does a matching rule exist in that chain?)'
+			# -----------------------------------------------------------------------------------------------------
+			$IPTABLES -t filter -D ND_f_permit_ou -d $ip -j ACCEPT 2>/dev/null
+			# -----------------------------------------------------------------------------------------------------
 		fi
-
-		# -----------------------------------------------------------------------------------------------------
-		# this command often give this message 'iptables: Bad rule (does a matching rule exist in that chain?)'
-		# -----------------------------------------------------------------------------------------------------
-		$IPTABLES -t filter -D NoCat_Inbound -d $ip -j ACCEPT 2>/dev/null
-		# -----------------------------------------------------------------------------------------------------
 
 		if [ $EnableBandwidthLimits -gt 0 ]; then
 			clearQoS $Ip $Netmask
 		fi
 	fi
 
-	# Mark outbound traffic from this node.
-	if [ "$mac" == "00:00:00:00:00:00" ]; then
-		if [ -z "$7" -o "$7" = "$ifacein" ]; then
-			$IPTABLES -t mangle $cmd NoCat_Permit -s $ip -j MARK --set-mark $mark
+	if [ "$EnableIpset" = 1 ]; then
+		if [ "$cmd" = "-A" ]; then
+			ipsetcmd=add
+		else
+			ipsetcmd=del
 		fi
+		if [ "$EnableIpsetAuth" = "bitmap:ip,mac" ]; then
+			if [ "$action" = "deny" ]; then
+				networkMatchIP $ip "$LocalNetwork" netid
+				[ $? -eq 0 ] || exit 1
+				$IPSET del -exist ND_s_notify $ip
+			fi
+			$IPSET $ipsetcmd "ND_s_permit_in_${mark}_$netid" $ip,$mac || exit 2
+		elif [ "$EnableIpsetAuth" = "hash:ip,mac" ]; then
+			$IPSET $ipsetcmd "ND_s_permit_in_$mark" $ip,$mac || exit 2
+		elif [ "$EnableIpsetAuth" = "hash:ip" ]; then
+			$IPSET $ipsetcmd "ND_s_permit_in_$mark" $ip || exit 2
+		else
+			$IPSET $ipsetcmd "ND_s_permit_in_$mark" $mac || exit 2
+		fi
+		$IPSET $ipsetcmd ND_s_permit_ou $ip
 	else
-		if [ -z "$7" -o "$7" = "$ifacein" ]; then
-			$IPTABLES -t mangle $cmd NoCat_Permit -s $ip -m mac --mac-source $mac -j MARK --set-mark $mark
+		# Mark outbound traffic from this node.
+		if [ "$mac" == "00:00:00:00:00:00" ]; then
+			if [ -z "$7" -o "$7" = "$ifacein" ]; then
+				$IPTABLES -t mangle $cmd ND_m_permit_in -s $ip -j MARK --set-mark $mark || exit 2
+			fi
+		else
+			if [ -z "$7" -o "$7" = "$ifacein" ]; then
+				$IPTABLES -t mangle $cmd ND_m_permit_in -s $ip -m mac --mac-source $mac -j MARK --set-mark $mark || exit 2
+			fi
 		fi
+
+		# Mark inbound traffic to this node.
+		$IPTABLES -t filter $cmd ND_f_permit_ou -d $ip -j ACCEPT || exit 2
 	fi
 
-	# Mark inbound traffic to this node.
-	$IPTABLES -t filter $cmd NoCat_Inbound -d $ip -j ACCEPT
+	if [ -x /usr/sbin/wifi-disassoc.sh -a "$mac" != "00:00:00:00:00:00" -a "$action" = "deny" ]; then
+		/usr/sbin/wifi-disassoc.sh "$mac"
+	fi
 
 	if [ $EnableBandwidthLimits -gt 0 ]; then
 		if [ "$action" = "deny" ]; then
@@ -710,7 +879,10 @@ access_fw_check() {
 # (CMD) (MAC) (IP) (Class) (UserDownloadRate) (UserUploadRate)
 # ------------------------------------------------------------
 #	cmd=$1
-	mac=`echo $2 | tr '[A-Z]' '[a-z]'`
+	mac=`tr '[A-Z]' '[a-z]' <<EOT
+$2
+EOT
+`
 	ip=$3
 #	class=$4
 #	UserDownloadRate=$5
@@ -734,7 +906,25 @@ access_fw_check() {
 		# check
 
 		fail=0
-		count=`$IPTABLES -t mangle -L NoCat_Permit -n | grep -c $ip`;
+		if [ "$EnableIpset" = 1 ]; then
+			if [ "$EnableIpsetAuth" = "bitmap:ip,mac" ]; then
+				networkMatchIP $ip "$LocalNetwork" netid
+				[ $? -eq 0 ] || exit 1
+				$IPSET test ND_s_permit_in_3_$netid $ip,$mac || $IPSET test ND_s_permit_in_2_$netid $ip,$mac || $IPSET test ND_s_permit_in_1_$netid $ip,$mac
+				count=$?
+			elif [ "$EnableIpsetAuth" = "hash:ip,mac" ]; then
+				$IPSET test ND_s_permit_in_3 $ip,$mac || $IPSET test ND_s_permit_in_2 $ip,$mac || $IPSET test ND_s_permit_in_1 $ip,$mac
+				count=$?
+			elif [ "$EnableIpsetAuth" = "hash:ip" ]; then
+				$IPSET test ND_s_permit_in_3 $ip || $IPSET test ND_s_permit_in_2 $ip || $IPSET test ND_s_permit_in_1 $ip
+				count=$?
+			else
+				$IPSET test ND_s_permit_in_3 $mac || $IPSET test ND_s_permit_in_2 $mac || $IPSET test ND_s_permit_in_1 $mac
+				count=$?
+			fi
+		else
+			count=`$IPTABLES -t mangle -L ND_m_permit_in -n | grep -c $ip`;
+		fi
 
 		if [ $count -gt 0 ]; then
 			if [ "$action" = "deny" ]; then
@@ -756,44 +946,71 @@ access_fw_check() {
 	echo "$ip $mac" > /tmp/nodog_fw.$action
 }
 
+notify_fw() {
+	cmd=$1
+ 	mac=`tr '[A-Z]' '[a-z]' <<EOT
+$2
+EOT
+`
+	ip=$3
+
+	if [ "$EnableIpset" = 1 ]; then
+		if [ "$cmd" = "-A" ]; then
+			ipsetcmd=add
+		else
+			ipsetcmd=del
+		fi
+		$IPSET $ipsetcmd ND_s_notify $ip || exit 2
+	else
+		$IPTABLES -t nat "$cmd" ND_n_notify -p tcp --dport 80 -s "$ip" -j REDIRECT --to-port $ProxyPort || exit 2
+	fi
+}
+
 clear_fw() {
 
-	#$IPTABLES -F
-	#$IPTABLES -t nat -F
-	#$IPTABLES -t mangle -F
-	#$IPTABLES -t filter -F
-	#$IPTABLES -t nat -X
-	#$IPTABLES -t mangle -X
-	#$IPTABLES -t filter -X
+	(
+		$IPTABLES -t filter -D INPUT -j ND_f_in
+		$IPTABLES -t filter -L FORWARD -n -v | awk '/ND_f_fwd_in/{system("'$IPTABLES' -t filter -D FORWARD -i " $6 " -o " $7 " -s " $8 " -j " $3);}'
+		$IPTABLES -t filter -L FORWARD -n -v | awk '/ND_f_fwd_ou/{system("'$IPTABLES' -t filter -D FORWARD -i " $6 " -o " $7 " -d " $9 " -j " $3);}'
 
-	$IPTABLES -t filter -F FORWARD
-	$IPTABLES -t filter -F NoCat
-	$IPTABLES -t filter -F NoCat_RFC1918
-	$IPTABLES -t filter -F NoCat_Inbound
-	$IPTABLES -t filter -F NoCat_Ports
-	$IPTABLES -t filter -X NoCat
-	$IPTABLES -t filter -X NoCat_RFC1918
-	$IPTABLES -t filter -X NoCat_Inbound
-	$IPTABLES -t filter -X NoCat_Ports
+		$IPTABLES -t filter -F FORWARD
+		$IPTABLES -t filter -F ND_f_fwd_in
+		$IPTABLES -t filter -F ND_f_fwd_ou
+		$IPTABLES -t filter -F ND_f_RFC1918
+		$IPTABLES -t filter -F ND_f_ports
+		$IPTABLES -t filter -F ND_f_in
+		$IPTABLES -t filter -X ND_f_fwd_in
+		$IPTABLES -t filter -X ND_f_fwd_ou
+		$IPTABLES -t filter -X ND_f_RFC1918
+		$IPTABLES -t filter -X ND_f_ports
+		$IPTABLES -t filter -X ND_f_in
+		$IPTABLES -t filter -F ND_f_permit_ou
+		$IPTABLES -t filter -X ND_f_permit_ou
 
-	$IPTABLES -t nat -D PREROUTING -j NoCat_Capture
-	$IPTABLES -t nat -D POSTROUTING -j NoCat_NAT
-	$IPTABLES -t nat -F NoCat_Capture
-	$IPTABLES -t nat -F NoCat_NAT
-	$IPTABLES -t nat -X NoCat_Capture
-	$IPTABLES -t nat -X NoCat_NAT
+		$IPTABLES -t nat -L PREROUTING  -n -v | awk '/ND_n_pre/ {system("'$IPTABLES' -t nat -D PREROUTING  -i " $6 " -s " $8 " -j " $3);}'
+		$IPTABLES -t nat -L POSTROUTING -n -v | awk '/ND_n_post/{system("'$IPTABLES' -t nat -D POSTROUTING -o " $7 " -s " $8 " -j " $3);}'
+		$IPTABLES -t nat -F ND_n_pre
+		$IPTABLES -t nat -F ND_n_post
+		$IPTABLES -t nat -X ND_n_pre
+		$IPTABLES -t nat -X ND_n_post
+		if [ "$EnableIpset" != 1 ]; then
+			$IPTABLES -t nat -F ND_n_notify
+			$IPTABLES -t nat -X ND_n_notify
+		fi
 
-	$IPTABLES -t mangle -D PREROUTING -j NoCat
-	$IPTABLES -t mangle -L POSTROUTING -v | awk '/Accoun/{system("'$IPTABLES' -t mangle -D POSTROUTING -o " $7 " -j " $3);}'
-	$IPTABLES -t mangle -L POSTROUTING -v | awk '/TCPMSS/{system("'$IPTABLES' -t mangle -D POSTROUTING -p tcp --tcp-flags SYN,RST SYN -o " $7 " -j TCPMSS --clamp-mss-to-pmtu");}'
-	$IPTABLES -t mangle -F AccountIn
-	$IPTABLES -t mangle -F AccountOu
-	$IPTABLES -t mangle -F NoCat
-	$IPTABLES -t mangle -F NoCat_Permit
-	$IPTABLES -t mangle -X AccountIn
-	$IPTABLES -t mangle -X AccountOu
-	$IPTABLES -t mangle -X NoCat
-	$IPTABLES -t mangle -X NoCat_Permit
+		$IPTABLES -t mangle -L PREROUTING  -n -v | awk '/ND_m_pre/   {system("'$IPTABLES' -t mangle -D PREROUTING  -i " $6 " -s " $8 " -j " $3);}'
+		$IPTABLES -t mangle -L POSTROUTING -n -v | awk '/ND_m_acc_ou/{system("'$IPTABLES' -t mangle -D POSTROUTING -o " $7 " -s " $8 " -j " $3);}'
+		$IPTABLES -t mangle -L POSTROUTING -n -v | awk '/ND_m_acc_in/{system("'$IPTABLES' -t mangle -D POSTROUTING -o " $7 " -d " $9 " -j " $3);}'
+		$IPTABLES -t mangle -F ND_m_acc_in
+		$IPTABLES -t mangle -F ND_m_acc_ou
+		$IPTABLES -t mangle -F ND_m_pre
+		$IPTABLES -t mangle -X ND_m_acc_in
+		$IPTABLES -t mangle -X ND_m_acc_ou
+		$IPTABLES -t mangle -X ND_m_pre
+		$IPTABLES -t mangle -F ND_m_permit_in
+		$IPTABLES -t mangle -X ND_m_permit_in
+		$IPSET -n list | sort | egrep '^ND_s_' | while read S; do $IPSET -! destroy $S; done
+	) 2>/dev/null
 
 	[ $EnableBandwidthLimits -gt 0 ] || return
 
@@ -817,33 +1034,14 @@ clear_fw() {
 
 reset_fw() {
 
-	$IPTABLES -t filter -D FORWARD	 -j NoCat			2>/dev/null
-	$IPTABLES -t nat	  -D PREROUTING -j NoCat_Capture 2>/dev/null
+	$IPTABLES -t filter -D FORWARD	 -j ND_f_fwd			2>/dev/null
+	$IPTABLES -t nat	  -D PREROUTING -j ND_n_pre 2>/dev/null
 
 	if [ $RouteOnly -eq 0 ]; then
-		$IPTABLES -t nat -D POSTROUTING -j NoCat_NAT 2>/dev/null
+		$IPTABLES -t nat -D POSTROUTING -j ND_n_post 2>/dev/null
 	fi
 
-	$IPTABLES -t mangle -D PREROUTING -j NoCat 2>/dev/null
-}
-
-open_fw() {
-
-	# $1 host list
-
-	if [ "$1" ]; then
-		for host in $1; do
-			for port in 80 443; do
-				for ifaceout in $MasqueradeDevice; do
-					$nat -o $ifaceout -s $net -d $host -p tcp --dport $port -j MASQUERADE
-				done
-
-				$redirect -s $net -d $host -p tcp --dport $port -j RETURN
-				$fwd      -s $net -d $host -p tcp --dport $port -j ACCEPT
-				$fwd      -d $net -s $host -p tcp --sport $port -j ACCEPT
-			done
-		done
-	fi
+	$IPTABLES -t mangle -D PREROUTING -j ND_m_pre 2>/dev/null
 }
 
 check_arp() {
@@ -867,26 +1065,47 @@ do_cmd() {
 		IPTABLES="echo iptables"
 	fi
 
-		  fwd="$IPTABLES -t filter -A NoCat"
-		ports="$IPTABLES -t filter -A NoCat_Ports"
-		local="$IPTABLES -t filter -A NoCat_LocalPorts"
-		  nat="$IPTABLES -t nat    -A NoCat_NAT"
-	redirect="$IPTABLES -t nat    -A NoCat_Capture"
-	  mangle="$IPTABLES -t mangle -A NoCat"
+	if [ -x /usr/sbin/ipset ]; then
+		IPSET=/usr/sbin/ipset
+	else
+		IPSET="echo ipset"
+	fi
+
+	if [ "$1" != "initialize" -a -r /tmp/nodog_fw.cur.env ]; then
+		source /tmp/nodog_fw.cur.env
+	fi
 
 	case "$1" in
-		arp)			shift; check_arp				 "$@" ;; #				  (IP)
-		deny)			shift; access_fw       "-D" "$@" ;; # (CMD) (MAC) (IP) (Class)
-#		deny)			shift; access_fw_check "-D" "$@" ;; # (CMD) (MAC) (IP) (Class)
-		clear)      shift; clear_fw				 "$@" ;;
-		reset)      shift; reset_fw				 "$@" ;;
-		permit)		shift; access_fw       "-A" "$@" ;; # (CMD) (MAC) (IP) (Class) (UserDownloadRate) (UserUploadRate)
-#		permit)		shift; access_fw_check "-A" "$@" ;; # (CMD) (MAC) (IP) (Class) (UserDownloadRate) (UserUploadRate)
-		initialize) shift; initialize_fw			 "$1" ;;
+		arp)		shift; check_arp "$@" ;;		# (IP)
+		clear)		shift; clear_fw "$@" ;;
+		reset)		shift; reset_fw "$@" ;;
+		permit)		shift; access_fw "-A" "$@" ;;		# (CMD) (MAC) (IP) (Class) (UserDownloadRate) (UserUploadRate)
+#		permit)		shift; access_fw_check "-A" "$@" ;;	# (CMD) (MAC) (IP) (Class) (UserDownloadRate) (UserUploadRate)
+		deny)		shift; access_fw "-D" "$@" ;;		# (CMD) (MAC) (IP) (Class)
+#		deny)		shift; access_fw_check "-D" "$@" ;;	# (CMD) (MAC) (IP) (Class)
+		notify)		shift; notify_fw "-A" "$@" ;;		# (CMD) (MAC) (IP)
+		notified)	shift; notify_fw "-D" "$@" ;;		# (CMD) (MAC) (IP)
+		initialize)	shift; initialize_fw "$1" ;;
 
 		openlist)
-		 	$IPTABLES -t mangle -L NoCat_Permit -n | awk '/MARK set 0x2/{printf("%s\n", $4)}' | sort -u;
-#		  	$IPTABLES -t mangle -L NoCat_Permit -n | awk '/MARK set 0x2/{printf("%s\n", $4)}' | sort -u | tee /tmp/nodog_fw.lst;
+			if [ "$EnableIpset" = 1 ]; then
+				if [ "$EnableIpsetAuth" = "bitmap:ip,mac" ]; then
+					for net in $LocalNetwork; do
+						networkMatchIface $net ifacein netid
+						[ $? -eq 0 ] || exit 1
+						$IPSET $ipsetcmd "ND_s_permit_in_2_$netid"
+					done
+				elif [ "$EnableIpsetAuth" = "hash:ip,mac" ]; then
+					$IPSET list "ND_s_permit_in_2"
+				elif [ "$EnableIpsetAuth" = "hash:ip" ]; then
+					$IPSET list "ND_s_permit_in_2"
+				else
+					$IPSET list "ND_s_permit_in_2"
+				fi
+			else
+		 		$IPTABLES -t mangle -L NoCat_Permit -n | awk '/MARK set 0x2/{printf("%s\n", $4)}' | sort -u;
+#		  		$IPTABLES -t mangle -L NoCat_Permit -n | awk '/MARK set 0x2/{printf("%s\n", $4)}' | sort -u | tee /tmp/nodog_fw.lst;
+			fi
 		;;
 	esac
 }
@@ -895,7 +1114,7 @@ do_cmd() {
 #-----------------------------------
 
 export RouteOnly MasqueradeDevice DNSAddr IncludePorts ExcludePorts AllowedWebHosts ExternalDevice \
-		 InternalDevice LocalNetwork GatewayPort AuthServiceIP MembersOnly MaxSegmentSize IPTABLES \
+		 InternalDevice LocalNetwork GatewayPort ProxyPort AuthServiceIP MembersOnly MaxSegmentSize IPTABLES \
 		 EnableBandwidthLimits IMQdevice IFBdevice UserDelay UserPriority UserUploadRate UserPacketSize \
 		 UserAverageRate UserDownloadRate UploadRate DownloadRate ReservedRatio ReservedClass ReservedDelay \
 		 ReservedPriority ReservedAverageRate ReservedPacketSize DosPrevention DosAllowTries DosTimeInterval \
@@ -910,74 +1129,82 @@ export RouteOnly MasqueradeDevice DNSAddr IncludePorts ExcludePorts AllowedWebHo
 # ------------------------------------------------------------
 
 # ---------------------------------------------------------------------------------------------------------------------------------------------------
-# RouteOnly       Required only if you DO NOT want your gateway to act as a NAT. Give this only if you're running a strictly routed
-#                 network, and don't need the gateway to enable NAT for you
+# RouteOnly			Required only if you DO NOT want your gateway to act as a NAT. Give this only if you're running a strictly routed
+# 				network, and don't need the gateway to enable NAT for you
 #
-# DNSAddr         *If* you choose not to run DNS on your internal network, specify the address(es) of one or more domain name server
-#                 on the Internet that wireless clients can use to get out. Should be the same DNS that your DHCP server hands out
+# DNSAddr			*If* you choose not to run DNS on your internal network, specify the address(es) of one or more domain name server
+# 				on the Internet that wireless clients can use to get out. Should be the same DNS that your DHCP server hands out
 #
-# IncludePorts    Specify TCP ports to allow access to when public class users login. All others will be denied
+# IncludePorts			Specify TCP ports to allow access to when public class users login. All others will be denied
 #
-# ExcludePorts    Specify TCP ports to denied access to when public class users login. All others will be allowed. Note that you should
-#                 use either IncludePorts or ExcludePorts, but not both. If neither is specified, access is granted to all ports to public class users.
-#                 You should *always* exclude port 25, unless you want to run an portal for wanton spam sending. Users should have their
-#                 own way of sending mail. It sucks, but that's the way it is. Comment this out *only if* you're using IncludePorts instead
+# ExcludePorts			Specify TCP ports to denied access to when public class users login. All others will be allowed. Note that you
+#				should use either IncludePorts or ExcludePorts, but not both. If neither is specified, access is granted to all ports
+#				to public class users. You should *always* exclude port 25, unless you want to run an portal for wanton spam sending.
+#				Users should have their own way of sending mail. It sucks, but that's the way it is. Comment this out *only if*
+#				you're using IncludePorts instead
 #
-# AllowedWebHosts List any domains that you would like to allow web access (TCP port 80 and 443) BEFORE logging in (this is the
-#                 pre-'skip' stage, so be careful about what you allow
+# AllowedWebHosts		List any domains that you would like to allow web access (TCP port 80 and 443) BEFORE logging in (this is thei
+#				pre-'skip' stage, so be careful about what you allow
 #
-# ExternalDevice  The interface connected to the Internet. Usually 'eth0' or 'eth1' under Linux, or maybe even 'ppp0' if you're running PPP or PPPoE
+# ExternalDevice		The interface connected to the Internet. Usually 'eth0' or 'eth1' under Linux, or maybe even 'ppp0' if you're running
+#				PPP or PPPoE
 #
-# InternalDevice  Required if and only if your machine has more than two network interfaces. Must be set to the interface connected to your local
-#                 network, normally your wireless card
+# InternalDevice		Required if and only if your machine has more than two network interfaces. Must be set to the interface connected to
+#				your local network, normally your wireless card
 #
-# LocalNetwork    Must be set to the network address and net mask of your internal network. You can use the number of bits in the netmask
-#                 (e.g. /16, /24, etc.) or the full x.x.x.x specification
+# LocalNetwork			Must be set to the network address and net mask of your internal network. You can use the number of bits in the
+#				netmask (e.g. /16, /24, etc.) or the full x.x.x.x specification
 #
-# GatewayPort     The TCP port to bind the gateway service to. 5280 is de-facto standard for NoCatAuth. Change this only if you absolutely need to
+# GatewayPort			The TCP port to bind the gateway service to. 5280 is de-facto standard for NoCatAuth. Change this only if you
+#				absolutely need to
 #
-# AuthServiceIP   The address of your authentication service. You must use an IP address if DNS resolution isn't available at gateway startup
+# ProxyPort			The TCP port to bind the proxy service to. If not defined is set to GatewayPort
 #
-# MembersOnly     Give this if you want to disable public access (i.e. unauthenticated 'skip' button access). You'll also want to
-#						point AuthServiceIP somewhere that doesn't include a skip button (likeat your own Auth server)
+# AuthServiceIP			The address of your authentication service. You must use an IP address if DNS resolution isn't available at gateway
+#				startup
 #
-# MaxSegmentSize  Give this if you want to reduce MTU
+# MembersOnly			Give this if you want to disable public access (i.e. unauthenticated 'skip' button access). You'll also want to
+#				point AuthServiceIP somewhere that doesn't include a skip button (likeat your own Auth server)
 #
-# MasqueradeDevice		                maschera   il traffico verso il device
-# AvoidMasqueradeAuthServiceIP evita di mascherare il traffico verso portale autorizzativo
+# MaxSegmentSize		Give this if you want to reduce MTU
+# MasqueradeDevice		maschera   il traffico verso il device
+# AvoidMasqueradeAuthServiceIP	evita di mascherare il traffico verso portale autorizzativo
 # ---------------------------------------------------------------------------------------------------------------------------------------------------
 RouteOnly=${RouteOnly:-0}
 MembersOnly=${MembersOnly:-1}
 GatewayPort=${GatewayPort:-5280}
+ProxyPort=${ProxyPort:-$GatewayPort}
 MaxSegmentSize=${MaxSegmentSize:-1}
 AvoidMasqueradeAuthServiceIP=${AvoidMasqueradeAuthServiceIP:-0}
 
 # ---------------------------------------------------------------------------------------------------------------------------------------------------
 # Gestione dei limiti sulla banda per gli utenti
 # ---------------------------------------------------------------------------------------------------------------------------------------------------
-# IMQdevice					IMQ device per la gestione del bitrate in upload
-# IFBdevice					IFB device per la gestione del bitrate in upload
-# UploadRate				Upload bit rate per le interfacce interne (in Kbits)
-# DownloadRate				Download bit rate per le interfacce interne (in Kbits)
-# UserDelay					delay accettabile per il traffico utente (default 100, in millisecondi)
-# UserPriority				priorita' del traffico degli utenti (default 5)
-# UserUploadRate			Bit rate in upload di default per gli utenti (in Kbits)
-# UserPacketSize			dimensione massima del pacchetto sull'interfaccia (default 1500, in bytes)
-# UserAverageRate			rate medio per il traffico (default 10)
+# IMQdevice			IMQ device per la gestione del bitrate in upload
+# IFBdevice			IFB device per la gestione del bitrate in upload
+# UploadRate			Upload bit rate per le interfacce interne (in Kbits)
+# DownloadRate			Download bit rate per le interfacce interne (in Kbits)
+# UserDelay			delay accettabile per il traffico utente (default 100, in millisecondi)
+# UserPriority			priorita' del traffico degli utenti (default 5)
+# UserUploadRate		Bit rate in upload di default per gli utenti (in Kbits)
+# UserPacketSize		dimensione massima del pacchetto sull'interfaccia (default 1500, in bytes)
+# UserAverageRate		rate medio per il traffico (default 10)
 # UserDownloadRate		Bit rate in download di default per gli utenti (in Kbits)
 # ReservedRatio			percentuale di banda riservata
 # ReservedClass			classId da utilizzare per il qos (default 1)
 # ReservedDelay			delay accettabile per il traffico riservato (default 200, in millisecondi)
 # ReservedPriority		priorita' per il traffico riservato (default 1, bassa priorita')
 # ReservedPacketSize		dimensione massima del pacchetto sull'interfaccia (default 1500, in bytes)
-# ReservedAverageRate	rate medio per il traffico riservato atto al dimensionamento dei parametri di coda (default 1)
-# EnableBandwidthLimits	abilita la gestione dei limiti sulla banda per gli utenti
-# FullPrivateNetwork	   la rete privata utilizzata internamente
-# BlockRFC1918		      blocca il travvico verso le reti private
+# ReservedAverageRate		rate medio per il traffico riservato atto al dimensionamento dei parametri di coda (default 1)
+# EnableBandwidthLimits		abilita la gestione dei limiti sulla banda per gli utenti
+# FullPrivateNetwork		la rete privata utilizzata internamente
+# BlockRFC1918			blocca il travvico verso le reti private
+# EnableIpset			utilizza ipset per ottimizzazioni
+# EnableIpsetAuth		modalita di autorizzazione sui pacchetti sorgenti: "bitmap:ip,mac", "hash:ip", "hash:ip,mac", "hash:mac" default "bitmap:ip,mac"
 #
 # DosPrevention			abilita il supporto anti DoS sul captive portal (da impostare ad 1 per attivare il supporto)
 # DosAllowTries			numero massimo di connessioni consentite nella finestra temporale
-# DosTimeInterval			finestra temporale in cui osservare il numero di connessioni per IP
+# DosTimeInterval		finestra temporale in cui osservare il numero di connessioni per IP
 # ---------------------------------------------------------------------------------------------------------------------------------------------------
 IFBdevice=${IFBdevice:-ifb0}
 UploadRate=${UploadRate:-10240}
@@ -995,14 +1222,16 @@ ReservedPriority=${ReservedPriority:-1}
 ReservedPacketSize=${ReservedPacketSize:-1500}
 ReservedAverageRate=${ReservedAverageRate:-1}
 EnableBandwidthLimits=${EnableBandwidthLimits:-0}
-FullPrivateNetwork=${FullPrivateNetwork:-192.168.0.0/16}
+FullPrivateNetwork=${FullPrivateNetwork:-172.16.0.0/12}
 BlockRFC1918=${BlockRFC1918:-1}
+EnableIpset=${EnableIpset:-0}
+EnableIpsetAuth=${EnableIpsetAuth:-bitmap:ip,mac}
 
 DosPrevention=${DosPrevention:-0}
 DosAllowTries=${DosAllowTries:-5}
 DosTimeInterval=${DosTimeInterval:-60}
 
-# (
+# {
 # echo "ENVIRONMENT:"
 # echo "-----------------------------------------------------------"
 # env
@@ -1013,4 +1242,6 @@ DosTimeInterval=${DosTimeInterval:-60}
 do_cmd "$@"
 # set +x
 # echo "-----------------------------------------------------------"
-# ) 2>/tmp/nodog_fw.$$ >&2
+# } 2>/tmp/nodog_fw.$$ >&2
+
+exit 0

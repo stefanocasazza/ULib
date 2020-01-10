@@ -1902,6 +1902,24 @@ long double UStringRep::strtold() const
 }
 #endif
 
+UString UString::humanReadableByteCountBin(int64_t bytes)
+{
+   U_TRACE(0, "UString::humanReadableByteCountBin(%lld)", bytes)
+
+   UString result(32U);
+   int64_t b = (bytes == LONG_MIN ? LONG_MAX : llabs(bytes));
+
+        if (b < 1024L)                       result.snprintf(U_CONSTANT_TO_PARAM("%lld B"),    bytes);
+   else if (b <= (0xfffccccccccccccL >> 40)) result.snprintf(U_CONSTANT_TO_PARAM("%.1f KiB"),  bytes        / 0x1p10);
+   else if (b <= (0xfffccccccccccccL >> 30)) result.snprintf(U_CONSTANT_TO_PARAM("%.1f MiB"),  bytes        / 0x1p20);
+   else if (b <= (0xfffccccccccccccL >> 20)) result.snprintf(U_CONSTANT_TO_PARAM("%.1f GiB"),  bytes        / 0x1p30);
+   else if (b <= (0xfffccccccccccccL >> 10)) result.snprintf(U_CONSTANT_TO_PARAM("%.1f TiB"),  bytes        / 0x1p40);
+   else if (b <=  0xfffccccccccccccL)        result.snprintf(U_CONSTANT_TO_PARAM("%.1f PiB"), (bytes >> 10) / 0x1p40);
+   else                                      result.snprintf(U_CONSTANT_TO_PARAM("%.1f EiB"), (bytes >> 20) / 0x1p40);
+
+   U_RETURN_STRING(result);
+}
+
 // UTF8 <--> ISO Latin 1
 
 UStringRep* UStringRep::fromUTF8(const unsigned char* s, uint32_t n)

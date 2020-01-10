@@ -17,13 +17,6 @@
 
 class U_EXPORT Fortune {
 public:
-	// Check for memory error
-	U_MEMORY_TEST
-
-	// Allocator e Deallocator
-	U_MEMORY_ALLOCATOR
-	U_MEMORY_DEALLOCATOR
-
 	uint32_t id;
 	UString message;
 
@@ -40,8 +33,6 @@ public:
 	Fortune(const Fortune& f) : id(f.id), message(f.message)
 		{
 		U_TRACE_CTOR(5, Fortune, "%p", &f)
-
-		U_MEMORY_TEST_COPY(f)
 		}
 
 	~Fortune()
@@ -159,7 +150,7 @@ public:
 			{
 			u_put_unalignedp64(ptr,	    U_MULTICHAR_CONSTANT64('C','o','n','t','e','n','t','-'));
 			u_put_unalignedp64(ptr+8,   U_MULTICHAR_CONSTANT64('L','e','n','g','t','h',':',' '));
-			u_put_unalignedp64(ptr+16,  U_MULTICHAR_CONSTANT64('1','2','2','7','\r','\n','C','o'));
+			u_put_unalignedp64(ptr+16,  U_MULTICHAR_CONSTANT64('x','x','x','x','\r','\n','C','o'));
 			u_put_unalignedp64(ptr+24,  U_MULTICHAR_CONSTANT64('n','t','e','n','t','-','T','y'));
 			u_put_unalignedp64(ptr+32,  U_MULTICHAR_CONSTANT64('p','e',':',' ','t','e','x','t'));
 			u_put_unalignedp64(ptr+40,  U_MULTICHAR_CONSTANT64('/','h','t','m','l',';',' ','c'));
@@ -180,13 +171,11 @@ public:
 			u_put_unalignedp64(ptr+160, U_MULTICHAR_CONSTANT64('<','/','t','h','>','<','/','t'));
 			u_put_unalignedp16(ptr+168, U_MULTICHAR_CONSTANT16('r','>'));
 
-			pwbuffer	= ptr + U_CONSTANT_SIZE("Content-Length: 1227\r\nContent-Type: text/html; charset=UTF-8\r\n\r\n"
+			pwbuffer	= ptr + U_CONSTANT_SIZE("Content-Length: xxxx\r\nContent-Type: text/html; charset=UTF-8\r\n\r\n"
 														"<!doctype html><html><head><title>Fortunes</title></head><body><table><tr><th>id</th><th>message</th></tr>");
 			}
 
 		U_INTERNAL_ASSERT_EQUALS(u_get_unalignedp64(UClientImage_Base::wbuffer->data()), U_MULTICHAR_CONSTANT64('C','o','n','t','e','n','t','-'))
-
-		UClientImage_Base::wbuffer->size_adjust_constant(U_CONSTANT_SIZE("Content-Length: 1227\r\nContent-Type: text/html; charset=UTF-8\r\n\r\n") + 1227);
 		}
 
 	static void endQuery()
@@ -203,6 +192,7 @@ public:
 		pvfortune->sort(Fortune::cmp_obj);
 
 		char* ptr = pwbuffer;
+		uint32_t content_length = U_CONSTANT_SIZE("<!doctype html><html><head><title>Fortunes</title></head><body><table><tr><th>id</th><th>message</th></tr>");
 
 		for (uint32_t sz, i = 0, n = pvfortune->size(); i < n; ++i)
 			{
@@ -228,6 +218,17 @@ public:
 		u_put_unalignedp64(ptr,    U_MULTICHAR_CONSTANT64('<','/','t','a','b','l','e','>'));
 		u_put_unalignedp64(ptr+8,  U_MULTICHAR_CONSTANT64('<','/','b','o','d','y','>','<'));
 		u_put_unalignedp64(ptr+16, U_MULTICHAR_CONSTANT64('/','h','t','m','l','>','\0','\0'));
+
+		content_length += (ptr - pwbuffer) + U_CONSTANT_SIZE("</table></body></html>");
+
+		U_INTERNAL_ASSERT_EQUALS(content_length, 1227)
+
+		ptr = pwbuffer	- U_CONSTANT_SIZE("xxxx\r\nContent-Type: text/html; charset=UTF-8\r\n\r\n"
+													"<!doctype html><html><head><title>Fortunes</title></head><body><table><tr><th>id</th><th>message</th></tr>");
+
+		(void) u_num2str32(content_length, ptr);
+
+		UClientImage_Base::wbuffer->size_adjust_constant(U_CONSTANT_SIZE("Content-Length: xxxx\r\nContent-Type: text/html; charset=UTF-8\r\n\r\n") + content_length);
 		}
 
 	static void doQuery(vPF handlerQuery)
@@ -246,10 +247,7 @@ public:
 #	ifdef U_STATIC_ORM_DRIVER_PGSQL
 		U_INTERNAL_DUMP("UServer_Base::handler_db2 = %p", UServer_Base::handler_db2)
 
-		if (UServer_Base::handler_db2 == U_NULLPTR)
-			{
-			U_NEW(UEventDB, UServer_Base::handler_db2, UEventDB);
-			}
+		if (UServer_Base::handler_db2 == U_NULLPTR) UServer_Base::handler_db2 = new UEventDB();
 #	endif
 		}
 
@@ -257,15 +255,15 @@ public:
 		{
 		U_TRACE_NO_PARAM(5, "Fortune::handlerFork()")
 
-		U_NEW_STRING(pmessage, UString(101U));
+		pmessage = new UString(101U);
 
-		U_NEW(UVector<Fortune*>, pvfortune, UVector<Fortune*>);
+		pvfortune = new UVector<Fortune*>();
 
 		Fortune* elem;
 
 		for (uint32_t i = 0; i < 13; ++i)
 			{
-			U_NEW(Fortune, elem, Fortune(i+1));
+			elem = new Fortune(i+1);
 
 			pvfortune->push(elem);
 			}
@@ -277,7 +275,7 @@ public:
 
 		if (psql_fortune == U_NULLPTR)
 			{
-			U_NEW(UOrmSession, psql_fortune, UOrmSession(U_CONSTANT_TO_PARAM("fortune")));
+			psql_fortune = new UOrmSession(U_CONSTANT_TO_PARAM("fortune"));
 
 			if (psql_fortune->isReady() == false)
 				{
@@ -290,7 +288,7 @@ public:
 				return;
 				}
 
-			U_NEW(UOrmStatement, pstmt_fortune, UOrmStatement(*psql_fortune, U_CONSTANT_TO_PARAM("SELECT id, message FROM Fortune")));
+			pstmt_fortune = new UOrmStatement(*psql_fortune, U_CONSTANT_TO_PARAM("SELECT id, message FROM Fortune"));
 
 			handlerFork();
 
@@ -313,33 +311,33 @@ public:
 		}
 
 #ifdef DEBUG
-	static void handlerEnd()
-		{
-		U_TRACE_NO_PARAM(5, "Fortune::handlerEnd()")
+   static void handlerEnd()
+      {
+      U_TRACE_NO_PARAM(5, "Fortune::handlerEnd()")
 
-		U_INTERNAL_ASSERT_POINTER(pmessage)
-		U_INTERNAL_ASSERT_POINTER(pvfortune)
+      U_INTERNAL_ASSERT_POINTER(pmessage)
+      U_INTERNAL_ASSERT_POINTER(pvfortune)
 
-		U_DELETE(pmessage)
-		U_DELETE(pvfortune)
-		}
+      U_DELETE(pmessage)
+      U_DELETE(pvfortune)
+      }
 
-	static void handlerEndSql()
-		{
-		U_TRACE_NO_PARAM(5, "Fortune::handlerEndSql()")
+   static void handlerEndSql()
+      {
+      U_TRACE_NO_PARAM(5, "Fortune::handlerEndSql()")
 
-		if (pstmt_fortune)
-			{
-			handlerEnd();
+      if (pstmt_fortune)
+         {
+         handlerEnd();
 
-			U_DELETE(psql_fortune)
-			U_DELETE(pstmt_fortune)
+         U_DELETE(psql_fortune)
+         U_DELETE(pstmt_fortune)
 
-			pstmt_fortune = U_NULLPTR;
-			}
-		}
+         pstmt_fortune = U_NULLPTR;
+         }
+      }
 
-	const char* dump(bool breset) const;
+   const char* dump(bool breset) const;
 #endif
 
 private:

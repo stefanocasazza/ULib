@@ -617,7 +617,12 @@ bool UWebSocket::sendData(const bool isServer, USocket* socket, int type, const 
    */
 
    uint8_t opcode, masking_key[4];
+
+   U_DUMP("len = %lu", len);
+   // 0xffff == 65535
    uint32_t header_length = (len > 125U ? 2U : 0) + (len > 0xffff ? 8U : 0);
+
+   U_DUMP("header_length = %lu", header_length);
 
    if (isServer) header_length += 2U;
    else
@@ -628,8 +633,12 @@ bool UWebSocket::sendData(const bool isServer, USocket* socket, int type, const 
 
    uint32_t ncount = header_length + len;
 
-   UString tmp(ncount), compressed;
-   unsigned char* header = (unsigned char*)tmp.data();
+   // 1 MB
+   static UString buffer(1048576U);
+   buffer.setEmpty();
+   buffer.reserve(ncount);
+
+   unsigned char* header = (unsigned char*)buffer.data();
 
    switch (type)
       {
@@ -643,6 +652,8 @@ bool UWebSocket::sendData(const bool isServer, USocket* socket, int type, const 
          opcode = U_WS_OPCODE_TEXT;
 
 #     ifdef USE_LIBBROTLI
+         UString compressed;
+
          if (compressed = UStringExt::brotli(data, len, (U_PARALLELIZATION_CHILD ? BROTLI_MAX_QUALITY : UHTTP::brotli_level_for_dynamic_content)))
             {
             opcode = U_WS_OPCODE_BROTLI;
@@ -685,7 +696,7 @@ bool UWebSocket::sendData(const bool isServer, USocket* socket, int type, const 
       case 4:
       {
          header[1] = 126;
-         u_put_unalignedp16(header+2, htons(len));
+         u_put_unalignedp16(header+2, htons((uint16_t)len));
          break;
       }
       case 12:
@@ -721,6 +732,7 @@ bool UWebSocket::sendData(const bool isServer, USocket* socket, int type, const 
 
       default: break; // never reached
    }
+
    switch (header_length)
    {
       // server
@@ -728,10 +740,7 @@ bool UWebSocket::sendData(const bool isServer, USocket* socket, int type, const 
       case 4:
       case 12:
       {
-         for (uint32_t i = 0; i < len; ++i)
-         {
-            header[2+i] = data[i];
-         }
+         memcpy(header + header_length, data, len);
          break;
       }
       // client
@@ -739,9 +748,10 @@ bool UWebSocket::sendData(const bool isServer, USocket* socket, int type, const 
       case 8:
       case 16:
       {  
+         // we should SIMD this
          for (uint32_t i = 0; i < len; ++i)
          {
-            header[6+i] = (data[i] ^ masking_key[i % 4]) & 0xff;
+            header[header_length + i] = (data[i] ^ masking_key[i % 4]) & 0xff;
          }
          break;
       }

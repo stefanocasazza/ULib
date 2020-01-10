@@ -45,9 +45,9 @@ export ORM_DRIVER ORM_OPTION UMEMPOOL
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------
 # JSON
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------
-#UMEMPOOL="237,0,0,49,273,-15,-14,-20,36"
-#sed -i "s|TCP_LINGER_SET .*|TCP_LINGER_SET 0|g"	 benchmark/FrameworkBenchmarks/fbenchmark.cfg
-#sed -i "s|LISTEN_BACKLOG .*|LISTEN_BACKLOG 256|g"	 benchmark/FrameworkBenchmarks/fbenchmark.cfg
+ UMEMPOOL="237,0,0,49,273,-15,-14,-20,36"
+ sed -i "s|TCP_LINGER_SET .*|TCP_LINGER_SET 0|g"	 benchmark/FrameworkBenchmarks/fbenchmark.cfg
+ sed -i "s|LISTEN_BACKLOG .*|LISTEN_BACKLOG 256|g"	 benchmark/FrameworkBenchmarks/fbenchmark.cfg
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------
 #Running 15s test @ http://localhost:8080/json
 #  4 threads and 256 connections
@@ -69,11 +69,11 @@ export ORM_DRIVER ORM_OPTION UMEMPOOL
 #ORM_OPTION="host=localhost dbname=../db/hello_world"
 #ORM_DRIVER="mysql"
 #ORM_OPTION="host=localhost user=benchmarkdbuser password=benchmarkdbpass character-set=utf8 dbname=hello_world"
- ORM_DRIVER="pgsql"
- ORM_OPTION="host=localhost user=benchmarkdbuser password=benchmarkdbpass dbname=hello_world"
- UMEMPOOL="581,0,0,66,16416,-7,-20,-23,31"
- sed -i "s|TCP_LINGER_SET .*|TCP_LINGER_SET -2|g"	benchmark/FrameworkBenchmarks/fbenchmark.cfg
- sed -i "s|LISTEN_BACKLOG .*|LISTEN_BACKLOG 256|g"	benchmark/FrameworkBenchmarks/fbenchmark.cfg
+#ORM_DRIVER="pgsql"
+#ORM_OPTION="host=localhost user=benchmarkdbuser password=benchmarkdbpass dbname=hello_world"
+#UMEMPOOL="581,0,0,66,16416,-7,-20,-23,31"
+#sed -i "s|TCP_LINGER_SET .*|TCP_LINGER_SET -2|g"	benchmark/FrameworkBenchmarks/fbenchmark.cfg
+#sed -i "s|LISTEN_BACKLOG .*|LISTEN_BACKLOG 256|g"	benchmark/FrameworkBenchmarks/fbenchmark.cfg
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------
 #Running 15s test @ http://localhost:8080/cached_worlds?queries=20
 #  4 threads and 256 connections

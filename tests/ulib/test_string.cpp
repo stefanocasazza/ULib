@@ -1501,6 +1501,10 @@ U_EXPORT main(int argc, char* argv[])
 
    U_TRACE(5, "main(%d)", argc)
 
+   UString byte_count = UString::humanReadableByteCountBin(U_STRING_MAX_SIZE);
+
+   U_ASSERT( byte_count == U_STRING_FROM_CONSTANT("4.0 GiB") )
+
 #if defined(U_STDCPP_ENABLE) && defined(HAVE_CXX20) && defined(U_LINUX)
    UString token     = U_STRING_FROM_CONSTANT("a"),
            firstname = U_STRING_FROM_CONSTANT("Victor"),

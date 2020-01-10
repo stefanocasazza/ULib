@@ -2648,6 +2648,8 @@ public:
             long strtol( bool check_for_suffix = false) const  { return rep->strtol( check_for_suffix); }
    unsigned long strtoul(bool check_for_suffix = false) const  { return rep->strtoul(check_for_suffix); }   
 
+   static UString humanReadableByteCountBin(int64_t bytes);
+
    // UTF8 <--> ISO Latin 1
 
    static UString toUTF8(const unsigned char* t, uint32_t tlen)
