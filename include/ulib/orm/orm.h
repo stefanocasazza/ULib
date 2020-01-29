@@ -254,13 +254,65 @@ public:
 
    // Syntactic sugar for bindParam() used with use() binding param registers
 
-   template <class T1>                                                             void use(T1& r1);
-   template <class T1, class T2>                                                   void use(T1& r1, T2& r2);
-   template <class T1, class T2, class T3>                                         void use(T1& r1, T2& r2, T3& r3);
-   template <class T1, class T2, class T3, class T4>                               void use(T1& r1, T2& r2, T3& r3, T4& r4);
-   template <class T1, class T2, class T3, class T4, class T5>                     void use(T1& r1, T2& r2, T3& r3, T4& r4, T5& r5);
-   template <class T1, class T2, class T3, class T4, class T5, class T6>           void use(T1& r1, T2& r2, T3& r3, T4& r4, T5& r5, T6& r6);
-   template <class T1, class T2, class T3, class T4, class T5, class T6, class T7> void use(T1& r1, T2& r2, T3& r3, T4& r4, T5& r5, T6& r6, T7& r7);
+template <class T1> 
+void use(T1& r1);
+
+template <class T1,class T2> 
+void use(T1& r1,T2& r2);
+
+template <class T1,class T2,class T3> 
+void use(T1& r1,T2& r2,T3& r3);
+
+template <class T1,class T2,class T3,class T4> 
+void use(T1& r1,T2& r2,T3& r3,T4& r4);
+
+template <class T1,class T2,class T3,class T4,class T5> 
+void use(T1& r1,T2& r2,T3& r3,T4& r4,T5& r5);
+
+template <class T1,class T2,class T3,class T4,class T5,class T6> 
+void use(T1& r1,T2& r2,T3& r3,T4& r4,T5& r5,T6& r6);
+
+template <class T1,class T2,class T3,class T4,class T5,class T6,class T7> 
+void use(T1& r1,T2& r2,T3& r3,T4& r4,T5& r5,T6& r6,T7& r7);
+
+template <class T1,class T2,class T3,class T4,class T5,class T6,class T7,class T8> 
+void use(T1& r1,T2& r2,T3& r3,T4& r4,T5& r5,T6& r6,T7& r7,T8& r8);
+
+template <class T1,class T2,class T3,class T4,class T5,class T6,class T7,class T8,class T9> 
+void use(T1& r1,T2& r2,T3& r3,T4& r4,T5& r5,T6& r6,T7& r7,T8& r8,T9& r9);
+
+template <class T1,class T2,class T3,class T4,class T5,class T6,class T7,class T8,class T9,class T10> 
+void use(T1& r1,T2& r2,T3& r3,T4& r4,T5& r5,T6& r6,T7& r7,T8& r8,T9& r9,T10& r10);
+
+template <class T1,class T2,class T3,class T4,class T5,class T6,class T7,class T8,class T9,class T10,class T11> 
+void use(T1& r1,T2& r2,T3& r3,T4& r4,T5& r5,T6& r6,T7& r7,T8& r8,T9& r9,T10& r10,T11& r11);
+
+template <class T1,class T2,class T3,class T4,class T5,class T6,class T7,class T8,class T9,class T10,class T11,class T12> 
+void use(T1& r1,T2& r2,T3& r3,T4& r4,T5& r5,T6& r6,T7& r7,T8& r8,T9& r9,T10& r10,T11& r11,T12& r12);
+
+template <class T1,class T2,class T3,class T4,class T5,class T6,class T7,class T8,class T9,class T10,class T11,class T12,class T13> 
+void use(T1& r1,T2& r2,T3& r3,T4& r4,T5& r5,T6& r6,T7& r7,T8& r8,T9& r9,T10& r10,T11& r11,T12& r12,T13& r13);
+
+template <class T1,class T2,class T3,class T4,class T5,class T6,class T7,class T8,class T9,class T10,class T11,class T12,class T13,class T14> 
+void use(T1& r1,T2& r2,T3& r3,T4& r4,T5& r5,T6& r6,T7& r7,T8& r8,T9& r9,T10& r10,T11& r11,T12& r12,T13& r13,T14& r14);
+
+template <class T1,class T2,class T3,class T4,class T5,class T6,class T7,class T8,class T9,class T10,class T11,class T12,class T13,class T14,class T15> 
+void use(T1& r1,T2& r2,T3& r3,T4& r4,T5& r5,T6& r6,T7& r7,T8& r8,T9& r9,T10& r10,T11& r11,T12& r12,T13& r13,T14& r14,T15& r15);
+
+template <class T1,class T2,class T3,class T4,class T5,class T6,class T7,class T8,class T9,class T10,class T11,class T12,class T13,class T14,class T15,class T16> 
+void use(T1& r1,T2& r2,T3& r3,T4& r4,T5& r5,T6& r6,T7& r7,T8& r8,T9& r9,T10& r10,T11& r11,T12& r12,T13& r13,T14& r14,T15& r15,T16& r16);
+
+template <class T1,class T2,class T3,class T4,class T5,class T6,class T7,class T8,class T9,class T10,class T11,class T12,class T13,class T14,class T15,class T16,class T17> 
+void use(T1& r1,T2& r2,T3& r3,T4& r4,T5& r5,T6& r6,T7& r7,T8& r8,T9& r9,T10& r10,T11& r11,T12& r12,T13& r13,T14& r14,T15& r15,T16& r16,T17& r17);
+
+template <class T1,class T2,class T3,class T4,class T5,class T6,class T7,class T8,class T9,class T10,class T11,class T12,class T13,class T14,class T15,class T16,class T17,class T18> 
+void use(T1& r1,T2& r2,T3& r3,T4& r4,T5& r5,T6& r6,T7& r7,T8& r8,T9& r9,T10& r10,T11& r11,T12& r12,T13& r13,T14& r14,T15& r15,T16& r16,T17& r17,T18& r18);
+
+template <class T1,class T2,class T3,class T4,class T5,class T6,class T7,class T8,class T9,class T10,class T11,class T12,class T13,class T14,class T15,class T16,class T17,class T18,class T19> 
+void use(T1& r1,T2& r2,T3& r3,T4& r4,T5& r5,T6& r6,T7& r7,T8& r8,T9& r9,T10& r10,T11& r11,T12& r12,T13& r13,T14& r14,T15& r15,T16& r16,T17& r17,T18& r18,T19& r19);
+
+template <class T1,class T2,class T3,class T4,class T5,class T6,class T7,class T8,class T9,class T10,class T11,class T12,class T13,class T14,class T15,class T16,class T17,class T18,class T19,class T20> 
+void use(T1& r1,T2& r2,T3& r3,T4& r4,T5& r5,T6& r6,T7& r7,T8& r8,T9& r9,T10& r10,T11& r11,T12& r12,T13& r13,T14& r14,T15& r15,T16& r16,T17& r17,T18& r18,T19& r19,T20& r20);
 
    // BIND PARAM
 
@@ -306,13 +358,67 @@ public:
 
    // Syntactic sugar for bindResult() used with into() binding result registers
 
-   template <class T1>                                                             void into(T1& r1);
-   template <class T1, class T2>                                                   void into(T1& r1, T2& r2);
-   template <class T1, class T2, class T3>                                         void into(T1& r1, T2& r2, T3& r3);
-   template <class T1, class T2, class T3, class T4>                               void into(T1& r1, T2& r2, T3& r3, T4& r4);
-   template <class T1, class T2, class T3, class T4, class T5>                     void into(T1& r1, T2& r2, T3& r3, T4& r4, T5& r5);
-   template <class T1, class T2, class T3, class T4, class T5, class T6>           void into(T1& r1, T2& r2, T3& r3, T4& r4, T5& r5, T6& r6);
-   template <class T1, class T2, class T3, class T4, class T5, class T6, class T7> void into(T1& r1, T2& r2, T3& r3, T4& r4, T5& r5, T6& r6, T7& r7);
+
+template <class T1> 
+void into(T1& r1);
+
+template <class T1,class T2> 
+void into(T1& r1,T2& r2);
+
+template <class T1,class T2,class T3> 
+void into(T1& r1,T2& r2,T3& r3);
+
+template <class T1,class T2,class T3,class T4> 
+void into(T1& r1,T2& r2,T3& r3,T4& r4);
+
+template <class T1,class T2,class T3,class T4,class T5> 
+void into(T1& r1,T2& r2,T3& r3,T4& r4,T5& r5);
+
+template <class T1,class T2,class T3,class T4,class T5,class T6> 
+void into(T1& r1,T2& r2,T3& r3,T4& r4,T5& r5,T6& r6);
+
+template <class T1,class T2,class T3,class T4,class T5,class T6,class T7> 
+void into(T1& r1,T2& r2,T3& r3,T4& r4,T5& r5,T6& r6,T7& r7);
+
+template <class T1,class T2,class T3,class T4,class T5,class T6,class T7,class T8> 
+void into(T1& r1,T2& r2,T3& r3,T4& r4,T5& r5,T6& r6,T7& r7,T8& r8);
+
+template <class T1,class T2,class T3,class T4,class T5,class T6,class T7,class T8,class T9> 
+void into(T1& r1,T2& r2,T3& r3,T4& r4,T5& r5,T6& r6,T7& r7,T8& r8,T9& r9);
+
+template <class T1,class T2,class T3,class T4,class T5,class T6,class T7,class T8,class T9,class T10> 
+void into(T1& r1,T2& r2,T3& r3,T4& r4,T5& r5,T6& r6,T7& r7,T8& r8,T9& r9,T10& r10);
+
+template <class T1,class T2,class T3,class T4,class T5,class T6,class T7,class T8,class T9,class T10,class T11> 
+void into(T1& r1,T2& r2,T3& r3,T4& r4,T5& r5,T6& r6,T7& r7,T8& r8,T9& r9,T10& r10,T11& r11);
+
+template <class T1,class T2,class T3,class T4,class T5,class T6,class T7,class T8,class T9,class T10,class T11,class T12> 
+void into(T1& r1,T2& r2,T3& r3,T4& r4,T5& r5,T6& r6,T7& r7,T8& r8,T9& r9,T10& r10,T11& r11,T12& r12);
+
+template <class T1,class T2,class T3,class T4,class T5,class T6,class T7,class T8,class T9,class T10,class T11,class T12,class T13> 
+void into(T1& r1,T2& r2,T3& r3,T4& r4,T5& r5,T6& r6,T7& r7,T8& r8,T9& r9,T10& r10,T11& r11,T12& r12,T13& r13);
+
+template <class T1,class T2,class T3,class T4,class T5,class T6,class T7,class T8,class T9,class T10,class T11,class T12,class T13,class T14> 
+void into(T1& r1,T2& r2,T3& r3,T4& r4,T5& r5,T6& r6,T7& r7,T8& r8,T9& r9,T10& r10,T11& r11,T12& r12,T13& r13,T14& r14);
+
+template <class T1,class T2,class T3,class T4,class T5,class T6,class T7,class T8,class T9,class T10,class T11,class T12,class T13,class T14,class T15> 
+void into(T1& r1,T2& r2,T3& r3,T4& r4,T5& r5,T6& r6,T7& r7,T8& r8,T9& r9,T10& r10,T11& r11,T12& r12,T13& r13,T14& r14,T15& r15);
+
+template <class T1,class T2,class T3,class T4,class T5,class T6,class T7,class T8,class T9,class T10,class T11,class T12,class T13,class T14,class T15,class T16> 
+void into(T1& r1,T2& r2,T3& r3,T4& r4,T5& r5,T6& r6,T7& r7,T8& r8,T9& r9,T10& r10,T11& r11,T12& r12,T13& r13,T14& r14,T15& r15,T16& r16);
+
+template <class T1,class T2,class T3,class T4,class T5,class T6,class T7,class T8,class T9,class T10,class T11,class T12,class T13,class T14,class T15,class T16,class T17> 
+void into(T1& r1,T2& r2,T3& r3,T4& r4,T5& r5,T6& r6,T7& r7,T8& r8,T9& r9,T10& r10,T11& r11,T12& r12,T13& r13,T14& r14,T15& r15,T16& r16,T17& r17);
+
+template <class T1,class T2,class T3,class T4,class T5,class T6,class T7,class T8,class T9,class T10,class T11,class T12,class T13,class T14,class T15,class T16,class T17,class T18> 
+void into(T1& r1,T2& r2,T3& r3,T4& r4,T5& r5,T6& r6,T7& r7,T8& r8,T9& r9,T10& r10,T11& r11,T12& r12,T13& r13,T14& r14,T15& r15,T16& r16,T17& r17,T18& r18);
+
+template <class T1,class T2,class T3,class T4,class T5,class T6,class T7,class T8,class T9,class T10,class T11,class T12,class T13,class T14,class T15,class T16,class T17,class T18,class T19> 
+void into(T1& r1,T2& r2,T3& r3,T4& r4,T5& r5,T6& r6,T7& r7,T8& r8,T9& r9,T10& r10,T11& r11,T12& r12,T13& r13,T14& r14,T15& r15,T16& r16,T17& r17,T18& r18,T19& r19);
+
+template <class T1,class T2,class T3,class T4,class T5,class T6,class T7,class T8,class T9,class T10,class T11,class T12,class T13,class T14,class T15,class T16,class T17,class T18,class T19,class T20> 
+void into(T1& r1,T2& r2,T3& r3,T4& r4,T5& r5,T6& r6,T7& r7,T8& r8,T9& r9,T10& r10,T11& r11,T12& r12,T13& r13,T14& r14,T15& r15,T16& r16,T17& r17,T18& r18,T19& r19,T20& r20);
+
 
    // BIND RESULT
 
@@ -367,158 +473,708 @@ private:
 template <class T1>
 inline void UOrmStatement::use(T1& r1)
 {
-   U_TRACE(0, "UOrmStatement::use<T1>(%p)", &r1)
+	U_TRACE(0, "UOrmStatement::use<T1& r1>(%p)",&r1)
 
-   bindParam(UOrmTypeHandler<T1>(r1));
+	bindParam(UOrmTypeHandler<T1>(r1));
 }
 
-template <class T1, class T2>
-inline void UOrmStatement::use(T1& r1, T2& r2)
+template <class T1,class T2>
+inline void UOrmStatement::use(T1& r1,T2& r2)
 {
-   U_TRACE(0, "UOrmStatement::use<T1,T2>(%p,%p)", &r1, &r2)
+	U_TRACE(0, "UOrmStatement::use<T1& r1,T2& r2>(%p,%p)",&r1,&r2)
 
-   bindParam(UOrmTypeHandler<T1>(r1));
-   bindParam(UOrmTypeHandler<T2>(r2));
+	bindParam(UOrmTypeHandler<T1>(r1));
+	bindParam(UOrmTypeHandler<T2>(r2));
 }
 
-template <class T1, class T2, class T3>
-inline void UOrmStatement::use(T1& r1, T2& r2, T3& r3)
+template <class T1,class T2,class T3>
+inline void UOrmStatement::use(T1& r1,T2& r2,T3& r3)
 {
-   U_TRACE(0, "UOrmStatement::use<T1,T2,T3>(%p,%p,%p)", &r1, &r2, &r3)
+	U_TRACE(0, "UOrmStatement::use<T1& r1,T2& r2,T3& r3>(%p,%p,%p)",&r1,&r2,&r3)
 
-   bindParam(UOrmTypeHandler<T1>(r1));
-   bindParam(UOrmTypeHandler<T2>(r2));
-   bindParam(UOrmTypeHandler<T3>(r3));
+	bindParam(UOrmTypeHandler<T1>(r1));
+	bindParam(UOrmTypeHandler<T2>(r2));
+	bindParam(UOrmTypeHandler<T3>(r3));
 }
 
-template <class T1, class T2, class T3, class T4>
-inline void UOrmStatement::use(T1& r1, T2& r2, T3& r3, T4& r4)
+template <class T1,class T2,class T3,class T4>
+inline void UOrmStatement::use(T1& r1,T2& r2,T3& r3,T4& r4)
 {
-   U_TRACE(0, "UOrmStatement::use<T1,T2,T3,T4>(%p,%p,%p,%p)", &r1, &r2, &r3, &r4)
+	U_TRACE(0, "UOrmStatement::use<T1& r1,T2& r2,T3& r3,T4& r4>(%p,%p,%p,%p)",&r1,&r2,&r3,&r4)
 
-   bindParam(UOrmTypeHandler<T1>(r1));
-   bindParam(UOrmTypeHandler<T2>(r2));
-   bindParam(UOrmTypeHandler<T3>(r3));
-   bindParam(UOrmTypeHandler<T4>(r4));
+	bindParam(UOrmTypeHandler<T1>(r1));
+	bindParam(UOrmTypeHandler<T2>(r2));
+	bindParam(UOrmTypeHandler<T3>(r3));
+	bindParam(UOrmTypeHandler<T4>(r4));
 }
 
-template <class T1, class T2, class T3, class T4, class T5>
-inline void UOrmStatement::use(T1& r1, T2& r2, T3& r3, T4& r4, T5& r5)
+template <class T1,class T2,class T3,class T4,class T5>
+inline void UOrmStatement::use(T1& r1,T2& r2,T3& r3,T4& r4,T5& r5)
 {
-   U_TRACE(0, "UOrmStatement::use<T1,T2,T3,T4,T5>(%p,%p,%p,%p,%p)", &r1, &r2, &r3, &r4, &r5)
+	U_TRACE(0, "UOrmStatement::use<T1& r1,T2& r2,T3& r3,T4& r4,T5& r5>(%p,%p,%p,%p,%p)",&r1,&r2,&r3,&r4,&r5)
 
-   bindParam(UOrmTypeHandler<T1>(r1));
-   bindParam(UOrmTypeHandler<T2>(r2));
-   bindParam(UOrmTypeHandler<T3>(r3));
-   bindParam(UOrmTypeHandler<T4>(r4));
-   bindParam(UOrmTypeHandler<T5>(r5));
+	bindParam(UOrmTypeHandler<T1>(r1));
+	bindParam(UOrmTypeHandler<T2>(r2));
+	bindParam(UOrmTypeHandler<T3>(r3));
+	bindParam(UOrmTypeHandler<T4>(r4));
+	bindParam(UOrmTypeHandler<T5>(r5));
 }
 
-template <class T1, class T2, class T3, class T4, class T5, class T6>
-inline void UOrmStatement::use(T1& r1, T2& r2, T3& r3, T4& r4, T5& r5, T6& r6)
+template <class T1,class T2,class T3,class T4,class T5,class T6>
+inline void UOrmStatement::use(T1& r1,T2& r2,T3& r3,T4& r4,T5& r5,T6& r6)
 {
-   U_TRACE(0, "UOrmStatement::use<T1,T2,T3,T4,T5,T6>(%p,%p,%p,%p,%p,%p)", &r1, &r2, &r3, &r4, &r5, &r6)
+	U_TRACE(0, "UOrmStatement::use<T1& r1,T2& r2,T3& r3,T4& r4,T5& r5,T6& r6>(%p,%p,%p,%p,%p,%p)",&r1,&r2,&r3,&r4,&r5,&r6)
 
-   bindParam(UOrmTypeHandler<T1>(r1));
-   bindParam(UOrmTypeHandler<T2>(r2));
-   bindParam(UOrmTypeHandler<T3>(r3));
-   bindParam(UOrmTypeHandler<T4>(r4));
-   bindParam(UOrmTypeHandler<T5>(r5));
-   bindParam(UOrmTypeHandler<T6>(r6));
+	bindParam(UOrmTypeHandler<T1>(r1));
+	bindParam(UOrmTypeHandler<T2>(r2));
+	bindParam(UOrmTypeHandler<T3>(r3));
+	bindParam(UOrmTypeHandler<T4>(r4));
+	bindParam(UOrmTypeHandler<T5>(r5));
+	bindParam(UOrmTypeHandler<T6>(r6));
 }
 
-template <class T1, class T2, class T3, class T4, class T5, class T6, class T7>
-inline void UOrmStatement::use(T1& r1, T2& r2, T3& r3, T4& r4, T5& r5, T6& r6, T7& r7)
+template <class T1,class T2,class T3,class T4,class T5,class T6,class T7>
+inline void UOrmStatement::use(T1& r1,T2& r2,T3& r3,T4& r4,T5& r5,T6& r6,T7& r7)
 {
-   U_TRACE(0, "UOrmStatement::use<T1,T2,T3,T4,T5,T6,T7>(%p,%p,%p,%p,%p,%p,%p)", &r1, &r2, &r3, &r4, &r5, &r6, &r7)
+	U_TRACE(0, "UOrmStatement::use<T1& r1,T2& r2,T3& r3,T4& r4,T5& r5,T6& r6,T7& r7>(%p,%p,%p,%p,%p,%p,%p)",&r1,&r2,&r3,&r4,&r5,&r6,&r7)
 
-   bindParam(UOrmTypeHandler<T1>(r1));
-   bindParam(UOrmTypeHandler<T2>(r2));
-   bindParam(UOrmTypeHandler<T3>(r3));
-   bindParam(UOrmTypeHandler<T4>(r4));
-   bindParam(UOrmTypeHandler<T5>(r5));
-   bindParam(UOrmTypeHandler<T6>(r6));
-   bindParam(UOrmTypeHandler<T7>(r7));
+	bindParam(UOrmTypeHandler<T1>(r1));
+	bindParam(UOrmTypeHandler<T2>(r2));
+	bindParam(UOrmTypeHandler<T3>(r3));
+	bindParam(UOrmTypeHandler<T4>(r4));
+	bindParam(UOrmTypeHandler<T5>(r5));
+	bindParam(UOrmTypeHandler<T6>(r6));
+	bindParam(UOrmTypeHandler<T7>(r7));
 }
+
+template <class T1,class T2,class T3,class T4,class T5,class T6,class T7,class T8>
+inline void UOrmStatement::use(T1& r1,T2& r2,T3& r3,T4& r4,T5& r5,T6& r6,T7& r7,T8& r8)
+{
+	U_TRACE(0, "UOrmStatement::use<T1& r1,T2& r2,T3& r3,T4& r4,T5& r5,T6& r6,T7& r7,T8& r8>(%p,%p,%p,%p,%p,%p,%p,%p)",&r1,&r2,&r3,&r4,&r5,&r6,&r7,&r8)
+
+	bindParam(UOrmTypeHandler<T1>(r1));
+	bindParam(UOrmTypeHandler<T2>(r2));
+	bindParam(UOrmTypeHandler<T3>(r3));
+	bindParam(UOrmTypeHandler<T4>(r4));
+	bindParam(UOrmTypeHandler<T5>(r5));
+	bindParam(UOrmTypeHandler<T6>(r6));
+	bindParam(UOrmTypeHandler<T7>(r7));
+	bindParam(UOrmTypeHandler<T8>(r8));
+}
+
+template <class T1,class T2,class T3,class T4,class T5,class T6,class T7,class T8,class T9>
+inline void UOrmStatement::use(T1& r1,T2& r2,T3& r3,T4& r4,T5& r5,T6& r6,T7& r7,T8& r8,T9& r9)
+{
+	U_TRACE(0, "UOrmStatement::use<T1& r1,T2& r2,T3& r3,T4& r4,T5& r5,T6& r6,T7& r7,T8& r8,T9& r9>(%p,%p,%p,%p,%p,%p,%p,%p,%p)",&r1,&r2,&r3,&r4,&r5,&r6,&r7,&r8,&r9)
+
+	bindParam(UOrmTypeHandler<T1>(r1));
+	bindParam(UOrmTypeHandler<T2>(r2));
+	bindParam(UOrmTypeHandler<T3>(r3));
+	bindParam(UOrmTypeHandler<T4>(r4));
+	bindParam(UOrmTypeHandler<T5>(r5));
+	bindParam(UOrmTypeHandler<T6>(r6));
+	bindParam(UOrmTypeHandler<T7>(r7));
+	bindParam(UOrmTypeHandler<T8>(r8));
+	bindParam(UOrmTypeHandler<T9>(r9));
+}
+
+template <class T1,class T2,class T3,class T4,class T5,class T6,class T7,class T8,class T9,class T10>
+inline void UOrmStatement::use(T1& r1,T2& r2,T3& r3,T4& r4,T5& r5,T6& r6,T7& r7,T8& r8,T9& r9,T10& r10)
+{
+	U_TRACE(0, "UOrmStatement::use<T1& r1,T2& r2,T3& r3,T4& r4,T5& r5,T6& r6,T7& r7,T8& r8,T9& r9,T10& r10>(%p,%p,%p,%p,%p,%p,%p,%p,%p,%p)",&r1,&r2,&r3,&r4,&r5,&r6,&r7,&r8,&r9,&r10)
+
+	bindParam(UOrmTypeHandler<T1>(r1));
+	bindParam(UOrmTypeHandler<T2>(r2));
+	bindParam(UOrmTypeHandler<T3>(r3));
+	bindParam(UOrmTypeHandler<T4>(r4));
+	bindParam(UOrmTypeHandler<T5>(r5));
+	bindParam(UOrmTypeHandler<T6>(r6));
+	bindParam(UOrmTypeHandler<T7>(r7));
+	bindParam(UOrmTypeHandler<T8>(r8));
+	bindParam(UOrmTypeHandler<T9>(r9));
+	bindParam(UOrmTypeHandler<T10>(r10));
+}
+
+template <class T1,class T2,class T3,class T4,class T5,class T6,class T7,class T8,class T9,class T10,class T11>
+inline void UOrmStatement::use(T1& r1,T2& r2,T3& r3,T4& r4,T5& r5,T6& r6,T7& r7,T8& r8,T9& r9,T10& r10,T11& r11)
+{
+	U_TRACE(0, "UOrmStatement::use<T1& r1,T2& r2,T3& r3,T4& r4,T5& r5,T6& r6,T7& r7,T8& r8,T9& r9,T10& r10,T11& r11>(%p,%p,%p,%p,%p,%p,%p,%p,%p,%p,%p)",&r1,&r2,&r3,&r4,&r5,&r6,&r7,&r8,&r9,&r10,&r11)
+
+	bindParam(UOrmTypeHandler<T1>(r1));
+	bindParam(UOrmTypeHandler<T2>(r2));
+	bindParam(UOrmTypeHandler<T3>(r3));
+	bindParam(UOrmTypeHandler<T4>(r4));
+	bindParam(UOrmTypeHandler<T5>(r5));
+	bindParam(UOrmTypeHandler<T6>(r6));
+	bindParam(UOrmTypeHandler<T7>(r7));
+	bindParam(UOrmTypeHandler<T8>(r8));
+	bindParam(UOrmTypeHandler<T9>(r9));
+	bindParam(UOrmTypeHandler<T10>(r10));
+	bindParam(UOrmTypeHandler<T11>(r11));
+}
+
+template <class T1,class T2,class T3,class T4,class T5,class T6,class T7,class T8,class T9,class T10,class T11,class T12>
+inline void UOrmStatement::use(T1& r1,T2& r2,T3& r3,T4& r4,T5& r5,T6& r6,T7& r7,T8& r8,T9& r9,T10& r10,T11& r11,T12& r12)
+{
+	U_TRACE(0, "UOrmStatement::use<T1& r1,T2& r2,T3& r3,T4& r4,T5& r5,T6& r6,T7& r7,T8& r8,T9& r9,T10& r10,T11& r11,T12& r12>(%p,%p,%p,%p,%p,%p,%p,%p,%p,%p,%p,%p)",&r1,&r2,&r3,&r4,&r5,&r6,&r7,&r8,&r9,&r10,&r11,&r12)
+
+	bindParam(UOrmTypeHandler<T1>(r1));
+	bindParam(UOrmTypeHandler<T2>(r2));
+	bindParam(UOrmTypeHandler<T3>(r3));
+	bindParam(UOrmTypeHandler<T4>(r4));
+	bindParam(UOrmTypeHandler<T5>(r5));
+	bindParam(UOrmTypeHandler<T6>(r6));
+	bindParam(UOrmTypeHandler<T7>(r7));
+	bindParam(UOrmTypeHandler<T8>(r8));
+	bindParam(UOrmTypeHandler<T9>(r9));
+	bindParam(UOrmTypeHandler<T10>(r10));
+	bindParam(UOrmTypeHandler<T11>(r11));
+	bindParam(UOrmTypeHandler<T12>(r12));
+}
+
+template <class T1,class T2,class T3,class T4,class T5,class T6,class T7,class T8,class T9,class T10,class T11,class T12,class T13>
+inline void UOrmStatement::use(T1& r1,T2& r2,T3& r3,T4& r4,T5& r5,T6& r6,T7& r7,T8& r8,T9& r9,T10& r10,T11& r11,T12& r12,T13& r13)
+{
+	U_TRACE(0, "UOrmStatement::use<T1& r1,T2& r2,T3& r3,T4& r4,T5& r5,T6& r6,T7& r7,T8& r8,T9& r9,T10& r10,T11& r11,T12& r12,T13& r13>(%p,%p,%p,%p,%p,%p,%p,%p,%p,%p,%p,%p,%p)",&r1,&r2,&r3,&r4,&r5,&r6,&r7,&r8,&r9,&r10,&r11,&r12,&r13)
+
+	bindParam(UOrmTypeHandler<T1>(r1));
+	bindParam(UOrmTypeHandler<T2>(r2));
+	bindParam(UOrmTypeHandler<T3>(r3));
+	bindParam(UOrmTypeHandler<T4>(r4));
+	bindParam(UOrmTypeHandler<T5>(r5));
+	bindParam(UOrmTypeHandler<T6>(r6));
+	bindParam(UOrmTypeHandler<T7>(r7));
+	bindParam(UOrmTypeHandler<T8>(r8));
+	bindParam(UOrmTypeHandler<T9>(r9));
+	bindParam(UOrmTypeHandler<T10>(r10));
+	bindParam(UOrmTypeHandler<T11>(r11));
+	bindParam(UOrmTypeHandler<T12>(r12));
+	bindParam(UOrmTypeHandler<T13>(r13));
+}
+
+template <class T1,class T2,class T3,class T4,class T5,class T6,class T7,class T8,class T9,class T10,class T11,class T12,class T13,class T14>
+inline void UOrmStatement::use(T1& r1,T2& r2,T3& r3,T4& r4,T5& r5,T6& r6,T7& r7,T8& r8,T9& r9,T10& r10,T11& r11,T12& r12,T13& r13,T14& r14)
+{
+	U_TRACE(0, "UOrmStatement::use<T1& r1,T2& r2,T3& r3,T4& r4,T5& r5,T6& r6,T7& r7,T8& r8,T9& r9,T10& r10,T11& r11,T12& r12,T13& r13,T14& r14>(%p,%p,%p,%p,%p,%p,%p,%p,%p,%p,%p,%p,%p,%p)",&r1,&r2,&r3,&r4,&r5,&r6,&r7,&r8,&r9,&r10,&r11,&r12,&r13,&r14)
+
+	bindParam(UOrmTypeHandler<T1>(r1));
+	bindParam(UOrmTypeHandler<T2>(r2));
+	bindParam(UOrmTypeHandler<T3>(r3));
+	bindParam(UOrmTypeHandler<T4>(r4));
+	bindParam(UOrmTypeHandler<T5>(r5));
+	bindParam(UOrmTypeHandler<T6>(r6));
+	bindParam(UOrmTypeHandler<T7>(r7));
+	bindParam(UOrmTypeHandler<T8>(r8));
+	bindParam(UOrmTypeHandler<T9>(r9));
+	bindParam(UOrmTypeHandler<T10>(r10));
+	bindParam(UOrmTypeHandler<T11>(r11));
+	bindParam(UOrmTypeHandler<T12>(r12));
+	bindParam(UOrmTypeHandler<T13>(r13));
+	bindParam(UOrmTypeHandler<T14>(r14));
+}
+
+template <class T1,class T2,class T3,class T4,class T5,class T6,class T7,class T8,class T9,class T10,class T11,class T12,class T13,class T14,class T15>
+inline void UOrmStatement::use(T1& r1,T2& r2,T3& r3,T4& r4,T5& r5,T6& r6,T7& r7,T8& r8,T9& r9,T10& r10,T11& r11,T12& r12,T13& r13,T14& r14,T15& r15)
+{
+	U_TRACE(0, "UOrmStatement::use<T1& r1,T2& r2,T3& r3,T4& r4,T5& r5,T6& r6,T7& r7,T8& r8,T9& r9,T10& r10,T11& r11,T12& r12,T13& r13,T14& r14,T15& r15>(%p,%p,%p,%p,%p,%p,%p,%p,%p,%p,%p,%p,%p,%p,%p)",&r1,&r2,&r3,&r4,&r5,&r6,&r7,&r8,&r9,&r10,&r11,&r12,&r13,&r14,&r15)
+
+	bindParam(UOrmTypeHandler<T1>(r1));
+	bindParam(UOrmTypeHandler<T2>(r2));
+	bindParam(UOrmTypeHandler<T3>(r3));
+	bindParam(UOrmTypeHandler<T4>(r4));
+	bindParam(UOrmTypeHandler<T5>(r5));
+	bindParam(UOrmTypeHandler<T6>(r6));
+	bindParam(UOrmTypeHandler<T7>(r7));
+	bindParam(UOrmTypeHandler<T8>(r8));
+	bindParam(UOrmTypeHandler<T9>(r9));
+	bindParam(UOrmTypeHandler<T10>(r10));
+	bindParam(UOrmTypeHandler<T11>(r11));
+	bindParam(UOrmTypeHandler<T12>(r12));
+	bindParam(UOrmTypeHandler<T13>(r13));
+	bindParam(UOrmTypeHandler<T14>(r14));
+	bindParam(UOrmTypeHandler<T15>(r15));
+}
+
+template <class T1,class T2,class T3,class T4,class T5,class T6,class T7,class T8,class T9,class T10,class T11,class T12,class T13,class T14,class T15,class T16>
+inline void UOrmStatement::use(T1& r1,T2& r2,T3& r3,T4& r4,T5& r5,T6& r6,T7& r7,T8& r8,T9& r9,T10& r10,T11& r11,T12& r12,T13& r13,T14& r14,T15& r15,T16& r16)
+{
+	U_TRACE(0, "UOrmStatement::use<T1& r1,T2& r2,T3& r3,T4& r4,T5& r5,T6& r6,T7& r7,T8& r8,T9& r9,T10& r10,T11& r11,T12& r12,T13& r13,T14& r14,T15& r15,T16& r16>(%p,%p,%p,%p,%p,%p,%p,%p,%p,%p,%p,%p,%p,%p,%p,%p)",&r1,&r2,&r3,&r4,&r5,&r6,&r7,&r8,&r9,&r10,&r11,&r12,&r13,&r14,&r15,&r16)
+
+	bindParam(UOrmTypeHandler<T1>(r1));
+	bindParam(UOrmTypeHandler<T2>(r2));
+	bindParam(UOrmTypeHandler<T3>(r3));
+	bindParam(UOrmTypeHandler<T4>(r4));
+	bindParam(UOrmTypeHandler<T5>(r5));
+	bindParam(UOrmTypeHandler<T6>(r6));
+	bindParam(UOrmTypeHandler<T7>(r7));
+	bindParam(UOrmTypeHandler<T8>(r8));
+	bindParam(UOrmTypeHandler<T9>(r9));
+	bindParam(UOrmTypeHandler<T10>(r10));
+	bindParam(UOrmTypeHandler<T11>(r11));
+	bindParam(UOrmTypeHandler<T12>(r12));
+	bindParam(UOrmTypeHandler<T13>(r13));
+	bindParam(UOrmTypeHandler<T14>(r14));
+	bindParam(UOrmTypeHandler<T15>(r15));
+	bindParam(UOrmTypeHandler<T16>(r16));
+}
+
+template <class T1,class T2,class T3,class T4,class T5,class T6,class T7,class T8,class T9,class T10,class T11,class T12,class T13,class T14,class T15,class T16,class T17>
+inline void UOrmStatement::use(T1& r1,T2& r2,T3& r3,T4& r4,T5& r5,T6& r6,T7& r7,T8& r8,T9& r9,T10& r10,T11& r11,T12& r12,T13& r13,T14& r14,T15& r15,T16& r16,T17& r17)
+{
+	U_TRACE(0, "UOrmStatement::use<T1& r1,T2& r2,T3& r3,T4& r4,T5& r5,T6& r6,T7& r7,T8& r8,T9& r9,T10& r10,T11& r11,T12& r12,T13& r13,T14& r14,T15& r15,T16& r16,T17& r17>(%p,%p,%p,%p,%p,%p,%p,%p,%p,%p,%p,%p,%p,%p,%p,%p,%p)",&r1,&r2,&r3,&r4,&r5,&r6,&r7,&r8,&r9,&r10,&r11,&r12,&r13,&r14,&r15,&r16,&r17)
+
+	bindParam(UOrmTypeHandler<T1>(r1));
+	bindParam(UOrmTypeHandler<T2>(r2));
+	bindParam(UOrmTypeHandler<T3>(r3));
+	bindParam(UOrmTypeHandler<T4>(r4));
+	bindParam(UOrmTypeHandler<T5>(r5));
+	bindParam(UOrmTypeHandler<T6>(r6));
+	bindParam(UOrmTypeHandler<T7>(r7));
+	bindParam(UOrmTypeHandler<T8>(r8));
+	bindParam(UOrmTypeHandler<T9>(r9));
+	bindParam(UOrmTypeHandler<T10>(r10));
+	bindParam(UOrmTypeHandler<T11>(r11));
+	bindParam(UOrmTypeHandler<T12>(r12));
+	bindParam(UOrmTypeHandler<T13>(r13));
+	bindParam(UOrmTypeHandler<T14>(r14));
+	bindParam(UOrmTypeHandler<T15>(r15));
+	bindParam(UOrmTypeHandler<T16>(r16));
+	bindParam(UOrmTypeHandler<T17>(r17));
+}
+
+template <class T1,class T2,class T3,class T4,class T5,class T6,class T7,class T8,class T9,class T10,class T11,class T12,class T13,class T14,class T15,class T16,class T17,class T18>
+inline void UOrmStatement::use(T1& r1,T2& r2,T3& r3,T4& r4,T5& r5,T6& r6,T7& r7,T8& r8,T9& r9,T10& r10,T11& r11,T12& r12,T13& r13,T14& r14,T15& r15,T16& r16,T17& r17,T18& r18)
+{
+	U_TRACE(0, "UOrmStatement::use<T1& r1,T2& r2,T3& r3,T4& r4,T5& r5,T6& r6,T7& r7,T8& r8,T9& r9,T10& r10,T11& r11,T12& r12,T13& r13,T14& r14,T15& r15,T16& r16,T17& r17,T18& r18>(%p,%p,%p,%p,%p,%p,%p,%p,%p,%p,%p,%p,%p,%p,%p,%p,%p,%p)",&r1,&r2,&r3,&r4,&r5,&r6,&r7,&r8,&r9,&r10,&r11,&r12,&r13,&r14,&r15,&r16,&r17,&r18)
+
+	bindParam(UOrmTypeHandler<T1>(r1));
+	bindParam(UOrmTypeHandler<T2>(r2));
+	bindParam(UOrmTypeHandler<T3>(r3));
+	bindParam(UOrmTypeHandler<T4>(r4));
+	bindParam(UOrmTypeHandler<T5>(r5));
+	bindParam(UOrmTypeHandler<T6>(r6));
+	bindParam(UOrmTypeHandler<T7>(r7));
+	bindParam(UOrmTypeHandler<T8>(r8));
+	bindParam(UOrmTypeHandler<T9>(r9));
+	bindParam(UOrmTypeHandler<T10>(r10));
+	bindParam(UOrmTypeHandler<T11>(r11));
+	bindParam(UOrmTypeHandler<T12>(r12));
+	bindParam(UOrmTypeHandler<T13>(r13));
+	bindParam(UOrmTypeHandler<T14>(r14));
+	bindParam(UOrmTypeHandler<T15>(r15));
+	bindParam(UOrmTypeHandler<T16>(r16));
+	bindParam(UOrmTypeHandler<T17>(r17));
+	bindParam(UOrmTypeHandler<T18>(r18));
+}
+
+template <class T1,class T2,class T3,class T4,class T5,class T6,class T7,class T8,class T9,class T10,class T11,class T12,class T13,class T14,class T15,class T16,class T17,class T18,class T19>
+inline void UOrmStatement::use(T1& r1,T2& r2,T3& r3,T4& r4,T5& r5,T6& r6,T7& r7,T8& r8,T9& r9,T10& r10,T11& r11,T12& r12,T13& r13,T14& r14,T15& r15,T16& r16,T17& r17,T18& r18,T19& r19)
+{
+	U_TRACE(0, "UOrmStatement::use<T1& r1,T2& r2,T3& r3,T4& r4,T5& r5,T6& r6,T7& r7,T8& r8,T9& r9,T10& r10,T11& r11,T12& r12,T13& r13,T14& r14,T15& r15,T16& r16,T17& r17,T18& r18,T19& r19>(%p,%p,%p,%p,%p,%p,%p,%p,%p,%p,%p,%p,%p,%p,%p,%p,%p,%p,%p)",&r1,&r2,&r3,&r4,&r5,&r6,&r7,&r8,&r9,&r10,&r11,&r12,&r13,&r14,&r15,&r16,&r17,&r18,&r19)
+
+	bindParam(UOrmTypeHandler<T1>(r1));
+	bindParam(UOrmTypeHandler<T2>(r2));
+	bindParam(UOrmTypeHandler<T3>(r3));
+	bindParam(UOrmTypeHandler<T4>(r4));
+	bindParam(UOrmTypeHandler<T5>(r5));
+	bindParam(UOrmTypeHandler<T6>(r6));
+	bindParam(UOrmTypeHandler<T7>(r7));
+	bindParam(UOrmTypeHandler<T8>(r8));
+	bindParam(UOrmTypeHandler<T9>(r9));
+	bindParam(UOrmTypeHandler<T10>(r10));
+	bindParam(UOrmTypeHandler<T11>(r11));
+	bindParam(UOrmTypeHandler<T12>(r12));
+	bindParam(UOrmTypeHandler<T13>(r13));
+	bindParam(UOrmTypeHandler<T14>(r14));
+	bindParam(UOrmTypeHandler<T15>(r15));
+	bindParam(UOrmTypeHandler<T16>(r16));
+	bindParam(UOrmTypeHandler<T17>(r17));
+	bindParam(UOrmTypeHandler<T18>(r18));
+	bindParam(UOrmTypeHandler<T19>(r19));
+}
+
+template <class T1,class T2,class T3,class T4,class T5,class T6,class T7,class T8,class T9,class T10,class T11,class T12,class T13,class T14,class T15,class T16,class T17,class T18,class T19,class T20>
+inline void UOrmStatement::use(T1& r1,T2& r2,T3& r3,T4& r4,T5& r5,T6& r6,T7& r7,T8& r8,T9& r9,T10& r10,T11& r11,T12& r12,T13& r13,T14& r14,T15& r15,T16& r16,T17& r17,T18& r18,T19& r19,T20& r20)
+{
+	U_TRACE(0, "UOrmStatement::use<T1& r1,T2& r2,T3& r3,T4& r4,T5& r5,T6& r6,T7& r7,T8& r8,T9& r9,T10& r10,T11& r11,T12& r12,T13& r13,T14& r14,T15& r15,T16& r16,T17& r17,T18& r18,T19& r19,T20& r20>(%p,%p,%p,%p,%p,%p,%p,%p,%p,%p,%p,%p,%p,%p,%p,%p,%p,%p,%p,%p)",&r1,&r2,&r3,&r4,&r5,&r6,&r7,&r8,&r9,&r10,&r11,&r12,&r13,&r14,&r15,&r16,&r17,&r18,&r19,&r20)
+
+	bindParam(UOrmTypeHandler<T1>(r1));
+	bindParam(UOrmTypeHandler<T2>(r2));
+	bindParam(UOrmTypeHandler<T3>(r3));
+	bindParam(UOrmTypeHandler<T4>(r4));
+	bindParam(UOrmTypeHandler<T5>(r5));
+	bindParam(UOrmTypeHandler<T6>(r6));
+	bindParam(UOrmTypeHandler<T7>(r7));
+	bindParam(UOrmTypeHandler<T8>(r8));
+	bindParam(UOrmTypeHandler<T9>(r9));
+	bindParam(UOrmTypeHandler<T10>(r10));
+	bindParam(UOrmTypeHandler<T11>(r11));
+	bindParam(UOrmTypeHandler<T12>(r12));
+	bindParam(UOrmTypeHandler<T13>(r13));
+	bindParam(UOrmTypeHandler<T14>(r14));
+	bindParam(UOrmTypeHandler<T15>(r15));
+	bindParam(UOrmTypeHandler<T16>(r16));
+	bindParam(UOrmTypeHandler<T17>(r17));
+	bindParam(UOrmTypeHandler<T18>(r18));
+	bindParam(UOrmTypeHandler<T19>(r19));
+	bindParam(UOrmTypeHandler<T20>(r20));
+}
+
 
 // Syntactic sugar for bindResult() used with into() binding result registers
+
 
 template <class T1>
 inline void UOrmStatement::into(T1& r1)
 {
-   U_TRACE(0, "UOrmStatement::into<T1>(%p)", &r1)
+	U_TRACE(0, "UOrmStatement::into<T1& r1>(%p)",&r1)
 
-   bindResult(UOrmTypeHandler<T1>(r1));
+	bindParam(UOrmTypeHandler<T1>(r1));
 }
 
-template <class T1, class T2>
-inline void UOrmStatement::into(T1& r1, T2& r2)
+template <class T1,class T2>
+inline void UOrmStatement::into(T1& r1,T2& r2)
 {
-   U_TRACE(0, "UOrmStatement::into<T1,T2>(%p,%p)", &r1, &r2)
+	U_TRACE(0, "UOrmStatement::into<T1& r1,T2& r2>(%p,%p)",&r1,&r2)
 
-   bindResult(UOrmTypeHandler<T1>(r1));
-   bindResult(UOrmTypeHandler<T2>(r2));
+	bindParam(UOrmTypeHandler<T1>(r1));
+	bindParam(UOrmTypeHandler<T2>(r2));
 }
 
-template <class T1, class T2, class T3>
-inline void UOrmStatement::into(T1& r1, T2& r2, T3& r3)
+template <class T1,class T2,class T3>
+inline void UOrmStatement::into(T1& r1,T2& r2,T3& r3)
 {
-   U_TRACE(0, "UOrmStatement::into<T1,T2,T3>(%p,%p,%p)", &r1, &r2, &r3)
+	U_TRACE(0, "UOrmStatement::into<T1& r1,T2& r2,T3& r3>(%p,%p,%p)",&r1,&r2,&r3)
 
-   bindResult(UOrmTypeHandler<T1>(r1));
-   bindResult(UOrmTypeHandler<T2>(r2));
-   bindResult(UOrmTypeHandler<T3>(r3));
+	bindParam(UOrmTypeHandler<T1>(r1));
+	bindParam(UOrmTypeHandler<T2>(r2));
+	bindParam(UOrmTypeHandler<T3>(r3));
 }
 
-template <class T1, class T2, class T3, class T4>
-inline void UOrmStatement::into(T1& r1, T2& r2, T3& r3, T4& r4)
+template <class T1,class T2,class T3,class T4>
+inline void UOrmStatement::into(T1& r1,T2& r2,T3& r3,T4& r4)
 {
-   U_TRACE(0, "UOrmStatement::into<T1,T2,T3,T4>(%p,%p,%p,%p)", &r1, &r2, &r3, &r4)
+	U_TRACE(0, "UOrmStatement::into<T1& r1,T2& r2,T3& r3,T4& r4>(%p,%p,%p,%p)",&r1,&r2,&r3,&r4)
 
-   bindResult(UOrmTypeHandler<T1>(r1));
-   bindResult(UOrmTypeHandler<T2>(r2));
-   bindResult(UOrmTypeHandler<T3>(r3));
-   bindResult(UOrmTypeHandler<T4>(r4));
+	bindParam(UOrmTypeHandler<T1>(r1));
+	bindParam(UOrmTypeHandler<T2>(r2));
+	bindParam(UOrmTypeHandler<T3>(r3));
+	bindParam(UOrmTypeHandler<T4>(r4));
 }
 
-template <class T1, class T2, class T3, class T4, class T5>
-inline void UOrmStatement::into(T1& r1, T2& r2, T3& r3, T4& r4, T5& r5)
+template <class T1,class T2,class T3,class T4,class T5>
+inline void UOrmStatement::into(T1& r1,T2& r2,T3& r3,T4& r4,T5& r5)
 {
-   U_TRACE(0, "UOrmStatement::into<T1,T2,T3,T4,T5>(%p,%p,%p,%p,%p)", &r1, &r2, &r3, &r4, &r5)
+	U_TRACE(0, "UOrmStatement::into<T1& r1,T2& r2,T3& r3,T4& r4,T5& r5>(%p,%p,%p,%p,%p)",&r1,&r2,&r3,&r4,&r5)
 
-   bindResult(UOrmTypeHandler<T1>(r1));
-   bindResult(UOrmTypeHandler<T2>(r2));
-   bindResult(UOrmTypeHandler<T3>(r3));
-   bindResult(UOrmTypeHandler<T4>(r4));
-   bindResult(UOrmTypeHandler<T5>(r5));
+	bindParam(UOrmTypeHandler<T1>(r1));
+	bindParam(UOrmTypeHandler<T2>(r2));
+	bindParam(UOrmTypeHandler<T3>(r3));
+	bindParam(UOrmTypeHandler<T4>(r4));
+	bindParam(UOrmTypeHandler<T5>(r5));
 }
 
-template <class T1, class T2, class T3, class T4, class T5, class T6>
-inline void UOrmStatement::into(T1& r1, T2& r2, T3& r3, T4& r4, T5& r5, T6& r6)
+template <class T1,class T2,class T3,class T4,class T5,class T6>
+inline void UOrmStatement::into(T1& r1,T2& r2,T3& r3,T4& r4,T5& r5,T6& r6)
 {
-   U_TRACE(0, "UOrmStatement::into<T1,T2,T3,T4,T5,T6>(%p,%p,%p,%p,%p,%p)", &r1, &r2, &r3, &r4, &r5, &r6)
+	U_TRACE(0, "UOrmStatement::into<T1& r1,T2& r2,T3& r3,T4& r4,T5& r5,T6& r6>(%p,%p,%p,%p,%p,%p)",&r1,&r2,&r3,&r4,&r5,&r6)
 
-   bindResult(UOrmTypeHandler<T1>(r1));
-   bindResult(UOrmTypeHandler<T2>(r2));
-   bindResult(UOrmTypeHandler<T3>(r3));
-   bindResult(UOrmTypeHandler<T4>(r4));
-   bindResult(UOrmTypeHandler<T5>(r5));
-   bindResult(UOrmTypeHandler<T6>(r6));
+	bindParam(UOrmTypeHandler<T1>(r1));
+	bindParam(UOrmTypeHandler<T2>(r2));
+	bindParam(UOrmTypeHandler<T3>(r3));
+	bindParam(UOrmTypeHandler<T4>(r4));
+	bindParam(UOrmTypeHandler<T5>(r5));
+	bindParam(UOrmTypeHandler<T6>(r6));
 }
 
-template <class T1, class T2, class T3, class T4, class T5, class T6, class T7>
-inline void UOrmStatement::into(T1& r1, T2& r2, T3& r3, T4& r4, T5& r5, T6& r6, T7& r7)
+template <class T1,class T2,class T3,class T4,class T5,class T6,class T7>
+inline void UOrmStatement::into(T1& r1,T2& r2,T3& r3,T4& r4,T5& r5,T6& r6,T7& r7)
 {
-   U_TRACE(0, "UOrmStatement::into<T1,T2,T3,T4,T5,T6,T7>(%p,%p,%p,%p,%p,%p,%p)", &r1, &r2, &r3, &r4, &r5, &r6, &r7)
+	U_TRACE(0, "UOrmStatement::into<T1& r1,T2& r2,T3& r3,T4& r4,T5& r5,T6& r6,T7& r7>(%p,%p,%p,%p,%p,%p,%p)",&r1,&r2,&r3,&r4,&r5,&r6,&r7)
 
-   bindResult(UOrmTypeHandler<T1>(r1));
-   bindResult(UOrmTypeHandler<T2>(r2));
-   bindResult(UOrmTypeHandler<T3>(r3));
-   bindResult(UOrmTypeHandler<T4>(r4));
-   bindResult(UOrmTypeHandler<T5>(r5));
-   bindResult(UOrmTypeHandler<T6>(r6));
-   bindResult(UOrmTypeHandler<T7>(r7));
+	bindParam(UOrmTypeHandler<T1>(r1));
+	bindParam(UOrmTypeHandler<T2>(r2));
+	bindParam(UOrmTypeHandler<T3>(r3));
+	bindParam(UOrmTypeHandler<T4>(r4));
+	bindParam(UOrmTypeHandler<T5>(r5));
+	bindParam(UOrmTypeHandler<T6>(r6));
+	bindParam(UOrmTypeHandler<T7>(r7));
 }
+
+template <class T1,class T2,class T3,class T4,class T5,class T6,class T7,class T8>
+inline void UOrmStatement::into(T1& r1,T2& r2,T3& r3,T4& r4,T5& r5,T6& r6,T7& r7,T8& r8)
+{
+	U_TRACE(0, "UOrmStatement::into<T1& r1,T2& r2,T3& r3,T4& r4,T5& r5,T6& r6,T7& r7,T8& r8>(%p,%p,%p,%p,%p,%p,%p,%p)",&r1,&r2,&r3,&r4,&r5,&r6,&r7,&r8)
+
+	bindParam(UOrmTypeHandler<T1>(r1));
+	bindParam(UOrmTypeHandler<T2>(r2));
+	bindParam(UOrmTypeHandler<T3>(r3));
+	bindParam(UOrmTypeHandler<T4>(r4));
+	bindParam(UOrmTypeHandler<T5>(r5));
+	bindParam(UOrmTypeHandler<T6>(r6));
+	bindParam(UOrmTypeHandler<T7>(r7));
+	bindParam(UOrmTypeHandler<T8>(r8));
+}
+
+template <class T1,class T2,class T3,class T4,class T5,class T6,class T7,class T8,class T9>
+inline void UOrmStatement::into(T1& r1,T2& r2,T3& r3,T4& r4,T5& r5,T6& r6,T7& r7,T8& r8,T9& r9)
+{
+	U_TRACE(0, "UOrmStatement::into<T1& r1,T2& r2,T3& r3,T4& r4,T5& r5,T6& r6,T7& r7,T8& r8,T9& r9>(%p,%p,%p,%p,%p,%p,%p,%p,%p)",&r1,&r2,&r3,&r4,&r5,&r6,&r7,&r8,&r9)
+
+	bindParam(UOrmTypeHandler<T1>(r1));
+	bindParam(UOrmTypeHandler<T2>(r2));
+	bindParam(UOrmTypeHandler<T3>(r3));
+	bindParam(UOrmTypeHandler<T4>(r4));
+	bindParam(UOrmTypeHandler<T5>(r5));
+	bindParam(UOrmTypeHandler<T6>(r6));
+	bindParam(UOrmTypeHandler<T7>(r7));
+	bindParam(UOrmTypeHandler<T8>(r8));
+	bindParam(UOrmTypeHandler<T9>(r9));
+}
+
+template <class T1,class T2,class T3,class T4,class T5,class T6,class T7,class T8,class T9,class T10>
+inline void UOrmStatement::into(T1& r1,T2& r2,T3& r3,T4& r4,T5& r5,T6& r6,T7& r7,T8& r8,T9& r9,T10& r10)
+{
+	U_TRACE(0, "UOrmStatement::into<T1& r1,T2& r2,T3& r3,T4& r4,T5& r5,T6& r6,T7& r7,T8& r8,T9& r9,T10& r10>(%p,%p,%p,%p,%p,%p,%p,%p,%p,%p)",&r1,&r2,&r3,&r4,&r5,&r6,&r7,&r8,&r9,&r10)
+
+	bindParam(UOrmTypeHandler<T1>(r1));
+	bindParam(UOrmTypeHandler<T2>(r2));
+	bindParam(UOrmTypeHandler<T3>(r3));
+	bindParam(UOrmTypeHandler<T4>(r4));
+	bindParam(UOrmTypeHandler<T5>(r5));
+	bindParam(UOrmTypeHandler<T6>(r6));
+	bindParam(UOrmTypeHandler<T7>(r7));
+	bindParam(UOrmTypeHandler<T8>(r8));
+	bindParam(UOrmTypeHandler<T9>(r9));
+	bindParam(UOrmTypeHandler<T10>(r10));
+}
+
+template <class T1,class T2,class T3,class T4,class T5,class T6,class T7,class T8,class T9,class T10,class T11>
+inline void UOrmStatement::into(T1& r1,T2& r2,T3& r3,T4& r4,T5& r5,T6& r6,T7& r7,T8& r8,T9& r9,T10& r10,T11& r11)
+{
+	U_TRACE(0, "UOrmStatement::into<T1& r1,T2& r2,T3& r3,T4& r4,T5& r5,T6& r6,T7& r7,T8& r8,T9& r9,T10& r10,T11& r11>(%p,%p,%p,%p,%p,%p,%p,%p,%p,%p,%p)",&r1,&r2,&r3,&r4,&r5,&r6,&r7,&r8,&r9,&r10,&r11)
+
+	bindParam(UOrmTypeHandler<T1>(r1));
+	bindParam(UOrmTypeHandler<T2>(r2));
+	bindParam(UOrmTypeHandler<T3>(r3));
+	bindParam(UOrmTypeHandler<T4>(r4));
+	bindParam(UOrmTypeHandler<T5>(r5));
+	bindParam(UOrmTypeHandler<T6>(r6));
+	bindParam(UOrmTypeHandler<T7>(r7));
+	bindParam(UOrmTypeHandler<T8>(r8));
+	bindParam(UOrmTypeHandler<T9>(r9));
+	bindParam(UOrmTypeHandler<T10>(r10));
+	bindParam(UOrmTypeHandler<T11>(r11));
+}
+
+template <class T1,class T2,class T3,class T4,class T5,class T6,class T7,class T8,class T9,class T10,class T11,class T12>
+inline void UOrmStatement::into(T1& r1,T2& r2,T3& r3,T4& r4,T5& r5,T6& r6,T7& r7,T8& r8,T9& r9,T10& r10,T11& r11,T12& r12)
+{
+	U_TRACE(0, "UOrmStatement::into<T1& r1,T2& r2,T3& r3,T4& r4,T5& r5,T6& r6,T7& r7,T8& r8,T9& r9,T10& r10,T11& r11,T12& r12>(%p,%p,%p,%p,%p,%p,%p,%p,%p,%p,%p,%p)",&r1,&r2,&r3,&r4,&r5,&r6,&r7,&r8,&r9,&r10,&r11,&r12)
+
+	bindParam(UOrmTypeHandler<T1>(r1));
+	bindParam(UOrmTypeHandler<T2>(r2));
+	bindParam(UOrmTypeHandler<T3>(r3));
+	bindParam(UOrmTypeHandler<T4>(r4));
+	bindParam(UOrmTypeHandler<T5>(r5));
+	bindParam(UOrmTypeHandler<T6>(r6));
+	bindParam(UOrmTypeHandler<T7>(r7));
+	bindParam(UOrmTypeHandler<T8>(r8));
+	bindParam(UOrmTypeHandler<T9>(r9));
+	bindParam(UOrmTypeHandler<T10>(r10));
+	bindParam(UOrmTypeHandler<T11>(r11));
+	bindParam(UOrmTypeHandler<T12>(r12));
+}
+
+template <class T1,class T2,class T3,class T4,class T5,class T6,class T7,class T8,class T9,class T10,class T11,class T12,class T13>
+inline void UOrmStatement::into(T1& r1,T2& r2,T3& r3,T4& r4,T5& r5,T6& r6,T7& r7,T8& r8,T9& r9,T10& r10,T11& r11,T12& r12,T13& r13)
+{
+	U_TRACE(0, "UOrmStatement::into<T1& r1,T2& r2,T3& r3,T4& r4,T5& r5,T6& r6,T7& r7,T8& r8,T9& r9,T10& r10,T11& r11,T12& r12,T13& r13>(%p,%p,%p,%p,%p,%p,%p,%p,%p,%p,%p,%p,%p)",&r1,&r2,&r3,&r4,&r5,&r6,&r7,&r8,&r9,&r10,&r11,&r12,&r13)
+
+	bindParam(UOrmTypeHandler<T1>(r1));
+	bindParam(UOrmTypeHandler<T2>(r2));
+	bindParam(UOrmTypeHandler<T3>(r3));
+	bindParam(UOrmTypeHandler<T4>(r4));
+	bindParam(UOrmTypeHandler<T5>(r5));
+	bindParam(UOrmTypeHandler<T6>(r6));
+	bindParam(UOrmTypeHandler<T7>(r7));
+	bindParam(UOrmTypeHandler<T8>(r8));
+	bindParam(UOrmTypeHandler<T9>(r9));
+	bindParam(UOrmTypeHandler<T10>(r10));
+	bindParam(UOrmTypeHandler<T11>(r11));
+	bindParam(UOrmTypeHandler<T12>(r12));
+	bindParam(UOrmTypeHandler<T13>(r13));
+}
+
+template <class T1,class T2,class T3,class T4,class T5,class T6,class T7,class T8,class T9,class T10,class T11,class T12,class T13,class T14>
+inline void UOrmStatement::into(T1& r1,T2& r2,T3& r3,T4& r4,T5& r5,T6& r6,T7& r7,T8& r8,T9& r9,T10& r10,T11& r11,T12& r12,T13& r13,T14& r14)
+{
+	U_TRACE(0, "UOrmStatement::into<T1& r1,T2& r2,T3& r3,T4& r4,T5& r5,T6& r6,T7& r7,T8& r8,T9& r9,T10& r10,T11& r11,T12& r12,T13& r13,T14& r14>(%p,%p,%p,%p,%p,%p,%p,%p,%p,%p,%p,%p,%p,%p)",&r1,&r2,&r3,&r4,&r5,&r6,&r7,&r8,&r9,&r10,&r11,&r12,&r13,&r14)
+
+	bindParam(UOrmTypeHandler<T1>(r1));
+	bindParam(UOrmTypeHandler<T2>(r2));
+	bindParam(UOrmTypeHandler<T3>(r3));
+	bindParam(UOrmTypeHandler<T4>(r4));
+	bindParam(UOrmTypeHandler<T5>(r5));
+	bindParam(UOrmTypeHandler<T6>(r6));
+	bindParam(UOrmTypeHandler<T7>(r7));
+	bindParam(UOrmTypeHandler<T8>(r8));
+	bindParam(UOrmTypeHandler<T9>(r9));
+	bindParam(UOrmTypeHandler<T10>(r10));
+	bindParam(UOrmTypeHandler<T11>(r11));
+	bindParam(UOrmTypeHandler<T12>(r12));
+	bindParam(UOrmTypeHandler<T13>(r13));
+	bindParam(UOrmTypeHandler<T14>(r14));
+}
+
+template <class T1,class T2,class T3,class T4,class T5,class T6,class T7,class T8,class T9,class T10,class T11,class T12,class T13,class T14,class T15>
+inline void UOrmStatement::into(T1& r1,T2& r2,T3& r3,T4& r4,T5& r5,T6& r6,T7& r7,T8& r8,T9& r9,T10& r10,T11& r11,T12& r12,T13& r13,T14& r14,T15& r15)
+{
+	U_TRACE(0, "UOrmStatement::into<T1& r1,T2& r2,T3& r3,T4& r4,T5& r5,T6& r6,T7& r7,T8& r8,T9& r9,T10& r10,T11& r11,T12& r12,T13& r13,T14& r14,T15& r15>(%p,%p,%p,%p,%p,%p,%p,%p,%p,%p,%p,%p,%p,%p,%p)",&r1,&r2,&r3,&r4,&r5,&r6,&r7,&r8,&r9,&r10,&r11,&r12,&r13,&r14,&r15)
+
+	bindParam(UOrmTypeHandler<T1>(r1));
+	bindParam(UOrmTypeHandler<T2>(r2));
+	bindParam(UOrmTypeHandler<T3>(r3));
+	bindParam(UOrmTypeHandler<T4>(r4));
+	bindParam(UOrmTypeHandler<T5>(r5));
+	bindParam(UOrmTypeHandler<T6>(r6));
+	bindParam(UOrmTypeHandler<T7>(r7));
+	bindParam(UOrmTypeHandler<T8>(r8));
+	bindParam(UOrmTypeHandler<T9>(r9));
+	bindParam(UOrmTypeHandler<T10>(r10));
+	bindParam(UOrmTypeHandler<T11>(r11));
+	bindParam(UOrmTypeHandler<T12>(r12));
+	bindParam(UOrmTypeHandler<T13>(r13));
+	bindParam(UOrmTypeHandler<T14>(r14));
+	bindParam(UOrmTypeHandler<T15>(r15));
+}
+
+template <class T1,class T2,class T3,class T4,class T5,class T6,class T7,class T8,class T9,class T10,class T11,class T12,class T13,class T14,class T15,class T16>
+inline void UOrmStatement::into(T1& r1,T2& r2,T3& r3,T4& r4,T5& r5,T6& r6,T7& r7,T8& r8,T9& r9,T10& r10,T11& r11,T12& r12,T13& r13,T14& r14,T15& r15,T16& r16)
+{
+	U_TRACE(0, "UOrmStatement::into<T1& r1,T2& r2,T3& r3,T4& r4,T5& r5,T6& r6,T7& r7,T8& r8,T9& r9,T10& r10,T11& r11,T12& r12,T13& r13,T14& r14,T15& r15,T16& r16>(%p,%p,%p,%p,%p,%p,%p,%p,%p,%p,%p,%p,%p,%p,%p,%p)",&r1,&r2,&r3,&r4,&r5,&r6,&r7,&r8,&r9,&r10,&r11,&r12,&r13,&r14,&r15,&r16)
+
+	bindParam(UOrmTypeHandler<T1>(r1));
+	bindParam(UOrmTypeHandler<T2>(r2));
+	bindParam(UOrmTypeHandler<T3>(r3));
+	bindParam(UOrmTypeHandler<T4>(r4));
+	bindParam(UOrmTypeHandler<T5>(r5));
+	bindParam(UOrmTypeHandler<T6>(r6));
+	bindParam(UOrmTypeHandler<T7>(r7));
+	bindParam(UOrmTypeHandler<T8>(r8));
+	bindParam(UOrmTypeHandler<T9>(r9));
+	bindParam(UOrmTypeHandler<T10>(r10));
+	bindParam(UOrmTypeHandler<T11>(r11));
+	bindParam(UOrmTypeHandler<T12>(r12));
+	bindParam(UOrmTypeHandler<T13>(r13));
+	bindParam(UOrmTypeHandler<T14>(r14));
+	bindParam(UOrmTypeHandler<T15>(r15));
+	bindParam(UOrmTypeHandler<T16>(r16));
+}
+
+template <class T1,class T2,class T3,class T4,class T5,class T6,class T7,class T8,class T9,class T10,class T11,class T12,class T13,class T14,class T15,class T16,class T17>
+inline void UOrmStatement::into(T1& r1,T2& r2,T3& r3,T4& r4,T5& r5,T6& r6,T7& r7,T8& r8,T9& r9,T10& r10,T11& r11,T12& r12,T13& r13,T14& r14,T15& r15,T16& r16,T17& r17)
+{
+	U_TRACE(0, "UOrmStatement::into<T1& r1,T2& r2,T3& r3,T4& r4,T5& r5,T6& r6,T7& r7,T8& r8,T9& r9,T10& r10,T11& r11,T12& r12,T13& r13,T14& r14,T15& r15,T16& r16,T17& r17>(%p,%p,%p,%p,%p,%p,%p,%p,%p,%p,%p,%p,%p,%p,%p,%p,%p)",&r1,&r2,&r3,&r4,&r5,&r6,&r7,&r8,&r9,&r10,&r11,&r12,&r13,&r14,&r15,&r16,&r17)
+
+	bindParam(UOrmTypeHandler<T1>(r1));
+	bindParam(UOrmTypeHandler<T2>(r2));
+	bindParam(UOrmTypeHandler<T3>(r3));
+	bindParam(UOrmTypeHandler<T4>(r4));
+	bindParam(UOrmTypeHandler<T5>(r5));
+	bindParam(UOrmTypeHandler<T6>(r6));
+	bindParam(UOrmTypeHandler<T7>(r7));
+	bindParam(UOrmTypeHandler<T8>(r8));
+	bindParam(UOrmTypeHandler<T9>(r9));
+	bindParam(UOrmTypeHandler<T10>(r10));
+	bindParam(UOrmTypeHandler<T11>(r11));
+	bindParam(UOrmTypeHandler<T12>(r12));
+	bindParam(UOrmTypeHandler<T13>(r13));
+	bindParam(UOrmTypeHandler<T14>(r14));
+	bindParam(UOrmTypeHandler<T15>(r15));
+	bindParam(UOrmTypeHandler<T16>(r16));
+	bindParam(UOrmTypeHandler<T17>(r17));
+}
+
+template <class T1,class T2,class T3,class T4,class T5,class T6,class T7,class T8,class T9,class T10,class T11,class T12,class T13,class T14,class T15,class T16,class T17,class T18>
+inline void UOrmStatement::into(T1& r1,T2& r2,T3& r3,T4& r4,T5& r5,T6& r6,T7& r7,T8& r8,T9& r9,T10& r10,T11& r11,T12& r12,T13& r13,T14& r14,T15& r15,T16& r16,T17& r17,T18& r18)
+{
+	U_TRACE(0, "UOrmStatement::into<T1& r1,T2& r2,T3& r3,T4& r4,T5& r5,T6& r6,T7& r7,T8& r8,T9& r9,T10& r10,T11& r11,T12& r12,T13& r13,T14& r14,T15& r15,T16& r16,T17& r17,T18& r18>(%p,%p,%p,%p,%p,%p,%p,%p,%p,%p,%p,%p,%p,%p,%p,%p,%p,%p)",&r1,&r2,&r3,&r4,&r5,&r6,&r7,&r8,&r9,&r10,&r11,&r12,&r13,&r14,&r15,&r16,&r17,&r18)
+
+	bindParam(UOrmTypeHandler<T1>(r1));
+	bindParam(UOrmTypeHandler<T2>(r2));
+	bindParam(UOrmTypeHandler<T3>(r3));
+	bindParam(UOrmTypeHandler<T4>(r4));
+	bindParam(UOrmTypeHandler<T5>(r5));
+	bindParam(UOrmTypeHandler<T6>(r6));
+	bindParam(UOrmTypeHandler<T7>(r7));
+	bindParam(UOrmTypeHandler<T8>(r8));
+	bindParam(UOrmTypeHandler<T9>(r9));
+	bindParam(UOrmTypeHandler<T10>(r10));
+	bindParam(UOrmTypeHandler<T11>(r11));
+	bindParam(UOrmTypeHandler<T12>(r12));
+	bindParam(UOrmTypeHandler<T13>(r13));
+	bindParam(UOrmTypeHandler<T14>(r14));
+	bindParam(UOrmTypeHandler<T15>(r15));
+	bindParam(UOrmTypeHandler<T16>(r16));
+	bindParam(UOrmTypeHandler<T17>(r17));
+	bindParam(UOrmTypeHandler<T18>(r18));
+}
+
+template <class T1,class T2,class T3,class T4,class T5,class T6,class T7,class T8,class T9,class T10,class T11,class T12,class T13,class T14,class T15,class T16,class T17,class T18,class T19>
+inline void UOrmStatement::into(T1& r1,T2& r2,T3& r3,T4& r4,T5& r5,T6& r6,T7& r7,T8& r8,T9& r9,T10& r10,T11& r11,T12& r12,T13& r13,T14& r14,T15& r15,T16& r16,T17& r17,T18& r18,T19& r19)
+{
+	U_TRACE(0, "UOrmStatement::into<T1& r1,T2& r2,T3& r3,T4& r4,T5& r5,T6& r6,T7& r7,T8& r8,T9& r9,T10& r10,T11& r11,T12& r12,T13& r13,T14& r14,T15& r15,T16& r16,T17& r17,T18& r18,T19& r19>(%p,%p,%p,%p,%p,%p,%p,%p,%p,%p,%p,%p,%p,%p,%p,%p,%p,%p,%p)",&r1,&r2,&r3,&r4,&r5,&r6,&r7,&r8,&r9,&r10,&r11,&r12,&r13,&r14,&r15,&r16,&r17,&r18,&r19)
+
+	bindParam(UOrmTypeHandler<T1>(r1));
+	bindParam(UOrmTypeHandler<T2>(r2));
+	bindParam(UOrmTypeHandler<T3>(r3));
+	bindParam(UOrmTypeHandler<T4>(r4));
+	bindParam(UOrmTypeHandler<T5>(r5));
+	bindParam(UOrmTypeHandler<T6>(r6));
+	bindParam(UOrmTypeHandler<T7>(r7));
+	bindParam(UOrmTypeHandler<T8>(r8));
+	bindParam(UOrmTypeHandler<T9>(r9));
+	bindParam(UOrmTypeHandler<T10>(r10));
+	bindParam(UOrmTypeHandler<T11>(r11));
+	bindParam(UOrmTypeHandler<T12>(r12));
+	bindParam(UOrmTypeHandler<T13>(r13));
+	bindParam(UOrmTypeHandler<T14>(r14));
+	bindParam(UOrmTypeHandler<T15>(r15));
+	bindParam(UOrmTypeHandler<T16>(r16));
+	bindParam(UOrmTypeHandler<T17>(r17));
+	bindParam(UOrmTypeHandler<T18>(r18));
+	bindParam(UOrmTypeHandler<T19>(r19));
+}
+
+template <class T1,class T2,class T3,class T4,class T5,class T6,class T7,class T8,class T9,class T10,class T11,class T12,class T13,class T14,class T15,class T16,class T17,class T18,class T19,class T20>
+inline void UOrmStatement::into(T1& r1,T2& r2,T3& r3,T4& r4,T5& r5,T6& r6,T7& r7,T8& r8,T9& r9,T10& r10,T11& r11,T12& r12,T13& r13,T14& r14,T15& r15,T16& r16,T17& r17,T18& r18,T19& r19,T20& r20)
+{
+	U_TRACE(0, "UOrmStatement::into<T1& r1,T2& r2,T3& r3,T4& r4,T5& r5,T6& r6,T7& r7,T8& r8,T9& r9,T10& r10,T11& r11,T12& r12,T13& r13,T14& r14,T15& r15,T16& r16,T17& r17,T18& r18,T19& r19,T20& r20>(%p,%p,%p,%p,%p,%p,%p,%p,%p,%p,%p,%p,%p,%p,%p,%p,%p,%p,%p,%p)",&r1,&r2,&r3,&r4,&r5,&r6,&r7,&r8,&r9,&r10,&r11,&r12,&r13,&r14,&r15,&r16,&r17,&r18,&r19,&r20)
+
+	bindParam(UOrmTypeHandler<T1>(r1));
+	bindParam(UOrmTypeHandler<T2>(r2));
+	bindParam(UOrmTypeHandler<T3>(r3));
+	bindParam(UOrmTypeHandler<T4>(r4));
+	bindParam(UOrmTypeHandler<T5>(r5));
+	bindParam(UOrmTypeHandler<T6>(r6));
+	bindParam(UOrmTypeHandler<T7>(r7));
+	bindParam(UOrmTypeHandler<T8>(r8));
+	bindParam(UOrmTypeHandler<T9>(r9));
+	bindParam(UOrmTypeHandler<T10>(r10));
+	bindParam(UOrmTypeHandler<T11>(r11));
+	bindParam(UOrmTypeHandler<T12>(r12));
+	bindParam(UOrmTypeHandler<T13>(r13));
+	bindParam(UOrmTypeHandler<T14>(r14));
+	bindParam(UOrmTypeHandler<T15>(r15));
+	bindParam(UOrmTypeHandler<T16>(r16));
+	bindParam(UOrmTypeHandler<T17>(r17));
+	bindParam(UOrmTypeHandler<T18>(r18));
+	bindParam(UOrmTypeHandler<T19>(r19));
+	bindParam(UOrmTypeHandler<T20>(r20));
+}
+
+
 
 // TEMPLATE SPECIALIZATIONS
 
