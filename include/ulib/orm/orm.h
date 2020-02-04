@@ -252,11 +252,13 @@ public:
 
    void reset();
 
-   // Syntactic sugar for bindParam() used with use() binding param registers
+   /* Syntactic sugar for bindParam() used with use() binding param registers
+    *
+    * you could replace all of this with a single variadic template method and a c++17 fold expression (Victor Stewart)
+    *
+    * template <typename...Ts> void use(Ts&&... ts) { (bindParam(UOrmTypeHandler<Ts>(ts)), ...); } NB: don't work!
+    */
 
-#if defined(HAVE_CXX17)
-template <typename...Ts> void use(Ts&&... ts) { (bindParam(UOrmTypeHandler<Ts>(ts)), ...); }
-#else
 template <class T1> 
 void use(T1& r1);
 
@@ -316,7 +318,6 @@ void use(T1& r1,T2& r2,T3& r3,T4& r4,T5& r5,T6& r6,T7& r7,T8& r8,T9& r9,T10& r10
 
 template <class T1,class T2,class T3,class T4,class T5,class T6,class T7,class T8,class T9,class T10,class T11,class T12,class T13,class T14,class T15,class T16,class T17,class T18,class T19,class T20> 
 void use(T1& r1,T2& r2,T3& r3,T4& r4,T5& r5,T6& r6,T7& r7,T8& r8,T9& r9,T10& r10,T11& r11,T12& r12,T13& r13,T14& r14,T15& r15,T16& r16,T17& r17,T18& r18,T19& r19,T20& r20);
-#endif
 
    // BIND PARAM
 
@@ -363,12 +364,8 @@ void use(T1& r1,T2& r2,T3& r3,T4& r4,T5& r5,T6& r6,T7& r7,T8& r8,T9& r9,T10& r10
    /**
     * Syntactic sugar for bindResult() used with into() binding result registers
     *
-    * you could replace all of this with a single variadic template method and a c++17 fold expression (Victor Stewart)
     */
 
-#if defined(HAVE_CXX17)
-template <typename...Ts> void into(Ts&&... ts) { (bindResult(UOrmTypeHandler<Ts>(ts)), ...); }
-#else 
 template <class T1> 
 void into(T1& r1);
 
@@ -428,7 +425,6 @@ void into(T1& r1,T2& r2,T3& r3,T4& r4,T5& r5,T6& r6,T7& r7,T8& r8,T9& r9,T10& r1
 
 template <class T1,class T2,class T3,class T4,class T5,class T6,class T7,class T8,class T9,class T10,class T11,class T12,class T13,class T14,class T15,class T16,class T17,class T18,class T19,class T20> 
 void into(T1& r1,T2& r2,T3& r3,T4& r4,T5& r5,T6& r6,T7& r7,T8& r8,T9& r9,T10& r10,T11& r11,T12& r12,T13& r13,T14& r14,T15& r15,T16& r16,T17& r17,T18& r18,T19& r19,T20& r20);
-#endif
 
    // BIND RESULT
 
@@ -480,7 +476,6 @@ private:
 
 // Syntactic sugar for bindParam() used with use() binding registers
 
-#if !defined(HAVE_CXX17)
 template <class T1>
 inline void UOrmStatement::use(T1& r1)
 {
@@ -830,11 +825,9 @@ inline void UOrmStatement::use(T1& r1,T2& r2,T3& r3,T4& r4,T5& r5,T6& r6,T7& r7,
    bindParam(UOrmTypeHandler<T19>(r19));
    bindParam(UOrmTypeHandler<T20>(r20));
 }
-#endif
 
 // Syntactic sugar for bindResult() used with into() binding result registers
 
-#if !defined(HAVE_CXX17)
 template <class T1>
 inline void UOrmStatement::into(T1& r1)
 {
@@ -1184,7 +1177,6 @@ inline void UOrmStatement::into(T1& r1,T2& r2,T3& r3,T4& r4,T5& r5,T6& r6,T7& r7
    bindResult(UOrmTypeHandler<T19>(r19));
    bindResult(UOrmTypeHandler<T20>(r20));
 }
-#endif
 
 // TEMPLATE SPECIALIZATIONS
 
