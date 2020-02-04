@@ -670,9 +670,9 @@ static uint32_t getApInfo(const UString& label, char* buffer)
    return u__snprintf(buffer, 1024, U_CONSTANT_TO_PARAM("%v@%v/%v"), label.rep, ap_address->rep, ap_hostname->rep);
 }
 
-static void writeToLOG(const UString& label, const char* op, uint32_t op_len, const UString& opt)
+static void writeToLOG(const UString& lmac, const UString& label, const char* op, uint32_t op_len, const UString& opt)
 {
-   U_TRACE(5, "::writeToLOG(%V,%.*S,%u,%V)", label.rep, op_len, op, op_len, opt.rep)
+   U_TRACE(5, "::writeToLOG((%V,%V,%.*S,%u,%V)", lmac.rep, label.rep, op_len, op, op_len, opt.rep)
 
    U_INTERNAL_ASSERT_POINTER(op)
    U_INTERNAL_ASSERT_MAJOR(op_len, 0)
@@ -686,30 +686,45 @@ static void writeToLOG(const UString& label, const char* op, uint32_t op_len, co
 
    ULog::log(file_LOG->getFd(),
              U_CONSTANT_TO_PARAM("op: %.*s, mac: %v, ip: %v, ap: %.*s, policy: %v|%.*sconsume|%snotify%v"),
-             op_len, op, mac->rep, ip->rep, getApInfo(label, buffer), buffer, policySessionId->rep, (ap_consume ? 0 : 3), "no_", (policySessionNotify == 0 ? ""     :
+             op_len, op, lmac.rep, ip->rep, getApInfo(label, buffer), buffer, policySessionId->rep, (ap_consume ? 0 : 3), "no_", (policySessionNotify == 0 ? ""     :
                                                                                                                                   policySessionNotify == 1 ? "no_" : "strict_"), opt.rep);
 }
 
-static void writeSessionToLOG(const UString& label, const char* op, uint32_t op_len)
+static void writeSessionToLOG(const UString& lmac, const UString& label, const char* op, uint32_t op_len)
 {
-   U_TRACE(5, "::writeSessionToLOG(%V,%.*S,%u)", label.rep, op_len, op, op_len)
+   U_TRACE(5, "::writeSessionToLOG((%V,%V,%.*S,%u)", lmac.rep, label.rep, op_len, op, op_len)
 
    UString opt(200U);
 
    opt.snprintf(U_CONSTANT_TO_PARAM(", traffic: %llu, elapsed: %u"), counter/1024, (u_now->tv_sec-created)/60);
 
-   writeToLOG(label, op, op_len, opt);
+   writeToLOG(lmac, label, op, op_len, opt);
+}
+
+static const char* getKeySessionPointer()
+{
+   U_TRACE_NO_PARAM(5, "::getKeySessionPointer()")
+
+   uint32_t pos = U_STRING_FIND(*key_session, 10, "deviceId:"); // 10 => U_CONSTANT_SIZE("captiveId:")
+
+   U_INTERNAL_ASSERT_DIFFERS(pos, U_NOT_FOUND)
+
+   const char* ptr = key_session->c_pointer(pos);
+
+   return ptr;
 }
 
 static void deleteSession()
 {
    U_TRACE_NO_PARAM(5, "::deleteSession()")
 
+   const char* ptr = getKeySessionPointer();
+
    (void) rc->del(U_CONSTANT_TO_PARAM("SESSION:%v"), key_session->rep);
-   (void) rc->zrem(U_CONSTANT_TO_PARAM("SESSION:byCaptiveIdAndApId deviceId:%v;ip:%v"), mac->rep, ip->rep);
+   (void) rc->zrem(U_CONSTANT_TO_PARAM("SESSION:byCaptiveIdAndApId %.*s"), key_session->remain(ptr), ptr);
    (void) rc->zrem(U_CONSTANT_TO_PARAM("SESSION:byLastUpdate %v"), key_session->rep);
 
-// U_LOGGER("*** SESSION(%V) deleted at deleteSession() ***", key_session->rep);
+   // U_LOGGER("*** SESSION(%V) deleted at deleteSession() ***", key_session->rep);
 }
 
 static void resetDeviceDailyCounter()
@@ -811,9 +826,9 @@ static bool getDataFromPOST(bool bpeer)
 
             if (getSession(mac_old, label_old, U_CONSTANT_TO_PARAM("getDataFromPOST(true)")))
                {
-               deleteSession();
+               writeSessionToLOG(mac_old, label_old, U_CONSTANT_TO_PARAM("DENY_RENEW"));
 
-               writeSessionToLOG(label_old, U_CONSTANT_TO_PARAM("DENY_NO_TRAFFIC"));
+               deleteSession();
                }
             }
          }
@@ -938,17 +953,13 @@ static void lostSession(int bclean)
          addToLogout(*ap_label);
          }
 
-      writeSessionToLOG(*ap_label, U_CONSTANT_TO_PARAM("DENY_LOST"));
+      writeSessionToLOG(*mac, *ap_label, U_CONSTANT_TO_PARAM("DENY_LOST"));
 
       deleteSession();
       }
    else
       {
-      uint32_t pos = U_STRING_FIND(*key_session, 10, "deviceId:"); // 10 => U_CONSTANT_SIZE("captiveId:")
-
-      U_INTERNAL_ASSERT_DIFFERS(pos, U_NOT_FOUND)
-
-      const char* ptr = key_session->c_pointer(pos);
+      const char* ptr = getKeySessionPointer();
 
       (void) rc->zrem(U_CONSTANT_TO_PARAM("SESSION:byCaptiveIdAndApId %.*s"), key_session->remain(ptr), ptr);
       (void) rc->zrem(U_CONSTANT_TO_PARAM("SESSION:byLastUpdate %v"), key_session->rep);
@@ -1315,7 +1326,7 @@ static void GET_logout()
 
                   sendLogoutToNodog();
 
-                  writeSessionToLOG(*ap_label, U_CONSTANT_TO_PARAM("DENY_NO_TRAFFIC"));
+                  writeSessionToLOG(*mac, *ap_label, U_CONSTANT_TO_PARAM("DENY_NO_TRAFFIC"));
 
                   deleteSession();
                   }
@@ -1522,12 +1533,12 @@ static void POST_login()
       UFlatBuffer fb;
       char buffer[2] = { '1'-ko, '0'+policySessionNotify }; // deny|permit: ('0'|'1') policy: notify|no_notify|strict_notify ('0'|'1'|'2')
 
-      writeToLOG(*ap_label, U_CONSTANT_TO_PARAM("PERMIT"), UString::getStringNull());
+      writeToLOG(*mac, *ap_label, U_CONSTANT_TO_PARAM("PERMIT"), UString::getStringNull());
 
       (void) rc->hmset(U_CONSTANT_TO_PARAM("DEVICE:id:%v lastAccess %u"), mac->rep, u_now->tv_sec);
       (void) rc->zadd(U_CONSTANT_TO_PARAM("DEVICE:bylastAccess %u id:%v"), u_now->tv_sec, mac->rep);
 
-      if (ko) writeSessionToLOG(*ap_label, U_CONSTANT_TO_PARAM("DENY_POLICY"));
+      if (ko) writeSessionToLOG(*mac, *ap_label, U_CONSTANT_TO_PARAM("DENY_POLICY"));
       else
          {
          U_ASSERT(mac->isXMacAddr())
@@ -1583,7 +1594,7 @@ static void POST_notify()
    // $2 -> mac
    // $3 -> ip
 
-   if (getDataFromPOST(false)) writeToLOG(*ap_label, U_CONSTANT_TO_PARAM("NOTIFIED"), UString::getStringNull());
+   if (getDataFromPOST(false)) writeToLOG(*mac, *ap_label, U_CONSTANT_TO_PARAM("NOTIFIED"), UString::getStringNull());
 
    ap->clear();
 
@@ -1613,7 +1624,7 @@ static void POST_strict_notify()
          (void) rc->hmset(x);
          }
 
-      writeToLOG(*ap_label, U_CONSTANT_TO_PARAM("STRICT_NOTIFIED"), UString::getStringNull());
+      writeToLOG(*mac, *ap_label, U_CONSTANT_TO_PARAM("STRICT_NOTIFIED"), UString::getStringNull());
       }
 
    ap->clear();
@@ -1740,7 +1751,7 @@ static void POST_info()
 
                created += ctime_no_traffic;
 
-del_sess:      writeSessionToLOG(label, op, op_len);
+del_sess:      writeSessionToLOG(*mac, label, op, op_len);
 
                deleteSession();
 
@@ -1758,7 +1769,7 @@ del_login:     addToLogout(label);
                {
                x.snprintf(U_CONSTANT_TO_PARAM(", traffic: %llu"), counter/1024);
 
-               writeToLOG(*ap_label, U_CONSTANT_TO_PARAM("RST_SESSION"), x);
+               writeToLOG(*mac, *ap_label, U_CONSTANT_TO_PARAM("RST_SESSION"), x);
 
                counter = 0;
 
