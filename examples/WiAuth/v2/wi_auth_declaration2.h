@@ -103,7 +103,7 @@ loop:
 
    *ip = lip;
 
-   (void) UIPAddress::getBinaryForm(ip->c_str(), addr, true);
+   (void) UIPAddress::getBinaryForm(*ip, addr, true);
 
    (void) rc->hmset(U_CONSTANT_TO_PARAM("CAPTIVE:id:%u ip %v"), addr, ip->rep);
    (void) rc->zadd(U_CONSTANT_TO_PARAM("CAPTIVE:byId 0 id:%u"), addr);
@@ -380,9 +380,9 @@ static void usp_end_wi_auth2()
 
 static bool setLabelAndNetmaskFromAnagrafica(UString& label, UString& netmask)
 {
-   U_TRACE(5, "::setLabelAndNetmaskFromAnagrafica(%p,%p,%p)", &label, &netmask)
+   U_TRACE(5, "::setLabelAndNetmaskFromAnagrafica(%p,%p)", &label, &netmask)
 
-   U_INTERNAL_DUMP("ap_address = %V", ap_address)
+   U_INTERNAL_DUMP("ap_address = %V", ap_address->rep)
 
    U_INTERNAL_ASSERT(*ap_address)
 
@@ -393,13 +393,17 @@ static bool setLabelAndNetmaskFromAnagrafica(UString& label, UString& netmask)
     */
 
 loop:
-   pos = db_anagrafica->find(*ap_address, pos);
+   U_INTERNAL_DUMP("pos = %u db_anagrafica->size() = %u", pos, db_anagrafica->size())
 
-   U_INTERNAL_DUMP("pos = %u", pos)
+   if (pos >= db_anagrafica->size()) U_RETURN(false);
+
+   pos = db_anagrafica->find(*ap_address, pos);
 
    if (pos == U_NOT_FOUND) U_RETURN(false);
 
    pos += ap_address->size();
+
+   U_INTERNAL_DUMP("db_anagrafica->c_char(%u) = %C", pos, db_anagrafica->c_char(pos))
 
    if (db_anagrafica->c_char(pos) != ',') goto loop;
 
@@ -511,7 +515,7 @@ static bool setAccessPoint()
       *ap_address = ap->substr(pos1+1, pos2-pos1-1).copy();
 
       if (*ap_address &&
-          UIPAddress::getBinaryForm(ap_address->c_str(), addr, true) == false)
+          UIPAddress::getBinaryForm(*ap_address, addr, true) == false)
          {
          U_LOGGER("*** AP ADDRESS(%v) NOT VALID ***", ap_address->rep);
 
@@ -948,7 +952,7 @@ static void lostSession(int bclean)
          *ap_address  = rc->getString(0);
          *ap_hostname = rc->getString(1);
 
-         (void) UIPAddress::getBinaryForm(ip->c_str(), ip_peer);
+         (void) UIPAddress::getBinaryForm(*ip, ip_peer);
 
          addToLogout(*ap_label);
          }
@@ -1100,7 +1104,7 @@ static void GET_checkCaptive()
             {
             *ap_address = vec[i];
 
-            (void) UIPAddress::getBinaryForm(ap_address->c_str(), addr, true);
+            (void) UIPAddress::getBinaryForm(*ap_address, addr, true);
 
             url.snprintf(U_CONSTANT_TO_PARAM("http://%v:5280/ping"), ap_address->rep);
 
@@ -1318,7 +1322,7 @@ static void GET_logout()
 
                if (getSession(*mac, *ap_label, U_CONSTANT_TO_PARAM("GET_logout")))
                   {
-                  (void) UIPAddress::getBinaryForm(ip->c_str(), ip_peer);
+                  (void) UIPAddress::getBinaryForm(*ip, ip_peer);
 
                   idx = 0;
 
@@ -1550,7 +1554,9 @@ static void POST_login()
 
       // U_LOGGER("*** SESSION(%V) created at POST_login() ***", key_session->rep);
 
-         (void) rc->zadd(U_CONSTANT_TO_PARAM("SESSION:byCaptiveIdAndApId %u%06u deviceId:%v;ip:%v"), addr, ap_label->strtoul(), mac->rep, ip->rep);
+         const char* ptr = getKeySessionPointer();
+
+         (void) rc->zadd(U_CONSTANT_TO_PARAM("SESSION:byCaptiveIdAndApId %u%06u %.*s"), addr, ap_label->strtoul(), key_session->remain(ptr), ptr);
          (void) rc->zadd(U_CONSTANT_TO_PARAM("SESSION:byLastUpdate %u %v"), u_now->tv_sec, key_session->rep);
          }
 

@@ -62,6 +62,9 @@
 /* Define to 1 if the fallocate() function is supported */
 #undef FALLOCATE_IS_SUPPORTED
 
+/* Define if we are using gcc compiler */
+#undef GCC_IS_GNU
+
 /* GNU C/C++ Compiler version */
 #undef GCC_VERSION
 

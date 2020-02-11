@@ -1282,7 +1282,7 @@ bool UNoCatPlugIn::creatNewPeer(uint32_t index_AUTH)
 
    U_INTERNAL_ASSERT_EQUALS(peer, U_NULLPTR)
 
-   uint32_t index_network = UIPAllow::find(UServer_Base::client_address, *vLocalNetworkMask);
+   uint32_t index_network = UIPAllow::find(U_CLIENT_ADDRESS_TO_PARAM, *vLocalNetworkMask);
 
    U_INTERNAL_DUMP("index_network = %u", index_network)
 
@@ -1930,7 +1930,7 @@ __pure uint32_t UNoCatPlugIn::getIndexAUTH(const char* ip_address)
       {
       // NB: we are multi portal, we must find which portal we indicate to redirect the client...
 
-      index_AUTH = UIPAllow::find(ip_address, *vLocalNetworkMask);
+      index_AUTH = UIPAllow::find(ip_address, strlen(ip_address), *vLocalNetworkMask);
 
       if (index_AUTH >= sz_AUTH) index_AUTH = 0;
       }

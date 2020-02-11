@@ -118,9 +118,8 @@ public:
 
    // Check whether a ip address client ought to be allowed (belong to the same network)...
 
-   inline bool isAllowed(const char* ip_client);
-
-   bool isAllowed(UString& ip_client) { return isAllowed(ip_client.c_str()); }
+   inline bool isAllowed(const UString& ip_client)                { return isAllowed(U_STRING_TO_PARAM(ip_client)); }
+   inline bool isAllowed(const char*    ip_client, uint32_t len);
 
    bool isAllowed(in_addr_t client) __pure;
    bool isAllowed(in_addr_t ifa_addr, in_addr_t ifa_netmask)
@@ -163,13 +162,13 @@ public:
       U_RETURN(U_NOT_FOUND);
       }
 
-   static uint32_t find(const char* ip_client, UVector<UIPAllow*>& vipallow)
+   static uint32_t find(const char* ip_client, uint32_t len, UVector<UIPAllow*>& vipallow)
       {
-      U_TRACE(0, "UIPAllow::find(%S,%p)", ip_client, &vipallow)
+      U_TRACE(0, "UIPAllow::find(%.*S,%u,%p)", len, ip_client, len, &vipallow)
 
       for (uint32_t i = 0, vlen = vipallow.size(); i < vlen; ++i)
          {
-         if (vipallow[i]->isAllowed(ip_client)) U_RETURN(i);
+         if (vipallow[i]->isAllowed(ip_client, len)) U_RETURN(i);
          }
 
       U_RETURN(U_NOT_FOUND);
@@ -187,9 +186,9 @@ public:
       U_RETURN(U_NOT_FOUND);
       }
 
-   static bool isAllowed(in_addr_t         client, UVector<UIPAllow*>& vipallow) { return (find(   client, vipallow) != U_NOT_FOUND); }
-   static bool isAllowed(const char*    ip_client, UVector<UIPAllow*>& vipallow) { return (find(ip_client, vipallow) != U_NOT_FOUND); }
-   static bool isAllowed(const UString& ip_client, UVector<UIPAllow*>& vipallow) { return (find(ip_client, vipallow) != U_NOT_FOUND); }
+   static bool isAllowed(in_addr_t         client,               UVector<UIPAllow*>& vipallow) { return (find(   client,      vipallow) != U_NOT_FOUND); }
+   static bool isAllowed(const char*    ip_client, uint32_t len, UVector<UIPAllow*>& vipallow) { return (find(ip_client, len, vipallow) != U_NOT_FOUND); }
+   static bool isAllowed(const UString& ip_client,               UVector<UIPAllow*>& vipallow) { return (find(ip_client,      vipallow) != U_NOT_FOUND); }
 
    // DEBUG
 
@@ -298,20 +297,8 @@ public:
    // converts the internet address from the IPv4 numbers-and-dots notation into binary form
    // (in network byte order) and stores it in the structure that points to
 
-   static bool getBinaryForm(const char* addr_str, uint32_t& addr, bool bconvert = false)
-      {
-      U_TRACE(0, "UIPAddress::getBinaryForm(%S,%p,%b)", addr_str, &addr, bconvert)
-
-      U_INTERNAL_ASSERT(u_isIPv4Addr(addr_str, u__strlen(addr_str, __PRETTY_FUNCTION__)))
-
-      struct in_addr ia;
-
-      if (U_SYSCALL(inet_aton, "%p,%p", addr_str, &ia) == 0) U_RETURN(false);
-
-      addr = (bconvert ? ntohl(ia.s_addr) : ia.s_addr);
-
-      U_RETURN(true);
-      }
+   static bool getBinaryForm(const UString& addr_str,            uint32_t& addr, bool bconvert = false) { return getBinaryForm(U_STRING_TO_PARAM(addr_str), addr, bconvert); }
+   static bool getBinaryForm(const char* addr_str, uint32_t len, uint32_t& addr, bool bconvert = false);
 
 #ifdef ENABLE_IPV6
    /********************************************************************************/
@@ -466,13 +453,13 @@ private:
    friend class UClientImage_Base;
 };
 
-inline bool UIPAllow::isAllowed(const char* ip_client)
+inline bool UIPAllow::isAllowed(const char* ip_client, uint32_t len)
 {
-   U_TRACE(0, "UIPAllow::isAllowed(%S)", ip_client)
+   U_TRACE(0, "UIPAllow::isAllowed(%.*S,%u)", len, ip_client, len)
 
    in_addr_t client;
 
-   if (UIPAddress::getBinaryForm(ip_client, client) &&
+   if (UIPAddress::getBinaryForm(ip_client, len, client) &&
        isAllowed(client))
       {
       U_RETURN(true);
@@ -480,5 +467,4 @@ inline bool UIPAllow::isAllowed(const char* ip_client)
 
    U_RETURN(false);
 }
-
 #endif

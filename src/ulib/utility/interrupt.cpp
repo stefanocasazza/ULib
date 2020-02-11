@@ -257,8 +257,10 @@ retry:
    (void) U_SYSCALL(sigaction, "%d,%p,%p", SIGSEGV, old + SIGSEGV, U_NULLPTR);
 }
 
+#ifdef GCC_IS_GNU
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wsuggest-attribute=noreturn"
+#endif
 
 RETSIGTYPE UInterrupt::handlerSegvWithInfo(int signo, siginfo_t* info, void* context)
 {
@@ -295,7 +297,9 @@ RETSIGTYPE UInterrupt::handlerSegvWithInfo(int signo, siginfo_t* info, void* con
    ::abort();
 }
 
+#ifdef GCC_IS_GNU
 #pragma GCC diagnostic pop
+#endif
 
 void UInterrupt::getSignalInfo(int signo, siginfo_t* info)
 {

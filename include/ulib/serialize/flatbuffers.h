@@ -677,8 +677,10 @@ public:
 
    // INIT
 
+#ifdef GCC_IS_GNU
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+#endif
 
    static void setStack(uint8_t* ptr, uint32_t len)
       {
@@ -688,7 +690,9 @@ public:
       stack_max = len / UFlatBufferValue::size();
       }
       
+#ifdef GCC_IS_GNU
 #pragma GCC diagnostic pop
+#endif
 
    static void setBuffer(uint8_t* ptr, uint32_t len)
       {

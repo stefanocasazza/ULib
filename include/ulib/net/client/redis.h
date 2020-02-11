@@ -1204,8 +1204,10 @@ private:
 class UCompileTimeRESPEncoder : public UCompileTimeStringFormatter {
 private:
 
+#ifdef GCC_IS_GNU
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-but-set-parameter"
+#endif
 
    template<bool isPartial, size_t workingIndex = 0, size_t workingSegmentCount = 0, typename StringClass, typename... Xs, typename T, typename... Ts>
    static constexpr auto generateSegments(StringClass format, size_t& outputCount, std::tuple<Xs...>&& workingCommand, T&& t, Ts&&... ts)
@@ -1258,7 +1260,10 @@ private:
          }
       }
    }
+
+#ifdef GCC_IS_GNU
 #pragma GCC diagnostic pop
+#endif
 
    template<bool isPartial, bool overwrite, auto format, typename... Ts>
    static size_t encode_impl(size_t writePosition, UString& workingString, Ts&&... ts)

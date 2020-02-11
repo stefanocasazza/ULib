@@ -218,13 +218,22 @@ am__EXEEXT_19 = test_timeval$(EXEEXT) test_timer$(EXEEXT) \
 	test_dialog$(EXEEXT) test_json$(EXEEXT) test_redis$(EXEEXT) \
 	test_elasticsearch$(EXEEXT) test_smtp$(EXEEXT) \
 	test_pop3$(EXEEXT) test_imap$(EXEEXT) test_hash_map$(EXEEXT) \
-	test_serialize$(EXEEXT) $(am__EXEEXT_1) $(am__EXEEXT_2) \
-	$(am__EXEEXT_3) $(am__EXEEXT_4) $(am__EXEEXT_5) \
-	$(am__EXEEXT_6) $(am__EXEEXT_7) $(am__EXEEXT_8) \
-	$(am__EXEEXT_9) $(am__EXEEXT_10) $(am__EXEEXT_2) \
-	$(am__EXEEXT_3) $(am__EXEEXT_11) $(am__EXEEXT_12) \
-	$(am__EXEEXT_13) $(am__EXEEXT_14) $(am__EXEEXT_15) \
-	$(am__EXEEXT_16) $(am__EXEEXT_17) $(am__EXEEXT_18)
+	test_serialize$(EXEEXT) eval_itoa$(EXEEXT) eval_dtoa$(EXEEXT) \
+	$(am__EXEEXT_1) $(am__EXEEXT_2) $(am__EXEEXT_3) \
+	$(am__EXEEXT_4) $(am__EXEEXT_5) $(am__EXEEXT_6) \
+	$(am__EXEEXT_7) $(am__EXEEXT_8) $(am__EXEEXT_9) \
+	$(am__EXEEXT_10) $(am__EXEEXT_2) $(am__EXEEXT_3) \
+	$(am__EXEEXT_11) $(am__EXEEXT_12) $(am__EXEEXT_13) \
+	$(am__EXEEXT_14) $(am__EXEEXT_15) $(am__EXEEXT_16) \
+	$(am__EXEEXT_17) $(am__EXEEXT_18)
+am_eval_dtoa_OBJECTS = eval_dtoa.$(OBJEXT)
+eval_dtoa_OBJECTS = $(am_eval_dtoa_OBJECTS)
+eval_dtoa_LDADD = $(LDADD)
+eval_dtoa_DEPENDENCIES = $(top_builddir)/src/ulib/lib@ULIB@.la
+am_eval_itoa_OBJECTS = eval_itoa.$(OBJEXT)
+eval_itoa_OBJECTS = $(am_eval_itoa_OBJECTS)
+eval_itoa_LDADD = $(LDADD)
+eval_itoa_DEPENDENCIES = $(top_builddir)/src/ulib/lib@ULIB@.la
 am_test_application_OBJECTS = test_application.$(OBJEXT)
 test_application_OBJECTS = $(am_test_application_OBJECTS)
 test_application_LDADD = $(LDADD)
@@ -595,7 +604,26 @@ AM_V_CXXLD = $(am__v_CXXLD_@AM_V@)
 am__v_CXXLD_ = $(am__v_CXXLD_@AM_DEFAULT_V@)
 am__v_CXXLD_0 = @echo "  CXXLD   " $@;
 am__v_CXXLD_1 = 
+COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
+	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
+LTCOMPILE = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) \
+	$(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) \
+	$(AM_CFLAGS) $(CFLAGS)
+AM_V_CC = $(am__v_CC_@AM_V@)
+am__v_CC_ = $(am__v_CC_@AM_DEFAULT_V@)
+am__v_CC_0 = @echo "  CC      " $@;
+am__v_CC_1 = 
+CCLD = $(CC)
+LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
+	$(AM_LDFLAGS) $(LDFLAGS) -o $@
+AM_V_CCLD = $(am__v_CCLD_@AM_V@)
+am__v_CCLD_ = $(am__v_CCLD_@AM_DEFAULT_V@)
+am__v_CCLD_0 = @echo "  CCLD    " $@;
+am__v_CCLD_1 = 
 SOURCES = $(product1_la_SOURCES) $(product2_la_SOURCES) \
+	$(eval_dtoa_SOURCES) $(eval_itoa_SOURCES) \
 	$(test_application_SOURCES) $(test_arping_SOURCES) \
 	$(test_base64_SOURCES) $(test_bit_array_SOURCES) \
 	$(test_cache_SOURCES) $(test_cdb_SOURCES) \
@@ -633,7 +661,8 @@ SOURCES = $(product1_la_SOURCES) $(product2_la_SOURCES) \
 	$(test_unixsocket_server_SOURCES) $(test_url_SOURCES) \
 	$(test_vector_SOURCES) $(test_zip_SOURCES)
 DIST_SOURCES = $(am__product1_la_SOURCES_DIST) \
-	$(am__product2_la_SOURCES_DIST) $(test_application_SOURCES) \
+	$(am__product2_la_SOURCES_DIST) $(eval_dtoa_SOURCES) \
+	$(eval_itoa_SOURCES) $(test_application_SOURCES) \
 	$(am__test_arping_SOURCES_DIST) $(test_base64_SOURCES) \
 	$(test_bit_array_SOURCES) $(test_cache_SOURCES) \
 	$(test_cdb_SOURCES) $(am__test_certificate_SOURCES_DIST) \
@@ -1118,13 +1147,14 @@ PRG = test_timeval test_timer test_notifier test_string test_file \
 	test_http test_rdb_client test_tokenizer test_query_parser \
 	test_multipart test_command test_dialog test_json test_redis \
 	test_elasticsearch test_smtp test_pop3 test_imap test_hash_map \
-	test_serialize $(am__append_1) $(am__append_3) $(am__append_4) \
-	$(am__append_5) $(am__append_6) $(am__append_8) \
-	$(am__append_10) $(am__append_12) $(am__append_14) \
-	$(am__append_16) $(am__append_18) $(am__append_20) \
-	$(am__append_22) $(am__append_24) $(am__append_26) \
-	$(am__append_28) $(am__append_30) $(am__append_32) \
-	$(am__append_34) $(am__append_36)
+	test_serialize eval_itoa eval_dtoa $(am__append_1) \
+	$(am__append_3) $(am__append_4) $(am__append_5) \
+	$(am__append_6) $(am__append_8) $(am__append_10) \
+	$(am__append_12) $(am__append_14) $(am__append_16) \
+	$(am__append_18) $(am__append_20) $(am__append_22) \
+	$(am__append_24) $(am__append_26) $(am__append_28) \
+	$(am__append_30) $(am__append_32) $(am__append_34) \
+	$(am__append_36)
 TST = timeval.test timer.test notifier.test string.test file.test \
 	cdb.test rdb.test file_config.test log.test vector.test \
 	options.test application.test tree.test compress.test \
@@ -1188,6 +1218,8 @@ test_mongodb_SOURCES = test_mongodb.cpp
 test_elasticsearch_SOURCES = test_elasticsearch.cpp
 test_hash_map_SOURCES = test_hash_map.cpp
 test_serialize_SOURCES = test_serialize.cpp
+eval_itoa_SOURCES = eval_itoa.cpp tsc.h branchlut.h
+eval_dtoa_SOURCES = eval_dtoa.cpp tsc.h dtoa_milo.h
 @PTHREAD_TRUE@test_thread_SOURCES = test_thread.cpp
 @ZIP_TRUE@test_zip_SOURCES = test_zip.cpp
 @LIBTDB_TRUE@test_tdb_SOURCES = test_tdb.cpp
@@ -1292,6 +1324,14 @@ clean-checkPROGRAMS:
 	list=`for p in $$list; do echo "$$p"; done | sed 's/$(EXEEXT)$$//'`; \
 	echo " rm -f" $$list; \
 	rm -f $$list
+
+eval_dtoa$(EXEEXT): $(eval_dtoa_OBJECTS) $(eval_dtoa_DEPENDENCIES) $(EXTRA_eval_dtoa_DEPENDENCIES) 
+	@rm -f eval_dtoa$(EXEEXT)
+	$(AM_V_CXXLD)$(CXXLINK) $(eval_dtoa_OBJECTS) $(eval_dtoa_LDADD) $(LIBS)
+
+eval_itoa$(EXEEXT): $(eval_itoa_OBJECTS) $(eval_itoa_DEPENDENCIES) $(EXTRA_eval_itoa_DEPENDENCIES) 
+	@rm -f eval_itoa$(EXEEXT)
+	$(AM_V_CXXLD)$(CXXLINK) $(eval_itoa_OBJECTS) $(eval_itoa_LDADD) $(LIBS)
 
 test_application$(EXEEXT): $(test_application_OBJECTS) $(test_application_DEPENDENCIES) $(EXTRA_test_application_DEPENDENCIES) 
 	@rm -f test_application$(EXEEXT)
@@ -1597,6 +1637,8 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/eval_dtoa.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/eval_itoa.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_application.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_arping.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_base64.Po@am__quote@

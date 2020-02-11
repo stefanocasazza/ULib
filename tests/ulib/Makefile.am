@@ -18,7 +18,7 @@ PRG = test_timeval test_timer test_notifier test_string \
 		test_services test_base64 test_header test_entity \
 		test_ipaddress test_socket test_ftp test_http test_rdb_client \
 		test_tokenizer test_query_parser test_multipart test_command test_dialog test_json test_redis test_elasticsearch \
-		test_smtp test_pop3 test_imap test_hash_map test_serialize
+		test_smtp test_pop3 test_imap test_hash_map test_serialize eval_itoa eval_dtoa
 ##		test_twilio
 
 TST = timeval.test timer.test notifier.test string.test \
@@ -103,6 +103,8 @@ test_mongodb_SOURCES = test_mongodb.cpp
 test_elasticsearch_SOURCES = test_elasticsearch.cpp
 test_hash_map_SOURCES = test_hash_map.cpp
 test_serialize_SOURCES = test_serialize.cpp
+eval_itoa_SOURCES = eval_itoa.cpp tsc.h branchlut.h
+eval_dtoa_SOURCES = eval_dtoa.cpp tsc.h dtoa_milo.h
 
 if PTHREAD
 PRG += test_thread

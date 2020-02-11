@@ -656,6 +656,70 @@ UString UIPAddress::toString(uint8_t* addr)
    U_RETURN_STRING(x);
 }
 
+bool UIPAddress::getBinaryForm(const char* addr_str, uint32_t len, uint32_t& addr, bool bconvert)
+{
+   U_TRACE(0, "UIPAddress::getBinaryForm(%.*S,%u,%p,%b)", len, addr_str, len, &addr, bconvert)
+
+   uint32_t i;
+   const char* ptr;
+   unsigned long a[4] = { 0 };
+   const char* p   = addr_str;
+   const char* end = addr_str + len;
+
+   for (i = 0; i < 4; ++i)
+      {
+      if (u__isdigit(*(ptr = p)) == false) U_RETURN(false);
+
+      while (u__isdigit(*p)) ++p; 
+
+      a[i] = u_strtoul(ptr, p);
+
+      if (p >= end) break;
+
+      if (*p++ != '.') U_RETURN(false);
+      }
+
+   U_INTERNAL_ASSERT(u_isIPv4Addr(addr_str, len))
+
+   switch (i)
+      {
+      case 0: a[1] = a[0] & 0xffffff; a[0] >>= 24; /* FALL THRU */
+      case 1: a[2] = a[1] & 0x00ffff; a[1] >>= 16; /* FALL THRU */
+      case 2: a[3] = a[2] & 0x0000ff; a[2] >>=  8; /* FALL THRU */
+      case 3: break;
+      case 4: U_RETURN(false);
+      }
+
+   if (a[0] > 255 ||
+       a[1] > 255 ||
+       a[2] > 255 ||
+       a[3] > 255)
+      {
+      U_RETURN(false);
+      }
+
+   unsigned char* d = (unsigned char*)&addr;
+
+#if __BYTE_ORDER == __LITTLE_ENDIAN
+   if (bconvert)
+      {
+      d[0] = a[3];
+      d[1] = a[2];
+      d[2] = a[1];
+      d[3] = a[0];
+      }
+   else
+#endif
+   {
+   d[0] = a[0];
+   d[1] = a[1];
+   d[2] = a[2];
+   d[3] = a[3];
+   }
+
+   U_RETURN(true);
+}
+
 // Simple IP-based access-control system
 // Interpret a "HOST/BITS" IP mask specification. (Ex. 192.168.1.64/28)
 
@@ -665,7 +729,7 @@ bool UIPAllow::parseMask(const UString& spec)
 
    // get bit before slash
 
-   char addr_str[U_INET_ADDRSTRLEN];
+   char addr_str[U_INET_ADDRSTRLEN+1];
    uint32_t len, addr_len = spec.find('/');
 
    // extract and parse addr part

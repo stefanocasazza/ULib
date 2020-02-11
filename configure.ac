@@ -279,44 +279,66 @@ AC_C_RESTRICT
 AC_C_VOLATILE
 AC_C_INLINE
 
-# clang is mostly GCC-compatible, but its version is much lower, so we have to check for it
-AC_MSG_CHECKING([if compiling with Intel C++])
+AC_MSG_CHECKING([if compiling with GNU C++])
+GCC_COMPILER=$($CXX --version 2>/dev/null | grep -v -E '(llvm|clang)' | grep -i -c -E '(gcc|g\+\+)')
 
-AC_COMPILE_IFELSE(
-[AC_LANG_PROGRAM([], [[
-#ifndef __INTEL_COMPILER 
-not intel
-#endif
-]])],
-[GCC_IS_INTEL=yes], [GCC_IS_INTEL=no])
-
-AC_MSG_RESULT([$GCC_IS_INTEL])
-#AC_SUBST(GCC_IS_INTEL)
-
-AM_CONDITIONAL(INTEL, false)
-if test "$GCC_IS_INTEL" = "yes"; then
-AM_CONDITIONAL(INTEL, true)
-gcc_version=`icc -dumpversion`
+GCC_IS_GNU=no
+if [[ "$GCC_COMPILER" -eq 0 ]]; then
+	AC_MSG_RESULT([no])
+else
+	GCC_IS_GNU=yes
+	gcc_version=`gcc -dumpversion`
+	AC_MSG_RESULT([yes ($gcc_version)])
+	AC_DEFINE([GCC_IS_GNU],[1],[Define if we are using gcc compiler])
 fi
 
 AC_MSG_CHECKING([if compiling with clang])
+CLANG_COMPILER=$($CXX --version 2>/dev/null | grep -i -c -E '(llvm|clang)')
 
-AC_COMPILE_IFELSE(
-[AC_LANG_PROGRAM([], [[
-#ifndef __clang__
-not clang
-#endif
-]])],
-[GCC_IS_CLANG=yes], [GCC_IS_CLANG=no])
+# AC_COMPILE_IFELSE(
+# [AC_LANG_PROGRAM([], [[
+# #ifndef __clang__
+# not clang
+# #endif
+# ]])],
+# [GCC_IS_CLANG=yes], [GCC_IS_CLANG=no])
 
-AC_MSG_RESULT([$GCC_IS_CLANG])
+GCC_IS_CLANG=no
+AM_CONDITIONAL(CLANG, false)
+if [[ "$CLANG_COMPILER" -eq 0 ]]; then
+	AC_MSG_RESULT([no])
+else
+	GCC_IS_CLANG=yes
+	AM_CONDITIONAL(CLANG, true)
+	gcc_version=`clang -dumpversion`
+	AC_MSG_RESULT([yes ($gcc_version)])
+fi
+
 #AC_SUBST(GCC_IS_CLANG)
 
-AM_CONDITIONAL(CLANG, false)
-if test "$GCC_IS_CLANG" = "yes"; then
-AM_CONDITIONAL(CLANG, true)
-gcc_version=`clang -dumpversion`
+AC_MSG_CHECKING([if compiling with Intel C++])
+INTEL_COMPILER=$($CXX --version 2>/dev/null | grep -i -c '\(icc\)')
+
+# AC_COMPILE_IFELSE(
+# [AC_LANG_PROGRAM([], [[
+# #ifndef __INTEL_COMPILER 
+# not intel
+# #endif
+# ]])],
+# [GCC_IS_INTEL=yes], [GCC_IS_INTEL=no])
+
+GCC_IS_INTEL=no
+AM_CONDITIONAL(INTEL, false)
+if [[ "$INTEL_COMPILER" -eq 0 ]]; then
+	AC_MSG_RESULT([no])
+else
+	GCC_IS_INTEL=yes
+	AM_CONDITIONAL(INTEL, true)
+	gcc_version=`icc -dumpversion`
+	AC_MSG_RESULT([yes ($gcc_version)])
 fi
+
+#AC_SUBST(GCC_IS_INTEL)
 
 ULIB_LIBS=
 MODULE_LIBTOOL_OPTIONS="-shared -export-dynamic -avoid-version"
@@ -550,10 +572,9 @@ AM_CONDITIONAL(MS_LIB_AVAILABLE, test x$ms_librarian = xyes)
 
 # Check for the compiler support
 gcc_major_4_1="no"
-if test "$ac_cv_c_compiler_gnu" = "yes" -a "x$GCC_IS_CLANG" = xno -a "x$GCC_IS_INTEL" = xno; then
+if test "x$GCC_IS_GNU" = xyes -a "x$GCC_IS_CLANG" = xno -a "x$GCC_IS_INTEL" = xno; then
 	# We don't want gcc 2.7
 	AC_MSG_CHECKING([for a supported version of gcc])
-	gcc_version=`$CC -dumpversion`
 	case "$gcc_version" in
 		1.*|2.7.*|2.8.*)
 			AC_MSG_RESULT([no ($gcc_version)])
@@ -716,7 +737,7 @@ if test "$enable_stdcpp" = "yes"; then
 else
    AC_MSG_RESULT(no)
 	AM_CONDITIONAL(STDCPP, false)
-	if test x"$GCC" = "xyes" ; then
+	if test "x$GCC_IS_GNU" = xyes ; then
 		lcflags="-nodefaultlibs -nostdinc++"
 	else
       lcflags="-library=no%Cstd -features=no%except -features=no%rtti"
@@ -2529,7 +2550,7 @@ fi
 
 # If gcc compiler add values to *FLAGS...
 
-if test "$ac_cv_c_compiler_gnu" = "yes" -a "x$OPERATINGSYSTEM" = xlinux; then
+if test "x$GCC_IS_GNU" = xyes -a "x$OPERATINGSYSTEM" = xlinux; then
 
 	TWOCAN_CONF_MSG(Checking for $CC compiler flags)
 
@@ -2778,9 +2799,9 @@ AM_CONDITIONAL(DOXY, test "$DOXYGEN" != "no")
 case "$target_os" in
 	*bsd*)
 		if test "$enable_stdcpp" != "yes"; then
-			  if test "$GCC" = "yes" -a "$ULIB_LIBC" = "-lc" ; then
+			  if test "x$GCC_IS_GNU" = xyes -a "$ULIB_LIBC" = "-lc" ; then
 				ULIB_LIBC="-Wl,-lc"
-			elif test "$GCC" = "yes" -a "$ULIB_LIBC" = "-lc_r" ; then
+			elif test "x$GCC_IS_GNU" = xyes -a "$ULIB_LIBC" = "-lc_r" ; then
 				ULIB_LIBC="-Wl,-lc_r"
 			fi
 		fi
@@ -2853,7 +2874,7 @@ if test "x$ac_cv_crc32_intrinsics" = xyes; then
 fi
 ##########################
 
-if test "$ac_cv_c_compiler_gnu" = "yes" -a "x$GCC_IS_CLANG" = xno -a "x$GCC_IS_INTEL" = xno; then
+if test "x$GCC_IS_GNU" = xyes -a "x$GCC_IS_CLANG" = xno -a "x$GCC_IS_INTEL" = xno; then
 	if test "$enable_static" = "yes" -a "$enable_shared" = "no" -a "$enable_stdcpp" = "yes"; then
 
 ##		if test -f "$gcc_dir/libstdc++.a"; then
@@ -2992,7 +3013,7 @@ fi
 TWOCAN_CONF_MSG(Output Substitution)
 
 # Create compiler version string
-if test x"$GCC" = x"yes" ; then
+if test "x$GCC_IS_GNU" = xyes ; then
   cc_string=`${CC} --version | sed q`
   case $cc_string in [[A-Za-z]]*) ;; *) cc_string="GCC $cc_string";; esac
 elif test x"$SUN_STUDIO_CC" = x"yes" ; then

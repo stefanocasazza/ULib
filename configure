@@ -915,10 +915,10 @@ MINGW_FALSE
 MINGW_TRUE
 LINUX_FALSE
 LINUX_TRUE
-CLANG_FALSE
-CLANG_TRUE
 INTEL_FALSE
 INTEL_TRUE
+CLANG_FALSE
+CLANG_TRUE
 LN_S
 am__fastdepCXX_FALSE
 am__fastdepCXX_TRUE
@@ -7586,85 +7586,37 @@ _ACEOF
 esac
 
 
-# clang is mostly GCC-compatible, but its version is much lower, so we have to check for it
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if compiling with Intel C++" >&5
-$as_echo_n "checking if compiling with Intel C++... " >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if compiling with GNU C++" >&5
+$as_echo_n "checking if compiling with GNU C++... " >&6; }
+GCC_COMPILER=$($CXX --version 2>/dev/null | grep -v -E '(llvm|clang)' | grep -i -c -E '(gcc|g\+\+)')
 
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-int
-main ()
-{
-
-#ifndef __INTEL_COMPILER
-not intel
-#endif
-
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_cxx_try_compile "$LINENO"; then :
-  GCC_IS_INTEL=yes
+GCC_IS_GNU=no
+if [ "$GCC_COMPILER" -eq 0 ]; then
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
 else
-  GCC_IS_INTEL=no
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+	GCC_IS_GNU=yes
+	gcc_version=`gcc -dumpversion`
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes ($gcc_version)" >&5
+$as_echo "yes ($gcc_version)" >&6; }
 
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $GCC_IS_INTEL" >&5
-$as_echo "$GCC_IS_INTEL" >&6; }
-#AC_SUBST(GCC_IS_INTEL)
+$as_echo "#define GCC_IS_GNU 1" >>confdefs.h
 
- if false; then
-  INTEL_TRUE=
-  INTEL_FALSE='#'
-else
-  INTEL_TRUE='#'
-  INTEL_FALSE=
-fi
-
-if test "$GCC_IS_INTEL" = "yes"; then
- if true; then
-  INTEL_TRUE=
-  INTEL_FALSE='#'
-else
-  INTEL_TRUE='#'
-  INTEL_FALSE=
-fi
-
-gcc_version=`icc -dumpversion`
 fi
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking if compiling with clang" >&5
 $as_echo_n "checking if compiling with clang... " >&6; }
+CLANG_COMPILER=$($CXX --version 2>/dev/null | grep -i -c -E '(llvm|clang)')
 
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
+# AC_COMPILE_IFELSE(
+# [AC_LANG_PROGRAM([], [[
+# #ifndef __clang__
+# not clang
+# #endif
+# ]])],
+# [GCC_IS_CLANG=yes], [GCC_IS_CLANG=no])
 
-int
-main ()
-{
-
-#ifndef __clang__
-not clang
-#endif
-
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_cxx_try_compile "$LINENO"; then :
-  GCC_IS_CLANG=yes
-else
-  GCC_IS_CLANG=no
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $GCC_IS_CLANG" >&5
-$as_echo "$GCC_IS_CLANG" >&6; }
-#AC_SUBST(GCC_IS_CLANG)
-
+GCC_IS_CLANG=no
  if false; then
   CLANG_TRUE=
   CLANG_FALSE='#'
@@ -7673,8 +7625,12 @@ else
   CLANG_FALSE=
 fi
 
-if test "$GCC_IS_CLANG" = "yes"; then
- if true; then
+if [ "$CLANG_COMPILER" -eq 0 ]; then
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+else
+	GCC_IS_CLANG=yes
+	 if true; then
   CLANG_TRUE=
   CLANG_FALSE='#'
 else
@@ -7682,8 +7638,53 @@ else
   CLANG_FALSE=
 fi
 
-gcc_version=`clang -dumpversion`
+	gcc_version=`clang -dumpversion`
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes ($gcc_version)" >&5
+$as_echo "yes ($gcc_version)" >&6; }
 fi
+
+#AC_SUBST(GCC_IS_CLANG)
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if compiling with Intel C++" >&5
+$as_echo_n "checking if compiling with Intel C++... " >&6; }
+INTEL_COMPILER=$($CXX --version 2>/dev/null | grep -i -c '\(icc\)')
+
+# AC_COMPILE_IFELSE(
+# [AC_LANG_PROGRAM([], [[
+# #ifndef __INTEL_COMPILER
+# not intel
+# #endif
+# ]])],
+# [GCC_IS_INTEL=yes], [GCC_IS_INTEL=no])
+
+GCC_IS_INTEL=no
+ if false; then
+  INTEL_TRUE=
+  INTEL_FALSE='#'
+else
+  INTEL_TRUE='#'
+  INTEL_FALSE=
+fi
+
+if [ "$INTEL_COMPILER" -eq 0 ]; then
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+else
+	GCC_IS_INTEL=yes
+	 if true; then
+  INTEL_TRUE=
+  INTEL_FALSE='#'
+else
+  INTEL_TRUE='#'
+  INTEL_FALSE=
+fi
+
+	gcc_version=`icc -dumpversion`
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes ($gcc_version)" >&5
+$as_echo "yes ($gcc_version)" >&6; }
+fi
+
+#AC_SUBST(GCC_IS_INTEL)
 
 ULIB_LIBS=
 MODULE_LIBTOOL_OPTIONS="-shared -export-dynamic -avoid-version"
@@ -8610,11 +8611,10 @@ fi
 
 # Check for the compiler support
 gcc_major_4_1="no"
-if test "$ac_cv_c_compiler_gnu" = "yes" -a "x$GCC_IS_CLANG" = xno -a "x$GCC_IS_INTEL" = xno; then
+if test "x$GCC_IS_GNU" = xyes -a "x$GCC_IS_CLANG" = xno -a "x$GCC_IS_INTEL" = xno; then
 	# We don't want gcc 2.7
 	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for a supported version of gcc" >&5
 $as_echo_n "checking for a supported version of gcc... " >&6; }
-	gcc_version=`$CC -dumpversion`
 	case "$gcc_version" in
 		1.*|2.7.*|2.8.*)
 			{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no ($gcc_version)" >&5
@@ -21779,7 +21779,7 @@ else
   STDCPP_FALSE=
 fi
 
-	if test x"$GCC" = "xyes" ; then
+	if test "x$GCC_IS_GNU" = xyes ; then
 		lcflags="-nodefaultlibs -nostdinc++"
 	else
       lcflags="-library=no%Cstd -features=no%except -features=no%rtti"
@@ -32714,7 +32714,7 @@ fi
 
 # If gcc compiler add values to *FLAGS...
 
-if test "$ac_cv_c_compiler_gnu" = "yes" -a "x$OPERATINGSYSTEM" = xlinux; then
+if test "x$GCC_IS_GNU" = xyes -a "x$OPERATINGSYSTEM" = xlinux; then
 
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: " >&5
@@ -33258,9 +33258,9 @@ fi
 case "$target_os" in
 	*bsd*)
 		if test "$enable_stdcpp" != "yes"; then
-			  if test "$GCC" = "yes" -a "$ULIB_LIBC" = "-lc" ; then
+			  if test "x$GCC_IS_GNU" = xyes -a "$ULIB_LIBC" = "-lc" ; then
 				ULIB_LIBC="-Wl,-lc"
-			elif test "$GCC" = "yes" -a "$ULIB_LIBC" = "-lc_r" ; then
+			elif test "x$GCC_IS_GNU" = xyes -a "$ULIB_LIBC" = "-lc_r" ; then
 				ULIB_LIBC="-Wl,-lc_r"
 			fi
 		fi
@@ -33541,7 +33541,7 @@ if test "x$ac_cv_crc32_intrinsics" = xyes; then
 fi
 ##########################
 
-if test "$ac_cv_c_compiler_gnu" = "yes" -a "x$GCC_IS_CLANG" = xno -a "x$GCC_IS_INTEL" = xno; then
+if test "x$GCC_IS_GNU" = xyes -a "x$GCC_IS_CLANG" = xno -a "x$GCC_IS_INTEL" = xno; then
 	if test "$enable_static" = "yes" -a "$enable_shared" = "no" -a "$enable_stdcpp" = "yes"; then
 
 ##		if test -f "$gcc_dir/libstdc++.a"; then
@@ -33797,7 +33797,7 @@ $as_echo "${T_MD}Output Substitution:${T_ME}" >&6; }
 
 
 # Create compiler version string
-if test x"$GCC" = x"yes" ; then
+if test "x$GCC_IS_GNU" = xyes ; then
   cc_string=`${CC} --version | sed q`
   case $cc_string in [A-Za-z]*) ;; *) cc_string="GCC $cc_string";; esac
 elif test x"$SUN_STUDIO_CC" = x"yes" ; then
@@ -34273,20 +34273,20 @@ if test -z "${am__fastdepCC_TRUE}" && test -z "${am__fastdepCC_FALSE}"; then
   as_fn_error $? "conditional \"am__fastdepCC\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
-if test -z "${INTEL_TRUE}" && test -z "${INTEL_FALSE}"; then
-  as_fn_error $? "conditional \"INTEL\" was never defined.
-Usually this means the macro was only invoked conditionally." "$LINENO" 5
-fi
-if test -z "${INTEL_TRUE}" && test -z "${INTEL_FALSE}"; then
-  as_fn_error $? "conditional \"INTEL\" was never defined.
-Usually this means the macro was only invoked conditionally." "$LINENO" 5
-fi
 if test -z "${CLANG_TRUE}" && test -z "${CLANG_FALSE}"; then
   as_fn_error $? "conditional \"CLANG\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${CLANG_TRUE}" && test -z "${CLANG_FALSE}"; then
   as_fn_error $? "conditional \"CLANG\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${INTEL_TRUE}" && test -z "${INTEL_FALSE}"; then
+  as_fn_error $? "conditional \"INTEL\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${INTEL_TRUE}" && test -z "${INTEL_FALSE}"; then
+  as_fn_error $? "conditional \"INTEL\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${LINUX_TRUE}" && test -z "${LINUX_FALSE}"; then

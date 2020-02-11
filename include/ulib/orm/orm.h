@@ -259,6 +259,8 @@ public:
     * template <typename...Ts> void use(Ts&&... ts) { (bindParam(UOrmTypeHandler<Ts>(ts)), ...); } NB: don't work!
     */
 
+/*
+*/
 template <class T1> 
 void use(T1& r1);
 
@@ -476,6 +478,8 @@ private:
 
 // Syntactic sugar for bindParam() used with use() binding registers
 
+/*
+*/
 template <class T1>
 inline void UOrmStatement::use(T1& r1)
 {

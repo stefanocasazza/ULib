@@ -14,8 +14,9 @@ U_EXPORT main (int argc, char* argv[])
 
    bool result;
    UIPAddress x;
+   uint32_t addr;
    char address[16];
-   UString name = UString(argv[1]), domain, name_domain, name_ret;
+   UString tmp, name = UString(argv[1]), domain, name_domain, name_ret;
 
    if (argv[2] &&
        argv[2][0])
@@ -30,13 +31,63 @@ U_EXPORT main (int argc, char* argv[])
 
    U_ASSERT( result == false )
 
+   tmp = U_STRING_FROM_CONSTANT("127.0.0.1");
+
+   x.getBinaryForm(tmp, addr, true);
+
+   U_INTERNAL_DUMP("addr = %#08x %B", addr, addr)
+
+#if __BYTE_ORDER == __LITTLE_ENDIAN
+   U_INTERNAL_ASSERT( addr == 0x7f000001 )
+#else
+   U_INTERNAL_ASSERT( addr == 0x0100007f )
+#endif
+
+   x.getBinaryForm(tmp, addr, false);
+
+   U_INTERNAL_DUMP("addr = %#08x %B", addr, addr)
+
+#if __BYTE_ORDER == __LITTLE_ENDIAN
+   U_INTERNAL_ASSERT( addr == 0x0100007f )
+#else
+   U_INTERNAL_ASSERT( addr == 0x7f000001 )
+#endif
+
+   tmp = U_STRING_FROM_CONSTANT("255.255.255.255");
+
+   x.getBinaryForm(tmp, addr, true);
+
+   U_INTERNAL_DUMP("addr = %#08x %B", addr, addr)
+
+   U_INTERNAL_ASSERT( addr == 0xffffffff )
+
+   x.getBinaryForm(tmp, addr, false);
+
+   U_INTERNAL_DUMP("addr = %#08x %B", addr, addr)
+
+   U_INTERNAL_ASSERT( addr == 0xffffffff )
+
+   tmp = U_STRING_FROM_CONSTANT("255.0.0.255");
+
+   x.getBinaryForm(tmp, addr, true);
+
+   U_INTERNAL_DUMP("addr = %#08x %B", addr, addr)
+
+   U_INTERNAL_ASSERT( addr == 0xff0000ff )
+
+   x.getBinaryForm(tmp, addr, false);
+
+   U_INTERNAL_DUMP("addr = %#08x %B", addr, addr)
+
+   U_INTERNAL_ASSERT( addr == 0xff0000ff )
+
    // Test code for matching IP masks
 
    UIPAllow a;
 
-   U_ASSERT( a.parseMask(U_STRING_FROM_CONSTANT("127.0.0.5")) == true )
-
    // 127.0.0.5
+
+   U_ASSERT( a.parseMask(U_STRING_FROM_CONSTANT("127.0.0.5")) == true )
 
    x.setHostName(U_STRING_FROM_CONSTANT("127.0.0.5"));
 
@@ -142,7 +193,7 @@ U_EXPORT main (int argc, char* argv[])
 
    U_INTERNAL_ASSERT_EQUALS(n, 2)
 
-   n = UIPAllow::find("192.168.253.253", vipallow);
+   n = UIPAllow::find(U_STRING_FROM_CONSTANT("192.168.253.253"), vipallow);
 
    U_INTERNAL_ASSERT( n != U_NOT_FOUND )
 

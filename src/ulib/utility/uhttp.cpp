@@ -8559,7 +8559,7 @@ bool UHTTP::checkUriProtected()
             if (ok &&
                 U_http_ip_client_len)
                {
-               ok = UIPAllow::isAllowed(UServer_Base::client_address, *vallow_IP);
+               ok = UIPAllow::isAllowed(U_CLIENT_ADDRESS_TO_PARAM, *vallow_IP);
                }
 
             if (ok == false)

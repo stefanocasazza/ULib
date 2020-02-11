@@ -3200,7 +3200,7 @@ next:
       {
       in_addr_t addr;
 
-      if (UIPAddress::getBinaryForm(IP_address->c_str(), addr) == false) U_ERROR("IP_ADDRESS conversion fail: %V", IP_address->rep);
+      if (UIPAddress::getBinaryForm(*IP_address, addr) == false) U_ERROR("IP_ADDRESS conversion fail: %V", IP_address->rep);
 
       socket->setAddress(&addr);
 

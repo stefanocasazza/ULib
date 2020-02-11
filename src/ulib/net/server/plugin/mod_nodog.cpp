@@ -1449,7 +1449,7 @@ next:             eraseTimer();
 
       if (checkUrl(buffer, sizeof(buffer), sz, U_CONSTANT_TO_PARAM("NEW")) == 0) goto end;
 
-      index_network = UIPAllow::find(UServer_Base::client_address, *vLocalNetworkMask);
+      index_network = UIPAllow::find(U_CLIENT_ADDRESS_TO_PARAM, *vLocalNetworkMask);
 
       U_INTERNAL_DUMP("index_network = %u", index_network)
 

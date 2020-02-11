@@ -3455,7 +3455,7 @@ next:
 
          if (pvallow)
             {
-            if (UIPAllow::isAllowed(user_rec->_ip.data(), *pvallow))
+            if (UIPAllow::isAllowed(user_rec->_ip, *pvallow))
                {
                *uid = db_user->getKeyID();
 

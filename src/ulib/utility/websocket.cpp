@@ -654,7 +654,7 @@ bool UWebSocket::sendData(const bool isServer, USocket* socket, int type, const 
 #     ifdef USE_LIBBROTLI
          UString compressed;
 
-         if (compressed = UStringExt::brotli(data, len, (U_PARALLELIZATION_CHILD ? BROTLI_MAX_QUALITY : UHTTP::brotli_level_for_dynamic_content)))
+         if ((compressed = UStringExt::brotli(data, len, (U_PARALLELIZATION_CHILD ? BROTLI_MAX_QUALITY : UHTTP::brotli_level_for_dynamic_content))))
             {
             opcode = U_WS_OPCODE_BROTLI;
 
