@@ -3803,9 +3803,11 @@ void UHTTP2::sendGoAway(USocket* psocket)
 
 #ifdef GCC_IS_GNU
    #pragma GCC diagnostic push
-   #pragma GCC diagnostic ignored "-Wunused-but-set-parameter"
+   #pragma GCC diagnostic ignored "-Wunused-variable"
 #endif
+	
    const char* descr = getFrameErrorCodeDescription(nerror);
+   
 #ifdef GCC_IS_GNU
    #pragma GCC diagnostic pop
 #endif
