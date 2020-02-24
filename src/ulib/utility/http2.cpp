@@ -3800,17 +3800,8 @@ void UHTTP2::sendGoAway(USocket* psocket)
 
    u_write_unalignedp32(ptr+ 9,pConnection->max_processed_stream_id);
    u_write_unalignedp32(ptr+13,nerror);
-
-#ifdef GCC_IS_GNU
-   #pragma GCC diagnostic push
-   #pragma GCC diagnostic ignored "-Wunused-variable"
-#endif
 	
    const char* descr = getFrameErrorCodeDescription(nerror);
-   
-#ifdef GCC_IS_GNU
-   #pragma GCC diagnostic pop
-#endif
 
    if (nerror) U_SRV_LOG("send GOAWAY frame with error (%u, %s)", nerror, descr);
 
