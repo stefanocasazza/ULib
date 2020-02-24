@@ -3832,7 +3832,15 @@ void UHTTP2::sendResetStream()
    u_write_unalignedp32(ptr+5,frame.stream_id);
    u_write_unalignedp32(ptr+9,nerror);
 
+#ifdef GCC_IS_GNU
+   #pragma GCC diagnostic push
+   #pragma GCC diagnostic ignored "-Wunused-variable"
+#endif
    const char* descr = getFrameErrorCodeDescription(nerror);
+   
+#ifdef GCC_IS_GNU
+   #pragma GCC diagnostic pop
+#endif
 
    U_DEBUG("Send RST_STREAM frame with error (%u, %s)", nerror, descr)
 
