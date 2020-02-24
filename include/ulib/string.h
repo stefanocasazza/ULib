@@ -1097,7 +1097,7 @@ private:
       U_RETURN(false);
       }
 
-   //U_DISALLOW_COPY_AND_ASSIGN(UStringRep)
+   U_DISALLOW_COPY_AND_ASSIGN(UStringRep)
 
    friend class Url;
    friend class ULib;
@@ -1347,7 +1347,6 @@ protected:
    explicit UString(UStringRep** pr) : rep(*pr) // NB: for toUTF8() and fromUTF8()...
       {
       U_TRACE_CTOR(0, UString, "%V", *pr)
-      U_DUMP("UString(UStringRep** pr)");
       }
 
    explicit UString(uint32_t len, uint32_t sz, char* ptr);
@@ -1488,8 +1487,6 @@ public:
       {
       U_TRACE_CTOR(0, UString, "")
 
-      U_DUMP("UString()");
-
       rep->hold();
 
       U_INTERNAL_ASSERT(invariant())
@@ -1499,8 +1496,6 @@ public:
       {
       U_TRACE_CTOR(0, UString, "%V", r)
 
-      U_DUMP("UString(const UStringRep* r)");
-
       rep->hold();
 
       U_INTERNAL_ASSERT(invariant())
@@ -1509,8 +1504,6 @@ public:
    explicit UString(ustringrep* r)
       {
       U_TRACE_CTOR(0, UString, "%p", r)
-
-      U_DUMP("UString(ustringrep* r)");
 
 #  ifdef DEBUG
       r->_this = (void*)U_CHECK_MEMORY_SENTINEL;
@@ -1548,8 +1541,6 @@ public:
    explicit UString(const char* t)
       {
       U_TRACE_CTOR(0, UString, "%S", t)
-
-      U_DUMP("UString(const char* t)");
 
       uint32_t len = (t ? u__strlen(t, __PRETTY_FUNCTION__) : 0);
 
@@ -1683,8 +1674,7 @@ public:
       {
       U_TRACE_CTOR(0, UString, "%p", &str)
 
-      U_DUMP("UString(const UString& str)");
-      U_DUMP("str = %.*s", str.size() > 500 ? 500 : str.size(), str.data());
+      U_DUMP("UString(const UString& str), str = %.*s", str.size() > 500 ? 500 : str.size(), str.data());
 
       rep->hold();
 
@@ -2023,10 +2013,6 @@ public:
    UString copy() const
       {
       U_TRACE_NO_PARAM(0, "UString::copy()")
-
-      U_DUMP("rep = %v", rep);
-      U_DUMP("rep->_length = %lu", rep->_length);
-      U_DUMP("rep->_capacity = %lu", rep->_capacity);
 
       if (rep->_length)
          {
@@ -2461,11 +2447,7 @@ public:
 
       char* ptr = (char*)rep->str;
 
-      U_DUMP("(A) rep->_length = %lu", rep->_length);
-
       ptr[(rep->_length = u_num2str32(number, ptr) - ptr)] = '\0';
-
-      U_DUMP("(B) rep->_length = %lu", rep->_length);
 
       U_INTERNAL_ASSERT(invariant())
       }
