@@ -1013,6 +1013,12 @@ public:
 
       UVector<void*>::move(source); // add to end and reset source
       }
+	
+	explicit UVector(const UVector<UString>& starting) : UVector(starting.size())
+   {
+      U_TRACE_CTOR(0, UVector<UString>, "copy ctor")
+      this->copy(starting);
+   }
 
    ~UVector()
       {
@@ -1320,7 +1326,7 @@ public:
       else                      UVector<void*>::sort();
       }
 
-   void copy(UVector<UString>& source)
+   void copy(const UVector<UString>& source)
       {
       U_TRACE(0, "UVector<UString>::copy(%p)", &source)
 
