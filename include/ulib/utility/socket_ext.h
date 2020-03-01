@@ -158,6 +158,9 @@ public:
 #endif
 
 private:
+   
+   friend class UREDISClusterMaster;
+   
 #ifdef USE_C_ARES
    static int   resolv_status;
    static char  resolv_hostname[INET6_ADDRSTRLEN];

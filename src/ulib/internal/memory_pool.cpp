@@ -194,6 +194,17 @@ public:
       void* ptr = (index == 0 ? (void*)pblock : *pblock);
 
 #  ifdef DEBUG
+      if (index)
+         {
+         U_INTERNAL_ASSERT_EQUALS( ptr, *pblock)
+         U_INTERNAL_ASSERT_EQUALS( ptr, *(pointer_block + len))
+
+         if (len)
+            {
+            U_INTERNAL_ASSERT_DIFFERS(ptr, *(pointer_block + len - 1))
+            }
+         }
+
       U_INTERNAL_ASSERT_EQUALS(((long)ptr & (sizeof(long)-1)), 0) // memory aligned
 
       if (++depth > max_depth) max_depth = depth;

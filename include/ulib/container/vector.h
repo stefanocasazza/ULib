@@ -1013,6 +1013,12 @@ public:
 
       UVector<void*>::move(source); // add to end and reset source
       }
+   
+   explicit UVector(const UVector<UString>& starting) : UVector(starting.size())
+   {
+      U_TRACE_CTOR(0, UVector<UString>, "copy ctor")
+      this->copy(starting);
+   }
 
    ~UVector()
       {
@@ -1102,9 +1108,8 @@ public:
       U_ASSERT_EQUALS(str.rep, UVector<UStringRep*>::at(_length-1))
       }
 
-   void push_back(const UStringRep* rep) { UVector<UStringRep*>::push_back(rep); }
-
-   void push_back(const char* t, uint32_t tlen) { UString str(t, tlen); push_back(str); }
+   void push_back(const UStringRep* rep)        { UVector<UStringRep*>::push_back(rep); }
+   void push_back(const char* t, uint32_t tlen) { UVector<UStringRep*>::push_back(UStringRep::create(tlen, tlen, t)); }
 
    UString last() // return last element
       {
@@ -1320,7 +1325,7 @@ public:
       else                      UVector<void*>::sort();
       }
 
-   void copy(UVector<UString>& source)
+   void copy(const UVector<UString>& source)
       {
       U_TRACE(0, "UVector<UString>::copy(%p)", &source)
 

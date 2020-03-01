@@ -215,6 +215,11 @@ public:
       U_RETURN(_capacity);
       }
 
+   void setToFree()
+   {
+      _capacity = U_TO_FREE;
+   }
+
    bool writeable() const
       {
       U_TRACE_NO_PARAM(0, "UStringRep::writeable()")
@@ -1653,7 +1658,7 @@ public:
    ~UString()
       {
       U_TRACE_DTOR(0, UString)
-
+      U_DUMP("str = %.*s", size() > 500 ? 500 : size(), data());
       U_INTERNAL_ASSERT_POINTER(rep)
 
       U_CHECK_MEMORY_OBJECT(rep)
@@ -1668,6 +1673,8 @@ public:
    UString(const UString& str) : rep(str.rep)
       {
       U_TRACE_CTOR(0, UString, "%p", &str)
+
+      U_DUMP("UString(const UString& str), str = %.*s", str.size() > 500 ? 500 : str.size(), str.data());
 
       rep->hold();
 
@@ -1711,6 +1718,7 @@ public:
    UString(UString && str)
       {
       U_TRACE_NO_PARAM(0, "UString::UString(move)")
+      U_DUMP("str = %.*s", str.size() > 500 ? 500 : str.size(), str.data());
 
       // Move the value (including the allocated memory) from the first object to the second one, and leave the first one empty.
       // It will not need the value anyway, because the only operation that will be executed on it is the destruction. We must
@@ -2647,9 +2655,9 @@ public:
 
             long strtol( bool check_for_suffix = false) const  { return rep->strtol( check_for_suffix); }
    unsigned long strtoul(bool check_for_suffix = false) const  { return rep->strtoul(check_for_suffix); }   
-
+   
    static UString humanReadableByteCountBin(int64_t bytes);
-
+   
    // UTF8 <--> ISO Latin 1
 
    static UString toUTF8(const unsigned char* t, uint32_t tlen)
@@ -2882,7 +2890,6 @@ public:
    // constexpr operator const char *() const { return string; }
 
    static constexpr char const * cbegin() noexcept { return &string[0]; }
-    
    static constexpr char const * cend() noexcept { return &string[length]; }
 
    template <char... OChars> constexpr
@@ -2896,8 +2903,8 @@ public:
    }
    
 #ifdef GCC_IS_GNU
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-but-set-parameter"
+   #pragma GCC diagnostic push
+   #pragma GCC diagnostic ignored "-Wunused-but-set-parameter"
 #endif
 
    template<size_t index = 0>
@@ -2909,7 +2916,7 @@ public:
    }
 
 #ifdef GCC_IS_GNU
-#pragma GCC diagnostic pop
+   #pragma GCC diagnostic pop
 #endif
 
 // so that CTV is transparently a UString to U_STRING_TO_PARAM
@@ -2918,20 +2925,32 @@ public:
 
    static constexpr uint8_t notChars = 0x1;
    static constexpr uint8_t skipDoubles = 0x2;
+   static constexpr uint8_t matchWholeString = 0x2;
 
    template <class String>
    constexpr size_t find(size_t index, String findTheseChars, uint8_t options = 0, size_t terminalIndex = length) const
    {
       while (index < terminalIndex)
       {
-         char ch = string[index];
-
-         if (options == skipDoubles)
+         if (options == matchWholeString)
          {
-            if (findTheseChars.contains(ch) && ((index + 1 < terminalIndex) ? !findTheseChars.contains(string[index + 1]) : true)) return index;
+            if ((index + findTheseChars.length) <= terminalIndex)
+            {
+               if (memcmp(string + index, findTheseChars.string, findTheseChars.length) == 0) return index;
+            }
+            else return terminalIndex;
          }
-         else if ((options == notChars) == !findTheseChars.contains(ch)) return index;
-         
+         else
+         {
+            char ch = string[index];
+            
+            if (options == skipDoubles)
+            {
+               if (findTheseChars.contains(ch) && ((index + 1 < terminalIndex) ? !findTheseChars.contains(string[index + 1]) : true)) return index;
+            }
+            else if ((options == notChars) == !findTheseChars.contains(ch)) return index;
+         }
+
          ++index;
       }
 
@@ -2945,6 +2964,12 @@ constexpr auto operator""_ctv() // compile time view
    return UCompileTimeStringView<static_cast<char>(Chars)...>{};
 }
 
+template <typename T, typename U>
+struct decay_equiv : std::is_same<typename std::decay<T>::type, U>::type {};
+
+template <class T, class U>
+static inline constexpr bool decay_equiv_v = decay_equiv<T, U>::value;
+
 template <typename T, template <char... CharsB> class Template>
 struct is_ctv : std::false_type {};
 
@@ -2952,12 +2977,12 @@ template <char... CharsA, template <char... CharsB> class Template>
 struct is_ctv<Template<CharsA...>, Template> : std::true_type {};
 
 template <typename T>
-static inline constexpr bool is_ctv_v = is_ctv<T, UCompileTimeStringView>::value;
+static inline constexpr bool is_ctv_v = is_ctv<typename std::decay<T>::type, UCompileTimeStringView>::value;
 
 #define U_CTV_TO_PARAM(ct_string) ct_string.string, ct_string.length
 
 template<typename Lambda, typename T>
-static void snprintf_specialization(Lambda&& lambda, T t) 
+static void snprintf_specialization(Lambda&& lambda, const T& t) 
 {
    lambda(U_NULLPTR, 0);
 }
@@ -2968,8 +2993,8 @@ class UCompileTimeStringFormatter {
 protected:
 
 #ifdef GCC_IS_GNU
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-but-set-parameter"
+   #pragma GCC diagnostic push
+   #pragma GCC diagnostic ignored "-Wunused-but-set-parameter"
 #endif
 
    template<size_t workingIndex, size_t argumentCount, typename StringClass, typename T, typename... Ts>
@@ -2981,36 +3006,43 @@ protected:
       }
       else
       {
-         constexpr size_t nextFormat = StringClass::instance.find(workingIndex, "{"_ctv, StringClass::skipDoubles);
+         constexpr size_t nextFormat = StringClass::instance.find(workingIndex, "{}"_ctv, StringClass::matchWholeString);
          constexpr size_t formatTermination = nextFormat + 1;
 
          return generateSegments<formatTermination + 1, argumentCount - 1>(format, std::forward<Ts>(ts)..., StringClass::instance.template substr<workingIndex, nextFormat>(), std::forward<T>(t));
       }
    }
-
 #ifdef GCC_IS_GNU
-#pragma GCC diagnostic pop
+   #pragma GCC diagnostic pop
 #endif
 
-   template <typename T, typename U>
-   struct decay_equiv : std::is_same<typename std::decay<T>::type, U>::type {};
-
-   template <class T, class U>
-   static inline constexpr bool decay_equiv_v = decay_equiv<T, U>::value;
-
    template <typename T>
-   static void writeBytes(char*& writeTo, T t)
+   static void writeBytes(char*& writeTo, T&& t)
    {
-           if constexpr (is_ctv_v<T>)                 writeTo = (char*)mempcpy(writeTo, t.data(), t.size());
-      else if constexpr (decay_equiv_v<T, UString>)   writeTo = (char*)mempcpy(writeTo, t.data(), t.size());
-      else if constexpr (std::is_integral_v<T>)       writeTo = u_num2str64s(t,  writeTo);
-      else if constexpr (std::is_floating_point_v<T>) writeTo = u_dtoa(t, writeTo);
-      else if constexpr (decay_equiv_v<T, char>)      writeTo = (char*)mempcpy(writeTo, t, strlen(t));
+      if constexpr (is_ctv_v<T>)                 
+      {
+         writeTo = (char*)mempcpy(writeTo, t.data(), t.size());
+      }
+      else if constexpr (decay_equiv_v<T, UString>)
+      {
+         writeTo = (char*)mempcpy(writeTo, t.data(), t.size());
+      }
+      else if constexpr (std::is_integral_v<std::remove_reference_t<T>>) 
+      {
+         writeTo = u_num2str64s(t,  writeTo);
+      }
+      else if constexpr (std::is_floating_point_v<std::remove_reference_t<T>>)
+      {
+         writeTo = u_dtoa(t, writeTo);
+      }
+      else if constexpr (decay_equiv_v<T, char>) 
+      {
+         writeTo = (char*)mempcpy(writeTo, t, strlen(t));
+      }
       else
       {
          auto lambda = [&] (const void *buffer, size_t bufferSize)
          {
-            //writeTo = (char*)memcpy(writeTo, buffer, bufferSize) + bufferSize;
             writeTo = (char*)mempcpy(writeTo, buffer, bufferSize);
          };
 
@@ -3046,55 +3078,47 @@ protected:
    }
 
    template <typename T>
-   static size_t getLength(T t)
+   static size_t getLength(T&& t)
    {
-           if constexpr (is_ctv_v<T>)                 return t.length;
-      else if constexpr (decay_equiv_v<T, UString>)   return t.size();
-      else if constexpr (std::is_integral_v<T>)
+      size_t length = 0;
+
+      if constexpr (is_ctv_v<T>)  
+      {
+         length = t.length;
+      }
+      else if constexpr (decay_equiv_v<T, UString>)   
+      {
+         length = t.size();
+      }
+      else if constexpr (std::is_integral_v<std::remove_reference_t<T>>)
       {
          static char buffer[64];
-         return u_num2str64s(t, buffer) - buffer;
+         length = u_num2str64s(t, buffer) - buffer;
       }
-      else if constexpr (std::is_floating_point_v<T>)
+      else if constexpr (std::is_floating_point_v<std::remove_reference_t<T>>)
       {
          static char buffer[64];
-         return u_dtoa(t, buffer) - buffer;
+         length = u_dtoa(t, buffer) - buffer;
       }
-      else if constexpr (decay_equiv_v<T, char>) 
-      {
-         return strlen(t);
-      }
+      else if constexpr (decay_equiv_v<T, char>) length = strlen(t);
       else
       {
-         size_t length = 0;
-
          auto lambda = [&] (const void *buffer, size_t bufferSize)
          {
             length = bufferSize;
          };
 
          snprintf_specialization(lambda, t);
-
-         return length;
       }
+
+      return length;
    }
-
-   template <typename T>
-   struct LengthSurplusPackage
-   {
-      size_t lengthSurplus;
-      const T& binding;
-
-      size_t size() 
-      {
-         return getLength(binding) + lengthSurplus;
-      }
-   };
 
    template<bool overwrite, typename... Ts>
    static void snprintf_impl(size_t writePosition, UString& workingString, Ts&&... ts)
    {
-      size_t lengths = (getLength(ts) + ...);
+      // the surpluses here are all 0 because this is run at run time not compile
+      size_t lengths = (getLength(std::forward<Ts>(ts)) + ...);
 
       // grow string to accomodate new size if necessary
       if constexpr (overwrite) workingString.reserve(lengths);
@@ -3108,7 +3132,7 @@ protected:
 
       char* target = workingString.data() + writePosition;
 
-      (writeBytes(target, ts), ...);
+      (writeBytes(target, std::forward<Ts>(ts)), ...);
 
       if constexpr (overwrite)   workingString.size_adjust_force(lengths);
       else                       workingString.size_adjust_force(workingString.size() + lengths);
@@ -3141,13 +3165,6 @@ public:
    }
 };
 
-template<typename Lambda, typename T>
-static void snprintf_specialization(Lambda&& lambda, UCompileTimeStringFormatter::LengthSurplusPackage<T>& t) 
-{
-   static char working[64];
-   lambda(working, u_num2str64s(t.size(), working) - working);
-}
-
 template<typename T>
 concept bool UCompileTimeStringType = requires(T string) {
    is_ctv_v<T>;
@@ -3161,6 +3178,9 @@ concept bool UStringType = requires(T string)
 
 inline bool operator==(const UString& lhs, const UCompileTimeStringType& rhs){ return lhs.equal(rhs.string); }
 inline bool operator==(const UCompileTimeStringType& lhs, const UString& rhs){ return rhs.equal(lhs.string); }
+
+inline bool operator!=(const UString& lhs, const UCompileTimeStringType& rhs){ return !lhs.equal(rhs.string); }
+inline bool operator!=(const UCompileTimeStringType& lhs, const UString& rhs){ return !rhs.equal(lhs.string); }
 
 #  endif
 #endif
