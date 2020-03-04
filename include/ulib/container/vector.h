@@ -1109,7 +1109,6 @@ public:
       }
 
    void push_back(const UStringRep* rep)        { UVector<UStringRep*>::push_back(rep); }
-   void push_back(const char* t, uint32_t tlen) { UVector<UStringRep*>::push_back(UStringRep::create(tlen, tlen, t)); }
 
    UString last() // return last element
       {
