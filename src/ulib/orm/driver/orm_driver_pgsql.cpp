@@ -180,7 +180,7 @@ UPgSqlStatement::UPgSqlStatement(const char* s, uint32_t n) : USqlStatement(U_NU
 
    if (len) (void) stmt.append(s + start, len);
 
-   (void) stmt.shrink();
+   (void) stmt.shrink(true);
 
    res          = U_NULLPTR;
    paramValues  = U_NULLPTR;

@@ -216,9 +216,13 @@ public:
       }
 
    void setToFree()
-   {
+      {
+      U_TRACE_NO_PARAM(0, "UStringRep::setToFree()")
+
+      U_CHECK_MEMORY
+
       _capacity = U_TO_FREE;
-   }
+      }
 
    bool writeable() const
       {
@@ -1973,7 +1977,7 @@ public:
 
    // it can shrink the space used (capacity)...
 
-   bool     shrink();
+   bool     shrink(bool bmalloc = false);
    UString& erase(uint32_t pos = 0, uint32_t n = U_NOT_FOUND) { return replace(pos, rep->fold(pos, n), "", 0); }
 
    // C-Style String
@@ -1990,7 +1994,7 @@ public:
       U_ASSERT_EQUALS(u__strlen(rep->str, __PRETTY_FUNCTION__), rep->_length)
       }
 
-   char* c_str() const
+   char* c_str()
       {
       U_TRACE_NO_PARAM(0, "UString::c_str()")
 
@@ -2001,7 +2005,11 @@ public:
          U_INTERNAL_DUMP("rep = %p rep->parent = %p rep->references = %u rep->child = %d rep->_length = %u rep->_capacity = %u",
                           rep,     rep->parent,     rep->references,     rep->child,     rep->_length,     rep->_capacity)
 
-         ((char*)rep->str)[rep->_length] = '\0';
+         if (writeable()) ((char*)rep->str)[rep->_length] = '\0';
+         else
+            {
+            (void) shrink(true);
+            }
          }
 
       return (char*)rep->str;
@@ -2243,6 +2251,8 @@ public:
 
       U_INTERNAL_ASSERT(invariant())
       }
+
+   void setToFree() { return rep->setToFree(); }
 
    bool uniq() const      { return rep->uniq(); }
    bool writeable() const { return rep->writeable(); }

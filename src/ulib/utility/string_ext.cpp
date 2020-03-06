@@ -218,7 +218,7 @@ UString UStringExt::expandTab(const char* s, uint32_t n, int tab)
 
    if (len) (void) x.append(s + start, len);
 
-   (void) x.shrink();
+   (void) x.shrink(true);
 
    U_RETURN_STRING(x);
 }
@@ -1729,7 +1729,7 @@ UString UStringExt::deflate(const char* s, uint32_t len, uint32_t quality) // .g
 
       UString str((const char*)out, outsize);
 
-      str.rep->_capacity = U_TO_FREE;
+      str.setToFree();
 
       U_RETURN_STRING(str);
       }

@@ -70,7 +70,7 @@ UString USOAPParser::getFaultResponse()
 
    fault.encode(retval);
 
-   (void) retval.shrink();
+   (void) retval.shrink(true);
 
    U_RETURN_STRING(retval);
 }

@@ -351,7 +351,7 @@ UString UServices::getFileName(long hash, bool crl)
 
       buffer.snprintf(U_CONSTANT_TO_PARAM("%v/%08x.%s"), CApath->rep, hash, (crl ? "r0" : "0"));
 
-      (void) buffer.shrink();
+      (void) buffer.shrink(true);
 
       U_RETURN_STRING(buffer);
       }

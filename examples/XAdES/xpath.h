@@ -99,6 +99,8 @@ public:
     UXPathData(int data_type, int nodeSetType, const char* expr);
    ~UXPathData();
 
+   UXPathData(const UXPathData&) {}
+
 #ifdef DEBUG
    const char* dump(bool reset) const;
 #endif

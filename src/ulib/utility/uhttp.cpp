@@ -313,7 +313,7 @@ UString UHTTP::getLinkPagination()
       U_INTERNAL_DUMP("num_page_cur = %u num_item_tot = %u num_page_start = %u num_page_end = %u num_item_for_page = %u",
                        num_page_cur,     num_item_tot,     num_page_start,     num_page_end,     num_item_for_page)
 
-      (void) link.shrink();
+      (void) link.shrink(true);
       }
 #endif
 
@@ -1092,7 +1092,7 @@ void UHTTP::init()
 
    U_ASSERT_EQUALS(UServer_Base::cenvironment->isBinary(), false)
 
-   (void) UServer_Base::cenvironment->shrink();
+   (void) UServer_Base::cenvironment->shrink(true);
 
    U_INTERNAL_ASSERT_POINTER(UServer_Base::senvironment)
 
@@ -1103,7 +1103,7 @@ void UHTTP::init()
 
    U_ASSERT_EQUALS(UServer_Base::senvironment->isBinary(), false)
 
-   (void) UServer_Base::senvironment->shrink();
+   (void) UServer_Base::senvironment->shrink(true);
 
    // CACHE DOCUMENT ROOT FILE SYSTEM
 
@@ -8933,7 +8933,7 @@ U_NO_EXPORT void UHTTP::setHeaderForCache(UHTTP::UFileCacheData* ptr, UString& d
 
    U_INTERNAL_ASSERT_POINTER(ptr)
 
-   (void) data.shrink();
+   (void) data.shrink(true);
 
    ptr->array->push_back(data);
 
@@ -8943,7 +8943,7 @@ U_NO_EXPORT void UHTTP::setHeaderForCache(UHTTP::UFileCacheData* ptr, UString& d
 
    hpack.size_adjust((const char*)dst);
 
-   (void) hpack.shrink();
+   (void) hpack.shrink(true);
 
    ptr->http2->push_back(hpack);
 #endif

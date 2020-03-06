@@ -721,7 +721,7 @@ uint32_t UPCRE::getTag(UVector<UString>& vec, const UString& xml, const char* at
 
       cstr.snprintf(U_CONSTANT_TO_PARAM("(<(%s)[^>]*%s\\s*=\\s*([\\'\\\"])%s\\\\2[^>]*>(.*?)<\\/\\\\1>)"), tag, attr, value);
 
-      (void) cstr.shrink();
+      (void) cstr.shrink(true);
 
       U_NEW_ULIB_OBJECT(UPCRE, xml_mask, UPCRE(cstr, PCRE_FOR_REPLACE));
 

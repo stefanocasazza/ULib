@@ -35,7 +35,7 @@ public:
 
       bool result = UXMLParser::parse(data);
 
-      (void) output.shrink();
+      (void) output.shrink(true);
 
       U_RETURN(result);
       }

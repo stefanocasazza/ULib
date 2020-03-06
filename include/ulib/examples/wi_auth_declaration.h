@@ -7250,7 +7250,7 @@ static void POST_login_request()
          if (user_rec->_auth_domain != *account_auth)
             {
             vec.push_back(user_rec->nodog);
-            vec.push_back(UStringRep::create(UServer_Base::client_address_len, UServer_Base::client_address_len, UServer_Base::client_address));
+            vec.push_back(U_CLIENT_ADDRESS_TO_PARAM);
             vec.push_back(*UString::str_without_mac);
             }
          }

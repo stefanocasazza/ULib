@@ -169,7 +169,7 @@ public:
          {
          UString str((const char*)dbuf.dptr, dbuf.dsize);
 
-         str.rep->_capacity = U_TO_FREE;
+         str.setToFree();
 
          U_RETURN_STRING(str);
          }

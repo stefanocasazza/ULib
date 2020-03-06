@@ -474,7 +474,7 @@ int UPop3Client::getAllHeader(UVector<UString>& vec)
                                 req.snprintf(    U_CONSTANT_TO_PARAM("TOP  1 0\r\n"));
       for (; i <= num_msg; ++i) req.snprintf_add(U_CONSTANT_TO_PARAM("TOP %d 0\r\n"), i);
 
-      (void) req.shrink();
+      (void) req.shrink(true);
 
       (void) buffer.reserve(size_msg);
 
@@ -513,7 +513,7 @@ int UPop3Client::getAllMessage(UVector<UString>& vec)
                                 req.snprintf(    U_CONSTANT_TO_PARAM("RETR  1\r\n"));
       for (; i <= num_msg; ++i) req.snprintf_add(U_CONSTANT_TO_PARAM("RETR %d\r\n"), i);
 
-      (void) req.shrink();
+      (void) req.shrink(true);
 
       (void) buffer.reserve(size_msg + (num_msg * (sizeof(U_POP3_OK) + sizeof("Message follows") + sizeof(U_POP3_EODML))));
 
@@ -552,7 +552,7 @@ bool UPop3Client::deleteAllMessage()
                                 req.snprintf(    U_CONSTANT_TO_PARAM("DELE  1\r\n"));
       for (; i <= num_msg; ++i) req.snprintf_add(U_CONSTANT_TO_PARAM("DELE %d\r\n"), i);
 
-      (void) req.shrink();
+      (void) req.shrink(true);
 
       (void) buffer.reserve(size);
 

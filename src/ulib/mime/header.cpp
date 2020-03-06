@@ -342,7 +342,7 @@ UString UMimeHeader::getHeaders()
 
       writeHeaders(buffer);
 
-      (void) buffer.shrink();
+      (void) buffer.shrink(true);
 
       U_RETURN_STRING(buffer);
       }

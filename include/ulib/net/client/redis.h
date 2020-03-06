@@ -1705,7 +1705,7 @@ public:
 
       // map in responses
 
-         std::sort(pipeline.spans.begin(), pipeline.spans.end(), [] (const auto& a, const auto& b) { return a.index > b.index; });
+         std::sort(pipeline.spans.begin(), pipeline.spans.end(), [] (const auto& a, const auto& b) { return a.index < b.index; });
 
          bool recloned = false;
 
