@@ -27,7 +27,7 @@ struct U_EXPORT UBase64 {
       {
       U_TRACE(0, "UBase64::decode(%.*S,%u,%p)", n, s, n, &buffer)
 
-      U_ASSERT(buffer.uniq())
+      //U_ASSERT(buffer.uniq())
 
       buffer.rep->_length = u_base64_decode(s, n, (unsigned char*)buffer.data());
 
