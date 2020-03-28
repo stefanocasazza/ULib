@@ -863,6 +863,7 @@ protected:
    static UString* password;   // password for private key of server
    static UString* ca_file;    // locations of trusted CA certificates used in the verification
    static UString* ca_path;    // locations of trusted CA certificates used in the verification
+	static UString* tls_pin;    // base64-encoded SHA256 hash of subjectInfoPublicKey
    static UString* IP_address; // IP address of this server
 
    static int rkids;
