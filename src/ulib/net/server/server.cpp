@@ -133,6 +133,7 @@ UString*      UServer_Base::ca_path;
 UString*      UServer_Base::key_file;
 UString*      UServer_Base::password;
 UString*      UServer_Base::cert_file;
+UString*      UServer_Base::tls_pin;
 UString*      UServer_Base::name_sock;
 UString*      UServer_Base::IP_address;
 UString*      UServer_Base::cenvironment;
@@ -1739,6 +1740,7 @@ UServer_Base::UServer_Base(UFileConfig* cfg)
    U_NEW_STRING(as_user,       UString);
    U_NEW_STRING(dh_file,       UString);
    U_NEW_STRING(cert_file,     UString);
+	U_NEW_STRING(tls_pin,     	 UString);
    U_NEW_STRING(key_file,      UString);
    U_NEW_STRING(password,      UString);
    U_NEW_STRING(ca_file,       UString);
@@ -1943,6 +1945,7 @@ UServer_Base::~UServer_Base()
    U_DELETE(as_user)
    U_DELETE(dh_file)
    U_DELETE(cert_file)
+	U_DELETE(tls_pin)
    U_DELETE(key_file)
    U_DELETE(password)
    U_DELETE(ca_file)
@@ -2308,13 +2311,21 @@ void UServer_Base::loadConfigParam()
    if (bssl)
       {
       *dh_file   = pcfg->at(U_CONSTANT_TO_PARAM("DH_FILE"));
-      *ca_file   = pcfg->at(U_CONSTANT_TO_PARAM("CA_FILE"));
-      *ca_path   = pcfg->at(U_CONSTANT_TO_PARAM("CA_PATH"));
+      
       *key_file  = pcfg->at(U_CONSTANT_TO_PARAM("KEY_FILE"));
       *password  = pcfg->at(U_CONSTANT_TO_PARAM("PASSWORD"));
       *cert_file = pcfg->at(U_CONSTANT_TO_PARAM("CERT_FILE"));
 
       verify_mode = pcfg->readLong(U_CONSTANT_TO_PARAM("VERIFY_MODE"));
+
+      *tls_pin = pcfg->at(U_CONSTANT_TO_PARAM("TLS_SPKI_PIN"));
+
+      if (tls_pin->size()) UBase64::decode(tls_pin->data(), tls_pin->size(), *tls_pin);
+      else
+      {
+         *ca_file   = pcfg->at(U_CONSTANT_TO_PARAM("CA_FILE"));
+         *ca_path   = pcfg->at(U_CONSTANT_TO_PARAM("CA_PATH"));
+      }
 
       min_size_for_sendfile = U_NOT_FOUND; // NB: we can't use sendfile with SSL...
       }
@@ -3098,7 +3109,7 @@ void UServer_Base::init()
       // Load our certificate
 
       if (((USSLSocket*)socket)->setContext( dh_file->data(), cert_file->data(), key_file->data(),
-                                            password->data(),   ca_file->data(),  ca_path->data(), verify_mode) == false)
+                                            password->data(),   ca_file->data(),  ca_path->data(), tls_pin->data(), verify_mode) == false)
          {
          U_ERROR("SSL: server setContext() failed");
          }
