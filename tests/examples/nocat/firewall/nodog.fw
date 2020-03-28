@@ -453,9 +453,9 @@ initialize_fw() {
 	fi
 	for net in $LocalNetwork; do
 		$IPTABLES -t mangle -A ND_m_acc_in -s "$net" -j RETURN && \
-		$IPTABLES -t mangle -A ND_m_acc_in -j ACCOUNT --addr "$net" --tname "$net" && \
+		$IPTABLES -t mangle -A ND_m_acc_in -d "$net" -j ACCOUNT --addr "$net" --tname "$net" && \
 		$IPTABLES -t mangle -A ND_m_acc_ou -d "$net" -j RETURN && \
-		$IPTABLES -t mangle -A ND_m_acc_ou -j ACCOUNT --addr "$net" --tname "$net" || exit 2
+		$IPTABLES -t mangle -A ND_m_acc_ou -s "$net" -j ACCOUNT --addr "$net" --tname "$net" || exit 2
 	done
 	# END ND_m_acc_in ND_m_acc_ou
 
@@ -492,13 +492,13 @@ initialize_fw() {
 	 		$IPTABLES -t mangle -A POSTROUTING -o $ifacein -d $net -j ND_m_acc_in || exit 2
 		else
 			for ifaceout in $ExternalDevice; do
-				$IPTABLES -t filter -A FORWARD     -i $ifacein          -o $ifaceout -j ND_f_fwd_in && \
-				$IPTABLES -t filter -A FORWARD     -i $ifaceout         -o $ifacein  -j ND_f_fwd_ou && \
+				$IPTABLES -t filter -A FORWARD     -i $ifacein  -s $net -o $ifaceout -j ND_f_fwd_in && \
+				$IPTABLES -t filter -A FORWARD     -i $ifaceout -d $net -o $ifacein  -j ND_f_fwd_ou && \
 	 			$IPTABLES -t mangle -A POSTROUTING -o $ifaceout -s $net -j ND_m_acc_ou || exit 2
 			done
-			$IPTABLES -t mangle -A PREROUTING  -i $ifacein         -j ND_m_pre && \
-			$IPTABLES -t nat    -A PREROUTING  -i $ifacein         -j ND_n_pre && \
-	 		$IPTABLES -t mangle -A POSTROUTING -o $ifacein         -j ND_m_acc_in || exit 2
+			$IPTABLES -t mangle -A PREROUTING  -i $ifacein -s $net -j ND_m_pre && \
+			$IPTABLES -t nat    -A PREROUTING  -i $ifacein -s $net -j ND_n_pre && \
+	 		$IPTABLES -t mangle -A POSTROUTING -o $ifacein -d $net -j ND_m_acc_in || exit 2
 		fi
 		if [ $RouteOnly -eq 0 ]; then
 			for ifacemsq in $MasqueradeDevice; do
@@ -1231,17 +1231,17 @@ DosPrevention=${DosPrevention:-0}
 DosAllowTries=${DosAllowTries:-5}
 DosTimeInterval=${DosTimeInterval:-60}
 
-# {
-# echo "ENVIRONMENT:"
-# echo "-----------------------------------------------------------"
-# env
-# echo "-----------------------------------------------------------"
-# echo "STDERR:"
-# echo "-----------------------------------------------------------"
-# set -x
+ {
+ echo "ENVIRONMENT:"
+ echo "-----------------------------------------------------------"
+ env
+ echo "-----------------------------------------------------------"
+ echo "STDERR:"
+ echo "-----------------------------------------------------------"
+ set -x
 do_cmd "$@"
-# set +x
-# echo "-----------------------------------------------------------"
-# } 2>/tmp/nodog_fw.$$ >&2
+ set +x
+ echo "-----------------------------------------------------------"
+ } 2>/tmp/nodog_fw.$$ >&2
 
 exit 0

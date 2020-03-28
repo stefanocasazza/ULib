@@ -239,33 +239,36 @@ bool USmtpClient::startTLS()
    U_RETURN(false);
 }
 
-bool USmtpClient::authLogin(const UString* username, const UString* password)
+bool USmtpClient::authLogin(UString* username, UString* password)
 {
-  U_TRACE_NO_PARAM(0, "USmtpClient::auth_login()")
-  syncCommand(U_CONSTANT_TO_PARAM("HELO"));
+   U_TRACE(0, "USmtpClient::auth_login(%p,%p)", username, password)
+
+   syncCommand(U_CONSTANT_TO_PARAM("HELO"));
 
 #ifdef USE_LIBSSL
-    if (((USSLSocket*)this)->isSSLActive()
-        && username->isBase64() && password->isBase64()){
-
-      if (syncCommand(U_CONSTANT_TO_PARAM("auth login"))
-          && syncCommand(username->c_str(),username->size())
-          && syncCommand(password->c_str(),password->size())
-          && response == SUCCESSFUL){
-            U_RETURN(true);
+   if (((USSLSocket*)this)->isSSLActive() &&
+       username->isBase64() &&
+       password->isBase64())
+      {
+      if (syncCommand(U_CONSTANT_TO_PARAM("auth login"))   &&
+          syncCommand(username->c_str(), username->size()) &&
+          syncCommand(password->c_str(), password->size()) &&
+          response == SUCCESSFUL)
+         {
+         U_RETURN(true);
          }
-         }
+      }
 #endif
 
-  U_RETURN(false);
+   U_RETURN(false);
 }
 
 
 // Execute an smtp transaction
 
-bool USmtpClient::sendMessage(bool secure, const UString* username, const UString* password)
+bool USmtpClient::sendMessage(bool secure, UString* username, UString* password)
 {
-   U_TRACE(0, "USmtpClient::sendMessage(%b)", secure)
+   U_TRACE(0, "USmtpClient::sendMessage(%b,%p,%p)", secure, username, password)
 
    U_INTERNAL_ASSERT_EQUALS(state,LOG_IN)
 

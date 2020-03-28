@@ -2029,7 +2029,7 @@ void UServer_Base::setMsgWelcome(const UString& lmsg)
 
    UEscape::decode(lmsg, *msg_welcome);
 
-   if (*msg_welcome) (void) msg_welcome->shrink();
+   if (*msg_welcome) (void) msg_welcome->shrink(true);
    else
       {
       U_DELETE(msg_welcome)

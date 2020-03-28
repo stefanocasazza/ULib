@@ -118,8 +118,8 @@ public:
    UString getRecipientAddress() const { return rcptoAddress; }
 
    bool startTLS();
-   bool authLogin(const UString* username, const UString* password);
-   bool sendMessage(bool secure = false, const UString* username = U_NULLPTR, const UString* password = U_NULLPTR);
+   bool authLogin(UString* username, UString* password);
+   bool sendMessage(bool secure = false, UString* username = U_NULLPTR, UString* password = U_NULLPTR);
 
    void setDomainName(      const UString& name)      { domainName     = name; }
    void setMessageBody(     const UString& message)   { messageBody    = message; }

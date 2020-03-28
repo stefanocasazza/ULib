@@ -89,7 +89,7 @@ void UMongoDBClient::readFromCursor()
 
       UString x((const char*)str, length);
 
-      x.rep->_capacity = U_TO_FREE;
+      x.setToFree();
 
       U_INTERNAL_DUMP("x = %V", x.rep);
 
@@ -287,7 +287,7 @@ bool UMongoDBClient::findAndModify(bson_t* query, bson_t* _update)
 
       x.setConstant((const char*)str, length);
 
-      x.rep->_capacity = U_TO_FREE;
+      x.setToFree();
 
       U_INTERNAL_DUMP("x = %V", x.rep);
 
@@ -341,7 +341,7 @@ bool UMongoDBClient::executeBulk(mongoc_bulk_operation_t* bulk)
 
       x.setConstant((const char*)str, length);
 
-      x.rep->_capacity = U_TO_FREE;
+      x.setToFree();
 
       U_INTERNAL_DUMP("x = %V", x.rep);
 

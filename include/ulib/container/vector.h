@@ -501,6 +501,15 @@ public:
 
    // STACK OPERATIONS
 
+   void push(const T* elem) // add to end
+      {
+      U_TRACE(0, "UVector<T*>::push(%p)", elem)
+
+      u_construct<T>(&elem, istream_loading);
+
+      UVector<void*>::push(elem);
+      }
+
    void push_back(const T* elem) // add to end
       {
       U_TRACE(0, "UVector<T*>::push_back(%p)", elem)
@@ -1013,6 +1022,15 @@ public:
 
       UVector<void*>::move(source); // add to end and reset source
       }
+   
+   explicit UVector(const UVector<UString>& source) : UVector(source._length)
+      {
+      U_TRACE_CTOR(0, UVector<UString>, "copy ctor")
+
+      U_MEMORY_TEST_COPY(source)
+
+      for (uint32_t i = 0; i < source._length; ++i) UVector<UStringRep*>::push(source[i].rep);
+      }
 
    ~UVector()
       {
@@ -1102,9 +1120,8 @@ public:
       U_ASSERT_EQUALS(str.rep, UVector<UStringRep*>::at(_length-1))
       }
 
-   void push_back(const UStringRep* rep) { UVector<UStringRep*>::push_back(rep); }
-
-   void push_back(const char* t, uint32_t tlen) { UString str(t, tlen); push_back(str); }
+   void push_back(const UStringRep* rep)        { UVector<UStringRep*>::push_back(rep); }
+   void push_back(const char* t, uint32_t tlen) { UVector<void*>::push_back(UStringRep::create(tlen, tlen, t)); }
 
    UString last() // return last element
       {
@@ -1320,7 +1337,7 @@ public:
       else                      UVector<void*>::sort();
       }
 
-   void copy(UVector<UString>& source)
+   void copy(const UVector<UString>& source)
       {
       U_TRACE(0, "UVector<UString>::copy(%p)", &source)
 

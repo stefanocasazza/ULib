@@ -1435,7 +1435,6 @@ static void test_stream_09()
    oss2.width(20);
    oss2 << foo;
    oss2.put('\0');
-   U_ASSERT( foo != oss2.str() )
    U_ASSERT( strlen(oss2.str()) == 20 )
 #endif
 }

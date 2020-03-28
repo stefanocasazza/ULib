@@ -61,7 +61,6 @@ void UThread::close()
          if (pthread_equal(tid, obj->tid))
 #     endif
             {
-            U_INTERNAL_ASSERT_EQUALS(this, obj)
             U_INTERNAL_ASSERT_EQUALS(next, obj->next)
 
             *ptr = next;

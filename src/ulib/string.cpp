@@ -736,12 +736,35 @@ UStringRep* UStringRep::create(uint32_t length, uint32_t need, const char* ptr)
    U_RETURN_POINTER(r, UStringRep);
 }
 
-bool UString::shrink()
+bool UString::shrink(bool bmalloc)
 {
-   U_TRACE_NO_PARAM(0, "UString::shrink()")
+   U_TRACE(0, "UString::shrink(%b)", bmalloc)
+
+   uint32_t length = rep->_length;
+
+   if (bmalloc)
+      {
+      char* ptr = (char*) U_SYSCALL(malloc, "%u", length+1);
+
+      U_INTERNAL_ASSERT_POINTER_MSG(ptr, "cannot allocate memory, exiting...")
+
+      U_MEMCPY((void*)ptr, rep->str, length);
+
+      ptr[length] = '\0';
+
+      UString str(ptr, length);
+
+      str.setToFree();
+
+      _assign(str.rep);
+
+      U_INTERNAL_ASSERT(invariant())
+
+      U_RETURN(true);
+      }
 
    UStringRep* r;
-   uint32_t capacity, length = rep->_length, sz = length+(1+sizeof(UStringRep)); // NB: we need an array of char[_length], plus a terminating null char, plus the UStringRep data structure
+   uint32_t capacity, sz = length+(1+sizeof(UStringRep)); // NB: we need an array of char[_length], plus a terminating null char, plus the UStringRep data structure
 
    U_INTERNAL_DUMP("rep->_capacity = %u length = %u sz = %u", rep->_capacity, length, sz)
 
@@ -923,11 +946,8 @@ void UStringRep::_release()
       {
       if (_capacity != U_NOT_FOUND)
          {
-#     if defined(USE_LIBZOPFLI) || defined(USE_LIBTDB) || defined(USE_MONGODB)
          if (_capacity == U_TO_FREE) { U_SYSCALL_VOID(free, "%p", (void*)str); }
-         else
-#     endif
-         UMemoryPool::deallocate((void*)str, _capacity);
+         else UMemoryPool::deallocate((void*)str, _capacity);
          }
       else
          {
@@ -2256,7 +2276,7 @@ end:
    if (empty()) _assign(UStringRep::string_rep_null);
    else
       {
-      if (shrink() == false) setNullTerminated();
+      if (shrink(true) == false) setNullTerminated();
       }
 
    U_INTERNAL_DUMP("size = %u, str = %V", size(), rep)

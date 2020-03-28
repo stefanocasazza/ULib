@@ -432,7 +432,7 @@ bool UFileConfig::loadINI()
          if (len == 0) fullKey.snprintf(U_CONSTANT_TO_PARAM(   "%v"),                 key.rep);
          else          fullKey.snprintf(U_CONSTANT_TO_PARAM("%v.%v"), sectionKey.rep, key.rep);
 
-         (void) fullKey.shrink();
+         (void) fullKey.shrink(true);
 
          table.insert(fullKey, value);
          }

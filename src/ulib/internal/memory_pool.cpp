@@ -194,6 +194,18 @@ public:
       void* ptr = (index == 0 ? (void*)pblock : *pblock);
 
 #  ifdef DEBUG
+      if (len &&
+          index)
+         {
+         for (uint32_t i = 1; i < len; ++i)
+            {
+            if (ptr == *(pointer_block + len - i))
+               {
+               U_ERROR("Duplicate entry on UStackMemoryPool::pop(%u): len = %u i = %u ptr = %p", index, len, i, ptr)
+               }
+            }
+         }
+
       U_INTERNAL_ASSERT_EQUALS(((long)ptr & (sizeof(long)-1)), 0) // memory aligned
 
       if (++depth > max_depth) max_depth = depth;
@@ -228,6 +240,14 @@ public:
       if (depth) --depth;
 
       ++push_cnt;
+
+      for (uint32_t i = 2; i <= len; ++i)
+         {
+         if (ptr == *(pointer_block + len - i))
+            {
+            U_ERROR("Duplicate entry on UStackMemoryPool::push(%p): index = %u len = %u i = %u", ptr, index, len, i)
+            }
+         }
 #  endif
       }
 
@@ -385,9 +405,13 @@ void* UMemoryPool::pop(int stack_index)
                   obj_class, func_call, pstack->index, pstack->type, pstack->len, pstack->space, pstack->depth,
                   pstack->max_depth, pstack->num_call_allocateMemoryBlocks, pstack->pop_cnt, pstack->push_cnt);
       }
-#endif
 
+   void* ptr = pstack->pop();
+
+   U_RETURN(ptr);
+#else
    return pstack->pop();
+#endif
 }
 
 #  ifdef DEBUG

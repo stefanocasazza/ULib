@@ -211,7 +211,7 @@ loop: if (upload)
 
                   location.snprintf(U_CONSTANT_TO_PARAM("http://%.*s"), pos, name.data());
 
-                  (void) location.shrink();
+                  (void) location.shrink(true);
 
                   if (client->connectServer(location) == false ||
                       client->sendRequest(req)        == false)

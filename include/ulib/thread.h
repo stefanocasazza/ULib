@@ -225,7 +225,7 @@ public:
       {
       U_TRACE_NO_PARAM(0, "UThread::resume()")
 
-      U_ASSERT_EQUALS(isCurrentThread(tid), false)
+      if (isCurrentThread(tid)) return;
 
 #   ifdef HAVE_PTHREAD_SUSPEND
       (void) U_SYSCALL(pthread_resume, "%p", tid);
@@ -240,7 +240,7 @@ public:
       {
       U_TRACE_NO_PARAM(0, "UThread::suspend()")
 
-      U_ASSERT_EQUALS(isCurrentThread(tid), false)
+      if (isCurrentThread(tid)) return;
 
 #   ifdef HAVE_PTHREAD_SUSPEND
       (void) U_SYSCALL(pthread_suspend, "%p", tid);
@@ -293,7 +293,7 @@ public:
 #  ifdef _MSWINDOWS_
       DWORD _tid = GetCurrentThreadId();
 #  else
-      pthread_t _tid = (pthread_t) U_SYSCALL_NO_PARAM(pthread_self);
+      pthread_t _tid = (pthread_t) u_gettid();
 #  endif
 
       for (UThread* obj = first; obj; obj = obj->next)
@@ -317,7 +317,7 @@ public:
 #  ifdef _MSWINDOWS_
       if (GetCurrentThreadId() == _tid) U_RETURN(true);
 #  else
-      if (pthread_equal((pthread_t)U_SYSCALL_NO_PARAM(pthread_self), _tid)) U_RETURN(true);
+      if (pthread_equal((pthread_t)u_gettid(), _tid)) U_RETURN(true);
 #  endif
 
       U_RETURN(false);
