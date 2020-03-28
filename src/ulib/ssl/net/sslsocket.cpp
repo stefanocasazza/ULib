@@ -42,6 +42,52 @@ bool                 USSLSocket::ocsp_nonce;
 USSLSocket::stapling USSLSocket::staple;
 #endif
 
+// OPENSSL_VERSION_NUMBER is a numeric release version identifier:
+// MNNFFPPS: major minor fix patch status
+// 0x000906000 == 0.9.6 dev
+// 0x000906023 == 0.9.6b beta 3
+// 0x00090605f == 0.9.6e release
+
+// 0x10101000L == 1.1.1
+// 0x10100000L == 1.1.0
+// 0x10002000L == 1.0.2
+
+static char* ossl_err_as_string (void)
+{ 
+   BIO *bio = BIO_new (BIO_s_mem ());
+   ERR_print_errors (bio);
+   char *buf = NULL;
+   size_t len = BIO_get_mem_data (bio, &buf);
+   char *ret = (char *) calloc (1, 1 + len);
+   if (ret)
+      memcpy (ret, buf, len);
+   BIO_free (bio);
+   return ret;
+}
+
+// static void print_certificate(X509* cert) 
+// {
+//    #define MAX_LENGTH 1024
+
+//    char subj[MAX_LENGTH+1];
+//    char issuer[MAX_LENGTH+1];
+//    X509_NAME_oneline(X509_get_subject_name(cert), subj, MAX_LENGTH);
+//    X509_NAME_oneline(X509_get_issuer_name(cert), issuer, MAX_LENGTH);
+//    printf("certificate: %s\n", subj);
+//    printf("\tissuer: %s\n\n", issuer);
+// }
+
+// static void print_stack(STACK_OF(X509)* sk)
+// {
+//    unsigned len = sk_X509_num(sk);
+//    printf("Begin Certificate Stack:\n");
+//    for(unsigned i=0; i<len; i++) {
+//       X509 *cert = sk_X509_value(sk, i);
+//       print_certificate(cert);
+//    }
+//    printf("End Certificate Stack\n");
+// }
+
 /**
  * The OpenSSL ssl library implements the Secure Sockets Layer (SSL v2/v3) and Transport Layer Security (TLS v1) protocols.
  * It provides a rich API. At first the library must be initialized; see SSL_library_init(3). Then an SSL_CTX object is created
@@ -119,6 +165,13 @@ USSLSocket::~USSLSocket()
 void USSLSocket::info_callback(const SSL* ssl, int where, int ret)
 {
    U_TRACE(0, "USSLSocket::info_callback(%p,%d,%d)", ssl, where, ret)
+
+#ifdef DEBUG
+   U_WARNING("USSLSocket::info_callback -> SSL_state_string_long = %s", SSL_state_string_long(ssl));
+
+   const char *error = ossl_err_as_string();
+   if (strlen(error)) U_WARNING("USSLSocket::info_callback -> SSL error = %s", error);
+#endif
 
    if ((where & SSL_CB_HANDSHAKE_START) != 0)
       {
@@ -368,21 +421,40 @@ bool USSLSocket::useDHFile(const char* dh_file)
       }
    else
       {
-      /**
-       * The concept of forward secrecy is simple: client and server negotiate a key that never hits the wire,
-       * and is destroyed at the end of the session. The RSA private from the server is used to sign a Diffie-Hellman
-       * key exchange between the client and the server. The pre-master key obtained from the Diffie-Hellman handshake
-       * is then used for encryption. Since the pre-master key is specific to a connection between a client and a server,
-       * and used only for a limited amount of time, it is called Ephemeral. With Forward Secrecy, if an attacker gets a
-       * hold of the server's private key, it will not be able to decrypt past communications. The private key is only
-       * used to sign the DH handshake, which does not reveal the pre-master key. Diffie-Hellman ensures that the pre-master
-       * keys never leave the client and the server, and cannot be intercepted by a MITM
-       */
-#  if OPENSSL_VERSION_NUMBER >= 0x0090800fL && !defined(OPENSSL_NO_ECDH) && defined(NID_X9_62_prime256v1)
+
+// The curve functions were added in OpenSSL 1.0.2. The equivalent group functions were added in OpenSSL 1.1.1.
+#  if OPENSSL_VERSION_NUMBER >= 0x10101000L
+
+   // In TLSv1.3 the client selects a “group” that it will use for key exchange. At the time of writing, OpenSSL only supports ECDHE groups for this. The client then sends “key_share” information to the server for its selected group in the ClientHello.
+
+   // The list of supported groups is configurable. It is possible for a client to select a group that the server does not support. In this case the server requests that the client sends a new key_share that it does support. While this means a connection will still be established (assuming a mutually supported group exists), it does introduce an extra server round trip - so this has implications for performance. In the ideal scenario the client will select a group that the server supports in the first instance.
+
+   // In practice most clients will use X25519 or P-256 for their initial key_share. For maximum performance it is recommended that servers are configured to support at least those two groups and clients use one of those two for its initial key_share. This is the default case (OpenSSL clients will use X25519).
+   // The group configuration also controls the allowed groups in TLSv1.2 and below.
+
+   // https://www.openssl.org/blog/blog/2018/02/08/tlsv1.3/
+   (void) U_SYSCALL(SSL_CTX_set1_groups_list, "%p,%s", ctx, "P-384:P-256:X25519:ffdhe2048:P-521");
+   U_RETURN(true);
+
+#  elif OPENSSL_VERSION_NUMBER >= 0x10002000L
+
+   (void) U_SYSCALL(SSL_CTX_set1_curves_list, "%p,%s", ctx, "P-384:P-256:X25519:ffdhe2048:P-521");
+   U_RETURN(true);
+
+/**
+   * The concept of forward secrecy is simple: client and server negotiate a key that never hits the wire,
+   * and is destroyed at the end of the session. The RSA private from the server is used to sign a Diffie-Hellman
+   * key exchange between the client and the server. The pre-master key obtained from the Diffie-Hellman handshake
+   * is then used for encryption. Since the pre-master key is specific to a connection between a client and a server,
+   * and used only for a limited amount of time, it is called Ephemeral. With Forward Secrecy, if an attacker gets a
+   * hold of the server's private key, it will not be able to decrypt past communications. The private key is only
+   * used to sign the DH handshake, which does not reveal the pre-master key. Diffie-Hellman ensures that the pre-master
+   * keys never leave the client and the server, and cannot be intercepted by a MITM
+*/
+#  elif OPENSSL_VERSION_NUMBER >= 0x0090800fL && !defined(OPENSSL_NO_ECDH) && defined(NID_X9_62_prime256v1)
+
       EC_KEY* ecdh = (EC_KEY*) U_SYSCALL(EC_KEY_new_by_curve_name, "%d", NID_X9_62_prime256v1);
-
       (void) U_SYSCALL(SSL_CTX_set_tmp_ecdh, "%p,%p", ctx, ecdh);
-
       U_SYSCALL_VOID(EC_KEY_free, "%p", ecdh);
 
       U_RETURN(true);
@@ -514,20 +586,16 @@ U_NO_EXPORT int USSLSocket::selectProto(SSL* ssl, const unsigned char** out, uns
 #endif
 
 bool USSLSocket::setContext(const char* dh_file, const char* cert_file, const char* private_key_file,
-                            const char* passwd,  const char* CAfile,    const char* CApath, int verify_mode)
+                            const char* passwd,  const char* CAfile,    const char* CApath, const char* tls_pin, int verify_mode)
 {
-   U_TRACE(1, "USSLSocket::setContext(%S,%S,%S,%S,%S,%S,%d)", dh_file, cert_file, private_key_file, passwd, CAfile, CApath, verify_mode)
+   U_TRACE(1, "USSLSocket::setContext(%S,%S,%S,%S,%S,%S,%S,%d)", dh_file, cert_file, private_key_file, passwd, CAfile, CApath, tls_pin, verify_mode)
 
    U_INTERNAL_ASSERT_POINTER(ctx)
 
    // These are the bit DH parameters from "Assigned Number for SKIP Protocols"
    // See there for how they were generated: http://www.skip-vpn.org/spec/numbers.html
 
-#if OPENSSL_VERSION_NUMBER >= 0x10002000L && OPENSSL_VERSION_NUMBER < 0x10100000L
-   SSL_CTX_set_ecdh_auto(ctx, 1);
-#else
    if (useDHFile(dh_file) == false) U_RETURN(false);
-#endif
 
    int result = 0;
 
@@ -536,9 +604,13 @@ bool USSLSocket::setContext(const char* dh_file, const char* cert_file, const ch
    if ( cert_file &&
        *cert_file)
       {
-      result = U_SYSCALL(SSL_CTX_use_certificate_chain_file, "%p,%S", ctx, cert_file);
+      result = U_SYSCALL(SSL_CTX_use_certificate_chain_file, "%p,%s", ctx, cert_file);
 
-      if (result == 0) U_RETURN(false);
+      if (result == 0) 
+      {
+         U_WARNING("SSL_CTX_use_certificate_chain_file error = %s", ossl_err_as_string());
+         U_RETURN(false);
+      }
 
 #  if defined(ENABLE_THREAD) && !defined(OPENSSL_NO_OCSP) && defined(SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB)
       UString str(cert_file, u__strlen(cert_file, __PRETTY_FUNCTION__));
@@ -595,25 +667,32 @@ bool USSLSocket::setContext(const char* dh_file, const char* cert_file, const ch
 #  endif
       }
 
-   if (CAfile && *CAfile == '\0') CAfile = U_NULLPTR;
-   if (CApath && *CApath == '\0') CApath = U_NULLPTR;
+   if (tls_pin)
+   {
+      U_SYSCALL_VOID(SSL_CTX_set_cert_verify_callback, "%p,%p,%p", ctx, USSLSocket::SPKIPinVerification, UServer_Base::tls_pin);
+   }
+   else
+   {
+      if (CAfile && *CAfile == '\0') CAfile = U_NULLPTR;
+      if (CApath && *CApath == '\0') CApath = U_NULLPTR;
 
-   if (CAfile ||
-       CApath)
+      if (CAfile ||
+          CApath)
       {
-      if (UServices::setupOpenSSLStore(CAfile, CApath, (verify_mode ? U_STORE_FLAGS : 0)) == false) U_RETURN(false);
+         if (UServices::setupOpenSSLStore(CAfile, CApath, (verify_mode ? U_STORE_FLAGS : 0)) == false) U_RETURN(false);
 
-      U_SYSCALL_VOID(SSL_CTX_set_cert_store, "%p,%p", ctx, UServices::store);
+         U_SYSCALL_VOID(SSL_CTX_set_cert_store, "%p,%p", ctx, UServices::store);
 
-      // Sets the list of CA sent to the client when requesting a client certificate for ctx
+         // Sets the list of CA sent to the client when requesting a client certificate for ctx
 
-      if (CAfile) // Process CA certificate bundle file
+         if (CAfile) // Process CA certificate bundle file
          {
-         STACK_OF(X509_NAME)* list = (STACK_OF(X509_NAME)*) U_SYSCALL(SSL_load_client_CA_file, "%S", CAfile);
+            STACK_OF(X509_NAME)* list = (STACK_OF(X509_NAME)*) U_SYSCALL(SSL_load_client_CA_file, "%S", CAfile);
 
-         U_SYSCALL_VOID(SSL_CTX_set_client_CA_list, "%p,%p", ctx, list);
+            U_SYSCALL_VOID(SSL_CTX_set_client_CA_list, "%p,%p", ctx, list);
          }
       }
+   }
 
    setVerifyCallback(UServices::X509Callback, verify_mode);
 
@@ -978,6 +1057,48 @@ loop:
    U_RETURN(false);
 }
 
+int USSLSocket::SPKIPinVerification(X509_STORE_CTX* context, void *arg)
+{
+   U_TRACE_NO_PARAM(0, "USSLSocket::SPKIPinVerification");
+
+   UString *tls_pin = (UString *)arg;
+
+   STACK_OF(X509) *certChain = X509_STORE_CTX_get0_untrusted(context);
+
+   X509 *workingCert = NULL;
+   bool result = false;
+   UString spkiPin(64U);
+
+   // we pin to root almost always, so start at bottom
+   for (ssize_t index = sk_X509_num(certChain) - 1; index > -1; index--)
+   {
+      workingCert = sk_X509_value(certChain, index);
+
+#if DEBUG
+      const char *commonName = (const char *)ASN1_STRING_data(X509_NAME_ENTRY_get_data(X509_NAME_get_entry(X509_get_subject_name(workingCert), 5)));
+      U_WARNING("USSLSocket::SPKIPinVerification -> for cert at index %lu, commonName = %s", index, commonName);
+#endif
+
+      unsigned char *pkey_buf = NULL;
+      int pkey_len = i2d_PUBKEY(X509_get_pubkey(workingCert), &pkey_buf);
+      unsigned int len;
+
+   // int EVP_Digest(const void *data, size_t count, unsigned char *md, unsigned int *size, const EVP_MD *type, ENGINE *impl);
+   //    A wrapper around the Digest Init_ex, Update and Final_ex functions. Hashes count bytes of data at data using a digest type from ENGINE impl. The digest value is placed in md and its length is written at size if the pointer is not NULL. At most EVP_MAX_MD_SIZE bytes will be written. If impl is NULL the default implementation of digest type is used.
+
+      EVP_Digest(pkey_buf, pkey_len, (unsigned char *)spkiPin.data(), &len, EVP_sha256(), NULL);
+      spkiPin.size_adjust(len);
+
+      result = spkiPin.equal(tls_pin->data(), tls_pin->size());
+
+      OPENSSL_free(pkey_buf);
+
+      if (result) return true;
+   }
+
+   return result;
+}
+
 // server side RE-NEGOTIATE asking for client cert
 
 bool USSLSocket::askForClientCertificate()
@@ -1089,35 +1210,27 @@ bool USSLSocket::acceptSSL(USSLSocket* pcNewConnection)
 
    (void) U_SYSCALL(SSL_set_fd, "%p,%d", ssl, fd); // get SSL to use our socket
 
+
+   //SSL_check_chain(ssl, );
 loop:
    errno = 0;
+
    ret   = U_SYSCALL(SSL_accept, "%p", ssl); // get SSL handshake with client
 
    if (ret == 1)
       {
       SSL_set_app_data(ssl, pcNewConnection);
-
       pcNewConnection->ssl            = ssl;
       pcNewConnection->ret            = SSL_ERROR_NONE;
       pcNewConnection->iState         = CONNECT;
       pcNewConnection->renegotiations = 0;
-
       ssl = U_NULLPTR;
 
       U_RETURN(true);
       }
 
-   U_INTERNAL_DUMP("errno = %d", errno)
-
    if (errno) pcNewConnection->iState = -errno;
-
    pcNewConnection->ret = U_SYSCALL(SSL_get_error, "%p,%d", ssl, ret);
-
-#ifdef DEBUG
-   dumpStatus(pcNewConnection->ret, false);
-#endif
-
-   U_INTERNAL_DUMP("count = %u", count)
 
    if (count++ < 5)
       {
@@ -1129,7 +1242,6 @@ loop:
 
    U_SYSCALL_VOID(SSL_free, "%p", ssl);
                                   ssl = U_NULLPTR;
-
    pcNewConnection->USocket::_close_socket();
 
    U_INTERNAL_DUMP("pcNewConnection->ret = %d", pcNewConnection->ret)
