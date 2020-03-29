@@ -668,28 +668,26 @@ bool USSLSocket::setContext(const char* dh_file, const char* cert_file, const ch
    {
       U_SYSCALL_VOID(SSL_CTX_set_cert_verify_callback, "%p,%p,%p", ctx, USSLSocket::SPKIPinVerification, UServer_Base::tls_pin);
    }
-   else
-   {
-      if (CAfile && *CAfile == '\0') CAfile = U_NULLPTR;
-      if (CApath && *CApath == '\0') CApath = U_NULLPTR;
+   
+	if (CAfile && *CAfile == '\0') CAfile = U_NULLPTR;
+	if (CApath && *CApath == '\0') CApath = U_NULLPTR;
 
-      if (CAfile ||
-          CApath)
-      {
-         if (UServices::setupOpenSSLStore(CAfile, CApath, (verify_mode ? U_STORE_FLAGS : 0)) == false) U_RETURN(false);
+	if (CAfile ||
+		 CApath)
+	{
+		if (UServices::setupOpenSSLStore(CAfile, CApath, (verify_mode ? U_STORE_FLAGS : 0)) == false) U_RETURN(false);
 
-         U_SYSCALL_VOID(SSL_CTX_set_cert_store, "%p,%p", ctx, UServices::store);
+		U_SYSCALL_VOID(SSL_CTX_set_cert_store, "%p,%p", ctx, UServices::store);
 
-         // Sets the list of CA sent to the client when requesting a client certificate for ctx
+		// Sets the list of CA sent to the client when requesting a client certificate for ctx
 
-         if (CAfile) // Process CA certificate bundle file
-         {
-            STACK_OF(X509_NAME)* list = (STACK_OF(X509_NAME)*) U_SYSCALL(SSL_load_client_CA_file, "%S", CAfile);
+		if (CAfile) // Process CA certificate bundle file
+		{
+			STACK_OF(X509_NAME)* list = (STACK_OF(X509_NAME)*) U_SYSCALL(SSL_load_client_CA_file, "%S", CAfile);
 
-            U_SYSCALL_VOID(SSL_CTX_set_client_CA_list, "%p,%p", ctx, list);
-         }
-      }
-   }
+			U_SYSCALL_VOID(SSL_CTX_set_client_CA_list, "%p,%p", ctx, list);
+		}
+	}
 
    setVerifyCallback(UServices::X509Callback, verify_mode);
 
@@ -1090,10 +1088,14 @@ int USSLSocket::SPKIPinVerification(X509_STORE_CTX* context, void *arg)
 
       OPENSSL_free(pkey_buf);
 
-      if (result) return true;
+      if (result) goto verifyTheChain;
    }
 
-   return result;
+   return false;
+
+verifyTheChain:
+
+   return X509_verify_cert(context);
 }
 
 // server side RE-NEGOTIATE asking for client cert
