@@ -421,8 +421,7 @@ bool USSLSocket::useDHFile(const char* dh_file)
       }
    else
       {
-
-
+	#if OPENSSL_VERSION_NUMBER < 0x0090800fL
       static unsigned char dhxxx2_g[] = { 0x02 };
       static unsigned char dh1024_p[] = {
          0xA2,0x95,0x7E,0x7C,0xA9,0xD5,0x55,0x1D,0x7C,0x77,0x11,0xAC,
@@ -474,6 +473,7 @@ bool USSLSocket::useDHFile(const char* dh_file)
          }
 
       U_INTERNAL_ASSERT_POINTER(dh->p)
+	#endif
       }
 
    if (dh == U_NULLPTR) U_RETURN(false);
