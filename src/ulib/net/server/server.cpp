@@ -2321,11 +2321,9 @@ void UServer_Base::loadConfigParam()
       *tls_pin = pcfg->at(U_CONSTANT_TO_PARAM("TLS_SPKI_PIN"));
 
       if (tls_pin->size()) UBase64::decode(tls_pin->data(), tls_pin->size(), *tls_pin);
-      else
-      {
-         *ca_file   = pcfg->at(U_CONSTANT_TO_PARAM("CA_FILE"));
-         *ca_path   = pcfg->at(U_CONSTANT_TO_PARAM("CA_PATH"));
-      }
+      
+		*ca_file   = pcfg->at(U_CONSTANT_TO_PARAM("CA_FILE"));
+		*ca_path   = pcfg->at(U_CONSTANT_TO_PARAM("CA_PATH"));
 
       min_size_for_sendfile = U_NOT_FOUND; // NB: we can't use sendfile with SSL...
       }
