@@ -422,43 +422,7 @@ bool USSLSocket::useDHFile(const char* dh_file)
    else
       {
 
-// The curve functions were added in OpenSSL 1.0.2. The equivalent group functions were added in OpenSSL 1.1.1.
-#  if OPENSSL_VERSION_NUMBER >= 0x10101000L
 
-   // In TLSv1.3 the client selects a “group” that it will use for key exchange. At the time of writing, OpenSSL only supports ECDHE groups for this. The client then sends “key_share” information to the server for its selected group in the ClientHello.
-
-   // The list of supported groups is configurable. It is possible for a client to select a group that the server does not support. In this case the server requests that the client sends a new key_share that it does support. While this means a connection will still be established (assuming a mutually supported group exists), it does introduce an extra server round trip - so this has implications for performance. In the ideal scenario the client will select a group that the server supports in the first instance.
-
-   // In practice most clients will use X25519 or P-256 for their initial key_share. For maximum performance it is recommended that servers are configured to support at least those two groups and clients use one of those two for its initial key_share. This is the default case (OpenSSL clients will use X25519).
-   // The group configuration also controls the allowed groups in TLSv1.2 and below.
-
-   // https://www.openssl.org/blog/blog/2018/02/08/tlsv1.3/
-   (void) U_SYSCALL(SSL_CTX_set1_groups_list, "%p,%s", ctx, "P-384:P-256:X25519:ffdhe2048:P-521");
-   U_RETURN(true);
-
-#  elif OPENSSL_VERSION_NUMBER >= 0x10002000L
-
-   (void) U_SYSCALL(SSL_CTX_set1_curves_list, "%p,%s", ctx, "P-384:P-256:X25519:ffdhe2048:P-521");
-   U_RETURN(true);
-
-/**
-   * The concept of forward secrecy is simple: client and server negotiate a key that never hits the wire,
-   * and is destroyed at the end of the session. The RSA private from the server is used to sign a Diffie-Hellman
-   * key exchange between the client and the server. The pre-master key obtained from the Diffie-Hellman handshake
-   * is then used for encryption. Since the pre-master key is specific to a connection between a client and a server,
-   * and used only for a limited amount of time, it is called Ephemeral. With Forward Secrecy, if an attacker gets a
-   * hold of the server's private key, it will not be able to decrypt past communications. The private key is only
-   * used to sign the DH handshake, which does not reveal the pre-master key. Diffie-Hellman ensures that the pre-master
-   * keys never leave the client and the server, and cannot be intercepted by a MITM
-*/
-#  elif OPENSSL_VERSION_NUMBER >= 0x0090800fL && !defined(OPENSSL_NO_ECDH) && defined(NID_X9_62_prime256v1)
-
-      EC_KEY* ecdh = (EC_KEY*) U_SYSCALL(EC_KEY_new_by_curve_name, "%d", NID_X9_62_prime256v1);
-      (void) U_SYSCALL(SSL_CTX_set_tmp_ecdh, "%p,%p", ctx, ecdh);
-      U_SYSCALL_VOID(EC_KEY_free, "%p", ecdh);
-
-      U_RETURN(true);
-#  else
       static unsigned char dhxxx2_g[] = { 0x02 };
       static unsigned char dh1024_p[] = {
          0xA2,0x95,0x7E,0x7C,0xA9,0xD5,0x55,0x1D,0x7C,0x77,0x11,0xAC,
@@ -510,7 +474,6 @@ bool USSLSocket::useDHFile(const char* dh_file)
          }
 
       U_INTERNAL_ASSERT_POINTER(dh->p)
-#  endif
       }
 
    if (dh == U_NULLPTR) U_RETURN(false);
@@ -592,10 +555,44 @@ bool USSLSocket::setContext(const char* dh_file, const char* cert_file, const ch
 
    U_INTERNAL_ASSERT_POINTER(ctx)
 
+// The curve functions were added in OpenSSL 1.0.2. The equivalent group functions were added in OpenSSL 1.1.1.
+#  if OPENSSL_VERSION_NUMBER >= 0x10101000L
+
+   // In TLSv1.3 the client selects a “group” that it will use for key exchange. At the time of writing, OpenSSL only supports ECDHE groups for this. The client then sends “key_share” information to the server for its selected group in the ClientHello.
+
+   // The list of supported groups is configurable. It is possible for a client to select a group that the server does not support. In this case the server requests that the client sends a new key_share that it does support. While this means a connection will still be established (assuming a mutually supported group exists), it does introduce an extra server round trip - so this has implications for performance. In the ideal scenario the client will select a group that the server supports in the first instance.
+
+   // In practice most clients will use X25519 or P-256 for their initial key_share. For maximum performance it is recommended that servers are configured to support at least those two groups and clients use one of those two for its initial key_share. This is the default case (OpenSSL clients will use X25519).
+   // The group configuration also controls the allowed groups in TLSv1.2 and below.
+
+   // https://www.openssl.org/blog/blog/2018/02/08/tlsv1.3/
+   (void) U_SYSCALL(SSL_CTX_set1_groups_list, "%p,%s", ctx, "P-384:P-256:X25519:ffdhe2048:P-521");
+
+#  elif OPENSSL_VERSION_NUMBER >= 0x10002000L
+
+   (void) U_SYSCALL(SSL_CTX_set1_curves_list, "%p,%s", ctx, "P-384:P-256:X25519:ffdhe2048:P-521");
+/**
+   * The concept of forward secrecy is simple: client and server negotiate a key that never hits the wire,
+   * and is destroyed at the end of the session. The RSA private from the server is used to sign a Diffie-Hellman
+   * key exchange between the client and the server. The pre-master key obtained from the Diffie-Hellman handshake
+   * is then used for encryption. Since the pre-master key is specific to a connection between a client and a server,
+   * and used only for a limited amount of time, it is called Ephemeral. With Forward Secrecy, if an attacker gets a
+   * hold of the server's private key, it will not be able to decrypt past communications. The private key is only
+   * used to sign the DH handshake, which does not reveal the pre-master key. Diffie-Hellman ensures that the pre-master
+   * keys never leave the client and the server, and cannot be intercepted by a MITM
+*/
+#  elif OPENSSL_VERSION_NUMBER >= 0x0090800fL && !defined(OPENSSL_NO_ECDH) && defined(NID_X9_62_prime256v1)
+
+      EC_KEY* ecdh = (EC_KEY*) U_SYSCALL(EC_KEY_new_by_curve_name, "%d", NID_X9_62_prime256v1);
+      (void) U_SYSCALL(SSL_CTX_set_tmp_ecdh, "%p,%p", ctx, ecdh);
+      U_SYSCALL_VOID(EC_KEY_free, "%p", ecdh);
+#  else
    // These are the bit DH parameters from "Assigned Number for SKIP Protocols"
    // See there for how they were generated: http://www.skip-vpn.org/spec/numbers.html
 
    if (useDHFile(dh_file) == false) U_RETURN(false);
+
+#endif
 
    int result = 0;
 
