@@ -666,7 +666,7 @@ bool USSLSocket::setContext(const char* dh_file, const char* cert_file, const ch
 
    if (tls_pin)
    {
-      U_SYSCALL_VOID(SSL_CTX_set_cert_verify_callback, "%p,%p,%p", ctx, USSLSocket::SPKIPinVerification, (void *)tls_pin);
+      U_SYSCALL_VOID(SSL_CTX_set_cert_verify_callback, "%p,%p,%p", ctx, USSLSocket::SPKIPinVerification, UServer_Base::tls_pin);
    }
    
 	if (CAfile && *CAfile == '\0') CAfile = U_NULLPTR;
