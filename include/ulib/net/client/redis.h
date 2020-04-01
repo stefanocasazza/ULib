@@ -1099,7 +1099,7 @@ private:
             else
             {
                constexpr size_t lengthSurplus = segmentEnd - segmentStart - 2; // -2 for the tag length, segmentEnd will always overshoot by 1 so that factors the 0 index
-               return generateSegments<isPartial, segmentEnd, workingSegmentCount + 1>(format, outputCount, std::tuple_cat(workingCommand, std::make_tuple("$"_ctv, getLength(std::forward<T>(t)) + lengthSurplus, "\r\n"_ctv), workingSegment, std::tuple(StringClass::instance.template substr<segmentStart, formatStart>(), std::forward<T>(t), StringClass::instance.template substr<(std::min(formatTermination + 1, segmentEnd)), segmentEnd>() + "\r\n"_ctv)), std::tuple(), 0, std::forward<Ts>(ts)...);
+               return generateSegments<isPartial, segmentEnd, workingSegmentCount + 1>(format, outputCount, std::tuple_cat(workingCommand, std::make_tuple("$"_ctv, getLength(std::forward<T>(t)) + lengthSurplus + workingSegmentLength, "\r\n"_ctv), workingSegment, std::tuple(StringClass::instance.template substr<segmentStart, formatStart>(), std::forward<T>(t), StringClass::instance.template substr<(std::min(formatTermination + 1, segmentEnd)), segmentEnd>() + "\r\n"_ctv)), std::tuple(), 0, std::forward<Ts>(ts)...);
             }
          }                         
          // no format at all in the segment
