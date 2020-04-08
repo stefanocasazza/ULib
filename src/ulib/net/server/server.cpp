@@ -87,6 +87,10 @@
 #  include <ulib/net/server/plugin/mod_http.h>
 #endif
 
+#ifdef USE_LIBSSL
+#  include <ulib/utility/base64.h>
+#endif
+
 int           UServer_Base::rkids;
 int           UServer_Base::timeoutMS;
 int           UServer_Base::verify_mode;
@@ -133,6 +137,7 @@ UString*      UServer_Base::ca_path;
 UString*      UServer_Base::key_file;
 UString*      UServer_Base::password;
 UString*      UServer_Base::cert_file;
+UString*      UServer_Base::tls_pin;
 UString*      UServer_Base::name_sock;
 UString*      UServer_Base::IP_address;
 UString*      UServer_Base::cenvironment;
@@ -1187,11 +1192,9 @@ public:
 
          U_INTERNAL_DUMP("u_now->tv_sec = %ld u_now->tv_usec = %ld ts.tv_nsec = %ld", u_now->tv_sec, u_now->tv_usec, ts.tv_nsec)
 
-         if (U_SYSCALL(nanosleep, "%p,%p", &ts, U_NULLPTR) == -1)
+         if (U_SYSCALL(nanosleep, "%p,%p", &ts, U_NULLPTR) == -1 || UThread::bpause)
             {
-            U_INTERNAL_ASSERT_EQUALS(errno, EINTR)
-
-            U_INTERNAL_DUMP("UServer_Base::flag_loop = %b", UServer_Base::flag_loop)
+            U_INTERNAL_DUMP("UServer_Base::flag_loop = %b UThread::bpause = %b", UServer_Base::flag_loop, UThread::bpause)
 
             u_gettimenow();
 
@@ -1323,11 +1326,9 @@ public:
 
       while (UServer_Base::flag_loop)
          {
-         if (U_SYSCALL(nanosleep, "%p,%p", &ts, &rem) == -1)
+         if (U_SYSCALL(nanosleep, "%p,%p", &ts, &rem) == -1 || UThread::bpause)
             {
-            U_INTERNAL_ASSERT_EQUALS(errno, EINTR)
-
-            U_INTERNAL_DUMP("UServer_Base::flag_loop = %b rem.tv_sec = %ld", UServer_Base::flag_loop, rem.tv_sec)
+            U_INTERNAL_DUMP("UServer_Base::flag_loop = %b rem.tv_sec = %ld UThread::bpause = %b", UServer_Base::flag_loop, rem.tv_sec, UThread::bpause)
 
             ts.tv_sec = rem.tv_sec;
 
@@ -1486,7 +1487,7 @@ public:
 
       while (U_SRV_FLAG_SIGTERM == false)
          {
-         if (UNotifier::waitForRead(UServer_Base::sse_event_fd) == 1 &&
+         if (UNotifier::waitForRead(UServer_Base::sse_event_fd) == 1 && UThread::bpause == false &&
              UServices::read(UServer_Base::sse_event_fd, input))
             {
             /**
@@ -1815,7 +1816,9 @@ UServer_Base::~UServer_Base()
       (void) pthread_rwlock_destroy(ULog::prwlock);
       }
 
-#  if defined(USE_LIBSSL) && !defined(OPENSSL_NO_OCSP) && defined(SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB)
+#  if defined(USE_LIBSSL)
+   if (tls_pin) U_DELETE(tls_pin)
+#  if !defined(OPENSSL_NO_OCSP) && defined(SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB)
    if (bssl)
       {
       if (pthread_ocsp) U_DELETE(pthread_ocsp)
@@ -1824,6 +1827,7 @@ UServer_Base::~UServer_Base()
 
       if (lock_ocsp_staple) U_DELETE(lock_ocsp_staple)
       }
+#  endif
 #  endif
 
 #  ifdef U_SSE_ENABLE // SERVER SENT EVENTS (SSE)
@@ -2308,13 +2312,24 @@ void UServer_Base::loadConfigParam()
    if (bssl)
       {
       *dh_file   = pcfg->at(U_CONSTANT_TO_PARAM("DH_FILE"));
-      *ca_file   = pcfg->at(U_CONSTANT_TO_PARAM("CA_FILE"));
-      *ca_path   = pcfg->at(U_CONSTANT_TO_PARAM("CA_PATH"));
+      
       *key_file  = pcfg->at(U_CONSTANT_TO_PARAM("KEY_FILE"));
       *password  = pcfg->at(U_CONSTANT_TO_PARAM("PASSWORD"));
       *cert_file = pcfg->at(U_CONSTANT_TO_PARAM("CERT_FILE"));
 
       verify_mode = pcfg->readLong(U_CONSTANT_TO_PARAM("VERIFY_MODE"));
+
+      x = pcfg->at(U_CONSTANT_TO_PARAM("TLS_SPKI_PIN")); // base64-encoded SHA256 hash of subjectInfoPublicKey
+
+      if (x)
+         {
+         U_NEW_STRING(tls_pin, UString(SHA256_DIGEST_LENGTH));
+
+         UBase64::decode(x, *tls_pin);
+         }
+      
+      *ca_file   = pcfg->at(U_CONSTANT_TO_PARAM("CA_FILE"));
+      *ca_path   = pcfg->at(U_CONSTANT_TO_PARAM("CA_PATH"));
 
       min_size_for_sendfile = U_NOT_FOUND; // NB: we can't use sendfile with SSL...
       }
@@ -3049,14 +3064,14 @@ void UServer_Base::suspendThread()
    U_TRACE_NO_PARAM(0, "UServer_Base::suspendThread()")
 
 #if defined(U_LINUX) && defined(ENABLE_THREAD)
-   if (u_pthread_time) ((UTimeThread*)u_pthread_time)->suspend();
+   if (u_pthread_time) ((UThread*)u_pthread_time)->bpause = true;
 
 # if defined(USE_LIBSSL) && !defined(OPENSSL_NO_OCSP) && defined(SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB)
-   if (pthread_ocsp) pthread_ocsp->suspend();
+   if (pthread_ocsp) pthread_ocsp->bpause = true;
 # endif
 
 # ifdef U_SSE_ENABLE // SERVER SENT EVENTS (SSE)
-   if (pthread_sse) pthread_sse->suspend();
+   if (pthread_sse) pthread_sse->bpause = true;
 #  endif
 #endif
 }
@@ -3639,14 +3654,14 @@ void UServer_Base::sendSignalToAllChildren(int signo, sighandler_t handler)
 #endif
 
 #if defined(U_LINUX) && defined(ENABLE_THREAD)
-   if (u_pthread_time) ((UTimeThread*)u_pthread_time)->resume();
+   if (u_pthread_time) ((UThread*)u_pthread_time)->bpause = false;
 
 # if defined(USE_LIBSSL) && !defined(OPENSSL_NO_OCSP) && defined(SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB)
-   if (pthread_ocsp) pthread_ocsp->resume();
+   if (pthread_ocsp) pthread_ocsp->bpause = false;
 # endif
 
 # ifdef U_SSE_ENABLE // SERVER SENT EVENTS (SSE)
-   if (pthread_sse) pthread_sse->resume();
+   if (pthread_sse) pthread_sse->bpause = false;
 # endif
 #endif
 }

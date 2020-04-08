@@ -56,6 +56,7 @@ public:
 #  else
       suspendCount = 0;
 #  endif
+      bpause = false;
       }
 
    UThread(const UThread& t)
@@ -221,11 +222,38 @@ public:
    void  resume() {}
    void suspend() {}
 #else
+
+   /*
+   static pthread_mutex_t mutex_suspend;
+
+   static void thread_control_handler(int n, siginfo_t* siginfo, void* sigcontext)
+      {
+      pthread_mutex_lock(  &mutex_suspend);
+      pthread_mutex_unlock(&mutex_suspend);
+      }
+
+   static void thread_suspend(int tid, int time) // suspend a thread for some time
+      {
+      struct sigaction act;
+      struct sigaction oact;
+      memset(&act, 0, sizeof(act));
+      act.sa_sigaction = thread_control_handler;
+      act.sa_flags = SA_RESTART | SA_SIGINFO | SA_ONSTACK;
+      sigemptyset(&act.sa_mask);
+      pthread_mutex_init(&mutex_suspend, 0);
+      if (!sigaction(U_SIGCONT, &act, &oact))
+         {
+         pthread_mutex_lock(&mutex_suspend);
+         kill(tid, U_SIGCONT);
+         sleep(time);
+         pthread_mutex_unlock(&mutex_suspend);
+         }
+      }
+   */
+
    void resume()
       {
       U_TRACE_NO_PARAM(0, "UThread::resume()")
-
-      if (isCurrentThread(tid)) return;
 
 #   ifdef HAVE_PTHREAD_SUSPEND
       (void) U_SYSCALL(pthread_resume, "%p", tid);
@@ -239,8 +267,6 @@ public:
    void suspend()
       {
       U_TRACE_NO_PARAM(0, "UThread::suspend()")
-
-      if (isCurrentThread(tid)) return;
 
 #   ifdef HAVE_PTHREAD_SUSPEND
       (void) U_SYSCALL(pthread_suspend, "%p", tid);
@@ -338,6 +364,7 @@ protected:
    pthread_t tid;
    int suspendCount;
 #endif
+   bool bpause;
 
    static UThread* first;
 

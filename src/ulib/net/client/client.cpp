@@ -223,6 +223,12 @@ void UClient_Base::loadConfigParam()
    password  = pcfg->at(U_CONSTANT_TO_PARAM("PASSWORD"));
    cert_file = pcfg->at(U_CONSTANT_TO_PARAM("CERT_FILE"));
 
+   /*
+   tls_pin = pcfg->at(U_CONSTANT_TO_PARAM("TLS_SPKI_PIN"));
+
+   if (tls_pin.size()) UBase64::decode(tls_pin.data(), tls_pin.size(), tls_pin);
+   */
+
    // write pid on file...
 
    UString x = pcfg->at(U_CONSTANT_TO_PARAM("PID_FILE"));

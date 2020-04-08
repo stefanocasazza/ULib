@@ -29,6 +29,7 @@ static void check(const UString& dati_cert, const UString& dati_ca)
         << c.getNotBefore()         << '\n' 
         << c.getNotAfter()          << '\n' 
         << c.checkValidity()        << '\n'
+        << c.getPinningHash()       << '\n'
         << vec1                     << '\n'
         << vec2                     << '\n';
 

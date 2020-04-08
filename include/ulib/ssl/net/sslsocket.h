@@ -136,7 +136,9 @@ public:
    /**
     * Verify callback
     */
-
+   
+   static int SPKIPinVerification(X509_STORE_CTX *ctx, void *arg);
+   
    void setVerifyCallback(verify_cb func, int mode = SSL_VERIFY_PEER_STRICT | SSL_VERIFY_CLIENT_ONCE)
       {
       U_TRACE(1, "USSLSocket::setVerifyCallback(%p,%d)", func, mode)

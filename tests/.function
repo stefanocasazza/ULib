@@ -360,6 +360,10 @@ check_for_netcat() {
 		   [ "$NC_TEST" = "usage: nc [-46CDdFhklNnrStUuvZz] [-I length] [-i interval] [-M ttl]" ] || \
 		   [ "$NC_TEST" = "This is nc from the netcat-openbsd package. An alternative nc is available in the netcat-traditional package." ]; then
 			NCAT=nc
+			NC_TEST=`nc -h 2>&1 | tail -n1 | cut -d' ' -f1`
+			if [ "$NC_TEST" = "port" ]; then
+				NCAT_TYPE=GNU
+			fi
 		fi
 	fi
 
@@ -398,7 +402,7 @@ kill_netcat() {
 ncat_listen() {
 
 	if [ "$NCAT_TYPE" = "GNU" ]; then
-		netcat -l -p $2 -v $1 <$3 >>$4 2>/tmp/netcat.err &
+		$NCAT -l -p $2 -v $1 <$3 >>$4 2>/tmp/netcat.err &
 	else
 		$NCAT  -v -4 -l $1 $2 <$3 >>$4 2>/tmp/netcat.err &
 	fi

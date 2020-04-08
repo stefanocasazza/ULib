@@ -702,6 +702,25 @@ STACK_OF(X509)* UCertificate::loadCerts(const UString& x)
    U_RETURN_POINTER(othercerts, STACK_OF(X509));
 }
 
+UString UCertificate::getPinningHash(X509* _x509)
+{
+   U_TRACE(0, "UCertificate::getPinningHash(%p)", _x509)
+
+   U_INTERNAL_ASSERT_POINTER(_x509)
+
+   unsigned char* pkey_buf;
+   UString hash(SHA256_DIGEST_LENGTH);
+
+   // Get Certificate Public Key
+   EVP_PKEY* pub_key = (EVP_PKEY*) U_SYSCALL(X509_get_pubkey, "%p", _x509);
+   i2d_PUBKEY(pub_key, &pkey_buf);
+
+   // Hash it
+   UServices::generateDigest(U_HASH_SHA256, 0, pkey_buf, SHA256_DIGEST_LENGTH, hash, true);
+
+   U_RETURN_STRING(hash);
+}
+
 // STREAMS
 
 UString UCertificate::print(unsigned long nmflag, unsigned long cflag) const

@@ -644,6 +644,8 @@ static bool getSession(const char* op, uint32_t op_len)
 
    U_LOGGER("*** SESSION(%V) NOT FOUND at %.*s() ***", key_session->rep, op_len, op);
 
+   created = u_now->tv_sec;
+
    U_RETURN(false);
 }
 
@@ -700,7 +702,11 @@ static void writeSessionToLOG(const UString& lmac, const UString& label, const c
 
    UString opt(200U);
 
-   opt.snprintf(U_CONSTANT_TO_PARAM(", traffic: %llu, elapsed: %u"), counter/1024, (u_now->tv_sec-created)/60);
+   uint32_t elapsed = u_now->tv_sec - created;
+
+   if (elapsed > U_ONE_DAY_IN_SECOND) elapsed = U_ONE_DAY_IN_SECOND;
+
+   opt.snprintf(U_CONSTANT_TO_PARAM(", traffic: %llu, elapsed: %u"), counter/1024, elapsed/60);
 
    writeToLOG(lmac, label, op, op_len, opt);
 }
@@ -1755,7 +1761,7 @@ static void POST_info()
                op     =                 "DENY_NO_TRAFFIC";
                op_len = U_CONSTANT_SIZE("DENY_NO_TRAFFIC");
 
-               created += ctime_no_traffic;
+               created += U_MAX_TIME_NO_TRAFFIC;
 
 del_sess:      writeSessionToLOG(*mac, label, op, op_len);
 
