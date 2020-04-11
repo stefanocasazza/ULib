@@ -37,8 +37,9 @@ static uint64_t counter, device_counter, max_traffic_daily;
 static uint8_t policySessionNotify, policySessionNotifyDefault;
 static uint32_t addr, old_addr, ip_peer, created, lastUpdate, lastReset, idx, duration_privacy_policy, vec_logout[8192];
 
-#define U_CLEAN_INTERVAL      (60U * 60U) // 1h
-#define U_MAX_TIME_NO_TRAFFIC (15U * 60U) // 15m
+#define U_CLEAN_INTERVAL       (60U * 60U) // 1h
+#define U_MAX_TIME_NO_TRAFFIC  (15U * 60U) // 15m
+#define U_MAX_ELAPSED_TIME (100000U * 60U) // 69g
 
 #define U_LOGGER(fmt,args...) ULog::log(file_WARNING->getFd(), U_CONSTANT_TO_PARAM("%v: " fmt), UClientImage_Base::request_uri->rep , ##args)
 
@@ -702,9 +703,9 @@ static void writeSessionToLOG(const UString& lmac, const UString& label, const c
 
    UString opt(200U);
 
-   uint32_t elapsed = u_now->tv_sec - created;
+   uint32_t elapsed = (u_now->tv_sec > created ? u_now->tv_sec - created : 0);
 
-   if (elapsed > U_ONE_DAY_IN_SECOND) elapsed = U_ONE_DAY_IN_SECOND;
+   if (elapsed > U_MAX_ELAPSED_TIME) elapsed = U_MAX_ELAPSED_TIME;
 
    opt.snprintf(U_CONSTANT_TO_PARAM(", traffic: %llu, elapsed: %u"), counter/1024, elapsed/60);
 

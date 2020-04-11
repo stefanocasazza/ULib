@@ -1058,7 +1058,11 @@ int USSLSocket::SPKIPinVerification(X509_STORE_CTX* context, void *arg)
 
    UString *tls_pin = (UString *)arg;
 
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
    STACK_OF(X509) *certChain = X509_STORE_CTX_get0_untrusted(context);
+#else
+   STACK_OF(X509) *certChain; // TODO
+#endif
 
    X509 *workingCert = NULL;
    bool result = false;

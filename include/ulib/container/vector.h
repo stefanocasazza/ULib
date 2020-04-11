@@ -1023,7 +1023,7 @@ public:
       UVector<void*>::move(source); // add to end and reset source
       }
    
-   explicit UVector(const UVector<UString>& source) : UVector(source._length)
+   explicit UVector(const UVector<UString>& source) : UVector<UStringRep*>(source._length)
       {
       U_TRACE_CTOR(0, UVector<UString>, "copy ctor")
 
