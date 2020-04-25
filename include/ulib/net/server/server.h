@@ -107,6 +107,7 @@ vClientImage = new client_type[UNotifier::max_connection]; } }
 
 class UHTTP;
 class UHTTP2;
+class UHTTP3;
 class UEventDB;
 class UCommand;
 class UTimeStat;
@@ -349,6 +350,9 @@ public:
       sem_t lock_throttling;
       sem_t lock_rdb_server;
       sem_t lock_data_session;
+#  ifndef U_HTTP3_DISABLE
+      sem_t lock_db_http3;
+#  endif
 #  ifdef USE_LIBSSL
       sem_t lock_ssl_session;
    // ------------------------------------------------------------------------------
@@ -420,6 +424,7 @@ public:
 #define U_SRV_LOCK_USER2          &(UServer_Base::ptr_shared_data->lock_user2)
 #define U_SRV_LOCK_SSE            &(UServer_Base::ptr_shared_data->lock_sse)
 #define U_SRV_LOCK_SSE_SSL        &(UServer_Base::ptr_shared_data->lock_sse_ssl)
+#define U_SRV_LOCK_DB_HTTP3       &(UServer_Base::ptr_shared_data->lock_db_http3)
 #define U_SRV_LOCK_THROTTLING     &(UServer_Base::ptr_shared_data->lock_throttling)
 #define U_SRV_LOCK_RDB_SERVER     &(UServer_Base::ptr_shared_data->lock_rdb_server)
 #define U_SRV_LOCK_SSL_SESSION    &(UServer_Base::ptr_shared_data->lock_ssl_session)
@@ -1211,6 +1216,7 @@ private:
 
    friend class UHTTP;
    friend class UHTTP2;
+   friend class UHTTP3;
    friend class UDayLight;
    friend class UTimeStat;
    friend class USSLSocket;
@@ -1356,6 +1362,10 @@ protected:
       // NB: array are not pointers (virtual table can shift the address of this)...
 
       vClientImage = new client_type[UNotifier::max_connection];
+
+      U_INTERNAL_DUMP("vClientImage = %p pClientImage = %p", vClientImage, pClientImage)
+
+      U_INTERNAL_ASSERT_EQUALS(vClientImage, pClientImage)
       }
 
 #ifdef DEBUG
@@ -1424,6 +1434,10 @@ protected:
       // NB: array are not pointers (virtual table can shift the address of this)...
 
       vClientImage = new client_type[UNotifier::max_connection];
+
+      U_INTERNAL_DUMP("vClientImage = %p pClientImage = %p", vClientImage, pClientImage)
+
+      U_INTERNAL_ASSERT_EQUALS(vClientImage, pClientImage)
       }
 
 #ifdef DEBUG
@@ -1492,6 +1506,10 @@ protected:
       // NB: array are not pointers (virtual table can shift the address of this)...
 
       vClientImage = new client_type[UNotifier::max_connection];
+
+      U_INTERNAL_DUMP("vClientImage = %p pClientImage = %p", vClientImage, pClientImage)
+
+      U_INTERNAL_ASSERT_EQUALS(vClientImage, pClientImage)
       }
 
 #ifdef DEBUG

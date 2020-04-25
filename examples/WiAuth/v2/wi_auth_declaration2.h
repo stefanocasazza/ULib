@@ -39,7 +39,7 @@ static uint32_t addr, old_addr, ip_peer, created, lastUpdate, lastReset, idx, du
 
 #define U_CLEAN_INTERVAL       (60U * 60U) // 1h
 #define U_MAX_TIME_NO_TRAFFIC  (15U * 60U) // 15m
-#define U_MAX_ELAPSED_TIME (100000U * 60U) // 69g
+#define U_MAX_ELAPSED_TIME     (69U * U_ONE_DAY_IN_SECOND)
 
 #define U_LOGGER(fmt,args...) ULog::log(file_WARNING->getFd(), U_CONSTANT_TO_PARAM("%v: " fmt), UClientImage_Base::request_uri->rep , ##args)
 

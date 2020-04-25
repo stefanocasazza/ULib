@@ -24,6 +24,10 @@
 #include <ulib/utility/services.h>
 #include <ulib/net/server/server.h>
 
+#ifndef U_HTTP3_DISABLE
+#  include <ulib/utility/http3.h>
+#endif
+
 #ifdef _MSWINDOWS_
 #  include <ws2tcpip.h>
 #else
@@ -1925,6 +1929,10 @@ UServer_Base::~UServer_Base()
       {
       u_need_root(false);
 
+#  ifdef USERVER_UDP
+      if (budp == false)
+#  endif
+      {
       (void) UFile::setSysParam("/proc/sys/net/ipv4/tcp_fin_timeout", tcp_fin_timeout, true);
 
       if (USocket::iBackLog > SOMAXCONN)
@@ -1934,6 +1942,7 @@ UServer_Base::~UServer_Base()
          }
 
       if (USocket::iBackLog == 1) (void) UFile::setSysParam("/proc/sys/net/ipv4/tcp_abort_on_overflow", tcp_abort_on_overflow, true);
+      }
       }
 #endif
 
@@ -2236,13 +2245,11 @@ void UServer_Base::loadConfigParam()
 
    U_INTERNAL_DUMP("UNotifier::max_connection = %u USocket::iBackLog = %u", UNotifier::max_connection, USocket::iBackLog)
 
-#ifdef USERVER_UDP
-   if (budp &&
-       u_printf_string_max_length == -1)
-      {
-      u_printf_string_max_length = 128;
-      }
-#endif
+   * key_file = pcfg->at(U_CONSTANT_TO_PARAM( "KEY_FILE"));
+   *cert_file = pcfg->at(U_CONSTANT_TO_PARAM("CERT_FILE"));
+
+   U_INTERNAL_ASSERT( key_file->isNullTerminated())
+   U_INTERNAL_ASSERT(cert_file->isNullTerminated())
 
    x = pcfg->at(U_CONSTANT_TO_PARAM("CRASH_EMAIL_NOTIFY"));
 
@@ -2311,11 +2318,8 @@ void UServer_Base::loadConfigParam()
 #ifdef USE_LIBSSL
    if (bssl)
       {
-      *dh_file   = pcfg->at(U_CONSTANT_TO_PARAM("DH_FILE"));
-      
-      *key_file  = pcfg->at(U_CONSTANT_TO_PARAM("KEY_FILE"));
-      *password  = pcfg->at(U_CONSTANT_TO_PARAM("PASSWORD"));
-      *cert_file = pcfg->at(U_CONSTANT_TO_PARAM("CERT_FILE"));
+      *dh_file    = pcfg->at(U_CONSTANT_TO_PARAM("DH_FILE"));
+      *password   = pcfg->at(U_CONSTANT_TO_PARAM("PASSWORD"));
 
       verify_mode = pcfg->readLong(U_CONSTANT_TO_PARAM("VERIFY_MODE"));
 
@@ -2427,7 +2431,7 @@ void UServer_Base::loadConfigParam()
 
    // DOCUMENT_ROOT: The directory out of which we will serve your documents
 
-#ifdef USERVER_UDP
+#if defined(USERVER_UDP) && defined(U_HTTP3_DISABLE)
    if (budp == false)
 #endif
    {
@@ -2452,7 +2456,7 @@ void UServer_Base::loadConfigParam()
 
       log->init(U_CONSTANT_TO_PARAM(U_SERVER_LOG_PREFIX));
 
-#  ifdef USERVER_UDP
+#  if defined(USERVER_UDP) && defined(U_HTTP3_DISABLE)
       if (budp == false)
 #  endif
       {
@@ -2640,17 +2644,34 @@ void UServer_Base::loadConfigParam()
    if (UOrmDriver::loadDriver(orm_driver_dir, orm_driver_list) == false) U_ERROR("ORM drivers load failed");
 #endif
 
-   // load plugin modules and call server-wide hooks handlerConfig()...
-
-#ifdef USERVER_UDP
+#if defined(USERVER_UDP) && defined(U_HTTP3_DISABLE)
    if (budp == false)
 #endif
    {
+   // load plugin modules and call server-wide hooks handlerConfig()...
+
    UString plugin_dir  = pcfg->at(U_CONSTANT_TO_PARAM("PLUGIN_DIR")),
            plugin_list = pcfg->at(U_CONSTANT_TO_PARAM("PLUGIN"));
 
    if (loadPlugins(plugin_dir, plugin_list) != U_PLUGIN_HANDLER_FINISHED) U_ERROR("Plugins stage load failed");
    }
+
+#if defined(USERVER_UDP) && !defined(U_HTTP3_DISABLE)
+   if (budp)
+      {
+      if (UHTTP3::loadConfigParam() == U_PLUGIN_HANDLER_ERROR)
+         {
+         if (pcfg->empty())
+            {
+            U_SRV_LOG("WARNING: Configuration of HTTTP3 empty");
+            }
+
+         U_SRV_LOG("WARNING: Configuration phase of HTTTP3 failed");
+         }
+
+      U_SRV_LOG("Configuration phase of HTTTP3 success");
+      }
+#endif
 }
 
 U_NO_EXPORT void UServer_Base::loadStaticLinkedModules(const UString& name)
@@ -3094,6 +3115,8 @@ void UServer_Base::init()
          U_ERROR("Run as server UDP with port '%u' failed", port);
          }
 
+      csocket = socket;
+
       goto next;
       }
 #endif
@@ -3106,9 +3129,7 @@ void UServer_Base::init()
       U_INTERNAL_ASSERT(  dh_file->isNullTerminated())
       U_INTERNAL_ASSERT(  ca_file->isNullTerminated())
       U_INTERNAL_ASSERT(  ca_path->isNullTerminated())
-      U_INTERNAL_ASSERT( key_file->isNullTerminated())
       U_INTERNAL_ASSERT( password->isNullTerminated())
-      U_INTERNAL_ASSERT(cert_file->isNullTerminated())
 
       // Load our certificate
 
@@ -3228,6 +3249,10 @@ next:
 #ifdef U_LINUX
    u_need_root(false);
 
+# ifdef USERVER_UDP
+   if (budp == false)
+# endif
+   {
    /**
     * timeout_timewait parameter: Determines the time that must elapse before TCP/IP can release a closed connection
     * and reuse its resources. This interval between closure and release is known as the TIME_WAIT state or twice the
@@ -3278,6 +3303,7 @@ next:
 
    U_INTERNAL_DUMP("sysctl_somaxconn = %d tcp_abort_on_overflow = %b sysctl_max_syn_backlog = %d",
                     sysctl_somaxconn,     tcp_abort_on_overflow,     sysctl_max_syn_backlog)
+   }
 #endif
 
    UTimer::init(UTimer::NOSIGNAL);
@@ -3306,7 +3332,7 @@ next:
 
    // init plugin modules, must run after the setting for shared log
 
-#ifdef USERVER_UDP
+#if defined(USERVER_UDP) && defined(U_HTTP3_DISABLE)
    if (budp == false)
 #endif
    {
@@ -3381,10 +3407,6 @@ next:
    U_INTERNAL_ASSERT_EQUALS(ULog::prwlock,  U_NULLPTR)
    U_INTERNAL_ASSERT_EQUALS(u_pthread_time, U_NULLPTR)
 
-# ifdef USERVER_UDP
-   if (budp == false)
-# endif
-   {
    if (UServer_Base::update_date)
       {
       U_NEW_WITHOUT_CHECK_MEMORY(UTimeThread, u_pthread_time, UTimeThread);
@@ -3393,7 +3415,6 @@ next:
 
       ((UTimeThread*)u_pthread_time)->start(50);
       }
-   }
 #endif
 
 #if !defined(U_LOG_DISABLE) && defined(USE_LIBZ)
@@ -3418,11 +3439,16 @@ next:
       }
 #endif
 
+#if defined(USERVER_UDP)
+   if (budp == false)
+#endif
+   {
 #ifdef DEBUG
    U_NEW(UTimeStat, pstat, UTimeStat);
 
    UTimer::insert(pstat);
 #endif
+   }
 
    (void) UFile::_mkdir("../db");
 
@@ -3442,13 +3468,7 @@ next:
    socket_flags |= O_RDWR | O_CLOEXEC;
 
 #ifdef USERVER_UDP
-   if (budp)
-      {
-      UNotifier::max_connection = 1;
-      UNotifier::num_connection =
-      UNotifier::min_connection = 0;
-      }
-   else
+   if (budp == false)
 #endif
    {
    // ---------------------------------------------------------------------------------------------------------
@@ -3520,7 +3540,7 @@ next:
       }
 #endif
 
-#ifdef USERVER_UDP
+#if defined(USERVER_UDP) && defined(U_HTTP3_DISABLE)
    if (budp == false)
 #endif
    {
@@ -3584,7 +3604,7 @@ next:
    U_NEW(USSEThread, pthread_sse, USSEThread);
    U_NEW(UVector<USSEClient*>, sse_vclient, UVector<USSEClient*>);
 
-   pthread_sse->start(0);
+   pthread_sse->start(1000);
 
    (void) U_SYSCALL(socketpair, "%d,%d,%d,%p", AF_UNIX, SOCK_STREAM, 0, sse_socketpair);
 
@@ -4428,7 +4448,7 @@ void UServer_Base::runLoop(const char* user)
 {
    U_TRACE(0, "UServer_Base::runLoop(%S)", user)
 
-#ifdef USERVER_UDP
+#if defined(USERVER_UDP) && defined(U_HTTP3_DISABLE)
    if (budp == false)
 #endif
    {
@@ -4623,6 +4643,12 @@ void UServer_Base::runLoop(const char* user)
 #ifdef USERVER_UDP
    if (budp)
       {
+      U_INTERNAL_DUMP("pClientImage->UEventFd::fd = %d socket->iSockDesc = %d", pClientImage->UEventFd::fd, socket->iSockDesc)
+
+      U_INTERNAL_ASSERT_EQUALS(csocket,              socket)
+      U_INTERNAL_ASSERT_EQUALS(pClientImage->socket, socket)
+
+#  ifdef U_HTTP3_DISABLE
       struct stat st;
       char buffer[U_PATH_MAX+1];
       HINSTANCE handle = U_NULLPTR;
@@ -4647,14 +4673,13 @@ void UServer_Base::runLoop(const char* user)
             }
          }
 
-      csocket                    =
-      pClientImage->socket       = socket;
-      pClientImage->UEventFd::fd = socket->iSockDesc;
-
       UClientImage_Base::callerHandlerRead = UServer_Base::handlerUDP;
 
+      if (u_printf_string_max_length == -1) u_printf_string_max_length = 128;
+#  endif
+
       U_INTERNAL_DUMP("handler_other = %p handler_inotify = %p handler_db1 = %p handler_db2 = %p UNotifier::num_connection = %u UNotifier::min_connection = %u",
-                       handler_other,     handler_inotify,     handler_db1,     handler_db2, UNotifier::num_connection,     UNotifier::min_connection)
+                       handler_other,     handler_inotify,     handler_db1,     handler_db2,     UNotifier::num_connection,     UNotifier::min_connection)
 
       // NB: we can go directly on recvFrom() and block on it...
 
@@ -4674,12 +4699,14 @@ void UServer_Base::runLoop(const char* user)
 #     endif
          }
 
+#  ifdef U_HTTP3_DISABLE
       if (runDynamicPageParam_udp)
          {
          runDynamicPageParam_udp(U_DPAGE_DESTROY);
 
          UDynamic::dclose(handle);
          }
+#  endif
       }
    else
 #endif
@@ -4687,7 +4714,7 @@ void UServer_Base::runLoop(const char* user)
    while (flag_loop)
       {
       U_INTERNAL_DUMP("handler_other = %p handler_inotify = %p handler_db1 = %p handler_db2 = %p UNotifier::num_connection = %u UNotifier::min_connection = %u",
-                       handler_other,     handler_inotify,     handler_db1,     handler_db2, UNotifier::num_connection,     UNotifier::min_connection)
+                       handler_other,     handler_inotify,     handler_db1,     handler_db2,     UNotifier::num_connection,     UNotifier::min_connection)
 
 #  if defined(ENABLE_THREAD) && !defined(USE_LIBEVENT) && defined(U_SERVER_THREAD_APPROACH_SUPPORT)
       if (preforked_num_kids != -1)
@@ -5027,7 +5054,7 @@ void UServer_Base::run()
    U_INTERNAL_ASSERT(proc->parent())
 
 stop:
-#ifdef USERVER_UDP
+#if defined(USERVER_UDP) && defined(U_HTTP3_DISABLE)
    if (budp == false)
 #endif
    {
@@ -5056,9 +5083,7 @@ stop:
    if (pthread_sse) sse_vclient->clear();
 #endif
 
-#ifdef DEBUG
    pthis->deallocate();
-#endif
 }
 
 // it creates a copy of itself, return true if parent...

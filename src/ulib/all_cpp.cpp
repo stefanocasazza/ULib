@@ -111,6 +111,9 @@
 #  ifndef U_HTTP2_DISABLE
 #     include "utility/http2.cpp"
 #  endif
+#  ifndef U_HTTP3_DISABLE
+#     include "utility/http3.cpp"
+#  endif
 #  ifdef ENABLE_ZIP
 #     include "zip/zip.cpp"
 #  endif

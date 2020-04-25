@@ -17,6 +17,7 @@
 #include <ulib/utility/base64.h>
 #include <ulib/utility/services.h>
 #include <ulib/net/server/server.h>
+#include <ulib/net/server/client_image.h>
 
 unsigned char UServices::key[16];
 

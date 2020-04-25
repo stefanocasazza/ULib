@@ -23,7 +23,7 @@
 #  include <ws2tcpip.h>
 #else
 #  include <ulib/net/unixsocket.h>
-#  ifdef U_LINUX
+#  if defined(U_LINUX) && defined(DEBUG)
 U_DUMP_KERNEL_VERSION(LINUX_VERSION_CODE)
 #  endif
 #endif
@@ -55,6 +55,29 @@ int            USocket::accept4_flags;  // If flags is 0, then accept4() is the 
 bool           USocket::breuseport;
 bool           USocket::bincoming_cpu;
 SocketAddress* USocket::cLocal;
+
+#ifdef USERVER_UDP
+socklen_t               USocket::peer_addr_len; 
+struct sockaddr_storage USocket::peer_addr; 
+
+void USocket::setPeer()
+{
+   U_TRACE_NO_PARAM(0, "USocket::setPeer()")
+
+   U_INTERNAL_DUMP("peer_addr_len = %u sizeOf() = %u", peer_addr_len, ((SocketAddress*)&peer_addr)->sizeOf())
+
+   U_INTERNAL_ASSERT_EQUALS(peer_addr_len, ((SocketAddress*)&peer_addr)->sizeOf())
+
+   U_INTERNAL_DUMP("SocketAddress = %#.*S", peer_addr_len, &peer_addr)
+
+   iRemotePort = ((SocketAddress*)&peer_addr)->getPortNumber();
+                 ((SocketAddress*)&peer_addr)->getIPAddress(cRemoteAddress);
+
+   U_INTERNAL_DUMP("getAddressFamily() = %u iRemotePort = %u", ((SocketAddress*)&peer_addr)->getAddressFamily(), iRemotePort)
+
+   U_INTERNAL_ASSERT_MAJOR(iRemotePort, 0)
+}
+#endif
 
 void USocket::setAddress(void* address)
 {
@@ -605,7 +628,7 @@ int USocket::recvFrom(void* pBuffer, uint32_t iBufLength, uint32_t uiFlags, UIPA
 
    if (iBytesRead > 0)
       {
-      U_INTERNAL_DUMP("BytesRead(%u) = %#.*S", iBytesRead, iBytesRead, CAST(pBuffer))
+      U_INTERNAL_DUMP("slDummy = %u BytesRead(%u) = %#.*S", slDummy, iBytesRead, iBytesRead, CAST(pBuffer))
 
       iSourcePortNumber = cSource.getPortNumber();
                           cSource.getIPAddress(cSourceIP);

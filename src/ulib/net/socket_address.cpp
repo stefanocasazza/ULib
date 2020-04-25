@@ -173,6 +173,8 @@ public:
       return sizeof(sockaddr_in);
       }
 
+   unsigned int getAddressFamily() { return addr.psaGeneric.sa_family; }
+
    operator       sockaddr*()       { return &(addr.psaGeneric); }
    operator const sockaddr*() const { return &(addr.psaGeneric); }
 

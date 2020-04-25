@@ -15,6 +15,7 @@
 #include <ulib/notifier.h>
 #include <ulib/utility/interrupt.h>
 #include <ulib/net/server/server.h>
+#include <ulib/net/server/client_image.h>
 
 #ifdef HAVE_SYS_SENDFILE_H
 #  ifndef HAVE_SENDFILE64

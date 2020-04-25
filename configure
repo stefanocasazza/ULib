@@ -655,6 +655,14 @@ DOXYGEN
 mcpp
 cpp
 GCC_AR
+USERVER_UDP_FALSE
+USERVER_UDP_TRUE
+HTTP3_FALSE
+HTTP3_TRUE
+ENABLE_EXAMPLES_FALSE
+ENABLE_EXAMPLES_TRUE
+USERVER_IPC_FALSE
+USERVER_IPC_TRUE
 MEMORY_POOL_FALSE
 MEMORY_POOL_TRUE
 SANITIZE_FALSE
@@ -814,12 +822,6 @@ ENABLE_PLUGINS_FALSE
 ENABLE_PLUGINS_TRUE
 ENABLE_SHARED_FALSE
 ENABLE_SHARED_TRUE
-ENABLE_EXAMPLES_FALSE
-ENABLE_EXAMPLES_TRUE
-USERVER_UDP_FALSE
-USERVER_UDP_TRUE
-USERVER_IPC_FALSE
-USERVER_IPC_TRUE
 POW_LIB
 LIBOBJS
 SEM_TIMEDWAIT_FALSE
@@ -940,7 +942,6 @@ am__nodep
 AMDEPBACKSLASH
 AMDEP_FALSE
 AMDEP_TRUE
-am__quote
 am__include
 DEPDIR
 OBJEXT
@@ -1029,7 +1030,8 @@ PACKAGE_VERSION
 PACKAGE_TARNAME
 PACKAGE_NAME
 PATH_SEPARATOR
-SHELL'
+SHELL
+am__quote'
 ac_subst_files='RPM_REQUIRE'
 ac_user_opts='
 enable_option_checking
@@ -1053,9 +1055,6 @@ with_libc
 enable_thread
 enable_pth
 with_ipv6
-enable_examples
-with_userver_ipc
-with_userver_udp
 enable_plugins
 enable_memory_pool
 enable_LFS
@@ -1075,6 +1074,7 @@ enable_HPRS
 enable_SSE
 enable_websocket_parallelization
 enable_http2
+enable_http3
 enable_check_time
 enable_classic
 enable_throttling
@@ -1092,6 +1092,7 @@ with_libz
 enable_zip
 with_libzopfli
 with_libbrotli
+with_libquiche
 with_magic
 enable_ssl_staticlib_deps
 with_ssl
@@ -1136,6 +1137,9 @@ with_f_stack_libs
 enable_static_server_plugin
 enable_static_orm_driver
 enable_static_servlet
+enable_examples
+with_userver_ipc
+with_userver_udp
 enable_libgcc
 '
       ac_precious_vars='build_alias
@@ -1795,7 +1799,6 @@ Optional Features:
   --enable-apexmem          use apex_memmove written by Trevor Herselman in 2014 [default=no]
   --enable-thread           enable build of thread support [default=yes]
   --enable-pth              always use GNU pth for threading [default=no]
-  --enable-examples         enable building of examples [default=yes]
   --enable-plugins          enable building of plugins for userver [default=yes]
   --enable-memory-pool      enable memory pool features [default=yes]
   --enable-LFS              enable Large File Support [default=yes]
@@ -1815,6 +1818,7 @@ Optional Features:
   --enable-SSE              enable Server-Sent Events support [default=no]
   --enable-websocket-parallelization enable Websocket parallelization support [default=yes]
   --enable-http2            enable HTTP/2 support [default=no]
+  --enable-http3            enable HTTP/3 support [default=no]
   --enable-check-time       enable server check time between request for parallelization [default=no]
   --enable-classic          enable server classic model support [default=no]
   --enable-throttling       enable server bandwidth throttling support [default=no]
@@ -1837,6 +1841,7 @@ Optional Features:
                           sqlite mysql pgsql
   --enable-static-servlet=NAMES
                           wi_auth ...
+  --enable-examples       enable building of examples [default=yes]
   --enable-libgcc         use libgcc when linking
 
 Optional Packages:
@@ -1852,13 +1857,12 @@ Optional Packages:
                           compiler's sysroot if not specified).
   --with-libc=path        specify path to alternate libc [[default=c]]
   --with-ipv6             Enable ipv6, default is disabled
-  --with-userver-ipc      Enable building of userver_ipc, default is disabled
-  --with-userver-udp      Enable building of userver_udp, default is disabled
   --with-parser           use parser generator bison/yacc
   --with-distcc           using distcc we must avoid to use some gcc flags (-mtune=native,-flto,...)
   --with-libz             use system     LIBZ library - [will check /usr /usr/local] [default=use if present]
   --with-libzopfli        use system   zopfli library - [will check /usr /usr/local] [default=use if present]
   --with-libbrotli        use system   brotli library - [will check /usr /usr/local] [default=use if present]
+  --with-libquiche        use system   quiche library - [will check /usr /usr/local] [default=use if present]
   --with-magic            use system libmagic library - [will check /usr /usr/local] [default=use if present]
   --with-ssl              use system      SSL library - [will check /usr /usr/local] [default=use if present]
   --with-pcre             use system     PCRE library - [will check /usr /usr/local] [default=use if present]
@@ -1898,6 +1902,8 @@ Optional Packages:
   --with-f-stack-includes=PATHS  f-stack includes list
   --with-f-stack-ldflags=LDFLAGS f-stack ldflags list
   --with-f-stack-libs=LIBS       f-stack libs list
+  --with-userver-ipc      Enable building of userver_ipc, default is disabled
+  --with-userver-udp      Enable building of userver_udp, default is disabled
 
 Some influential environment variables:
   CC          C compiler command
@@ -3653,7 +3659,7 @@ test -n "$target_alias" &&
   program_prefix=${target_alias}-
 
 # Pick a newer and better tar implementation like tar-pax
-am__api_version='1.13'
+am__api_version='1.16'
 
 # Find a good install program.  We prefer a C program (faster),
 # so one script is as good as another.  But avoid the broken or
@@ -3825,8 +3831,8 @@ test "$program_suffix" != NONE &&
 ac_script='s/[\\$]/&&/g;s/;s,x,x,$//'
 program_transform_name=`$as_echo "$program_transform_name" | sed "$ac_script"`
 
-# expand $ac_aux_dir to an absolute path
-am_aux_dir=`cd $ac_aux_dir && pwd`
+# Expand $ac_aux_dir to an absolute path.
+am_aux_dir=`cd "$ac_aux_dir" && pwd`
 
 if test x"${MISSING+set}" != xset; then
   case $am_aux_dir in
@@ -3845,7 +3851,7 @@ else
 $as_echo "$as_me: WARNING: 'missing' script is too old or missing" >&2;}
 fi
 
-if test x"${install_sh}" != xset; then
+if test x"${install_sh+set}" != xset; then
   case $am_aux_dir in
   *\ * | *\	*)
     install_sh="\${SHELL} '$am_aux_dir/install-sh'" ;;
@@ -4160,12 +4166,12 @@ MAKEINFO=${MAKEINFO-"${am_missing_run}makeinfo"}
 
 # For better backward compatibility.  To be removed once Automake 1.9.x
 # dies out for good.  For more background, see:
-# <http://lists.gnu.org/archive/html/automake/2012-07/msg00001.html>
-# <http://lists.gnu.org/archive/html/automake/2012-07/msg00014.html>
+# <https://lists.gnu.org/archive/html/automake/2012-07/msg00001.html>
+# <https://lists.gnu.org/archive/html/automake/2012-07/msg00014.html>
 mkdir_p='$(MKDIR_P)'
 
-# We need awk for the "check" target.  The system "awk" is bad on
-# some platforms.
+# We need awk for the "check" target (and possibly the TAP driver).  The
+# system "awk" is bad on some platforms.
 # Always define AMTAR for backward compatibility.  Yes, it's still used
 # in the wild :-(  We should find a proper way to deprecate it ...
 AMTAR='$${TAR-tar}'
@@ -4266,6 +4272,48 @@ $as_echo "$am_cv_prog_tar_pax" >&6; }
 
 
 
+# POSIX will say in a future version that running "rm -f" with no argument
+# is OK; and we want to be able to make that assumption in our Makefile
+# recipes.  So use an aggressive probe to check that the usage we want is
+# actually supported "in the wild" to an acceptable degree.
+# See automake bug#10828.
+# To make any issue more visible, cause the running configure to be aborted
+# by default if the 'rm' program in use doesn't match our expectations; the
+# user can still override this though.
+if rm -f && rm -fr && rm -rf; then : OK; else
+  cat >&2 <<'END'
+Oops!
+
+Your 'rm' program seems unable to run without file operands specified
+on the command line, even when the '-f' option is present.  This is contrary
+to the behaviour of most rm programs out there, and not conforming with
+the upcoming POSIX standard: <http://austingroupbugs.net/view.php?id=542>
+
+Please tell bug-automake@gnu.org about your system, including the value
+of your $PATH and any error possibly output before this message.  This
+can help us improve future automake versions.
+
+END
+  if test x"$ACCEPT_INFERIOR_RM_PROGRAM" = x"yes"; then
+    echo 'Configuration will proceed anyway, since you have set the' >&2
+    echo 'ACCEPT_INFERIOR_RM_PROGRAM variable to "yes"' >&2
+    echo >&2
+  else
+    cat >&2 <<'END'
+Aborting the configuration process, to ensure you take notice of the issue.
+
+You can download and install GNU coreutils to get an 'rm' implementation
+that behaves properly: <https://www.gnu.org/software/coreutils/>.
+
+If you want to complete the configuration process using your problematic
+'rm' anyway, export the environment variable ACCEPT_INFERIOR_RM_PROGRAM
+to "yes", and re-run configure.
+
+END
+    as_fn_error $? "Your 'rm' program is bad, sorry." "$LINENO" 5
+  fi
+fi
+
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether to enable maintainer-specific portions of Makefiles" >&5
 $as_echo_n "checking whether to enable maintainer-specific portions of Makefiles... " >&6; }
@@ -4333,45 +4381,45 @@ DEPDIR="${am__leading_dot}deps"
 
 ac_config_commands="$ac_config_commands depfiles"
 
-
-am_make=${MAKE-make}
-cat > confinc << 'END'
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether ${MAKE-make} supports the include directive" >&5
+$as_echo_n "checking whether ${MAKE-make} supports the include directive... " >&6; }
+cat > confinc.mk << 'END'
 am__doit:
-	@echo this is the am__doit target
+	@echo this is the am__doit target >confinc.out
 .PHONY: am__doit
 END
-# If we don't find an include directive, just comment out the code.
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for style of include used by $am_make" >&5
-$as_echo_n "checking for style of include used by $am_make... " >&6; }
 am__include="#"
 am__quote=
-_am_result=none
-# First try GNU make style include.
-echo "include confinc" > confmf
-# Ignore all kinds of additional output from 'make'.
-case `$am_make -s -f confmf 2> /dev/null` in #(
-*the\ am__doit\ target*)
-  am__include=include
-  am__quote=
-  _am_result=GNU
-  ;;
-esac
-# Now try BSD make style include.
-if test "$am__include" = "#"; then
-   echo '.include "confinc"' > confmf
-   case `$am_make -s -f confmf 2> /dev/null` in #(
-   *the\ am__doit\ target*)
-     am__include=.include
-     am__quote="\""
-     _am_result=BSD
+# BSD make does it like this.
+echo '.include "confinc.mk" # ignored' > confmf.BSD
+# Other make implementations (GNU, Solaris 10, AIX) do it like this.
+echo 'include confinc.mk # ignored' > confmf.GNU
+_am_result=no
+for s in GNU BSD; do
+  { echo "$as_me:$LINENO: ${MAKE-make} -f confmf.$s && cat confinc.out" >&5
+   (${MAKE-make} -f confmf.$s && cat confinc.out) >&5 2>&5
+   ac_status=$?
+   echo "$as_me:$LINENO: \$? = $ac_status" >&5
+   (exit $ac_status); }
+  case $?:`cat confinc.out 2>/dev/null` in #(
+  '0:this is the am__doit target') :
+    case $s in #(
+  BSD) :
+    am__include='.include' am__quote='"' ;; #(
+  *) :
+    am__include='include' am__quote='' ;;
+esac ;; #(
+  *) :
      ;;
-   esac
-fi
-
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $_am_result" >&5
-$as_echo "$_am_result" >&6; }
-rm -f confinc confmf
+esac
+  if test "$am__include" != "#"; then
+    _am_result="yes ($s style)"
+    break
+  fi
+done
+rm -f confinc.* confmf.*
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: ${_am_result}" >&5
+$as_echo "${_am_result}" >&6; }
 
 # Check whether --enable-dependency-tracking was given.
 if test "${enable_dependency_tracking+set}" = set; then :
@@ -5180,6 +5228,65 @@ ac_cpp='$CPP $CPPFLAGS'
 ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
 ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
+ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether $CC understands -c and -o together" >&5
+$as_echo_n "checking whether $CC understands -c and -o together... " >&6; }
+if ${am_cv_prog_cc_c_o+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+  # Make sure it works both with $CC and with simple cc.
+  # Following AC_PROG_CC_C_O, we do the test twice because some
+  # compilers refuse to overwrite an existing .o file with -o,
+  # though they will create one.
+  am_cv_prog_cc_c_o=yes
+  for am_i in 1 2; do
+    if { echo "$as_me:$LINENO: $CC -c conftest.$ac_ext -o conftest2.$ac_objext" >&5
+   ($CC -c conftest.$ac_ext -o conftest2.$ac_objext) >&5 2>&5
+   ac_status=$?
+   echo "$as_me:$LINENO: \$? = $ac_status" >&5
+   (exit $ac_status); } \
+         && test -f conftest2.$ac_objext; then
+      : OK
+    else
+      am_cv_prog_cc_c_o=no
+      break
+    fi
+  done
+  rm -f core conftest*
+  unset am_i
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $am_cv_prog_cc_c_o" >&5
+$as_echo "$am_cv_prog_cc_c_o" >&6; }
+if test "$am_cv_prog_cc_c_o" != yes; then
+   # Losing compiler, so override with the script.
+   # FIXME: It is wrong to rewrite CC.
+   # But if we don't then we get into trouble of one sort or another.
+   # A longer-term fix would be to have automake use am__CC in this case,
+   # and then we could set am__CC="\$(top_srcdir)/compile \$(CC)"
+   CC="$am_aux_dir/compile $CC"
+fi
+ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
 
 depcc="$CC"   am_compiler_list=
 
@@ -7152,6 +7259,65 @@ ac_cpp='$CXXCPP $CPPFLAGS'
 ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
 ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
+
+ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether $CC understands -c and -o together" >&5
+$as_echo_n "checking whether $CC understands -c and -o together... " >&6; }
+if ${am_cv_prog_cc_c_o+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+  # Make sure it works both with $CC and with simple cc.
+  # Following AC_PROG_CC_C_O, we do the test twice because some
+  # compilers refuse to overwrite an existing .o file with -o,
+  # though they will create one.
+  am_cv_prog_cc_c_o=yes
+  for am_i in 1 2; do
+    if { echo "$as_me:$LINENO: $CC -c conftest.$ac_ext -o conftest2.$ac_objext" >&5
+   ($CC -c conftest.$ac_ext -o conftest2.$ac_objext) >&5 2>&5
+   ac_status=$?
+   echo "$as_me:$LINENO: \$? = $ac_status" >&5
+   (exit $ac_status); } \
+         && test -f conftest2.$ac_objext; then
+      : OK
+    else
+      am_cv_prog_cc_c_o=no
+      break
+    fi
+  done
+  rm -f core conftest*
+  unset am_i
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $am_cv_prog_cc_c_o" >&5
+$as_echo "$am_cv_prog_cc_c_o" >&6; }
+if test "$am_cv_prog_cc_c_o" != yes; then
+   # Losing compiler, so override with the script.
+   # FIXME: It is wrong to rewrite CC.
+   # But if we don't then we get into trouble of one sort or another.
+   # A longer-term fix would be to have automake use am__CC in this case,
+   # and then we could set am__CC="\$(top_srcdir)/compile \$(CC)"
+   CC="$am_aux_dir/compile $CC"
+fi
+ac_ext=cpp
+ac_cpp='$CXXCPP $CPPFLAGS'
+ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
+
 
 depcc="$CC"   am_compiler_list=
 
@@ -26052,6 +26218,7 @@ $as_echo "${T_MD}C++ stuff:${T_ME}" >&6; }
      ulib_libz_msg="no (--with-libz)"
 ulib_libzopfli_msg="no (--with-libzopfli)"
 ulib_libbrotli_msg="no (--with-libbrotli)"
+ulib_libquiche_msg="no (--with-libquiche)"
    ulib_libtdb_msg="no (--with-libtdb)"
      ulib_curl_msg="no (--with-curl)"
     ulib_expat_msg="no (--with-expat)"
@@ -26193,114 +26360,6 @@ $as_echo "#define ENABLE_IPV6 1" >>confdefs.h
 else
 
 $as_echo "#define DISABLE_IPV6 1" >>confdefs.h
-
-fi
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if you want to enable build of examples" >&5
-$as_echo_n "checking if you want to enable build of examples... " >&6; }
-# Check whether --enable-examples was given.
-if test "${enable_examples+set}" = set; then :
-  enableval=$enable_examples;
-fi
-
-
-if test -z "$enable_examples" -a "$enable_shared" = "yes"; then
-	enable_examples="yes"
-fi
-
- if false; then
-  USERVER_IPC_TRUE=
-  USERVER_IPC_FALSE='#'
-else
-  USERVER_IPC_TRUE='#'
-  USERVER_IPC_FALSE=
-fi
-
- if false; then
-  USERVER_UDP_TRUE=
-  USERVER_UDP_FALSE='#'
-else
-  USERVER_UDP_TRUE='#'
-  USERVER_UDP_FALSE=
-fi
-
-
-if test "$enable_examples" = "yes"; then
-   { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
-	ulib_examples="enabled"
-	 if true; then
-  ENABLE_EXAMPLES_TRUE=
-  ENABLE_EXAMPLES_FALSE='#'
-else
-  ENABLE_EXAMPLES_TRUE='#'
-  ENABLE_EXAMPLES_FALSE=
-fi
-
-
-	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if you want to build userver_ipc" >&5
-$as_echo_n "checking if you want to build userver_ipc... " >&6; }
-
-# Check whether --with-userver-ipc was given.
-if test "${with_userver_ipc+set}" = set; then :
-  withval=$with_userver_ipc; use_userver_ipc=$withval
-else
-  use_userver_ipc=no
-fi
-
-	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $use_userver_ipc" >&5
-$as_echo "$use_userver_ipc" >&6; }
-
-	if test "$use_userver_ipc" = "yes" ; then
-		 if true; then
-  USERVER_IPC_TRUE=
-  USERVER_IPC_FALSE='#'
-else
-  USERVER_IPC_TRUE='#'
-  USERVER_IPC_FALSE=
-fi
-
-
-$as_echo "#define USERVER_IPC 1" >>confdefs.h
-
-	fi
-
-	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if you want to build userver_udp" >&5
-$as_echo_n "checking if you want to build userver_udp... " >&6; }
-
-# Check whether --with-userver-udp was given.
-if test "${with_userver_udp+set}" = set; then :
-  withval=$with_userver_udp; use_userver_udp=$withval
-else
-  use_userver_udp=no
-fi
-
-	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $use_userver_udp" >&5
-$as_echo "$use_userver_udp" >&6; }
-
-	if test "$use_userver_udp" = "yes" ; then
-		 if true; then
-  USERVER_UDP_TRUE=
-  USERVER_UDP_FALSE='#'
-else
-  USERVER_UDP_TRUE='#'
-  USERVER_UDP_FALSE=
-fi
-
-
-$as_echo "#define USERVER_UDP 1" >>confdefs.h
-
-	fi
-else
-   { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-	 if false; then
-  ENABLE_EXAMPLES_TRUE=
-  ENABLE_EXAMPLES_FALSE='#'
-else
-  ENABLE_EXAMPLES_TRUE='#'
-  ENABLE_EXAMPLES_FALSE=
-fi
 
 fi
 
@@ -26773,6 +26832,24 @@ $as_echo "#define U_HTTP2_DISABLE 1" >>confdefs.h
 	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $enable_http2" >&5
 $as_echo "$enable_http2" >&6; }
 
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if you want to enable HTTP/3 support" >&5
+$as_echo_n "checking if you want to enable HTTP/3 support... " >&6; }
+	# Check whether --enable-http3 was given.
+if test "${enable_http3+set}" = set; then :
+  enableval=$enable_http3;
+fi
+
+	if test -z "$enable_http3"; then
+		enable_http3="no"
+	fi
+	if test "$enable_http3" != "yes"; then
+
+$as_echo "#define U_HTTP3_DISABLE 1" >>confdefs.h
+
+	fi
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $enable_http3" >&5
+$as_echo "$enable_http3" >&6; }
+
 	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if you want to enable server check time between request for parallelization" >&5
 $as_echo_n "checking if you want to enable server check time between request for parallelization... " >&6; }
 	# Check whether --enable-check-time was given.
@@ -26783,7 +26860,7 @@ fi
 	if test -z "$enable_check_time"; then
 		if test "$USP_FLAGS" = "-DAS_cpoll_cppsp_DO"; then
 			enable_check_time="no"
-		elif test "$enable_debug" = "yes" -a "$enable_http2" != "yes"; then
+		elif test "$enable_debug" = "yes" -a "$enable_http2" != "yes" -a "$enable_http3" != "yes"; then
 			enable_check_time="yes"
 		else
 			enable_check_time="no"
@@ -27368,6 +27445,7 @@ $as_echo "$use_distcc" >&6; }
 libz_version="unknow"
 libzopfli_version="unknown"
 libbrotli_version="unknown"
+libquiche_version="unknown"
 libtdb_version="unknown"
 pcre_version="unknown"
 ldap_version="unknown"
@@ -27585,14 +27663,81 @@ $as_echo "#define USE_LIBBROTLI 1" >>confdefs.h
 			if test -z "${libbrotli_version}"; then
 				libbrotli_version=$(ls $libbrotlidir/lib*/libbrotli*.so.*.* 2>/dev/null | head -n 1 | awk -F'.so.' '{n=2; print $n}' 2>/dev/null)
 			fi
-			if test -z "${libzopfli_version}"; then
-				libzopfli_version="unknown"
+			if test -z "${libbrotli_version}"; then
+				libbrotli_version="unknown"
 			fi
          ULIB_LIBS="$ULIB_LIBS -lbrotlidec -lbrotlienc";
 			if test $libbrotlidir != "${CROSS_ENVIRONMENT}/" -a $libbrotlidir != "${CROSS_ENVIRONMENT}/usr" -a $libbrotlidir != "${CROSS_ENVIRONMENT}/usr/local"; then
 				CPPFLAGS="$CPPFLAGS -I$libbrotlidir/include"
 				LDFLAGS="$LDFLAGS -L$libbrotlidir/lib -Wl,-R$libbrotlidir/lib";
 				PRG_LDFLAGS="$PRG_LDFLAGS -L$libbrotlidir/lib";
+			fi
+		fi
+	fi
+
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if quiche library is wanted" >&5
+$as_echo_n "checking if quiche library is wanted... " >&6; }
+	wanted=1;
+	if test -z "$with_libquiche" ; then
+		wanted=0;
+		if test -n "$CROSS_ENVIRONMENT" -o "$USP_FLAGS" = "-DAS_cpoll_cppsp_DO" -o "$enable_shared" = "no"; then
+			with_libquiche="no";
+		else
+			with_libquiche="${CROSS_ENVIRONMENT}/usr";
+		fi
+	fi
+
+# Check whether --with-libquiche was given.
+if test "${with_libquiche+set}" = set; then :
+  withval=$with_libquiche;
+	if test "$withval" = "no"; then
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+	else
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+		for dir in $withval ${CROSS_ENVIRONMENT}/ ${CROSS_ENVIRONMENT}/usr ${CROSS_ENVIRONMENT}/usr/local; do
+			libquichedir="$dir"
+			if test -f "$dir/include/quiche.h"; then
+				found_libquiche="yes";
+				break;
+			fi
+		done
+		if test x_$found_libquiche != x_yes; then
+			msg="Cannot find libquiche library";
+			if test $wanted = 1; then
+				as_fn_error $? "$msg" "$LINENO" 5
+			else
+				{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $msg" >&5
+$as_echo "$msg" >&6; }
+			fi
+		else
+			echo "${T_MD}libquiche found in $libquichedir${T_ME}"
+			USE_LIBQUICHE=yes
+
+$as_echo "#define USE_LIBQUICHE 1" >>confdefs.h
+
+
+			if test -z "$CROSS_ENVIRONMENT" -a x_$PKG_CONFIG != x_no; then
+				libquiche_version=$(pkg-config --modversion quiche 2>/dev/null)
+			fi
+			if test -z "${libquiche_version}"; then
+				libquiche_version=$(ls $libquichedir/lib*/libquiche.so.*.* 2>/dev/null | head -n 1 | awk -F'.so.' '{n=2; print $n}' 2>/dev/null)
+			fi
+			if test -z "${libquiche_version}"; then
+				libquiche_version="unknown"
+			fi
+			ULIB_LIBS="$ULIB_LIBS -lquiche";
+			if test $libquichedir != "${CROSS_ENVIRONMENT}/" -a $libquichedir != "${CROSS_ENVIRONMENT}/usr" -a $libquichedir != "${CROSS_ENVIRONMENT}/usr/local"; then
+				CPPFLAGS="$CPPFLAGS -I$libquichedir/include"
+				LDFLAGS="$LDFLAGS -L$libquichedir/lib -Wl,-R$libquichedir/lib";
+				PRG_LDFLAGS="$PRG_LDFLAGS -L$libquichedir/lib";
 			fi
 		fi
 	fi
@@ -29137,6 +29282,10 @@ fi
 
 if test "$USE_LIBBROTLI" = "yes"; then
 	ulib_libbrotli_msg="yes ( $libbrotli_version )"
+fi
+
+if test "$USE_LIBQUICHE" = "yes"; then
+	ulib_libquiche_msg="yes ( $libquiche_version )"
 fi
 
 if test "$USE_LIBTDB" = "yes"; then
@@ -30728,6 +30877,11 @@ _ACEOF
 
 cat >>confdefs.h <<_ACEOF
 #define _LIBBROTLI_VERSION "$libbrotli_version"
+_ACEOF
+
+
+cat >>confdefs.h <<_ACEOF
+#define _LIBQUICHE_VERSION "$libquiche_version"
 _ACEOF
 
 
@@ -32706,6 +32860,131 @@ fi
 
 fi
 
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if you want to enable build of examples" >&5
+$as_echo_n "checking if you want to enable build of examples... " >&6; }
+# Check whether --enable-examples was given.
+if test "${enable_examples+set}" = set; then :
+  enableval=$enable_examples;
+fi
+
+
+if test -z "$enable_examples" -a "$enable_shared" = "yes"; then
+	enable_examples="yes"
+fi
+
+ if false; then
+  USERVER_IPC_TRUE=
+  USERVER_IPC_FALSE='#'
+else
+  USERVER_IPC_TRUE='#'
+  USERVER_IPC_FALSE=
+fi
+
+
+if test "$enable_examples" = "yes"; then
+   { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+	ulib_examples="enabled"
+	 if true; then
+  ENABLE_EXAMPLES_TRUE=
+  ENABLE_EXAMPLES_FALSE='#'
+else
+  ENABLE_EXAMPLES_TRUE='#'
+  ENABLE_EXAMPLES_FALSE=
+fi
+
+
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if you want to build userver_ipc" >&5
+$as_echo_n "checking if you want to build userver_ipc... " >&6; }
+
+# Check whether --with-userver-ipc was given.
+if test "${with_userver_ipc+set}" = set; then :
+  withval=$with_userver_ipc; use_userver_ipc=$withval
+else
+  use_userver_ipc=no
+fi
+
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $use_userver_ipc" >&5
+$as_echo "$use_userver_ipc" >&6; }
+
+	if test "$use_userver_ipc" = "yes" ; then
+		 if true; then
+  USERVER_IPC_TRUE=
+  USERVER_IPC_FALSE='#'
+else
+  USERVER_IPC_TRUE='#'
+  USERVER_IPC_FALSE=
+fi
+
+
+$as_echo "#define USERVER_IPC 1" >>confdefs.h
+
+	fi
+
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if you want to build userver_udp" >&5
+$as_echo_n "checking if you want to build userver_udp... " >&6; }
+
+# Check whether --with-userver-udp was given.
+if test "${with_userver_udp+set}" = set; then :
+  withval=$with_userver_udp; use_userver_udp=$withval
+else
+  use_userver_udp=no
+fi
+
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $use_userver_udp" >&5
+$as_echo "$use_userver_udp" >&6; }
+else
+   { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+	 if false; then
+  ENABLE_EXAMPLES_TRUE=
+  ENABLE_EXAMPLES_FALSE='#'
+else
+  ENABLE_EXAMPLES_TRUE='#'
+  ENABLE_EXAMPLES_FALSE=
+fi
+
+fi
+
+ if false; then
+  HTTP3_TRUE=
+  HTTP3_FALSE='#'
+else
+  HTTP3_TRUE='#'
+  HTTP3_FALSE=
+fi
+
+ if false; then
+  USERVER_UDP_TRUE=
+  USERVER_UDP_FALSE='#'
+else
+  USERVER_UDP_TRUE='#'
+  USERVER_UDP_FALSE=
+fi
+
+
+if test "x$use_userver_udp" != "xno" -a "$enable_http3" = "yes" -a "$USE_LIBQUICHE" = "yes"; then
+	 if true; then
+  HTTP3_TRUE=
+  HTTP3_FALSE='#'
+else
+  HTTP3_TRUE='#'
+  HTTP3_FALSE=
+fi
+
+	 if true; then
+  USERVER_UDP_TRUE=
+  USERVER_UDP_FALSE='#'
+else
+  USERVER_UDP_TRUE='#'
+  USERVER_UDP_FALSE=
+fi
+
+
+$as_echo "#define USERVER_UDP 1" >>confdefs.h
+
+fi
+
 CXXFLAGS="$CXXFLAGS -fno-exceptions"
 
 if test "$enable_rtti" != "yes"; then
@@ -34016,6 +34295,7 @@ ULIB_SYSCONFDIR="$u_sysconfdir"
            LIBZ support: ${ulib_libz_msg}
       LIBZOPFLI support: ${ulib_libzopfli_msg}
       LIBBROTLI support: ${ulib_libbrotli_msg}
+      LIBQUICHE support: ${ulib_libquiche_msg}
          LIBTDB support: ${ulib_libtdb_msg}
            PCRE support: ${ulib_pcre_msg}
             SSL support: ${ulib_ssl_msg}
@@ -34079,6 +34359,7 @@ $as_echo "$as_me: Configured to build src/ulib/lib${ULIB}:
            LIBZ support: ${ulib_libz_msg}
       LIBZOPFLI support: ${ulib_libzopfli_msg}
       LIBBROTLI support: ${ulib_libbrotli_msg}
+      LIBQUICHE support: ${ulib_libquiche_msg}
          LIBTDB support: ${ulib_libtdb_msg}
            PCRE support: ${ulib_pcre_msg}
             SSL support: ${ulib_ssl_msg}
@@ -34709,30 +34990,6 @@ if test -z "${NANOSLEEP_TRUE}" && test -z "${NANOSLEEP_FALSE}"; then
   as_fn_error $? "conditional \"NANOSLEEP\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
-if test -z "${USERVER_IPC_TRUE}" && test -z "${USERVER_IPC_FALSE}"; then
-  as_fn_error $? "conditional \"USERVER_IPC\" was never defined.
-Usually this means the macro was only invoked conditionally." "$LINENO" 5
-fi
-if test -z "${USERVER_UDP_TRUE}" && test -z "${USERVER_UDP_FALSE}"; then
-  as_fn_error $? "conditional \"USERVER_UDP\" was never defined.
-Usually this means the macro was only invoked conditionally." "$LINENO" 5
-fi
-if test -z "${ENABLE_EXAMPLES_TRUE}" && test -z "${ENABLE_EXAMPLES_FALSE}"; then
-  as_fn_error $? "conditional \"ENABLE_EXAMPLES\" was never defined.
-Usually this means the macro was only invoked conditionally." "$LINENO" 5
-fi
-if test -z "${USERVER_IPC_TRUE}" && test -z "${USERVER_IPC_FALSE}"; then
-  as_fn_error $? "conditional \"USERVER_IPC\" was never defined.
-Usually this means the macro was only invoked conditionally." "$LINENO" 5
-fi
-if test -z "${USERVER_UDP_TRUE}" && test -z "${USERVER_UDP_FALSE}"; then
-  as_fn_error $? "conditional \"USERVER_UDP\" was never defined.
-Usually this means the macro was only invoked conditionally." "$LINENO" 5
-fi
-if test -z "${ENABLE_EXAMPLES_TRUE}" && test -z "${ENABLE_EXAMPLES_FALSE}"; then
-  as_fn_error $? "conditional \"ENABLE_EXAMPLES\" was never defined.
-Usually this means the macro was only invoked conditionally." "$LINENO" 5
-fi
 if test -z "${ENABLE_SHARED_TRUE}" && test -z "${ENABLE_SHARED_FALSE}"; then
   as_fn_error $? "conditional \"ENABLE_SHARED\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
@@ -35019,6 +35276,38 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${HTTP2_TRUE}" && test -z "${HTTP2_FALSE}"; then
   as_fn_error $? "conditional \"HTTP2\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${USERVER_IPC_TRUE}" && test -z "${USERVER_IPC_FALSE}"; then
+  as_fn_error $? "conditional \"USERVER_IPC\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${ENABLE_EXAMPLES_TRUE}" && test -z "${ENABLE_EXAMPLES_FALSE}"; then
+  as_fn_error $? "conditional \"ENABLE_EXAMPLES\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${USERVER_IPC_TRUE}" && test -z "${USERVER_IPC_FALSE}"; then
+  as_fn_error $? "conditional \"USERVER_IPC\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${ENABLE_EXAMPLES_TRUE}" && test -z "${ENABLE_EXAMPLES_FALSE}"; then
+  as_fn_error $? "conditional \"ENABLE_EXAMPLES\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${HTTP3_TRUE}" && test -z "${HTTP3_FALSE}"; then
+  as_fn_error $? "conditional \"HTTP3\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${USERVER_UDP_TRUE}" && test -z "${USERVER_UDP_FALSE}"; then
+  as_fn_error $? "conditional \"USERVER_UDP\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${HTTP3_TRUE}" && test -z "${HTTP3_FALSE}"; then
+  as_fn_error $? "conditional \"HTTP3\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${USERVER_UDP_TRUE}" && test -z "${USERVER_UDP_FALSE}"; then
+  as_fn_error $? "conditional \"USERVER_UDP\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${SANITIZE_TRUE}" && test -z "${SANITIZE_FALSE}"; then
@@ -35612,7 +35901,7 @@ cat >>$CONFIG_STATUS <<_ACEOF || ac_write_fail=1
 #
 # INIT-COMMANDS
 #
-AMDEP_TRUE="$AMDEP_TRUE" ac_aux_dir="$ac_aux_dir"
+AMDEP_TRUE="$AMDEP_TRUE" MAKE="${MAKE-make}"
 
 
 # The HP-UX ksh and POSIX shell print the target directory to stdout
@@ -36722,29 +37011,35 @@ $as_echo "$as_me: executing $ac_file commands" >&6;}
   # Older Autoconf quotes --file arguments for eval, but not when files
   # are listed without --file.  Let's play safe and only enable the eval
   # if we detect the quoting.
-  case $CONFIG_FILES in
-  *\'*) eval set x "$CONFIG_FILES" ;;
-  *)   set x $CONFIG_FILES ;;
-  esac
+  # TODO: see whether this extra hack can be removed once we start
+  # requiring Autoconf 2.70 or later.
+  case $CONFIG_FILES in #(
+  *\'*) :
+    eval set x "$CONFIG_FILES" ;; #(
+  *) :
+    set x $CONFIG_FILES ;; #(
+  *) :
+     ;;
+esac
   shift
-  for mf
+  # Used to flag and report bootstrapping failures.
+  am_rc=0
+  for am_mf
   do
     # Strip MF so we end up with the name of the file.
-    mf=`echo "$mf" | sed -e 's/:.*$//'`
-    # Check whether this is an Automake generated Makefile or not.
-    # We used to match only the files named 'Makefile.in', but
-    # some people rename them; so instead we look at the file content.
-    # Grep'ing the first line is not enough: some people post-process
-    # each Makefile.in and add a new line on top of each file to say so.
-    # Grep'ing the whole file is not good either: AIX grep has a line
+    am_mf=`$as_echo "$am_mf" | sed -e 's/:.*$//'`
+    # Check whether this is an Automake generated Makefile which includes
+    # dependency-tracking related rules and includes.
+    # Grep'ing the whole file directly is not great: AIX grep has a line
     # limit of 2048, but all sed's we know have understand at least 4000.
-    if sed -n 's,^#.*generated by automake.*,X,p' "$mf" | grep X >/dev/null 2>&1; then
-      dirpart=`$as_dirname -- "$mf" ||
-$as_expr X"$mf" : 'X\(.*[^/]\)//*[^/][^/]*/*$' \| \
-	 X"$mf" : 'X\(//\)[^/]' \| \
-	 X"$mf" : 'X\(//\)$' \| \
-	 X"$mf" : 'X\(/\)' \| . 2>/dev/null ||
-$as_echo X"$mf" |
+    sed -n 's,^am--depfiles:.*,X,p' "$am_mf" | grep X >/dev/null 2>&1 \
+      || continue
+    am_dirpart=`$as_dirname -- "$am_mf" ||
+$as_expr X"$am_mf" : 'X\(.*[^/]\)//*[^/][^/]*/*$' \| \
+	 X"$am_mf" : 'X\(//\)[^/]' \| \
+	 X"$am_mf" : 'X\(//\)$' \| \
+	 X"$am_mf" : 'X\(/\)' \| . 2>/dev/null ||
+$as_echo X"$am_mf" |
     sed '/^X\(.*[^/]\)\/\/*[^/][^/]*\/*$/{
 	    s//\1/
 	    q
@@ -36762,53 +37057,48 @@ $as_echo X"$mf" |
 	    q
 	  }
 	  s/.*/./; q'`
-    else
-      continue
-    fi
-    # Extract the definition of DEPDIR, am__include, and am__quote
-    # from the Makefile without running 'make'.
-    DEPDIR=`sed -n 's/^DEPDIR = //p' < "$mf"`
-    test -z "$DEPDIR" && continue
-    am__include=`sed -n 's/^am__include = //p' < "$mf"`
-    test -z "$am__include" && continue
-    am__quote=`sed -n 's/^am__quote = //p' < "$mf"`
-    # Find all dependency output files, they are included files with
-    # $(DEPDIR) in their names.  We invoke sed twice because it is the
-    # simplest approach to changing $(DEPDIR) to its actual value in the
-    # expansion.
-    for file in `sed -n "
-      s/^$am__include $am__quote\(.*(DEPDIR).*\)$am__quote"'$/\1/p' <"$mf" | \
-	 sed -e 's/\$(DEPDIR)/'"$DEPDIR"'/g'`; do
-      # Make sure the directory exists.
-      test -f "$dirpart/$file" && continue
-      fdir=`$as_dirname -- "$file" ||
-$as_expr X"$file" : 'X\(.*[^/]\)//*[^/][^/]*/*$' \| \
-	 X"$file" : 'X\(//\)[^/]' \| \
-	 X"$file" : 'X\(//\)$' \| \
-	 X"$file" : 'X\(/\)' \| . 2>/dev/null ||
-$as_echo X"$file" |
-    sed '/^X\(.*[^/]\)\/\/*[^/][^/]*\/*$/{
+    am_filepart=`$as_basename -- "$am_mf" ||
+$as_expr X/"$am_mf" : '.*/\([^/][^/]*\)/*$' \| \
+	 X"$am_mf" : 'X\(//\)$' \| \
+	 X"$am_mf" : 'X\(/\)' \| . 2>/dev/null ||
+$as_echo X/"$am_mf" |
+    sed '/^.*\/\([^/][^/]*\)\/*$/{
 	    s//\1/
 	    q
 	  }
-	  /^X\(\/\/\)[^/].*/{
+	  /^X\/\(\/\/\)$/{
 	    s//\1/
 	    q
 	  }
-	  /^X\(\/\/\)$/{
-	    s//\1/
-	    q
-	  }
-	  /^X\(\/\).*/{
+	  /^X\/\(\/\).*/{
 	    s//\1/
 	    q
 	  }
 	  s/.*/./; q'`
-      as_dir=$dirpart/$fdir; as_fn_mkdir_p
-      # echo "creating $dirpart/$file"
-      echo '# dummy' > "$dirpart/$file"
-    done
+    { echo "$as_me:$LINENO: cd "$am_dirpart" \
+      && sed -e '/# am--include-marker/d' "$am_filepart" \
+        | $MAKE -f - am--depfiles" >&5
+   (cd "$am_dirpart" \
+      && sed -e '/# am--include-marker/d' "$am_filepart" \
+        | $MAKE -f - am--depfiles) >&5 2>&5
+   ac_status=$?
+   echo "$as_me:$LINENO: \$? = $ac_status" >&5
+   (exit $ac_status); } || am_rc=$?
   done
+  if test $am_rc -ne 0; then
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
+as_fn_error $? "Something went wrong bootstrapping makefile fragments
+    for automatic dependency tracking.  Try re-running configure with the
+    '--disable-dependency-tracking' option to at least be able to build
+    the package (albeit without support for automatic dependency tracking).
+See \`config.log' for more details" "$LINENO" 5; }
+  fi
+  { am_dirpart=; unset am_dirpart;}
+  { am_filepart=; unset am_filepart;}
+  { am_mf=; unset am_mf;}
+  { am_rc=; unset am_rc;}
+  rm -f conftest-deps.mk
 }
  ;;
     "libtool":C)

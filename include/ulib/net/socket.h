@@ -62,6 +62,7 @@
 class UFile;
 class UHTTP;
 class UHTTP2;
+class UHTTP3;
 class UNotifier;
 class UWebSocket;
 class USocketExt;
@@ -813,6 +814,13 @@ protected:
       _socket();
       }
 
+#ifdef USERVER_UDP
+   static socklen_t peer_addr_len; 
+   static struct sockaddr_storage peer_addr; 
+
+   void setPeer();
+#endif
+
    static SocketAddress* cLocal;
    static bool breuseport, bincoming_cpu;
    static int iBackLog, incoming_cpu, accept4_flags; // If flags is 0, then accept4() is the same as accept()
@@ -831,9 +839,10 @@ protected:
 private:
    U_DISALLOW_COPY_AND_ASSIGN(USocket)
 
+                      friend class UFile;
                       friend class UHTTP;
                       friend class UHTTP2;
-                      friend class UFile;
+                      friend class UHTTP3;
                       friend class UNotifier;
                       friend class UWebSocket;
                       friend class USocketExt;

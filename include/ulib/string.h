@@ -120,7 +120,6 @@ class Application;
 class UFlatBuffer;
 class UServer_Base;
 class UHashMapNode;
-class UHashTableNode;
 class UMongoDBClient;
 class URDBClient_Base;
 class UQuotedPrintable;
@@ -129,7 +128,6 @@ class UREDISClient_Base;
 
 template <class T> class UVector;
 template <class T> class UHashMap;
-template <class T> class UHashTable;
 template <class T> class UJsonTypeHandler;
 
 typedef void (*vPFprpv)(UStringRep*,void*);
@@ -1131,7 +1129,6 @@ private:
    friend class UProxyPlugIn;
    friend class UHashMapNode;
    friend class UServer_Base;
-   friend class UHashTableNode;
    friend class UMongoDBClient;
    friend class URDBClient_Base;
    friend class UQuotedPrintable;
@@ -1142,7 +1139,6 @@ private:
 
    template <class T> friend class UVector;
    template <class T> friend class UHashMap;
-   template <class T> friend class UHashTable;
    template <class T> friend class UJsonTypeHandler;
    template <class T> friend void u_construct(const T*, uint32_t);
 };
@@ -1346,7 +1342,6 @@ protected:
 
    template <class T> friend class UVector;
    template <class T> friend class UHashMap;
-   template <class T> friend class UHashTable;
 
    explicit UString(UStringRep** pr) : rep(*pr) // NB: for toUTF8() and fromUTF8()...
       {
@@ -1662,12 +1657,13 @@ public:
    ~UString()
       {
       U_TRACE_DTOR(0, UString)
-      U_DUMP("str = %.*s", size() > 500 ? 500 : size(), data());
       U_INTERNAL_ASSERT_POINTER(rep)
 
       U_CHECK_MEMORY_OBJECT(rep)
 
       U_INTERNAL_ASSERT_DIFFERS(this, string_u_buffer)
+
+  //  U_INTERNAL_DUMP("str = %.*s", size() > 500 ? 500 : size(), data());
 
       rep->release();
       }
@@ -1678,7 +1674,7 @@ public:
       {
       U_TRACE_CTOR(0, UString, "%p", &str)
 
-      U_DUMP("UString(const UString& str), str = %.*s", str.size() > 500 ? 500 : str.size(), str.data());
+   // U_INTERNAL_DUMP("UString(const UString& str), str = %.*s", str.size() > 500 ? 500 : str.size(), str.data());
 
       rep->hold();
 
@@ -1722,7 +1718,8 @@ public:
    UString(UString && str)
       {
       U_TRACE_NO_PARAM(0, "UString::UString(move)")
-      U_DUMP("str = %.*s", str.size() > 500 ? 500 : str.size(), str.data());
+
+    // U_INTERNAL_DUMP("str = %.*s", str.size() > 500 ? 500 : str.size(), str.data());
 
       // Move the value (including the allocated memory) from the first object to the second one, and leave the first one empty.
       // It will not need the value anyway, because the only operation that will be executed on it is the destruction. We must

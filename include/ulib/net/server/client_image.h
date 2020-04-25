@@ -25,6 +25,10 @@
 #  include <ulib/ssl/net/sslsocket.h>
 #endif
 
+#if defined(USERVER_UDP) && !defined(U_HTTP3_DISABLE)
+#  include <ulib/utility/http3.h>
+#endif
+
 /**
  * @class UClientImage
  *
@@ -44,6 +48,7 @@ class UStreamPlugIn;
 class UBandWidthThrottling;
 
 template <class T> class UServer;
+template <class T> class UHashMap;
 
 #define U_ClientImage_request_is_cached UClientImage_Base::cbuffer[0]
 
@@ -61,6 +66,8 @@ public:
    // Allocator e Deallocator
    U_MEMORY_ALLOCATOR
    U_MEMORY_DEALLOCATOR
+
+   virtual ~UClientImage_Base();
 
    // SERVICES
 
@@ -369,16 +376,19 @@ public:
       }
 
 protected:
+   uucflag flag;
    USocket* socket;
+   off_t offset, count;
+   UString* data_pending;
+#if defined(USERVER_UDP) && !defined(U_HTTP3_DISABLE)
+   UHTTP3::connio http3connio;
+#endif
 #ifdef U_THROTTLING_SUPPORT
    UString uri;
    uint64_t bytes_sent;
    uint32_t min_limit, max_limit, started_at;
 #endif
-   UString* data_pending;
-   off_t offset, count;
    int sfd;
-   uucflag flag;
    long last_event;
 
 #ifndef U_LOG_DISABLE
@@ -517,8 +527,7 @@ protected:
    static bool isRequestCacheable() __pure;
 #endif
 
-            UClientImage_Base();
-   virtual ~UClientImage_Base();
+   UClientImage_Base();
 
 #ifdef DEBUG
    bool check_memory();
@@ -534,6 +543,7 @@ private:
 
                       friend class UHTTP;
                       friend class UHTTP2;
+                      friend class UHTTP3;
                       friend class UEventDB;
                       friend class USocketExt;
                       friend class USSIPlugIn;
@@ -544,6 +554,7 @@ private:
                       friend class UBandWidthThrottling;
 
    template <class T> friend class UServer;
+   template <class T> friend class UHashMap;
    template <class T> friend void u_delete_vector(      T* _vec, uint32_t offset, uint32_t n);
 #ifdef DEBUG
    template <class T> friend bool u_check_memory_vector(T* _vec,                  uint32_t n);
@@ -576,6 +587,31 @@ public:
 private:
    U_DISALLOW_COPY_AND_ASSIGN(UClientImage)
 };
+
+#ifdef USERVER_UDP
+template <> class U_EXPORT UClientImage<UUDPSocket> : public UClientImage_Base {
+public:
+
+   UClientImage() : UClientImage_Base()
+      {
+      U_TRACE_CTOR(0, UClientImage<UUDPSocket>, "")
+      }
+
+   virtual ~UClientImage()
+      {
+      U_TRACE_DTOR(0, UClientImage<UUDPSocket>)
+      }
+
+   // DEBUG
+
+#if defined(U_STDCPP_ENABLE) && defined(DEBUG)
+   const char* dump(bool _reset) const { return UClientImage_Base::dump(_reset); }
+#endif
+
+private:
+   U_DISALLOW_COPY_AND_ASSIGN(UClientImage<UUDPSocket>)
+};
+#endif
 
 #ifdef USE_LIBSSL
 template <> class U_EXPORT UClientImage<USSLSocket> : public UClientImage_Base {

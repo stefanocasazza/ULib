@@ -750,6 +750,9 @@
 /* Define if enable libpcre support */
 #undef USE_LIBPCRE
 
+/* Define if enable libquiche support */
+#undef USE_LIBQUICHE
+
 /* Define if enable libssh support */
 #undef USE_LIBSSH
 
@@ -855,6 +858,9 @@
 
 /* disable HTTP/2 support */
 #undef U_HTTP2_DISABLE
+
+/* disable HTTP/3 support */
+#undef U_HTTP3_DISABLE
 
 /* enable HTTP inotify support */
 #undef U_HTTP_INOTIFY_SUPPORT
@@ -1003,6 +1009,10 @@
 
 /* libevent - event notification library version */
 #undef _LIBEVENT_VERSION
+
+/* libquiche - library version of implementation of the QUIC transport
+   protocol and HTTP/3 */
+#undef _LIBQUICHE_VERSION
 
 /* libSSH version */
 #undef _LIBSSH_VERSION

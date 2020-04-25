@@ -60,6 +60,9 @@ endif
 if HTTP2
 SRC_CPP += utility/http2.cpp
 endif
+if HTTP3
+SRC_CPP += utility/http3.cpp
+endif
 
 if STDCPP
 SRC_CPP += internal/objectIO.cpp 
