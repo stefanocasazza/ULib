@@ -2536,7 +2536,7 @@ if test "$enable_examples" = "yes"; then
 	AC_ARG_WITH(userver-udp,
 	[  --with-userver-udp      Enable building of userver_udp, default is disabled],
 	[use_userver_udp=$withval],
-	[use_userver_udp=no])
+	[])
 	AC_MSG_RESULT($use_userver_udp)
 else
    AC_MSG_RESULT(no)

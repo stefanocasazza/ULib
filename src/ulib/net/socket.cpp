@@ -49,57 +49,15 @@ U_DUMP_KERNEL_VERSION(LINUX_VERSION_CODE)
 #  define sockaddr linux_sockaddr
 #endif
 
-int            USocket::incoming_cpu = -1;
-int            USocket::iBackLog = SOMAXCONN;
-int            USocket::accept4_flags;  // If flags is 0, then accept4() is the same as accept()
-bool           USocket::breuseport;
-bool           USocket::bincoming_cpu;
-SocketAddress* USocket::cLocal;
+int  USocket::incoming_cpu = -1;
+int  USocket::iBackLog = SOMAXCONN;
+int  USocket::accept4_flags;  // If flags is 0, then accept4() is the same as accept()
+bool USocket::breuseport;
+bool USocket::bincoming_cpu;
 
-#ifdef USERVER_UDP
 socklen_t               USocket::peer_addr_len; 
+SocketAddress*          USocket::cLocal;
 struct sockaddr_storage USocket::peer_addr; 
-
-void USocket::setPeer()
-{
-   U_TRACE_NO_PARAM(0, "USocket::setPeer()")
-
-   U_INTERNAL_DUMP("peer_addr_len = %u sizeOf() = %u", peer_addr_len, ((SocketAddress*)&peer_addr)->sizeOf())
-
-   U_INTERNAL_ASSERT_EQUALS(peer_addr_len, ((SocketAddress*)&peer_addr)->sizeOf())
-
-   U_INTERNAL_DUMP("SocketAddress = %#.*S", peer_addr_len, &peer_addr)
-
-   iRemotePort = ((SocketAddress*)&peer_addr)->getPortNumber();
-                 ((SocketAddress*)&peer_addr)->getIPAddress(cRemoteAddress);
-
-   U_INTERNAL_DUMP("getAddressFamily() = %u iRemotePort = %u", ((SocketAddress*)&peer_addr)->getAddressFamily(), iRemotePort)
-
-   U_INTERNAL_ASSERT_MAJOR(iRemotePort, 0)
-}
-#endif
-
-void USocket::setAddress(void* address)
-{
-   U_TRACE(0, "USocket::setAddress(%p)", address)
-
-   cLocalAddress.setAddress(address, (bool)U_socket_IPv6(this));
-
-   if (cLocal) cLocal->setIPAddress(cLocalAddress);
-
-   U_socket_LocalSet(this) = true;
-}
-
-void USocket::setLocal(const UIPAddress& addr)
-{
-   U_TRACE(0, "USocket::setLocal(%p)", &addr)
-
-   cLocalAddress = addr;
-
-   if (cLocal) cLocal->setIPAddress(cLocalAddress);
-
-   U_socket_LocalSet(this) = true;
-}
 
 USocket::USocket(bool bSocketIsIPv6, int fd)
 {
@@ -223,6 +181,28 @@ bool USocket::checkTime(long time_limit, long& timeout)
    U_RETURN(true);
 }
 
+void USocket::setLocalAddress(void* address)
+{
+   U_TRACE(0, "USocket::setLocalAddress(%p)", address)
+
+   cLocalAddress.setAddress(address, (bool)U_socket_IPv6(this));
+
+   if (cLocal) cLocal->setIPAddress(cLocalAddress);
+
+   U_socket_LocalSet(this) = true;
+}
+
+void USocket::setLocal(const UIPAddress& addr)
+{
+   U_TRACE(0, "USocket::setLocal(%p)", &addr)
+
+   cLocalAddress = addr;
+
+   if (cLocal) cLocal->setIPAddress(cLocalAddress);
+
+   U_socket_LocalSet(this) = true;
+}
+
 void USocket::setLocalInfo(USocket* p, SocketAddress* pLocal)
 {
    U_TRACE(0, "USocket::setLocalInfo(%p,%p)", p, pLocal)
@@ -254,6 +234,24 @@ void USocket::setLocal()
 
       U_socket_LocalSet(this) = true;
       }
+}
+
+void USocket::setRemoteAddressAndPort()
+{
+   U_TRACE_NO_PARAM(0, "USocket::setRemoteAddressAndPort()")
+
+   U_INTERNAL_DUMP("peer_addr_len = %u sizeOf() = %u", peer_addr_len, ((SocketAddress*)&peer_addr)->sizeOf())
+
+   U_INTERNAL_ASSERT_EQUALS(peer_addr_len, ((SocketAddress*)&peer_addr)->sizeOf())
+
+   U_INTERNAL_DUMP("SocketAddress = %#.*S", peer_addr_len, &peer_addr)
+
+   iRemotePort = ((SocketAddress*)&peer_addr)->getPortNumber();
+                 ((SocketAddress*)&peer_addr)->getIPAddress(cRemoteAddress);
+
+   U_INTERNAL_DUMP("getAddressFamily() = %u iRemotePort = %u", ((SocketAddress*)&peer_addr)->getAddressFamily(), iRemotePort)
+
+   U_INTERNAL_ASSERT_MAJOR(iRemotePort, 0)
 }
 
 /**
@@ -576,10 +574,7 @@ bool USocket::connect()
    U_INTERNAL_ASSERT(isOpen())
 
    int result;
-   SocketAddress cServer;
-
-   cServer.setPortNumber(iRemotePort);
-   cServer.setIPAddress(cRemoteAddress);
+   SocketAddress cServer(iRemotePort, cRemoteAddress);
 
    setTcpFastOpen();
 
@@ -620,11 +615,10 @@ int USocket::recvFrom(void* pBuffer, uint32_t iBufLength, uint32_t uiFlags, UIPA
 
    U_INTERNAL_ASSERT(isOpen())
 
-   int iBytesRead;
    SocketAddress cSource;
    socklen_t slDummy = cSource.sizeOf();
 
-   iBytesRead = U_FF_SYSCALL(recvfrom, "%d,%p,%u,%u,%p,%p", getFd(), CAST(pBuffer), iBufLength, uiFlags, (sockaddr*)cSource, &slDummy);
+   int iBytesRead = U_FF_SYSCALL(recvfrom, "%d,%p,%u,%u,%p,%p", getFd(), CAST(pBuffer), iBufLength, uiFlags, (sockaddr*)cSource, &slDummy);
 
    if (iBytesRead > 0)
       {
@@ -632,6 +626,31 @@ int USocket::recvFrom(void* pBuffer, uint32_t iBufLength, uint32_t uiFlags, UIPA
 
       iSourcePortNumber = cSource.getPortNumber();
                           cSource.getIPAddress(cSourceIP);
+
+      U_RETURN(iBytesRead);
+      }
+
+   if (errno == EINTR) UInterrupt::checkForEventSignalPending(); // NB: we never restart recvfrom(), in general the socket server is NOT blocking...
+
+   U_RETURN(-1);
+}
+
+int USocket::recvFrom(void* pBuffer, uint32_t iBufLength, uint32_t uiFlags)
+{
+   U_TRACE(1, "USocket::recvFrom(%p,%u,%u)", pBuffer, iBufLength, uiFlags)
+
+   U_CHECK_MEMORY
+
+   U_INTERNAL_ASSERT(isOpen())
+
+   SocketAddress cSource(iRemotePort, cRemoteAddress);
+   socklen_t slDummy = cSource.sizeOf();
+
+   int iBytesRead = U_FF_SYSCALL(recvfrom, "%d,%p,%u,%u,%p,%p", getFd(), CAST(pBuffer), iBufLength, uiFlags, (sockaddr*)cSource, &slDummy);
+
+   if (iBytesRead > 0)
+      {
+      U_INTERNAL_DUMP("slDummy = %u BytesRead(%u) = %#.*S", slDummy, iBytesRead, iBytesRead, CAST(pBuffer))
 
       U_RETURN(iBytesRead);
       }
@@ -650,13 +669,43 @@ int USocket::sendTo(void* pPayload, uint32_t iPayloadLength, uint32_t uiFlags, U
    U_INTERNAL_ASSERT(isOpen())
 
    int iBytesWrite;
-   SocketAddress cDestination;
-
-   cDestination.setIPAddress(cDestinationIP);
-   cDestination.setPortNumber(iDestinationPortNumber);
+   SocketAddress cDestination(iDestinationPortNumber, cDestinationIP);
+   socklen_t slDummy = cDestination.sizeOf();
 
 loop:
-   iBytesWrite = U_FF_SYSCALL(sendto, "%d,%p,%u,%u,%p,%d", getFd(), CAST(pPayload), iPayloadLength, uiFlags, (sockaddr*)cDestination, cDestination.sizeOf());
+   iBytesWrite = U_FF_SYSCALL(sendto, "%d,%p,%u,%u,%p,%d", getFd(), CAST(pPayload), iPayloadLength, uiFlags, (sockaddr*)cDestination, slDummy);
+
+   if (iBytesWrite > 0)
+      {
+      U_INTERNAL_DUMP("BytesWrite(%u) = %#.*S", iBytesWrite, iBytesWrite, CAST(pPayload))
+
+      U_RETURN(iBytesWrite);
+      }
+
+   if (errno == EINTR)
+      {
+      UInterrupt::checkForEventSignalPending();
+
+      goto loop;
+      }
+
+   U_RETURN(-1);
+}
+
+int USocket::sendTo(void* pPayload, uint32_t iPayloadLength, uint32_t uiFlags)
+{
+   U_TRACE(1, "USocket::sendTo(%p,%u,%u)", pPayload, iPayloadLength, uiFlags)
+
+   U_CHECK_MEMORY
+
+   U_INTERNAL_ASSERT(isOpen())
+
+   int iBytesWrite;
+   SocketAddress cDestination(iRemotePort, cRemoteAddress);
+   socklen_t slDummy = cDestination.sizeOf();
+
+loop:
+   iBytesWrite = U_FF_SYSCALL(sendto, "%d,%p,%u,%u,%p,%d", getFd(), CAST(pPayload), iPayloadLength, uiFlags, (sockaddr*)cDestination, slDummy);
 
    if (iBytesWrite > 0)
       {
@@ -1042,13 +1091,11 @@ bool USocket::connectServer(const UString& server, unsigned int iServPort, int t
    if (cRemoteAddress.setHostName(server, U_socket_IPv6(this)))
       {
       int result;
-      SocketAddress cServer;
       bool bflag = (timeoutMS && ((flags & O_NONBLOCK) != O_NONBLOCK));
 
       if (bflag) setNonBlocking(); // setting socket to nonblocking
 
-      cServer.setIPAddress(cRemoteAddress);
-      cServer.setPortNumber((iRemotePort = iServPort));
+      SocketAddress cServer(iRemotePort = iServPort, cRemoteAddress);
 
 loop:
 #  ifdef DEBUG

@@ -576,7 +576,6 @@ int UHttpPlugIn::handlerRun() // NB: we use this method instead of handlerInit()
 #endif
 
 #ifndef U_HTTP3_DISABLE
-   if (UServer_Base::budp) UHTTP3::initDb();
 #endif
 
 #ifdef USE_LIBSSL

@@ -181,7 +181,7 @@ public:
 #  ifdef DEBUG
       if (memory.invariant() == false)
          {
-         U_ERROR("UStringRep::release() %s - this = %p parent = %p references = %u child = %d _capacity = %u str(%u) = %.*S",
+         U_ERROR("UStringRep::release() %s - this = %p parent = %p references = %u child = %d _capacity = %u str(%u) = %#.*S",
                   memory.getErrorType(this), this, parent, references, child, _capacity, _length, _length, str);
          }
 #  endif
@@ -327,11 +327,11 @@ public:
 
    int compare(const char* s, uint32_t n) const
       {
-      U_TRACE(0, "UStringRep::compare(%.*S,%u)", n, s, n)
+      U_TRACE(0, "UStringRep::compare(%#.*S,%u)", n, s, n)
 
       U_CHECK_MEMORY
 
-      U_INTERNAL_DUMP("str(%u) = %.*S", _length, U_min(_length, n), str)
+      U_INTERNAL_DUMP("str(%u) = %#.*S", _length, U_min(_length, n), str)
 
       U_INTERNAL_ASSERT_MAJOR(n, 0)
 
@@ -357,7 +357,7 @@ public:
 
    int compare(uint32_t pos, uint32_t n1, const char* s, uint32_t n2) const
       {
-      U_TRACE(0, "UStringRep::compare(%u,%u,%.*S,%u)", pos, n1, n2, s, n2)
+      U_TRACE(0, "UStringRep::compare(%u,%u,%#.*S,%u)", pos, n1, n2, s, n2)
 
       U_CHECK_MEMORY
 
@@ -376,13 +376,13 @@ public:
 
    int comparenocase(const char* s, uint32_t n) const
       {
-      U_TRACE(0, "UStringRep::comparenocase(%.*S,%u)", n, s, n)
+      U_TRACE(0, "UStringRep::comparenocase(%#.*S,%u)", n, s, n)
 
       U_CHECK_MEMORY
 
       int r = u__strncasecmp(str, s, U_min(_length, n));
 
-      U_INTERNAL_DUMP("str = %.*S", U_min(_length, n), str)
+      U_INTERNAL_DUMP("str = %#.*S", U_min(_length, n), str)
 
       if (r == 0) r = (_length - n);
 
@@ -447,7 +447,7 @@ public:
 
    bool equalnocase(const char* s, uint32_t n) const
       {
-      U_TRACE(0, "UStringRep::equalnocase(%.*S,%u)", n, s, n)
+      U_TRACE(0, "UStringRep::equalnocase(%#.*S,%u)", n, s, n)
 
       U_CHECK_MEMORY
 
@@ -1051,7 +1051,7 @@ private:
 
    static bool equal_lookup(UStringRep* key1, const char* s2, uint32_t n2, bool ignore_case)
       {
-      U_TRACE(0, "UStringRep::equal_lookup(%V,%.*S,%u,%b)", key1, n2, s2, n2, ignore_case)
+      U_TRACE(0, "UStringRep::equal_lookup(%V,%#.*S,%u,%b)", key1, n2, s2, n2, ignore_case)
 
       U_INTERNAL_ASSERT_POINTER(s2)
       U_INTERNAL_ASSERT_MAJOR(n2, 0)
@@ -1352,7 +1352,7 @@ protected:
 
    explicit UString(unsigned char* t, uint32_t tlen, uint32_t need) // NB: for UHTTP2::CONTINUATION...
       {
-      U_TRACE_CTOR(0, UString, "%.*S,%u,%u", tlen, t, tlen, need)
+      U_TRACE_CTOR(0, UString, "%#.*S,%u,%u", tlen, t, tlen, need)
 
       U_INTERNAL_ASSERT_POINTER(t)
       U_INTERNAL_ASSERT_MAJOR(tlen, 0)
@@ -1517,7 +1517,7 @@ public:
 
    explicit UString(const char* t, uint32_t tlen)
       {
-      U_TRACE_CTOR(0, UString, "%.*S,%u", tlen, t, tlen)
+      U_TRACE_CTOR(0, UString, "%#.*S,%u", tlen, t, tlen)
 
       U_INTERNAL_ASSERT_MAJOR(tlen, 0)
 
@@ -1551,7 +1551,7 @@ public:
 
    explicit UString(const void* t, uint32_t tlen)
       {
-      U_TRACE_CTOR(0, UString, "%.*S,%u", tlen, (char*)t, tlen)
+      U_TRACE_CTOR(0, UString, "%#.*S,%u", tlen, (char*)t, tlen)
 
       U_INTERNAL_ASSERT_POINTER(t)
       U_INTERNAL_ASSERT_MAJOR(tlen, 0)
@@ -1574,7 +1574,7 @@ public:
 
    explicit UString(uint32_t sz, const char* format, uint32_t fmt_size, ...) // ctor with var arg
       {
-      U_TRACE_CTOR(0, UString, "%u,%.*S,%u", sz, fmt_size, format, fmt_size)
+      U_TRACE_CTOR(0, UString, "%u,%#.*S,%u", sz, fmt_size, format, fmt_size)
 
       U_INTERNAL_ASSERT_POINTER(format)
 
@@ -1608,7 +1608,7 @@ public:
 
    UString substr(const char* t, uint32_t tlen) const
       {
-      U_TRACE(0, "UString::substr(%.*S,%u)", tlen, t, tlen)
+      U_TRACE(0, "UString::substr(%#.*S,%u)", tlen, t, tlen)
 
       if (tlen == 0) return *string_null;
 
@@ -1628,7 +1628,7 @@ public:
 
    UString substrTrim(const char* t, uint32_t tlen) const
       {
-      U_TRACE(0, "UString::substrTrim(%.*S,%u)", tlen, t, tlen)
+      U_TRACE(0, "UString::substrTrim(%#.*S,%u)", tlen, t, tlen)
 
       if (tlen == 0 ||
           (u_trim(&t, &tlen) && tlen == 0))
@@ -1868,7 +1868,7 @@ public:
 
    UString& append(const char* s, uint32_t n)
       {
-      U_TRACE(0, "UString::append(%.*S,%u)", n, s, n)
+      U_TRACE(0, "UString::append(%#.*S,%u)", n, s, n)
 
       if (n)
          {
@@ -2267,7 +2267,7 @@ public:
 
    void setConstant(const char* t, uint32_t tlen)
       {
-      U_TRACE(0, "UString::setConstant(%.*S,%u)", tlen, t, tlen)
+      U_TRACE(0, "UString::setConstant(%#.*S,%u)", tlen, t, tlen)
  
       U_INTERNAL_ASSERT_MAJOR(tlen, 0)
 
@@ -2369,7 +2369,7 @@ public:
 
    void snprintf(const char* format, uint32_t fmt_size, ...)
       {
-      U_TRACE(0, "UString::snprintf(%.*S,%u)", fmt_size, format, fmt_size)
+      U_TRACE(0, "UString::snprintf(%#.*S,%u)", fmt_size, format, fmt_size)
 
       U_INTERNAL_ASSERT_POINTER(format)
 
@@ -2383,7 +2383,7 @@ public:
 
    void snprintf_add(const char* format, uint32_t fmt_size, ...)
       {
-      U_TRACE(0, "UString::snprintf_add(%.*S,%u)", fmt_size, format, fmt_size)
+      U_TRACE(0, "UString::snprintf_add(%#.*S,%u)", fmt_size, format, fmt_size)
 
       U_INTERNAL_ASSERT_POINTER(format)
 
@@ -2397,7 +2397,7 @@ public:
 
    void snprintf_pos(uint32_t pos, const char* format, uint32_t fmt_size, ...)
       {
-      U_TRACE(0, "UString::snprintf_pos(%u,%.*S,%u)", pos, fmt_size, format, fmt_size)
+      U_TRACE(0, "UString::snprintf_pos(%u,%#.*S,%u)", pos, fmt_size, format, fmt_size)
 
       U_INTERNAL_ASSERT_POINTER(format)
       U_INTERNAL_ASSERT(pos <= rep->_length)
@@ -2581,7 +2581,7 @@ public:
 
    void appendData(const char* t, uint32_t tlen)
       {
-      U_TRACE(0, "UString::appendData(%.*S,%u)", tlen, t, tlen)
+      U_TRACE(0, "UString::appendData(%#.*S,%u)", tlen, t, tlen)
 
       U_ASSERT_MAJOR(space(), tlen)
       U_INTERNAL_ASSERT_MAJOR(tlen, 0)
@@ -2597,7 +2597,7 @@ public:
 
    void appendDataQuoted(const char* t, uint32_t tlen)
       {
-      U_TRACE(0, "UString::appendDataQuoted(%.*S,%u)", tlen, t, tlen)
+      U_TRACE(0, "UString::appendDataQuoted(%#.*S,%u)", tlen, t, tlen)
 
       U_ASSERT_MAJOR(space(), tlen+2)
       U_INTERNAL_ASSERT_EQUALS(u_is_quoted(t, tlen), false)
@@ -2617,7 +2617,7 @@ public:
 
    void vsnprintf(const char* format, uint32_t fmt_size, va_list argp)
       {
-      U_TRACE(0, "UString::vsnprintf(%.*S,%u)", fmt_size, format, fmt_size)
+      U_TRACE(0, "UString::vsnprintf(%#.*S,%u)", fmt_size, format, fmt_size)
 
 #  ifdef DEBUG
       vsnprintf_check(format, fmt_size);
@@ -2632,7 +2632,7 @@ public:
 
    void vsnprintf_add(const char* format, uint32_t fmt_size, va_list argp)
       {
-      U_TRACE(0, "UString::vsnprintf_add(%.*S,%u)", fmt_size, format, fmt_size)
+      U_TRACE(0, "UString::vsnprintf_add(%#.*S,%u)", fmt_size, format, fmt_size)
 
 #  ifdef DEBUG
       vsnprintf_check(format, fmt_size);
@@ -2669,7 +2669,7 @@ public:
 
    static UString toUTF8(const unsigned char* t, uint32_t tlen)
       {
-      U_TRACE(0, "UString::toUTF8(%.*S,%u)", tlen, t, tlen)
+      U_TRACE(0, "UString::toUTF8(%#.*S,%u)", tlen, t, tlen)
 
       if (tlen == 0) return *string_null; 
 
@@ -2682,7 +2682,7 @@ public:
 
    static UString fromUTF8(const unsigned char* t, uint32_t tlen)
       {
-      U_TRACE(0, "UString::fromUTF8(%.*S,%u)", tlen, t, tlen)
+      U_TRACE(0, "UString::fromUTF8(%#.*S,%u)", tlen, t, tlen)
 
       if (tlen == 0) return *string_null; 
 
@@ -2695,7 +2695,7 @@ public:
 
    template <typename T> void toJSON(const char* name, uint32_t sz, UJsonTypeHandler<T> member)
       {
-      U_TRACE(0, "UString::toJSON<T>(%.*S,%u,%p)", sz, name, sz, &member)
+      U_TRACE(0, "UString::toJSON<T>(%#.*S,%u,%p)", sz, name, sz, &member)
 
       U_ASSERT_MAJOR(space(), sz+6)
       U_INTERNAL_ASSERT_MAJOR(sz, 0)
@@ -2829,7 +2829,7 @@ inline bool operator>=(const UString& lhs,    const char* rhs)       { return lh
 
 template <> inline void UString2Object<UString>(const char* t, uint32_t tlen, UString& object)
 {
-   U_TRACE(0, "UString2Object<UString>(%.*S,%u,%V)", tlen, t, tlen, object.rep)
+   U_TRACE(0, "UString2Object<UString>(%#.*S,%u,%V)", tlen, t, tlen, object.rep)
 
    object.setConstant(t, tlen);
 }

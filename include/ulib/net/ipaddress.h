@@ -33,8 +33,10 @@
 #endif
 
 #ifndef ENABLE_IPV6
+#define U_SIZE_SOCKADDR   sizeof(struct sockaddr_in6)
 #define U_INET_ADDRSTRLEN INET_ADDRSTRLEN
 #else
+#define U_SIZE_SOCKADDR   sizeof(struct sockaddr_in)
 #define U_INET_ADDRSTRLEN INET6_ADDRSTRLEN
 #endif
 

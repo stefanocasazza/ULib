@@ -927,30 +927,6 @@ protected:
 # endif
 #endif
 
-#ifdef USERVER_UDP
-   static vPF  runDynamicPage_udp;
-   static vPFu runDynamicPageParam_udp;
-
-   static int handlerUDP()
-      {
-      U_TRACE_NO_PARAM(0, "UServer_Base::handlerUDP()")
-
-      U_INTERNAL_DUMP("runDynamicPage_udp = %p", runDynamicPage_udp) 
-
-      if (runDynamicPage_udp) runDynamicPage_udp();
-      else
-         {
-         *UClientImage_Base::wbuffer = *UClientImage_Base::rbuffer; // echo server
-         }
-
-      UClientImage_Base::bnoheader = true;
-
-      UClientImage_Base::setRequestProcessed();
-
-      U_RETURN(U_PLUGIN_HANDLER_FINISHED);
-      }
-#endif
-
 #ifdef U_THROTTLING_SUPPORT
    typedef struct uthrottling {
       uint64_t bytes_since_avg;

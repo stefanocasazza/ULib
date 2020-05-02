@@ -121,11 +121,7 @@ UClientImage_Base::UClientImage_Base()
    U_TRACE_CTOR(0, UClientImage_Base, "")
 
    logbuf = U_NULLPTR;
-   flag.u = 0;
    socket = U_NULLPTR;
-   offset =
-   count  = 0;
-   data_pending = U_NULLPTR;
 
 #ifdef U_THROTTLING_SUPPORT
    bytes_sent = 0;
@@ -134,31 +130,17 @@ UClientImage_Base::UClientImage_Base()
    started_at = 0;
 #endif
 
-#ifdef USERVER_UDP
-   if (UServer_Base::budp)
-      {
-      U_INTERNAL_ASSERT_POINTER(UServer_Base::socket)
-
-      socket = UServer_Base::socket; 
-      }
-
-# ifndef U_HTTP3_DISABLE
-   (void) U_SYSCALL(memset, "%p,%d,%u", &http3connio.cid, 0, U_LOCAL_CONN_ID_LEN);
-
-   http3connio.conn  = U_NULLPTR;
-   http3connio.http3 = U_NULLPTR;
-
-   (void) U_SYSCALL(memset, "%p,%d,%u", &http3connio.peer_addr, 0, sizeof(http3connio.peer_addr));
-
-   http3connio.peer_addr_len = 0;
-# endif
-#endif
-
    if (UServer_Base::isLog()) U_NEW_STRING(logbuf, UString(200U));
+
+   data_pending = U_NULLPTR;
 
    reset();
 
+   flag.u     = 0;
    last_event = u_now->tv_sec;
+
+   conn  = U_NULLPTR;
+   http3 = U_NULLPTR;
 
    // NB: array are not pointers (virtual table can shift the address of 'this')...
 
@@ -171,12 +153,7 @@ UClientImage_Base::~UClientImage_Base()
 
    // NB: array are not pointers (virtual table can shift the address of 'this')...
 
-#if defined(USERVER_UDP)
-   if (UServer_Base::budp == false)
-#endif
-   {
    U_DELETE(socket)
-   }
 
    if (logbuf)
       {
@@ -208,21 +185,24 @@ void UClientImage_Base::set()
                                                socket->flags |= O_CLOEXEC;
    if (USocket::accept4_flags & SOCK_NONBLOCK) socket->flags |= O_NONBLOCK;
 
-#if !defined(USERVER_UDP) && defined(DEBUG)
+#ifdef DEBUG
                U_CHECK_MEMORY
                U_CHECK_MEMORY_OBJECT(socket)
    if (logbuf) U_CHECK_MEMORY_OBJECT(logbuf->rep)
 
-// static uint32_t index;
+   static uint32_t index;
 
-   ptrdiff_t index = (this - UServer_Base::pClientImage);
+   ptrdiff_t diff = (char*)this - (char*)UServer_Base::pClientImage;
 
    if (index)
       {
-      U_INTERNAL_DUMP("index = %u UServer_Base::pClientImage = %p this = %p", (uint32_t)index, UServer_Base::pClientImage, this)
+      U_INTERNAL_DUMP("index = %u diff = %u UServer_Base::pClientImage = %p this = %p sizeof(UClientImage_Base) = %u",
+                       index,     diff,     UServer_Base::pClientImage,     this,     sizeof(UClientImage_Base))
 
       U_INTERNAL_ASSERT_MAJOR(this, UServer_Base::pClientImage)
-      U_INTERNAL_ASSERT_MINOR((uint32_t)index, UNotifier::max_connection)
+      U_INTERNAL_ASSERT_MINOR(index, UNotifier::max_connection)
+
+      if (index != (uint32_t)diff/sizeof(UClientImage_Base)) U_DEBUG("UClientImage_Base::set() something strange happen (%p - %p) = %p", this, UServer_Base::pClientImage, diff)
 
       UClientImage_Base* ptr = UServer_Base::pClientImage + index-1;
 
@@ -243,7 +223,7 @@ void UClientImage_Base::set()
          }
       }
 
-// ++index;
+   ++index;
 #endif
 }
 // ------------------------------------------------------------------------
@@ -306,16 +286,13 @@ void UClientImage_Base::init()
    U_NEW_STRING(request_uri, UString);
    U_NEW_STRING(environment, UString(U_CAPACITY));
 
+   uint32_t sz = 8192;
+
 #ifdef USERVER_UDP
-   if (UServer_Base::budp)
-      {
-      U_NEW_STRING(rbuffer, UString(65535));
-      }
-   else
+   if (UServer_Base::budp) sz = 65535;
 #endif
-   {
-   U_NEW_STRING(rbuffer, UString(8192));
-   }
+
+   U_NEW_STRING(rbuffer, UString(sz));
 
    // NB: these are for ULib Servlet Page (USP) - USP_PRINTF...
 
@@ -1050,15 +1027,6 @@ void UClientImage_Base::prepareForRead()
 
    u_clientimage_info.flag.u = 0; // NB: U_ClientImage_parallelization is reset by this...
 
-#ifdef USERVER_UDP
-   if (UServer_Base::budp)
-      {
-      (void) U_SYSCALL(memset, "%p,%d,%u", &USocket::peer_addr, 0, USocket::peer_addr_len = sizeof(USocket::peer_addr));
-
-      return;
-      }
-#endif
-
 #ifdef U_CLASSIC_SUPPORT
    if (UServer_Base::isClassic())
       {
@@ -1175,32 +1143,6 @@ bool UClientImage_Base::genericRead()
 
    socket->iState = USocket::CONNECT; // prepare socket before read
 
-#ifdef USERVER_UDP
-   if (UServer_Base::budp)
-      {
-      U_INTERNAL_ASSERT_MAJOR(USocket::peer_addr_len, 0)
-
-      uint32_t sz = rbuffer->size();
-      int iBytesTransferred = U_SYSCALL(recvfrom, "%d,%p,%u,%u,%p,%p", socket->getFd(), rbuffer->data()+sz,
-                                        rbuffer->capacity(), 0, (struct sockaddr*)&USocket::peer_addr, &USocket::peer_addr_len);
-
-      if (iBytesTransferred <= 0) U_RETURN(false);
-
-      rbuffer->size_adjust(sz+iBytesTransferred);
-
-      U_INTERNAL_DUMP("BytesRead(%u) = %#.*S", iBytesTransferred, iBytesTransferred, rbuffer->data()+sz)
-
-      socket->setPeer();
-
-      UServer_Base::setClientAddress();
-
-#  ifndef U_LOG_DISABLE
-      UServer_Base::logNewClient(socket, this);
-#  endif
-      }
-   else
-#endif
-   {
    U_INTERNAL_ASSERT_EQUALS(socket->iSockDesc, UEventFd::fd)
 
    if (USocketExt::read(socket, *rbuffer, U_SINGLE_READ, 0) == false) // NB: timeout == 0 means that we put the socket fd on epoll queue if EAGAIN...
@@ -1210,7 +1152,6 @@ bool UClientImage_Base::genericRead()
 
       U_RETURN(false);
       }
-   }
 
    if (data_pending)
       {

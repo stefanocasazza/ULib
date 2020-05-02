@@ -2004,9 +2004,10 @@ empty:      u_put_unalignedp16(bp, U_MULTICHAR_CONSTANT16('"','"'));
             {
             remaining >>= 1;
 
-            if (ch != 'V'                &&
-                u__isprint(*cp) == false &&
-                u__isspace(*cp) == false)
+            if ((u__isprint(*cp)     == false  &&
+                 u__isspace(*cp)     == false) ||
+                (u__isprint(*(cp+1)) == false  &&
+                 u__isspace(*(cp+1)) == false))
                {
                sign = 1; /* we want to print buffer as exadecimal... */
                }

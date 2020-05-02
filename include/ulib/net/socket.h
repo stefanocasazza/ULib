@@ -617,17 +617,15 @@ public:
     * the source address information. The number of bytes read is returned
     */
 
+   int recvFrom(void* pBuffer, uint32_t iBufLength, uint32_t uiFlags = 0);
    int recvFrom(void* pBuffer, uint32_t iBufLength, uint32_t uiFlags, UIPAddress& cSourceIP, unsigned int& iSourcePortNumber);
-
-   int recvFrom(void* pBuffer, uint32_t iBufLength, uint32_t uiFlags = 0) { return recvFrom(pBuffer, iBufLength, uiFlags, cRemoteAddress, iRemotePort); }
 
    /**
     * The socket transmits the data to the remote socket. The number of bytes written is returned
     */
 
+   int sendTo(void* pPayload, uint32_t iPayloadLength, uint32_t uiFlags = 0);
    int sendTo(void* pPayload, uint32_t iPayloadLength, uint32_t uiFlags, UIPAddress& cDestinationIP, unsigned int iDestinationPortNumber);
-
-   int sendTo(void* pPayload, uint32_t iPayloadLength, uint32_t uiFlags = 0) { return sendTo(pPayload, iPayloadLength, uiFlags, cRemoteAddress, iRemotePort); }
 
    /**
     * This method is called to read a 16-bit binary value from the remote connection.
@@ -712,7 +710,7 @@ protected:
    bool connect();
    void setRemote();
    void setMsgError();
-   void setAddress(void* address);
+   void setLocalAddress(void* address);
    void setLocal(const UIPAddress& addr);
    bool setHostName(const UString& pcNewHostName);
 
@@ -814,12 +812,10 @@ protected:
       _socket();
       }
 
-#ifdef USERVER_UDP
+   void setRemoteAddressAndPort();
+
    static socklen_t peer_addr_len; 
    static struct sockaddr_storage peer_addr; 
-
-   void setPeer();
-#endif
 
    static SocketAddress* cLocal;
    static bool breuseport, bincoming_cpu;

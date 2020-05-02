@@ -32927,8 +32927,6 @@ $as_echo_n "checking if you want to build userver_udp... " >&6; }
 # Check whether --with-userver-udp was given.
 if test "${with_userver_udp+set}" = set; then :
   withval=$with_userver_udp; use_userver_udp=$withval
-else
-  use_userver_udp=no
 fi
 
 	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $use_userver_udp" >&5

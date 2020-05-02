@@ -180,10 +180,6 @@ UVector<UServerPlugIn*>*          UServer_Base::vplugin;
 UVector<UServerPlugIn*>*          UServer_Base::vplugin_static;
 UVector<UServer_Base::file_LOG*>* UServer_Base::vlog;
 
-#ifdef USERVER_UDP
-vPF  UServer_Base::runDynamicPage_udp;
-vPFu UServer_Base::runDynamicPageParam_udp;
-#endif
 #ifdef U_WELCOME_SUPPORT
 UString* UServer_Base::msg_welcome;
 #endif
@@ -3115,8 +3111,6 @@ void UServer_Base::init()
          U_ERROR("Run as server UDP with port '%u' failed", port);
          }
 
-      csocket = socket;
-
       goto next;
       }
 #endif
@@ -3238,7 +3232,7 @@ next:
 
       if (UIPAddress::getBinaryForm(*IP_address, addr) == false) U_ERROR("IP_ADDRESS conversion fail: %V", IP_address->rep);
 
-      socket->setAddress(&addr);
+      socket->setLocalAddress(&addr);
 
       public_address = (socket->cLocalAddress.isPrivate() == false);
       }
@@ -3467,10 +3461,6 @@ next:
 
    socket_flags |= O_RDWR | O_CLOEXEC;
 
-#ifdef USERVER_UDP
-   if (budp == false)
-#endif
-   {
    // ---------------------------------------------------------------------------------------------------------
    // init notifier event manager
    // ---------------------------------------------------------------------------------------------------------
@@ -3522,7 +3512,6 @@ next:
    UNotifier::num_connection = UNotifier::min_connection;
 
    if (num_client_threshold == 0) num_client_threshold = U_NOT_FOUND;
-   }
 
    U_INTERNAL_DUMP("UNotifier::max_connection = %u USocket::iBackLog = %u", UNotifier::max_connection, USocket::iBackLog)
 
@@ -3890,12 +3879,8 @@ int UServer_Base::handlerRead()
    uint32_t accepted = 10; // USocket::iBackLog;
 #endif
 
-   // This loops until the accept() fails, trying to start new connections as fast as possible so we don't overrun the listen queue
-
-   pClientImage = vClientImage + nClientIndex;
-
 #if defined(ENABLE_THREAD) && !defined(USE_LIBEVENT) && defined(U_SERVER_THREAD_APPROACH_SUPPORT)
-   USocket* psocket;
+   USocket* psocket = U_NULLPTR;
    uint32_t lclient_address_len = 0;
    char* lclient_address = U_NULLPTR;
    UClientImage_Base* lClientIndex = pClientImage;
@@ -3905,6 +3890,27 @@ int UServer_Base::handlerRead()
    CLIENT_ADDRESS_LEN = 0;
    uint32_t numc, nothing = 0;
 #endif
+
+#ifndef U_HTTP3_DISABLE
+   if (budp)
+      {
+hretry:
+      if (UHTTP3::handlerRead() == false) U_RETURN(U_NOTIFIER_OK);
+
+      if (pClientImage)
+         {
+         U_INTERNAL_DUMP("pClientImage->conn = %p pClientImage->http3", pClientImage->conn, pClientImage->http3)
+
+         goto try_accept;
+         }
+      }
+#endif
+
+   // This loops until the accept() fails, trying to start new connections as fast as possible so we don't overrun the listen queue
+
+   U_INTERNAL_DUMP("pClientImage = %p vClientImage = %p nClientIndex = %u", pClientImage, vClientImage, nClientIndex)
+
+   pClientImage = vClientImage + nClientIndex;
 
 loop:
    U_INTERNAL_ASSERT_MINOR(CLIENT_IMAGE, eClientImage)
@@ -3916,14 +3922,16 @@ loop:
                    "vClientImage[%u].last_event        = %#3D\n"
                    "vClientImage[%u].sfd               = %d\n"
                    "vClientImage[%u].UEventFd::fd      = %d\n"
-                   "vClientImage[%u].socket            = %p\n"
+                   "vClientImage[%u].conn              = %p\n"
+                   "vClientImage[%u].http3             = %p\n"
                    "vClientImage[%u].socket->flags     = %u %B\n"
                    "vClientImage[%u].socket->iSockDesc = %d"
                    "\n----------------------------------------\n",
                    (CLIENT_IMAGE - vClientImage), CLIENT_IMAGE->last_event,
                    (CLIENT_IMAGE - vClientImage), CLIENT_IMAGE->sfd,
                    (CLIENT_IMAGE - vClientImage), CLIENT_IMAGE->UEventFd::fd,
-                   (CLIENT_IMAGE - vClientImage), CSOCKET,
+                   (CLIENT_IMAGE - vClientImage), CLIENT_IMAGE->conn,
+                   (CLIENT_IMAGE - vClientImage), CLIENT_IMAGE->http3,
                    (CLIENT_IMAGE - vClientImage), CSOCKET->flags, CSOCKET->flags,
                    (CLIENT_IMAGE - vClientImage), CSOCKET->iSockDesc)
 
@@ -4005,8 +4013,22 @@ try_next:
    if (cround >= 2) goto try_next; // polling mode
 
 try_accept:
-   U_INTERNAL_ASSERT(CSOCKET->isClosed())
    U_INTERNAL_ASSERT_DIFFERS(U_ClientImage_parallelization, U_PARALLELIZATION_CHILD)
+
+#ifndef U_HTTP3_DISABLE
+   if (budp)
+      {
+      if (UHTTP3::handlerAccept() == false) goto hretry;
+
+      U_INTERNAL_DUMP("pClientImage->conn = %p pClientImage->http3", pClientImage->conn, pClientImage->http3)
+
+      U_INTERNAL_ASSERT_POINTER(pClientImage->conn)
+
+   // goto hnext;
+      }
+#endif
+
+   U_INTERNAL_ASSERT(CSOCKET->isClosed())
 
    if (socket->acceptClient(CSOCKET) == false)
       {
@@ -4315,9 +4337,14 @@ next:
    }
 
 end:
+#ifdef USERVER_UDP
+   if (budp == false)
+#endif
+   {
 #if defined(HAVE_EPOLL_CTL_BATCH) && !defined(USE_LIBEVENT)
    UNotifier::insertBatch();
 #endif
+   }
 
    nClientIndex = CLIENT_IMAGE - vClientImage;
 
@@ -4519,10 +4546,6 @@ void UServer_Base::runLoop(const char* user)
 
    pthis->UEventFd::fd = socket->iSockDesc;
 
-#ifdef USERVER_UDP
-   if (budp == false)
-#endif
-   {
 # ifndef U_SERVER_CAPTIVE_PORTAL
    if (handler_db1)
       {
@@ -4623,7 +4646,6 @@ void UServer_Base::runLoop(const char* user)
       U_ASSERT(proc->parent())
       }
 #endif
-   }
 
    U_SRV_LOG("Waiting for connection on port %u", port);
 
@@ -4640,77 +4662,6 @@ void UServer_Base::runLoop(const char* user)
 #  endif
       }
 
-#ifdef USERVER_UDP
-   if (budp)
-      {
-      U_INTERNAL_DUMP("pClientImage->UEventFd::fd = %d socket->iSockDesc = %d", pClientImage->UEventFd::fd, socket->iSockDesc)
-
-      U_INTERNAL_ASSERT_EQUALS(csocket,              socket)
-      U_INTERNAL_ASSERT_EQUALS(pClientImage->socket, socket)
-
-#  ifdef U_HTTP3_DISABLE
-      struct stat st;
-      char buffer[U_PATH_MAX+1];
-      HINSTANCE handle = U_NULLPTR;
-      uint32_t len = u__snprintf(buffer, U_PATH_MAX, U_CONSTANT_TO_PARAM(U_LIBEXECDIR "/usp/udp.%s"), U_LIB_SUFFIX);
-
-      if (U_SYSCALL(stat, "%S,%p", buffer, &st))
-         {
-         U_WARNING("I can't found the usp page: %.*S", len, buffer);
-         }
-      else
-         {
-         if ((handle = UDynamic::dload(buffer)) == U_NULLPTR                                                    ||
-             (runDynamicPage_udp      = (vPF) UDynamic::lookup(handle, "runDynamicPage_udp"))      == U_NULLPTR ||
-             (runDynamicPageParam_udp = (vPFu)UDynamic::lookup(handle, "runDynamicPageParam_udp")) == U_NULLPTR)
-            {
-            U_WARNING("Load failed of usp page: %.*S", len, buffer);
-            }
-         else
-            {
-            runDynamicPageParam_udp(U_DPAGE_INIT);
-            runDynamicPageParam_udp(U_DPAGE_FORK);
-            }
-         }
-
-      UClientImage_Base::callerHandlerRead = UServer_Base::handlerUDP;
-
-      if (u_printf_string_max_length == -1) u_printf_string_max_length = 128;
-#  endif
-
-      U_INTERNAL_DUMP("handler_other = %p handler_inotify = %p handler_db1 = %p handler_db2 = %p UNotifier::num_connection = %u UNotifier::min_connection = %u",
-                       handler_other,     handler_inotify,     handler_db1,     handler_db2,     UNotifier::num_connection,     UNotifier::min_connection)
-
-      // NB: we can go directly on recvFrom() and block on it...
-
-      U_INTERNAL_ASSERT_EQUALS(socket_flags & O_NONBLOCK, 0)
-
-      while (flag_loop)
-         {
-         if (pClientImage->handlerRead() == U_NOTIFIER_DELETE) break;
-
-#     ifndef U_LOG_DISABLE
-         if (isLog())
-            {
-            pClientImage->logbuf->setEmpty();
-
-            log->log(U_CONSTANT_TO_PARAM("Waiting for connection on port %u"), port);
-            }
-#     endif
-         }
-
-#  ifdef U_HTTP3_DISABLE
-      if (runDynamicPageParam_udp)
-         {
-         runDynamicPageParam_udp(U_DPAGE_DESTROY);
-
-         UDynamic::dclose(handle);
-         }
-#  endif
-      }
-   else
-#endif
-   {
    while (flag_loop)
       {
       U_INTERNAL_DUMP("handler_other = %p handler_inotify = %p handler_db1 = %p handler_db2 = %p UNotifier::num_connection = %u UNotifier::min_connection = %u",
@@ -4758,7 +4709,6 @@ void UServer_Base::runLoop(const char* user)
 
       (void) pthis->UServer_Base::handlerRead();
       }
-   }
 }
 
 void UServer_Base::run()

@@ -25,10 +25,6 @@
 #  include <ulib/ssl/net/sslsocket.h>
 #endif
 
-#if defined(USERVER_UDP) && !defined(U_HTTP3_DISABLE)
-#  include <ulib/utility/http3.h>
-#endif
-
 /**
  * @class UClientImage
  *
@@ -66,8 +62,6 @@ public:
    // Allocator e Deallocator
    U_MEMORY_ALLOCATOR
    U_MEMORY_DEALLOCATOR
-
-   virtual ~UClientImage_Base();
 
    // SERVICES
 
@@ -376,20 +370,20 @@ public:
       }
 
 protected:
-   uucflag flag;
    USocket* socket;
-   off_t offset, count;
-   UString* data_pending;
-#if defined(USERVER_UDP) && !defined(U_HTTP3_DISABLE)
-   UHTTP3::connio http3connio;
-#endif
 #ifdef U_THROTTLING_SUPPORT
    UString uri;
    uint64_t bytes_sent;
    uint32_t min_limit, max_limit, started_at;
 #endif
+   UString* data_pending;
+   off_t offset, count;
    int sfd;
+   uucflag flag;
    long last_event;
+   // HTTP3
+   void* conn;
+   void* http3;
 
 #ifndef U_LOG_DISABLE
    static int log_request_partial;
@@ -527,7 +521,8 @@ protected:
    static bool isRequestCacheable() __pure;
 #endif
 
-   UClientImage_Base();
+            UClientImage_Base();
+   virtual ~UClientImage_Base();
 
 #ifdef DEBUG
    bool check_memory();
@@ -595,6 +590,10 @@ public:
    UClientImage() : UClientImage_Base()
       {
       U_TRACE_CTOR(0, UClientImage<UUDPSocket>, "")
+
+      U_NEW(UUDPSocket, socket, UUDPSocket(UClientImage_Base::bIPv6))
+
+      set();
       }
 
    virtual ~UClientImage()

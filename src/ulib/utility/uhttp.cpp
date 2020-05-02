@@ -3877,9 +3877,6 @@ int UHTTP::handlerREAD()
 #ifndef U_HTTP3_DISABLE
    if (UServer_Base::budp)
       {
-      UHTTP3::handlerRequest();
-
-      U_RETURN(U_ClientImage_state);
       }
 #endif
 

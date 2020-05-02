@@ -21,7 +21,7 @@ export UTRACE UOBJDUMP USIMERR UTRACE_SIGNAL UMEMUSAGE UTRACE_FOLDER
 
 cat <<EOF >inp/webserver.cfg
 userver {
- PORT 8080
+ PORT 4433
  RUN_AS_USER nobody
  LOG_FILE /tmp/userver_udp.log
  LOG_FILE_SZ 10M
@@ -29,8 +29,8 @@ userver {
  DOCUMENT_ROOT $DOC_ROOT
  PLUGIN "socket http"
  PLUGIN_DIR ../../../../src/ulib/net/server/plugin/.libs
- CERT_FILE ../../../ulib/CA/server.crt
-  KEY_FILE ../../../ulib/CA/server.key
+ CERT_FILE cert.crt
+  KEY_FILE cert.key
  PREFORK_CHILD 0
 }
 http3 {
@@ -65,12 +65,18 @@ compile_usp
 #STRACE=$TRUSS
 start_prg_background userver_udp -c inp/webserver.cfg
 
-$SLEEP
+wait_server_ready localhost 4433
+
 sync
 echo "PID = `cat /var/run/userver_udp.pid`"
 
-#$SLEEP
-#$SLEEP
-#killall userver_udp
+$SLEEP
+$SLEEP
+curl -vvvv --http3 https://localhost:4433 &
+$SLEEP
+$SLEEP
+killall userver_udp
+$SLEEP
+pkill userver_udp 2>/dev/null
 
-#nc -u -w 5 192.168.42.12 8080 < /tmp/audacious-temp-*
+#nc -u -w 5 192.168.42.12 4433 < /tmp/audacious-temp-*

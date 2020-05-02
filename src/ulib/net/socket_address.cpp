@@ -63,6 +63,28 @@ public:
 
    SocketAddress() { (void) memset(&addr, 0, sizeof(addr)); }
 
+   SocketAddress(int iPortNumber, UIPAddress& cAddr)
+      {
+      U_TRACE(0, "SocketAddress::SocketAddress(%d,%p)", iPortNumber, &cAddr)
+
+      addr.psaGeneric.sa_family = cAddr.getAddressFamily();
+
+#  ifdef ENABLE_IPV6
+      if (addr.psaGeneric.sa_family == AF_INET6)
+         {
+         addr.psaIP6Addr.sin6_port = htons(iPortNumber);
+
+         U_MEMCPY(&(addr.psaIP6Addr.sin6_addr), cAddr.get_in_addr(), cAddr.getInAddrLength());
+
+         return;
+         }
+#  endif
+
+      addr.psaIP4Addr.sin_port = htons(iPortNumber);
+
+      U_MEMCPY(&(addr.psaIP4Addr.sin_addr), cAddr.get_in_addr(), cAddr.getInAddrLength());
+      }
+
    // If we want an IPv6 wildcard address, the sin6_addr value of the sockaddr
    // structure is set to in6addr_any, otherwise the sin_addr value of the
    // structure is set to INADDR_ANY
