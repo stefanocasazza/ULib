@@ -676,7 +676,8 @@ public:
 	
 	// this method initiates an asynchronous connection that you must later wait on with UNotifier::waitOnAsynchronousConnects
    virtual bool beginAsynchronousConnect(const UString& server, unsigned int iServPort);
-
+	virtual bool finishAsynchronousConnect();
+	
    /**
     * This method is called to receive a block of data on the connected socket.
     * The parameters signify the payload receiving buffer and its size.
