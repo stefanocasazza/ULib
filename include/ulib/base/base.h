@@ -45,6 +45,7 @@
 #  define HAVE_SIGINFO_T 1
 #  define U_STDCPP_ENABLE 1
 #  define U_HTTP2_DISABLE 1
+#  define U_HTTP3_DISABLE 1
 #  define HAVE_SYS_IOCTL_H 1
 #  define PACKAGE_NAME "ULib"
 #  define HAVE_NETINET_IN_H 1
@@ -98,17 +99,17 @@ U_DO_PRAGMA(message ("Sorry I was compiled on Windows so I cannot use load balan
 U_DO_PRAGMA(message ("Sorry I was compiled without thread enabled so I cannot use load balance"))
 #  endif
 #endif
-#if defined(U_THROTTLING_SUPPORT) && !defined(U_HTTP2_DISABLE)
+#if defined(U_THROTTLING_SUPPORT) && (!defined(U_HTTP2_DISABLE) || !defined(U_HTTP3_DISABLE))
 #  undef U_THROTTLING_SUPPORT
-U_DO_PRAGMA(message ("Sorry I was compiled with http2 enabled so I cannot support bandwidth throttling"))
+U_DO_PRAGMA(message ("Sorry I was compiled with http2/3 enabled so I cannot support bandwidth throttling"))
 #endif
-#if defined(U_SERVER_CHECK_TIME_BETWEEN_REQUEST) && !defined(U_HTTP2_DISABLE)
+#if defined(U_SERVER_CHECK_TIME_BETWEEN_REQUEST) && (!defined(U_HTTP2_DISABLE) || !defined(U_HTTP3_DISABLE))
 #  undef U_SERVER_CHECK_TIME_BETWEEN_REQUEST
-U_DO_PRAGMA(message ("Sorry I was compiled with http2 enabled so I cannot support check time between request"))
+U_DO_PRAGMA(message ("Sorry I was compiled with http2/3 enabled so I cannot support check time between request"))
 #endif
-#if !defined(U_CACHE_REQUEST_DISABLE) && !defined(U_HTTP2_DISABLE)
+#if !defined(U_CACHE_REQUEST_DISABLE) && (!defined(U_HTTP2_DISABLE) || !defined(U_HTTP3_DISABLE))
 #  define U_CACHE_REQUEST_DISABLE
-U_DO_PRAGMA(message ("Sorry I was compiled with http2 enabled so I cannot support cache request"))
+U_DO_PRAGMA(message ("Sorry I was compiled with http2/3 enabled so I cannot support cache request"))
 #endif
 #if defined(U_HTTP_INOTIFY_SUPPORT) && defined(U_SERVER_CAPTIVE_PORTAL)
 #  undef U_HTTP_INOTIFY_SUPPORT

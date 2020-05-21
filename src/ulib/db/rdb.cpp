@@ -13,6 +13,7 @@
 
 #include <ulib/db/rdb.h>
 #include <ulib/net/server/server.h>
+#include <ulib/net/server/client_image.h>
 
 /*
                 _._

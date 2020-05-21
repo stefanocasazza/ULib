@@ -618,11 +618,9 @@ bool UWebSocket::sendData(const bool isServer, USocket* socket, int type, const 
 
    uint8_t opcode, masking_key[4];
 
-   U_DUMP("len = %lu", len);
-   // 0xffff == 65535
-   uint32_t header_length = (len > 125U ? 2U : 0) + (len > 0xffff ? 8U : 0);
+   uint32_t header_length = (len > 125U ? 2U : 0) + (len > 0xffff ? 8U : 0); // 0xffff == 65535
 
-   U_DUMP("header_length = %lu", header_length);
+   U_INTERNAL_DUMP("len = %u header_length = %u", len, header_length);
 
    if (isServer) header_length += 2U;
    else

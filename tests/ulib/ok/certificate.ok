@@ -2,7 +2,7 @@
     Data:
         Version: 3 (0x2)
         Serial Number: 1 (0x1)
-    Signature Algorithm: sha1WithRSAEncryption
+        Signature Algorithm: sha1WithRSAEncryption
         Issuer: C=IT, ST=Italy, L=Sesto Fiorentino, O=Unirel spa, OU=CA, CN=localhost.localdomain/emailAddress=root@localhost.localdomain
         Validity
             Not Before: Jul 15 15:30:55 2010 GMT
@@ -10,7 +10,7 @@
         Subject: C=IT, ST=Italy, O=Unirel spa, OU=server, CN=localhost.localdomain/emailAddress=root@localhost.localdomain
         Subject Public Key Info:
             Public Key Algorithm: rsaEncryption
-                Public-Key: (1024 bit)
+                RSA Public-Key: (1024 bit)
                 Modulus:
                     00:e5:83:d1:9f:19:40:25:1b:a9:6f:25:b1:4d:ef:
                     ad:76:b1:ae:99:d5:d2:28:8c:9b:7f:e8:67:28:a3:
@@ -51,14 +51,15 @@
 2094012269
 100715153055Z
 210627153055Z
-0
+1
+5Fq+fP7BHsWCGMqtwGTLP04qlXqM17iqH7Woa/ofMKg=
 ( )
 ( )
 { Certificate:
     Data:
         Version: 3 (0x2)
         Serial Number: 2 (0x2)
-    Signature Algorithm: sha1WithRSAEncryption
+        Signature Algorithm: sha1WithRSAEncryption
         Issuer: C=IT, ST=Italy, L=Sesto Fiorentino, O=Unirel spa, OU=CA, CN=localhost.localdomain/emailAddress=root@localhost.localdomain
         Validity
             Not Before: Jul 15 15:31:02 2010 GMT
@@ -66,7 +67,7 @@
         Subject: C=IT, ST=Italy, O=Unirel spa, OU=username, CN=localhost.localdomain/emailAddress=root@localhost.localdomain
         Subject Public Key Info:
             Public Key Algorithm: rsaEncryption
-                Public-Key: (1024 bit)
+                RSA Public-Key: (1024 bit)
                 Modulus:
                     00:d8:8f:63:13:ed:e3:a7:74:52:14:a7:e9:73:42:
                     c8:ff:82:29:08:c7:aa:6c:ee:c5:cc:b7:2c:e1:55:
@@ -107,6 +108,7 @@
 2747996067
 100715153102Z
 210627153102Z
-0
+1
+GICu5vdzb/i+a3Vd8euLdVFe56bbe34vq4pMbTICPho=
 ( )
 ( )

@@ -2667,7 +2667,7 @@ void UValue::consumeFieldsAndValues(const UString& json, std::function<void(cons
 
             valueStart = tok.getPointer();
 
-            while (jreadAdvanceAndFindToken(tok) != U_REAL_VALUE) {};
+            while (jreadAdvanceAndFindToken(tok) == U_REAL_VALUE) {};
 
             value = tok.substrTrim(valueStart); // possible space between end of value and comma
             }
@@ -2682,7 +2682,11 @@ void UValue::consumeFieldsAndValues(const UString& json, std::function<void(cons
 
             while (jreadAdvanceAndFindToken(tok) != U_STRING_VALUE) {};
 
-            value = tok.substr(valueStart);
+            U_DUMP("UValue::consumeFieldsAndValues -> value = %v", tok.substr(valueStart).rep);
+
+            if (tok.getPointer() > valueStart) value = tok.substr(valueStart);
+
+            tok.advance();
             }
          break;
 

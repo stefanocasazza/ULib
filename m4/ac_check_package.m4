@@ -148,14 +148,67 @@ AC_DEFUN([AC_CHECK_PACKAGE],[
 			if test -z "${libbrotli_version}"; then
 				libbrotli_version=$(ls $libbrotlidir/lib*/libbrotli*.so.*.* 2>/dev/null | head -n 1 | awk -F'.so.' '{n=2; print $n}' 2>/dev/null)
 			fi
-			if test -z "${libzopfli_version}"; then
-				libzopfli_version="unknown"
+			if test -z "${libbrotli_version}"; then
+				libbrotli_version="unknown"
 			fi
          ULIB_LIBS="$ULIB_LIBS -lbrotlidec -lbrotlienc";
 			if test $libbrotlidir != "${CROSS_ENVIRONMENT}/" -a $libbrotlidir != "${CROSS_ENVIRONMENT}/usr" -a $libbrotlidir != "${CROSS_ENVIRONMENT}/usr/local"; then
 				CPPFLAGS="$CPPFLAGS -I$libbrotlidir/include"
 				LDFLAGS="$LDFLAGS -L$libbrotlidir/lib -Wl,-R$libbrotlidir/lib";
 				PRG_LDFLAGS="$PRG_LDFLAGS -L$libbrotlidir/lib";
+			fi
+		fi
+	fi
+	], [AC_MSG_RESULT(no)])
+
+	AC_MSG_CHECKING(if quiche library is wanted)
+	wanted=1;
+	if test -z "$with_libquiche" ; then
+		wanted=0;
+		if test -n "$CROSS_ENVIRONMENT" -o "$USP_FLAGS" = "-DAS_cpoll_cppsp_DO" -o "$enable_shared" = "no"; then
+			with_libquiche="no";
+		else
+			with_libquiche="${CROSS_ENVIRONMENT}/usr";
+		fi
+	fi
+	AC_ARG_WITH(libquiche, [  --with-libquiche        use system   quiche library - [[will check /usr /usr/local]] [[default=use if present]]], [
+	if test "$withval" = "no"; then
+		AC_MSG_RESULT(no)
+	else
+		AC_MSG_RESULT(yes)
+		for dir in $withval ${CROSS_ENVIRONMENT}/ ${CROSS_ENVIRONMENT}/usr ${CROSS_ENVIRONMENT}/usr/local; do
+			libquichedir="$dir"
+			if test -f "$dir/include/quiche.h"; then
+				found_libquiche="yes";
+				break;
+			fi
+		done
+		if test x_$found_libquiche != x_yes; then
+			msg="Cannot find libquiche library";
+			if test $wanted = 1; then
+				AC_MSG_ERROR($msg)
+			else
+				AC_MSG_RESULT($msg)
+			fi
+		else
+			echo "${T_MD}libquiche found in $libquichedir${T_ME}"
+			USE_LIBQUICHE=yes
+			AC_DEFINE(USE_LIBQUICHE, 1, [Define if enable libquiche support])
+
+			if test -z "$CROSS_ENVIRONMENT" -a x_$PKG_CONFIG != x_no; then
+				libquiche_version=$(pkg-config --modversion quiche 2>/dev/null)
+			fi
+			if test -z "${libquiche_version}"; then
+				libquiche_version=$(ls $libquichedir/lib*/libquiche.so.*.* 2>/dev/null | head -n 1 | awk -F'.so.' '{n=2; print $n}' 2>/dev/null)
+			fi
+			if test -z "${libquiche_version}"; then
+				libquiche_version="unknown"
+			fi
+			ULIB_LIBS="$ULIB_LIBS -lquiche";
+			if test $libquichedir != "${CROSS_ENVIRONMENT}/" -a $libquichedir != "${CROSS_ENVIRONMENT}/usr" -a $libquichedir != "${CROSS_ENVIRONMENT}/usr/local"; then
+				CPPFLAGS="$CPPFLAGS -I$libquichedir/include"
+				LDFLAGS="$LDFLAGS -L$libquichedir/lib -Wl,-R$libquichedir/lib";
+				PRG_LDFLAGS="$PRG_LDFLAGS -L$libquichedir/lib";
 			fi
 		fi
 	fi

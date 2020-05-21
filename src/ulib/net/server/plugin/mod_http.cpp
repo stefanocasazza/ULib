@@ -21,6 +21,9 @@
 #ifndef U_HTTP2_DISABLE
 #  include <ulib/utility/http2.h>
 #endif
+#ifndef U_HTTP3_DISABLE
+#  include <ulib/utility/http3.h>
+#endif
 
 U_CREAT_FUNC(server_plugin_http, UHttpPlugIn)
 
@@ -570,6 +573,9 @@ int UHttpPlugIn::handlerRun() // NB: we use this method instead of handlerInit()
 
 #ifndef U_HTTP2_DISABLE
    UHTTP2::Connection::preallocate(UNotifier::max_connection);
+#endif
+
+#ifndef U_HTTP3_DISABLE
 #endif
 
 #ifdef USE_LIBSSL

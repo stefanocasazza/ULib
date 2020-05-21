@@ -24,6 +24,10 @@
 #include <ulib/utility/services.h>
 #include <ulib/net/server/server.h>
 
+#ifndef U_HTTP3_DISABLE
+#  include <ulib/utility/http3.h>
+#endif
+
 #ifdef _MSWINDOWS_
 #  include <ws2tcpip.h>
 #else
@@ -87,6 +91,10 @@
 #  include <ulib/net/server/plugin/mod_http.h>
 #endif
 
+#ifdef USE_LIBSSL
+#  include <ulib/utility/base64.h>
+#endif
+
 int           UServer_Base::rkids;
 int           UServer_Base::timeoutMS;
 int           UServer_Base::verify_mode;
@@ -133,6 +141,7 @@ UString*      UServer_Base::ca_path;
 UString*      UServer_Base::key_file;
 UString*      UServer_Base::password;
 UString*      UServer_Base::cert_file;
+UString*      UServer_Base::tls_pin;
 UString*      UServer_Base::name_sock;
 UString*      UServer_Base::IP_address;
 UString*      UServer_Base::cenvironment;
@@ -171,10 +180,6 @@ UVector<UServerPlugIn*>*          UServer_Base::vplugin;
 UVector<UServerPlugIn*>*          UServer_Base::vplugin_static;
 UVector<UServer_Base::file_LOG*>* UServer_Base::vlog;
 
-#ifdef USERVER_UDP
-vPF  UServer_Base::runDynamicPage_udp;
-vPFu UServer_Base::runDynamicPageParam_udp;
-#endif
 #ifdef U_WELCOME_SUPPORT
 UString* UServer_Base::msg_welcome;
 #endif
@@ -1187,11 +1192,9 @@ public:
 
          U_INTERNAL_DUMP("u_now->tv_sec = %ld u_now->tv_usec = %ld ts.tv_nsec = %ld", u_now->tv_sec, u_now->tv_usec, ts.tv_nsec)
 
-         if (U_SYSCALL(nanosleep, "%p,%p", &ts, U_NULLPTR) == -1)
+         if (U_SYSCALL(nanosleep, "%p,%p", &ts, U_NULLPTR) == -1 || UThread::bpause)
             {
-            U_INTERNAL_ASSERT_EQUALS(errno, EINTR)
-
-            U_INTERNAL_DUMP("UServer_Base::flag_loop = %b", UServer_Base::flag_loop)
+            U_INTERNAL_DUMP("UServer_Base::flag_loop = %b UThread::bpause = %b", UServer_Base::flag_loop, UThread::bpause)
 
             u_gettimenow();
 
@@ -1323,11 +1326,9 @@ public:
 
       while (UServer_Base::flag_loop)
          {
-         if (U_SYSCALL(nanosleep, "%p,%p", &ts, &rem) == -1)
+         if (U_SYSCALL(nanosleep, "%p,%p", &ts, &rem) == -1 || UThread::bpause)
             {
-            U_INTERNAL_ASSERT_EQUALS(errno, EINTR)
-
-            U_INTERNAL_DUMP("UServer_Base::flag_loop = %b rem.tv_sec = %ld", UServer_Base::flag_loop, rem.tv_sec)
+            U_INTERNAL_DUMP("UServer_Base::flag_loop = %b rem.tv_sec = %ld UThread::bpause = %b", UServer_Base::flag_loop, rem.tv_sec, UThread::bpause)
 
             ts.tv_sec = rem.tv_sec;
 
@@ -1486,7 +1487,7 @@ public:
 
       while (U_SRV_FLAG_SIGTERM == false)
          {
-         if (UNotifier::waitForRead(UServer_Base::sse_event_fd) == 1 &&
+         if (UNotifier::waitForRead(UServer_Base::sse_event_fd) == 1 && UThread::bpause == false &&
              UServices::read(UServer_Base::sse_event_fd, input))
             {
             /**
@@ -1815,7 +1816,9 @@ UServer_Base::~UServer_Base()
       (void) pthread_rwlock_destroy(ULog::prwlock);
       }
 
-#  if defined(USE_LIBSSL) && !defined(OPENSSL_NO_OCSP) && defined(SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB)
+#  if defined(USE_LIBSSL)
+   if (tls_pin) U_DELETE(tls_pin)
+#  if !defined(OPENSSL_NO_OCSP) && defined(SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB)
    if (bssl)
       {
       if (pthread_ocsp) U_DELETE(pthread_ocsp)
@@ -1824,6 +1827,7 @@ UServer_Base::~UServer_Base()
 
       if (lock_ocsp_staple) U_DELETE(lock_ocsp_staple)
       }
+#  endif
 #  endif
 
 #  ifdef U_SSE_ENABLE // SERVER SENT EVENTS (SSE)
@@ -1921,6 +1925,10 @@ UServer_Base::~UServer_Base()
       {
       u_need_root(false);
 
+#  ifdef USERVER_UDP
+      if (budp == false)
+#  endif
+      {
       (void) UFile::setSysParam("/proc/sys/net/ipv4/tcp_fin_timeout", tcp_fin_timeout, true);
 
       if (USocket::iBackLog > SOMAXCONN)
@@ -1930,6 +1938,7 @@ UServer_Base::~UServer_Base()
          }
 
       if (USocket::iBackLog == 1) (void) UFile::setSysParam("/proc/sys/net/ipv4/tcp_abort_on_overflow", tcp_abort_on_overflow, true);
+      }
       }
 #endif
 
@@ -2232,13 +2241,11 @@ void UServer_Base::loadConfigParam()
 
    U_INTERNAL_DUMP("UNotifier::max_connection = %u USocket::iBackLog = %u", UNotifier::max_connection, USocket::iBackLog)
 
-#ifdef USERVER_UDP
-   if (budp &&
-       u_printf_string_max_length == -1)
-      {
-      u_printf_string_max_length = 128;
-      }
-#endif
+   * key_file = pcfg->at(U_CONSTANT_TO_PARAM( "KEY_FILE"));
+   *cert_file = pcfg->at(U_CONSTANT_TO_PARAM("CERT_FILE"));
+
+   U_INTERNAL_ASSERT( key_file->isNullTerminated())
+   U_INTERNAL_ASSERT(cert_file->isNullTerminated())
 
    x = pcfg->at(U_CONSTANT_TO_PARAM("CRASH_EMAIL_NOTIFY"));
 
@@ -2307,14 +2314,22 @@ void UServer_Base::loadConfigParam()
 #ifdef USE_LIBSSL
    if (bssl)
       {
-      *dh_file   = pcfg->at(U_CONSTANT_TO_PARAM("DH_FILE"));
-      *ca_file   = pcfg->at(U_CONSTANT_TO_PARAM("CA_FILE"));
-      *ca_path   = pcfg->at(U_CONSTANT_TO_PARAM("CA_PATH"));
-      *key_file  = pcfg->at(U_CONSTANT_TO_PARAM("KEY_FILE"));
-      *password  = pcfg->at(U_CONSTANT_TO_PARAM("PASSWORD"));
-      *cert_file = pcfg->at(U_CONSTANT_TO_PARAM("CERT_FILE"));
+      *dh_file    = pcfg->at(U_CONSTANT_TO_PARAM("DH_FILE"));
+      *password   = pcfg->at(U_CONSTANT_TO_PARAM("PASSWORD"));
 
       verify_mode = pcfg->readLong(U_CONSTANT_TO_PARAM("VERIFY_MODE"));
+
+      x = pcfg->at(U_CONSTANT_TO_PARAM("TLS_SPKI_PIN")); // base64-encoded SHA256 hash of subjectInfoPublicKey
+
+      if (x)
+         {
+         U_NEW_STRING(tls_pin, UString(SHA256_DIGEST_LENGTH));
+
+         UBase64::decode(x, *tls_pin);
+         }
+      
+      *ca_file   = pcfg->at(U_CONSTANT_TO_PARAM("CA_FILE"));
+      *ca_path   = pcfg->at(U_CONSTANT_TO_PARAM("CA_PATH"));
 
       min_size_for_sendfile = U_NOT_FOUND; // NB: we can't use sendfile with SSL...
       }
@@ -2412,7 +2427,7 @@ void UServer_Base::loadConfigParam()
 
    // DOCUMENT_ROOT: The directory out of which we will serve your documents
 
-#ifdef USERVER_UDP
+#if defined(USERVER_UDP) && defined(U_HTTP3_DISABLE)
    if (budp == false)
 #endif
    {
@@ -2437,7 +2452,7 @@ void UServer_Base::loadConfigParam()
 
       log->init(U_CONSTANT_TO_PARAM(U_SERVER_LOG_PREFIX));
 
-#  ifdef USERVER_UDP
+#  if defined(USERVER_UDP) && defined(U_HTTP3_DISABLE)
       if (budp == false)
 #  endif
       {
@@ -2625,17 +2640,34 @@ void UServer_Base::loadConfigParam()
    if (UOrmDriver::loadDriver(orm_driver_dir, orm_driver_list) == false) U_ERROR("ORM drivers load failed");
 #endif
 
-   // load plugin modules and call server-wide hooks handlerConfig()...
-
-#ifdef USERVER_UDP
+#if defined(USERVER_UDP) && defined(U_HTTP3_DISABLE)
    if (budp == false)
 #endif
    {
+   // load plugin modules and call server-wide hooks handlerConfig()...
+
    UString plugin_dir  = pcfg->at(U_CONSTANT_TO_PARAM("PLUGIN_DIR")),
            plugin_list = pcfg->at(U_CONSTANT_TO_PARAM("PLUGIN"));
 
    if (loadPlugins(plugin_dir, plugin_list) != U_PLUGIN_HANDLER_FINISHED) U_ERROR("Plugins stage load failed");
    }
+
+#if defined(USERVER_UDP) && !defined(U_HTTP3_DISABLE)
+   if (budp)
+      {
+      if (UHTTP3::loadConfigParam() == U_PLUGIN_HANDLER_ERROR)
+         {
+         if (pcfg->empty())
+            {
+            U_SRV_LOG("WARNING: Configuration of HTTTP3 empty");
+            }
+
+         U_SRV_LOG("WARNING: Configuration phase of HTTTP3 failed");
+         }
+
+      U_SRV_LOG("Configuration phase of HTTTP3 success");
+      }
+#endif
 }
 
 U_NO_EXPORT void UServer_Base::loadStaticLinkedModules(const UString& name)
@@ -3049,14 +3081,14 @@ void UServer_Base::suspendThread()
    U_TRACE_NO_PARAM(0, "UServer_Base::suspendThread()")
 
 #if defined(U_LINUX) && defined(ENABLE_THREAD)
-   if (u_pthread_time) ((UTimeThread*)u_pthread_time)->suspend();
+   if (u_pthread_time) ((UThread*)u_pthread_time)->bpause = true;
 
 # if defined(USE_LIBSSL) && !defined(OPENSSL_NO_OCSP) && defined(SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB)
-   if (pthread_ocsp) pthread_ocsp->suspend();
+   if (pthread_ocsp) pthread_ocsp->bpause = true;
 # endif
 
 # ifdef U_SSE_ENABLE // SERVER SENT EVENTS (SSE)
-   if (pthread_sse) pthread_sse->suspend();
+   if (pthread_sse) pthread_sse->bpause = true;
 #  endif
 #endif
 }
@@ -3091,9 +3123,7 @@ void UServer_Base::init()
       U_INTERNAL_ASSERT(  dh_file->isNullTerminated())
       U_INTERNAL_ASSERT(  ca_file->isNullTerminated())
       U_INTERNAL_ASSERT(  ca_path->isNullTerminated())
-      U_INTERNAL_ASSERT( key_file->isNullTerminated())
       U_INTERNAL_ASSERT( password->isNullTerminated())
-      U_INTERNAL_ASSERT(cert_file->isNullTerminated())
 
       // Load our certificate
 
@@ -3202,7 +3232,7 @@ next:
 
       if (UIPAddress::getBinaryForm(*IP_address, addr) == false) U_ERROR("IP_ADDRESS conversion fail: %V", IP_address->rep);
 
-      socket->setAddress(&addr);
+      socket->setLocalAddress(&addr);
 
       public_address = (socket->cLocalAddress.isPrivate() == false);
       }
@@ -3213,6 +3243,10 @@ next:
 #ifdef U_LINUX
    u_need_root(false);
 
+# ifdef USERVER_UDP
+   if (budp == false)
+# endif
+   {
    /**
     * timeout_timewait parameter: Determines the time that must elapse before TCP/IP can release a closed connection
     * and reuse its resources. This interval between closure and release is known as the TIME_WAIT state or twice the
@@ -3263,6 +3297,7 @@ next:
 
    U_INTERNAL_DUMP("sysctl_somaxconn = %d tcp_abort_on_overflow = %b sysctl_max_syn_backlog = %d",
                     sysctl_somaxconn,     tcp_abort_on_overflow,     sysctl_max_syn_backlog)
+   }
 #endif
 
    UTimer::init(UTimer::NOSIGNAL);
@@ -3291,7 +3326,7 @@ next:
 
    // init plugin modules, must run after the setting for shared log
 
-#ifdef USERVER_UDP
+#if defined(USERVER_UDP) && defined(U_HTTP3_DISABLE)
    if (budp == false)
 #endif
    {
@@ -3366,10 +3401,6 @@ next:
    U_INTERNAL_ASSERT_EQUALS(ULog::prwlock,  U_NULLPTR)
    U_INTERNAL_ASSERT_EQUALS(u_pthread_time, U_NULLPTR)
 
-# ifdef USERVER_UDP
-   if (budp == false)
-# endif
-   {
    if (UServer_Base::update_date)
       {
       U_NEW_WITHOUT_CHECK_MEMORY(UTimeThread, u_pthread_time, UTimeThread);
@@ -3378,7 +3409,6 @@ next:
 
       ((UTimeThread*)u_pthread_time)->start(50);
       }
-   }
 #endif
 
 #if !defined(U_LOG_DISABLE) && defined(USE_LIBZ)
@@ -3403,11 +3433,16 @@ next:
       }
 #endif
 
+#if defined(USERVER_UDP)
+   if (budp == false)
+#endif
+   {
 #ifdef DEBUG
    U_NEW(UTimeStat, pstat, UTimeStat);
 
    UTimer::insert(pstat);
 #endif
+   }
 
    (void) UFile::_mkdir("../db");
 
@@ -3426,16 +3461,6 @@ next:
 
    socket_flags |= O_RDWR | O_CLOEXEC;
 
-#ifdef USERVER_UDP
-   if (budp)
-      {
-      UNotifier::max_connection = 1;
-      UNotifier::num_connection =
-      UNotifier::min_connection = 0;
-      }
-   else
-#endif
-   {
    // ---------------------------------------------------------------------------------------------------------
    // init notifier event manager
    // ---------------------------------------------------------------------------------------------------------
@@ -3487,7 +3512,6 @@ next:
    UNotifier::num_connection = UNotifier::min_connection;
 
    if (num_client_threshold == 0) num_client_threshold = U_NOT_FOUND;
-   }
 
    U_INTERNAL_DUMP("UNotifier::max_connection = %u USocket::iBackLog = %u", UNotifier::max_connection, USocket::iBackLog)
 
@@ -3505,7 +3529,7 @@ next:
       }
 #endif
 
-#ifdef USERVER_UDP
+#if defined(USERVER_UDP) && defined(U_HTTP3_DISABLE)
    if (budp == false)
 #endif
    {
@@ -3569,7 +3593,7 @@ next:
    U_NEW(USSEThread, pthread_sse, USSEThread);
    U_NEW(UVector<USSEClient*>, sse_vclient, UVector<USSEClient*>);
 
-   pthread_sse->start(0);
+   pthread_sse->start(1000);
 
    (void) U_SYSCALL(socketpair, "%d,%d,%d,%p", AF_UNIX, SOCK_STREAM, 0, sse_socketpair);
 
@@ -3639,14 +3663,14 @@ void UServer_Base::sendSignalToAllChildren(int signo, sighandler_t handler)
 #endif
 
 #if defined(U_LINUX) && defined(ENABLE_THREAD)
-   if (u_pthread_time) ((UTimeThread*)u_pthread_time)->resume();
+   if (u_pthread_time) ((UThread*)u_pthread_time)->bpause = false;
 
 # if defined(USE_LIBSSL) && !defined(OPENSSL_NO_OCSP) && defined(SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB)
-   if (pthread_ocsp) pthread_ocsp->resume();
+   if (pthread_ocsp) pthread_ocsp->bpause = false;
 # endif
 
 # ifdef U_SSE_ENABLE // SERVER SENT EVENTS (SSE)
-   if (pthread_sse) pthread_sse->resume();
+   if (pthread_sse) pthread_sse->bpause = false;
 # endif
 #endif
 }
@@ -3855,12 +3879,8 @@ int UServer_Base::handlerRead()
    uint32_t accepted = 10; // USocket::iBackLog;
 #endif
 
-   // This loops until the accept() fails, trying to start new connections as fast as possible so we don't overrun the listen queue
-
-   pClientImage = vClientImage + nClientIndex;
-
 #if defined(ENABLE_THREAD) && !defined(USE_LIBEVENT) && defined(U_SERVER_THREAD_APPROACH_SUPPORT)
-   USocket* psocket;
+   USocket* psocket = U_NULLPTR;
    uint32_t lclient_address_len = 0;
    char* lclient_address = U_NULLPTR;
    UClientImage_Base* lClientIndex = pClientImage;
@@ -3870,6 +3890,27 @@ int UServer_Base::handlerRead()
    CLIENT_ADDRESS_LEN = 0;
    uint32_t numc, nothing = 0;
 #endif
+
+#ifndef U_HTTP3_DISABLE
+   if (budp)
+      {
+hretry:
+      if (UHTTP3::handlerRead() == false) U_RETURN(U_NOTIFIER_OK);
+
+      if (pClientImage)
+         {
+         U_INTERNAL_DUMP("pClientImage->conn = %p pClientImage->http3", pClientImage->conn, pClientImage->http3)
+
+         goto try_accept;
+         }
+      }
+#endif
+
+   // This loops until the accept() fails, trying to start new connections as fast as possible so we don't overrun the listen queue
+
+   U_INTERNAL_DUMP("pClientImage = %p vClientImage = %p nClientIndex = %u", pClientImage, vClientImage, nClientIndex)
+
+   pClientImage = vClientImage + nClientIndex;
 
 loop:
    U_INTERNAL_ASSERT_MINOR(CLIENT_IMAGE, eClientImage)
@@ -3881,14 +3922,16 @@ loop:
                    "vClientImage[%u].last_event        = %#3D\n"
                    "vClientImage[%u].sfd               = %d\n"
                    "vClientImage[%u].UEventFd::fd      = %d\n"
-                   "vClientImage[%u].socket            = %p\n"
+                   "vClientImage[%u].conn              = %p\n"
+                   "vClientImage[%u].http3             = %p\n"
                    "vClientImage[%u].socket->flags     = %u %B\n"
                    "vClientImage[%u].socket->iSockDesc = %d"
                    "\n----------------------------------------\n",
                    (CLIENT_IMAGE - vClientImage), CLIENT_IMAGE->last_event,
                    (CLIENT_IMAGE - vClientImage), CLIENT_IMAGE->sfd,
                    (CLIENT_IMAGE - vClientImage), CLIENT_IMAGE->UEventFd::fd,
-                   (CLIENT_IMAGE - vClientImage), CSOCKET,
+                   (CLIENT_IMAGE - vClientImage), CLIENT_IMAGE->conn,
+                   (CLIENT_IMAGE - vClientImage), CLIENT_IMAGE->http3,
                    (CLIENT_IMAGE - vClientImage), CSOCKET->flags, CSOCKET->flags,
                    (CLIENT_IMAGE - vClientImage), CSOCKET->iSockDesc)
 
@@ -3970,8 +4013,22 @@ try_next:
    if (cround >= 2) goto try_next; // polling mode
 
 try_accept:
-   U_INTERNAL_ASSERT(CSOCKET->isClosed())
    U_INTERNAL_ASSERT_DIFFERS(U_ClientImage_parallelization, U_PARALLELIZATION_CHILD)
+
+#ifndef U_HTTP3_DISABLE
+   if (budp)
+      {
+      if (UHTTP3::handlerAccept() == false) goto hretry;
+
+      U_INTERNAL_DUMP("pClientImage->conn = %p pClientImage->http3", pClientImage->conn, pClientImage->http3)
+
+      U_INTERNAL_ASSERT_POINTER(pClientImage->conn)
+
+   // goto hnext;
+      }
+#endif
+
+   U_INTERNAL_ASSERT(CSOCKET->isClosed())
 
    if (socket->acceptClient(CSOCKET) == false)
       {
@@ -4280,9 +4337,14 @@ next:
    }
 
 end:
+#ifdef USERVER_UDP
+   if (budp == false)
+#endif
+   {
 #if defined(HAVE_EPOLL_CTL_BATCH) && !defined(USE_LIBEVENT)
    UNotifier::insertBatch();
 #endif
+   }
 
    nClientIndex = CLIENT_IMAGE - vClientImage;
 
@@ -4413,7 +4475,7 @@ void UServer_Base::runLoop(const char* user)
 {
    U_TRACE(0, "UServer_Base::runLoop(%S)", user)
 
-#ifdef USERVER_UDP
+#if defined(USERVER_UDP) && defined(U_HTTP3_DISABLE)
    if (budp == false)
 #endif
    {
@@ -4484,10 +4546,6 @@ void UServer_Base::runLoop(const char* user)
 
    pthis->UEventFd::fd = socket->iSockDesc;
 
-#ifdef USERVER_UDP
-   if (budp == false)
-#endif
-   {
 # ifndef U_SERVER_CAPTIVE_PORTAL
    if (handler_db1)
       {
@@ -4588,7 +4646,6 @@ void UServer_Base::runLoop(const char* user)
       U_ASSERT(proc->parent())
       }
 #endif
-   }
 
    U_SRV_LOG("Waiting for connection on port %u", port);
 
@@ -4605,74 +4662,10 @@ void UServer_Base::runLoop(const char* user)
 #  endif
       }
 
-#ifdef USERVER_UDP
-   if (budp)
-      {
-      struct stat st;
-      char buffer[U_PATH_MAX+1];
-      HINSTANCE handle = U_NULLPTR;
-      uint32_t len = u__snprintf(buffer, U_PATH_MAX, U_CONSTANT_TO_PARAM(U_LIBEXECDIR "/usp/udp.%s"), U_LIB_SUFFIX);
-
-      if (U_SYSCALL(stat, "%S,%p", buffer, &st))
-         {
-         U_WARNING("I can't found the usp page: %.*S", len, buffer);
-         }
-      else
-         {
-         if ((handle = UDynamic::dload(buffer)) == U_NULLPTR                                                    ||
-             (runDynamicPage_udp      = (vPF) UDynamic::lookup(handle, "runDynamicPage_udp"))      == U_NULLPTR ||
-             (runDynamicPageParam_udp = (vPFu)UDynamic::lookup(handle, "runDynamicPageParam_udp")) == U_NULLPTR)
-            {
-            U_WARNING("Load failed of usp page: %.*S", len, buffer);
-            }
-         else
-            {
-            runDynamicPageParam_udp(U_DPAGE_INIT);
-            runDynamicPageParam_udp(U_DPAGE_FORK);
-            }
-         }
-
-      csocket                    =
-      pClientImage->socket       = socket;
-      pClientImage->UEventFd::fd = socket->iSockDesc;
-
-      UClientImage_Base::callerHandlerRead = UServer_Base::handlerUDP;
-
-      U_INTERNAL_DUMP("handler_other = %p handler_inotify = %p handler_db1 = %p handler_db2 = %p UNotifier::num_connection = %u UNotifier::min_connection = %u",
-                       handler_other,     handler_inotify,     handler_db1,     handler_db2, UNotifier::num_connection,     UNotifier::min_connection)
-
-      // NB: we can go directly on recvFrom() and block on it...
-
-      U_INTERNAL_ASSERT_EQUALS(socket_flags & O_NONBLOCK, 0)
-
-      while (flag_loop)
-         {
-         if (pClientImage->handlerRead() == U_NOTIFIER_DELETE) break;
-
-#     ifndef U_LOG_DISABLE
-         if (isLog())
-            {
-            pClientImage->logbuf->setEmpty();
-
-            log->log(U_CONSTANT_TO_PARAM("Waiting for connection on port %u"), port);
-            }
-#     endif
-         }
-
-      if (runDynamicPageParam_udp)
-         {
-         runDynamicPageParam_udp(U_DPAGE_DESTROY);
-
-         UDynamic::dclose(handle);
-         }
-      }
-   else
-#endif
-   {
    while (flag_loop)
       {
       U_INTERNAL_DUMP("handler_other = %p handler_inotify = %p handler_db1 = %p handler_db2 = %p UNotifier::num_connection = %u UNotifier::min_connection = %u",
-                       handler_other,     handler_inotify,     handler_db1,     handler_db2, UNotifier::num_connection,     UNotifier::min_connection)
+                       handler_other,     handler_inotify,     handler_db1,     handler_db2,     UNotifier::num_connection,     UNotifier::min_connection)
 
 #  if defined(ENABLE_THREAD) && !defined(USE_LIBEVENT) && defined(U_SERVER_THREAD_APPROACH_SUPPORT)
       if (preforked_num_kids != -1)
@@ -4716,7 +4709,6 @@ void UServer_Base::runLoop(const char* user)
 
       (void) pthis->UServer_Base::handlerRead();
       }
-   }
 }
 
 void UServer_Base::run()
@@ -5012,7 +5004,7 @@ void UServer_Base::run()
    U_INTERNAL_ASSERT(proc->parent())
 
 stop:
-#ifdef USERVER_UDP
+#if defined(USERVER_UDP) && defined(U_HTTP3_DISABLE)
    if (budp == false)
 #endif
    {
@@ -5041,9 +5033,7 @@ stop:
    if (pthread_sse) sse_vclient->clear();
 #endif
 
-#ifdef DEBUG
    pthis->deallocate();
-#endif
 }
 
 // it creates a copy of itself, return true if parent...

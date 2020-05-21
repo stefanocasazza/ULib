@@ -62,6 +62,7 @@
 class UFile;
 class UHTTP;
 class UHTTP2;
+class UHTTP3;
 class UNotifier;
 class UWebSocket;
 class USocketExt;
@@ -616,17 +617,15 @@ public:
     * the source address information. The number of bytes read is returned
     */
 
+   int recvFrom(void* pBuffer, uint32_t iBufLength, uint32_t uiFlags = 0);
    int recvFrom(void* pBuffer, uint32_t iBufLength, uint32_t uiFlags, UIPAddress& cSourceIP, unsigned int& iSourcePortNumber);
-
-   int recvFrom(void* pBuffer, uint32_t iBufLength, uint32_t uiFlags = 0) { return recvFrom(pBuffer, iBufLength, uiFlags, cRemoteAddress, iRemotePort); }
 
    /**
     * The socket transmits the data to the remote socket. The number of bytes written is returned
     */
 
+   int sendTo(void* pPayload, uint32_t iPayloadLength, uint32_t uiFlags = 0);
    int sendTo(void* pPayload, uint32_t iPayloadLength, uint32_t uiFlags, UIPAddress& cDestinationIP, unsigned int iDestinationPortNumber);
-
-   int sendTo(void* pPayload, uint32_t iPayloadLength, uint32_t uiFlags = 0) { return sendTo(pPayload, iPayloadLength, uiFlags, cRemoteAddress, iRemotePort); }
 
    /**
     * This method is called to read a 16-bit binary value from the remote connection.
@@ -711,7 +710,7 @@ protected:
    bool connect();
    void setRemote();
    void setMsgError();
-   void setAddress(void* address);
+   void setLocalAddress(void* address);
    void setLocal(const UIPAddress& addr);
    bool setHostName(const UString& pcNewHostName);
 
@@ -813,6 +812,11 @@ protected:
       _socket();
       }
 
+   void setRemoteAddressAndPort();
+
+   static socklen_t peer_addr_len; 
+   static struct sockaddr_storage peer_addr; 
+
    static SocketAddress* cLocal;
    static bool breuseport, bincoming_cpu;
    static int iBackLog, incoming_cpu, accept4_flags; // If flags is 0, then accept4() is the same as accept()
@@ -831,9 +835,10 @@ protected:
 private:
    U_DISALLOW_COPY_AND_ASSIGN(USocket)
 
+                      friend class UFile;
                       friend class UHTTP;
                       friend class UHTTP2;
-                      friend class UFile;
+                      friend class UHTTP3;
                       friend class UNotifier;
                       friend class UWebSocket;
                       friend class USocketExt;

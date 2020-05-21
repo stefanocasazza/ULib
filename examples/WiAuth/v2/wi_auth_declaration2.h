@@ -37,8 +37,9 @@ static uint64_t counter, device_counter, max_traffic_daily;
 static uint8_t policySessionNotify, policySessionNotifyDefault;
 static uint32_t addr, old_addr, ip_peer, created, lastUpdate, lastReset, idx, duration_privacy_policy, vec_logout[8192];
 
-#define U_CLEAN_INTERVAL      (60U * 60U) // 1h
-#define U_MAX_TIME_NO_TRAFFIC (15U * 60U) // 15m
+#define U_CLEAN_INTERVAL       (60U * 60U) // 1h
+#define U_MAX_TIME_NO_TRAFFIC  (15U * 60U) // 15m
+#define U_MAX_ELAPSED_TIME     (69U * U_ONE_DAY_IN_SECOND)
 
 #define U_LOGGER(fmt,args...) ULog::log(file_WARNING->getFd(), U_CONSTANT_TO_PARAM("%v: " fmt), UClientImage_Base::request_uri->rep , ##args)
 
@@ -644,6 +645,8 @@ static bool getSession(const char* op, uint32_t op_len)
 
    U_LOGGER("*** SESSION(%V) NOT FOUND at %.*s() ***", key_session->rep, op_len, op);
 
+   created = u_now->tv_sec;
+
    U_RETURN(false);
 }
 
@@ -700,7 +703,11 @@ static void writeSessionToLOG(const UString& lmac, const UString& label, const c
 
    UString opt(200U);
 
-   opt.snprintf(U_CONSTANT_TO_PARAM(", traffic: %llu, elapsed: %u"), counter/1024, (u_now->tv_sec-created)/60);
+   uint32_t elapsed = (u_now->tv_sec > created ? u_now->tv_sec - created : 0);
+
+   if (elapsed > U_MAX_ELAPSED_TIME) elapsed = U_MAX_ELAPSED_TIME;
+
+   opt.snprintf(U_CONSTANT_TO_PARAM(", traffic: %llu, elapsed: %u"), counter/1024, elapsed/60);
 
    writeToLOG(lmac, label, op, op_len, opt);
 }
@@ -1755,7 +1762,7 @@ static void POST_info()
                op     =                 "DENY_NO_TRAFFIC";
                op_len = U_CONSTANT_SIZE("DENY_NO_TRAFFIC");
 
-               created += ctime_no_traffic;
+               created += U_MAX_TIME_NO_TRAFFIC;
 
 del_sess:      writeSessionToLOG(*mac, label, op, op_len);
 

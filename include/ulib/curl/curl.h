@@ -71,7 +71,7 @@ public:
 
    const char* error();
 
-   void setOption(CURLoption option, long parameter)
+   template <class T> void setOption(CURLoption option, T parameter)
       {
       U_TRACE(1, "UCURL::setOption(%p,%p)", option, parameter)
 

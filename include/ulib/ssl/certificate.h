@@ -456,6 +456,14 @@ public:
    bool operator==(const UCertificate& c) const { return  isEqual(x509, c.x509); }
    bool operator!=(const UCertificate& c) const { return !isEqual(x509, c.x509); }
 
+   /**
+    * Returns the pinning hash from Public Key
+    */
+
+   static UString getPinningHash(X509* _x509);
+
+   UString getPinningHash() const { return getPinningHash(x509); }
+
    // STREAM
 
    UString print(unsigned long nmflag = 0, unsigned long cflag = 0) const;

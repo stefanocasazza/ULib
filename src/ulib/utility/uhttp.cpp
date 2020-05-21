@@ -36,6 +36,9 @@
 #ifndef U_HTTP2_DISABLE
 #  include <ulib/utility/http2.h>
 #endif
+#ifndef U_HTTP3_DISABLE
+#  include <ulib/utility/http3.h>
+#endif
 #ifdef USE_LIBZ // check for crc32
 #  include <ulib/base/coder/gzio.h>
 #  include <ulib/utility/interrupt.h>
@@ -1384,6 +1387,9 @@ void UHTTP::init()
 #ifndef U_HTTP2_DISABLE
    UHTTP2::ctor();
 #endif
+#ifndef U_HTTP3_DISABLE
+   UHTTP3::ctor();
+#endif
 }
 
 #ifdef U_ALIAS
@@ -1538,6 +1544,9 @@ void UHTTP::dtor()
 
 #ifndef U_HTTP2_DISABLE
    UHTTP2::dtor();
+#endif
+#ifndef U_HTTP3_DISABLE
+   UHTTP3::dtor();
 #endif
 }
 
@@ -3864,6 +3873,12 @@ int UHTTP::handlerREAD()
    U_HTTP_INFO_RESET(0);
 
    U_http_info.nResponseCode = HTTP_OK;
+
+#ifndef U_HTTP3_DISABLE
+   if (UServer_Base::budp)
+      {
+      }
+#endif
 
 #ifndef U_HTTP2_DISABLE
    U_INTERNAL_DUMP("U_ClientImage_http = %C", U_ClientImage_http(UServer_Base::pClientImage))

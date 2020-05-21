@@ -107,6 +107,7 @@ vClientImage = new client_type[UNotifier::max_connection]; } }
 
 class UHTTP;
 class UHTTP2;
+class UHTTP3;
 class UEventDB;
 class UCommand;
 class UTimeStat;
@@ -349,6 +350,9 @@ public:
       sem_t lock_throttling;
       sem_t lock_rdb_server;
       sem_t lock_data_session;
+#  ifndef U_HTTP3_DISABLE
+      sem_t lock_db_http3;
+#  endif
 #  ifdef USE_LIBSSL
       sem_t lock_ssl_session;
    // ------------------------------------------------------------------------------
@@ -420,6 +424,7 @@ public:
 #define U_SRV_LOCK_USER2          &(UServer_Base::ptr_shared_data->lock_user2)
 #define U_SRV_LOCK_SSE            &(UServer_Base::ptr_shared_data->lock_sse)
 #define U_SRV_LOCK_SSE_SSL        &(UServer_Base::ptr_shared_data->lock_sse_ssl)
+#define U_SRV_LOCK_DB_HTTP3       &(UServer_Base::ptr_shared_data->lock_db_http3)
 #define U_SRV_LOCK_THROTTLING     &(UServer_Base::ptr_shared_data->lock_throttling)
 #define U_SRV_LOCK_RDB_SERVER     &(UServer_Base::ptr_shared_data->lock_rdb_server)
 #define U_SRV_LOCK_SSL_SESSION    &(UServer_Base::ptr_shared_data->lock_ssl_session)
@@ -863,6 +868,7 @@ protected:
    static UString* password;   // password for private key of server
    static UString* ca_file;    // locations of trusted CA certificates used in the verification
    static UString* ca_path;    // locations of trusted CA certificates used in the verification
+   static UString* tls_pin;    // base64-encoded SHA256 hash of subjectInfoPublicKey
    static UString* IP_address; // IP address of this server
 
    static int rkids;
@@ -919,30 +925,6 @@ protected:
 # ifndef U_LOG_DISABLE
    static long last_event;
 # endif
-#endif
-
-#ifdef USERVER_UDP
-   static vPF  runDynamicPage_udp;
-   static vPFu runDynamicPageParam_udp;
-
-   static int handlerUDP()
-      {
-      U_TRACE_NO_PARAM(0, "UServer_Base::handlerUDP()")
-
-      U_INTERNAL_DUMP("runDynamicPage_udp = %p", runDynamicPage_udp) 
-
-      if (runDynamicPage_udp) runDynamicPage_udp();
-      else
-         {
-         *UClientImage_Base::wbuffer = *UClientImage_Base::rbuffer; // echo server
-         }
-
-      UClientImage_Base::bnoheader = true;
-
-      UClientImage_Base::setRequestProcessed();
-
-      U_RETURN(U_PLUGIN_HANDLER_FINISHED);
-      }
 #endif
 
 #ifdef U_THROTTLING_SUPPORT
@@ -1210,6 +1192,7 @@ private:
 
    friend class UHTTP;
    friend class UHTTP2;
+   friend class UHTTP3;
    friend class UDayLight;
    friend class UTimeStat;
    friend class USSLSocket;
@@ -1355,6 +1338,10 @@ protected:
       // NB: array are not pointers (virtual table can shift the address of this)...
 
       vClientImage = new client_type[UNotifier::max_connection];
+
+      U_INTERNAL_DUMP("vClientImage = %p pClientImage = %p", vClientImage, pClientImage)
+
+      U_INTERNAL_ASSERT_EQUALS(vClientImage, pClientImage)
       }
 
 #ifdef DEBUG
@@ -1423,6 +1410,10 @@ protected:
       // NB: array are not pointers (virtual table can shift the address of this)...
 
       vClientImage = new client_type[UNotifier::max_connection];
+
+      U_INTERNAL_DUMP("vClientImage = %p pClientImage = %p", vClientImage, pClientImage)
+
+      U_INTERNAL_ASSERT_EQUALS(vClientImage, pClientImage)
       }
 
 #ifdef DEBUG
@@ -1491,6 +1482,10 @@ protected:
       // NB: array are not pointers (virtual table can shift the address of this)...
 
       vClientImage = new client_type[UNotifier::max_connection];
+
+      U_INTERNAL_DUMP("vClientImage = %p pClientImage = %p", vClientImage, pClientImage)
+
+      U_INTERNAL_ASSERT_EQUALS(vClientImage, pClientImage)
       }
 
 #ifdef DEBUG

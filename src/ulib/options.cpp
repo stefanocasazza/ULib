@@ -53,7 +53,7 @@
 #  define LIBZ_ENABLE        "no"
 #endif
 #ifdef USE_LIBZOPFLI
-#  define LIBZOPFLI_ENABLE   "yes ( " _LIBBROTLI_VERSION " )"
+#  define LIBZOPFLI_ENABLE   "yes ( " _LIBZOPFLI_VERSION " )"
 #else
 #  define LIBZOPFLI_ENABLE   "no"
 #endif
@@ -61,6 +61,11 @@
 #  define LIBBROTLI_ENABLE   "yes ( " _LIBBROTLI_VERSION " )"
 #else
 #  define LIBBROTLI_ENABLE   "no"
+#endif
+#ifdef USE_LIBQUICHE
+#  define LIBQUICHE_ENABLE   "yes ( " _LIBQUICHE_VERSION " )"
+#else
+#  define LIBQUICHE_ENABLE   "no"
 #endif
 #ifdef USE_LIBTDB
 #  define LIBTDB_ENABLE      "yes ( " _LIBTDB_VERSION " )"
@@ -721,6 +726,7 @@ PYTHON language support: yes ( 2.7 )
       "LIBZ support...........:%W " LIBZ_ENABLE "%W\n" \
       "LIBZOPFLI support......:%W " LIBZOPFLI_ENABLE "%W\n" \
       "LIBBROTLI support......:%W " LIBBROTLI_ENABLE "%W\n" \
+      "LIBQUICHE support......:%W " LIBQUICHE_ENABLE "%W\n" \
       "LIBTDB support.........:%W " LIBTDB_ENABLE "%W\n" \
       "PCRE support...........:%W " LIBPCRE_ENABLE "%W\n" \
       "SSL support............:%W " LIBSSL_ENABLE "%W\n" \
@@ -775,6 +781,7 @@ PYTHON language support: yes ( 2.7 )
                BRIGHTGREEN, RESET,
                BRIGHTGREEN, RESET,
                // wrapping
+               BRIGHTYELLOW, RESET,
                BRIGHTYELLOW, RESET,
                BRIGHTYELLOW, RESET,
                BRIGHTYELLOW, RESET,

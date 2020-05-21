@@ -250,13 +250,24 @@ AC_DEFUN([AC_COMPILATION_OPTIONS],[
 	fi
 	AC_MSG_RESULT([$enable_http2])
 
+	AC_MSG_CHECKING(if you want to enable HTTP/3 support)
+	AC_ARG_ENABLE(http3,
+				[  --enable-http3            enable HTTP/3 support [[default=no]]])
+	if test -z "$enable_http3"; then
+		enable_http3="no"
+	fi
+	if test "$enable_http3" != "yes"; then
+		AC_DEFINE(U_HTTP3_DISABLE, 1, [disable HTTP/3 support])
+	fi
+	AC_MSG_RESULT([$enable_http3])
+
 	AC_MSG_CHECKING(if you want to enable server check time between request for parallelization)
 	AC_ARG_ENABLE(check-time,
 				[  --enable-check-time       enable server check time between request for parallelization [[default=no]]])
 	if test -z "$enable_check_time"; then
 		if test "$USP_FLAGS" = "-DAS_cpoll_cppsp_DO"; then
 			enable_check_time="no"
-		elif test "$enable_debug" = "yes" -a "$enable_http2" != "yes"; then
+		elif test "$enable_debug" = "yes" -a "$enable_http2" != "yes" -a "$enable_http3" != "yes"; then
 			enable_check_time="yes"
 		else
 			enable_check_time="no"

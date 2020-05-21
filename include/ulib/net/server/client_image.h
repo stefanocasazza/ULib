@@ -44,6 +44,7 @@ class UStreamPlugIn;
 class UBandWidthThrottling;
 
 template <class T> class UServer;
+template <class T> class UHashMap;
 
 #define U_ClientImage_request_is_cached UClientImage_Base::cbuffer[0]
 
@@ -380,6 +381,9 @@ protected:
    int sfd;
    uucflag flag;
    long last_event;
+   // HTTP3
+   void* conn;
+   void* http3;
 
 #ifndef U_LOG_DISABLE
    static int log_request_partial;
@@ -534,6 +538,7 @@ private:
 
                       friend class UHTTP;
                       friend class UHTTP2;
+                      friend class UHTTP3;
                       friend class UEventDB;
                       friend class USocketExt;
                       friend class USSIPlugIn;
@@ -544,6 +549,7 @@ private:
                       friend class UBandWidthThrottling;
 
    template <class T> friend class UServer;
+   template <class T> friend class UHashMap;
    template <class T> friend void u_delete_vector(      T* _vec, uint32_t offset, uint32_t n);
 #ifdef DEBUG
    template <class T> friend bool u_check_memory_vector(T* _vec,                  uint32_t n);
@@ -576,6 +582,35 @@ public:
 private:
    U_DISALLOW_COPY_AND_ASSIGN(UClientImage)
 };
+
+#ifdef USERVER_UDP
+template <> class U_EXPORT UClientImage<UUDPSocket> : public UClientImage_Base {
+public:
+
+   UClientImage() : UClientImage_Base()
+      {
+      U_TRACE_CTOR(0, UClientImage<UUDPSocket>, "")
+
+      U_NEW(UUDPSocket, socket, UUDPSocket(UClientImage_Base::bIPv6))
+
+      set();
+      }
+
+   virtual ~UClientImage()
+      {
+      U_TRACE_DTOR(0, UClientImage<UUDPSocket>)
+      }
+
+   // DEBUG
+
+#if defined(U_STDCPP_ENABLE) && defined(DEBUG)
+   const char* dump(bool _reset) const { return UClientImage_Base::dump(_reset); }
+#endif
+
+private:
+   U_DISALLOW_COPY_AND_ASSIGN(UClientImage<UUDPSocket>)
+};
+#endif
 
 #ifdef USE_LIBSSL
 template <> class U_EXPORT UClientImage<USSLSocket> : public UClientImage_Base {

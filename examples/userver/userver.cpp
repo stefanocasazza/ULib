@@ -3,15 +3,36 @@
 #include <ulib/file_config.h>
 
 #ifdef U_SSL_SOCKET
+#  ifdef USERVER_IPC
+#  undef USERVER_IPC
+#  endif
+#  ifdef USERVER_UDP
+#  undef USERVER_UDP
+#  endif
 #  include <ulib/ssl/net/sslsocket.h>
 #  define Server UServer<USSLSocket>
 #elif defined(U_UDP_SOCKET)
+#  ifdef USERVER_IPC
+#  undef USERVER_IPC
+#  endif
 #  include <ulib/net/udpsocket.h>
 #  define Server UServer<UUDPSocket>
 #elif defined(U_UNIX_SOCKET)
+#  ifdef USERVER_IPC
+#  undef USERVER_IPC
+#  endif
+#  ifdef USERVER_UDP
+#  undef USERVER_UDP
+#  endif
 #  include <ulib/net/unixsocket.h>
 #  define Server UServer<UUnixSocket>
 #elif defined(U_TCP_SOCKET)
+#  ifdef USERVER_IPC
+#  undef USERVER_IPC
+#  endif
+#  ifdef USERVER_UDP
+#  undef USERVER_UDP
+#  endif
 #  include <ulib/net/tcpsocket.h>
 #  define Server UServer<UTCPSocket>
 #else
@@ -58,7 +79,7 @@ public:
 
       if (UApplication::isOptions()) cfg_str = opt['c'];
 
-      // argpmanage file configuration
+      // manage file configuration
 
       if (cfg_str.empty()) cfg_str = U_STRING_FROM_CONSTANT(U_SYSCONFDIR "/userver.cfg");
 
@@ -118,7 +139,7 @@ public:
       // PREFORK_CHILD  number of child server processes created at startup ( 0 - serialize, no forking
       //                                                                      1 - classic, forking after accept client)
       //                                                                     >1 - pool of process serialize plus monitoring process)
-      //argp
+      //
       // CRASH_COUNT         this is the threshold for the number of crash of child server processes
       // CRASH_EMAIL_NOTIFY  the email address to send a message whenever the number of crash > CRASH_COUNT
       // ---------------------------------------------------------------------------------------------------------------------------------------

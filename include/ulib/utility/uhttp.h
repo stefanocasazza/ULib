@@ -20,6 +20,7 @@
 #include <ulib/net/server/server.h>
 #include <ulib/utility/string_ext.h>
 #include <ulib/utility/data_session.h>
+#include <ulib/net/server/client_image.h>
 
 #if defined(U_ALIAS) && defined(USE_LIBPCRE) // REWRITE RULE
 #  include <ulib/pcre/pcre.h>
@@ -1631,6 +1632,7 @@ private:
    U_DISALLOW_COPY_AND_ASSIGN(UHTTP)
 
    friend class UHTTP2;
+   friend class UHTTP3;
    friend class USSIPlugIn;
    friend class UHttpPlugIn;
    friend class UProxyPlugIn;

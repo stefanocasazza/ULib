@@ -1308,6 +1308,7 @@ dnl initialize all the info variables to 'no'
      ulib_libz_msg="no (--with-libz)"
 ulib_libzopfli_msg="no (--with-libzopfli)"
 ulib_libbrotli_msg="no (--with-libbrotli)"
+ulib_libquiche_msg="no (--with-libquiche)"
    ulib_libtdb_msg="no (--with-libtdb)"
      ulib_curl_msg="no (--with-curl)"
     ulib_expat_msg="no (--with-expat)"
@@ -1348,49 +1349,6 @@ if test "$ulib_ipv6_msg" = "enabled"; then
 	AC_DEFINE(ENABLE_IPV6,  1, [Define if  enable ipv6 support])
 else
 	AC_DEFINE(DISABLE_IPV6, 1, [Define if disable ipv6 support])
-fi
-
-AC_MSG_CHECKING(if you want to enable build of examples)
-AC_ARG_ENABLE(examples,[  --enable-examples         enable building of examples [[default=yes]]])
-
-if test -z "$enable_examples" -a "$enable_shared" = "yes"; then
-	enable_examples="yes"
-fi
-
-AM_CONDITIONAL(USERVER_IPC, false)
-AM_CONDITIONAL(USERVER_UDP, false)
-
-if test "$enable_examples" = "yes"; then
-   AC_MSG_RESULT(yes)
-	ulib_examples="enabled"
-	AM_CONDITIONAL(ENABLE_EXAMPLES, true)
-
-	AC_MSG_CHECKING(if you want to build userver_ipc)
-	AC_ARG_WITH(userver-ipc,
-	[  --with-userver-ipc      Enable building of userver_ipc, default is disabled],
-	[use_userver_ipc=$withval],
-	[use_userver_ipc=no])
-	AC_MSG_RESULT($use_userver_ipc)
-
-	if test "$use_userver_ipc" = "yes" ; then
-		AM_CONDITIONAL(USERVER_IPC, true)
-		AC_DEFINE(USERVER_IPC, 1, [Define if use userver_ipc])
-	fi
-
-	AC_MSG_CHECKING(if you want to build userver_udp)
-	AC_ARG_WITH(userver-udp,
-	[  --with-userver-udp      Enable building of userver_udp, default is disabled],
-	[use_userver_udp=$withval],
-	[use_userver_udp=no])
-	AC_MSG_RESULT($use_userver_udp)
-
-	if test "$use_userver_udp" = "yes" ; then
-		AM_CONDITIONAL(USERVER_UDP, true)
-		AC_DEFINE(USERVER_UDP, 1, [Define if use userver_udp])
-	fi
-else
-   AC_MSG_RESULT(no)
-	AM_CONDITIONAL(ENABLE_EXAMPLES, false)
 fi
 
 AM_CONDITIONAL(ENABLE_SHARED, false)
@@ -1488,6 +1446,7 @@ AC_MSG_RESULT($use_distcc)
 libz_version="unknow"
 libzopfli_version="unknown"
 libbrotli_version="unknown"
+libquiche_version="unknown"
 libtdb_version="unknown"
 pcre_version="unknown"
 ldap_version="unknown"
@@ -1573,6 +1532,10 @@ fi
 
 if test "$USE_LIBBROTLI" = "yes"; then
 	ulib_libbrotli_msg="yes ( $libbrotli_version )"
+fi
+
+if test "$USE_LIBQUICHE" = "yes"; then
+	ulib_libquiche_msg="yes ( $libquiche_version )"
 fi
 
 if test "$USE_LIBTDB" = "yes"; then
@@ -2070,6 +2033,7 @@ AC_DEFINE_UNQUOTED(_EXPAT_VERSION,		 "$expat_version",		[Expat version])
 AC_DEFINE_UNQUOTED(_LIBZ_VERSION,		 "$libz_version",			[libz - general purpose compression library version])
 AC_DEFINE_UNQUOTED(_LIBZOPFLI_VERSION,	 "$libzopfli_version",	[libzopfli - google compression library version])
 AC_DEFINE_UNQUOTED(_LIBBROTLI_VERSION,	 "$libbrotli_version",	[libbrotli - google compression library version])
+AC_DEFINE_UNQUOTED(_LIBQUICHE_VERSION,	 "$libquiche_version",	[libquiche - library version of implementation of the QUIC transport protocol and HTTP/3])
 AC_DEFINE_UNQUOTED(_LIBTDB_VERSION,		 "$libtdb_version",		[libtdb - samba Trivial DB library version])
 AC_DEFINE_UNQUOTED(_LIBSSH_VERSION,		 "$libssh_version",		[libSSH version])
 AC_DEFINE_UNQUOTED(_SSL_VERSION,			 "$ssl_version",			[SSL version])
@@ -2540,6 +2504,52 @@ fi
 
 if test "$enable_http2" = "yes"; then
 	AM_CONDITIONAL(HTTP2, true)
+fi
+
+AC_MSG_CHECKING(if you want to enable build of examples)
+AC_ARG_ENABLE(examples,[  --enable-examples       enable building of examples [[default=yes]]])
+
+if test -z "$enable_examples" -a "$enable_shared" = "yes"; then
+	enable_examples="yes"
+fi
+
+AM_CONDITIONAL(USERVER_IPC, false)
+
+if test "$enable_examples" = "yes"; then
+   AC_MSG_RESULT(yes)
+	ulib_examples="enabled"
+	AM_CONDITIONAL(ENABLE_EXAMPLES, true)
+
+	AC_MSG_CHECKING(if you want to build userver_ipc)
+	AC_ARG_WITH(userver-ipc,
+	[  --with-userver-ipc      Enable building of userver_ipc, default is disabled],
+	[use_userver_ipc=$withval],
+	[use_userver_ipc=no])
+	AC_MSG_RESULT($use_userver_ipc)
+
+	if test "$use_userver_ipc" = "yes" ; then
+		AM_CONDITIONAL(USERVER_IPC, true)
+		AC_DEFINE(USERVER_IPC, 1, [Define if use userver_ipc])
+	fi
+
+	AC_MSG_CHECKING(if you want to build userver_udp)
+	AC_ARG_WITH(userver-udp,
+	[  --with-userver-udp      Enable building of userver_udp, default is disabled],
+	[use_userver_udp=$withval],
+	[])
+	AC_MSG_RESULT($use_userver_udp)
+else
+   AC_MSG_RESULT(no)
+	AM_CONDITIONAL(ENABLE_EXAMPLES, false)
+fi
+
+AM_CONDITIONAL(HTTP3, false)
+AM_CONDITIONAL(USERVER_UDP, false)
+
+if test "x$use_userver_udp" != "xno" -a "$enable_http3" = "yes" -a "$USE_LIBQUICHE" = "yes"; then
+	AM_CONDITIONAL(HTTP3, true)
+	AM_CONDITIONAL(USERVER_UDP, true)
+	AC_DEFINE(USERVER_UDP, 1, [Define if use userver_udp])
 fi
 
 CXXFLAGS="$CXXFLAGS -fno-exceptions"
@@ -3115,6 +3125,7 @@ AC_MSG_NOTICE([Configured to build src/ulib/lib${ULIB}:
            LIBZ support: ${ulib_libz_msg}
       LIBZOPFLI support: ${ulib_libzopfli_msg}
       LIBBROTLI support: ${ulib_libbrotli_msg}
+      LIBQUICHE support: ${ulib_libquiche_msg}
          LIBTDB support: ${ulib_libtdb_msg}
            PCRE support: ${ulib_pcre_msg}
             SSL support: ${ulib_ssl_msg}

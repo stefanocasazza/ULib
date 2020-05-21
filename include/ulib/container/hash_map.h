@@ -287,7 +287,7 @@ public:
 
    void* erase(const char* k, uint32_t klen)
       {
-      U_TRACE(0, "UHashMap<void*>::erase(%.*S,%u)", klen, k, klen)
+      U_TRACE(0, "UHashMap<void*>::erase(%#.*S,%u)", klen, k, klen)
 
       setKey(k, klen);
 
@@ -535,7 +535,7 @@ protected:
 
    static void setKey(const char* k, uint32_t klen)
       {
-      U_TRACE(0, "UHashMap<void*>::setKey(%.*S,%u)", klen, k, klen)
+      U_TRACE(0, "UHashMap<void*>::setKey(%#.*S,%u)", klen, k, klen)
 
       U_INTERNAL_ASSERT_POINTER(k)
       U_INTERNAL_ASSERT_MAJOR(klen, 0)
