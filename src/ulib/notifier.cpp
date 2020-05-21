@@ -1363,52 +1363,58 @@ int UNotifier::waitForRead(int fd, int timeoutMS)
 }
 
 #ifdef HAVE_EPOLL_WAIT
-bool USocket::beginAsynchronousConnect(const UString& server, unsigned int iServPort)
+bool UNotifier::waitOnAsynchronousConnects(const UVector<UEventFd *>& waiting, int timeoutMS)
 {
-   U_TRACE(1, "USocket::beginAsynchronousConnect(%V,%u)", server.rep, iServPort)
+   U_TRACE_NO_PARAM(0, "UNotifier::waitOnAsynchronousConnects()");
 
-   U_CHECK_MEMORY
+   size_t waitingOnNConnects = waiting.size();
 
-   U_INTERNAL_ASSERT(server.isNullTerminated())
+   int epollfd = U_SYSCALL(epoll_create1, "%d", 0);
 
-   if (isOpen() == false) _socket();
+   struct epoll_event *events;
+   struct epoll_event *pevents;
+      
+   size_t maxConnects = waitingOnNConnects + 1;
+   events = pevents = (struct epoll_event*) UMemoryPool::malloc(maxConnects, sizeof(struct epoll_event), true);
 
-   if (cRemoteAddress.setHostName(server, U_socket_IPv6(this)))
+   for (UEventFd *waiter : waiting)
    {
-      setNonBlocking(); // we assume all sockets are blocking, so we will set nonBlocking for connect then unset back to blocking
-
-      SocketAddress cServer(iRemotePort = iServPort, cRemoteAddress);
-
-      /*
-      Yes, a non-blocking connect() can return 0 (which means success), although this is not likely to happen with TCP. "Immediately" means that the kernel does not have to wait to determine the status. Situations where you could see this include
-
-         1) UDP sockets, where connect() is basically advisory, allowing send() to be used later, rather than sendto().
-
-         2) Streaming UNIX domain sockets, where the peer is in the same kernel and thus could be scrutinized immediately.
-
-         3) A TCP connection to 127.0.0.1 (localhost). 
-      */
-
-      switch (U_FF_SYSCALL(connect, "%d,%p,%d", getFd(), (sockaddr*)cServer, cServer.sizeOf()))
-      {
-         case 0:
-         {
-            iState = CONNECT;
-            U_RETURN(true);
-         }
-         case -1:
-         {
-            if (errno == EINPROGRESS) U_RETURN(true);
-         }
-         default:
-         {
-            _close_socket();
-            U_RETURN(false);
-         }
-      }
+      struct epoll_event _events = { POLLOUT, { waiter } };
+      (void) U_FF_SYSCALL(epoll_ctl, "%d,%d,%d,%p", epollfd, EPOLL_CTL_ADD, waiter->UEventFd::fd, &_events);
    }
-   
-   U_RETURN(false);
+
+   bool result = true;
+
+   do
+   {
+      int nfd_ready = U_FF_SYSCALL(epoll_wait, "%d,%p,%u,%d", epollfd, events, waitingOnNConnects, timeoutMS); 
+
+      if (nfd_ready > 0)
+      {
+         waitingOnNConnects -= nfd_ready;
+         pevents = events;
+
+         do
+         {
+            UEventFd *waiter = (UEventFd*)events->data.ptr;
+            waiter->handlerConnect(); // it's the responsibility of the wrapper to check if the connect completed succesfully or not
+            
+            pevents++;
+
+         } while (--nfd_ready > 0);
+      }
+      else 
+      {
+         // either timed out or failed
+         result = false;
+         break;
+      }
+   } while (waitingOnNConnects > 0);
+
+   UMemoryPool::_free(events, maxConnects, sizeof(struct epoll_event));
+   (void)U_FF_SYSCALL(close, "%d", epollfd);
+
+   U_RETURN(result);
 }
 #endif
 
