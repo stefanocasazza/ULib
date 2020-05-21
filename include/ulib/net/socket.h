@@ -673,6 +673,9 @@ public:
     */
 
    virtual bool connectServer(const UString& server, unsigned int iServPort, int timeoutMS = 0);
+	
+	// this method initiates an asynchronous connection that you must later wait on with UNotifier::waitOnAsynchronousConnects
+   virtual bool beginAsynchronousConnect(const UString& server, unsigned int iServPort);
 
    /**
     * This method is called to receive a block of data on the connected socket.
