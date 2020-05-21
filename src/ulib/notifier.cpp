@@ -1362,6 +1362,56 @@ int UNotifier::waitForRead(int fd, int timeoutMS)
    U_RETURN(ret);
 }
 
+#ifdef HAVE_EPOLL_WAIT
+bool USocket::beginAsynchronousConnect(const UString& server, unsigned int iServPort)
+{
+   U_TRACE(1, "USocket::beginAsynchronousConnect(%V,%u)", server.rep, iServPort)
+
+   U_CHECK_MEMORY
+
+   U_INTERNAL_ASSERT(server.isNullTerminated())
+
+   if (isOpen() == false) _socket();
+
+   if (cRemoteAddress.setHostName(server, U_socket_IPv6(this)))
+   {
+      setNonBlocking(); // we assume all sockets are blocking, so we will set nonBlocking for connect then unset back to blocking
+
+      SocketAddress cServer(iRemotePort = iServPort, cRemoteAddress);
+
+      /*
+      Yes, a non-blocking connect() can return 0 (which means success), although this is not likely to happen with TCP. "Immediately" means that the kernel does not have to wait to determine the status. Situations where you could see this include
+
+         1) UDP sockets, where connect() is basically advisory, allowing send() to be used later, rather than sendto().
+
+         2) Streaming UNIX domain sockets, where the peer is in the same kernel and thus could be scrutinized immediately.
+
+         3) A TCP connection to 127.0.0.1 (localhost). 
+      */
+
+      switch (U_FF_SYSCALL(connect, "%d,%p,%d", getFd(), (sockaddr*)cServer, cServer.sizeOf()))
+      {
+         case 0:
+         {
+            iState = CONNECT;
+            U_RETURN(true);
+         }
+         case -1:
+         {
+            if (errno == EINPROGRESS) U_RETURN(true);
+         }
+         default:
+         {
+            _close_socket();
+            U_RETURN(false);
+         }
+      }
+   }
+   
+   U_RETURN(false);
+}
+#endif
+
 int UNotifier::waitForWrite(int fd, int timeoutMS)
 {
    U_TRACE(0, "UNotifier::waitForWrite(%d,%d)", fd, timeoutMS)
