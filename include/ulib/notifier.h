@@ -185,7 +185,11 @@ public:
 #  endif
       }
 #endif
-
+	
+#ifdef HAVE_EPOLL_WAIT
+   static bool waitOnAsynchronousConnects(const UVector<UEventFd *>& waiting, int timeoutMS = -1);
+#endif
+							
    // READ - WRITE
 
    // param timeoutMS specified the timeout value, in milliseconds.
