@@ -1173,6 +1173,7 @@ ok:      setLocal();
    U_RETURN(false);
 }
 
+#ifdef HAVE_EPOLL_WAIT
 bool USocket::beginAsynchronousConnect(const UString& server, unsigned int iServPort)
 {
    U_TRACE(1, "USocket::beginAsynchronousConnect(%V,%u)", server.rep, iServPort)
@@ -1199,27 +1200,36 @@ bool USocket::beginAsynchronousConnect(const UString& server, unsigned int iServ
          3) A TCP connection to 127.0.0.1 (localhost). 
       */
 
-      switch (U_FF_SYSCALL(connect, "%d,%p,%d", getFd(), (sockaddr*)cServer, cServer.sizeOf()))
-      {
-         case 0:
-         {
-            iState = CONNECT;
-            U_RETURN(true);
-         }
-         case -1:
-         {
-            if (errno == EINPROGRESS) U_RETURN(true);
-         }
-         default:
-         {
-            _close_socket();
-            U_RETURN(false);
-         }
-      }
+      int result = U_FF_SYSCALL(connect, "%d,%p,%d", getFd(), (sockaddr*)cServer, cServer.sizeOf());
+
+      if ( (result == -1 && errno == EINPROGRESS) || (result == 0 && finishAsynchronousConnect()) ) U_RETURN(true);
+
+      _close_socket();
    }
    
    U_RETURN(false);
 }
+
+bool USocket::finishAsynchronousConnect()
+{
+   setBlocking();
+
+   uint32_t error = U_NOT_FOUND, tmp = sizeof(uint32_t);
+
+   (void)getSockOpt(SOL_SOCKET, SO_ERROR, (void*)&error, tmp);
+
+   if (error == 0)
+   {
+      iState = CONNECT;
+      U_RETURN(true);
+   }
+   else
+   {
+      iState = -(errno = error);
+      U_RETURN(false);
+   }
+}
+#endif
 
 int USocket::send(const char* pData, uint32_t iDataLen)
 {
