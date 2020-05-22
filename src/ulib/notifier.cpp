@@ -1363,11 +1363,11 @@ int UNotifier::waitForRead(int fd, int timeoutMS)
 }
 
 #ifdef HAVE_EPOLL_WAIT
-bool UNotifier::waitOnAsynchronousConnects(const UVector<UEventFd *>& waiting, int timeoutMS)
+bool UNotifier::waitOnAsynchronousBatch(waitOnAsynchronousBatch(const UVector<UEventFd *>& waiting, int op, int timeoutMS)
 {
-   U_TRACE_NO_PARAM(0, "UNotifier::waitOnAsynchronousConnects()");
+   U_TRACE_NO_PARAM(0, "UNotifier::waitOnAsynchronousBatch()");
 
-   size_t waitingOnNConnects = waiting.size();
+   size_t waitingOnN = waiting.size();
 
    int epollfd = U_SYSCALL(epoll_create1, "%d", 0);
 
@@ -1378,38 +1378,63 @@ bool UNotifier::waitOnAsynchronousConnects(const UVector<UEventFd *>& waiting, i
 
    for (UEventFd *waiter : waiting)
    {
-      struct epoll_event _events = { POLLOUT, { waiter } };
+      struct epoll_event _events = { op, { waiter } };
       (void) U_FF_SYSCALL(epoll_ctl, "%d,%d,%d,%p", epollfd, EPOLL_CTL_ADD, waiter->UEventFd::fd, &_events);
    }
 
    bool result = true;
 
+   UTimeVal *timer;
+   if (timeoutMS > 0) U_NEW(UTimeVal, timer, UTimeVal);
+
    do
    {
-      int nfd_ready = U_FF_SYSCALL(epoll_wait, "%d,%p,%u,%d", epollfd, events, waitingOnNConnects, timeoutMS); 
+      if (timer) timer->start();
+
+      int nfd_ready = U_FF_SYSCALL(epoll_wait, "%d,%p,%u,%d", epollfd, events, waitingOnN, timeoutMS); 
 
       if (nfd_ready > 0)
       {
-         waitingOnNConnects -= nfd_ready;
+         // if it had timed out it would have returned 0, so we still have some time left
+         if (timer) timeoutMS -= timer->stop();
+
+         waitingOnN -= nfd_ready;
          pevents = events;
 
          do
          {
             UEventFd *waiter = (UEventFd*)events->data.ptr;
-            waiter->handlerConnect(); // it's the responsibility of the wrapper to check if the connect completed succesfully or not
-            
+
+            switch (op)
+            {
+               case POLLOUT: 
+               {
+                  // it's the responsibility of the wrapper to check if the connect completed succesfully or not
+                  waiter->handlerConnect();
+                  break;
+               }
+               case POLLIN:
+               {
+                  waiter->handlerRead();
+                  break;
+               }
+               default: break;
+            }
+
             pevents++;
 
          } while (--nfd_ready > 0);
       }
       else 
       {
+   fail:
          // either timed out or failed
          result = false;
          break;
       }
-   } while (waitingOnNConnects > 0);
+   } while (waitingOnN > 0);
 
+   if (timer) U_DELETE(timer);
    UMemoryPool::_free(events, waiting.size() + 1, sizeof(struct epoll_event));
    (void)U_FF_SYSCALL(close, "%d", epollfd);
 
