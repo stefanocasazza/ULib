@@ -187,7 +187,7 @@ public:
 #endif
 	
 #ifdef HAVE_EPOLL_WAIT
-   static bool waitOnAsynchronousConnects(const UVector<UEventFd *>& waiting, int timeoutMS = -1);
+   static bool waitOnAsynchronousBatch(const UVector<UEventFd *>& waiting, int op, int timeoutMS = -1);
 #endif
 							
    // READ - WRITE
