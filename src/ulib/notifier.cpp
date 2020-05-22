@@ -1374,8 +1374,7 @@ bool UNotifier::waitOnAsynchronousConnects(const UVector<UEventFd *>& waiting, i
    struct epoll_event *events;
    struct epoll_event *pevents;
       
-   size_t maxConnects = waitingOnNConnects + 1;
-   events = pevents = (struct epoll_event*) UMemoryPool::malloc(maxConnects, sizeof(struct epoll_event), true);
+   events = pevents = (struct epoll_event*) UMemoryPool::malloc(waiting.size() + 1, sizeof(struct epoll_event), true);
 
    for (UEventFd *waiter : waiting)
    {
@@ -1411,7 +1410,7 @@ bool UNotifier::waitOnAsynchronousConnects(const UVector<UEventFd *>& waiting, i
       }
    } while (waitingOnNConnects > 0);
 
-   UMemoryPool::_free(events, maxConnects, sizeof(struct epoll_event));
+   UMemoryPool::_free(events, waiting.size() + 1, sizeof(struct epoll_event));
    (void)U_FF_SYSCALL(close, "%d", epollfd);
 
    U_RETURN(result);
