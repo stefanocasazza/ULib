@@ -1843,7 +1843,7 @@ URDBObjectHandler<UDataStorage*>::URDBObjectHandler(const UString& pathdb, int _
       {
       uint32_t sz = pDataStorage->size();
 
-      if (sz) pDataStorage->recdata = (char*) UMemoryPool::malloc(sz);
+      if (sz) pDataStorage->recdata = (char*) UMemoryPool::u_malloc(sz);
 
       U_INTERNAL_DUMP("pDataStorage->recdata(%u) = %p", sz, pDataStorage->recdata)
       }

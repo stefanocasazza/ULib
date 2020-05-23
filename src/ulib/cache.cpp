@@ -111,7 +111,7 @@ bool UCache::open(const UString& path, const UString& dir, const UString* enviro
 
       if (( _x.size() == 0                          ||
            (_x.fstat(), _x.st_mtime < _y.st_mtime)) &&
-          (UDirWalk::setFollowLinks(true), n = dirwalk.walk(vec1)))
+          (UDirWalk::setFollowLinks(true), (n = dirwalk.walk(vec1))))
          {
          exist = false;
 

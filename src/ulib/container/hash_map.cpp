@@ -61,7 +61,7 @@ void UHashMap<void*>::_allocate(uint32_t n)
 
    U_INTERNAL_ASSERT_EQUALS(n & (n-1), 0)
 
-   info  = (uint8_t*) U_SYSCALL(malloc, "%u", n*(1+UHashMapNode::size())); // UMemoryPool::malloc(n, 1+UHashMapNode::size(), false);
+   info  = (uint8_t*) U_SYSCALL(malloc, "%u", n*(1+UHashMapNode::size())); // UMemoryPool::u_malloc(n, 1+UHashMapNode::size(), false);
    table = (char*) (info + n);
 
    U_INTERNAL_ASSERT_POINTER_MSG(info, "cannot allocate memory, exiting...")

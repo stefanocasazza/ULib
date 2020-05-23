@@ -185,7 +185,12 @@ public:
 #  endif
       }
 #endif
-
+   
+#ifdef HAVE_EPOLL_WAIT
+   // this timeout does not include time spent in event handlers, only time waiting on epoll
+   static bool waitOnAsynchronousBatch(const UVector<UEventFd *>& waiting, int op, int timeoutMS = -1);
+#endif
+                     
    // READ - WRITE
 
    // param timeoutMS specified the timeout value, in milliseconds.

@@ -16,6 +16,12 @@
 
 #include <ulib/internal/common.h>
 
+#ifdef USE_LIBMIMALLOC
+#  include <mimalloc.h> // mimalloc-new-delete.h
+#  define malloc(x) mi_malloc(x)
+#  define   free(x) mi_free(x)
+#endif
+
 // ---------------------------------------------------------------------------------------------------------------
 // U_STACK_TYPE_[0-9] 'type' stack for which the request is serviced with preallocation
 
@@ -524,7 +530,7 @@ public:
 
 #endif
 
-   static void*  malloc(uint32_t   num, uint32_t type_size = sizeof(char), bool bzero = false);
+   static void* u_malloc(uint32_t num, uint32_t type_size = sizeof(char), bool bzero = false);
 
 #ifdef DEBUG
    static const char* obj_class;
@@ -602,7 +608,7 @@ template <class T> bool u_check_memory_vector(T* _vec, uint32_t n)
 
 #  define U_MEMORY_ALLOCATOR \
 void* operator new(  size_t sz)          { U_INTERNAL_ASSERT(sz <= U_MAX_SIZE_PREALLOCATE); return UMemoryPool::pop(U_SIZE_TO_STACK_INDEX(sz)); } \
-void* operator new[](size_t sz)          {                                                  return UMemoryPool::malloc(sz); }
+void* operator new[](size_t sz)          {                                                  return UMemoryPool::u_malloc(sz); }
 #     define U_MEMORY_DEALLOCATOR \
 void  operator delete(  void* _ptr, size_t sz) { U_INTERNAL_ASSERT(sz <= U_MAX_SIZE_PREALLOCATE); UMemoryPool::push( _ptr, U_SIZE_TO_STACK_INDEX(sz)); } \
 void  operator delete[](void* _ptr, size_t sz) {                                                  UMemoryPool::_free(_ptr, sz); }

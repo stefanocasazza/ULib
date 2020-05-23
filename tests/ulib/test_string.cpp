@@ -1504,7 +1504,7 @@ U_EXPORT main(int argc, char* argv[])
 
    U_ASSERT( byte_count == U_STRING_FROM_CONSTANT("4.0 GiB") )
 
-#if defined(U_STDCPP_ENABLE) && defined(HAVE_CXX20) && defined(U_LINUX)
+#if defined(U_STDCPP_ENABLE) && defined(HAVE_CXX20) && defined(U_LINUX) && !defined(__clang__) && GCC_VERSION_NUM < 100100
    UString token     = U_STRING_FROM_CONSTANT("a"),
            firstname = U_STRING_FROM_CONSTANT("Victor"),
            lastname  = U_STRING_FROM_CONSTANT("Stewart"),

@@ -3172,6 +3172,7 @@ public:
    }
 };
 
+#  if defined(U_STDCPP_ENABLE) && defined(HAVE_CXX20) && defined(U_LINUX) && !defined(__clang__) && GCC_VERSION_NUM < 100100
 template<typename T>
 concept bool UCompileTimeStringType = requires(T string) {
    is_ctv_v<T>;
@@ -3188,7 +3189,7 @@ inline bool operator==(const UCompileTimeStringType& lhs, const UString& rhs){ r
 
 inline bool operator!=(const UString& lhs, const UCompileTimeStringType& rhs){ return !lhs.equal(rhs.string); }
 inline bool operator!=(const UCompileTimeStringType& lhs, const UString& rhs){ return !rhs.equal(lhs.string); }
-
+#  endif
 #  endif
 #endif
 #endif
