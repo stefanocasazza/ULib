@@ -187,8 +187,7 @@ public:
 #endif
    
 #ifdef HAVE_EPOLL_WAIT
-   // this timeout does not include time spent in event handlers, only time waiting on epoll
-   static bool waitOnAsynchronousBatch(const UVector<UEventFd *>& waiting, int op, int timeoutMS = -1);
+   static bool waitOnAsynchronousBatch(const UVector<UEventFd*>& waiting, int op, int timeoutMS = -1); // timeout does not include time spent in event handlers, only time waiting on epoll
 #endif
                      
    // READ - WRITE
@@ -235,7 +234,7 @@ protected:
    static fd_set fd_set_read, fd_set_write;
    static int fd_set_max, fd_read_cnt, fd_write_cnt;
 
-   static int  getNFDS();     // nfds is the highest-numbered file descriptor in any of the three sets, plus 1.
+   static int  getNFDS();     // nfds is the highest-numbered file descriptor in any of the three sets, plus 1
    static void removeBadFd(); // rimuove i descrittori di file diventati invalidi (possibile con EPIPE)
 # endif
 #endif

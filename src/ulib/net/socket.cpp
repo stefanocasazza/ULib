@@ -1185,28 +1185,31 @@ bool USocket::beginAsynchronousConnect(const UString& server, unsigned int iServ
    if (isOpen() == false) _socket();
 
    if (cRemoteAddress.setHostName(server, U_socket_IPv6(this)))
-   {
+      {
       setNonBlocking(); // we assume all sockets are blocking, so we will set nonBlocking for connect then unset back to blocking
 
       SocketAddress cServer(iRemotePort = iServPort, cRemoteAddress);
 
-      /*
-      Yes, a non-blocking connect() can return 0 (which means success), although this is not likely to happen with TCP. "Immediately" means that the kernel does not have to wait to determine the status. Situations where you could see this include
-
-         1) UDP sockets, where connect() is basically advisory, allowing send() to be used later, rather than sendto().
-
-         2) Streaming UNIX domain sockets, where the peer is in the same kernel and thus could be scrutinized immediately.
-
-         3) A TCP connection to 127.0.0.1 (localhost). 
-      */
+      /**
+       * Yes, a non-blocking connect() can return 0 (which means success), although this is not likely to happen with TCP.
+       * "Immediately" means that the kernel does not have to wait to determine the status. Situations where you could see this include:
+       *
+       * 1) UDP sockets, where connect() is basically advisory, allowing send() to be used later, rather than sendto()
+       * 2) Streaming UNIX domain sockets, where the peer is in the same kernel and thus could be scrutinized immediately
+       * 3) A TCP connection to 127.0.0.1 (localhost)
+       */
 
       int result = U_FF_SYSCALL(connect, "%d,%p,%d", getFd(), (sockaddr*)cServer, cServer.sizeOf());
 
-      if ( (result == -1 && errno == EINPROGRESS) || (result == 0 && finishAsynchronousConnect()) ) U_RETURN(true);
+      if ((result == -1 && errno == EINPROGRESS) ||
+          (result ==  0 && finishAsynchronousConnect()))
+         {
+         U_RETURN(true);
+         }
 
       _close_socket();
-   }
-   
+      }
+
    U_RETURN(false);
 }
 

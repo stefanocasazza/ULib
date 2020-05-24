@@ -18,6 +18,7 @@
 
 #ifdef USE_LIBMIMALLOC
 #  include <mimalloc.h> // mimalloc-new-delete.h
+#  define calloc(x) mi_calloc(x)
 #  define malloc(x) mi_malloc(x)
 #  define   free(x) mi_free(x)
 #endif

@@ -88,10 +88,10 @@ public:
 
    // method VIRTUAL to define
    
-   virtual int handlerConnect() { return U_NOTIFIER_DELETE; }
    virtual int handlerRead()    { return U_NOTIFIER_DELETE; }
    virtual int handlerWrite()   { return U_NOTIFIER_DELETE; }
    virtual int handlerTimeout() { return U_NOTIFIER_DELETE; }
+   virtual int handlerConnect() { return U_NOTIFIER_DELETE; }
 
    virtual void handlerDelete() { delete this; }
 

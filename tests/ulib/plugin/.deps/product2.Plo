@@ -258,9 +258,8 @@ plugin/product2.lo: plugin/product2.cpp /usr/include/stdc-predef.h \
  /usr/include/libxml2/libxml/threads.h \
  ../../include/ulib/internal/macro.h \
  ../../include/ulib/internal/objectIO.h \
- ../../include/ulib/internal/memory_pool.h /usr/local/include/mimalloc.h \
- /usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/stdbool.h \
- /usr/include/dlfcn.h /usr/include/bits/dlfcn.h
+ ../../include/ulib/internal/memory_pool.h /usr/include/dlfcn.h \
+ /usr/include/bits/dlfcn.h
 /usr/include/stdc-predef.h:
 plugin/product.h:
 ../../include/ulib/dynamic/plugin.h:
@@ -613,7 +612,5 @@ plugin/product.h:
 ../../include/ulib/internal/macro.h:
 ../../include/ulib/internal/objectIO.h:
 ../../include/ulib/internal/memory_pool.h:
-/usr/local/include/mimalloc.h:
-/usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/stdbool.h:
 /usr/include/dlfcn.h:
 /usr/include/bits/dlfcn.h:

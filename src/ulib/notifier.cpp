@@ -1367,33 +1367,33 @@ bool UNotifier::waitOnAsynchronousBatch(const UVector<UEventFd*>& waiting, int o
 {
    U_TRACE_NO_PARAM(0, "UNotifier::waitOnAsynchronousBatch()");
 
-   uint32_t waitingOnN = waiting.size();
-
+   int nfd_ready;
+   UEventFd* waiter;
+   bool result = true;
+   UTimeVal* timer = U_NULLPTR;
+   struct epoll_event*  levents;
+   struct epoll_event* lpevents;
+   int32_t waitingOnN = waiting.size();
    int epollfd = U_SYSCALL(epoll_create1, "%d", 0);
 
-   struct epoll_event*  events;
-   struct epoll_event* pevents;
-      
-    events =
-   pevents = (struct epoll_event*) UMemoryPool::u_malloc(waitingOnN + 1, sizeof(struct epoll_event), true);
-
-   for (uint32_t i = 0; i < waitingOnN; ++i)
+   for (uint32_t i = 0; i < (uint32_t)waitingOnN; ++i)
       {
-      UEventFd* waiter           = waiting.at(i);
+      waiter = waiting.at(i);
+
       struct epoll_event _events = { (uint32_t)op, { waiter } };
 
       (void) U_FF_SYSCALL(epoll_ctl, "%d,%d,%d,%p", epollfd, EPOLL_CTL_ADD, waiter->UEventFd::fd, &_events);
       }
 
-   bool result = true;
-   UTimeVal* timer = U_NULLPTR;
-
    if (timeoutMS > 0) U_NEW(UTimeVal, timer, UTimeVal);
+
+    levents =
+   lpevents = (struct epoll_event*) UMemoryPool::u_malloc(waitingOnN + 1, sizeof(struct epoll_event), true);
 
    do {
       if (timer) timer->start();
 
-      int nfd_ready = U_FF_SYSCALL(epoll_wait, "%d,%p,%u,%d", epollfd, events, waitingOnN, timeoutMS); 
+      nfd_ready = U_FF_SYSCALL(epoll_wait, "%d,%p,%u,%d", epollfd, levents, waitingOnN, timeoutMS); 
 
       if (nfd_ready <= 0) // either timed out or failed
          {
@@ -1402,15 +1402,14 @@ bool UNotifier::waitOnAsynchronousBatch(const UVector<UEventFd*>& waiting, int o
          break;
          }
 
-      // if it had timed out it would have returned 0, so we still have some time left
-      if (timer) timeoutMS -= timer->stop();
-
       waitingOnN -= nfd_ready;
 
-      pevents = events;
+      if (timer) timeoutMS -= timer->stop(); // if it had timed out it would have returned 0, so we still have some time left
+
+      lpevents = levents;
 
       do {
-         UEventFd* waiter = (UEventFd*)events->data.ptr;
+         waiter = (UEventFd*)lpevents->data.ptr;
 
          switch (op)
             {
@@ -1419,7 +1418,7 @@ bool UNotifier::waitOnAsynchronousBatch(const UVector<UEventFd*>& waiting, int o
             default:                                break;
             }
 
-         pevents++;
+         ++lpevents;
          }
       while (--nfd_ready > 0);
       }
@@ -1427,7 +1426,7 @@ bool UNotifier::waitOnAsynchronousBatch(const UVector<UEventFd*>& waiting, int o
 
    if (timer) U_DELETE(timer);
 
-   UMemoryPool::_free(events, waiting.size() + 1, sizeof(struct epoll_event));
+   UMemoryPool::_free(levents, waitingOnN + 1, sizeof(struct epoll_event));
 
    (void) U_FF_SYSCALL(close, "%d", epollfd);
 
