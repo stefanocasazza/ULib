@@ -530,7 +530,7 @@ protected:
       U_INTERNAL_ASSERT_EQUALS(_length, 0)
       U_INTERNAL_ASSERT_MAJOR(_capacity, 1)
 
-      U_SYSCALL_VOID(free, "%p", info); // UMemoryPool::_free(info, _capacity, 1+UHashMapNode::size());
+      U_SYSCALL_FREE(info); // UMemoryPool::_free(info, _capacity, 1+UHashMapNode::size());
       }
 
    void init(uint32_t n)

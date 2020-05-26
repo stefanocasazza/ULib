@@ -297,7 +297,7 @@ void UDBI::bind(const UString& v, bool is_null)
 
       (void) escaped_query.append(new_str, sz);
 
-      U_SYSCALL_VOID(free, "%p", new_str);
+      U_SYSCALL_FREE(new_str);
       }
 
    ready_for_input = false;

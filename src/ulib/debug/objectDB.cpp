@@ -80,7 +80,11 @@ public:
       {
       U_INTERNAL_TRACE("UHashMapObjectDumpable::init(%u)", size)
 
-      table = (UHashMapObjectDumpable**) calloc((table_size = U_GET_NEXT_PRIME_NUMBER(size)), sizeof(UHashMapObjectDumpable*));
+#ifdef USE_LIBMIMALLOC
+      table = (UHashMapObjectDumpable**) mi_calloc((table_size = U_GET_NEXT_PRIME_NUMBER(size)), sizeof(UHashMapObjectDumpable*));
+#else
+      table = (UHashMapObjectDumpable**)    calloc((table_size = U_GET_NEXT_PRIME_NUMBER(size)), sizeof(UHashMapObjectDumpable*));
+#endif
       }
 
    static void lookup(void* ptr_object)
@@ -147,7 +151,11 @@ public:
             }
          }
 
+#  ifdef USE_LIBMIMALLOC
+      mi_free(old_table);
+#  else
       free(old_table);
+#  endif
       }
 
    static void insert(UObjectDumpable* dumper)
@@ -169,8 +177,13 @@ public:
          U_DEBUG("UHashMapObjectDumpable::insert() - ptr_object = %p base_class = %s derived_class = %s", dumper->ptr_object, node->objDumper->name_class, dumper->name_class);
          */
 
+#     ifdef USE_LIBMIMALLOC
+         (void) mi_free((void*)node->objDumper->name_file);
+         (void) mi_free((void*)node->objDumper->name_function);
+#     else
          (void) free((void*)node->objDumper->name_file);
          (void) free((void*)node->objDumper->name_function);
+#     endif
 
          delete node->objDumper;
          }
@@ -248,8 +261,13 @@ public:
 
       table[index] = node->next;
 
+#  ifdef USE_LIBMIMALLOC
+      (void) mi_free((void*)node->objDumper->name_file);
+      (void) mi_free((void*)node->objDumper->name_function);
+#  else
       (void) free((void*)node->objDumper->name_file);
       (void) free((void*)node->objDumper->name_function);
+#  endif
 
       delete node->objDumper;
       delete node;
@@ -474,8 +492,13 @@ void UObjectDB::registerObject(UObjectDumpable* dumper)
    U_INTERNAL_ASSERT_POINTER(u_name_function)
 
    dumper->num_line      = u_num_line;
+#ifdef USE_LIBMIMALLOC
+   dumper->name_file     = mi_strdup(u_name_file);
+   dumper->name_function = mi_strdup(u_name_function);
+#else
    dumper->name_file     = strdup(u_name_file);
    dumper->name_function = strdup(u_name_function);
+#endif
 
    UHashMapObjectDumpable::insert(dumper);
 }
@@ -505,7 +528,7 @@ void UObjectDB::dumpObject(UObjectDumpable* dumper)
 
    liov[2].iov_len = sprintf(buffer2, "\n%s(%u)\n", dumper->name_file, dumper->num_line);
 
-   U_SYSCALL_VOID(free, "%p", (void*)dumper->name_file);
+   U_SYSCALL_FREE((void*)dumper->name_file);
 
    liov[3].iov_len  =   strlen(dumper->name_function);
    liov[3].iov_base = (caddr_t)dumper->name_function;
@@ -663,7 +686,7 @@ void UObjectDB::dumpObjects()
 
             _write(liov, 8);
 
-            U_SYSCALL_VOID(free, "%p", (void*)dumper->name_function);
+            U_SYSCALL_FREE((void*)dumper->name_function);
             }
          }
       }

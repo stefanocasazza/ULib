@@ -60,8 +60,8 @@ public:
 
       if (uri)
          {
-         U_SYSCALL_VOID(free, "%p", (void*)uri);
-         U_SYSCALL_VOID(free, "%p", (void*)xptrExpr);
+         U_SYSCALL_FREE((void*)uri);
+         U_SYSCALL_FREE((void*)xptrExpr);
          }
       }
 

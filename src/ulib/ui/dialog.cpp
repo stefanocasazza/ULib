@@ -35,7 +35,7 @@ void UDialog::initialize()
    if ((xdialog = true,  u_pathfind(path, U_NULLPTR, 0, "Xdialog", R_OK | X_OK)) ||
        (xdialog = false, u_pathfind(path, U_NULLPTR, 0,  "dialog", R_OK | X_OK)))
       {
-      path_dialog = strdup(path);
+      path_dialog = U_SYSCALL_STRDUP(path);
 
       U_INTERNAL_ASSERT_MINOR(u__strlen(path_dialog, __PRETTY_FUNCTION__), U_PATH_MAX)
       }

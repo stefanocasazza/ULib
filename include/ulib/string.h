@@ -181,7 +181,7 @@ public:
 #  ifdef DEBUG
       if (memory.invariant() == false)
          {
-         U_ERROR("UStringRep::release() %s - this = %p parent = %p references = %u child = %d _capacity = %u str(%u) = %#.*S",
+         U_ERROR("UStringRep::release() %O - this = %p parent = %p references = %u child = %d _capacity = %u str(%u) = %#.*S",
                   memory.getErrorType(this), this, parent, references, child, _capacity, _length, _length, str);
          }
 #  endif
@@ -2012,8 +2012,13 @@ public:
       return (char*)rep->str;
       }
 
+#ifdef USE_LIBMIMALLOC
+   char* c_strdup() const                                            { return mi_strndup(rep->str, rep->_length); }
+   char* c_strndup(uint32_t pos = 0, uint32_t n = U_NOT_FOUND) const { return mi_strndup(rep->str+pos, rep->fold(pos, n)); }
+#else
    char* c_strdup() const                                            { return strndup(rep->str, rep->_length); }
    char* c_strndup(uint32_t pos = 0, uint32_t n = U_NOT_FOUND) const { return strndup(rep->str+pos, rep->fold(pos, n)); }
+#endif
 
    UString copy() const
       {

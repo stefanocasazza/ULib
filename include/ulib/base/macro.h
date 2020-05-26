@@ -184,8 +184,9 @@
 #define U_1G_MASK      (U_1G-1)
 #define U_PAGEMASK (PAGESIZE-1)
 
-#define U_TO_FREE   ((uint32_t)-2)
-#define U_NOT_FOUND ((uint32_t)-1)
+#define U_NOT_FOUND  ((uint32_t)-1)
+#define U_TO_MI_FREE ((uint32_t)-3)
+#define U_TO_FREE    ((uint32_t)-2)
 
 #define U_ONE_HOUR_IN_SECOND  (60L * 60L)
 #define U_ONE_DAY_IN_SECOND   (24L * U_ONE_HOUR_IN_SECOND)

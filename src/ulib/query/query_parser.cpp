@@ -911,8 +911,8 @@ void UQueryParser::startEvaluate(bPFpr func)
 
    uint32_t sz = termRoots->size();
 
-   negatives = (UVector<UString>**) UMemoryPool::u_malloc(sz, sizeof(void*));
-   positives = (UVector<UString>**) UMemoryPool::u_malloc(sz, sizeof(void*));
+   negatives = (UVector<UString>**) UMemoryPool::cmalloc(sz, sizeof(void*));
+   positives = (UVector<UString>**) UMemoryPool::cmalloc(sz, sizeof(void*));
 
    for (uint32_t i = 0; i < sz; ++i)
       {

@@ -87,8 +87,8 @@ UIptAccount::UIptAccount(bool bSocketIsIPv6) : USocket(bSocketIsIPv6)
 
    // 4096 bytes default buffer should save us from reallocations as it fits 200 concurrent active clients
 
-   data      = UMemoryPool::u_malloc(IPT_ACCOUNT_MIN_BUFSIZE);
-   data_size =                       IPT_ACCOUNT_MIN_BUFSIZE;
+   data      = UMemoryPool::cmalloc(IPT_ACCOUNT_MIN_BUFSIZE);
+   data_size =                      IPT_ACCOUNT_MIN_BUFSIZE;
 #endif
 }
 
@@ -162,7 +162,7 @@ bool UIptAccount::readEntries(const char* table, bool bflush)
 
       UMemoryPool::_free(data, data_size);
 
-      data = UMemoryPool::u_malloc(new_size);
+      data = UMemoryPool::cmalloc(new_size);
 
       data_size = new_size;
       }

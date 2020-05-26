@@ -1,20 +1,20 @@
 [tid 0]<--
-[tid 1763]-->
-{Call   main(1,0x7fff483a07f8)
-test_memerror: ERROR ON MEMORY
+[tid 23640]-->
+{Call   main(1,0x7ffe6d599d78)
+test_memerror: 26/05/20 20:16:08 ERROR ON MEMORY
 -------------------------------------
- pid: 1763
+ pid: 23640
  file: test_memerror.cpp
  line: 26
  function: UInt::operator int() const
- assertion: "((this)->memory.invariant())" [pobj = 0x23d1e10 _this = (nil) - FMR]
+ assertion: "((this)->memory.invariant())" [pobj = 0x506a5420c00 _this = 0x506a54207d0 - ABW]
 -------------------------------------
-test_memerror: ERROR ON MEMORY
+test_memerror: 26/05/20 20:16:08 ERROR ON MEMORY
 -------------------------------------
- pid: 1763
+ pid: 23640
  file: ../../include/ulib/debug/error_memory.h
  line: 28
  function: UMemoryError::~UMemoryError()
- assertion: "(invariant())" [pobj = 0x7fff4839fee0 _this = 0xa1b2c3d000000ff - ABW]
+ assertion: "(invariant())" [pobj = 0x7ffe6d599460 _this = 0xa1b2c3d000000ff - ABW]
 -------------------------------------
-}Return main(1,0x7fff483a07f8) = 0
+}Return main(1,0x7ffe6d599d78) = 0

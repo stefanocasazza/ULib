@@ -62,11 +62,11 @@ void UZIP::clear()
 
       for (uint32_t i = 0; i < npart; ++i)
          {
-         U_SYSCALL_VOID(free, "%p", filenames[i]);
+         U_SYSCALL_FREE(filenames[i]);
          }
 
-      U_SYSCALL_VOID(free, "%p", filenames);
-      U_SYSCALL_VOID(free, "%p", filenames_len);
+      U_SYSCALL_FREE(filenames);
+      U_SYSCALL_FREE(filenames_len);
 
       filenames     = U_NULLPTR;
       filenames_len = U_NULLPTR;
@@ -82,11 +82,11 @@ void UZIP::clear()
 
       for (uint32_t i = 0; i < npart; ++i)
          {
-         U_SYSCALL_VOID(free, "%p", filecontents[i]);
+         U_SYSCALL_FREE(filecontents[i]);
          }
 
-      U_SYSCALL_VOID(free, "%p", filecontents);
-      U_SYSCALL_VOID(free, "%p", filecontents_len);
+      U_SYSCALL_FREE(filecontents);
+      U_SYSCALL_FREE(filecontents_len);
 
       filecontents     = U_NULLPTR;
       filecontents_len = U_NULLPTR;

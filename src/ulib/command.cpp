@@ -34,7 +34,7 @@ void UCommand::freeCommand()
 
    if (pathcmd)
       {
-      U_SYSCALL_VOID(free, "%p", pathcmd);
+      U_SYSCALL_FREE(pathcmd);
 
       pathcmd = U_NULLPTR;
       }
@@ -113,7 +113,7 @@ void UCommand::setCommand()
       {
       U_INTERNAL_ASSERT_RANGE(1,ncmd,U_MAX_ARGS)
 
-      if (buffer[0]) argv[0] = pathcmd = U_SYSCALL(strdup, "%S", buffer);
+      if (buffer[0]) argv[0] = pathcmd = U_SYSCALL_STRDUP(buffer);
 
       U_INTERNAL_DUMP("pathcmd = %S", pathcmd)
 
@@ -121,7 +121,7 @@ void UCommand::setCommand()
 
       uint32_t n = 1+ncmd+1;
 
-      argv_exec = (char**) UMemoryPool::u_malloc(n + U_ADD_ARGS, sizeof(char*)); // U_ADD_ARGS => space for addArgument()...
+      argv_exec = (char**) UMemoryPool::cmalloc(n + U_ADD_ARGS, sizeof(char*)); // U_ADD_ARGS => space for addArgument()...
 
       U_MEMCPY(argv_exec, argv, n * sizeof(char*)); // NB: copy also null terminator...
       }
@@ -145,7 +145,7 @@ uint32_t UCommand::setEnvironment(const UString& env, char**& _envp)
 
    uint32_t n = _nenv + 1; // NB: consider also null terminator...
 
-   _envp = (char**) UMemoryPool::u_malloc(n, sizeof(char*)); // NB: consider also null terminator...
+   _envp = (char**) UMemoryPool::cmalloc(n, sizeof(char*)); // NB: consider also null terminator...
 
    U_MEMCPY(_envp, argp, n * sizeof(char*)); // NB: copy also null terminator...
 
@@ -217,7 +217,7 @@ void UCommand::setNumArgument(uint32_t n, bool bfree)
       {
       while (ncmd != n)
          {
-         U_SYSCALL_VOID(free, "%p", argv_exec[ncmd]);
+         U_SYSCALL_FREE(argv_exec[ncmd]);
 
          --ncmd;
          }

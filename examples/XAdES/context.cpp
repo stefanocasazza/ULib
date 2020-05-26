@@ -920,8 +920,8 @@ bool UTransformCtx::setURI(const char* _uri, xmlNodePtr node)
       U_RETURN(true);
       }
 
-   xptrExpr  = strdup(xptr);
-   this->uri = strndup(_uri, xptr - _uri);
+   xptrExpr  = U_SYSCALL_STRDUP(xptr);
+   this->uri = U_SYSCALL_STRNDUP(_uri, xptr - _uri);
 
    /* do we have barename or full xpointer? */
 

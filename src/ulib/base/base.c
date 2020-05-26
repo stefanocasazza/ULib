@@ -424,9 +424,13 @@ void u_getcwd(void) /* get current working directory */
    U_INTERNAL_TRACE("u_getcwd()")
 
 loop:
+#ifdef USE_LIBMIMALLOC
+   if (u_cwd) mi_free(u_cwd);
+   u_cwd = (char*) mi_malloc(newsize);
+#else
    if (u_cwd) free(u_cwd);
-
    u_cwd = (char*) malloc(newsize);
+#endif
 
    if (getcwd(u_cwd, newsize) == 0 &&
        errno == ERANGE)
@@ -2062,7 +2066,12 @@ empty:      u_put_unalignedp16(bp, U_MULTICHAR_CONSTANT16('"','"'));
          *bp++ = '"';
 
 #     if defined(DEBUG) && defined(U_STDCPP_ENABLE)
-         if (ch == 'O') free(cp);
+         if (ch == 'O')
+#       ifdef USE_LIBMIMALLOC
+         mi_free(cp);
+#       else
+         free(cp);
+#       endif
 #     endif
 
          continue;

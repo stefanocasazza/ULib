@@ -186,7 +186,7 @@ void* UShibTarget::sendRedirect(const string& url)
 {
    U_TRACE(0, "UShibTarget::sendRedirect(%S)", url.c_str())
 
-   UShibTarget::location = strdup(url.c_str());
+   UShibTarget::location = U_SYSCALL_STRDUP(url.c_str());
 
    return (void*)0;
 }
@@ -615,9 +615,9 @@ int UShibPlugIn::handlerRequest()
       else                    UShibTarget::port = atoi(host.c_pointer(pos+1));
 
    // UShibTarget::protocol    = "http";
-      UShibTarget::hostname    = strndup(host.data(), pos);
-      UShibTarget::uri         = strndup(U_HTTP_URI_TO_PARAM);
-      UShibTarget::remote_addr = strdup(UServer_Base::client_address);
+      UShibTarget::hostname    = U_SYSCALL_STRNDUP(host.data(), pos);
+      UShibTarget::uri         = U_SYSCALL_STRNDUP(U_HTTP_URI_TO_PARAM);
+      UShibTarget::remote_addr = U_SYSCALL_STRDUP(UServer_Base::client_address);
       UShibTarget::cookies     = (U_http_info.cookie_len ? ((void)cookies.replace(U_http_info.cookie, U_http_info.cookie_len), cookies.c_str()) : "");
 
       int mode              = 0;
@@ -698,9 +698,9 @@ int UShibPlugIn::handlerRequest()
 
       UShibTarget::hostname = UShibTarget::uri = 0;
 
-      U_SYSCALL_VOID(free, "%p", (void*)UShibTarget::uri);
-      U_SYSCALL_VOID(free, "%p", (void*)UShibTarget::hostname);
-      U_SYSCALL_VOID(free, "%p", (void*)UShibTarget::remote_addr);
+      U_SYSCALL_FREE((void*)UShibTarget::uri);
+      U_SYSCALL_FREE((void*)UShibTarget::hostname);
+      U_SYSCALL_FREE((void*)UShibTarget::remote_addr);
 
       U_RETURN(U_PLUGIN_HANDLER_PROCESSED);
       }
