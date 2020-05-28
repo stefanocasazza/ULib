@@ -104,9 +104,15 @@ private:
 			struct io_uring_sqe *sqe = sqes[sqe_tail++ & *ring_mask];
 
 			sqe->opcode = op;
-			sqe->flags = IOSQE_FIXED_FILE; // signals that we pass an index into socketfds rather than a file descriptor
+
+			if (op == IORING_OP_PROVIDE_BUFFERS) sqe->fd = 1; // this gets reads as # of buffers at io_uring.c#L3115
+			else
+			{
+				sqe->flags = IOSQE_FIXED_FILE; // signals that we pass an index into socketfds rather than a file descriptor
+				sqe->fd = slave->fd; // index of the worker's fd in socketfds, but equal to fd
+			}
+
 			sqe->ioprio = 0;
-			sqe->fd = slave->fd; // index of the worker's fd in socketfds, but equal to fd
 			sqe->off = offset;
 			sqe->addr = (unsigned long) addr;
 			sqe->len = len;
@@ -292,6 +298,11 @@ private:
 						// all our read operations will have this set because we only used buffered reads
 						//if (cqe->flags & IORING_CQE_F_BUFFER) 
 						int bufferID = (cqe->flags >> 16);
+
+					// when using a buffer pool vs fixed buffers, we must reregister them after usage. we could amoratize this cost, and only do so after N times
+						struct io_uring_sqe *sqe = submissionQueue.entryFor(U_NULLPTR, IORING_OP_PROVIDE_BUFFERS, (readBuffers + bufferID * READ_BUFFER_SIZE), READ_BUFFER_SIZE, bufferID);
+						sqe->buf_group = READ_BUFFER_GROUP_ID;
+						submissionQueue.flush();
 
 						UString message;
 						message.setConstant(readBuffers[bufferID], cqe->res);
