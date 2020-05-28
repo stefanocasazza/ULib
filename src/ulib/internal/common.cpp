@@ -54,6 +54,19 @@
 U_EXPORT bool __cxa_guard_acquire() { return 1; }
 U_EXPORT bool __cxa_guard_release() { return 1; }
 
+# ifdef USE_LIBMIMALLOC
+U_EXPORT void* operator new(  size_t n)   { return mi_malloc(n); }
+U_EXPORT void* operator new[](size_t n)   { return mi_malloc(n); }
+U_EXPORT void  operator delete(  void* p) { mi_free(p); }
+U_EXPORT void  operator delete[](void* p) { mi_free(p); }
+# ifdef __MINGW32__
+U_EXPORT void  operator delete(  void* p,      unsigned int) { mi_free(p); }
+U_EXPORT void  operator delete[](void* p,      unsigned int) { mi_free(p); }
+# else
+U_EXPORT void  operator delete(  void* p, long unsigned int) { mi_free(p); }
+U_EXPORT void  operator delete[](void* p, long unsigned int) { mi_free(p); }
+# endif
+# else
 U_EXPORT void* operator new(  size_t n)   { return malloc(n); }
 U_EXPORT void* operator new[](size_t n)   { return malloc(n); }
 U_EXPORT void  operator delete(  void* p) { free(p); }
@@ -64,6 +77,7 @@ U_EXPORT void  operator delete[](void* p,      unsigned int) { free(p); }
 # else
 U_EXPORT void  operator delete(  void* p, long unsigned int) { free(p); }
 U_EXPORT void  operator delete[](void* p, long unsigned int) { free(p); }
+# endif
 # endif
 #endif
 
@@ -180,7 +194,7 @@ void ULib::init(char** argv, const char* mempool)
    U_INTERNAL_DUMP("u_progname(%u) = %.*S u_cwd(%u) = %.*S", u_progname_len, u_progname_len, u_progname, u_cwd_len, u_cwd_len, u_cwd)
 
 #ifndef ENABLE_MEMPOOL // allocation from memory pool
-   u_buffer = (char*) U_SYSCALL(malloc, "%u", U_BUFFER_SIZE+1);
+   u_buffer = (char*) U_SYSCALL_MALLOC(U_BUFFER_SIZE+1);
 #else
    // check if we want some preallocation for memory pool - start from 1... (Ex: 768,768,0,1536,2085,0,0,0,121)
 

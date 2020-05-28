@@ -747,6 +747,9 @@
 /* Define if enable libmagic support */
 #undef USE_LIBMAGIC
 
+/* Define if enable libmimalloc support */
+#undef USE_LIBMIMALLOC
+
 /* Define if enable libpcre support */
 #undef USE_LIBPCRE
 
@@ -1009,6 +1012,10 @@
 
 /* libevent - event notification library version */
 #undef _LIBEVENT_VERSION
+
+/* libmimalloc - library version of implementation of the QUIC transport
+   protocol and HTTP/3 */
+#undef _LIBMIMALLOC_VERSION
 
 /* libquiche - library version of implementation of the QUIC transport
    protocol and HTTP/3 */

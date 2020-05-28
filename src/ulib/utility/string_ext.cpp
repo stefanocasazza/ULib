@@ -1076,11 +1076,16 @@ UString UStringExt::evalExpression(const UString& expr, const UString& environme
    U_TRACE(0, "UStringExt::evalExpression(%V,%V)", expr.rep, environment.rep)
 
    int token_id;
+   void* pParser;
    UString* ptoken;
    UTokenizer t(expr);
    UString token, result = *UString::str_true;
 
-   void* pParser = expressionParserAlloc(malloc);
+#ifdef USE_LIBMIMALLOC
+   pParser = expressionParserAlloc(mi_malloc);
+#else
+   pParser = expressionParserAlloc(malloc);
+#endif
 
    /*
 #ifdef U_DEBUG
@@ -1113,7 +1118,11 @@ UString UStringExt::evalExpression(const UString& expr, const UString& environme
 
    expressionParser(pParser, 0, U_NULLPTR, &result);
 
+#ifdef USE_LIBMIMALLOC
+   expressionParserFree(pParser, mi_free);
+#else
    expressionParserFree(pParser, free);
+#endif
 
    /*
 #if defined(U_DEBUG) && !defined(U_SUBSTR_INC_REF)

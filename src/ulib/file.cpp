@@ -579,7 +579,7 @@ try_from_file_system:
       }
 
 #if !defined(U_LINUX) || (defined(U_SERVER_CAPTIVE_PORTAL) && !defined(ENABLE_THREAD))
-   _ptr = (char*) U_SYSCALL(malloc, "%u", *plength);
+   _ptr = (char*) U_SYSCALL_MALLOC(*plength);
 
    return _ptr;
 #else

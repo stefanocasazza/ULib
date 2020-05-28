@@ -285,6 +285,17 @@ public:
 
    void insert(const UString& k, const void* e) { return insert(k.rep, e); }
 
+   void replace(const char* k, uint32_t klen, const void* e)
+      {
+      U_TRACE(0, "UHashMap<void*>::replace(%#.*S,%u,%p)", klen, k, klen, e)
+
+      setKey(k, klen);
+
+      lookup();
+
+      replaceAfterFind(e);
+      }
+
    void* erase(const char* k, uint32_t klen)
       {
       U_TRACE(0, "UHashMap<void*>::erase(%#.*S,%u)", klen, k, klen)
@@ -519,7 +530,7 @@ protected:
       U_INTERNAL_ASSERT_EQUALS(_length, 0)
       U_INTERNAL_ASSERT_MAJOR(_capacity, 1)
 
-      U_SYSCALL_VOID(free, "%p", info); // UMemoryPool::_free(info, _capacity, 1+UHashMapNode::size());
+      U_SYSCALL_FREE(info); // UMemoryPool::_free(info, _capacity, 1+UHashMapNode::size());
       }
 
    void init(uint32_t n)
@@ -986,6 +997,17 @@ public:
       }
 
    void insert(const UString& k, const T* e) { return insert(k.rep, e); }
+
+   void replace(const char* k, uint32_t klen, const T* e)
+      {
+      U_TRACE(0, "UHashMap<T*>::replace(%#.*S,%u,%p)", klen, k, klen, e)
+
+      setKey(k, klen);
+
+      lookup();
+
+      replaceAfterFind(e);
+      }
 
    // find a elem in the array with key
 

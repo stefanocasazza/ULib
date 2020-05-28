@@ -363,7 +363,7 @@ bool UMySqlStatement::setBindParam(UOrmDriver* pdrv)
       {
       USqlStatementBindParam* param;
 
-      mysql_vparam = (MYSQL_BIND*) UMemoryPool::malloc(num_bind_param, sizeof(MYSQL_BIND), true);
+      mysql_vparam = (MYSQL_BIND*) UMemoryPool::cmalloc(num_bind_param, sizeof(MYSQL_BIND), true);
 
       for (uint32_t i = 0; i < num_bind_param; ++i)
          {
@@ -494,7 +494,7 @@ bool UMySqlStatement::setBindResult(UOrmDriver* pdrv)
       {
       USqlStatementBindResult* result;
 
-      mysql_vresult = (MYSQL_BIND*) UMemoryPool::malloc(num_bind_result, sizeof(MYSQL_BIND), true);
+      mysql_vresult = (MYSQL_BIND*) UMemoryPool::cmalloc(num_bind_result, sizeof(MYSQL_BIND), true);
 
       for (uint32_t i = 0; i < num_bind_result; ++i)
          {

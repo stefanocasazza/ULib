@@ -279,8 +279,8 @@ next:
    U_INTERNAL_ASSERT_EQUALS(kqevents, 0)
    U_INTERNAL_ASSERT_EQUALS(kqrevents, 0)
 
-   kqevents  = (struct kevent*) UMemoryPool::malloc(max_connection, sizeof(struct kevent), true);
-   kqrevents = (struct kevent*) UMemoryPool::malloc(max_connection, sizeof(struct kevent), true);
+   kqevents  = (struct kevent*) UMemoryPool::cmalloc(max_connection, sizeof(struct kevent), true);
+   kqrevents = (struct kevent*) UMemoryPool::cmalloc(max_connection, sizeof(struct kevent), true);
 
    // Check for Mac OS X kqueue bug. If kqueue works, then kevent will succeed, and it will stick an error in events[0].
    // If kqueue is broken, then kevent will fail (This detects an old bug in Mac OS X 10.4, fixed in 10.5)
@@ -303,7 +303,7 @@ next:
       U_INTERNAL_ASSERT_EQUALS(events, U_NULLPTR)
 
        events =
-      pevents = (struct epoll_event*) UMemoryPool::malloc(max_connection+1, sizeof(struct epoll_event), true);
+      pevents = (struct epoll_event*) UMemoryPool::cmalloc(max_connection+1, sizeof(struct epoll_event), true);
 
 #  ifdef HAVE_EPOLL_CTL_BATCH
       for (int i = 0; i < U_EPOLL_CTL_CMD_SIZE; ++i)
@@ -1361,6 +1361,78 @@ int UNotifier::waitForRead(int fd, int timeoutMS)
 
    U_RETURN(ret);
 }
+
+#ifdef HAVE_EPOLL_WAIT
+bool UNotifier::waitOnAsynchronousBatch(const UVector<UEventFd*>& waiting, int op, int timeoutMS)
+{
+   U_TRACE_NO_PARAM(0, "UNotifier::waitOnAsynchronousBatch()");
+
+   int nfd_ready;
+   UEventFd* waiter;
+   bool result = true;
+   UTimeVal* timer = U_NULLPTR;
+   struct epoll_event*  levents;
+   struct epoll_event* lpevents;
+   int32_t waitingOnN = waiting.size();
+   int epollfd = U_SYSCALL(epoll_create1, "%d", 0);
+
+   for (uint32_t i = 0; i < (uint32_t)waitingOnN; ++i)
+      {
+      waiter = waiting.at(i);
+
+      struct epoll_event _events = { (uint32_t)op, { waiter } };
+
+      (void) U_FF_SYSCALL(epoll_ctl, "%d,%d,%d,%p", epollfd, EPOLL_CTL_ADD, waiter->UEventFd::fd, &_events);
+      }
+
+   if (timeoutMS > 0) U_NEW(UTimeVal, timer, UTimeVal);
+
+    levents =
+   lpevents = (struct epoll_event*) UMemoryPool::cmalloc(waitingOnN + 1, sizeof(struct epoll_event), true);
+
+   do {
+      if (timer) timer->start();
+
+      nfd_ready = U_FF_SYSCALL(epoll_wait, "%d,%p,%u,%d", epollfd, levents, waitingOnN, timeoutMS); 
+
+      if (nfd_ready <= 0) // either timed out or failed
+         {
+         result = false;
+
+         break;
+         }
+
+      waitingOnN -= nfd_ready;
+
+      if (timer) timeoutMS -= timer->stop(); // if it had timed out it would have returned 0, so we still have some time left
+
+      lpevents = levents;
+
+      do {
+         waiter = (UEventFd*)lpevents->data.ptr;
+
+         switch (op)
+            {
+            case POLLIN:  waiter->handlerRead();    break;
+            case POLLOUT: waiter->handlerConnect(); break; // it's the responsibility of the wrapper to check if the connect completed succesfully or not
+            default:                                break;
+            }
+
+         ++lpevents;
+         }
+      while (--nfd_ready > 0);
+      }
+   while (waitingOnN > 0);
+
+   if (timer) U_DELETE(timer);
+
+   UMemoryPool::_free(levents, waitingOnN + 1, sizeof(struct epoll_event));
+
+   (void) U_FF_SYSCALL(close, "%d", epollfd);
+
+   U_RETURN(result);
+}
+#endif
 
 int UNotifier::waitForWrite(int fd, int timeoutMS)
 {

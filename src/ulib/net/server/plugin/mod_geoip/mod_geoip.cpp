@@ -194,7 +194,7 @@ int UGeoIPPlugIn::handlerInit()
 
             U_SRV_LOG("%s available, %s", GeoIPDBDescription[i], db_info);
 
-            U_SYSCALL_VOID(free, "%p", (void*)db_info);
+            U_SYSCALL_VOID(free, "%p", db_info);
             }
          }
       }

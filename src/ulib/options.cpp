@@ -67,6 +67,11 @@
 #else
 #  define LIBQUICHE_ENABLE   "no"
 #endif
+#ifdef USE_LIBMIMALLOC
+#  define LIBMIMALLOC_ENABLE   "yes ( " _LIBMIMALLOC_VERSION " )"
+#else
+#  define LIBMIMALLOC_ENABLE   "no"
+#endif
 #ifdef USE_LIBTDB
 #  define LIBTDB_ENABLE      "yes ( " _LIBTDB_VERSION " )"
 #else
@@ -727,6 +732,7 @@ PYTHON language support: yes ( 2.7 )
       "LIBZOPFLI support......:%W " LIBZOPFLI_ENABLE "%W\n" \
       "LIBBROTLI support......:%W " LIBBROTLI_ENABLE "%W\n" \
       "LIBQUICHE support......:%W " LIBQUICHE_ENABLE "%W\n" \
+      "MIMALLOC support.......:%W " LIBMIMALLOC_ENABLE "%W\n" \
       "LIBTDB support.........:%W " LIBTDB_ENABLE "%W\n" \
       "PCRE support...........:%W " LIBPCRE_ENABLE "%W\n" \
       "SSL support............:%W " LIBSSL_ENABLE "%W\n" \
@@ -781,6 +787,7 @@ PYTHON language support: yes ( 2.7 )
                BRIGHTGREEN, RESET,
                BRIGHTGREEN, RESET,
                // wrapping
+               BRIGHTYELLOW, RESET,
                BRIGHTYELLOW, RESET,
                BRIGHTYELLOW, RESET,
                BRIGHTYELLOW, RESET,

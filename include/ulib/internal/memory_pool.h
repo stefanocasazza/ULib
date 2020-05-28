@@ -470,7 +470,7 @@ public:
 
       U_INTERNAL_ASSERT_MINOR(stack_index, U_NUM_STACK_TYPE) // 10
 
-      return U_SYSCALL(malloc, "%u", U_STACK_INDEX_TO_SIZE[stack_index]);
+      return U_SYSCALL_MALLOC(U_STACK_INDEX_TO_SIZE[stack_index]);
       }
 
    static void push(void* ptr, int stack_index)
@@ -479,14 +479,14 @@ public:
 
       U_INTERNAL_ASSERT_MINOR(stack_index, U_NUM_STACK_TYPE) // 10
 
-      U_SYSCALL_VOID(free, "%p", ptr);
+      U_SYSCALL_FREE(ptr);
       }
 
    static void _free(void* ptr, uint32_t num, uint32_t type_size = sizeof(char))
       {
       U_TRACE(1, "UMemoryPool::_free(%p,%u,%u)", ptr, num, type_size)
 
-      U_SYSCALL_VOID(free, "%p", ptr);
+      U_SYSCALL_FREE(ptr);
       }
 
    static void allocateMemoryBlocks(const char* ptr)
@@ -513,7 +513,7 @@ public:
 
       if (length == 0) length = type_size;
 
-      ptr = U_SYSCALL(malloc, "%u", length);
+      ptr = U_SYSCALL_MALLOC(length);
 
       U_INTERNAL_ASSERT_POINTER_MSG(ptr, "cannot allocate memory, exiting...")
 
@@ -524,7 +524,7 @@ public:
 
 #endif
 
-   static void*  malloc(uint32_t   num, uint32_t type_size = sizeof(char), bool bzero = false);
+   static void* cmalloc(uint32_t num, uint32_t type_size = sizeof(char), bool bzero = false);
 
 #ifdef DEBUG
    static const char* obj_class;
@@ -551,7 +551,7 @@ private:
       {
       U_TRACE(1, "UMemoryPool::deallocate(%p,%u)", ptr, length)
 
-      U_SYSCALL_VOID(free, "%p", ptr);
+      U_SYSCALL_FREE(ptr);
       }
 #endif
 
@@ -602,13 +602,18 @@ template <class T> bool u_check_memory_vector(T* _vec, uint32_t n)
 
 #  define U_MEMORY_ALLOCATOR \
 void* operator new(  size_t sz)          { U_INTERNAL_ASSERT(sz <= U_MAX_SIZE_PREALLOCATE); return UMemoryPool::pop(U_SIZE_TO_STACK_INDEX(sz)); } \
-void* operator new[](size_t sz)          {                                                  return UMemoryPool::malloc(sz); }
+void* operator new[](size_t sz)          {                                                  return UMemoryPool::cmalloc(sz); }
 #     define U_MEMORY_DEALLOCATOR \
 void  operator delete(  void* _ptr, size_t sz) { U_INTERNAL_ASSERT(sz <= U_MAX_SIZE_PREALLOCATE); UMemoryPool::push( _ptr, U_SIZE_TO_STACK_INDEX(sz)); } \
 void  operator delete[](void* _ptr, size_t sz) {                                                  UMemoryPool::_free(_ptr, sz); }
 #else
+# ifdef USE_LIBMIMALLOC
+#  define U_MALLOC_TYPE(  type) (type*)mi_malloc(sizeof(type))
+#  define U_FREE_TYPE(ptr,type) { mi_free(ptr); }
+# else
 #  define U_MALLOC_TYPE(  type) (type*)malloc(sizeof(type))
 #  define U_FREE_TYPE(ptr,type) { free(ptr); }
+# endif
 
 #  define U_MEMORY_ALLOCATOR
 #  define U_MEMORY_DEALLOCATOR

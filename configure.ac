@@ -1309,6 +1309,7 @@ dnl initialize all the info variables to 'no'
 ulib_libzopfli_msg="no (--with-libzopfli)"
 ulib_libbrotli_msg="no (--with-libbrotli)"
 ulib_libquiche_msg="no (--with-libquiche)"
+ ulib_mimalloc_msg="no (--with-libmimalloc)"
    ulib_libtdb_msg="no (--with-libtdb)"
      ulib_curl_msg="no (--with-curl)"
     ulib_expat_msg="no (--with-expat)"
@@ -1447,6 +1448,7 @@ libz_version="unknow"
 libzopfli_version="unknown"
 libbrotli_version="unknown"
 libquiche_version="unknown"
+mimalloc_version="unknown"
 libtdb_version="unknown"
 pcre_version="unknown"
 ldap_version="unknown"
@@ -1536,6 +1538,10 @@ fi
 
 if test "$USE_LIBQUICHE" = "yes"; then
 	ulib_libquiche_msg="yes ( $libquiche_version )"
+fi
+
+if test "$USE_LIBMIMALLOC" = "yes"; then
+	ulib_mimalloc_msg="yes ( $libmimalloc_version )"
 fi
 
 if test "$USE_LIBTDB" = "yes"; then
@@ -2034,6 +2040,7 @@ AC_DEFINE_UNQUOTED(_LIBZ_VERSION,		 "$libz_version",			[libz - general purpose c
 AC_DEFINE_UNQUOTED(_LIBZOPFLI_VERSION,	 "$libzopfli_version",	[libzopfli - google compression library version])
 AC_DEFINE_UNQUOTED(_LIBBROTLI_VERSION,	 "$libbrotli_version",	[libbrotli - google compression library version])
 AC_DEFINE_UNQUOTED(_LIBQUICHE_VERSION,	 "$libquiche_version",	[libquiche - library version of implementation of the QUIC transport protocol and HTTP/3])
+AC_DEFINE_UNQUOTED(_LIBMIMALLOC_VERSION,"$libmimalloc_version",[libmimalloc - library version of implementation of the QUIC transport protocol and HTTP/3])
 AC_DEFINE_UNQUOTED(_LIBTDB_VERSION,		 "$libtdb_version",		[libtdb - samba Trivial DB library version])
 AC_DEFINE_UNQUOTED(_LIBSSH_VERSION,		 "$libssh_version",		[libSSH version])
 AC_DEFINE_UNQUOTED(_SSL_VERSION,			 "$ssl_version",			[SSL version])
@@ -3126,6 +3133,7 @@ AC_MSG_NOTICE([Configured to build src/ulib/lib${ULIB}:
       LIBZOPFLI support: ${ulib_libzopfli_msg}
       LIBBROTLI support: ${ulib_libbrotli_msg}
       LIBQUICHE support: ${ulib_libquiche_msg}
+       MIMALLOC support: ${ulib_mimalloc_msg}
          LIBTDB support: ${ulib_libtdb_msg}
            PCRE support: ${ulib_pcre_msg}
             SSL support: ${ulib_ssl_msg}

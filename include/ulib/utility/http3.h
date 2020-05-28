@@ -49,14 +49,18 @@ public:
       Short              = 0x006
    };
 
+   typedef struct conn_io {
+      quiche_conn* conn;
+      quiche_h3_conn* http3;
+   } conn_io;
+
    static bool handlerRead();
    static bool handlerAccept();
    static int loadConfigParam();
 
 protected:
-   static quiche_conn* conn;
+   static conn_io conn;
    static size_t conn_id_len;
-   static quiche_h3_conn* http3;
    static quiche_config* qconfig;
    static quiche_h3_config* http3_config;
    static struct sockaddr_storage peer_addr;

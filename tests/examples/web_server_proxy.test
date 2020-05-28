@@ -20,11 +20,15 @@ rm -f tmp/usp_compile.sh.err /tmp/*.hpack.* \
       $DOC_ROOT1/trace.*userver_*.[0-9]* $DOC_ROOT1/object.*userver_*.[0-9]* $DOC_ROOT1/stack.*userver_*.[0-9]* $DOC_ROOT1/mempool.*userver_*.[0-9]* \
       $DOC_ROOT2/trace.*userver_*.[0-9]* $DOC_ROOT2/object.*userver_*.[0-9]* $DOC_ROOT2/stack.*userver_*.[0-9]* $DOC_ROOT2/mempool.*userver_*.[0-9]*
 
-#UTRACE="0 10M 0"
+ UTRACE="0 10M -1"
+ UTRACE_FOLDER=/tmp
+ TMPDIR=/tmp
 #UOBJDUMP="0 10M 100"
 #USIMERR="error.sim"
 #UMEMUSAGE=yes
-export UTRACE UOBJDUMP USIMERR UTRACE_SIGNAL UMEMUSAGE
+MIMALLOC_VERBOSE=1
+MIMALLOC_SHOW_ERRORS=1
+export UTRACE UOBJDUMP USIMERR UTRACE_SIGNAL UMEMUSAGE UTRACE_FOLDER TMPDIR MIMALLOC_VERBOSE MIMALLOC_SHOW_ERRORS
 
 DIR_CMD="../../examples/userver"
 

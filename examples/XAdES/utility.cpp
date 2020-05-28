@@ -294,7 +294,7 @@ void UXAdESUtility::outputDocument(const UString& firma)
 
             (void) UFile::writeTo(tpath, UFile::contentOf(pcontent), false, true);
 
-            add_to_filenames[j++] = strdup(namefile.c_str());
+            add_to_filenames[j++] = U_SYSCALL_STRDUP(namefile.c_str());
             }
 
          add_to_filenames[j] = U_NULLPTR;

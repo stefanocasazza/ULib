@@ -214,6 +214,59 @@ AC_DEFUN([AC_CHECK_PACKAGE],[
 	fi
 	], [AC_MSG_RESULT(no)])
 
+	AC_MSG_CHECKING(if mimalloc library is wanted)
+	wanted=1;
+	if test -z "$with_libmimalloc" ; then
+		wanted=0;
+		if test -n "$CROSS_ENVIRONMENT" -o "$USP_FLAGS" = "-DAS_cpoll_cppsp_DO" -o "$enable_shared" = "no"; then
+			with_libmimalloc="no";
+		else
+			with_libmimalloc="${CROSS_ENVIRONMENT}/usr";
+		fi
+	fi
+	AC_ARG_WITH(libmimalloc, [  --with-libmimalloc      use system mimalloc library - [[will check /usr /usr/local]] [[default=use if present]]], [
+	if test "$withval" = "no"; then
+		AC_MSG_RESULT(no)
+	else
+		AC_MSG_RESULT(yes)
+		for dir in $withval ${CROSS_ENVIRONMENT}/ ${CROSS_ENVIRONMENT}/usr ${CROSS_ENVIRONMENT}/usr/local; do
+			libmimallocdir="$dir"
+			if test -f "$dir/include/mimalloc.h"; then
+				found_libmimalloc="yes";
+				break;
+			fi
+		done
+		if test x_$found_libmimalloc != x_yes; then
+			msg="Cannot find libmimalloc library";
+			if test $wanted = 1; then
+				AC_MSG_ERROR($msg)
+			else
+				AC_MSG_RESULT($msg)
+			fi
+		else
+			echo "${T_MD}libmimalloc found in $libmimallocdir${T_ME}"
+			USE_LIBMIMALLOC=yes
+			AC_DEFINE(USE_LIBMIMALLOC, 1, [Define if enable libmimalloc support])
+
+			if test -z "$CROSS_ENVIRONMENT" -a x_$PKG_CONFIG != x_no; then
+				libmimalloc_version=$(pkg-config --modversion mimalloc 2>/dev/null)
+			fi
+			if test -z "${libmimalloc}"; then
+				libmimalloc_version=$(ls $libmimallocdir/lib*/libmimalloc.so.*.* 2>/dev/null | head -n 1 | awk -F'.so.' '{n=2; print $n}' 2>/dev/null)
+			fi
+			if test -z "${libmimalloc_version}"; then
+				libmimalloc_version="unknown"
+			fi
+			ULIB_LIBS="$ULIB_LIBS -lmimalloc";
+			if test $libmimallocdir != "${CROSS_ENVIRONMENT}/" -a $libmimallocdir != "${CROSS_ENVIRONMENT}/usr" -a $libmimallocdir != "${CROSS_ENVIRONMENT}/usr/local"; then
+				CPPFLAGS="$CPPFLAGS -I$libmimallocdir/include"
+				LDFLAGS="$LDFLAGS -L$libmimallocdir/lib -Wl,-R$libmimallocdir/lib";
+				PRG_LDFLAGS="$PRG_LDFLAGS -L$libmimallocdir/lib";
+			fi
+		fi
+	fi
+	], [AC_MSG_RESULT(no)])
+
 	AC_MSG_CHECKING(if MAGIC library is wanted)
 	wanted=1;
 	if test -z "$with_magic" ; then

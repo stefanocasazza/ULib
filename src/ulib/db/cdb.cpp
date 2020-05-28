@@ -174,10 +174,10 @@ U_NO_EXPORT inline bool UCDB::match(uint32_t pos)
          len  -= n;
          }
 
-      if (data.dptr) U_SYSCALL_VOID(free, "%p", data.dptr); // free old data...
+      if (data.dptr) U_SYSCALL_FREE(data.dptr); // free old data...
 
       data.dsize = u_get_unaligned32(hr->dlen);
-      data.dptr  = U_SYSCALL(malloc, "%lu", data.dsize);
+      data.dptr  = U_SYSCALL_MALLOC(data.dsize);
 
       U_INTERNAL_ASSERT_POINTER_MSG(data.dptr, "cannot allocate memory, exiting...")
 
@@ -301,7 +301,7 @@ uint32_t UCDB::makeFinish(bool _reset)
          uint32_t index;
       };
 
-      cdb_tmp*  tmp = (cdb_tmp*) UMemoryPool::malloc(nrecord, sizeof(cdb_tmp));
+      cdb_tmp*  tmp = (cdb_tmp*) UMemoryPool::cmalloc(nrecord, sizeof(cdb_tmp));
       cdb_tmp* ptmp = tmp;
 
       cdb_hash_table_slot* pslot;

@@ -1093,6 +1093,7 @@ enable_zip
 with_libzopfli
 with_libbrotli
 with_libquiche
+with_libmimalloc
 with_magic
 enable_ssl_staticlib_deps
 with_ssl
@@ -1863,6 +1864,7 @@ Optional Packages:
   --with-libzopfli        use system   zopfli library - [will check /usr /usr/local] [default=use if present]
   --with-libbrotli        use system   brotli library - [will check /usr /usr/local] [default=use if present]
   --with-libquiche        use system   quiche library - [will check /usr /usr/local] [default=use if present]
+  --with-libmimalloc      use system mimalloc library - [will check /usr /usr/local] [default=use if present]
   --with-magic            use system libmagic library - [will check /usr /usr/local] [default=use if present]
   --with-ssl              use system      SSL library - [will check /usr /usr/local] [default=use if present]
   --with-pcre             use system     PCRE library - [will check /usr /usr/local] [default=use if present]
@@ -26219,6 +26221,7 @@ $as_echo "${T_MD}C++ stuff:${T_ME}" >&6; }
 ulib_libzopfli_msg="no (--with-libzopfli)"
 ulib_libbrotli_msg="no (--with-libbrotli)"
 ulib_libquiche_msg="no (--with-libquiche)"
+ ulib_mimalloc_msg="no (--with-libmimalloc)"
    ulib_libtdb_msg="no (--with-libtdb)"
      ulib_curl_msg="no (--with-curl)"
     ulib_expat_msg="no (--with-expat)"
@@ -27446,6 +27449,7 @@ libz_version="unknow"
 libzopfli_version="unknown"
 libbrotli_version="unknown"
 libquiche_version="unknown"
+mimalloc_version="unknown"
 libtdb_version="unknown"
 pcre_version="unknown"
 ldap_version="unknown"
@@ -27738,6 +27742,73 @@ $as_echo "#define USE_LIBQUICHE 1" >>confdefs.h
 				CPPFLAGS="$CPPFLAGS -I$libquichedir/include"
 				LDFLAGS="$LDFLAGS -L$libquichedir/lib -Wl,-R$libquichedir/lib";
 				PRG_LDFLAGS="$PRG_LDFLAGS -L$libquichedir/lib";
+			fi
+		fi
+	fi
+
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if mimalloc library is wanted" >&5
+$as_echo_n "checking if mimalloc library is wanted... " >&6; }
+	wanted=1;
+	if test -z "$with_libmimalloc" ; then
+		wanted=0;
+		if test -n "$CROSS_ENVIRONMENT" -o "$USP_FLAGS" = "-DAS_cpoll_cppsp_DO" -o "$enable_shared" = "no"; then
+			with_libmimalloc="no";
+		else
+			with_libmimalloc="${CROSS_ENVIRONMENT}/usr";
+		fi
+	fi
+
+# Check whether --with-libmimalloc was given.
+if test "${with_libmimalloc+set}" = set; then :
+  withval=$with_libmimalloc;
+	if test "$withval" = "no"; then
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+	else
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+		for dir in $withval ${CROSS_ENVIRONMENT}/ ${CROSS_ENVIRONMENT}/usr ${CROSS_ENVIRONMENT}/usr/local; do
+			libmimallocdir="$dir"
+			if test -f "$dir/include/mimalloc.h"; then
+				found_libmimalloc="yes";
+				break;
+			fi
+		done
+		if test x_$found_libmimalloc != x_yes; then
+			msg="Cannot find libmimalloc library";
+			if test $wanted = 1; then
+				as_fn_error $? "$msg" "$LINENO" 5
+			else
+				{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $msg" >&5
+$as_echo "$msg" >&6; }
+			fi
+		else
+			echo "${T_MD}libmimalloc found in $libmimallocdir${T_ME}"
+			USE_LIBMIMALLOC=yes
+
+$as_echo "#define USE_LIBMIMALLOC 1" >>confdefs.h
+
+
+			if test -z "$CROSS_ENVIRONMENT" -a x_$PKG_CONFIG != x_no; then
+				libmimalloc_version=$(pkg-config --modversion mimalloc 2>/dev/null)
+			fi
+			if test -z "${libmimalloc}"; then
+				libmimalloc_version=$(ls $libmimallocdir/lib*/libmimalloc.so.*.* 2>/dev/null | head -n 1 | awk -F'.so.' '{n=2; print $n}' 2>/dev/null)
+			fi
+			if test -z "${libmimalloc_version}"; then
+				libmimalloc_version="unknown"
+			fi
+			ULIB_LIBS="$ULIB_LIBS -lmimalloc";
+			if test $libmimallocdir != "${CROSS_ENVIRONMENT}/" -a $libmimallocdir != "${CROSS_ENVIRONMENT}/usr" -a $libmimallocdir != "${CROSS_ENVIRONMENT}/usr/local"; then
+				CPPFLAGS="$CPPFLAGS -I$libmimallocdir/include"
+				LDFLAGS="$LDFLAGS -L$libmimallocdir/lib -Wl,-R$libmimallocdir/lib";
+				PRG_LDFLAGS="$PRG_LDFLAGS -L$libmimallocdir/lib";
 			fi
 		fi
 	fi
@@ -29286,6 +29357,10 @@ fi
 
 if test "$USE_LIBQUICHE" = "yes"; then
 	ulib_libquiche_msg="yes ( $libquiche_version )"
+fi
+
+if test "$USE_LIBMIMALLOC" = "yes"; then
+	ulib_mimalloc_msg="yes ( $libmimalloc_version )"
 fi
 
 if test "$USE_LIBTDB" = "yes"; then
@@ -30882,6 +30957,11 @@ _ACEOF
 
 cat >>confdefs.h <<_ACEOF
 #define _LIBQUICHE_VERSION "$libquiche_version"
+_ACEOF
+
+
+cat >>confdefs.h <<_ACEOF
+#define _LIBMIMALLOC_VERSION "$libmimalloc_version"
 _ACEOF
 
 
@@ -34294,6 +34374,7 @@ ULIB_SYSCONFDIR="$u_sysconfdir"
       LIBZOPFLI support: ${ulib_libzopfli_msg}
       LIBBROTLI support: ${ulib_libbrotli_msg}
       LIBQUICHE support: ${ulib_libquiche_msg}
+       MIMALLOC support: ${ulib_mimalloc_msg}
          LIBTDB support: ${ulib_libtdb_msg}
            PCRE support: ${ulib_pcre_msg}
             SSL support: ${ulib_ssl_msg}
@@ -34358,6 +34439,7 @@ $as_echo "$as_me: Configured to build src/ulib/lib${ULIB}:
       LIBZOPFLI support: ${ulib_libzopfli_msg}
       LIBBROTLI support: ${ulib_libbrotli_msg}
       LIBQUICHE support: ${ulib_libquiche_msg}
+       MIMALLOC support: ${ulib_mimalloc_msg}
          LIBTDB support: ${ulib_libtdb_msg}
            PCRE support: ${ulib_pcre_msg}
             SSL support: ${ulib_ssl_msg}
