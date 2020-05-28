@@ -82,18 +82,15 @@ void UIORing::registerBuffers()
 
 	io_uring_register(ringfd, IORING_REGISTER_BUFFERS, &writeBufferVecs, NUMBER_OF_WRITE_BUFFERS);
 
-
-	for (uint32_t i = 0; i < NUMBER_OF_READ_BUFFERS; i++) 
+	for (uint32_t index = 0; i < NUMBER_OF_READ_BUFFERS; index++) 
 	{
-		struct io_uring_sqe *sqe = submissionQueue.nextEntry();
+		struct io_uring_sqe *sqe = submissionQueue.entryFor(U_NULLPTR, IORING_OP_PROVIDE_BUFFERS, (readBuffers + index * READ_BUFFER_SIZE), READ_BUFFER_SIZE, index);
 		sqe->buf_group = READ_BUFFER_GROUP_ID;
-
-		submissionQueue.prepareEntry(sqe, U_NULLPTR, IORING_OP_PROVIDE_BUFFERS, 1 , (readBuffers + i * READ_BUFFER_SIZE), READ_BUFFER_SIZE, i);
 	}
 
 	submissionQueue.flush();
 
-	for (uint32_t i = 0; i < NUMBER_OF_READ_BUFFERS; i++) 
+	for (uint32_t index = 0; i < NUMBER_OF_READ_BUFFERS; index++) 
 	{
 		io_uring_cqe* cqe = completionQueue.getNextAndWait(ringfd);
 
