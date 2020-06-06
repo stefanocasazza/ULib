@@ -6,6 +6,10 @@
 
 start_msg zip
 
+MIMALLOC_VERBOSE=1
+MIMALLOC_SHOW_ERRORS=1
+export MIMALLOC_VERBOSE MIMALLOC_SHOW_ERRORS
+
 rm -rf tmp/*
 mkdir  tmp/tmp
 

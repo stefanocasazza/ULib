@@ -649,7 +649,7 @@
 /* Platform */
 #undef PLATFORM_VAR
 
-/* Define as the return type of signal handlers (`int' or `void'). */
+/* Define as the return type of signal handlers (`int' or `void') */
 #undef RETSIGTYPE
 
 /* The number of bytes in type int */
@@ -764,6 +764,9 @@
 
 /* Define if enable libtdb support */
 #undef USE_LIBTDB
+
+/* Define if enable liburing support */
+#undef USE_LIBURING
 
 /* Define if enable libuuid support */
 #undef USE_LIBUUID
@@ -1026,6 +1029,10 @@
 
 /* libtdb - samba Trivial DB library version */
 #undef _LIBTDB_VERSION
+
+/* liburing - library version of implementation of efficient I/O with io_uring
+   */
+#undef _LIBURING_VERSION
 
 /* libuuid - version library to create a new UUID value */
 #undef _LIBUUID_VERSION

@@ -105,6 +105,7 @@ int           UServer_Base::preforked_num_kids;
 bool          UServer_Base::bssl;
 bool          UServer_Base::bipc;
 bool          UServer_Base::budp;
+bool          UServer_Base::brng;
 bool          UServer_Base::binsert;
 bool          UServer_Base::flag_loop;
 bool          UServer_Base::public_address;
@@ -194,6 +195,29 @@ UVector<UIPAllow*>* UServer_Base::vallow_IP;
 #ifdef U_RFC1918_SUPPORT
 bool                UServer_Base::enable_rfc1918_filter;
 UVector<UIPAllow*>* UServer_Base::vallow_IP_prv;
+#endif
+#ifdef USE_LIBURING
+#  ifndef USERVER_RNG
+#  define USERVER_RNG 1
+#  endif
+#  ifndef SQ_THREAD_IDLE
+#  define SQ_THREAD_IDLE 2000
+#  endif
+#  ifndef U_IO_BUFFER_SIZE
+#  define U_IO_BUFFER_SIZE U_1M // 1 MB in bytes
+#  endif
+#  ifndef IOSQE_BUFFER_SELECT
+#  define IOSQE_BUFFER_SELECT (1U << 5)
+#  endif
+#  define U_RBUFFER_GROUP_ID 0xA
+#  define U_WBUFFER_GROUP_ID 0xB
+
+int*                   UServer_Base::socketfds;
+UString*               UServer_Base::rwBuffers;
+uint32_t               UServer_Base::bufNextIndex;
+struct io_uring        UServer_Base::io_uring;
+struct io_uring_cqe*   UServer_Base::cqe;
+struct io_uring_params UServer_Base::params;
 #endif
 
 //#define U_MAX_CONNECTIONS_ACCEPTED_SIMULTANEOUSLY 1
@@ -1136,9 +1160,10 @@ public:
       uint32_t addr = 0;
       uusockaddr srv_addr, cli_addr;
 
-#   if defined(USERVER_UDP) || defined(USERVER_IPC)
+#   if defined(USERVER_UDP) || defined(USERVER_IPC) || defined(USERVER_RNG)
       if (UServer_Base::budp == false &&
-          UServer_Base::bipc == false)
+          UServer_Base::bipc == false &&
+          UServer_Base::brng == false)
 #   endif
       {
       if (UServer_Base::ifname == U_NULLPTR) U_NEW_STRING(UServer_Base::ifname, UString(UServer_Base::getNetworkDevice(U_NULLPTR)));
@@ -1790,13 +1815,73 @@ UServer_Base::UServer_Base(UFileConfig* cfg)
    else
 #endif
                                  iAddressType = AF_INET;
+
+#ifdef USERVER_RNG
+   if (brng)
+      {
+      (void) u_get_num_cpu();
+
+      U_INTERNAL_DUMP("u_num_cpu = %u", u_num_cpu)
+
+      (void) U_SYSCALL(memset, "%p,%u,%u", &params, 0, sizeof(params));
+
+#  if LINUX_VERSION_CODE >= KERNEL_VERSION(5,7,0)
+      if (UServices::isSetuidRoot() == false)
+         {
+         U_ERROR("Sorry, it is required root privilege to use IORING_SETUP_SQPOLL");
+         }
+
+      /**
+       * IORING_SETUP_SQPOLL kernel side polling for submission queue additions, so as soon as we push to the ring, the kernel will pick it up, must be run as root to use this
+       * IORING_SETUP_SQ_AFF pin the IORING_SETUP_SQPOLL poll thread to the CPU specified by sq_thread_cpu
+       *
+       * as soon as we stop generating submission queue entries, a timer starts that will put the kernel side polling thread to sleep, as long as we keep driving IO, the kernel
+       * thread will always stay active... otherwise it will set IORING_SQ_NEED_WAKEUP bit in the flags field of the struct io_sq_ring and you have to call enter to wake it up
+       */
+
+      params.flags          = IORING_SETUP_SQPOLL;
+      params.sq_thread_idle = SQ_THREAD_IDLE; // UINT32_MAX tell the kernel to never stop polling
+
+#     ifdef HAVE_SCHED_GETAFFINITY // Pin kernel submission polling thread to same CPU
+      cpu_set_t affinity;
+      CPU_ZERO(&affinity);
+
+      (void) U_SYSCALL(sched_getaffinity, "%u,%u,%p", 0, sizeof(affinity), &affinity);
+
+      params.flags |= IORING_SETUP_SQ_AFF;
+
+      for (uint32_t i = 0; i < (uint32_t)u_num_cpu; ++i)
+         {
+         if (CPU_ISSET(i, &affinity))
+            {
+            params.sq_thread_cpu = i;
+
+            break;
+            }
+         }
+#     endif
+#  endif
+      }
+#endif
 }
 
 UServer_Base::~UServer_Base()
 {
    U_TRACE_DTOR(0, UServer_Base)
 
-   U_INTERNAL_ASSERT_POINTER(socket)
+#ifdef USERVER_RNG
+   if (brng)
+      {
+      U_SYSCALL_VOID(io_uring_queue_exit, "%p", &io_uring);
+
+      if (socketfds)
+         {
+         U_DELETE(rwBuffers);
+
+         UMemoryPool::_free(socketfds, UNotifier::max_connection, sizeof(int));
+         }
+      }
+#endif
 
 #ifdef ENABLE_THREAD
 # if !defined(USE_LIBEVENT) && defined(U_SERVER_THREAD_APPROACH_SUPPORT)
@@ -1850,6 +1935,8 @@ UServer_Base::~UServer_Base()
    if (handler_other) handler_other->clear();
 
    UClientImage_Base::clear();
+
+   U_INTERNAL_ASSERT_POINTER(socket)
 
    U_DELETE(socket)
    U_DELETE(udp_sock)
@@ -2185,7 +2272,7 @@ void UServer_Base::loadConfigParam()
    // DOS_LOGFILE         the file to write DOS event
    // --------------------------------------------------------------------------------------------------------------------------------------
 
-   U_INTERNAL_DUMP("bssl = %b budp = %b bipc = %b", bssl, budp, bipc)
+   U_INTERNAL_DUMP("bssl = %b budp = %b bipc = %b brng = %b", bssl, budp, bipc, brng)
 
 #ifdef USERVER_IPC
    if (bipc)
@@ -2267,6 +2354,10 @@ void UServer_Base::loadConfigParam()
    if (x) setMsgWelcome(x);
 #endif
 
+#ifdef USERVER_RNG
+   if (brng == false)
+#endif
+   {
    x = pcfg->at(U_CONSTANT_TO_PARAM("PREFORK_CHILD"));
 
    if (x)
@@ -2292,6 +2383,7 @@ void UServer_Base::loadConfigParam()
       if (preforked_num_kids < 2) preforked_num_kids = 2;
       }
 #endif
+   }
 
 #ifndef U_CLASSIC_SUPPORT
    if (isClassic())
@@ -2488,8 +2580,10 @@ void UServer_Base::loadConfigParam()
       }
 
 #ifdef USE_LOAD_BALANCE
-# ifdef USERVER_UDP
-   if (budp == false)
+# if defined(USERVER_UDP) || defined(USERVER_IPC) || defined(USERVER_RNG)
+   if (budp == false &&
+       bipc == false &&
+       brng == false)
 # endif
    {
    x = pcfg->at(U_CONSTANT_TO_PARAM("LOAD_BALANCE_DEVICE_NETWORK"));
@@ -2526,8 +2620,10 @@ void UServer_Base::loadConfigParam()
 #endif
 
 #ifdef U_EVASIVE_SUPPORT
-# ifdef USERVER_UDP
-   if (budp == false)
+# if defined(USERVER_UDP) || defined(USERVER_IPC) || defined(USERVER_RNG)
+   if (budp == false &&
+       bipc == false &&
+       brng == false)
 # endif
    {
    /**
@@ -3097,9 +3193,9 @@ void UServer_Base::init()
 {
    U_TRACE_NO_PARAM(1, "UServer_Base::init()")
 
-   U_INTERNAL_ASSERT_POINTER(socket)
+   U_INTERNAL_DUMP("bssl = %b budp = %b bipc = %b brng = %b", bssl, budp, bipc, brng)
 
-   U_INTERNAL_DUMP("bssl = %b budp = %b bipc = %b", bssl, budp, bipc)
+   U_INTERNAL_ASSERT_POINTER(socket)
 
 #ifdef USERVER_UDP
    if (budp)
@@ -3146,6 +3242,17 @@ void UServer_Base::init()
       }
 #endif
 
+#ifdef USERVER_RNG
+   if (brng)
+      {
+      USocket::breuseport = true;
+
+      socket->iSockDesc = USocket::startServer(port);
+
+      if (set_tcp_keep_alive) socket->setTcpKeepAlive();
+      }
+   else
+#endif
    if (socket->setServer(port, server) == false)
       {
       UString x = (server ? *server : U_STRING_FROM_CONSTANT("*"));
@@ -3519,6 +3626,10 @@ next:
 
    U_INTERNAL_ASSERT_MAJOR(UNotifier::max_connection, 0)
 
+#ifdef USERVER_RNG
+   if (brng) UNotifier::max_connection += u_num_cpu;
+#endif
+
    pthis->preallocate();
 
 #if defined(USE_LIBSSL) && defined(ENABLE_THREAD) && !defined(OPENSSL_NO_OCSP) && defined(SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB) && !defined(_MSWINDOWS_)
@@ -3560,15 +3671,19 @@ next:
 #endif
 
 #ifdef U_EVASIVE_SUPPORT
-# ifdef USERVER_UDP
-   if (budp == false)
+# if defined(USERVER_UDP) || defined(USERVER_IPC) || defined(USERVER_RNG)
+   if (budp == false &&
+       bipc == false &&
+       brng == false)
 # endif
    initEvasive();
 #endif
 
 #ifdef U_SSE_ENABLE // SERVER SENT EVENTS (SSE)
-# ifdef USERVER_UDP
-   if (budp == false)
+# if defined(USERVER_UDP) || defined(USERVER_IPC) || defined(USERVER_RNG)
+   if (budp == false &&
+       bipc == false &&
+       brng == false)
 # endif
    {
    sse_fifo_pos = u__snprintf(sse_fifo_name, 256, U_CONSTANT_TO_PARAM("%s/SSE_%s_EVENT"), u_tmpdir, bssl ? "SSL" : "TCP") - U_CONSTANT_SIZE("EVENT");
@@ -4078,7 +4193,8 @@ try_accept:
    setClientAddress(CSOCKET, CLIENT_ADDRESS, CLIENT_ADDRESS_LEN);
 
 # ifdef U_EVASIVE_SUPPORT
-   if (checkHold(CSOCKET->getClientAddress()))
+   if (db_evasive &&
+       checkHold(CSOCKET->getClientAddress()))
       {
       CSOCKET->abortive_close();
 
@@ -4475,6 +4591,8 @@ void UServer_Base::runLoop(const char* user)
 {
    U_TRACE(0, "UServer_Base::runLoop(%S)", user)
 
+   U_INTERNAL_ASSERT_EQUALS(brng, false)
+
 #if defined(USERVER_UDP) && defined(U_HTTP3_DISABLE)
    if (budp == false)
 #endif
@@ -4587,6 +4705,7 @@ void UServer_Base::runLoop(const char* user)
    U_INTERNAL_DUMP("UNotifier::max_connection = %u UNotifier::min_connection = %u num_client_threshold = %u",
                     UNotifier::max_connection,     UNotifier::min_connection,     num_client_threshold)
 
+   {
    UNotifier::init();
 
    if (UNotifier::min_connection)
@@ -4627,6 +4746,7 @@ void UServer_Base::runLoop(const char* user)
          for (uint32_t i = 0, n = handler_other->size(); i < n; ++i) UNotifier::insert(handler_other->at(i), EPOLLEXCLUSIVE | EPOLLROUNDROBIN);
          }
       }
+   }
 
 #if defined(ENABLE_THREAD) && !defined(USE_LIBEVENT) && defined(U_SERVER_THREAD_APPROACH_SUPPORT)
    U_INTERNAL_ASSERT_EQUALS(UNotifier::pthread, U_NULLPTR)
@@ -4711,9 +4831,132 @@ void UServer_Base::runLoop(const char* user)
       }
 }
 
+#ifdef USE_LIBURING
+void UServer_Base::submit(int op)
+{
+   U_TRACE(0, "UServer_Base::submit(%d)", op)
+
+   U_INTERNAL_ASSERT_EQUALS(pClientImage, vClientImage+nClientIndex)
+
+   struct io_uring_sqe* sqe = (struct io_uring_sqe*) U_SYSCALL(io_uring_get_sqe, "%p", &io_uring);
+
+   switch (op)
+      {
+      case SocketOperation::_accept:
+         {
+         U_INTERNAL_ASSERT_MINOR(nClientIndex, (uint32_t)u_num_cpu)
+
+         pClientImage->UEventFd::op_mask = SocketOperation::_accept;
+
+         U_SYSCALL_VOID(io_uring_prep_accept, "%p,%u,%p,%p,%u", sqe, nClientIndex, U_NULLPTR, U_NULLPTR, SOCK_NONBLOCK | SOCK_CLOEXEC);
+
+         // To make use of the registered files, the IOSQE_FIXED_FILE flag must be set in the flags member
+         // of the struct io_uring_sqe, and the fd member is set to the index of the file in the file descriptor array
+
+         sqe->flags |= IOSQE_FIXED_FILE; // signals that we pass an index into socketfds rather than a file descriptor
+         }
+      break;
+
+      case SocketOperation::_read:
+         {
+         pClientImage->UEventFd::op_mask = SocketOperation::_read;
+
+         U_SYSCALL_VOID(io_uring_prep_read_fixed, "%p,%u,%p,%u,%u,%u", sqe, nClientIndex, rwBuffers->c_pointer(pClientImage->bufIndex*U_IO_BUFFER_SIZE), U_IO_BUFFER_SIZE, 0, 0);
+
+         sqe->flags     |= IOSQE_FIXED_FILE | IOSQE_BUFFER_SELECT;
+      // sqe->buf_group  = index;
+         }
+      break;
+
+      case SocketOperation::_write:
+         {
+         pClientImage->UEventFd::op_mask = SocketOperation::_write;
+
+         U_SYSCALL_VOID(io_uring_prep_write_fixed, "%p,%u,%p,%u,%u,%u", sqe, nClientIndex,
+                           rwBuffers->c_pointer(rwBuffers->size()/2+pClientImage->bufIndex*U_IO_BUFFER_SIZE), pClientImage->bufsz, 0, 0);
+
+         sqe->flags     |= IOSQE_FIXED_FILE | IOSQE_BUFFER_SELECT;
+      // sqe->buf_group  = index;
+         }
+      break;
+
+      case SocketOperation::_close:
+         {
+         pClientImage->UEventFd::op_mask = SocketOperation::_close;
+
+         U_SYSCALL_VOID(io_uring_prep_close, "%p,%u", sqe, pClientImage->fd);
+         }
+      break;
+
+      default: break; // never
+      }
+
+   sqe->user_data = (long)pClientImage;
+
+   int ret = U_SYSCALL(io_uring_submit, "%p", &io_uring);
+
+   if (ret == -1)
+      {
+      U_ERROR("io_uring_submit() failed: %d%R", ret, 0); // NB: the last argument (0) is necessary...
+      }
+}
+
+void UServer_Base::findNextClientImage()
+{
+   U_TRACE_NO_PARAM(0, "UServer_Base::findNextClientImage()")
+
+#ifdef DEBUG
+   for (uint32_t i = 0; i < (uint32_t)u_num_cpu; ++i)
+      {
+      U_INTERNAL_ASSERT_DIFFERS(vClientImage[i].fd, -1)
+      U_INTERNAL_ASSERT_EQUALS(vClientImage[i].UEventFd::op_mask, SocketOperation::_accept)
+      U_INTERNAL_ASSERT_EQUALS(vClientImage[i].bufsz, 0)
+      U_INTERNAL_ASSERT_EQUALS(vClientImage[i].bufIndex, 0xffffffff)
+      }
+#endif
+
+   pClientImage = vClientImage + UNotifier::num_connection;
+
+   while (true)
+      {
+      U_INTERNAL_DUMP("\n----------------------------------------\n"
+                      "vClientImage[%u].fd       = %d\n"
+                      "vClientImage[%u].op_mask  = %u\n"
+                      "vClientImage[%u].bufsz    = %u\n"
+                      "vClientImage[%u].bufIndex = %u"
+                      "\n----------------------------------------\n",
+                      pClientImage-vClientImage, pClientImage->UEventFd::fd,
+                      pClientImage-vClientImage, pClientImage->UEventFd::op_mask,
+                      pClientImage-vClientImage, pClientImage->bufsz,
+                      pClientImage-vClientImage, pClientImage->bufIndex)
+
+      if (pClientImage->fd == -1)
+         {
+         nClientIndex = pClientImage - vClientImage;
+
+         U_INTERNAL_ASSERT_MINOR(nClientIndex, UNotifier::max_connection)
+
+         if (++bufNextIndex >= (uint32_t)u_num_cpu) bufNextIndex = 0;
+
+         pClientImage->bufIndex = bufNextIndex;
+
+         return;
+         }
+
+      // busy
+      //
+      // TODO
+
+      if (++pClientImage >= eClientImage) pClientImage = vClientImage + u_num_cpu;
+      }
+}
+#endif
+
 void UServer_Base::run()
 {
    U_TRACE_NO_PARAM(1, "UServer_Base::run()")
+
+   UTimeVal to_sleep(0L, 500L * 1000L);
 
    if (UFile::isRunningInChroot())
       {
@@ -4722,10 +4965,177 @@ void UServer_Base::run()
 
    init();
 
+#ifdef USERVER_RNG
+   if (brng) 
+      {
+      int ret = U_SYSCALL(io_uring_queue_init_params, "%u,%p,%p", UNotifier::max_connection, &io_uring, &params);
+
+      if (ret)
+         {
+         U_ERROR("io_uring_queue_init_params() failed: %d%R", ret, 0); // NB: the last argument (0) is necessary...
+         }
+
+      U_INTERNAL_ASSERT_EQUALS(socketfds, U_NULLPTR)
+
+      socketfds = (int*) UMemoryPool::cmalloc(UNotifier::max_connection, sizeof(int));
+
+      (void) U_SYSCALL(memset, "%p,%u,%u", socketfds, 0xff, UNotifier::max_connection * sizeof(int)); // make sparse with -1
+
+      ret = U_SYSCALL(io_uring_register_files, "%p,%p,%p", &io_uring, socketfds, UNotifier::max_connection); // register an array large enough to contain all possible file descriptors for io
+
+      if (ret)
+         {
+         U_ERROR("io_uring_register_files() failed: %d%R", ret, 0); // NB: the last argument (0) is necessary...
+         }
+
+      U_INTERNAL_ASSERT_EQUALS(rwBuffers, U_NULLPTR)
+
+      U_NEW_STRING(rwBuffers, UString);
+
+      uint32_t sz = u_num_cpu * U_IO_BUFFER_SIZE;
+
+      rwBuffers->setConstant(sz);
+      rwBuffers->checkConstant(sz);
+
+      struct iovec vrwBuffers = { rwBuffers->data(), sz };
+
+      ret = U_SYSCALL(io_uring_register_buffers, "%p,%p,%p", &io_uring, &vrwBuffers, 1);
+
+      if (ret)
+         {
+         U_ERROR("io_uring_register_buffers() failed: %d%R", ret, 0); // NB: the last argument (0) is necessary...
+         }
+
+      register_files_update(socket->iSockDesc);
+
+      submit(SocketOperation::_accept); // this queues an accept()
+
+      pClientImage->bufsz    = 0;
+      pClientImage->bufIndex = 0xffffffff;
+
+      for (pClientImage = vClientImage+(nClientIndex=1); nClientIndex < (uint32_t)u_num_cpu; ++nClientIndex, ++pClientImage)
+         {
+         pClientImage->bufsz    = 0;
+         pClientImage->bufIndex = 0xffffffff;
+
+         register_files_update(USocket::startServer(port));
+
+         if (set_tcp_keep_alive) USocket::setTcpKeepAlive(pClientImage->fd);
+
+         submit(SocketOperation::_accept); // this queues an accept()
+         }
+
+      while (flag_loop)
+         {
+         wait_cqe();
+
+         switch (pClientImage->UEventFd::op_mask)
+            {
+            case SocketOperation::_accept:
+               {
+               U_INTERNAL_ASSERT_MINOR(nClientIndex, (uint32_t)u_num_cpu)
+
+               if (UNLIKELY(cqe->res < 0)) // standard accept errors -> ENETDOWN, EPROTO, ENOPROTOOPT, EHOSTDOWN, ENONET, EHOSTUNREACH, EOPNOTSUPP, ENETUNREACH
+                  {
+                  u_errno = -cqe->res;
+
+                  U_WARNING("accept got %d%R", cqe->res, 0); // NB: the last argument (0) is necessary...
+                  }
+               else
+                  {
+                  int newfd = cqe->res;
+
+                  U_INTERNAL_DUMP("pClientImage->fd = %d newfd = %d", pClientImage->fd, newfd)
+
+                  U_INTERNAL_ASSERT_MINOR((uint32_t)newfd,            UNotifier::max_connection)
+                  U_INTERNAL_ASSERT_MINOR((uint32_t)pClientImage->fd, UNotifier::max_connection)
+
+                  int op = (pClientImage->handlerAccept(newfd) ? SocketOperation::_read
+                                                               : SocketOperation::_close);
+
+                  if (++UNotifier::num_connection < UNotifier::max_connection) submit(SocketOperation::_accept); // this queues an accept()
+
+                  U_INTERNAL_DUMP("UNotifier::num_connection = %u UNotifier::max_connection = %u", UNotifier::num_connection, UNotifier::max_connection)
+
+                  findNextClientImage();
+
+                  register_files_update(newfd);
+
+                  submit(op);
+                  }
+               }
+            break;
+
+            case SocketOperation::_read:
+               {
+               if (UNLIKELY(cqe->res < 0))
+                  {
+                  u_errno = -cqe->res;
+
+                  U_WARNING("read got %d%R", cqe->res, 0); // NB: the last argument (0) is necessary...
+                  }
+               else
+                  {
+                  U_INTERNAL_DUMP("BytesRead(%u) = %#.*S", cqe->res, cqe->res, rwBuffers->data())
+
+                  uint32_t start1 = pClientImage->bufIndex * U_IO_BUFFER_SIZE,
+                           start2 = sz / 2 + start1;
+
+                  UString request  = rwBuffers->substr(start1, cqe->res),
+                          response = rwBuffers->substr(start2, U_IO_BUFFER_SIZE);
+
+                  if (pClientImage->handlerRequest(request, response) == false) submit(SocketOperation::_close); // this queues a close()
+                  else
+                     {
+                     if ((pClientImage->bufsz = response.size())) submit(SocketOperation::_write); // this queues a write()
+                                                                  submit(SocketOperation::_read);  // this queues a  read()
+                     }
+                  }
+               }
+            break;
+
+            case SocketOperation::_write:
+               {
+               if (UNLIKELY(cqe->res < 0))
+                  {
+                  u_errno = -cqe->res;
+
+                  U_WARNING("write got %d%R", cqe->res, 0); // NB: the last argument (0) is necessary...
+                  }
+               else
+                  {
+                  U_INTERNAL_DUMP("pClientImage->bufsz = %u BytesWrite(%u) = %#.*S", pClientImage->bufsz, cqe->res, cqe->res)
+                  }
+               }
+            break;
+
+            case SocketOperation::_close:
+               {
+               if (UNLIKELY(cqe->res < 0))
+                  {
+                  u_errno = -cqe->res;
+
+                  U_WARNING("close fd %u got %d%R", pClientImage->fd, cqe->res, 0); // NB: the last argument (0) is necessary...
+                  }
+
+               --UNotifier::num_connection;
+
+               register_files_update(-1);
+               }
+            break;
+
+            default: break; // never
+            }
+
+         U_SYSCALL_VOID(io_uring_cqe_seen, "%p,%p", &io_uring, cqe); // signal that we consumed one
+         }
+      }
+   else
+#endif
+   {
    int status;
    uint32_t crash_counter = 0;
    bool baffinity = false, bmail;
-   UTimeVal to_sleep(0L, 500L * 1000L);
    const char* user = (as_user->empty() ? U_NULLPTR : as_user->data());
 
    UHttpClient_Base::server_context_flag = true;
@@ -5002,6 +5412,7 @@ void UServer_Base::run()
       }
 
    U_INTERNAL_ASSERT(proc->parent())
+   }
 
 stop:
 #if defined(USERVER_UDP) && defined(U_HTTP3_DISABLE)

@@ -5,10 +5,10 @@
 (cd benchmark; rm -f  db; creat_link FrameworkBenchmarks/ULib/db db)
 
 #DOC_ROOT=SESSION
-#DOC_ROOT=docroot
+ DOC_ROOT=docroot
 #DOC_ROOT=sse_example
 #DOC_ROOT=ruby/blog
- DOC_ROOT=JONATHAN/docroot
+#DOC_ROOT=JONATHAN/docroot
 #DOC_ROOT=benchmark/docroot
 #DOC_ROOT=ShivShankarDayal/docroot
 
@@ -18,7 +18,7 @@ rm -f tmp/usp_compile.sh.err /tmp/*.hpack.* \
                 trace.*userver_*.[0-9]*           object.*userver_*.[0-9]*           stack.*userver_*.[0-9]*           mempool.*userver_*.[0-9]* \
       $DOC_ROOT/trace.*userver_*.[0-9]* $DOC_ROOT/object.*userver_*.[0-9]* $DOC_ROOT/stack.*userver_*.[0-9]* $DOC_ROOT/mempool.*userver_*.[0-9]*
 
- UTRACE="0 50M 0"
+#UTRACE="0 50M 0"
 #UTRACE_SIGNAL="0 50M -1"
  UTRACE_FOLDER=/tmp
  TMPDIR=/tmp
@@ -64,7 +64,7 @@ cat <<EOF >inp/webserver.cfg
 userver {
  PORT 8080
  RUN_AS_USER nobody
- MIN_SIZE_FOR_SENDFILE 2k
+#MIN_SIZE_FOR_SENDFILE 2k
  LOG_FILE web_server.log
  LOG_FILE_SZ 10M
 #LOG_FILE_SZ 20k
@@ -83,17 +83,17 @@ userver {
 #REQ_TIMEOUT 300
 #PLUGIN "ssi http"
 #ORM_DRIVER "sqlite mysql"
- ORM_DRIVER sqlite
+#ORM_DRIVER sqlite
 
 #DOCUMENT_ROOT .
 #PLUGIN_DIR            ../../src/ulib/net/server/plugin/.libs
 #ORM_DRIVER_DIR        ../../src/ulib/orm/driver/.libs
 #DOCUMENT_ROOT docroot
-#PLUGIN_DIR        ../../../src/ulib/net/server/plugin/.libs
-#ORM_DRIVER_DIR    ../../../src/ulib/orm/driver/.libs
+ PLUGIN_DIR        ../../../src/ulib/net/server/plugin/.libs
+ ORM_DRIVER_DIR    ../../../src/ulib/orm/driver/.libs
 #DOCUMENT_ROOT benchmark/docroot
- PLUGIN_DIR     ../../../../src/ulib/net/server/plugin/.libs
- ORM_DRIVER_DIR ../../../../src/ulib/orm/driver/.libs
+#PLUGIN_DIR     ../../../../src/ulib/net/server/plugin/.libs
+#ORM_DRIVER_DIR ../../../../src/ulib/orm/driver/.libs
 
  DOCUMENT_ROOT $DOC_ROOT
 }
@@ -105,11 +105,12 @@ http {
 #REQUEST_READ_TIMEOUT 30
 #APACHE_LIKE_LOG /var/log/httpd/access_log
 #LOG_FILE_SZ 10M
- DIGEST_AUTHENTICATION yes
- URI_PROTECTED_MASK /tutor/*|/learner/*|/HOD/*
- URI_OVERLOAD_AUTHENTICATION yes
+#DIGEST_AUTHENTICATION yes
+#URI_PROTECTED_MASK /tutor/*|/learner/*|/HOD/*
+#URI_OVERLOAD_AUTHENTICATION yes
 #CACHE_FILE_STORE nocat/webif.gz
-#CACHE_FILE_MASK inp/http/data/file1|*.flv|*.svgz
+ CACHE_FILE_MASK inp/http/data/file1|*.flv|*.svgz
+ CACHE_AVOID_MASK www.sito1.com/inp|ruby
 #URI_REQUEST_STRICT_TRANSPORT_SECURITY_MASK *
 }
 EOF

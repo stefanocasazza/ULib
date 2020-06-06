@@ -1309,6 +1309,7 @@ dnl initialize all the info variables to 'no'
 ulib_libzopfli_msg="no (--with-libzopfli)"
 ulib_libbrotli_msg="no (--with-libbrotli)"
 ulib_libquiche_msg="no (--with-libquiche)"
+ ulib_liburing_msg="no (--with-liburing)"
  ulib_mimalloc_msg="no (--with-libmimalloc)"
    ulib_libtdb_msg="no (--with-libtdb)"
      ulib_curl_msg="no (--with-curl)"
@@ -1448,6 +1449,7 @@ libz_version="unknow"
 libzopfli_version="unknown"
 libbrotli_version="unknown"
 libquiche_version="unknown"
+liburing_version="unknown"
 mimalloc_version="unknown"
 libtdb_version="unknown"
 pcre_version="unknown"
@@ -1542,6 +1544,10 @@ fi
 
 if test "$USE_LIBMIMALLOC" = "yes"; then
 	ulib_mimalloc_msg="yes ( $libmimalloc_version )"
+fi
+
+if test "$USE_LIBURING" = "yes"; then
+	ulib_liburing_msg="yes ( $liburing_version )"
 fi
 
 if test "$USE_LIBTDB" = "yes"; then
@@ -2022,6 +2028,7 @@ AM_CONDITIONAL(EXPAT,		test "$USE_LIBEXPAT"		= "yes")
 AM_CONDITIONAL(MAGIC,		test "$USE_LIBMAGIC"		= "yes")
 AM_CONDITIONAL(DBI,			test "$USE_LIBDBI"		= "yes")
 AM_CONDITIONAL(LIBTDB,		test "$USE_LIBTDB"		= "yes")
+AM_CONDITIONAL(LIBURING,	test "$USE_LIBURING"		= "yes")
 AM_CONDITIONAL(LIBEVENT,	test "$USE_LIBEVENT"		= "yes")
 AM_CONDITIONAL(LIBXML2,		test "$USE_LIBXML2"		= "yes")
 AM_CONDITIONAL(PAGE_SPEED, test "$USE_PAGE_SPEED"	= "yes")
@@ -2041,6 +2048,7 @@ AC_DEFINE_UNQUOTED(_LIBZOPFLI_VERSION,	 "$libzopfli_version",	[libzopfli - googl
 AC_DEFINE_UNQUOTED(_LIBBROTLI_VERSION,	 "$libbrotli_version",	[libbrotli - google compression library version])
 AC_DEFINE_UNQUOTED(_LIBQUICHE_VERSION,	 "$libquiche_version",	[libquiche - library version of implementation of the QUIC transport protocol and HTTP/3])
 AC_DEFINE_UNQUOTED(_LIBMIMALLOC_VERSION,"$libmimalloc_version",[libmimalloc - library version of implementation of the QUIC transport protocol and HTTP/3])
+AC_DEFINE_UNQUOTED(_LIBURING_VERSION,	 "$liburing_version",	[liburing - library version of implementation of efficient I/O with io_uring])
 AC_DEFINE_UNQUOTED(_LIBTDB_VERSION,		 "$libtdb_version",		[libtdb - samba Trivial DB library version])
 AC_DEFINE_UNQUOTED(_LIBSSH_VERSION,		 "$libssh_version",		[libSSH version])
 AC_DEFINE_UNQUOTED(_SSL_VERSION,			 "$ssl_version",			[SSL version])
@@ -2086,7 +2094,7 @@ AC_TYPE_UINT64_T
 AC_TYPE_UINT8_T
 AC_CHECK_TYPES([ptrdiff_t])
 
-AC_DEFINE_UNQUOTED([RETSIGTYPE],[void],[Define as the return type of signal handlers (`int' or `void').])
+AC_DEFINE_UNQUOTED([RETSIGTYPE],[void],[Define as the return type of signal handlers (`int' or `void')])
 
 # SECTION 7: Checks for structures
 
@@ -3133,6 +3141,7 @@ AC_MSG_NOTICE([Configured to build src/ulib/lib${ULIB}:
       LIBZOPFLI support: ${ulib_libzopfli_msg}
       LIBBROTLI support: ${ulib_libbrotli_msg}
       LIBQUICHE support: ${ulib_libquiche_msg}
+       LIBURING support: ${ulib_liburing_msg}
        MIMALLOC support: ${ulib_mimalloc_msg}
          LIBTDB support: ${ulib_libtdb_msg}
            PCRE support: ${ulib_pcre_msg}
@@ -3164,7 +3173,7 @@ PYTHON language support: ${ulib_python_msg}
 
 See include/ulib/internal/config.h for further configuration information
 ------------------------------------------------------------------------])
-#      Built-in manual: ${ulib_manual_msg}
+# Built-in manual: ${ulib_manual_msg}
 
 # SECTION 16: `AC_CONFIG_FILES([FILE...])
 

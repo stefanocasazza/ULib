@@ -734,6 +734,8 @@ LIBXML2_FALSE
 LIBXML2_TRUE
 LIBEVENT_FALSE
 LIBEVENT_TRUE
+LIBURING_FALSE
+LIBURING_TRUE
 LIBTDB_FALSE
 LIBTDB_TRUE
 DBI_FALSE
@@ -1094,6 +1096,7 @@ with_libzopfli
 with_libbrotli
 with_libquiche
 with_libmimalloc
+with_liburing
 with_magic
 enable_ssl_staticlib_deps
 with_ssl
@@ -1865,6 +1868,7 @@ Optional Packages:
   --with-libbrotli        use system   brotli library - [will check /usr /usr/local] [default=use if present]
   --with-libquiche        use system   quiche library - [will check /usr /usr/local] [default=use if present]
   --with-libmimalloc      use system mimalloc library - [will check /usr /usr/local] [default=use if present]
+  --with-liburing         use system    uring library - [will check /usr /usr/local] [default=use if present]
   --with-magic            use system libmagic library - [will check /usr /usr/local] [default=use if present]
   --with-ssl              use system      SSL library - [will check /usr /usr/local] [default=use if present]
   --with-pcre             use system     PCRE library - [will check /usr /usr/local] [default=use if present]
@@ -26221,6 +26225,7 @@ $as_echo "${T_MD}C++ stuff:${T_ME}" >&6; }
 ulib_libzopfli_msg="no (--with-libzopfli)"
 ulib_libbrotli_msg="no (--with-libbrotli)"
 ulib_libquiche_msg="no (--with-libquiche)"
+ ulib_liburing_msg="no (--with-liburing)"
  ulib_mimalloc_msg="no (--with-libmimalloc)"
    ulib_libtdb_msg="no (--with-libtdb)"
      ulib_curl_msg="no (--with-curl)"
@@ -27449,6 +27454,7 @@ libz_version="unknow"
 libzopfli_version="unknown"
 libbrotli_version="unknown"
 libquiche_version="unknown"
+liburing_version="unknown"
 mimalloc_version="unknown"
 libtdb_version="unknown"
 pcre_version="unknown"
@@ -27809,6 +27815,73 @@ $as_echo "#define USE_LIBMIMALLOC 1" >>confdefs.h
 				CPPFLAGS="$CPPFLAGS -I$libmimallocdir/include"
 				LDFLAGS="$LDFLAGS -L$libmimallocdir/lib -Wl,-R$libmimallocdir/lib";
 				PRG_LDFLAGS="$PRG_LDFLAGS -L$libmimallocdir/lib";
+			fi
+		fi
+	fi
+
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if uring library is wanted" >&5
+$as_echo_n "checking if uring library is wanted... " >&6; }
+	wanted=1;
+	if test -z "$with_liburing" ; then
+		wanted=0;
+		if test -n "$CROSS_ENVIRONMENT" -o "$USP_FLAGS" = "-DAS_cpoll_cppsp_DO" -o "$enable_shared" = "no"; then
+			with_liburing="no";
+		else
+			with_liburing="${CROSS_ENVIRONMENT}/usr";
+		fi
+	fi
+
+# Check whether --with-liburing was given.
+if test "${with_liburing+set}" = set; then :
+  withval=$with_liburing;
+	if test "$withval" = "no"; then
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+	else
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+		for dir in $withval ${CROSS_ENVIRONMENT}/ ${CROSS_ENVIRONMENT}/usr ${CROSS_ENVIRONMENT}/usr/local; do
+			liburingdir="$dir"
+			if test -f "$dir/include/liburing.h"; then
+				found_liburing="yes";
+				break;
+			fi
+		done
+		if test x_$found_liburing != x_yes; then
+			msg="Cannot find liburing library";
+			if test $wanted = 1; then
+				as_fn_error $? "$msg" "$LINENO" 5
+			else
+				{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $msg" >&5
+$as_echo "$msg" >&6; }
+			fi
+		else
+			echo "${T_MD}liburing found in $liburingdir${T_ME}"
+			USE_LIBURING=yes
+
+$as_echo "#define USE_LIBURING 1" >>confdefs.h
+
+
+			if test -z "$CROSS_ENVIRONMENT" -a x_$PKG_CONFIG != x_no; then
+				liburing_version=$(pkg-config --modversion liburing 2>/dev/null)
+			fi
+			if test -z "${liburing_version}"; then
+				liburing_version=$(ls $liburingdir/lib*/liburing.so.*.* 2>/dev/null | head -n 1 | awk -F'.so.' '{n=2; print $n}' 2>/dev/null)
+			fi
+			if test -z "${liburing_version}"; then
+				liburing_version="unknown"
+			fi
+			ULIB_LIBS="$ULIB_LIBS -luring";
+			if test $liburingdir != "${CROSS_ENVIRONMENT}/" -a $liburingdir != "${CROSS_ENVIRONMENT}/usr" -a $liburingdir != "${CROSS_ENVIRONMENT}/usr/local"; then
+				CPPFLAGS="$CPPFLAGS -I$liburingdir/include"
+				LDFLAGS="$LDFLAGS -L$liburingdir/lib -Wl,-R$liburingdir/lib";
+				PRG_LDFLAGS="$PRG_LDFLAGS -L$liburingdir/lib";
 			fi
 		fi
 	fi
@@ -29363,6 +29436,10 @@ if test "$USE_LIBMIMALLOC" = "yes"; then
 	ulib_mimalloc_msg="yes ( $libmimalloc_version )"
 fi
 
+if test "$USE_LIBURING" = "yes"; then
+	ulib_liburing_msg="yes ( $liburing_version )"
+fi
+
 if test "$USE_LIBTDB" = "yes"; then
 	ulib_libtdb_msg="yes ( $libtdb_version )"
 	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for tdb_traverse_read in -ltdb" >&5
@@ -30849,6 +30926,14 @@ else
   LIBTDB_FALSE=
 fi
 
+ if test "$USE_LIBURING"		= "yes"; then
+  LIBURING_TRUE=
+  LIBURING_FALSE='#'
+else
+  LIBURING_TRUE='#'
+  LIBURING_FALSE=
+fi
+
  if test "$USE_LIBEVENT"		= "yes"; then
   LIBEVENT_TRUE=
   LIBEVENT_FALSE='#'
@@ -30962,6 +31047,11 @@ _ACEOF
 
 cat >>confdefs.h <<_ACEOF
 #define _LIBMIMALLOC_VERSION "$libmimalloc_version"
+_ACEOF
+
+
+cat >>confdefs.h <<_ACEOF
+#define _LIBURING_VERSION "$liburing_version"
 _ACEOF
 
 
@@ -34374,6 +34464,7 @@ ULIB_SYSCONFDIR="$u_sysconfdir"
       LIBZOPFLI support: ${ulib_libzopfli_msg}
       LIBBROTLI support: ${ulib_libbrotli_msg}
       LIBQUICHE support: ${ulib_libquiche_msg}
+       LIBURING support: ${ulib_liburing_msg}
        MIMALLOC support: ${ulib_mimalloc_msg}
          LIBTDB support: ${ulib_libtdb_msg}
            PCRE support: ${ulib_pcre_msg}
@@ -34439,6 +34530,7 @@ $as_echo "$as_me: Configured to build src/ulib/lib${ULIB}:
       LIBZOPFLI support: ${ulib_libzopfli_msg}
       LIBBROTLI support: ${ulib_libbrotli_msg}
       LIBQUICHE support: ${ulib_libquiche_msg}
+       LIBURING support: ${ulib_liburing_msg}
        MIMALLOC support: ${ulib_mimalloc_msg}
          LIBTDB support: ${ulib_libtdb_msg}
            PCRE support: ${ulib_pcre_msg}
@@ -34470,7 +34562,7 @@ PYTHON language support: ${ulib_python_msg}
 
 See include/ulib/internal/config.h for further configuration information
 ------------------------------------------------------------------------" >&6;}
-#      Built-in manual: ${ulib_manual_msg}
+# Built-in manual: ${ulib_manual_msg}
 
 # SECTION 16: `AC_CONFIG_FILES([FILE...])
 
@@ -35192,6 +35284,10 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${LIBTDB_TRUE}" && test -z "${LIBTDB_FALSE}"; then
   as_fn_error $? "conditional \"LIBTDB\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${LIBURING_TRUE}" && test -z "${LIBURING_FALSE}"; then
+  as_fn_error $? "conditional \"LIBURING\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${LIBEVENT_TRUE}" && test -z "${LIBEVENT_FALSE}"; then

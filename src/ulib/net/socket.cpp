@@ -303,25 +303,25 @@ bool USocket::connectServer(const UIPAddress& cAddr, unsigned int iServPort)
    U_RETURN(false);
 }
 
-void USocket::setTcpKeepAlive()
+void USocket::setTcpKeepAlive(int fd)
 {
-   U_TRACE_NO_PARAM(0, "USocket::setTcpKeepAlive()")
+   U_TRACE(0, "USocket::setTcpKeepAlive(%d)", fd)
 
    // Set TCP keep alive option to detect dead peers
 
 #ifdef SO_KEEPALIVE
-   (void) setSockOpt(SOL_SOCKET, SO_KEEPALIVE, (const int[]){ 1 });
+   (void) setSockOpt(fd, SOL_SOCKET, SO_KEEPALIVE, (const int[]){ 1 });
 
 # ifdef U_LINUX // Default settings are more or less garbage, with the keepalive time set to 7200 by default on Linux. Modify settings to make the feature actually useful
-   (void) setSockOpt(IPPROTO_TCP, TCP_KEEPIDLE, (const int[]){ 15 }); // Send first probe after interval
+   (void) setSockOpt(fd, IPPROTO_TCP, TCP_KEEPIDLE, (const int[]){ 15 }); // Send first probe after interval
 
    // Send next probes after the specified interval. Note that we set the delay as interval / 3, as we send three probes before detecting an error (see the next setsockopt call)
 
-   (void) setSockOpt(IPPROTO_TCP, TCP_KEEPINTVL, (const int[]){ 15 / 3 }); // Send next probe after interval
+   (void) setSockOpt(fd, IPPROTO_TCP, TCP_KEEPINTVL, (const int[]){ 15 / 3 }); // Send next probe after interval
 
    // Consider the socket in error state after three we send three ACK probes without getting a reply
 
-   (void) setSockOpt(IPPROTO_TCP, TCP_KEEPCNT, (const int[]){ 3 });
+   (void) setSockOpt(fd, IPPROTO_TCP, TCP_KEEPCNT, (const int[]){ 3 });
 # endif
 #endif
 }
@@ -460,6 +460,32 @@ bool USocket::setServer(unsigned int port, void* localAddress)
    iState = -errno;
 
    U_RETURN(false);
+}
+
+int USocket::startServer(unsigned int port)
+{
+   U_TRACE(0, "USocket::startServer(%u)", port)
+
+   int32_t val = 1;
+   struct sockaddr_in addr;
+   int fd = U_SYSCALL(socket, "%d,%d,%d", AF_INET, SOCK_STREAM | SOCK_CLOEXEC, IPPROTO_TCP);
+
+   (void) U_SYSCALL(setsockopt, "%d,%d,%d,%p,%u", fd, SOL_SOCKET, SO_REUSEPORT, &val, sizeof(int));
+   (void) U_SYSCALL(setsockopt, "%d,%d,%d,%p,%u", fd, SOL_SOCKET, SO_REUSEADDR, &val, sizeof(int));
+
+   (void) U_SYSCALL(setsockopt, "%d,%d,%d,%p,%u", fd, SOL_TCP, TCP_NODELAY, (const int[]){ 1 }, sizeof(int));
+   (void) U_SYSCALL(setsockopt, "%d,%d,%d,%p,%u", fd, SOL_TCP, TCP_FASTOPEN, (const int[]){ 4096 }, sizeof(int));
+   (void) U_SYSCALL(setsockopt, "%d,%d,%d,%p,%u", fd, SOL_TCP, TCP_DEFER_ACCEPT, (const int[]){ 10 }, sizeof(int));
+   (void) U_SYSCALL(setsockopt, "%d,%d,%d,%p,%u", fd, SOL_SOCKET, SO_SNDBUF, (const int[]){ 500 * 1024 }, sizeof(int));
+
+   addr.sin_family = AF_INET;
+   addr.sin_port = htons(port);
+   addr.sin_addr.s_addr = htonl(INADDR_ANY);
+
+   (void) U_SYSCALL(bind, "%d,%p,%d", fd, (struct sockaddr*)&addr, sizeof(addr));
+   (void) U_SYSCALL(listen, "%d,%d",  fd, SOMAXCONN);
+
+   U_RETURN(fd);
 }
 
 #if defined(U_LINUX) && (!defined(U_SERVER_CAPTIVE_PORTAL) || defined(ENABLE_THREAD)) && !defined(HAVE_OLD_IOSTREAM)

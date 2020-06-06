@@ -25,6 +25,10 @@
 #include <ulib/utility/socket_ext.h>
 #include <ulib/net/server/client_image.h>
 
+#ifdef USE_LIBURING
+#  include <liburing.h>
+#endif
+
 #ifndef SIGWINCH
 #define SIGWINCH 28
 #endif
@@ -108,6 +112,7 @@ vClientImage = new client_type[UNotifier::max_connection]; } }
 class UHTTP;
 class UHTTP2;
 class UHTTP3;
+class UIORing;
 class UEventDB;
 class UCommand;
 class UTimeStat;
@@ -238,7 +243,7 @@ public:
 #endif
 
    static UFileConfig* pcfg;
-   static bool bssl, bipc, budp, flag_loop;
+   static bool bssl, bipc, budp, brng, flag_loop;
    static unsigned int port; // the port number to bind to
 
    static int          getReqTimeout()  { return (ptime ? ptime->UTimeVal::tv_sec : 0); }
@@ -1057,6 +1062,52 @@ protected:
       }
 #endif
 
+#ifdef USE_LIBURING
+   static int* socketfds;
+   static UString* rwBuffers;
+   static uint32_t bufNextIndex;
+   static struct io_uring_cqe* cqe;
+   static struct io_uring io_uring;
+   static struct io_uring_params params;
+
+   static void register_files_update(int newfd)
+      {
+      U_TRACE(0, "UServer_Base::register_files_update(%d)", newfd)
+
+      // ...fd member is the index of the file in the file descriptor array
+
+      U_INTERNAL_DUMP("socketfds[%u] = %d", nClientIndex, socketfds[nClientIndex])
+
+      int ret = U_SYSCALL(io_uring_register_files_update, "%p,%u,%p,%u", &io_uring, nClientIndex, &(socketfds[nClientIndex] = newfd), 1);
+
+      if (ret != 1)
+         {
+         U_ERROR("io_uring_register_files_update() failed: %d%R", ret, 0); // NB: the last argument (0) is necessary...
+         }
+
+      pClientImage->fd = newfd;
+      }
+
+   static void wait_cqe()
+      {
+      U_TRACE_NO_PARAM(0, "UServer_Base::wait_cqe()")
+
+      int ret = U_SYSCALL(io_uring_wait_cqe, "%p,%p", &io_uring, &cqe);
+
+      if (ret)
+         {
+         U_ERROR("io_uring_wait_cqe() failed: %d%R", ret, 0); // NB: the last argument (0) is necessary...
+         }
+
+      nClientIndex = (pClientImage = (UClientImage_Base*)cqe->user_data) - vClientImage;
+
+      U_INTERNAL_DUMP("vClientImage[%u].UEventFd::op_mask = %u", nClientIndex, pClientImage->UEventFd::op_mask)
+      }
+
+   static void submit(int op);
+   static void findNextClientImage();
+#endif
+
             UServer_Base(UFileConfig* cfg = U_NULLPTR);
    virtual ~UServer_Base();
 
@@ -1193,6 +1244,7 @@ private:
    friend class UHTTP;
    friend class UHTTP2;
    friend class UHTTP3;
+   friend class UIORing;
    friend class UDayLight;
    friend class UTimeStat;
    friend class USSLSocket;

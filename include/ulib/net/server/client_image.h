@@ -384,6 +384,14 @@ protected:
    // HTTP3
    void* conn;
    void* http3;
+#ifdef USE_LIBURING
+// int pendingOp; // we use UEventFd::op_mask as last operation
+   uint32_t bufIndex, bufsz;
+
+   // turn false if we should close the socket
+   virtual bool handlerAccept(int newfd);
+   virtual bool handlerRequest(const UString& req, UString& response);
+#endif
 
 #ifndef U_LOG_DISABLE
    static int log_request_partial;

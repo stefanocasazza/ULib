@@ -159,8 +159,8 @@ grep 'www.sito1.com' /etc/hosts >/dev/null 2>/dev/null
 
 if [ $? -ne 0 ]; then
    echo '# virtual host userver' >> /etc/hosts 2>/dev/null
-   echo localhost www.sito1.com  >> /etc/hosts 2>/dev/null
-   echo localhost www.sito2.com  >> /etc/hosts 2>/dev/null
+   echo 127.0.0.1 www.sito1.com  >> /etc/hosts 2>/dev/null
+   echo 127.0.0.1 www.sito2.com  >> /etc/hosts 2>/dev/null
 fi
 
 mkdir $DOC_ROOT/www.sito1.com

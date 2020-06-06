@@ -63,6 +63,7 @@ class UFile;
 class UHTTP;
 class UHTTP2;
 class UHTTP3;
+class UIORing;
 class UNotifier;
 class UWebSocket;
 class USocketExt;
@@ -80,6 +81,8 @@ class UREDISClient_Base;
 #define U_socket_LocalSet(obj) (obj)->USocket::flag[1]
 #define U_socket_Type(obj)     (obj)->USocket::flag[2]
 #define U_socket_unused(obj)   (obj)->USocket::flag[3]
+
+enum SocketOperation { none, _accept, _read, _write, _close };
 
 class U_EXPORT USocket {
 public:
@@ -250,6 +253,15 @@ public:
     * The setsockopt() function is called with the provided parameters to obtain the desired value
     */
 
+   static bool setSockOpt(int fd, int iCodeLevel, int iOptionName, const void* pOptionData, uint32_t iDataLength = sizeof(int))
+      {
+      U_TRACE(1, "USocket::setSockOpt(%d,%d,%d,%p,%u)", fd, iCodeLevel, iOptionName, pOptionData, iDataLength) // problem with sanitize address
+
+      if (U_FF_SYSCALL(setsockopt, "%d,%d,%d,%p,%u", fd, iCodeLevel, iOptionName, CAST(pOptionData), iDataLength) == 0) U_RETURN(true);
+
+      U_RETURN(false);
+      }
+
    bool setSockOpt(int iCodeLevel, int iOptionName, const void* pOptionData, uint32_t iDataLength = sizeof(int))
       {
       U_TRACE(1, "USocket::setSockOpt(%d,%d,%p,%u)", iCodeLevel, iOptionName, pOptionData, iDataLength) // problem with sanitize address
@@ -258,9 +270,7 @@ public:
 
       U_INTERNAL_ASSERT(isOpen())
 
-      if (U_FF_SYSCALL(setsockopt, "%d,%d,%d,%p,%u", getFd(), iCodeLevel, iOptionName, CAST(pOptionData), iDataLength) == 0) U_RETURN(true);
-
-      U_RETURN(false);
+      return setSockOpt(getFd(), iCodeLevel, iOptionName, CAST(pOptionData), iDataLength);
       }
 
    /**
@@ -576,7 +586,8 @@ public:
     * Ref4: tcp_max_orphans [https://www.frozentux.net/ipsysctl-tutorial/chunkyhtml/tcpvariables.html#AEN388]
     */
 
-   void setTcpKeepAlive();
+   static void setTcpKeepAlive(int fd);
+          void setTcpKeepAlive() { setTcpKeepAlive(iSockDesc); }
 
    /**
     * Enables/disables the @c SO_TIMEOUT pseudo option
@@ -827,6 +838,8 @@ protected:
    static bool breuseport, bincoming_cpu;
    static int iBackLog, incoming_cpu, accept4_flags; // If flags is 0, then accept4() is the same as accept()
 
+   static int startServer(unsigned int port);
+
    static void setLocalInfo( USocket* p, SocketAddress* cLocal);
    static void setRemoteInfo(USocket* p, SocketAddress* cRemote);
 
@@ -845,6 +858,7 @@ private:
                       friend class UHTTP;
                       friend class UHTTP2;
                       friend class UHTTP3;
+                      friend class UIORing;
                       friend class UNotifier;
                       friend class UWebSocket;
                       friend class USocketExt;

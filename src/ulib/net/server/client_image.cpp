@@ -129,6 +129,10 @@ UClientImage_Base::UClientImage_Base()
    max_limit  =
    started_at = 0;
 #endif
+#ifdef USE_LIBURING
+   bufIndex = bufsz = 0;
+   UEventFd::op_mask = SocketOperation::none; 
+#endif
 
    if (UServer_Base::isLog()) U_NEW_STRING(logbuf, UString(200U));
 
@@ -153,7 +157,7 @@ UClientImage_Base::~UClientImage_Base()
 
    // NB: array are not pointers (virtual table can shift the address of 'this')...
 
-   U_DELETE(socket)
+   if (socket) U_DELETE(socket)
 
    if (logbuf)
       {
@@ -280,11 +284,13 @@ void UClientImage_Base::init()
    U_INTERNAL_ASSERT_EQUALS(usp_encoded, U_NULLPTR)
    U_INTERNAL_ASSERT_EQUALS(request_uri, U_NULLPTR)
 
+#ifdef USE_LIBURING
+   if (UServer_Base::brng == false) 
+#endif
+   {
    U_NEW_STRING(body, UString);
    U_NEW_STRING(wbuffer, UString(U_CAPACITY));
    U_NEW_STRING(request, UString);
-   U_NEW_STRING(request_uri, UString);
-   U_NEW_STRING(environment, UString(U_CAPACITY));
 
    uint32_t sz = 8192;
 
@@ -293,6 +299,10 @@ void UClientImage_Base::init()
 #endif
 
    U_NEW_STRING(rbuffer, UString(sz));
+   }
+
+   U_NEW_STRING(request_uri, UString);
+   U_NEW_STRING(environment, UString(U_CAPACITY));
 
    // NB: these are for ULib Servlet Page (USP) - USP_PRINTF...
 
@@ -313,18 +323,11 @@ void UClientImage_Base::clear()
 {
    U_TRACE_NO_PARAM(0, "UClientImage_Base::clear()")
 
-   U_INTERNAL_ASSERT_POINTER(body)
-   U_INTERNAL_ASSERT_POINTER(wbuffer)
-   U_INTERNAL_ASSERT_POINTER(request)
-   U_INTERNAL_ASSERT_POINTER(rbuffer)
-   U_INTERNAL_ASSERT_POINTER(request_uri)
-
-   if (body)
+   if (request_uri)
       {
-      U_DELETE(body)
-      U_DELETE(wbuffer)
-      U_DELETE(request)
-      U_DELETE(rbuffer)
+      U_INTERNAL_ASSERT_POINTER(environment)
+      U_INTERNAL_ASSERT_POINTER(chronometer)
+
       U_DELETE(request_uri)
       U_DELETE(environment)
       U_DELETE(chronometer)
@@ -338,6 +341,18 @@ void UClientImage_Base::clear()
       U_DELETE(usp_value)
       U_DELETE(usp_buffer)
       U_DELETE(usp_encoded)
+      }
+
+   if (body)
+      {
+      U_INTERNAL_ASSERT_POINTER(wbuffer)
+      U_INTERNAL_ASSERT_POINTER(request)
+      U_INTERNAL_ASSERT_POINTER(rbuffer)
+
+      U_DELETE(body)
+      U_DELETE(wbuffer)
+      U_DELETE(request)
+      U_DELETE(rbuffer)
       }
 }
 
@@ -1054,7 +1069,8 @@ void UClientImage_Base::prepareForRead()
       U_INTERNAL_DUMP("UServer_Base::client_address = %.*S", U_CLIENT_ADDRESS_TO_TRACE)
 
 #  ifdef U_EVASIVE_SUPPORT
-      if (UServer_Base::checkHold(socket->getClientAddress()))
+      if (UServer_Base::db_evasive && 
+          UServer_Base::checkHold(socket->getClientAddress()))
          {
          abortive_close();
 
@@ -1080,7 +1096,8 @@ void UClientImage_Base::prepareForRead()
       }
 
 #ifdef U_EVASIVE_SUPPORT
-   if (UServer_Base::checkHitSiteStats())
+   if (UServer_Base::db_evasive &&
+       UServer_Base::checkHitSiteStats())
       {
       if (UHTTP::file_gzip_bomb &&
           UServer_Base::bssl == false)
@@ -2126,6 +2143,22 @@ end:
 
    U_RETURN(U_NOTIFIER_DELETE);
 }
+
+#ifdef USE_LIBURING
+bool UClientImage_Base::handlerAccept(int newfd)
+{
+   U_TRACE(0, "UClientImage_Base::handlerAccept(%d)", fd)
+
+   U_RETURN(true);
+}
+
+bool UClientImage_Base::handlerRequest(const UString& req, UString& response)
+{
+   U_TRACE(0, "UClientImage_Base::handlerRequest(%V,%p)", req.rep, &response)
+
+   U_RETURN(true);
+}
+#endif
 
 // DEBUG
 

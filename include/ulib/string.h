@@ -104,6 +104,7 @@ class UValue;
 class UString;
 class UBase64;
 class UEscape;
+class UIORing;
 class UHexDump;
 class UOptions;
 class UTimeDate;
@@ -2782,7 +2783,9 @@ private:
       }
 
    friend class UHTTP;
+   friend class UIORing;
    friend class USSEThread;
+   friend class UServer_Base;
    friend class URDBClient_Base;
 
    template <class T> friend class UJsonTypeHandler;

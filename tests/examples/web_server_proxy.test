@@ -20,7 +20,7 @@ rm -f tmp/usp_compile.sh.err /tmp/*.hpack.* \
       $DOC_ROOT1/trace.*userver_*.[0-9]* $DOC_ROOT1/object.*userver_*.[0-9]* $DOC_ROOT1/stack.*userver_*.[0-9]* $DOC_ROOT1/mempool.*userver_*.[0-9]* \
       $DOC_ROOT2/trace.*userver_*.[0-9]* $DOC_ROOT2/object.*userver_*.[0-9]* $DOC_ROOT2/stack.*userver_*.[0-9]* $DOC_ROOT2/mempool.*userver_*.[0-9]*
 
- UTRACE="0 10M -1"
+#UTRACE="0 10M -1"
  UTRACE_FOLDER=/tmp
  TMPDIR=/tmp
 #UOBJDUMP="0 10M 100"

@@ -1,0 +1,38 @@
+#!/bin/sh
+
+. ../.function
+
+## ioring.test -- Test io_ring feature
+
+start_msg ioring
+
+rm -rf err/ioring.err \
+		 trace.*ioring*.[0-9]* object.*ioring*.[0-9]* stack.*ioring*.[0-9]*
+
+ UTRACE="0 50M 0"
+#UTRACE_SIGNAL="0 10M 0"
+#UOBJDUMP="0 100k 10"
+#USIMERR="error.sim"
+ export UTRACE UOBJDUMP USIMERR UTRACE_SIGNAL
+
+prepare_usp
+
+check_for_netcat
+
+#VALGRIND=valgrind # --gen-suppressions=all
+#STRACE=$TRUSS
+start_prg_background ioring ../../src/ulib/net/server/plugin/.libs '"echo http"' # '"soap http"'
+
+wait_server_ready localhost 8080
+
+send_req $NCAT localhost 8080 inp/http/form_enctype.http server 5 kill
+
+#ab -k -n 2      -c 2    "http://127.0.0.1:8080/servlet/benchmarking?name=stefano" >/dev/null 2>&1
+#ab -k -n 100    -c 2    'http://127.0.0.1:8080/servlet/benchmarking?name=stefano' >/tmp/ab.out 2>&1
+#ab -k -n 100000 -c 1000 'http://127.0.0.1:8080/servlet/benchmarking?name=stefano' >/tmp/ab.txt 2>&1
+kill_server test_ioring
+
+rm -rf /tmp/form*
+
+# Test against expected output
+test_output_wc l ioring

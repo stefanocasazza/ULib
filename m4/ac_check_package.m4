@@ -267,6 +267,59 @@ AC_DEFUN([AC_CHECK_PACKAGE],[
 	fi
 	], [AC_MSG_RESULT(no)])
 
+	AC_MSG_CHECKING(if uring library is wanted)
+	wanted=1;
+	if test -z "$with_liburing" ; then
+		wanted=0;
+		if test -n "$CROSS_ENVIRONMENT" -o "$USP_FLAGS" = "-DAS_cpoll_cppsp_DO" -o "$enable_shared" = "no"; then
+			with_liburing="no";
+		else
+			with_liburing="${CROSS_ENVIRONMENT}/usr";
+		fi
+	fi
+	AC_ARG_WITH(liburing, [  --with-liburing         use system    uring library - [[will check /usr /usr/local]] [[default=use if present]]], [
+	if test "$withval" = "no"; then
+		AC_MSG_RESULT(no)
+	else
+		AC_MSG_RESULT(yes)
+		for dir in $withval ${CROSS_ENVIRONMENT}/ ${CROSS_ENVIRONMENT}/usr ${CROSS_ENVIRONMENT}/usr/local; do
+			liburingdir="$dir"
+			if test -f "$dir/include/liburing.h"; then
+				found_liburing="yes";
+				break;
+			fi
+		done
+		if test x_$found_liburing != x_yes; then
+			msg="Cannot find liburing library";
+			if test $wanted = 1; then
+				AC_MSG_ERROR($msg)
+			else
+				AC_MSG_RESULT($msg)
+			fi
+		else
+			echo "${T_MD}liburing found in $liburingdir${T_ME}"
+			USE_LIBURING=yes
+			AC_DEFINE(USE_LIBURING, 1, [Define if enable liburing support])
+
+			if test -z "$CROSS_ENVIRONMENT" -a x_$PKG_CONFIG != x_no; then
+				liburing_version=$(pkg-config --modversion liburing 2>/dev/null)
+			fi
+			if test -z "${liburing_version}"; then
+				liburing_version=$(ls $liburingdir/lib*/liburing.so.*.* 2>/dev/null | head -n 1 | awk -F'.so.' '{n=2; print $n}' 2>/dev/null)
+			fi
+			if test -z "${liburing_version}"; then
+				liburing_version="unknown"
+			fi
+			ULIB_LIBS="$ULIB_LIBS -luring";
+			if test $liburingdir != "${CROSS_ENVIRONMENT}/" -a $liburingdir != "${CROSS_ENVIRONMENT}/usr" -a $liburingdir != "${CROSS_ENVIRONMENT}/usr/local"; then
+				CPPFLAGS="$CPPFLAGS -I$liburingdir/include"
+				LDFLAGS="$LDFLAGS -L$liburingdir/lib -Wl,-R$liburingdir/lib";
+				PRG_LDFLAGS="$PRG_LDFLAGS -L$liburingdir/lib";
+			fi
+		fi
+	fi
+	], [AC_MSG_RESULT(no)])
+
 	AC_MSG_CHECKING(if MAGIC library is wanted)
 	wanted=1;
 	if test -z "$with_magic" ; then
