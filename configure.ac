@@ -1133,9 +1133,6 @@ for func in accept4 atexit clock_gettime daemon dup3 epoll_create1 epoll_wait ep
     epoll_wait)
         AC_DEFINE(HAVE_EPOLL_WAIT, [1], [has epoll_wait])
         ;;
-    epoll_ctl_batch)
-        AC_DEFINE(HAVE_EPOLL_CTL_BATCH, [1], [has epoll_ctl_batch])
-        ;;
     fallocate)
 		  AM_CONDITIONAL(FALLOCATE, true)
         AC_DEFINE(HAVE_FALLOCATE, [1], [has fallocate])

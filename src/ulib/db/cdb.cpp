@@ -881,7 +881,7 @@ U_NO_EXPORT void UCDB::checkForAllEntry()
 // STREAM
 
 #ifdef U_STDCPP_ENABLE
-vpFpcu UCDB::getValueFromBuffer;
+vPFpcu UCDB::getValueFromBuffer;
 
 class mystreambuf : public streambuf {
 public:

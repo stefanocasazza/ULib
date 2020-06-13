@@ -48,10 +48,18 @@ template <class T> class UHashMap;
 
 #define U_ClientImage_request_is_cached UClientImage_Base::cbuffer[0]
 
-#define U_ClientImage_http(obj)                    (obj)->UClientImage_Base::flag.c[0]
-#define U_ClientImage_idle(obj)                    (obj)->UClientImage_Base::flag.c[1]
-#define U_ClientImage_pclose(obj)                  (obj)->UClientImage_Base::flag.c[2]
-#define U_ClientImage_request_is_from_userver(obj) (obj)->UClientImage_Base::flag.c[3]
+#define U_ClientImage_is_wsk(obj)     (((obj)->UClientImage_Base::flag.c[0] & 0x01) != 0)
+#define U_ClientImage_is_http2(obj)   (((obj)->UClientImage_Base::flag.c[0] & 0x02) != 0)
+#define U_ClientImage_is_http3(obj)   (((obj)->UClientImage_Base::flag.c[0] & 0x04) != 0)
+#define U_ClientImage_is_idle(obj)    (((obj)->UClientImage_Base::flag.c[0] & 0x08) != 0)
+#define U_ClientImage_is_close(obj)   (((obj)->UClientImage_Base::flag.c[0] & 0x10) != 0)
+#define U_ClientImage_is_delete(obj)  (((obj)->UClientImage_Base::flag.c[0] & 0x20) != 0)
+#define U_ClientImage_user1_flag(obj) (((obj)->UClientImage_Base::flag.c[0] & 0x40) != 0)
+#define U_ClientImage_user2_flag(obj) (((obj)->UClientImage_Base::flag.c[0] & 0x80) != 0)
+
+#define U_ClientImage_op_pending(obj)   (obj)->UClientImage_Base::flag.c[1]
+#define U_ClientImage_idx_buffer(obj)   (obj)->UClientImage_Base::flag.c[2]
+#define U_ClientImage_user_value(obj)   (obj)->UClientImage_Base::flag.c[3]
 
 class U_EXPORT UClientImage_Base : public UEventFd {
 public:
@@ -84,6 +92,7 @@ public:
    virtual int  handlerRead() U_DECL_OVERRIDE;
    virtual int  handlerWrite() U_DECL_FINAL;
    virtual int  handlerTimeout() U_DECL_FINAL;
+   virtual int  handlerRequest() U_DECL_OVERRIDE;
    virtual void handlerDelete() U_DECL_FINAL;
 
    static void init();
@@ -145,7 +154,7 @@ public:
       {
       U_TRACE_NO_PARAM(0, "UClientImage_Base::isRequestNotFound()")
 
-      U_INTERNAL_DUMP("U_ClientImage_request = %d %B", U_ClientImage_request, U_ClientImage_request)
+      U_INTERNAL_DUMP("U_ClientImage_request = %u %B", U_ClientImage_request, U_ClientImage_request)
 
 #  ifdef U_CACHE_REQUEST_DISABLE
       if (U_ClientImage_request == 0) U_RETURN(true);
@@ -250,7 +259,7 @@ public:
       {
       U_TRACE_NO_PARAM(0, "UClientImage_Base::isRequestRedirected()")
 
-      U_INTERNAL_DUMP("U_ClientImage_request = %d %B U_http_info.nResponseCode = %d", U_ClientImage_request,
+      U_INTERNAL_DUMP("U_ClientImage_request = %u %B U_http_info.nResponseCode = %u", U_ClientImage_request,
                        U_ClientImage_request,        U_http_info.nResponseCode)
 
       if ((U_ClientImage_request & ALREADY_PROCESSED) != 0 &&
@@ -270,7 +279,7 @@ public:
 #  ifndef U_CACHE_REQUEST_DISABLE
       U_ClientImage_request |= NO_CACHE;
 
-      U_INTERNAL_DUMP("U_ClientImage_request = %d %B", U_ClientImage_request, U_ClientImage_request)
+      U_INTERNAL_DUMP("U_ClientImage_request = %u %B", U_ClientImage_request, U_ClientImage_request)
 #  endif
       }
 
@@ -384,14 +393,6 @@ protected:
    // HTTP3
    void* conn;
    void* http3;
-#ifdef USE_LIBURING
-// int pendingOp; // we use UEventFd::op_mask as last operation
-   uint32_t bufIndex, bufsz;
-
-   // turn false if we should close the socket
-   virtual bool handlerAccept(int newfd);
-   virtual bool handlerRequest(const UString& req, UString& response);
-#endif
 
 #ifndef U_LOG_DISABLE
    static int log_request_partial;
@@ -487,29 +488,6 @@ protected:
    static void manageReadBufferResize(uint32_t n);
    static void setSendfile(int fd, off_t start, off_t count);
 
-   bool isRequestFromUServer()
-      {
-      U_TRACE_NO_PARAM(0, "UClientImage_Base::isRequestFromUServer()")
-
-      if (U_ClientImage_request_is_from_userver(this) != false) U_RETURN(true);
-
-      U_RETURN(false);
-      }
-
-   void setRequestFromUServer()
-      {
-      U_TRACE_NO_PARAM(0, "UClientImage_Base::setRequestFromUServer()")
-
-      U_ClientImage_request_is_from_userver(this) = true;
-      }
-
-   void resetRequestFromUServer()
-      {
-      U_TRACE_NO_PARAM(0, "UClientImage_Base::resetRequestFromUServer()")
-
-      U_ClientImage_request_is_from_userver(this) = true;
-      }
-
    void prepareForSendfile();
 
 #if defined(U_THROTTLING_SUPPORT) || defined(U_CLIENT_RESPONSE_PARTIAL_WRITE_SUPPORT)
@@ -521,7 +499,7 @@ protected:
 
       prepareForSendfile();
 
-      U_ClientImage_pclose(this) |= U_CLOSE;
+      flag.c[0] |= 0x10;
       }
 #endif
 

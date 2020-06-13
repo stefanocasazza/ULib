@@ -16,7 +16,7 @@
 #include <ulib/utility/escape.h>
 #include <ulib/internal/chttp.h>
 
-vpFpcu      UString::printValueToBuffer;
+vPFpcu      UString::printValueToBuffer;
 UString*    UString::string_null        = ULib::uustringnull.p2;
 UString*    UString::string_u_buffer    = ULib::uustringubuffer.p2;
 UStringRep* UStringRep::string_rep_null = ULib::uustringrepnull.p2;

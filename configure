@@ -25810,11 +25810,6 @@ $as_echo "#define HAVE_EPOLL_CREATE1 1" >>confdefs.h
 $as_echo "#define HAVE_EPOLL_WAIT 1" >>confdefs.h
 
         ;;
-    epoll_ctl_batch)
-
-$as_echo "#define HAVE_EPOLL_CTL_BATCH 1" >>confdefs.h
-
-        ;;
     fallocate)
 		   if true; then
   FALLOCATE_TRUE=

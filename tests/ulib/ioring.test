@@ -7,21 +7,50 @@
 start_msg ioring
 
 rm -rf err/ioring.err \
-		 trace.*ioring*.[0-9]* object.*ioring*.[0-9]* stack.*ioring*.[0-9]*
+		      trace.*ioring*.[0-9]*      object.*ioring*.[0-9]*      stack.*ioring*.[0-9]*      mempool.*ioring*.[0-9]* \
+		 /tmp/trace.*ioring*.[0-9]* /tmp/object.*ioring*.[0-9]* /tmp/stack.*ioring*.[0-9]* /tmp/mempool.*ioring*.[0-9]*
 
  UTRACE="0 50M 0"
 #UTRACE_SIGNAL="0 10M 0"
+ UTRACE_FOLDER=/tmp
+MIMALLOC_VERBOSE=1
+MIMALLOC_SHOW_ERRORS=1
 #UOBJDUMP="0 100k 10"
 #USIMERR="error.sim"
- export UTRACE UOBJDUMP USIMERR UTRACE_SIGNAL
+export UTRACE UOBJDUMP USIMERR UTRACE_SIGNAL UMEMUSAGE UTRACE_FOLDER TMPDIR MIMALLOC_VERBOSE MIMALLOC_SHOW_ERRORS
 
 prepare_usp
 
 check_for_netcat
 
+cat <<EOF >../examples/inp/webserver.cfg
+userver {
+ PORT 8080
+ RUN_AS_USER nobody
+#MIN_SIZE_FOR_SENDFILE 1k
+#REQ_TIMEOUT 5
+ DOS_WHITE_LIST 127.0.0.1,10.30.0.0/16
+ LOG_FILE /tmp/ioring.log
+ LOG_FILE_SZ 1M
+ LOG_MSG_SIZE -1
+ DOCUMENT_ROOT . 
+ PLUGIN "echo http"
+ PLUGIN_DIR ../../src/ulib/net/server/plugin/.libs
+ ORM_DRIVER_DIR ../../src/ulib/orm/driver/.libs
+ PREFORK_CHILD 0 
+#CRASH_COUNT 1
+#CRASH_EMAIL_NOTIFY mail.unirel.com:stefano.casazza@unirel.com
+}
+http {
+ CACHE_FILE_MASK _off_
+#REQUEST_READ_TIMEOUT 30
+ APACHE_LIKE_LOG /var/log/httpd/access_log
+}
+EOF
+
 #VALGRIND=valgrind # --gen-suppressions=all
 #STRACE=$TRUSS
-start_prg_background ioring ../../src/ulib/net/server/plugin/.libs '"echo http"' # '"soap http"'
+start_prg_background ioring ../examples/inp/webserver.cfg
 
 wait_server_ready localhost 8080
 

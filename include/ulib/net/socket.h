@@ -82,7 +82,7 @@ class UREDISClient_Base;
 #define U_socket_Type(obj)     (obj)->USocket::flag[2]
 #define U_socket_unused(obj)   (obj)->USocket::flag[3]
 
-enum SocketOperation { none, _accept, _read, _write, _close };
+enum SocketOperation { none, _accept, _read, _write, _close, _update, _poll };
 
 class U_EXPORT USocket {
 public:
@@ -843,6 +843,15 @@ protected:
    static void setLocalInfo( USocket* p, SocketAddress* cLocal);
    static void setRemoteInfo(USocket* p, SocketAddress* cRemote);
 
+   static void resetPeerAddr()
+      {
+      U_TRACE_NO_PARAM(0, "USocket::resetPeerAddr()")
+
+      peer_addr_len = sizeof(peer_addr);
+
+      (void) U_SYSCALL(memset, "%p,%d,%u", &peer_addr, 0, U_SIZE_SOCKADDR);
+      }
+   
    /**
     * The _socket() function is called to create the socket of the specified type.
     * The parameters indicate whether the socket will use IPv6 or IPv4 and the type of socket

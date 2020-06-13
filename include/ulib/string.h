@@ -2369,7 +2369,7 @@ public:
       U_INTERNAL_ASSERT(invariant())
       }
 
-   static vpFpcu printValueToBuffer;
+   static vPFpcu printValueToBuffer;
 
    void printKeyValue(const char* key, uint32_t keylen, const char* data, uint32_t datalen);
 

@@ -3881,9 +3881,9 @@ int UHTTP::handlerREAD()
 #endif
 
 #ifndef U_HTTP2_DISABLE
-   U_INTERNAL_DUMP("U_ClientImage_http = %C", U_ClientImage_http(UServer_Base::pClientImage))
+   U_INTERNAL_DUMP("U_ClientImage_is_http2 = %b", U_ClientImage_is_http2(UServer_Base::pClientImage))
 
-   if (U_ClientImage_http(UServer_Base::pClientImage) == '2')
+   if (U_ClientImage_is_http2(UServer_Base::pClientImage))
       {
       U_http_version = '2';
 
@@ -4908,7 +4908,7 @@ from_cache:
 
          if (UServer_Base::startParallelization() == false) UWebSocket::handlerRequest(); // child
 #     else
-         U_ClientImage_http(UServer_Base::pClientImage) = '0';
+         UClientImage_Base::flag.c[0] |= 0x01;
 
          U_ClientImage_parallelization = U_PARALLELIZATION_PARENT;
 
@@ -10774,7 +10774,7 @@ U_NO_EXPORT bool UHTTP::manageSendfile(const char* ptr, uint32_t len)
          if (file_data->fd != UServer_Base::pClientImage->sfd) file->close();
          else
             {
-            U_ClientImage_pclose(UServer_Base::pClientImage) = U_CLOSE;
+            UServer_Base::pClientImage->flag.c[0] |= 0x10;
             }
          }
 

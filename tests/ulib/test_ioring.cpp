@@ -13,10 +13,14 @@ U_EXPORT main(int argc, char* argv[])
 
    U_TRACE(5,"main(%d)",argc)
 
-   UServer_Base::brng = true;
-
    UFileConfig fcg;
-   UServerExample server(U_NULLPTR);
+
+   UServer_Base::brng = true;
+   fcg.UFile::setPath(UString(argv[1]));
+
+   UServerExample server(&fcg);
+
+   /*
    UString plugin_dir(argv[1]), plugin_list(argv[2]);
 
    if (argv[3])
@@ -35,6 +39,7 @@ U_EXPORT main(int argc, char* argv[])
    server.loadPlugins(plugin_dir, plugin_list);
 
    server.port = 8080;
+   */
 
    server.run();
 }

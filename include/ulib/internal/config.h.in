@@ -156,9 +156,6 @@
 /* has epoll_create1 */
 #undef HAVE_EPOLL_CREATE1
 
-/* has epoll_ctl_batch */
-#undef HAVE_EPOLL_CTL_BATCH
-
 /* has epoll_wait */
 #undef HAVE_EPOLL_WAIT
 

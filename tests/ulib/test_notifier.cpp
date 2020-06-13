@@ -431,7 +431,7 @@ int U_EXPORT main(int argc, char* argv[])
 
       (void) U_SYSCALL(write, "%d,%p,%u", fd_output, U_CONSTANT_TO_PARAM("hello, world"));
 
-             UNotifier::waitForEvent(&timeout);
+             UNotifier::waitForEvent1(&timeout);
       (void) UNotifier::waitForRead(fds[0], 500);
 
       U_NEW_WITHOUT_CHECK_MEMORY(MyAlarm1, a, MyAlarm1(1L, 0L));

@@ -51,16 +51,14 @@ public:
       U_RETURN_STRING(result);
       }
 
-   static void setRemoteInfo(USocket* sk, UString& logbuf)
+   static void setRemoteInfo(int fd, USocket* sk, UString& logbuf)
       {
-      U_TRACE(0, "USocketExt::setRemoteInfo(%p,%V)", sk, logbuf.rep)
+      U_TRACE(0, "USocketExt::setRemoteInfo(%d,%p,%V)", fd, sk, logbuf.rep)
 
-      UString x(100U);
-
-      x.snprintf(U_CONSTANT_TO_PARAM("%2d '%s:%u'"), sk->iSockDesc, sk->cRemoteAddress.pcStrAddress, sk->iRemotePort);
-
-      (void) logbuf.insert(0, x);
+      (void) logbuf.insert(0, u_buffer, u__snprintf(u_buffer, U_BUFFER_SIZE, U_CONSTANT_TO_PARAM("%2d '%s:%u'"), fd, sk->cRemoteAddress.pcStrAddress, sk->iRemotePort));
       }
+
+   static void setRemoteInfo(USocket* sk, UString& logbuf) { setRemoteInfo(sk->iSockDesc, sk, logbuf); }
 
    static bool getARPCache(UString& cache, UVector<UString>& vec);
 

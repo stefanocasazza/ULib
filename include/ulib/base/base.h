@@ -221,7 +221,7 @@ typedef int   (*iPFpv)    (void*);
 typedef bool  (*bPFpc)    (const char*);
 typedef void  (*vPFpc)    (const char*);
 typedef void* (*pvPFpv)   (void*);
-typedef void  (*vpFpcu)   (const char*,uint32_t);
+typedef void  (*vPFpcu)   (const char*,uint32_t);
 typedef bool  (*bPFpcu)   (const char*,uint32_t);
 typedef void  (*vPFpvu)   (void*,uint32_t);
 typedef int   (*iPFpvpv)  (void*,void*);

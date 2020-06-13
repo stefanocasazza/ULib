@@ -196,9 +196,7 @@ bool UHTTP3::handlerRead()
 
    while (true)
       {
-      peer_addr_len = sizeof(peer_addr);
-
-      (void) U_SYSCALL(memset, "%p,%d,%u", &peer_addr, 0, U_SIZE_SOCKADDR);
+      USocket::resetPeerAddr();
 
       iBytesRead = U_SYSCALL(recvfrom, "%d,%p,%u,%u,%p,%p", fd, data, 65535, 0, (struct sockaddr*)&peer_addr, &peer_addr_len);
 

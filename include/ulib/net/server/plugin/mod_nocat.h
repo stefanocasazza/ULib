@@ -15,7 +15,6 @@
 #define U_MOD_NOCAT_H 1
 
 #include <ulib/url.h>
-#include <ulib/timer.h>
 #include <ulib/command.h>
 #include <ulib/net/ping.h>
 #include <ulib/net/tcpsocket.h>

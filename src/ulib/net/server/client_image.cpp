@@ -129,10 +129,6 @@ UClientImage_Base::UClientImage_Base()
    max_limit  =
    started_at = 0;
 #endif
-#ifdef USE_LIBURING
-   bufIndex = bufsz = 0;
-   UEventFd::op_mask = SocketOperation::none; 
-#endif
 
    if (UServer_Base::isLog()) U_NEW_STRING(logbuf, UString(200U));
 
@@ -283,15 +279,18 @@ void UClientImage_Base::init()
    U_INTERNAL_ASSERT_EQUALS(usp_buffer, U_NULLPTR)
    U_INTERNAL_ASSERT_EQUALS(usp_encoded, U_NULLPTR)
    U_INTERNAL_ASSERT_EQUALS(request_uri, U_NULLPTR)
+   U_INTERNAL_ASSERT_EQUALS(environment, U_NULLPTR)
+   U_INTERNAL_ASSERT_EQUALS(chronometer, U_NULLPTR)
 
 #ifdef USE_LIBURING
-   if (UServer_Base::brng == false) 
+   if (UServer_Base::brng) 
+      {
+      U_NEW_STRING(rbuffer, UString);
+      U_NEW_STRING(wbuffer, UString);
+      }
+   else
 #endif
    {
-   U_NEW_STRING(body, UString);
-   U_NEW_STRING(wbuffer, UString(U_CAPACITY));
-   U_NEW_STRING(request, UString);
-
    uint32_t sz = 8192;
 
 #ifdef USERVER_UDP
@@ -299,8 +298,11 @@ void UClientImage_Base::init()
 #endif
 
    U_NEW_STRING(rbuffer, UString(sz));
+   U_NEW_STRING(wbuffer, UString(U_CAPACITY));
    }
 
+   U_NEW_STRING(body, UString);
+   U_NEW_STRING(request, UString);
    U_NEW_STRING(request_uri, UString);
    U_NEW_STRING(environment, UString(U_CAPACITY));
 
@@ -323,11 +325,19 @@ void UClientImage_Base::clear()
 {
    U_TRACE_NO_PARAM(0, "UClientImage_Base::clear()")
 
-   if (request_uri)
+   if (body)
       {
+      U_INTERNAL_ASSERT_POINTER(rbuffer)
+      U_INTERNAL_ASSERT_POINTER(wbuffer)
+      U_INTERNAL_ASSERT_POINTER(request)
+      U_INTERNAL_ASSERT_POINTER(request_uri)
       U_INTERNAL_ASSERT_POINTER(environment)
       U_INTERNAL_ASSERT_POINTER(chronometer)
 
+      U_DELETE(body)
+      U_DELETE(wbuffer)
+      U_DELETE(rbuffer)
+      U_DELETE(request)
       U_DELETE(request_uri)
       U_DELETE(environment)
       U_DELETE(chronometer)
@@ -341,18 +351,6 @@ void UClientImage_Base::clear()
       U_DELETE(usp_value)
       U_DELETE(usp_buffer)
       U_DELETE(usp_encoded)
-      }
-
-   if (body)
-      {
-      U_INTERNAL_ASSERT_POINTER(wbuffer)
-      U_INTERNAL_ASSERT_POINTER(request)
-      U_INTERNAL_ASSERT_POINTER(rbuffer)
-
-      U_DELETE(body)
-      U_DELETE(wbuffer)
-      U_DELETE(request)
-      U_DELETE(rbuffer)
       }
 }
 
@@ -575,14 +573,14 @@ void UClientImage_Base::handlerDelete()
       bsocket_open = false;
       }
 
-   U_INTERNAL_DUMP("U_ClientImage_http = %C U_http_version = %C", U_ClientImage_http(this), U_http_version)
+   U_INTERNAL_DUMP("U_ClientImage_is_http2 = %b U_ClientImage_is_wsk = %b U_http_version = %C", U_ClientImage_is_http2(this), U_ClientImage_is_wsk(this), U_http_version)
 
 #ifndef U_HTTP2_DISABLE
-   if (U_ClientImage_http(this) == '2') UHTTP2::handlerDelete(this, bsocket_open);
+   if (U_ClientImage_is_http2(this)) UHTTP2::handlerDelete(this, bsocket_open);
 #endif
 
 #ifndef U_WEBSOCKET_PARALLELIZATION
-   if (U_ClientImage_http(this) == '0')
+   if (U_ClientImage_is_wsk(this))
       {
       if (bsocket_open &&
           (UWebSocket::status_code == U_WS_STATUS_CODE_GOING_AWAY || UWebSocket::sendClose(true, socket)))
@@ -617,10 +615,10 @@ void UClientImage_Base::handlerDelete()
       }
    else if (isPendingSendfile())
       {
-      U_INTERNAL_DUMP("sfd = %d count = %I UEventFd::op_mask = %B U_ClientImage_pclose(this) = %d %B",
-                       sfd,     count,     UEventFd::op_mask,     U_ClientImage_pclose(this), U_ClientImage_pclose(this))
+      U_INTERNAL_DUMP("sfd = %d count = %I UEventFd::op_mask = %B U_ClientImage_is_close(this) = %b",
+                       sfd,     count,     UEventFd::op_mask,     U_ClientImage_is_close(this))
 
-      if ((U_ClientImage_pclose(this) & U_CLOSE) != 0)
+      if ((U_ClientImage_is_close(this)))
          {
 #     ifdef DEBUG
          if (UNLIKELY(sfd <= 0))
@@ -688,9 +686,9 @@ int UClientImage_Base::handlerTimeout()
       }
 #endif
 
-   U_INTERNAL_DUMP("U_ClientImage_idle(this) = %d %B", U_ClientImage_idle(this), U_ClientImage_idle(this))
+   U_INTERNAL_DUMP("U_ClientImage_is_idle(this) = %b", U_ClientImage_is_idle(this))
 
-   if (U_ClientImage_idle(this) != U_YES) // U_YES = 0x0001
+   if (U_ClientImage_is_idle(this))
       {
       // NB: maybe we have some more data to read...
 
@@ -966,9 +964,9 @@ void UClientImage_Base::manageReadBufferResize(uint32_t n)
       }
 
 #ifndef U_HTTP2_DISABLE
-   U_INTERNAL_DUMP("U_ClientImage_http = %C U_http_version = %C", U_ClientImage_http(UServer_Base::pClientImage), U_http_version)
+   U_INTERNAL_DUMP("U_ClientImage_is_http2 = %b U_http_version = %C", U_ClientImage_is_http2(UServer_Base::pClientImage), U_http_version)
 
-   if (U_ClientImage_http(UServer_Base::pClientImage) != '2')
+   if (U_ClientImage_is_http2(UServer_Base::pClientImage) == false)
 #endif
    {
    if (U_http_method_type)
@@ -1077,8 +1075,6 @@ void UClientImage_Base::prepareForRead()
          return;
          }
 #  endif
-
-   // resetRequestFromUServer();
       }
    else
       {
@@ -1091,8 +1087,6 @@ void UClientImage_Base::prepareForRead()
       U_INTERNAL_ASSERT_EQUALS(UServer_Base::pClientImage, this)
 
       UEventFd::fd = socket->iSockDesc;
-
-   // setRequestFromUServer();
       }
 
 #ifdef U_EVASIVE_SUPPORT
@@ -1215,6 +1209,15 @@ bool UClientImage_Base::genericRead()
    U_ClientImage_state = 0;
 
    U_RETURN(true);
+}
+
+int UClientImage_Base::handlerRequest()
+{
+   U_TRACE(0, "UClientImage_Base::handlerRequest()")
+
+   wbuffer->size_adjust_constant(0U);
+
+   U_RETURN(U_PLUGIN_HANDLER_PROCESSED);
 }
 
 int UClientImage_Base::handlerRead() // Connection-wide hooks
@@ -1355,9 +1358,9 @@ data_missing:
    resetBuffer();
 
 #ifndef U_WEBSOCKET_PARALLELIZATION
-   U_INTERNAL_DUMP("U_ClientImage_http = %C U_http_version = %C", U_ClientImage_http(this), U_http_version)
+   U_INTERNAL_DUMP("U_ClientImage_is_wsk = %b U_http_version = %C", U_ClientImage_is_wsk(this), U_http_version)
 
-   if (U_ClientImage_http(this) == '0')
+   if (U_ClientImage_is_wsk(this))
       {
       if (UWebSocket::handleDataFraming(rbuffer, socket) == U_WS_STATUS_CODE_OK)
          {
@@ -2009,8 +2012,8 @@ void UClientImage_Base::prepareForSendfile()
 
    if (U_ClientImage_close)
       {
-      U_ClientImage_close        = false;
-      U_ClientImage_pclose(this) = U_YES;
+      flag.c[0]           |= 0x20;
+      U_ClientImage_close  = false;
       }
 
    if (U_ClientImage_pipeline) resetPipeline();
@@ -2090,9 +2093,9 @@ write:
       count  =  0;
       sfd    = -1;
 
-      if ((U_ClientImage_pclose(this) & U_CLOSE) != 0) UFile::close(sfd);
+      if (U_ClientImage_is_close(this)) UFile::close(sfd);
 
-      if ((U_ClientImage_pclose(this) & U_YES) != 0) U_RETURN(U_NOTIFIER_DELETE);
+      if (U_ClientImage_is_delete(this)) U_RETURN(U_NOTIFIER_DELETE);
 
       U_RETURN(U_NOTIFIER_OK);
       }
@@ -2128,37 +2131,21 @@ wait:    socket->setBlocking();
       }
 
 end:
-   U_SRV_LOG("sendfile failed - sock_fd: %d sfd: %d count: %I U_ClientImage_pclose(this): %d %B", socket->iSockDesc, sfd, count, U_ClientImage_pclose(this), U_ClientImage_pclose(this));
+   U_SRV_LOG("sendfile failed - sock_fd: %d sfd: %d count: %I U_ClientImage_is_close(this): %b", socket->iSockDesc, sfd, count, U_ClientImage_is_close(this));
 
    if (U_ClientImage_parallelization != U_PARALLELIZATION_CHILD)
       {
-      if ((U_ClientImage_pclose(this) & U_CLOSE) != 0) UFile::close(sfd);
+      if (U_ClientImage_is_close(this)) UFile::close(sfd);
 
       offset =
       count  =  0;
       sfd    = -1;
 
-      U_ClientImage_pclose(this) = 0;
+      flag.c[0] = 0;
       }
 
    U_RETURN(U_NOTIFIER_DELETE);
 }
-
-#ifdef USE_LIBURING
-bool UClientImage_Base::handlerAccept(int newfd)
-{
-   U_TRACE(0, "UClientImage_Base::handlerAccept(%d)", fd)
-
-   U_RETURN(true);
-}
-
-bool UClientImage_Base::handlerRequest(const UString& req, UString& response)
-{
-   U_TRACE(0, "UClientImage_Base::handlerRequest(%V,%p)", req.rep, &response)
-
-   U_RETURN(true);
-}
-#endif
 
 // DEBUG
 

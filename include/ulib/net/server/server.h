@@ -15,6 +15,7 @@
 #define U_SERVER_H 1
 
 #include <ulib/log.h>
+#include <ulib/timer.h>
 #include <ulib/process.h>
 #include <ulib/command.h>
 #include <ulib/notifier.h>
@@ -693,7 +694,6 @@ public:
 
    static bool isLocalHost() { return csocket->cRemoteAddress.isLocalHost(); }
 
-   static void      setClientAddress() { setClientAddress(csocket, client_address, client_address_len); }
    static in_addr_t getClientAddress() { return csocket->getClientAddress(); }
 
    static UString getIPAddress()                         { return *IP_address; }
@@ -890,7 +890,7 @@ protected:
    static USmtpClient* emailClient;
    static long last_time_email_crash;
    static UString* crashEmailAddress;
-   static bool monitoring_process, set_realtime_priority, public_address, binsert, set_tcp_keep_alive, called_from_handlerTime;
+   static bool monitoring_process, set_realtime_priority, public_address, binsert, baffinity, set_tcp_keep_alive, called_from_handlerTime;
 
    static uint32_t                 vplugin_size;
    static UVector<UString>*        vplugin_name;
@@ -903,8 +903,29 @@ protected:
    static void runLoop(const char* user);
    static bool handlerTimeoutConnection(void* cimg);
 
+   static void postEvent()
+      {
+      U_TRACE_NO_PARAM(0, "UServer_Base::postEvent()")
+
+      U_INTERNAL_ASSERT_POINTER(ptime)
+
+#  if !defined(U_LOG_DISABLE) && defined(DEBUG)
+      last_event = u_now->tv_sec;
+
+#   ifndef _MSWINDOWS_
+      if (monitoring_process &&
+          U_SYSCALL_NO_PARAM(getppid) == 1)
+         {
+         U_ERROR("the monitoring process has crashed, exiting...");
+         }
+#   endif
+#  endif
+
+      UTimer::updateTimeToExpire(ptime);
+      }
+
 #ifndef U_LOG_DISABLE
-   static void logNewClient(USocket* psocket, UClientImage_Base* lClientImage);
+   static void logNewClient(int fd);
 #endif
 
 #ifdef U_WELCOME_SUPPORT
@@ -1067,45 +1088,44 @@ protected:
    static UString* rwBuffers;
    static uint32_t bufNextIndex;
    static struct io_uring_cqe* cqe;
-   static struct io_uring io_uring;
-   static struct io_uring_params params;
+   static struct io_uring* io_uring;
 
-   static void register_files_update(int newfd)
-      {
-      U_TRACE(0, "UServer_Base::register_files_update(%d)", newfd)
-
-      // ...fd member is the index of the file in the file descriptor array
-
-      U_INTERNAL_DUMP("socketfds[%u] = %d", nClientIndex, socketfds[nClientIndex])
-
-      int ret = U_SYSCALL(io_uring_register_files_update, "%p,%u,%p,%u", &io_uring, nClientIndex, &(socketfds[nClientIndex] = newfd), 1);
-
-      if (ret != 1)
-         {
-         U_ERROR("io_uring_register_files_update() failed: %d%R", ret, 0); // NB: the last argument (0) is necessary...
-         }
-
-      pClientImage->fd = newfd;
-      }
-
-   static void wait_cqe()
+   static int wait_cqe()
       {
       U_TRACE_NO_PARAM(0, "UServer_Base::wait_cqe()")
 
-      int ret = U_SYSCALL(io_uring_wait_cqe, "%p,%p", &io_uring, &cqe);
+      int ret = U_SYSCALL(io_uring_wait_cqe, "%p,%p", io_uring, &cqe);
 
       if (ret)
          {
-         U_ERROR("io_uring_wait_cqe() failed: %d%R", ret, 0); // NB: the last argument (0) is necessary...
+         if (ret == -EINTR) UInterrupt::checkForEventSignalPending();
+         else
+            {
+            U_ERROR("io_uring_wait_cqe() failed: %d%R", ret, 0); // NB: the last argument (0) is necessary...
+            }
          }
 
-      nClientIndex = (pClientImage = (UClientImage_Base*)cqe->user_data) - vClientImage;
+      U_RETURN(ret);
+      }
 
-      U_INTERNAL_DUMP("vClientImage[%u].UEventFd::op_mask = %u", nClientIndex, pClientImage->UEventFd::op_mask)
+   static void insertBatch(int ctl_cmd_cnt)
+      {
+      U_TRACE(0, "UServer_Base::insertBatch(%d)", ctl_cmd_cnt)
+
+      while (ctl_cmd_cnt--)
+         {
+         (void) wait_cqe();
+
+         U_INTERNAL_ASSERT_EQUALS(cqe->user_data, 0xff)
+
+         U_SYSCALL_VOID(io_uring_cqe_seen, "%p,%p", io_uring, cqe); // signal that we consumed one
+         }
       }
 
    static void submit(int op);
    static void findNextClientImage();
+   static int batch(UEventFd* handler_event);
+   static void waitForEvent(UEventTime* ptimeout);
 #endif
 
             UServer_Base(UFileConfig* cfg = U_NULLPTR);
@@ -1139,6 +1159,8 @@ protected:
    virtual void  deallocate()  = 0;
    virtual bool check_memory() = 0;
 #endif
+
+   virtual bool handlerAccept(int newfd); // turn false if we should close the socket
 
    // SERVICES
 
@@ -1204,16 +1226,14 @@ private:
       if (pluginsHandlerSigHUP() != U_PLUGIN_HANDLER_FINISHED) U_WARNING("Plugins stage SigHUP failed...");
       }
 
-   static void setClientAddress(USocket* psocket, char*& pclient_address, uint32_t& pclient_address_len)
+   static void setClientAddress()
       {
-      U_TRACE(0, "UServer_Base::setClientAddress(%p,%p,%u)", psocket, pclient_address, pclient_address_len)
+      U_TRACE_NO_PARAM(0, "UServer_Base::setClientAddress()")
 
-      U_INTERNAL_ASSERT(psocket->isConnected())
+      client_address     = UIPAddress::resolveStrAddress(iAddressType, csocket->cRemoteAddress.pcAddress.p, csocket->cRemoteAddress.pcStrAddress);
+      client_address_len = u__strlen(client_address, __PRETTY_FUNCTION__);
 
-      pclient_address     = UIPAddress::resolveStrAddress(iAddressType, psocket->cRemoteAddress.pcAddress.p, psocket->cRemoteAddress.pcStrAddress);
-      pclient_address_len = u__strlen(pclient_address, __PRETTY_FUNCTION__);
-
-      U_INTERNAL_DUMP("client_address = %.*S", pclient_address_len, pclient_address)
+      U_INTERNAL_DUMP("client_address = %.*S", U_CLIENT_ADDRESS_TO_TRACE)
       }
 
    static void logMemUsage(const char* signame)
@@ -1235,6 +1255,7 @@ private:
 #  endif
       }
 
+   static bool postAccept() U_NO_EXPORT;
    static bool clientImageHandlerRead() U_NO_EXPORT;
    static void loadStaticLinkedModules(const UString& name) U_NO_EXPORT;
    static void manageCommand(const char* format, uint32_t fmt_size, ...) U_NO_EXPORT;

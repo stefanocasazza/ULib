@@ -15,7 +15,6 @@
 #define U_MOD_NODOG_H 1
 
 #include <ulib/url.h>
-#include <ulib/timer.h>
 #include <ulib/command.h>
 #include <ulib/net/tcpsocket.h>
 #include <ulib/net/client/http.h>

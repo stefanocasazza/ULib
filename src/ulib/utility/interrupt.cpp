@@ -393,8 +393,8 @@ void UInterrupt::getSignalInfo(int signo, siginfo_t* info)
 #        else
            CYAN,                errlist[index], info->si_code, errlist[index+1], YELLOW,
 #        endif
-           CYAN, (double)vsz / (1024.0 * 1024.0), YELLOW,
-           CYAN, (double)rss / (1024.0 * 1024.0), YELLOW);
+           CYAN, (double)rss / (1024.0 * 1024.0), YELLOW,
+           CYAN, (double)vsz / (1024.0 * 1024.0), YELLOW);
       }
 #  endif
 }

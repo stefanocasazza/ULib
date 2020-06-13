@@ -9,10 +9,18 @@ rm -rf /tmp/ssl_session.txt
 start_msg ssl_server
 start_msg ssl_client
 
-#UTRACE="0 5M 0"
+rm -rf err/ssl*.err \
+		      trace.*ssl*.[0-9]*      object.*ssl*.[0-9]*      stack.*ssl*.[0-9]*      mempool.*ssl*.[0-9]* \
+		 /tmp/trace.*ssl*.[0-9]* /tmp/object.*ssl*.[0-9]* /tmp/stack.*ssl*.[0-9]* /tmp/mempool.*ssl*.[0-9]*
+
+#UTRACE="0 50M 0"
+#UTRACE_SIGNAL="0 10M 0"
+ UTRACE_FOLDER=/tmp
+MIMALLOC_VERBOSE=1
+MIMALLOC_SHOW_ERRORS=1
 #UOBJDUMP="0 100k 10"
 #USIMERR="error.sim"
- export UTRACE UOBJDUMP USIMERR
+export UTRACE UOBJDUMP USIMERR UTRACE_SIGNAL UMEMUSAGE UTRACE_FOLDER TMPDIR MIMALLOC_VERBOSE MIMALLOC_SHOW_ERRORS
 
 #----------------------------------------------------------------------------------------------------------------------
 # use either SSL_VERIFY_NONE or SSL_VERIFY_PEER, the last 2 options are 'ored' with SSL_VERIFY_PEER if they are desired
