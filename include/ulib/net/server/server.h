@@ -1089,6 +1089,7 @@ protected:
    static uint32_t bufNextIndex;
    static struct io_uring_cqe* cqe;
    static struct io_uring* io_uring;
+   static UVector<UEventFd*>* handler_poll;
 
    static int wait_cqe()
       {
@@ -1108,24 +1109,26 @@ protected:
       U_RETURN(ret);
       }
 
-   static void insertBatch(int ctl_cmd_cnt)
+   static void epoll_ctl_batch(UEventFd* handler)
       {
-      U_TRACE(0, "UServer_Base::insertBatch(%d)", ctl_cmd_cnt)
+      U_TRACE(0, "UServer_Base::epoll_ctl_batch(%p)", handler)
 
-      while (ctl_cmd_cnt--)
-         {
-         (void) wait_cqe();
+      U_INTERNAL_ASSERT_POINTER(handler)
 
-         U_INTERNAL_ASSERT_EQUALS(cqe->user_data, 0xff)
+      U_INTERNAL_DUMP("handler->fd = %d handler->op_mask = %B", handler->fd, handler->op_mask)
 
-         U_SYSCALL_VOID(io_uring_cqe_seen, "%p,%p", io_uring, cqe); // signal that we consumed one
-         }
+      U_INTERNAL_ASSERT_EQUALS(handler->op_mask, EPOLLIN | EPOLLRDHUP | EPOLLET)
+
+      struct epoll_event ev    = { handler->op_mask, { handler } };
+      struct io_uring_sqe* sqe = (struct io_uring_sqe*) U_SYSCALL(io_uring_get_sqe, "%p", io_uring);
+
+      U_SYSCALL_VOID(io_uring_prep_epoll_ctl, "%p,%d,%d,%u,%p", sqe, UNotifier::epollfd, handler->fd, EPOLL_CTL_ADD, &ev);
       }
 
-   static void submit(int op);
+   static void submit(int op, ...);
    static void findNextClientImage();
-   static int batch(UEventFd* handler_event);
    static void waitForEvent(UEventTime* ptimeout);
+   static void epoll_ctl_batch(uint32_t ctl_cmd_cnt);
 #endif
 
             UServer_Base(UFileConfig* cfg = U_NULLPTR);

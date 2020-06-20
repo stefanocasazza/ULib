@@ -33,6 +33,7 @@ class UValue;
 class UThreadPool;
 class UHttpPlugIn;
 class UFileConfig;
+class UServer_Base;
 class UNoCatPlugIn;
 
 template <class T> class UVector;
@@ -437,6 +438,7 @@ private:
 
    friend class UValue;
    friend class UThreadPool;
+   friend class UServer_Base;
 
    template <class T> friend class UOrmTypeHandler;
    template <class T> friend class UJsonTypeHandler;
@@ -922,6 +924,7 @@ private:
    U_DISALLOW_ASSIGN(UVector<T*>)
 
    friend class UThreadPool;
+   friend class UServer_Base;
 };
 
 #if defined(U_STDCPP_ENABLE) && defined(HAVE_CXX11)

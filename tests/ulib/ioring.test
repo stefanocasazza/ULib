@@ -6,7 +6,7 @@
 
 start_msg ioring
 
-rm -rf err/ioring.err \
+rm -rf err/ioring.err /tmp/ioring.log \
 		      trace.*ioring*.[0-9]*      object.*ioring*.[0-9]*      stack.*ioring*.[0-9]*      mempool.*ioring*.[0-9]* \
 		 /tmp/trace.*ioring*.[0-9]* /tmp/object.*ioring*.[0-9]* /tmp/stack.*ioring*.[0-9]* /tmp/mempool.*ioring*.[0-9]*
 
@@ -29,6 +29,7 @@ userver {
  RUN_AS_USER nobody
 #MIN_SIZE_FOR_SENDFILE 1k
 #REQ_TIMEOUT 5
+ WELCOME_MSG "220 david.unirel.intranet LCSP server (Version 1.1.0) ready.\n"
  DOS_WHITE_LIST 127.0.0.1,10.30.0.0/16
  LOG_FILE /tmp/ioring.log
  LOG_FILE_SZ 1M
@@ -54,7 +55,7 @@ start_prg_background ioring ../examples/inp/webserver.cfg
 
 wait_server_ready localhost 8080
 
-send_req $NCAT localhost 8080 inp/http/form_enctype.http server 5 kill
+send_req $NCAT localhost 8080 inp/http/form_enctype.http ioring 5 kill
 
 #ab -k -n 2      -c 2    "http://127.0.0.1:8080/servlet/benchmarking?name=stefano" >/dev/null 2>&1
 #ab -k -n 100    -c 2    'http://127.0.0.1:8080/servlet/benchmarking?name=stefano' >/tmp/ab.out 2>&1

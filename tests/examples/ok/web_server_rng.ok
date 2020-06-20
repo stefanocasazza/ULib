@@ -1,0 +1,1411 @@
+HTTP/1.1 505 HTTP Version Not Supported
+Date: Fri, 19 Jun 2020 14:36:52 GMT
+Server: ULib
+Connection: close
+Content-Length: 0
+
+HTTP/1.1 501 Not Implemented
+Date: Fri, 19 Jun 2020 14:36:52 GMT
+Server: ULib
+Connection: close
+Content-Type: text/html; charset=UTF-8
+Content-Length: 256
+
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
+<html><head>
+<title>501 Not Implemented</title>
+</head><body>
+<h1>Not Implemented</h1>
+<p>Sorry, the method you requested is not implemented</p>
+<hr>
+<address>ULib Server</address>
+</body></html>
+HTTP/1.1 400 Bad Request
+Date: Fri, 19 Jun 2020 14:36:52 GMT
+Server: ULib
+Connection: close
+Content-Type: text/html; charset=UTF-8
+Content-Length: 263
+
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
+<html><head>
+<title>400 Bad Request</title>
+</head><body>
+<h1>Bad Request</h1>
+<p>Your browser sent a request that this server could not understand</p>
+<hr>
+<address>ULib Server</address>
+</body></html>
+HTTP/1.1 400 Bad Request
+Date: Fri, 19 Jun 2020 14:36:52 GMT
+Server: ULib
+Connection: close
+Content-Type: text/html; charset=UTF-8
+Content-Length: 263
+
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
+<html><head>
+<title>400 Bad Request</title>
+</head><body>
+<h1>Bad Request</h1>
+<p>Your browser sent a request that this server could not understand</p>
+<hr>
+<address>ULib Server</address>
+</body></html>
+HTTP/1.1 400 Bad Request
+Date: Fri, 19 Jun 2020 14:36:52 GMT
+Server: ULib
+Connection: close
+Content-Type: text/html; charset=UTF-8
+Content-Length: 263
+
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
+<html><head>
+<title>400 Bad Request</title>
+</head><body>
+<h1>Bad Request</h1>
+<p>Your browser sent a request that this server could not understand</p>
+<hr>
+<address>ULib Server</address>
+</body></html>
+HTTP/1.1 411 Length Required
+Date: Fri, 19 Jun 2020 14:36:52 GMT
+Server: ULib
+Connection: close
+Content-Type: text/html; charset=UTF-8
+Content-Length: 273
+
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
+<html><head>
+<title>411 Length Required</title>
+</head><body>
+<h1>Length Required</h1>
+<p>Sorry, you must give the length of your data in your header request</p>
+<hr>
+<address>ULib Server</address>
+</body></html>
+HTTP/1.1 413 Request Entity Too Large
+Date: Fri, 19 Jun 2020 14:36:52 GMT
+Server: ULib
+Connection: close
+Content-Type: text/html; charset=UTF-8
+Content-Length: 266
+
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
+<html><head>
+<title>413 Request Entity Too Large</title>
+</head><body>
+<h1>Request Entity Too Large</h1>
+<p>Sorry, the data you requested is too large</p>
+<hr>
+<address>ULib Server</address>
+</body></html>
+HTTP/1.1 400 Bad Request
+Date: Fri, 19 Jun 2020 14:36:52 GMT
+Server: ULib
+Connection: close
+Content-Type: text/html; charset=UTF-8
+Content-Length: 263
+
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
+<html><head>
+<title>400 Bad Request</title>
+</head><body>
+<h1>Bad Request</h1>
+<p>Your browser sent a request that this server could not understand</p>
+<hr>
+<address>ULib Server</address>
+</body></html>
+HTTP/1.1 400 Bad Request
+Date: Fri, 19 Jun 2020 14:36:52 GMT
+Server: ULib
+Connection: close
+Content-Type: text/html; charset=UTF-8
+Content-Length: 263
+
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
+<html><head>
+<title>400 Bad Request</title>
+</head><body>
+<h1>Bad Request</h1>
+<p>Your browser sent a request that this server could not understand</p>
+<hr>
+<address>ULib Server</address>
+</body></html>
+HTTP/1.1 400 Bad Request
+Date: Fri, 19 Jun 2020 14:36:52 GMT
+Server: ULib
+Connection: close
+Content-Type: text/html; charset=UTF-8
+Content-Length: 263
+
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
+<html><head>
+<title>400 Bad Request</title>
+</head><body>
+<h1>Bad Request</h1>
+<p>Your browser sent a request that this server could not understand</p>
+<hr>
+<address>ULib Server</address>
+</body></html>
+HTTP/1.1 400 Bad Request
+Date: Fri, 19 Jun 2020 14:36:52 GMT
+Server: ULib
+Connection: close
+Content-Type: text/html; charset=UTF-8
+Content-Length: 263
+
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
+<html><head>
+<title>400 Bad Request</title>
+</head><body>
+<h1>Bad Request</h1>
+<p>Your browser sent a request that this server could not understand</p>
+<hr>
+<address>ULib Server</address>
+</body></html>
+HTTP/1.1 400 Bad Request
+Date: Fri, 19 Jun 2020 14:36:52 GMT
+Server: ULib
+Connection: close
+Content-Type: text/html; charset=UTF-8
+Content-Length: 263
+
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
+<html><head>
+<title>400 Bad Request</title>
+</head><body>
+<h1>Bad Request</h1>
+<p>Your browser sent a request that this server could not understand</p>
+<hr>
+<address>ULib Server</address>
+</body></html>
+HTTP/1.1 400 Bad Request
+Date: Fri, 19 Jun 2020 14:36:52 GMT
+Server: ULib
+Connection: close
+Content-Type: text/html; charset=UTF-8
+Content-Length: 263
+
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
+<html><head>
+<title>400 Bad Request</title>
+</head><body>
+<h1>Bad Request</h1>
+<p>Your browser sent a request that this server could not understand</p>
+<hr>
+<address>ULib Server</address>
+</body></html>
+HTTP/1.1 200 OK
+Date: Fri, 19 Jun 2020 14:36:52 GMT
+Server: ULib
+Connection: close
+Allow: GET, HEAD, POST, PUT, DELETE, OPTIONS, TRACE, CONNECT, COPY, MOVE, LOCK, UNLOCK, MKCOL, PROPFIND, PATCH, PURGE, MERGE, REPORT, CHECKOUT, MKACTIVITY, NOTIFY, MSEARCH, SUBSCRIBE, UNSUBSCRIBE
+Content-Length: 0
+
+HTTP/1.1 401 Authorization Required
+Date: Fri, 19 Jun 2020 14:36:52 GMT
+Server: ULib
+Connection: close
+Content-Type: text/html; charset=UTF-8
+WWW-Authenticate: Basic realm="Protected Area"
+Content-Length: 444
+
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
+<html><head>
+<title>401 Authorization Required</title>
+</head><body>
+<h1>Authorization Required</h1>
+<p>This server could not verify that you are authorized to access the document requested. Either you supplied the wrong credentials (e.g., bad password), or your browser doesn't understand how to supply the credentials required</p>
+<hr>
+<address>ULib Server</address>
+</body></html>
+HTTP/1.1 404 Not Found
+Date: Fri, 19 Jun 2020 14:36:52 GMT
+Server: ULib
+Content-Type: text/html; charset=UTF-8
+Content-Length: 257
+
+HTTP/1.1 404 Not Found
+Date: Fri, 19 Jun 2020 14:36:52 GMT
+Server: ULib
+Content-Type: text/html; charset=UTF-8
+Content-Length: 344
+
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
+<html><head>
+<title>404 Not Found</title>
+</head><body>
+<h1>Not Found</h1>
+<p>Your requested URL "/xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" was not found on this server</p>
+<hr>
+<address>ULib Server</address>
+</body></html>
+HTTP/1.1 403 Forbidden
+Date: Fri, 19 Jun 2020 14:36:52 GMT
+Server: ULib
+Content-Type: text/html; charset=UTF-8
+Content-Length: 304
+
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
+<html><head>
+<title>403 Forbidden</title>
+</head><body>
+<h1>Forbidden</h1>
+<p>You don't have permission to access "/../../../../linux/include/generated/uapi/linux/version.h" on this server</p>
+<hr>
+<address>ULib Server</address>
+</body></html>
+HTTP/1.1 500 Internal Server Error
+Date: Fri, 19 Jun 2020 14:36:52 GMT
+Server: ULib
+Content-Type: text/html; charset=UTF-8
+Content-Length: 548
+
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
+<html><head>
+<title>500 Internal Server Error</title>
+</head><body>
+<h1>Internal Server Error</h1>
+<p>The server encountered an internal error or misconfiguration and was unable to complete your request. Please contact the server administrator, and inform them of the time the error occurred, and anything you might have done that may have caused the error. More information about this error may be available in the server error log</p>
+<hr>
+<address>ULib Server</address>
+</body></html>
+HTTP/1.1 200 OK
+Date: Fri, 19 Jun 2020 14:36:52 GMT
+Server: ULib
+Content-Type: text/plain; charset=UTF-8
+Cache-Control: max-age=0, no-cache, no-store, must-revalidate
+Pragma: no-cache
+Expires: Sat, 1 Jan 2000 00:00:00 GMT
+Content-Length: 21
+
+pippo pluto paperino
+HTTP/1.1 401 Authorization Required
+Date: Fri, 19 Jun 2020 14:36:52 GMT
+Server: ULib
+Content-Type: text/html; charset=UTF-8
+WWW-Authenticate: Basic realm="Protected Area"
+Content-Length: 444
+
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
+<html><head>
+<title>401 Authorization Required</title>
+</head><body>
+<h1>Authorization Required</h1>
+<p>This server could not verify that you are authorized to access the document requested. Either you supplied the wrong credentials (e.g., bad password), or your browser doesn't understand how to supply the credentials required</p>
+<hr>
+<address>ULib Server</address>
+</body></html>
+HTTP/1.1 200 OK
+Date: Fri, 19 Jun 2020 14:36:52 GMT
+Server: ULib
+Content-Type: text/html; charset=UTF-8
+Expires: Sat, 19 Jun 2021 14:36:51 GMT
+Last-Modified: Fri, 20 Feb 2009 14:50:49 GMT
+Content-Length: 63
+
+this is the web_server testsuite inp/http/data/index.html file
+HTTP/1.1 206 Partial Content
+Date: Fri, 19 Jun 2020 14:36:52 GMT
+Server: ULib
+Content-Range: bytes 0-63/64
+Content-Type: application/octet-stream; charset=binary
+Expires: Sat, 19 Jun 2021 14:36:52 GMT
+Last-Modified: Sun, 24 Sep 2017 17:11:42 GMT
+Content-Length: 64
+
+123456781234567
+345678903456789
+ 34567892345678
+012345670123456
+HTTP/1.1 206 Partial Content
+Date: Fri, 19 Jun 2020 14:36:52 GMT
+Server: ULib
+Content-Range: bytes 0-31/64
+Content-Type: application/octet-stream; charset=binary
+Expires: Sat, 19 Jun 2021 14:36:52 GMT
+Last-Modified: Sun, 24 Sep 2017 17:11:42 GMT
+Content-Length: 32
+
+123456781234567
+345678903456789
+HTTP/1.1 206 Partial Content
+Date: Fri, 19 Jun 2020 14:36:52 GMT
+Server: ULib
+Content-Range: bytes 32-63/64
+Content-Type: application/octet-stream; charset=binary
+Expires: Sat, 19 Jun 2021 14:36:52 GMT
+Last-Modified: Sun, 24 Sep 2017 17:11:42 GMT
+Content-Length: 32
+
+ 34567892345678
+012345670123456
+HTTP/1.1 206 Partial Content
+Date: Fri, 19 Jun 2020 14:36:52 GMT
+Server: ULib
+Content-Range: bytes 32-63/64
+Content-Type: text/plain; charset=us-ascii
+Expires: Sat, 19 Jun 2021 14:36:52 GMT
+Last-Modified: Sun, 24 Sep 2017 17:11:42 GMT
+Content-Length: 32
+
+234567892345678
+012345670123456
+HTTP/1.1 206 Partial Content
+Date: Fri, 19 Jun 2020 14:36:52 GMT
+Server: ULib
+Content-Length: 227
+Content-Type: multipart/byteranges; boundary="=_5476481467314131684"
+
+
+--=_5476481467314131684
+Content-Range: bytes 0-0/64
+Content-Type: text/html; charset=UTF-8
+
+1
+--=_5476481467314131684
+Content-Range: bytes 63-63/64
+Content-Type: text/html; charset=UTF-8
+
+
+
+--=_5476481467314131684--HTTP/1.1 206 Partial Content
+Date: Fri, 19 Jun 2020 14:36:52 GMT
+Server: ULib
+Content-Range: bytes 50-63/64
+Content-Type: text/plain; charset=us-ascii
+Expires: Sat, 19 Jun 2021 14:36:52 GMT
+Last-Modified: Sun, 24 Sep 2017 17:11:42 GMT
+Content-Length: 14
+
+2345670123456
+HTTP/1.1 206 Partial Content
+Date: Fri, 19 Jun 2020 14:36:52 GMT
+Server: ULib
+Content-Length: 247
+Content-Type: multipart/byteranges; boundary="=_5476481467314131685"
+
+
+--=_5476481467314131685
+Content-Range: bytes 10-19/64
+Content-Type: text/html; charset=UTF-8
+
+34567
+3456
+--=_5476481467314131685
+Content-Range: bytes 50-59/64
+Content-Type: text/html; charset=UTF-8
+
+2345670123
+--=_5476481467314131685--HTTP/1.1 200 OK
+Date: Fri, 19 Jun 2020 14:36:52 GMT
+Server: ULib
+Content-Type: text/plain; charset=us-ascii
+Expires: Sat, 19 Jun 2021 14:36:52 GMT
+Last-Modified: Sun, 24 Sep 2017 17:11:42 GMT
+Content-Length: 64
+
+123456781234567
+345678903456789
+234567892345678
+012345670123456
+HTTP/1.1 204 No Content
+Date: Fri, 19 Jun 2020 14:36:52 GMT
+Server: ULib
+Content-Length: 0
+
+HTTP/1.1 204 No Content
+Date: Fri, 19 Jun 2020 14:36:52 GMT
+Server: ULib
+Content-Length: 0
+
+HTTP/1.1 200 OK
+Date: Fri, 19 Jun 2020 14:36:52 GMT
+Server: ULib
+Content-Encoding: gzip
+Content-Type: text/html; charset=UTF-8
+Last-Modified: Wed, 29 Apr 2020 14:37:14 GMT
+Content-Length: 292
+
+HTTP/1.1 200 OK
+Date: Fri, 19 Jun 2020 14:36:52 GMT
+Server: ULib
+Content-Type: text/html; charset=UTF-8
+Last-Modified: Wed, 29 Apr 2020 14:37:14 GMT
+Content-Length: 558
+
+<html><head><title>Index of tmp</title></head><body><h1>Index of directory: tmp</h1><hr><table><tr><td><a href="/./?_nav_"><img width="20" height="21" align="absbottom" border="0" src="/icons/dir.png"> Up one level</a></td><td></td><td></td></tr><tr><td><strong><a href="/tmp/c?_nav_"><img width="20" height="21" align="absbottom" border="0" src="/icons/generic.gif"> c</a></strong></td><td align="right" valign="bottom">      4 Bytes</td><td align="right" valign="bottom">19/06/2020 14:36:51</td></tr></table><hr><address>ULib Server</address></body></html>HTTP/1.1 304 Not Modified
+Date: Fri, 19 Jun 2020 14:36:52 GMT
+Server: ULib
+Content-Length: 0
+
+HTTP/1.1 200 OK
+Date: Fri, 19 Jun 2020 14:36:52 GMT
+Server: ULib
+Content-Type: text/html; charset=UTF-8
+Content-Length: 1669
+
+<html>
+<head>
+  <title>Welcome to ULib Web Server!</title>
+<!--
+<script language="javascript" src="js/jquery.js" type="text/javascript"></script>
+<script language="javascript" type="text/javascript">
+        $(document).ready( function() {
+        // get verification code with Ajax
+        $.get('get_checkingcode_php', { data:'getting code' }, function(checkingcode) { $('#codebox').html(checkingcode); }); } );
+</script>
+-->
+</head>
+
+<body bgcolor="white" text="black">
+  <center>
+    <h1>Welcome to ULib Web Server!</h1>
+  </center>
+<!--
+  <form action="cgi-bin/check_form.php" method="post">
+    <p>First Name <input name="1" type="text" class="inputbox" title="Enter your first name"></p>
+    <p>Last Name <input name="2" type="text" class="inputbox" title="Enter your last name"></p>
+    <p>Email <input name="3" type="text" class="inputbox" title="Enter your email address"></p>
+    <p>Enter your comments below:</p>
+    <p><textarea name="4" title="Enter your comments" rows="10" cols="10"></textarea></p>
+    <div id="codebox"></div>
+    <p>Verification Code: <input name="5" type="text" name="code" class="checkingcode" title="Enter the above four-digit verification code"></p>
+    <p><input type="submit" value="Send Data"></p>
+  </form>
+-->
+
+  <div class="Video">
+    <object width="400" height="225">
+      <param name="movie" value="http://10.30.1.131/test.flv">
+      <param name="allowFullScreen" value="true">
+      <param name="allowscriptaccess" value="always">
+      <embed src="http://10.30.1.131/test.flv" type="video/x-flv" allowscriptaccess="always"
+      allowfullscreen="true" width="400" height="225">
+    </object>
+  </div>
+</body>
+</html>
+HTTP/1.1 200 OK
+Date: Fri, 19 Jun 2020 14:36:52 GMT
+Server: ULib
+Content-Type: text/html; charset=UTF-8
+Cache-Control: max-age=0, no-cache, no-store, must-revalidate
+Pragma: no-cache
+Expires: Sat, 1 Jan 2000 00:00:00 GMT
+Content-Length: 1882
+
+<html><pre>
+ssi_begin
+This page last updated: Friday, 30-Oct-2015 15:20:57 GMT
+</pre>
+
+1: ok
+
+
+2: ok
+
+
+3: ok
+
+
+4: ok
+
+
+<pre>
+SSI_BEGIN
+Name of user: nobody
+
+Document name: ssi1.shtml
+
+Document URI: /SSI/ssi1.shtml
+
+It's now: Friday, 19-Jun-2020 14:36:52 GMT
+
+It's now: Friday, 19-Jun-2020 16:36:52 CEST
+
+This page is:     179 Bytes
+
+This file last modified: April 02, 2019
+
+You're using: 
+
+$HTTP_X_SENDFILE: 
+
+
+start PRINTENV
+--------------
+QUERY_STRING=
+REQUEST_URI=/SSI/ssi1.shtml
+CONTENT_LENGTH=0
+REQUEST_METHOD=GET
+SCRIPT_NAME=/SSI/ssi1.shtml
+SERVER_NAME=stefano
+SERVER_PORT=8080
+HTTP_HOST=10.30.1.131
+SERVER_PROTOCOL=HTTP/1.1
+SERVER_ADDR=192.168.42.158
+DOCUMENT_ROOT=/mnt/data/storage/ulib/ULib-2.4.2/tests/examples/docroot
+SERVER_SOFTWARE=ULib/2.4.2
+REMOTE_PORT=49382
+REMOTE_ADDR=
+SESSION_ID=:0
+REQUEST_ID=:49382:0
+PWD=/mnt/data/storage/ulib/ULib-2.4.2/tests/examples/docroot
+PATH=/usr/local/bin:/usr/bin:/bin
+HTTP_X_SENDFILE=puppamelo
+--------------
+end   PRINTENV
+ 
+
+start LS
+--------------
+total 32
+drwxrwxrwx 3 nobody nobody 4096 Apr  2  2019 .
+drwxrwxrwx 7 nobody nobody 4096 Jun 19 16:36 ..
+drwxrwxrwx 3 nobody nobody 4096 Aug 25  2014 earth
+-rw-r--r-- 1 nobody nobody  179 Apr  2  2019 embed.c
+-rw-rw-rw- 1 nobody nobody  160 Mar 28  2011 index.shtml
+-rw-rw-rw- 1 nobody nobody  352 Nov  8  2011 menu.shtml
+-rw-rw-rw- 1 nobody nobody  917 Oct 30  2015 ssi1.shtml
+-rw-rw-rw- 1 nobody nobody 1190 Aug 25  2014 ssi2.shtml
+--------------
+end   LS
+
+start CGI
+--------------
+Content-Type: text/html
+
+<span class="code">You're not using Microsoft&reg; Internet Explorer&reg; 5.0</span>
+--------------
+end   CGI
+SSI include failed!
+SSI include failed!
+/*int main(void) {
+  struct mg_context* ctx;
+  const char *options[] = {"listening_ports", LISTENING_PORT, NULL};
+
+  ctx = mg_start(callback, options);
+  pause();
+  return 0;
+}*/
+
+SSI_END
+</pre>
+
+
+<pre>
+ssi_end
+</pre></html>
+HTTP/1.1 200 OK
+Date: Fri, 19 Jun 2020 14:36:52 GMT
+Server: ULib
+Content-Length: 115
+X-Real-IP: 10.30.1.131
+Set-Cookie: ulib.s1=; expires=Thu, 18 Jun 2020 14:36:52 GMT
+Set-Cookie: ulib.s0=5374657665204a6f686e736f6e26313539323636333831322694c9dfc8242ee973319dac58becc0523; expires=Sat, 20 Jun 2020 14:36:52 GMT
+Set-Cookie: TestCookie=pippo
+Content-Type: text/html; charset=iso-8859-1
+
+UID          = Steve Johnson
+HTTP_COOKIE  = name1=value1, name2=value2; name3=value3, name4=value4
+ULIB_SESSION = 
+HTTP/1.1 200 OK
+Date: Fri, 19 Jun 2020 14:36:52 GMT
+Server: ULib
+Content-Encoding: gzip
+Content-Type: text/html; charset=UTF-8
+Content-Length: 709
+
+ã     ïUWõ£,æ˜Wú·+S£…W∂ölﬂõÌ˝rƒìH≈LŸÚﬂ˜ n Ùí
+o„MZ∏Rç¢¥@ûè"Ä‘IßpÙï–%Ç”È•Ã‡fÕÕNöHîÓÙzQjÖëµ≈´I√'8dS>„aêÅ5Çl2˝⁄†Y∆SÀ¿-k9\∏d9Jìitπ‚EÙ∫ø?˜r-ö+∑‰˘r∆M%ú‘’ﬁ>|_·í&ËÄ$«Rp?BÁsÈ
+x4ÂãµdL»Ω]z9äYM<Ú∏.Í›#¯9w¸ûüv4”äÏ¬œ£µÌ&â"Pƒ›?¸ÁL/v˜cﬂˇ6‰>¸ÙOÿø≠[ÈıFÙ-ÏRîf:_BFp•ÕêÕÈêÅ/e»2≈≈I[H*®4°õ¥\æ©4Ô9I Ö›ıcmJ‡ÌJÜLLd/ìU“Ê=ˆS1µ¿†DWË|»jmÎÎ—si¨É◊ú,SY’çÉä>Ÿ`s≈≠≤Aù–§täfü˘ ∞‘çÅ1)∂?)ı ·%?◊‡ü(~Æ˛≥íKµ≠˝Ôçµ±·yn–⁄m˝Ìå?µ2Tz~oïz+nêw˛;«e≈g`Ù‹R…}Fc*|"”ﬂ˛πúÅ§]Î£G—– ˆÛÊµÒÑ0˜∂õ¯ªâ0ËµV≠lÎSô]Å¿3=CS˙^.'Úú´qª≠Œ=ò⁄&+%ŸŒ∏jËÎ¨rx _Q“ƒüœpÂD›jª\üeéöu∫:õ¢p0óπ+®€>ıV†úéŒ—?ˇw(Ôœ/ªUñz&qÂ]8WﬂKíA?˛∑‚¡øj€∫x¨fÁ”π¢-~ﬁ(ıAƒj%‰LÉó0¬ΩÄÅ÷Æ8\Õ˘“ÆYXfò˚ÔÂπ∫gæâd—káŒò¨‘Éx å)∑mswÅØ®.MB√˛[w¿“ƒﬂ¿¸{¯ı˘*ä±Ö  HTTP/1.1 200 OK
+Date: Fri, 19 Jun 2020 14:36:52 GMT
+Server: ULib
+Content-Length: 72
+Content-Type: application/jsonrequest
+
+{"user":"doctoravatar@penzance.com","t":"vlIj","forecast":7,"zip":94089}HTTP/1.1 302 Moved Temporarily
+Date: Fri, 19 Jun 2020 14:36:52 GMT
+Server: ULib
+Connection: close
+Content-Type: text/html; charset=UTF-8
+Location: http://10.30.1.131/?ticket=U2FsdGVkX1+/AYaicDGB1EReb1+EErzD/ar1Wrv8wrXpYEj9RoN3RlzFWK5ykUyRMg4AicmBMNQsUQDWZENgiQ
+X-Powered-By: PHP/5.2.6-pl7-gentoo
+X-Powered-By: PHP/5.2.6-pl7-gentoo
+Content-Length: 365
+
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
+<html><head>
+<title>302 Moved Temporarily</title>
+</head><body>
+<h1>Moved Temporarily</h1>
+<p>The document has moved <a href="http://10.30.1.131/?ticket=U2FsdGVkX1+/AYaicDGB1EReb1+EErzD/ar1Wrv8wrXpYEj9RoN3RlzFWK5ykUyRMg4AicmBMNQsUQDWZENgiQ">here</a></p>
+<hr>
+<address>ULib Server</address>
+</body></html>
+HTTP/1.1 404 Not Found
+Date: Fri, 19 Jun 2020 14:36:52 GMT
+Server: ULib
+Content-Type: text/html; charset=UTF-8
+Content-Length: 253
+
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
+<html><head>
+<title>404 Not Found</title>
+</head><body>
+<h1>Not Found</h1>
+<p>Your requested URL "/uploader" was not found on this server</p>
+<hr>
+<address>ULib Server</address>
+</body></html>
+HTTP/1.1 404 Not Found
+Date: Fri, 19 Jun 2020 14:36:52 GMT
+Server: ULib
+Content-Type: text/html; charset=UTF-8
+Content-Length: 249
+
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
+<html><head>
+<title>404 Not Found</title>
+</head><body>
+<h1>Not Found</h1>
+<p>Your requested URL "/info" was not found on this server</p>
+<hr>
+<address>ULib Server</address>
+</body></html>
+HTTP/1.1 404 Not Found
+Date: Fri, 19 Jun 2020 14:36:52 GMT
+Server: ULib
+Content-Type: text/html; charset=UTF-8
+Content-Length: 249
+
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
+<html><head>
+<title>404 Not Found</title>
+</head><body>
+<h1>Not Found</h1>
+<p>Your requested URL "/info" was not found on this server</p>
+<hr>
+<address>ULib Server</address>
+</body></html>
+HTTP/1.1 404 Not Found
+Date: Fri, 19 Jun 2020 14:36:52 GMT
+Server: ULib
+Content-Type: text/html; charset=UTF-8
+Content-Length: 249
+
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
+<html><head>
+<title>404 Not Found</title>
+</head><body>
+<h1>Not Found</h1>
+<p>Your requested URL "/info" was not found on this server</p>
+<hr>
+<address>ULib Server</address>
+</body></html>
+HTTP/1.1 404 Not Found
+Date: Fri, 19 Jun 2020 14:36:52 GMT
+Server: ULib
+Content-Type: text/html; charset=UTF-8
+Content-Length: 249
+
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
+<html><head>
+<title>404 Not Found</title>
+</head><body>
+<h1>Not Found</h1>
+<p>Your requested URL "/info" was not found on this server</p>
+<hr>
+<address>ULib Server</address>
+</body></html>
+HTTP/1.1 404 Not Found
+Date: Fri, 19 Jun 2020 14:36:52 GMT
+Server: ULib
+Content-Type: text/html; charset=UTF-8
+Content-Length: 249
+
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
+<html><head>
+<title>404 Not Found</title>
+</head><body>
+<h1>Not Found</h1>
+<p>Your requested URL "/info" was not found on this server</p>
+<hr>
+<address>ULib Server</address>
+</body></html>
+HTTP/1.1 404 Not Found
+Date: Fri, 19 Jun 2020 14:36:52 GMT
+Server: ULib
+Content-Type: text/html; charset=UTF-8
+Content-Length: 249
+
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
+<html><head>
+<title>404 Not Found</title>
+</head><body>
+<h1>Not Found</h1>
+<p>Your requested URL "/info" was not found on this server</p>
+<hr>
+<address>ULib Server</address>
+</body></html>
+HTTP/1.1 404 Not Found
+Date: Fri, 19 Jun 2020 14:36:52 GMT
+Server: ULib
+Content-Type: text/html; charset=UTF-8
+Content-Length: 249
+
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
+<html><head>
+<title>404 Not Found</title>
+</head><body>
+<h1>Not Found</h1>
+<p>Your requested URL "/info" was not found on this server</p>
+<hr>
+<address>ULib Server</address>
+</body></html>
+HTTP/1.1 404 Not Found
+Date: Fri, 19 Jun 2020 14:36:52 GMT
+Server: ULib
+Content-Type: text/html; charset=UTF-8
+Content-Length: 249
+
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
+<html><head>
+<title>404 Not Found</title>
+</head><body>
+<h1>Not Found</h1>
+<p>Your requested URL "/info" was not found on this server</p>
+<hr>
+<address>ULib Server</address>
+</body></html>
+HTTP/1.1 404 Not Found
+Date: Fri, 19 Jun 2020 14:36:52 GMT
+Server: ULib
+Content-Type: text/html; charset=UTF-8
+Content-Length: 249
+
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
+<html><head>
+<title>404 Not Found</title>
+</head><body>
+<h1>Not Found</h1>
+<p>Your requested URL "/info" was not found on this server</p>
+<hr>
+<address>ULib Server</address>
+</body></html>
+HTTP/1.1 404 Not Found
+Date: Fri, 19 Jun 2020 14:36:52 GMT
+Server: ULib
+Content-Type: text/html; charset=UTF-8
+Content-Length: 249
+
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
+<html><head>
+<title>404 Not Found</title>
+</head><body>
+<h1>Not Found</h1>
+<p>Your requested URL "/info" was not found on this server</p>
+<hr>
+<address>ULib Server</address>
+</body></html>
+HTTP/1.1 404 Not Found
+Date: Fri, 19 Jun 2020 14:36:56 GMT
+Server: ULib
+Content-Type: text/html; charset=UTF-8
+Content-Length: 253
+
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
+<html><head>
+<title>404 Not Found</title>
+</head><body>
+<h1>Not Found</h1>
+<p>Your requested URL "/uploader" was not found on this server</p>
+<hr>
+<address>ULib Server</address>
+</body></html>
+HTTP/1.1 404 Not Found
+Date: Fri, 19 Jun 2020 14:36:56 GMT
+Server: ULib
+Content-Type: text/html; charset=UTF-8
+Content-Length: 253
+
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
+<html><head>
+<title>404 Not Found</title>
+</head><body>
+<h1>Not Found</h1>
+<p>Your requested URL "/uploader" was not found on this server</p>
+<hr>
+<address>ULib Server</address>
+</body></html>
+HTTP/1.1 404 Not Found
+Date: Fri, 19 Jun 2020 14:36:56 GMT
+Server: ULib
+Content-Type: text/html; charset=UTF-8
+Content-Length: 249
+
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
+<html><head>
+<title>404 Not Found</title>
+</head><body>
+<h1>Not Found</h1>
+<p>Your requested URL "/info" was not found on this server</p>
+<hr>
+<address>ULib Server</address>
+</body></html>
+HTTP/1.1 404 Not Found
+Date: Fri, 19 Jun 2020 14:36:56 GMT
+Server: ULib
+Content-Type: text/html; charset=UTF-8
+Content-Length: 249
+
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
+<html><head>
+<title>404 Not Found</title>
+</head><body>
+<h1>Not Found</h1>
+<p>Your requested URL "/info" was not found on this server</p>
+<hr>
+<address>ULib Server</address>
+</body></html>
+HTTP/1.1 404 Not Found
+Date: Fri, 19 Jun 2020 14:36:56 GMT
+Server: ULib
+Content-Type: text/html; charset=UTF-8
+Content-Length: 249
+
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
+<html><head>
+<title>404 Not Found</title>
+</head><body>
+<h1>Not Found</h1>
+<p>Your requested URL "/info" was not found on this server</p>
+<hr>
+<address>ULib Server</address>
+</body></html>
+HTTP/1.1 404 Not Found
+Date: Fri, 19 Jun 2020 14:36:56 GMT
+Server: ULib
+Content-Type: text/html; charset=UTF-8
+Content-Length: 249
+
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
+<html><head>
+<title>404 Not Found</title>
+</head><body>
+<h1>Not Found</h1>
+<p>Your requested URL "/info" was not found on this server</p>
+<hr>
+<address>ULib Server</address>
+</body></html>
+HTTP/1.1 404 Not Found
+Date: Fri, 19 Jun 2020 14:36:56 GMT
+Server: ULib
+Content-Type: text/html; charset=UTF-8
+Content-Length: 249
+
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
+<html><head>
+<title>404 Not Found</title>
+</head><body>
+<h1>Not Found</h1>
+<p>Your requested URL "/info" was not found on this server</p>
+<hr>
+<address>ULib Server</address>
+</body></html>
+HTTP/1.1 404 Not Found
+Date: Fri, 19 Jun 2020 14:36:56 GMT
+Server: ULib
+Content-Type: text/html; charset=UTF-8
+Content-Length: 249
+
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
+<html><head>
+<title>404 Not Found</title>
+</head><body>
+<h1>Not Found</h1>
+<p>Your requested URL "/info" was not found on this server</p>
+<hr>
+<address>ULib Server</address>
+</body></html>
+HTTP/1.1 404 Not Found
+Date: Fri, 19 Jun 2020 14:36:56 GMT
+Server: ULib
+Content-Type: text/html; charset=UTF-8
+Content-Length: 249
+
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
+<html><head>
+<title>404 Not Found</title>
+</head><body>
+<h1>Not Found</h1>
+<p>Your requested URL "/info" was not found on this server</p>
+<hr>
+<address>ULib Server</address>
+</body></html>
+HTTP/1.1 404 Not Found
+Date: Fri, 19 Jun 2020 14:36:56 GMT
+Server: ULib
+Content-Type: text/html; charset=UTF-8
+Content-Length: 249
+
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
+<html><head>
+<title>404 Not Found</title>
+</head><body>
+<h1>Not Found</h1>
+<p>Your requested URL "/info" was not found on this server</p>
+<hr>
+<address>ULib Server</address>
+</body></html>
+HTTP/1.1 404 Not Found
+Date: Fri, 19 Jun 2020 14:36:56 GMT
+Server: ULib
+Content-Type: text/html; charset=UTF-8
+Content-Length: 249
+
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
+<html><head>
+<title>404 Not Found</title>
+</head><body>
+<h1>Not Found</h1>
+<p>Your requested URL "/info" was not found on this server</p>
+<hr>
+<address>ULib Server</address>
+</body></html>
+HTTP/1.1 404 Not Found
+Date: Fri, 19 Jun 2020 14:36:56 GMT
+Server: ULib
+Content-Type: text/html; charset=UTF-8
+Content-Length: 249
+
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
+<html><head>
+<title>404 Not Found</title>
+</head><body>
+<h1>Not Found</h1>
+<p>Your requested URL "/info" was not found on this server</p>
+<hr>
+<address>ULib Server</address>
+</body></html>
+HTTP/1.1 400 Bad Request
+Date: Fri, 19 Jun 2020 14:36:56 GMT
+Server: ULib
+Connection: close
+Content-Type: text/html; charset=UTF-8
+Content-Length: 272
+
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
+<html><head>
+<title>400 Bad Request</title>
+</head><body>
+<h1>Bad Request</h1>
+<p>Your requested URL "/" was a request that this server could not understand</p>
+<hr>
+<address>ULib Server</address>
+</body></html>
+HTTP/1.1 404 Not Found
+Date: Fri, 19 Jun 2020 14:37:00 GMT
+Server: ULib
+Content-Type: text/html; charset=UTF-8
+Content-Length: 249
+
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
+<html><head>
+<title>404 Not Found</title>
+</head><body>
+<h1>Not Found</h1>
+<p>Your requested URL "/test" was not found on this server</p>
+<hr>
+<address>ULib Server</address>
+</body></html>
+HTTP/1.1 200 OK
+Date: Fri, 19 Jun 2020 14:37:00 GMT
+Server: ULib
+Content-Type: image/x-icon; charset=binary
+Expires: Tue, 15 Apr 2050 14:40:40 GMT
+Last-Modified: Mon, 15 Apr 2017 14:36:13 GMT
+Content-Length: 318
+
+         (     (                Ä                  ˇ    ¨F ˇˇˇ iˇˇ                                                             "    "           " "          "                  33333                                                                HTTP/1.1 404 Not Found
+Date: Fri, 19 Jun 2020 14:37:00 GMT
+Server: ULib
+Content-Type: text/html; charset=UTF-8
+Content-Length: 253
+
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
+<html><head>
+<title>404 Not Found</title>
+</head><body>
+<h1>Not Found</h1>
+<p>Your requested URL "/dumbfuck" was not found on this server</p>
+<hr>
+<address>ULib Server</address>
+</body></html>
+HTTP/1.1 404 Not Found
+Date: Fri, 19 Jun 2020 14:37:00 GMT
+Server: ULib
+Content-Type: text/html; charset=UTF-8
+Content-Length: 273
+
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
+<html><head>
+<title>404 Not Found</title>
+</head><body>
+<h1>Not Found</h1>
+<p>Your requested URL "/get_no_headers_no_body/world" was not found on this server</p>
+<hr>
+<address>ULib Server</address>
+</body></html>
+HTTP/1.1 404 Not Found
+Date: Fri, 19 Jun 2020 14:37:00 GMT
+Server: ULib
+Content-Type: text/html; charset=UTF-8
+Content-Length: 267
+
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
+<html><head>
+<title>404 Not Found</title>
+</head><body>
+<h1>Not Found</h1>
+<p>Your requested URL "/get_one_header_no_body" was not found on this server</p>
+<hr>
+<address>ULib Server</address>
+</body></html>
+HTTP/1.1 404 Not Found
+Date: Fri, 19 Jun 2020 14:37:00 GMT
+Server: ULib
+Content-Type: text/html; charset=UTF-8
+Content-Length: 280
+
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
+<html><head>
+<title>404 Not Found</title>
+</head><body>
+<h1>Not Found</h1>
+<p>Your requested URL "/get_funky_content_length_body_hello" was not found on this server</p>
+<hr>
+<address>ULib Server</address>
+</body></html>
+HTTP/1.1 404 Not Found
+Date: Fri, 19 Jun 2020 14:37:00 GMT
+Server: ULib
+Content-Type: text/html; charset=UTF-8
+Content-Length: 269
+
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
+<html><head>
+<title>404 Not Found</title>
+</head><body>
+<h1>Not Found</h1>
+<p>Your requested URL "/post_identity_body_world" was not found on this server</p>
+<hr>
+<address>ULib Server</address>
+</body></html>
+HTTP/1.1 404 Not Found
+Date: Fri, 19 Jun 2020 14:37:00 GMT
+Server: ULib
+Content-Type: text/html; charset=UTF-8
+Content-Length: 271
+
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
+<html><head>
+<title>404 Not Found</title>
+</head><body>
+<h1>Not Found</h1>
+<p>Your requested URL "/post_chunked_all_your_base" was not found on this server</p>
+<hr>
+<address>ULib Server</address>
+</body></html>
+HTTP/1.1 404 Not Found
+Date: Fri, 19 Jun 2020 14:37:00 GMT
+Server: ULib
+Content-Type: text/html; charset=UTF-8
+Content-Length: 269
+
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
+<html><head>
+<title>404 Not Found</title>
+</head><body>
+<h1>Not Found</h1>
+<p>Your requested URL "/two_chunks_mult_zero_end" was not found on this server</p>
+<hr>
+<address>ULib Server</address>
+</body></html>
+HTTP/1.1 404 Not Found
+Date: Fri, 19 Jun 2020 14:37:00 GMT
+Server: ULib
+Content-Type: text/html; charset=UTF-8
+Content-Length: 271
+
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
+<html><head>
+<title>404 Not Found</title>
+</head><body>
+<h1>Not Found</h1>
+<p>Your requested URL "/chunked_w_trailing_headers" was not found on this server</p>
+<hr>
+<address>ULib Server</address>
+</body></html>
+HTTP/1.1 404 Not Found
+Date: Fri, 19 Jun 2020 14:37:00 GMT
+Server: ULib
+Content-Type: text/html; charset=UTF-8
+Content-Length: 276
+
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
+<html><head>
+<title>404 Not Found</title>
+</head><body>
+<h1>Not Found</h1>
+<p>Your requested URL "/chunked_w_bullshit_after_length" was not found on this server</p>
+<hr>
+<address>ULib Server</address>
+</body></html>
+HTTP/1.1 404 Not Found
+Date: Fri, 19 Jun 2020 14:37:00 GMT
+Server: ULib
+Content-Type: text/html; charset=UTF-8
+Content-Length: 249
+
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
+<html><head>
+<title>404 Not Found</title>
+</head><body>
+<h1>Not Found</h1>
+<p>Your requested URL "/test" was not found on this server</p>
+<hr>
+<address>ULib Server</address>
+</body></html>
+HTTP/1.1 404 Not Found
+Date: Fri, 19 Jun 2020 14:37:00 GMT
+Server: ULib
+Content-Type: text/html; charset=UTF-8
+Content-Length: 253
+
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
+<html><head>
+<title>404 Not Found</title>
+</head><body>
+<h1>Not Found</h1>
+<p>Your requested URL "/test.cgi" was not found on this server</p>
+<hr>
+<address>ULib Server</address>
+</body></html>
+HTTP/1.1 404 Not Found
+Date: Fri, 19 Jun 2020 14:37:00 GMT
+Server: ULib
+Content-Type: text/html; charset=UTF-8
+Content-Length: 249
+
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
+<html><head>
+<title>404 Not Found</title>
+</head><body>
+<h1>Not Found</h1>
+<p>Your requested URL "/test" was not found on this server</p>
+<hr>
+<address>ULib Server</address>
+</body></html>
+HTTP/1.1 404 Not Found
+Date: Fri, 19 Jun 2020 14:37:00 GMT
+Server: ULib
+Content-Type: text/html; charset=UTF-8
+Content-Length: 245
+
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
+<html><head>
+<title>404 Not Found</title>
+</head><body>
+<h1>Not Found</h1>
+<p>Your requested URL "*" was not found on this server</p>
+<hr>
+<address>ULib Server</address>
+</body></html>
+HTTP/1.1 200 OK
+Date: Fri, 19 Jun 2020 14:37:00 GMT
+Server: ULib
+Content-Type: text/html; charset=UTF-8
+Expires: Sat, 19 Jun 2021 14:36:51 GMT
+Last-Modified: Wed, 06 Jul 2011 16:28:46 GMT
+Content-Length: 1669
+
+<html>
+<head>
+  <title>Welcome to ULib Web Server!</title>
+<!--
+<script language="javascript" src="js/jquery.js" type="text/javascript"></script>
+<script language="javascript" type="text/javascript">
+        $(document).ready( function() {
+        // get verification code with Ajax
+        $.get('get_checkingcode_php', { data:'getting code' }, function(checkingcode) { $('#codebox').html(checkingcode); }); } );
+</script>
+-->
+</head>
+
+<body bgcolor="white" text="black">
+  <center>
+    <h1>Welcome to ULib Web Server!</h1>
+  </center>
+<!--
+  <form action="cgi-bin/check_form.php" method="post">
+    <p>First Name <input name="1" type="text" class="inputbox" title="Enter your first name"></p>
+    <p>Last Name <input name="2" type="text" class="inputbox" title="Enter your last name"></p>
+    <p>Email <input name="3" type="text" class="inputbox" title="Enter your email address"></p>
+    <p>Enter your comments below:</p>
+    <p><textarea name="4" title="Enter your comments" rows="10" cols="10"></textarea></p>
+    <div id="codebox"></div>
+    <p>Verification Code: <input name="5" type="text" name="code" class="checkingcode" title="Enter the above four-digit verification code"></p>
+    <p><input type="submit" value="Send Data"></p>
+  </form>
+-->
+
+  <div class="Video">
+    <object width="400" height="225">
+      <param name="movie" value="http://10.30.1.131/test.flv">
+      <param name="allowFullScreen" value="true">
+      <param name="allowscriptaccess" value="always">
+      <embed src="http://10.30.1.131/test.flv" type="video/x-flv" allowscriptaccess="always"
+      allowfullscreen="true" width="400" height="225">
+    </object>
+  </div>
+</body>
+</html>
+HTTP/1.1 404 Not Found
+Date: Fri, 19 Jun 2020 14:37:00 GMT
+Server: ULib
+Content-Type: text/html; charset=UTF-8
+Content-Length: 253
+
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
+<html><head>
+<title>404 Not Found</title>
+</head><body>
+<h1>Not Found</h1>
+<p>Your requested URL "/file.txt" was not found on this server</p>
+<hr>
+<address>ULib Server</address>
+</body></html>
+HTTP/1.1 404 Not Found
+Date: Fri, 19 Jun 2020 14:37:04 GMT
+Server: ULib
+Content-Type: text/html; charset=UTF-8
+Content-Length: 252
+
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
+<html><head>
+<title>404 Not Found</title>
+</head><body>
+<h1>Not Found</h1>
+<p>Your requested URL "/bag.xml" was not found on this server</p>
+<hr>
+<address>ULib Server</address>
+</body></html>
+HTTP/1.1 404 Not Found
+Date: Fri, 19 Jun 2020 14:37:04 GMT
+Server: ULib
+Content-Type: text/html; charset=UTF-8
+Content-Length: 254
+
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
+<html><head>
+<title>404 Not Found</title>
+</head><body>
+<h1>Not Found</h1>
+<p>Your requested URL "/help.html" was not found on this server</p>
+<hr>
+<address>ULib Server</address>
+</body></html>
+HTTP/1.1 200 OK
+Date: Fri, 19 Jun 2020 14:37:08 GMT
+Server: ULib
+Content-Length: 13
+Content-Type: text/plain
+
+Hello, World!HTTP/1.1 200 OK
+Date: Fri, 19 Jun 2020 14:37:08 GMT
+Server: ULib
+Content-Length: 13
+Content-Type: text/plain
+
+Hello, World!HTTP/1.1 200 OK
+Date: Fri, 19 Jun 2020 14:37:08 GMT
+Server: ULib
+Content-Length: 13
+Content-Type: text/plain
+
+Hello, World!HTTP/1.1 200 OK
+Date: Fri, 19 Jun 2020 14:37:08 GMT
+Server: ULib
+Content-Length: 13
+Content-Type: text/plain
+
+Hello, World!HTTP/1.1 200 OK
+Date: Fri, 19 Jun 2020 14:37:08 GMT
+Server: ULib
+Content-Length: 13
+Content-Type: text/plain
+
+Hello, World!HTTP/1.1 404 Not Found
+Date: Fri, 19 Jun 2020 14:37:08 GMT
+Server: ULib
+Connection: close
+Content-Type: text/html; charset=UTF-8
+Content-Length: 255
+
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
+<html><head>
+<title>404 Not Found</title>
+</head><body>
+<h1>Not Found</h1>
+<p>Your requested URL "/plaintext1" was not found on this server</p>
+<hr>
+<address>ULib Server</address>
+</body></html>
+HTTP/1.1 200 OK
+Date: Fri, 19 Jun 2020 14:37:08 GMT
+Server: ULib
+Connection: close
+Set-Cookie: ulib.s0=5374657665204a6f686e736f6e2631353932363633383238262ac2a1b144695197ed86b565777986a6; expires=Sat, 20 Jun 2020 14:37:08 GMT
+Content-Length: 0
+
+<html>
+<head>
+  <title></title>
+</head>
+<body>
+  <table align="center" class="table">
+    <tr>
+      <td class="table_header" colspan="2"><b>Your file have been uploaded!</b></td>
+    </tr>
+    <tr>
+      <td class="table_body"><br>
+      <b>File #1:</b> <a href="/uploads/vuoto.txt" target="_blank">/uploads/vuoto.txt</a><br>
+      <br>
+      <br>
+      <a href="/cgi-bin/uploader.sh">Go Back</a><br></td>
+    </tr>
+  </table>
+</body>
+</html>
+<html>
+<head>
+  <title></title>
+</head>
+<body>
+  <table align="center" class="table">
+    <tr>
+      <td class="table_header" colspan="2"><b>Your file have been uploaded!</b></td>
+    </tr>
+    <tr>
+      <td class="table_body"><br>
+      <b>File #1:</b> <a href="/uploads/operazione.xml" target="_blank">/uploads/operazione.xml</a><br>
+      <br>
+      <br>
+      <a href="/cgi-bin/uploader.sh">Go Back</a><br></td>
+    </tr>
+  </table>
+</body>
+</html>

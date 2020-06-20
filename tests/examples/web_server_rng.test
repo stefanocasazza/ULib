@@ -1,0 +1,235 @@
+#!/bin/sh
+
+. ../.function
+
+# set -x
+
+## web_server_rng.test -- Test web server with io_uring feature
+
+start_msg web_server_rng
+
+(cd benchmark; rm -f  db; creat_link FrameworkBenchmarks/ULib/db  db)
+(cd ..;        rm -rf db; creat_link examples/benchmark/db        db)
+                          creat_link          benchmark/db        db
+                          creat_link          benchmark/libraries libraries
+
+DOC_ROOT=docroot
+
+rm -f db/session.ssl* /tmp/ssl_session.txt /tmp/byterange* /tmp/soap.res /tmp/*.memusage.* /tmp/*.hpack.* \
+      $DOC_ROOT/webserver_rng*.log* $DOC_ROOT/uploads/* /var/log/httpd/access_log \
+      out/userver_rng.out err/userver_rng.err web_server_rng.err \
+                trace.*userver_*.[0-9]*           object.*userver_*.[0-9]*           stack.*userver_*.[0-9]*           mempool.*userver_*.[0-9]* \
+      $DOC_ROOT/trace.*userver_*.[0-9]* $DOC_ROOT/object.*userver_*.[0-9]* $DOC_ROOT/stack.*userver_*.[0-9]* $DOC_ROOT/mempool.*userver_*.[0-9]*
+
+#chmod 666 /proc/sys/net/ipv4/tcp_fin_timeout /proc/sys/net/core/somaxconn /proc/sys/net/ipv4/tcp_max_syn_backlog
+
+#UTRACE="0 50M 0"
+ UTRACE_SIGNAL="0 50M -1"
+ UTRACE_FOLDER=/tmp
+ TMPDIR=/tmp
+MIMALLOC_VERBOSE=1
+MIMALLOC_SHOW_ERRORS=1
+#UOBJDUMP="0 10M 100"
+#USIMERR="error.sim"
+#UMEMUSAGE=yes
+export UTRACE UOBJDUMP USIMERR UTRACE_SIGNAL UMEMUSAGE UTRACE_FOLDER TMPDIR MIMALLOC_VERBOSE MIMALLOC_SHOW_ERRORS
+
+if [ "$TERM" = "msys" ]; then
+   export TMPDIR="c:/tmp"
+fi
+
+DIR_CMD="../../examples/userver"
+
+compile_usp
+
+check_for_netcat
+
+mkdir -p /var/log/httpd 2>/dev/null
+
+# function : upload_test
+upload_test() {
+
+rm    -rf      uploads
+mkdir -p       uploads
+$CHOWN nobody: uploads docroot 2>/dev/null
+chmod 777      uploads
+
+$CURL -m 3 -s -F 'file=@vuoto.txt'                                -F "name=prova" http://$1/cgi-bin/uploader.sh        >>out/web_server_rng.out 2>>err/web_server_rng.err
+$CURL -m 3 -s -F 'file=@inp/xml2txt/operazione.xml;type=text/xml' -F "name=prova" http://$1/cgi-bin/uploader.sh        >>out/web_server_rng.out 2>>err/web_server_rng.err
+$CURL -m 3 -s -T web_server_rng.test                                              http://$1/upload/web_server_rng.test >>out/web_server_rng.out 2>>err/web_server_rng.err
+
+if [ $? -ne 0 ]; then
+   kill_server userver_rng
+   exit 1
+fi
+}
+
+# function : start_test
+start_test() {
+
+#STRACE=$TRUSS
+start_prg_background userver_rng -c inp/webserver_rng.cfg
+
+wait_server_ready localhost 8080
+
+#LS=tst_90
+#LS=`ls inp/http/and`
+#mkdir -p /tmp/web_server_rng
+#for i in $LS; do
+# $NCAT -w 10 localhost 8080 <inp/http/and/$i >/tmp/web_server_rng/$i
+#done
+
+#./sendbytes.pl
+#$NCAT -w 10 test          80 < inp/request.14215 >>out/web_server_rng.out
+#$NCAT -w 10 10.10.100.115 80 < inp/http/all4.inp >>out/web_server_rng.out
+#$CURL -m 10 http://$1/browserconfig.xml          >>out/web_server_rng.out 2>>err/web_server_rng.err
+#send_req $NCAT test 80 inp/request.14215 web_server_rng 2
+#exit 0
+#return
+
+LS=`ls inp/http/close`
+for i in $LS; do
+   send_req $1 $2 8080 inp/http/close/$i web_server_rng 2
+done
+
+send_req $1 $2 8080 inp/http/all.inp web_server_rng 3
+
+for i in all0.inp all01.inp all1.inp all2.inp; do
+   send_req $1 $2 8080 inp/http/$i web_server_rng 3 kill
+done
+
+for i in plaintext.inp post.inp; do
+   send_req $1 $2 8080 inp/http/$i web_server_rng 3
+done
+
+upload_test $2:8080
+
+kill_server userver_rng
+$SLEEP
+pkill userver_rng 2>/dev/null
+}
+
+# function : creat_config
+creat_config() {
+
+if [ -z "$2" ]; then
+   N=$1
+else
+   N=$2
+fi
+
+cat <<EOF >inp/webserver_rng.cfg
+userver {
+ PORT 8080
+ RUN_AS_USER nobody
+#MIN_SIZE_FOR_SENDFILE 1k
+ REQ_TIMEOUT 5
+ DOS_WHITE_LIST 127.0.0.1,10.30.0.0/16
+ LOG_FILE webserver_rng$1.log
+ LOG_FILE_SZ 1M
+ LOG_MSG_SIZE -1
+ DOCUMENT_ROOT $DOC_ROOT
+ PLUGIN "ssi http"
+ PLUGIN_DIR ../../../src/ulib/net/server/plugin/.libs
+ ORM_DRIVER_DIR ../../../src/ulib/orm/driver/.libs
+ PREFORK_CHILD $N
+#CRASH_COUNT 1
+#CRASH_EMAIL_NOTIFY mail.unirel.com:stefano.casazza@unirel.com
+}
+http {
+ ENABLE_INOTIFY yes
+ ALIAS @FILE:../alias.txt
+ LIMIT_REQUEST_BODY 700K
+ REQUEST_READ_TIMEOUT 30
+ DIGEST_AUTHENTICATION no
+ APACHE_LIKE_LOG /var/log/httpd/access_log
+ BANDWIDTH_THROTTLING_MASK @FILE:../throttling.txt
+ CACHE_FILE_MASK inp/http/data/file1|*.flv|*.svgz
+ CACHE_AVOID_MASK www.sito1.com/inp|ruby
+}
+EOF
+}
+
+# ---------------------------------------------------------
+# virtual host
+# ---------------------------------------------------------
+rm -rf $DOC_ROOT/www.sito1.com 2>/dev/null
+
+grep 'www.sito1.com' /etc/hosts >/dev/null 2>/dev/null
+
+if [ $? -ne 0 ]; then
+   echo '# virtual host userver' >> /etc/hosts 2>/dev/null
+   echo 127.0.0.1 www.sito1.com  >> /etc/hosts 2>/dev/null
+   echo 127.0.0.1 www.sito2.com  >> /etc/hosts 2>/dev/null
+fi
+
+mkdir $DOC_ROOT/www.sito1.com
+
+creat_link ../ok                           $DOC_ROOT/ok
+creat_link ../tmp                          $DOC_ROOT/tmp
+creat_link ../uploads                      $DOC_ROOT/uploads
+creat_link ../benchmark/docroot/servlet    $DOC_ROOT/servlet
+creat_link ../../inp                       $DOC_ROOT/www.sito1.com/inp
+creat_link ../../tmp                       $DOC_ROOT/www.sito1.com/tmp
+creat_link ../SSI                          $DOC_ROOT/www.sito1.com/SSI
+creat_link ../cgi-bin                      $DOC_ROOT/www.sito1.com/cgi-bin
+creat_link ../../uploads                   $DOC_ROOT/www.sito1.com/uploads
+creat_link ../../benchmark/docroot/servlet $DOC_ROOT/www.sito1.com/servlet
+
+touch vuoto.txt $DOC_ROOT/vuoto.txt $DOC_ROOT/www.sito1.com/vuoto.txt
+cat << EOF >tmp/c
+c
+c
+EOF
+
+pkill userver_rng 2>/dev/null
+
+#cp $DOC_ROOT/../.htpasswd $DOC_ROOT/../tmp.htpasswd
+
+export UMEMPOOL="136,0,60,100,250,-22,-17,-23,60"
+
+# webserver-1
+#creat_config -1
+#start_test $NCAT localhost
+# webserver0
+ creat_config 0 
+ start_test $NCAT localhost
+# webserver1
+#creat_config 1 
+#start_test $NCAT localhost
+# webserver2
+#creat_config 2 
+#start_test $NCAT localhost
+# webserverN
+#creat_config N 2
+#start_test $NCAT localhost
+# webserverV
+#creat_config V 2
+#start_test $NCAT www.sito1.com
+
+kill_server userver_rng
+
+# -----------------------------------------------------------------------------------
+# for GDB
+# -----------------------------------------------------------------------------------
+# sed "s/Host: 10.30.1.131/Host: www.sito1.com/" inp/http/all.inp | nc localhost 8080
+# -----------------------------------------------------------------------------------
+
+diff inp/xml2txt/operazione.xml uploads/operazione.xml
+RESULT=$?
+if [ "$RESULT" = "0" ]; then
+   diff web_server_rng.test uploads/web_server_rng.test
+   RESULT=$?
+fi
+
+mv err/userver_rng.err err/web_server_rng.err
+
+# -------------------------------------------------------------------------------------------------------------------------------------------------------
+# cut -d ' ' -f7 /var/log/httpd/access_log > /tmp/urls.txt
+# siege -c<concurreny rate> -b -f urls.txt
+# -------------------------------------------------------------------------------------------------------------------------------------------------------
+# curl -v -0 -k -H "Host:"  -H "Accept:" -H "User-Agent: SSL Labs (https://www.ssllabs.com/about/assessment.html)" https://wifi-aaa.comune.fi.it
+# -------------------------------------------------------------------------------------------------------------------------------------------------------
+
+# Test against expected output
+test_output_wc l web_server_rng

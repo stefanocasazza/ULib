@@ -82,8 +82,6 @@ class UREDISClient_Base;
 #define U_socket_Type(obj)     (obj)->USocket::flag[2]
 #define U_socket_unused(obj)   (obj)->USocket::flag[3]
 
-enum SocketOperation { none, _accept, _read, _write, _close, _update, _poll };
-
 class U_EXPORT USocket {
 public:
 
@@ -730,6 +728,13 @@ protected:
    void setLocalAddress(void* address);
    void setLocal(const UIPAddress& addr);
    bool setHostName(const UString& pcNewHostName);
+
+   void setFd(int fd)
+      {
+      U_TRACE(1, "USocket::setFd(%d)", fd)
+
+      iSockDesc = fd;
+      }
 
    void setFlags(int _flags)
       {

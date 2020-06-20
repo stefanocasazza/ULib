@@ -1,0 +1,415 @@
+01/03/20 16:36:11 (pid 54156)> *** STARTUP userver_tcp (64bit, pid 54156) [root@stefano] ***
+01/03/20 16:36:11 (pid 54156)> Building Environment: Gentoo 2.6 (AMD64) (Mar  1 2020)
+01/03/20 16:36:11 (pid 54156)> Current Operating System: Linux x86_64 v#2 SMP PREEMPT Tue Jan 28 13:47:39 CET 2020 5.5.0
+01/03/20 16:36:11 (pid 54156)> Working directory (DOCUMENT_ROOT) changed to "/usr/src/ULib-2.4.2/tests/examples/benchmark/docroot"
+01/03/20 16:36:11 (pid 54156)> Trying to kill another instance of userver that is running with pid 29807
+01/03/20 16:36:11 (pid 54156)> Load phase of plugin "http" success
+01/03/20 16:36:11 (pid 54156)> Configuration phase of plugin "http" success
+01/03/20 16:36:11 (pid 54156)> SO_REUSEPORT status is: using
+01/03/20 16:36:11 (pid 54156)> HOST registered as: stefano:8080
+01/03/20 16:36:11 (pid 54156)> SERVER IP ADDRESS registered as: 192.168.42.107 (private)
+01/03/20 16:36:11 (pid 54156)> [http] File data users permission: ../.htdigest loaded - 58 bytes
+01/03/20 16:36:11 (pid 54156)> [http] File cached: "js/calcajax.js" - 1000 bytes - compression ratio (zopfli 51%, brotli 62%)
+01/03/20 16:36:11 (pid 54156)> [http] File cached: "js/chat.js" - 1288 bytes - compression ratio (zopfli 56%, brotli 65%)
+01/03/20 16:36:11 (pid 54156)> [http] File cached: "1000.html" - 1000 bytes - compression ratio (zopfli 98%, brotli 99%)
+01/03/20 16:36:11 (pid 54156)> [http] File cached: "graph/if.html" - 564 bytes - compression ratio (zopfli 34%, brotli 63%)
+01/03/20 16:36:11 (pid 54156)> [http] File cached: "graph/index.html" - 547 bytes - compression ratio (zopfli 34%, brotli 63%)
+01/03/20 16:36:11 (pid 54156)> [http] File cached: "graph/svg/test.svg" - 1073 bytes - compression ratio (zopfli 50%, brotli 58%)
+01/03/20 16:36:11 (pid 54156)> [http] File cached: "graph/svg/cpu.svg" - 4825 bytes - compression ratio (zopfli 63%, brotli 68%)
+01/03/20 16:36:11 (pid 54156)> [http] File cached: "graph/svg/if.svg" - 8654 bytes - compression ratio (zopfli 67%, brotli 72%)
+01/03/20 16:36:11 (pid 54156)> [http] File cached: "graph/cpu.html" - 550 bytes - compression ratio (zopfli 34%, brotli 60%)
+01/03/20 16:36:11 (pid 54156)> [http] cgi-bin found: "graph/cgi-bin/cpu.cgi", interpreter registered: (null)
+01/03/20 16:36:11 (pid 54156)> [http] cgi-bin found: "graph/cgi-bin/if.cgi", interpreter registered: (null)
+01/03/20 16:36:11 (pid 54156)> [http] File cached: "css/chat.css" - 61 bytes - compression ratio (zopfli 0%, brotli 0%)
+01/03/20 16:36:11 (pid 54156)> [http] File cached: "ErrorDocument/500.html" - 728 bytes - compression ratio (zopfli 41%, brotli 64%)
+01/03/20 16:36:11 (pid 54156)> [http] File cached: "ErrorDocument/404.html" - 728 bytes - compression ratio (zopfli 42%, brotli 65%)
+01/03/20 16:36:11 (pid 54156)> [http] File cached: "ErrorDocument/down.html" - 3127 bytes - compression ratio (zopfli 71%, brotli 80%)
+01/03/20 16:36:11 (pid 54156)> [http] File cached (image): "images/wink.png" - 455 bytes
+01/03/20 16:36:11 (pid 54156)> [http] File cached (image): "images/ulib_logo.jpg" - 3576 bytes
+01/03/20 16:36:11 (pid 54156)> [http] File cached (image): "images/smile.png" - 435 bytes
+01/03/20 16:36:11 (pid 54156)> [http] File cached (image): "images/sad.png" - 429 bytes
+01/03/20 16:36:11 (pid 54156)> [http] File cached: "100.html" - 100 bytes - compression ratio (zopfli 0%, brotli 0%)
+01/03/20 16:36:11 (pid 54156)> [http] File cached: "ws/websocket.html" - 1398 bytes - compression ratio (zopfli 59%, brotli 71%)
+01/03/20 16:36:11 (pid 54156)> [http] USP found: "cchat.so", USP service registered (URI): "servlet/cchat"
+01/03/20 16:36:11 (pid 54156)> [http] USP found: "benchmarking.usp", USP service registered (URI): "servlet/benchmarking"
+01/03/20 16:36:11 (pid 54156)> [http] WARNING: USP load failed: "./servlet/mquery.so"
+01/03/20 16:36:11 (pid 54156)> [http] WARNING: USP load failed: "./servlet/fortune.so"
+01/03/20 16:36:11 (pid 54156)> [http] USP found: "json.so", USP service registered (URI): "servlet/json"
+01/03/20 16:36:11 (pid 54156)> [http] USP found: "alldemos.usp", USP service registered (URI): "servlet/alldemos"
+01/03/20 16:36:11 (pid 54156)> [http] USP found: "docalc1.usp", USP service registered (URI): "servlet/docalc1"
+01/03/20 16:36:11 (pid 54156)> [http] WARNING: USP load failed: "./servlet/cached_worlds.so"
+01/03/20 16:36:11 (pid 54156)> [http] WARNING: USP load failed: "./servlet/eupdate.so"
+01/03/20 16:36:11 (pid 54156)> [http] WARNING: USP load failed: "./servlet/edb.so"
+01/03/20 16:36:11 (pid 54156)> [http] USP found: "two.usp", USP service registered (URI): "servlet/two"
+01/03/20 16:36:11 (pid 54156)> [http] WARNING: USP load failed: "./servlet/update.so"
+01/03/20 16:36:11 (pid 54156)> [http] USP found: "upload.so", USP service registered (URI): "servlet/upload"
+01/03/20 16:36:11 (pid 54156)> [http] USP found: "jsonrequest.usp", USP service registered (URI): "servlet/jsonrequest"
+01/03/20 16:36:11 (pid 54156)> [http] WARNING: USP load failed: "./servlet/eupdate.so"
+01/03/20 16:36:11 (pid 54156)> [http] WARNING: USP load failed: "./servlet/mdb.so"
+01/03/20 16:36:11 (pid 54156)> [http] USP found: "udp.usp", USP service registered (URI): "servlet/udp"
+01/03/20 16:36:11 (pid 54156)> [http] WARNING: USP load failed: "./servlet/update.so"
+01/03/20 16:36:11 (pid 54156)> [http] WARNING: USP load failed: "./servlet/rdb.so"
+01/03/20 16:36:11 (pid 54156)> [http] WARNING: USP load failed: "./servlet/cached_worlds.so"
+01/03/20 16:36:11 (pid 54156)> [http] USP found: "strings.so", USP service registered (URI): "servlet/strings"
+01/03/20 16:36:11 (pid 54156)> [http] WARNING: USP load failed: "./servlet/rfortune.so"
+01/03/20 16:36:11 (pid 54156)> [http] WARNING: USP load failed: "./servlet/rdb.so"
+01/03/20 16:36:11 (pid 54156)> [http] USP found: "session.usp", USP service registered (URI): "servlet/session"
+01/03/20 16:36:11 (pid 54156)> [http] WARNING: USP load failed: "./servlet/equery.so"
+01/03/20 16:36:11 (pid 54156)> [http] USP found: "chat.usp", USP service registered (URI): "servlet/chat"
+01/03/20 16:36:11 (pid 54156)> [http] WARNING: USP load failed: "./servlet/mupdate.so"
+01/03/20 16:36:11 (pid 54156)> [http] WARNING: USP load failed: "./servlet/fortune.so"
+01/03/20 16:36:11 (pid 54156)> [http] USP found: "modsocket.usp", USP service registered (URI): "servlet/modsocket"
+01/03/20 16:36:11 (pid 54156)> [http] USP found: "cookie.usp", USP service registered (URI): "servlet/cookie"
+01/03/20 16:36:11 (pid 54156)> [http] WARNING: USP load failed: "./servlet/equery.so"
+01/03/20 16:36:11 (pid 54156)> [http] USP found: "hello.so", USP service registered (URI): "servlet/hello"
+01/03/20 16:36:11 (pid 54156)> [http] USP found: "example_form.so", USP service registered (URI): "servlet/example_form"
+01/03/20 16:36:11 (pid 54156)> [http] USP found: "test.so", USP service registered (URI): "servlet/test"
+01/03/20 16:36:11 (pid 54156)> [http] USP found: "docalc.usp", USP service registered (URI): "servlet/docalc"
+01/03/20 16:36:11 (pid 54156)> [http] USP found: "calcajax.usp", USP service registered (URI): "servlet/calcajax"
+01/03/20 16:36:11 (pid 54156)> [http] WARNING: USP load failed: "./servlet/mdb.so"
+01/03/20 16:36:11 (pid 54156)> [http] WARNING: USP load failed: "./servlet/query.so"
+01/03/20 16:36:11 (pid 54156)> [http] WARNING: USP load failed: "./servlet/rquery.so"
+01/03/20 16:36:11 (pid 54156)> [http] WARNING: USP load failed: "./servlet/edb.so"
+01/03/20 16:36:11 (pid 54156)> [http] USP found: "example.so", USP service registered (URI): "servlet/example"
+01/03/20 16:36:11 (pid 54156)> [http] USP found: "calcmvc.so", USP service registered (URI): "servlet/calcmvc"
+01/03/20 16:36:11 (pid 54156)> [http] USP found: "remove.so", USP service registered (URI): "servlet/remove"
+01/03/20 16:36:11 (pid 54156)> [http] WARNING: USP load failed: "./servlet/rquery.so"
+01/03/20 16:36:11 (pid 54156)> [http] USP found: "one.so", USP service registered (URI): "servlet/one"
+01/03/20 16:36:11 (pid 54156)> [http] WARNING: USP load failed: "./servlet/rfortune.so"
+01/03/20 16:36:11 (pid 54156)> [http] WARNING: USP load failed: "./servlet/mfortune.so"
+01/03/20 16:36:11 (pid 54156)> [http] WARNING: USP load failed: "./servlet/rupdate.so"
+01/03/20 16:36:11 (pid 54156)> [http] CSP found: "hellox.c", CSP service registered (URI): "servlet/hellox"
+01/03/20 16:36:11 (pid 54156)> [http] WARNING: USP load failed: "./servlet/query.so"
+01/03/20 16:36:11 (pid 54156)> [http] WARNING: USP load failed: "./servlet/mupdate.so"
+01/03/20 16:36:11 (pid 54156)> [http] USP found: "plaintext.so", USP service registered (URI): "servlet/plaintext"
+01/03/20 16:36:11 (pid 54156)> [http] WARNING: USP load failed: "./servlet/db.so"
+01/03/20 16:36:11 (pid 54156)> [http] CSP found: "captcha.c", CSP service registered (URI): "servlet/captcha"
+01/03/20 16:36:11 (pid 54156)> [http] USP found: "businesses.so", USP service registered (URI): "servlet/businesses"
+01/03/20 16:36:11 (pid 54156)> [http] USP found: "calc.so", USP service registered (URI): "servlet/calc"
+01/03/20 16:36:11 (pid 54156)> [http] WARNING: USP load failed: "./servlet/rupdate.so"
+01/03/20 16:36:11 (pid 54156)> [http] WARNING: USP load failed: "./servlet/db.so"
+01/03/20 16:36:11 (pid 54156)> [http] WARNING: USP load failed: "./servlet/mquery.so"
+01/03/20 16:36:11 (pid 54156)> [http] WARNING: USP load failed: "./servlet/mfortune.so"
+01/03/20 16:36:11 (pid 54156)> [http] Loaded cache icon store for directory listing
+01/03/20 16:36:11 (pid 54156)> [http] Loaded cache favicon.ico
+01/03/20 16:36:11 (pid 54156)> [http] Loaded cache css store for HTML pagination
+01/03/20 16:36:11 (pid 54156)> UTimeThread optimization for time resolution of one second activated (tid 54180)
+01/03/20 16:36:11 (pid 54156)> Load balance activated (by udp socket: 7): loadavg_threshold = 45 brodacast address = (usb0:192.168.42.255)
+01/03/20 16:36:11 (pid 54156)> Mapped 1157645 bytes (1132 KB) of shared memory for 0 preforked process
+01/03/20 16:36:11 (pid 54156)> [http] db NotFound initialization success: size(19)
+01/03/20 16:36:11 (pid 54156)> [usp_init] db HTTP session initialization success
+01/03/20 16:36:11 (pid 54156)> db Evasive initialization success: size(0)
+01/03/20 16:36:11 (pid 54156)> [http] Inode based directory notification enabled
+01/03/20 16:36:11 (pid 54156)> [http] SSE thread activated (tid 54181): /var/tmp/SSE_TCP_EVENT(12)
+01/03/20 16:36:11 (pid 54156)> Server run with user "apache" permission
+01/03/20 16:36:11 (pid 54156)> Waiting for connection on port 8080
+01/03/20 16:36:12 (pid 54156)> New client connected from 18 '127.0.0.1:59162', 0 clients currently connected
+01/03/20 16:36:12 (pid 54156)> Server close connection from 18 '127.0.0.1:59162', 0 clients still connected
+01/03/20 16:36:12 (pid 54156)> Waiting for connection on port 8080
+01/03/20 16:36:12 (pid 54156)> New client connected from 18 '127.0.0.1:59164', 0 clients currently connected
+01/03/20 16:36:12 (pid 54156)> received request (139 bytes) "GET /servlet/benchmarking?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1:8080\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*" from 18 '127.0.0.1:59164'
+01/03/20 16:36:12 (pid 54156)> send response (176 bytes) "HTTP/1.1 200 OK\r\nDate: Sun, 01 Mar 2020 15:36:12 GMT\r\nServer: ULib\r\n" to 18 '127.0.0.1:59164'
+01/03/20 16:36:12 (pid 54156)> request "/servlet/benchmarking?name=stefano" run in 0.185 ms
+01/03/20 16:36:12 (pid 54156)> received request (139 bytes) "GET /servlet/benchmarking?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1:8080\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*" from 18 '127.0.0.1:59164'
+01/03/20 16:36:12 (pid 54156)> send response (176 bytes) "HTTP/1.1 200 OK\r\nDate: Sun, 01 Mar 2020 15:36:12 GMT\r\nServer: ULib\r\n" to 18 '127.0.0.1:59164'
+01/03/20 16:36:12 (pid 54156)> request "/servlet/benchmarking?name=stefano" run in 0.058 ms
+01/03/20 16:36:12 (pid 54156)> New client connected from 19 '127.0.0.1:59166', 0 clients currently connected
+01/03/20 16:36:12 (pid 54156)> received request (139 bytes) "GET /servlet/benchmarking?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1:8080\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*" from 19 '127.0.0.1:59166'
+01/03/20 16:36:12 (pid 54156)> send response (176 bytes) "HTTP/1.1 200 OK\r\nDate: Sun, 01 Mar 2020 15:36:12 GMT\r\nServer: ULib\r\n" to 19 '127.0.0.1:59166'
+01/03/20 16:36:12 (pid 54156)> request "/servlet/benchmarking?name=stefano" run in 0.059000000000000007 ms
+01/03/20 16:36:12 (pid 54156)> received request (139 bytes) "GET /servlet/benchmarking?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1:8080\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*" from 18 '127.0.0.1:59164'
+01/03/20 16:36:12 (pid 54156)> send response (176 bytes) "HTTP/1.1 200 OK\r\nDate: Sun, 01 Mar 2020 15:36:12 GMT\r\nServer: ULib\r\n" to 18 '127.0.0.1:59164'
+01/03/20 16:36:12 (pid 54156)> request "/servlet/benchmarking?name=stefano" run in 0.042 ms
+01/03/20 16:36:12 (pid 54156)> received request (139 bytes) "GET /servlet/benchmarking?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1:8080\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*" from 19 '127.0.0.1:59166'
+01/03/20 16:36:12 (pid 54156)> send response (176 bytes) "HTTP/1.1 200 OK\r\nDate: Sun, 01 Mar 2020 15:36:12 GMT\r\nServer: ULib\r\n" to 19 '127.0.0.1:59166'
+01/03/20 16:36:12 (pid 54156)> request "/servlet/benchmarking?name=stefano" run in 0.038 ms
+01/03/20 16:36:12 (pid 54156)> received request (139 bytes) "GET /servlet/benchmarking?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1:8080\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*" from 18 '127.0.0.1:59164'
+01/03/20 16:36:12 (pid 54156)> send response (176 bytes) "HTTP/1.1 200 OK\r\nDate: Sun, 01 Mar 2020 15:36:12 GMT\r\nServer: ULib\r\n" to 18 '127.0.0.1:59164'
+01/03/20 16:36:12 (pid 54156)> request "/servlet/benchmarking?name=stefano" run in 0.036000000000000007 ms
+01/03/20 16:36:12 (pid 54156)> received request (139 bytes) "GET /servlet/benchmarking?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1:8080\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*" from 19 '127.0.0.1:59166'
+01/03/20 16:36:12 (pid 54156)> send response (176 bytes) "HTTP/1.1 200 OK\r\nDate: Sun, 01 Mar 2020 15:36:12 GMT\r\nServer: ULib\r\n" to 19 '127.0.0.1:59166'
+01/03/20 16:36:12 (pid 54156)> request "/servlet/benchmarking?name=stefano" run in 0.037 ms
+01/03/20 16:36:12 (pid 54156)> received request (139 bytes) "GET /servlet/benchmarking?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1:8080\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*" from 18 '127.0.0.1:59164'
+01/03/20 16:36:12 (pid 54156)> send response (176 bytes) "HTTP/1.1 200 OK\r\nDate: Sun, 01 Mar 2020 15:36:12 GMT\r\nServer: ULib\r\n" to 18 '127.0.0.1:59164'
+01/03/20 16:36:12 (pid 54156)> request "/servlet/benchmarking?name=stefano" run in 0.036000000000000007 ms
+01/03/20 16:36:12 (pid 54156)> received request (139 bytes) "GET /servlet/benchmarking?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1:8080\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*" from 19 '127.0.0.1:59166'
+01/03/20 16:36:12 (pid 54156)> send response (176 bytes) "HTTP/1.1 200 OK\r\nDate: Sun, 01 Mar 2020 15:36:12 GMT\r\nServer: ULib\r\n" to 19 '127.0.0.1:59166'
+01/03/20 16:36:12 (pid 54156)> request "/servlet/benchmarking?name=stefano" run in 0.043000000000000006 ms
+01/03/20 16:36:12 (pid 54156)> received request (139 bytes) "GET /servlet/benchmarking?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1:8080\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*" from 18 '127.0.0.1:59164'
+01/03/20 16:36:12 (pid 54156)> send response (176 bytes) "HTTP/1.1 200 OK\r\nDate: Sun, 01 Mar 2020 15:36:12 GMT\r\nServer: ULib\r\n" to 18 '127.0.0.1:59164'
+01/03/20 16:36:12 (pid 54156)> request "/servlet/benchmarking?name=stefano" run in 0.037 ms
+01/03/20 16:36:12 (pid 54156)> received request (139 bytes) "GET /servlet/benchmarking?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1:8080\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*" from 19 '127.0.0.1:59166'
+01/03/20 16:36:12 (pid 54156)> send response (176 bytes) "HTTP/1.1 200 OK\r\nDate: Sun, 01 Mar 2020 15:36:12 GMT\r\nServer: ULib\r\n" to 19 '127.0.0.1:59166'
+01/03/20 16:36:12 (pid 54156)> request "/servlet/benchmarking?name=stefano" run in 0.038 ms
+01/03/20 16:36:12 (pid 54156)> received request (139 bytes) "GET /servlet/benchmarking?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1:8080\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*" from 18 '127.0.0.1:59164'
+01/03/20 16:36:12 (pid 54156)> send response (176 bytes) "HTTP/1.1 200 OK\r\nDate: Sun, 01 Mar 2020 15:36:12 GMT\r\nServer: ULib\r\n" to 18 '127.0.0.1:59164'
+01/03/20 16:36:12 (pid 54156)> request "/servlet/benchmarking?name=stefano" run in 0.049 ms
+01/03/20 16:36:12 (pid 54156)> received request (139 bytes) "GET /servlet/benchmarking?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1:8080\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*" from 19 '127.0.0.1:59166'
+01/03/20 16:36:12 (pid 54156)> send response (176 bytes) "HTTP/1.1 200 OK\r\nDate: Sun, 01 Mar 2020 15:36:12 GMT\r\nServer: ULib\r\n" to 19 '127.0.0.1:59166'
+01/03/20 16:36:12 (pid 54156)> request "/servlet/benchmarking?name=stefano" run in 0.038 ms
+01/03/20 16:36:12 (pid 54156)> received request (139 bytes) "GET /servlet/benchmarking?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1:8080\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*" from 18 '127.0.0.1:59164'
+01/03/20 16:36:12 (pid 54156)> send response (176 bytes) "HTTP/1.1 200 OK\r\nDate: Sun, 01 Mar 2020 15:36:12 GMT\r\nServer: ULib\r\n" to 18 '127.0.0.1:59164'
+01/03/20 16:36:12 (pid 54156)> request "/servlet/benchmarking?name=stefano" run in 0.037 ms
+01/03/20 16:36:12 (pid 54156)> received request (139 bytes) "GET /servlet/benchmarking?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1:8080\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*" from 19 '127.0.0.1:59166'
+01/03/20 16:36:12 (pid 54156)> send response (176 bytes) "HTTP/1.1 200 OK\r\nDate: Sun, 01 Mar 2020 15:36:12 GMT\r\nServer: ULib\r\n" to 19 '127.0.0.1:59166'
+01/03/20 16:36:12 (pid 54156)> request "/servlet/benchmarking?name=stefano" run in 0.037 ms
+01/03/20 16:36:12 (pid 54156)> received request (139 bytes) "GET /servlet/benchmarking?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1:8080\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*" from 18 '127.0.0.1:59164'
+01/03/20 16:36:12 (pid 54156)> send response (176 bytes) "HTTP/1.1 200 OK\r\nDate: Sun, 01 Mar 2020 15:36:12 GMT\r\nServer: ULib\r\n" to 18 '127.0.0.1:59164'
+01/03/20 16:36:12 (pid 54156)> request "/servlet/benchmarking?name=stefano" run in 0.03 ms
+01/03/20 16:36:12 (pid 54156)> received request (139 bytes) "GET /servlet/benchmarking?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1:8080\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*" from 19 '127.0.0.1:59166'
+01/03/20 16:36:12 (pid 54156)> send response (176 bytes) "HTTP/1.1 200 OK\r\nDate: Sun, 01 Mar 2020 15:36:12 GMT\r\nServer: ULib\r\n" to 19 '127.0.0.1:59166'
+01/03/20 16:36:12 (pid 54156)> request "/servlet/benchmarking?name=stefano" run in 0.037 ms
+01/03/20 16:36:12 (pid 54156)> received request (139 bytes) "GET /servlet/benchmarking?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1:8080\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*" from 18 '127.0.0.1:59164'
+01/03/20 16:36:12 (pid 54156)> send response (176 bytes) "HTTP/1.1 200 OK\r\nDate: Sun, 01 Mar 2020 15:36:12 GMT\r\nServer: ULib\r\n" to 18 '127.0.0.1:59164'
+01/03/20 16:36:12 (pid 54156)> request "/servlet/benchmarking?name=stefano" run in 0.029 ms
+01/03/20 16:36:12 (pid 54156)> received request (139 bytes) "GET /servlet/benchmarking?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1:8080\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*" from 19 '127.0.0.1:59166'
+01/03/20 16:36:12 (pid 54156)> send response (176 bytes) "HTTP/1.1 200 OK\r\nDate: Sun, 01 Mar 2020 15:36:12 GMT\r\nServer: ULib\r\n" to 19 '127.0.0.1:59166'
+01/03/20 16:36:12 (pid 54156)> request "/servlet/benchmarking?name=stefano" run in 0.029 ms
+01/03/20 16:36:12 (pid 54156)> received request (139 bytes) "GET /servlet/benchmarking?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1:8080\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*" from 18 '127.0.0.1:59164'
+01/03/20 16:36:12 (pid 54156)> send response (176 bytes) "HTTP/1.1 200 OK\r\nDate: Sun, 01 Mar 2020 15:36:12 GMT\r\nServer: ULib\r\n" to 18 '127.0.0.1:59164'
+01/03/20 16:36:12 (pid 54156)> request "/servlet/benchmarking?name=stefano" run in 0.04 ms
+01/03/20 16:36:12 (pid 54156)> received request (139 bytes) "GET /servlet/benchmarking?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1:8080\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*" from 19 '127.0.0.1:59166'
+01/03/20 16:36:12 (pid 54156)> send response (176 bytes) "HTTP/1.1 200 OK\r\nDate: Sun, 01 Mar 2020 15:36:12 GMT\r\nServer: ULib\r\n" to 19 '127.0.0.1:59166'
+01/03/20 16:36:12 (pid 54156)> request "/servlet/benchmarking?name=stefano" run in 0.03 ms
+01/03/20 16:36:12 (pid 54156)> received request (139 bytes) "GET /servlet/benchmarking?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1:8080\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*" from 18 '127.0.0.1:59164'
+01/03/20 16:36:12 (pid 54156)> send response (176 bytes) "HTTP/1.1 200 OK\r\nDate: Sun, 01 Mar 2020 15:36:12 GMT\r\nServer: ULib\r\n" to 18 '127.0.0.1:59164'
+01/03/20 16:36:12 (pid 54156)> request "/servlet/benchmarking?name=stefano" run in 0.029 ms
+01/03/20 16:36:12 (pid 54156)> received request (139 bytes) "GET /servlet/benchmarking?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1:8080\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*" from 19 '127.0.0.1:59166'
+01/03/20 16:36:12 (pid 54156)> send response (176 bytes) "HTTP/1.1 200 OK\r\nDate: Sun, 01 Mar 2020 15:36:12 GMT\r\nServer: ULib\r\n" to 19 '127.0.0.1:59166'
+01/03/20 16:36:12 (pid 54156)> request "/servlet/benchmarking?name=stefano" run in 0.04 ms
+01/03/20 16:36:12 (pid 54156)> received request (139 bytes) "GET /servlet/benchmarking?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1:8080\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*" from 18 '127.0.0.1:59164'
+01/03/20 16:36:12 (pid 54156)> send response (176 bytes) "HTTP/1.1 200 OK\r\nDate: Sun, 01 Mar 2020 15:36:12 GMT\r\nServer: ULib\r\n" to 18 '127.0.0.1:59164'
+01/03/20 16:36:12 (pid 54156)> request "/servlet/benchmarking?name=stefano" run in 0.03 ms
+01/03/20 16:36:12 (pid 54156)> received request (139 bytes) "GET /servlet/benchmarking?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1:8080\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*" from 19 '127.0.0.1:59166'
+01/03/20 16:36:12 (pid 54156)> send response (176 bytes) "HTTP/1.1 200 OK\r\nDate: Sun, 01 Mar 2020 15:36:12 GMT\r\nServer: ULib\r\n" to 19 '127.0.0.1:59166'
+01/03/20 16:36:12 (pid 54156)> request "/servlet/benchmarking?name=stefano" run in 0.045 ms
+01/03/20 16:36:12 (pid 54156)> received request (139 bytes) "GET /servlet/benchmarking?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1:8080\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*" from 18 '127.0.0.1:59164'
+01/03/20 16:36:12 (pid 54156)> send response (176 bytes) "HTTP/1.1 200 OK\r\nDate: Sun, 01 Mar 2020 15:36:12 GMT\r\nServer: ULib\r\n" to 18 '127.0.0.1:59164'
+01/03/20 16:36:12 (pid 54156)> request "/servlet/benchmarking?name=stefano" run in 0.041 ms
+01/03/20 16:36:12 (pid 54156)> received request (139 bytes) "GET /servlet/benchmarking?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1:8080\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*" from 19 '127.0.0.1:59166'
+01/03/20 16:36:12 (pid 54156)> send response (176 bytes) "HTTP/1.1 200 OK\r\nDate: Sun, 01 Mar 2020 15:36:12 GMT\r\nServer: ULib\r\n" to 19 '127.0.0.1:59166'
+01/03/20 16:36:12 (pid 54156)> request "/servlet/benchmarking?name=stefano" run in 0.039 ms
+01/03/20 16:36:12 (pid 54156)> received request (139 bytes) "GET /servlet/benchmarking?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1:8080\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*" from 18 '127.0.0.1:59164'
+01/03/20 16:36:12 (pid 54156)> send response (176 bytes) "HTTP/1.1 200 OK\r\nDate: Sun, 01 Mar 2020 15:36:12 GMT\r\nServer: ULib\r\n" to 18 '127.0.0.1:59164'
+01/03/20 16:36:12 (pid 54156)> request "/servlet/benchmarking?name=stefano" run in 0.038 ms
+01/03/20 16:36:12 (pid 54156)> received request (139 bytes) "GET /servlet/benchmarking?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1:8080\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*" from 19 '127.0.0.1:59166'
+01/03/20 16:36:12 (pid 54156)> send response (176 bytes) "HTTP/1.1 200 OK\r\nDate: Sun, 01 Mar 2020 15:36:12 GMT\r\nServer: ULib\r\n" to 19 '127.0.0.1:59166'
+01/03/20 16:36:12 (pid 54156)> request "/servlet/benchmarking?name=stefano" run in 0.055 ms
+01/03/20 16:36:12 (pid 54156)> received request (139 bytes) "GET /servlet/benchmarking?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1:8080\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*" from 18 '127.0.0.1:59164'
+01/03/20 16:36:12 (pid 54156)> send response (176 bytes) "HTTP/1.1 200 OK\r\nDate: Sun, 01 Mar 2020 15:36:12 GMT\r\nServer: ULib\r\n" to 18 '127.0.0.1:59164'
+01/03/20 16:36:12 (pid 54156)> request "/servlet/benchmarking?name=stefano" run in 0.04 ms
+01/03/20 16:36:12 (pid 54156)> received request (139 bytes) "GET /servlet/benchmarking?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1:8080\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*" from 19 '127.0.0.1:59166'
+01/03/20 16:36:12 (pid 54156)> send response (176 bytes) "HTTP/1.1 200 OK\r\nDate: Sun, 01 Mar 2020 15:36:12 GMT\r\nServer: ULib\r\n" to 19 '127.0.0.1:59166'
+01/03/20 16:36:12 (pid 54156)> request "/servlet/benchmarking?name=stefano" run in 0.04 ms
+01/03/20 16:36:12 (pid 54156)> received request (139 bytes) "GET /servlet/benchmarking?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1:8080\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*" from 18 '127.0.0.1:59164'
+01/03/20 16:36:12 (pid 54156)> send response (176 bytes) "HTTP/1.1 200 OK\r\nDate: Sun, 01 Mar 2020 15:36:12 GMT\r\nServer: ULib\r\n" to 18 '127.0.0.1:59164'
+01/03/20 16:36:12 (pid 54156)> request "/servlet/benchmarking?name=stefano" run in 0.039 ms
+01/03/20 16:36:12 (pid 54156)> received request (139 bytes) "GET /servlet/benchmarking?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1:8080\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*" from 19 '127.0.0.1:59166'
+01/03/20 16:36:12 (pid 54156)> send response (176 bytes) "HTTP/1.1 200 OK\r\nDate: Sun, 01 Mar 2020 15:36:12 GMT\r\nServer: ULib\r\n" to 19 '127.0.0.1:59166'
+01/03/20 16:36:12 (pid 54156)> request "/servlet/benchmarking?name=stefano" run in 0.039 ms
+01/03/20 16:36:12 (pid 54156)> received request (139 bytes) "GET /servlet/benchmarking?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1:8080\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*" from 18 '127.0.0.1:59164'
+01/03/20 16:36:12 (pid 54156)> send response (176 bytes) "HTTP/1.1 200 OK\r\nDate: Sun, 01 Mar 2020 15:36:12 GMT\r\nServer: ULib\r\n" to 18 '127.0.0.1:59164'
+01/03/20 16:36:12 (pid 54156)> request "/servlet/benchmarking?name=stefano" run in 0.039 ms
+01/03/20 16:36:12 (pid 54156)> received request (139 bytes) "GET /servlet/benchmarking?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1:8080\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*" from 19 '127.0.0.1:59166'
+01/03/20 16:36:12 (pid 54156)> send response (176 bytes) "HTTP/1.1 200 OK\r\nDate: Sun, 01 Mar 2020 15:36:12 GMT\r\nServer: ULib\r\n" to 19 '127.0.0.1:59166'
+01/03/20 16:36:12 (pid 54156)> request "/servlet/benchmarking?name=stefano" run in 0.039 ms
+01/03/20 16:36:12 (pid 54156)> received request (139 bytes) "GET /servlet/benchmarking?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1:8080\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*" from 18 '127.0.0.1:59164'
+01/03/20 16:36:12 (pid 54156)> send response (176 bytes) "HTTP/1.1 200 OK\r\nDate: Sun, 01 Mar 2020 15:36:12 GMT\r\nServer: ULib\r\n" to 18 '127.0.0.1:59164'
+01/03/20 16:36:12 (pid 54156)> request "/servlet/benchmarking?name=stefano" run in 0.039 ms
+01/03/20 16:36:12 (pid 54156)> received request (139 bytes) "GET /servlet/benchmarking?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1:8080\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*" from 19 '127.0.0.1:59166'
+01/03/20 16:36:12 (pid 54156)> send response (176 bytes) "HTTP/1.1 200 OK\r\nDate: Sun, 01 Mar 2020 15:36:12 GMT\r\nServer: ULib\r\n" to 19 '127.0.0.1:59166'
+01/03/20 16:36:12 (pid 54156)> request "/servlet/benchmarking?name=stefano" run in 0.058 ms
+01/03/20 16:36:12 (pid 54156)> received request (139 bytes) "GET /servlet/benchmarking?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1:8080\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*" from 18 '127.0.0.1:59164'
+01/03/20 16:36:12 (pid 54156)> send response (176 bytes) "HTTP/1.1 200 OK\r\nDate: Sun, 01 Mar 2020 15:36:12 GMT\r\nServer: ULib\r\n" to 18 '127.0.0.1:59164'
+01/03/20 16:36:12 (pid 54156)> request "/servlet/benchmarking?name=stefano" run in 0.041 ms
+01/03/20 16:36:12 (pid 54156)> received request (139 bytes) "GET /servlet/benchmarking?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1:8080\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*" from 19 '127.0.0.1:59166'
+01/03/20 16:36:12 (pid 54156)> send response (176 bytes) "HTTP/1.1 200 OK\r\nDate: Sun, 01 Mar 2020 15:36:12 GMT\r\nServer: ULib\r\n" to 19 '127.0.0.1:59166'
+01/03/20 16:36:12 (pid 54156)> request "/servlet/benchmarking?name=stefano" run in 0.039 ms
+01/03/20 16:36:12 (pid 54156)> received request (139 bytes) "GET /servlet/benchmarking?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1:8080\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*" from 18 '127.0.0.1:59164'
+01/03/20 16:36:12 (pid 54156)> send response (176 bytes) "HTTP/1.1 200 OK\r\nDate: Sun, 01 Mar 2020 15:36:12 GMT\r\nServer: ULib\r\n" to 18 '127.0.0.1:59164'
+01/03/20 16:36:12 (pid 54156)> request "/servlet/benchmarking?name=stefano" run in 0.039 ms
+01/03/20 16:36:12 (pid 54156)> received request (139 bytes) "GET /servlet/benchmarking?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1:8080\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*" from 19 '127.0.0.1:59166'
+01/03/20 16:36:12 (pid 54156)> send response (176 bytes) "HTTP/1.1 200 OK\r\nDate: Sun, 01 Mar 2020 15:36:12 GMT\r\nServer: ULib\r\n" to 19 '127.0.0.1:59166'
+01/03/20 16:36:12 (pid 54156)> request "/servlet/benchmarking?name=stefano" run in 0.04 ms
+01/03/20 16:36:12 (pid 54156)> received request (139 bytes) "GET /servlet/benchmarking?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1:8080\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*" from 18 '127.0.0.1:59164'
+01/03/20 16:36:12 (pid 54156)> send response (176 bytes) "HTTP/1.1 200 OK\r\nDate: Sun, 01 Mar 2020 15:36:12 GMT\r\nServer: ULib\r\n" to 18 '127.0.0.1:59164'
+01/03/20 16:36:12 (pid 54156)> request "/servlet/benchmarking?name=stefano" run in 0.039 ms
+01/03/20 16:36:12 (pid 54156)> received request (139 bytes) "GET /servlet/benchmarking?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1:8080\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*" from 19 '127.0.0.1:59166'
+01/03/20 16:36:12 (pid 54156)> send response (176 bytes) "HTTP/1.1 200 OK\r\nDate: Sun, 01 Mar 2020 15:36:12 GMT\r\nServer: ULib\r\n" to 19 '127.0.0.1:59166'
+01/03/20 16:36:12 (pid 54156)> request "/servlet/benchmarking?name=stefano" run in 0.04 ms
+01/03/20 16:36:12 (pid 54156)> received request (139 bytes) "GET /servlet/benchmarking?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1:8080\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*" from 18 '127.0.0.1:59164'
+01/03/20 16:36:12 (pid 54156)> send response (176 bytes) "HTTP/1.1 200 OK\r\nDate: Sun, 01 Mar 2020 15:36:12 GMT\r\nServer: ULib\r\n" to 18 '127.0.0.1:59164'
+01/03/20 16:36:12 (pid 54156)> request "/servlet/benchmarking?name=stefano" run in 0.038 ms
+01/03/20 16:36:12 (pid 54156)> received request (139 bytes) "GET /servlet/benchmarking?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1:8080\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*" from 19 '127.0.0.1:59166'
+01/03/20 16:36:12 (pid 54156)> send response (176 bytes) "HTTP/1.1 200 OK\r\nDate: Sun, 01 Mar 2020 15:36:12 GMT\r\nServer: ULib\r\n" to 19 '127.0.0.1:59166'
+01/03/20 16:36:12 (pid 54156)> request "/servlet/benchmarking?name=stefano" run in 0.04 ms
+01/03/20 16:36:12 (pid 54156)> received request (139 bytes) "GET /servlet/benchmarking?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1:8080\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*" from 18 '127.0.0.1:59164'
+01/03/20 16:36:12 (pid 54156)> send response (176 bytes) "HTTP/1.1 200 OK\r\nDate: Sun, 01 Mar 2020 15:36:12 GMT\r\nServer: ULib\r\n" to 18 '127.0.0.1:59164'
+01/03/20 16:36:12 (pid 54156)> request "/servlet/benchmarking?name=stefano" run in 0.051000000000000007 ms
+01/03/20 16:36:12 (pid 54156)> received request (139 bytes) "GET /servlet/benchmarking?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1:8080\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*" from 19 '127.0.0.1:59166'
+01/03/20 16:36:12 (pid 54156)> send response (176 bytes) "HTTP/1.1 200 OK\r\nDate: Sun, 01 Mar 2020 15:36:12 GMT\r\nServer: ULib\r\n" to 19 '127.0.0.1:59166'
+01/03/20 16:36:12 (pid 54156)> request "/servlet/benchmarking?name=stefano" run in 0.041 ms
+01/03/20 16:36:12 (pid 54156)> received request (139 bytes) "GET /servlet/benchmarking?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1:8080\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*" from 18 '127.0.0.1:59164'
+01/03/20 16:36:12 (pid 54156)> send response (176 bytes) "HTTP/1.1 200 OK\r\nDate: Sun, 01 Mar 2020 15:36:12 GMT\r\nServer: ULib\r\n" to 18 '127.0.0.1:59164'
+01/03/20 16:36:12 (pid 54156)> request "/servlet/benchmarking?name=stefano" run in 0.039 ms
+01/03/20 16:36:12 (pid 54156)> received request (139 bytes) "GET /servlet/benchmarking?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1:8080\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*" from 19 '127.0.0.1:59166'
+01/03/20 16:36:12 (pid 54156)> send response (176 bytes) "HTTP/1.1 200 OK\r\nDate: Sun, 01 Mar 2020 15:36:12 GMT\r\nServer: ULib\r\n" to 19 '127.0.0.1:59166'
+01/03/20 16:36:12 (pid 54156)> request "/servlet/benchmarking?name=stefano" run in 0.044 ms
+01/03/20 16:36:12 (pid 54156)> received request (139 bytes) "GET /servlet/benchmarking?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1:8080\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*" from 18 '127.0.0.1:59164'
+01/03/20 16:36:12 (pid 54156)> send response (176 bytes) "HTTP/1.1 200 OK\r\nDate: Sun, 01 Mar 2020 15:36:12 GMT\r\nServer: ULib\r\n" to 18 '127.0.0.1:59164'
+01/03/20 16:36:12 (pid 54156)> request "/servlet/benchmarking?name=stefano" run in 0.04 ms
+01/03/20 16:36:12 (pid 54156)> received request (139 bytes) "GET /servlet/benchmarking?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1:8080\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*" from 19 '127.0.0.1:59166'
+01/03/20 16:36:12 (pid 54156)> send response (176 bytes) "HTTP/1.1 200 OK\r\nDate: Sun, 01 Mar 2020 15:36:12 GMT\r\nServer: ULib\r\n" to 19 '127.0.0.1:59166'
+01/03/20 16:36:12 (pid 54156)> request "/servlet/benchmarking?name=stefano" run in 1 ms
+01/03/20 16:36:12 (pid 54156)> received request (139 bytes) "GET /servlet/benchmarking?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1:8080\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*" from 18 '127.0.0.1:59164'
+01/03/20 16:36:12 (pid 54156)> send response (176 bytes) "HTTP/1.1 200 OK\r\nDate: Sun, 01 Mar 2020 15:36:12 GMT\r\nServer: ULib\r\n" to 18 '127.0.0.1:59164'
+01/03/20 16:36:12 (pid 54156)> request "/servlet/benchmarking?name=stefano" run in 0.039 ms
+01/03/20 16:36:12 (pid 54156)> received request (139 bytes) "GET /servlet/benchmarking?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1:8080\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*" from 19 '127.0.0.1:59166'
+01/03/20 16:36:12 (pid 54156)> send response (176 bytes) "HTTP/1.1 200 OK\r\nDate: Sun, 01 Mar 2020 15:36:12 GMT\r\nServer: ULib\r\n" to 19 '127.0.0.1:59166'
+01/03/20 16:36:12 (pid 54156)> request "/servlet/benchmarking?name=stefano" run in 0.04 ms
+01/03/20 16:36:12 (pid 54156)> received request (139 bytes) "GET /servlet/benchmarking?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1:8080\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*" from 18 '127.0.0.1:59164'
+01/03/20 16:36:12 (pid 54156)> send response (176 bytes) "HTTP/1.1 200 OK\r\nDate: Sun, 01 Mar 2020 15:36:12 GMT\r\nServer: ULib\r\n" to 18 '127.0.0.1:59164'
+01/03/20 16:36:12 (pid 54156)> request "/servlet/benchmarking?name=stefano" run in 0.053 ms
+01/03/20 16:36:12 (pid 54156)> received request (139 bytes) "GET /servlet/benchmarking?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1:8080\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*" from 19 '127.0.0.1:59166'
+01/03/20 16:36:12 (pid 54156)> send response (176 bytes) "HTTP/1.1 200 OK\r\nDate: Sun, 01 Mar 2020 15:36:12 GMT\r\nServer: ULib\r\n" to 19 '127.0.0.1:59166'
+01/03/20 16:36:12 (pid 54156)> request "/servlet/benchmarking?name=stefano" run in 0.041 ms
+01/03/20 16:36:12 (pid 54156)> received request (139 bytes) "GET /servlet/benchmarking?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1:8080\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*" from 18 '127.0.0.1:59164'
+01/03/20 16:36:12 (pid 54156)> send response (176 bytes) "HTTP/1.1 200 OK\r\nDate: Sun, 01 Mar 2020 15:36:12 GMT\r\nServer: ULib\r\n" to 18 '127.0.0.1:59164'
+01/03/20 16:36:12 (pid 54156)> request "/servlet/benchmarking?name=stefano" run in 0.039 ms
+01/03/20 16:36:12 (pid 54156)> received request (139 bytes) "GET /servlet/benchmarking?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1:8080\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*" from 19 '127.0.0.1:59166'
+01/03/20 16:36:12 (pid 54156)> send response (176 bytes) "HTTP/1.1 200 OK\r\nDate: Sun, 01 Mar 2020 15:36:12 GMT\r\nServer: ULib\r\n" to 19 '127.0.0.1:59166'
+01/03/20 16:36:12 (pid 54156)> request "/servlet/benchmarking?name=stefano" run in 0.04 ms
+01/03/20 16:36:12 (pid 54156)> received request (139 bytes) "GET /servlet/benchmarking?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1:8080\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*" from 18 '127.0.0.1:59164'
+01/03/20 16:36:12 (pid 54156)> send response (176 bytes) "HTTP/1.1 200 OK\r\nDate: Sun, 01 Mar 2020 15:36:12 GMT\r\nServer: ULib\r\n" to 18 '127.0.0.1:59164'
+01/03/20 16:36:12 (pid 54156)> request "/servlet/benchmarking?name=stefano" run in 0.039 ms
+01/03/20 16:36:12 (pid 54156)> received request (139 bytes) "GET /servlet/benchmarking?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1:8080\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*" from 19 '127.0.0.1:59166'
+01/03/20 16:36:12 (pid 54156)> send response (176 bytes) "HTTP/1.1 200 OK\r\nDate: Sun, 01 Mar 2020 15:36:12 GMT\r\nServer: ULib\r\n" to 19 '127.0.0.1:59166'
+01/03/20 16:36:12 (pid 54156)> request "/servlet/benchmarking?name=stefano" run in 0.04 ms
+01/03/20 16:36:12 (pid 54156)> received request (139 bytes) "GET /servlet/benchmarking?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1:8080\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*" from 18 '127.0.0.1:59164'
+01/03/20 16:36:12 (pid 54156)> send response (176 bytes) "HTTP/1.1 200 OK\r\nDate: Sun, 01 Mar 2020 15:36:12 GMT\r\nServer: ULib\r\n" to 18 '127.0.0.1:59164'
+01/03/20 16:36:12 (pid 54156)> request "/servlet/benchmarking?name=stefano" run in 0.039 ms
+01/03/20 16:36:12 (pid 54156)> received request (139 bytes) "GET /servlet/benchmarking?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1:8080\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*" from 19 '127.0.0.1:59166'
+01/03/20 16:36:12 (pid 54156)> send response (176 bytes) "HTTP/1.1 200 OK\r\nDate: Sun, 01 Mar 2020 15:36:12 GMT\r\nServer: ULib\r\n" to 19 '127.0.0.1:59166'
+01/03/20 16:36:12 (pid 54156)> request "/servlet/benchmarking?name=stefano" run in 0.06 ms
+01/03/20 16:36:12 (pid 54156)> received request (139 bytes) "GET /servlet/benchmarking?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1:8080\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*" from 18 '127.0.0.1:59164'
+01/03/20 16:36:12 (pid 54156)> send response (176 bytes) "HTTP/1.1 200 OK\r\nDate: Sun, 01 Mar 2020 15:36:12 GMT\r\nServer: ULib\r\n" to 18 '127.0.0.1:59164'
+01/03/20 16:36:12 (pid 54156)> request "/servlet/benchmarking?name=stefano" run in 0.041 ms
+01/03/20 16:36:12 (pid 54156)> received request (139 bytes) "GET /servlet/benchmarking?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1:8080\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*" from 19 '127.0.0.1:59166'
+01/03/20 16:36:12 (pid 54156)> send response (176 bytes) "HTTP/1.1 200 OK\r\nDate: Sun, 01 Mar 2020 15:36:12 GMT\r\nServer: ULib\r\n" to 19 '127.0.0.1:59166'
+01/03/20 16:36:12 (pid 54156)> request "/servlet/benchmarking?name=stefano" run in 1 ms
+01/03/20 16:36:12 (pid 54156)> received request (139 bytes) "GET /servlet/benchmarking?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1:8080\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*" from 18 '127.0.0.1:59164'
+01/03/20 16:36:12 (pid 54156)> send response (176 bytes) "HTTP/1.1 200 OK\r\nDate: Sun, 01 Mar 2020 15:36:12 GMT\r\nServer: ULib\r\n" to 18 '127.0.0.1:59164'
+01/03/20 16:36:12 (pid 54156)> request "/servlet/benchmarking?name=stefano" run in 0.04 ms
+01/03/20 16:36:12 (pid 54156)> received request (139 bytes) "GET /servlet/benchmarking?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1:8080\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*" from 19 '127.0.0.1:59166'
+01/03/20 16:36:12 (pid 54156)> send response (176 bytes) "HTTP/1.1 200 OK\r\nDate: Sun, 01 Mar 2020 15:36:12 GMT\r\nServer: ULib\r\n" to 19 '127.0.0.1:59166'
+01/03/20 16:36:12 (pid 54156)> request "/servlet/benchmarking?name=stefano" run in 0.04 ms
+01/03/20 16:36:12 (pid 54156)> received request (139 bytes) "GET /servlet/benchmarking?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1:8080\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*" from 18 '127.0.0.1:59164'
+01/03/20 16:36:12 (pid 54156)> send response (176 bytes) "HTTP/1.1 200 OK\r\nDate: Sun, 01 Mar 2020 15:36:12 GMT\r\nServer: ULib\r\n" to 18 '127.0.0.1:59164'
+01/03/20 16:36:12 (pid 54156)> request "/servlet/benchmarking?name=stefano" run in 0.052000000000000008 ms
+01/03/20 16:36:12 (pid 54156)> received request (139 bytes) "GET /servlet/benchmarking?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1:8080\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*" from 19 '127.0.0.1:59166'
+01/03/20 16:36:12 (pid 54156)> send response (176 bytes) "HTTP/1.1 200 OK\r\nDate: Sun, 01 Mar 2020 15:36:12 GMT\r\nServer: ULib\r\n" to 19 '127.0.0.1:59166'
+01/03/20 16:36:12 (pid 54156)> request "/servlet/benchmarking?name=stefano" run in 0.041 ms
+01/03/20 16:36:12 (pid 54156)> received request (139 bytes) "GET /servlet/benchmarking?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1:8080\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*" from 18 '127.0.0.1:59164'
+01/03/20 16:36:12 (pid 54156)> send response (176 bytes) "HTTP/1.1 200 OK\r\nDate: Sun, 01 Mar 2020 15:36:12 GMT\r\nServer: ULib\r\n" to 18 '127.0.0.1:59164'
+01/03/20 16:36:12 (pid 54156)> request "/servlet/benchmarking?name=stefano" run in 0.04 ms
+01/03/20 16:36:12 (pid 54156)> received request (139 bytes) "GET /servlet/benchmarking?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1:8080\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*" from 19 '127.0.0.1:59166'
+01/03/20 16:36:12 (pid 54156)> send response (176 bytes) "HTTP/1.1 200 OK\r\nDate: Sun, 01 Mar 2020 15:36:12 GMT\r\nServer: ULib\r\n" to 19 '127.0.0.1:59166'
+01/03/20 16:36:12 (pid 54156)> request "/servlet/benchmarking?name=stefano" run in 0.04 ms
+01/03/20 16:36:12 (pid 54156)> received request (139 bytes) "GET /servlet/benchmarking?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1:8080\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*" from 18 '127.0.0.1:59164'
+01/03/20 16:36:12 (pid 54156)> send response (176 bytes) "HTTP/1.1 200 OK\r\nDate: Sun, 01 Mar 2020 15:36:12 GMT\r\nServer: ULib\r\n" to 18 '127.0.0.1:59164'
+01/03/20 16:36:12 (pid 54156)> request "/servlet/benchmarking?name=stefano" run in 0.039 ms
+01/03/20 16:36:12 (pid 54156)> received request (139 bytes) "GET /servlet/benchmarking?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1:8080\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*" from 19 '127.0.0.1:59166'
+01/03/20 16:36:12 (pid 54156)> send response (176 bytes) "HTTP/1.1 200 OK\r\nDate: Sun, 01 Mar 2020 15:36:12 GMT\r\nServer: ULib\r\n" to 19 '127.0.0.1:59166'
+01/03/20 16:36:12 (pid 54156)> request "/servlet/benchmarking?name=stefano" run in 0.052000000000000008 ms
+01/03/20 16:36:12 (pid 54156)> received request (139 bytes) "GET /servlet/benchmarking?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1:8080\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*" from 18 '127.0.0.1:59164'
+01/03/20 16:36:12 (pid 54156)> send response (176 bytes) "HTTP/1.1 200 OK\r\nDate: Sun, 01 Mar 2020 15:36:12 GMT\r\nServer: ULib\r\n" to 18 '127.0.0.1:59164'
+01/03/20 16:36:12 (pid 54156)> request "/servlet/benchmarking?name=stefano" run in 0.041 ms
+01/03/20 16:36:12 (pid 54156)> received request (139 bytes) "GET /servlet/benchmarking?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1:8080\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*" from 19 '127.0.0.1:59166'
+01/03/20 16:36:12 (pid 54156)> send response (176 bytes) "HTTP/1.1 200 OK\r\nDate: Sun, 01 Mar 2020 15:36:12 GMT\r\nServer: ULib\r\n" to 19 '127.0.0.1:59166'
+01/03/20 16:36:12 (pid 54156)> request "/servlet/benchmarking?name=stefano" run in 0.046 ms
+01/03/20 16:36:12 (pid 54156)> received request (139 bytes) "GET /servlet/benchmarking?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1:8080\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*" from 18 '127.0.0.1:59164'
+01/03/20 16:36:12 (pid 54156)> send response (176 bytes) "HTTP/1.1 200 OK\r\nDate: Sun, 01 Mar 2020 15:36:12 GMT\r\nServer: ULib\r\n" to 18 '127.0.0.1:59164'
+01/03/20 16:36:12 (pid 54156)> request "/servlet/benchmarking?name=stefano" run in 0.041 ms
+01/03/20 16:36:12 (pid 54156)> received request (139 bytes) "GET /servlet/benchmarking?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1:8080\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*" from 19 '127.0.0.1:59166'
+01/03/20 16:36:12 (pid 54156)> send response (176 bytes) "HTTP/1.1 200 OK\r\nDate: Sun, 01 Mar 2020 15:36:12 GMT\r\nServer: ULib\r\n" to 19 '127.0.0.1:59166'
+01/03/20 16:36:12 (pid 54156)> request "/servlet/benchmarking?name=stefano" run in 1 ms
+01/03/20 16:36:12 (pid 54156)> received request (139 bytes) "GET /servlet/benchmarking?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1:8080\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*" from 18 '127.0.0.1:59164'
+01/03/20 16:36:12 (pid 54156)> send response (176 bytes) "HTTP/1.1 200 OK\r\nDate: Sun, 01 Mar 2020 15:36:12 GMT\r\nServer: ULib\r\n" to 18 '127.0.0.1:59164'
+01/03/20 16:36:12 (pid 54156)> request "/servlet/benchmarking?name=stefano" run in 0.039 ms
+01/03/20 16:36:12 (pid 54156)> received request (139 bytes) "GET /servlet/benchmarking?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1:8080\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*" from 19 '127.0.0.1:59166'
+01/03/20 16:36:12 (pid 54156)> send response (176 bytes) "HTTP/1.1 200 OK\r\nDate: Sun, 01 Mar 2020 15:36:12 GMT\r\nServer: ULib\r\n" to 19 '127.0.0.1:59166'
+01/03/20 16:36:12 (pid 54156)> request "/servlet/benchmarking?name=stefano" run in 0.04 ms
+01/03/20 16:36:12 (pid 54156)> received request (139 bytes) "GET /servlet/benchmarking?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1:8080\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*" from 18 '127.0.0.1:59164'
+01/03/20 16:36:12 (pid 54156)> send response (176 bytes) "HTTP/1.1 200 OK\r\nDate: Sun, 01 Mar 2020 15:36:12 GMT\r\nServer: ULib\r\n" to 18 '127.0.0.1:59164'
+01/03/20 16:36:12 (pid 54156)> request "/servlet/benchmarking?name=stefano" run in 0.039 ms
+01/03/20 16:36:12 (pid 54156)> received request (139 bytes) "GET /servlet/benchmarking?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1:8080\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*" from 19 '127.0.0.1:59166'
+01/03/20 16:36:12 (pid 54156)> send response (176 bytes) "HTTP/1.1 200 OK\r\nDate: Sun, 01 Mar 2020 15:36:12 GMT\r\nServer: ULib\r\n" to 19 '127.0.0.1:59166'
+01/03/20 16:36:12 (pid 54156)> request "/servlet/benchmarking?name=stefano" run in 0.04 ms
+01/03/20 16:36:12 (pid 54156)> received request (139 bytes) "GET /servlet/benchmarking?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1:8080\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*" from 18 '127.0.0.1:59164'
+01/03/20 16:36:12 (pid 54156)> send response (176 bytes) "HTTP/1.1 200 OK\r\nDate: Sun, 01 Mar 2020 15:36:12 GMT\r\nServer: ULib\r\n" to 18 '127.0.0.1:59164'
+01/03/20 16:36:12 (pid 54156)> request "/servlet/benchmarking?name=stefano" run in 0.054 ms
+01/03/20 16:36:12 (pid 54156)> received request (139 bytes) "GET /servlet/benchmarking?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1:8080\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*" from 19 '127.0.0.1:59166'
+01/03/20 16:36:12 (pid 54156)> send response (176 bytes) "HTTP/1.1 200 OK\r\nDate: Sun, 01 Mar 2020 15:36:12 GMT\r\nServer: ULib\r\n" to 19 '127.0.0.1:59166'
+01/03/20 16:36:12 (pid 54156)> request "/servlet/benchmarking?name=stefano" run in 0.041 ms
+01/03/20 16:36:12 (pid 54156)> received request (139 bytes) "GET /servlet/benchmarking?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1:8080\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*" from 18 '127.0.0.1:59164'
+01/03/20 16:36:12 (pid 54156)> send response (176 bytes) "HTTP/1.1 200 OK\r\nDate: Sun, 01 Mar 2020 15:36:12 GMT\r\nServer: ULib\r\n" to 18 '127.0.0.1:59164'
+01/03/20 16:36:12 (pid 54156)> request "/servlet/benchmarking?name=stefano" run in 0.04 ms
+01/03/20 16:36:12 (pid 54156)> received request (139 bytes) "GET /servlet/benchmarking?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1:8080\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*" from 19 '127.0.0.1:59166'
+01/03/20 16:36:12 (pid 54156)> send response (176 bytes) "HTTP/1.1 200 OK\r\nDate: Sun, 01 Mar 2020 15:36:12 GMT\r\nServer: ULib\r\n" to 19 '127.0.0.1:59166'
+01/03/20 16:36:12 (pid 54156)> request "/servlet/benchmarking?name=stefano" run in 0.04 ms
+01/03/20 16:36:12 (pid 54156)> received request (139 bytes) "GET /servlet/benchmarking?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1:8080\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*" from 18 '127.0.0.1:59164'
+01/03/20 16:36:12 (pid 54156)> send response (176 bytes) "HTTP/1.1 200 OK\r\nDate: Sun, 01 Mar 2020 15:36:12 GMT\r\nServer: ULib\r\n" to 18 '127.0.0.1:59164'
+01/03/20 16:36:12 (pid 54156)> request "/servlet/benchmarking?name=stefano" run in 0.04 ms
+01/03/20 16:36:12 (pid 54156)> received request (139 bytes) "GET /servlet/benchmarking?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1:8080\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*" from 19 '127.0.0.1:59166'
+01/03/20 16:36:12 (pid 54156)> send response (176 bytes) "HTTP/1.1 200 OK\r\nDate: Sun, 01 Mar 2020 15:36:12 GMT\r\nServer: ULib\r\n" to 19 '127.0.0.1:59166'
+01/03/20 16:36:12 (pid 54156)> request "/servlet/benchmarking?name=stefano" run in 0.057 ms
+01/03/20 16:36:12 (pid 54156)> received request (139 bytes) "GET /servlet/benchmarking?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1:8080\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*" from 18 '127.0.0.1:59164'
+01/03/20 16:36:12 (pid 54156)> send response (176 bytes) "HTTP/1.1 200 OK\r\nDate: Sun, 01 Mar 2020 15:36:12 GMT\r\nServer: ULib\r\n" to 18 '127.0.0.1:59164'
+01/03/20 16:36:12 (pid 54156)> request "/servlet/benchmarking?name=stefano" run in 0.041 ms
+01/03/20 16:36:12 (pid 54156)> received request (139 bytes) "GET /servlet/benchmarking?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1:8080\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*" from 19 '127.0.0.1:59166'
+01/03/20 16:36:12 (pid 54156)> send response (176 bytes) "HTTP/1.1 200 OK\r\nDate: Sun, 01 Mar 2020 15:36:12 GMT\r\nServer: ULib\r\n" to 19 '127.0.0.1:59166'
+01/03/20 16:36:12 (pid 54156)> request "/servlet/benchmarking?name=stefano" run in 0.04 ms
+01/03/20 16:36:12 (pid 54156)> received request (139 bytes) "GET /servlet/benchmarking?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1:8080\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*" from 18 '127.0.0.1:59164'
+01/03/20 16:36:12 (pid 54156)> send response (176 bytes) "HTTP/1.1 200 OK\r\nDate: Sun, 01 Mar 2020 15:36:12 GMT\r\nServer: ULib\r\n" to 18 '127.0.0.1:59164'
+01/03/20 16:36:12 (pid 54156)> request "/servlet/benchmarking?name=stefano" run in 0.053 ms
+01/03/20 16:36:12 (pid 54156)> received request (139 bytes) "GET /servlet/benchmarking?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1:8080\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*" from 19 '127.0.0.1:59166'
+01/03/20 16:36:12 (pid 54156)> send response (176 bytes) "HTTP/1.1 200 OK\r\nDate: Sun, 01 Mar 2020 15:36:12 GMT\r\nServer: ULib\r\n" to 19 '127.0.0.1:59166'
+01/03/20 16:36:12 (pid 54156)> request "/servlet/benchmarking?name=stefano" run in 0.04 ms
+01/03/20 16:36:12 (pid 54156)> received request (139 bytes) "GET /servlet/benchmarking?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1:8080\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*" from 18 '127.0.0.1:59164'
+01/03/20 16:36:12 (pid 54156)> send response (176 bytes) "HTTP/1.1 200 OK\r\nDate: Sun, 01 Mar 2020 15:36:12 GMT\r\nServer: ULib\r\n" to 18 '127.0.0.1:59164'
+01/03/20 16:36:12 (pid 54156)> request "/servlet/benchmarking?name=stefano" run in 0.039 ms
+01/03/20 16:36:12 (pid 54156)> received request (139 bytes) "GET /servlet/benchmarking?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1:8080\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*" from 19 '127.0.0.1:59166'
+01/03/20 16:36:12 (pid 54156)> send response (176 bytes) "HTTP/1.1 200 OK\r\nDate: Sun, 01 Mar 2020 15:36:12 GMT\r\nServer: ULib\r\n" to 19 '127.0.0.1:59166'
+01/03/20 16:36:12 (pid 54156)> request "/servlet/benchmarking?name=stefano" run in 0.04 ms
+01/03/20 16:36:12 (pid 54156)> received request (139 bytes) "GET /servlet/benchmarking?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1:8080\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*" from 18 '127.0.0.1:59164'
+01/03/20 16:36:12 (pid 54156)> send response (176 bytes) "HTTP/1.1 200 OK\r\nDate: Sun, 01 Mar 2020 15:36:12 GMT\r\nServer: ULib\r\n" to 18 '127.0.0.1:59164'
+01/03/20 16:36:12 (pid 54156)> request "/servlet/benchmarking?name=stefano" run in 0.039 ms
+01/03/20 16:36:12 (pid 54156)> received request (139 bytes) "GET /servlet/benchmarking?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1:8080\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*" from 19 '127.0.0.1:59166'
+01/03/20 16:36:12 (pid 54156)> send response (176 bytes) "HTTP/1.1 200 OK\r\nDate: Sun, 01 Mar 2020 15:36:12 GMT\r\nServer: ULib\r\n" to 19 '127.0.0.1:59166'
+01/03/20 16:36:12 (pid 54156)> request "/servlet/benchmarking?name=stefano" run in 0.039 ms
+01/03/20 16:36:12 (pid 54156)> received request (139 bytes) "GET /servlet/benchmarking?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1:8080\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*" from 18 '127.0.0.1:59164'
+01/03/20 16:36:12 (pid 54156)> send response (176 bytes) "HTTP/1.1 200 OK\r\nDate: Sun, 01 Mar 2020 15:36:12 GMT\r\nServer: ULib\r\n" to 18 '127.0.0.1:59164'
+01/03/20 16:36:12 (pid 54156)> request "/servlet/benchmarking?name=stefano" run in 0.039 ms
+01/03/20 16:36:12 (pid 54156)> received request (139 bytes) "GET /servlet/benchmarking?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1:8080\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*" from 19 '127.0.0.1:59166'
+01/03/20 16:36:12 (pid 54156)> send response (176 bytes) "HTTP/1.1 200 OK\r\nDate: Sun, 01 Mar 2020 15:36:12 GMT\r\nServer: ULib\r\n" to 19 '127.0.0.1:59166'
+01/03/20 16:36:12 (pid 54156)> request "/servlet/benchmarking?name=stefano" run in 0.039 ms
+01/03/20 16:36:12 (pid 54156)> received request (139 bytes) "GET /servlet/benchmarking?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1:8080\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*" from 18 '127.0.0.1:59164'
+01/03/20 16:36:12 (pid 54156)> send response (176 bytes) "HTTP/1.1 200 OK\r\nDate: Sun, 01 Mar 2020 15:36:12 GMT\r\nServer: ULib\r\n" to 18 '127.0.0.1:59164'
+01/03/20 16:36:12 (pid 54156)> request "/servlet/benchmarking?name=stefano" run in 0.039 ms
+01/03/20 16:36:12 (pid 54156)> received request (139 bytes) "GET /servlet/benchmarking?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1:8080\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*" from 19 '127.0.0.1:59166'
+01/03/20 16:36:12 (pid 54156)> send response (176 bytes) "HTTP/1.1 200 OK\r\nDate: Sun, 01 Mar 2020 15:36:12 GMT\r\nServer: ULib\r\n" to 19 '127.0.0.1:59166'
+01/03/20 16:36:12 (pid 54156)> request "/servlet/benchmarking?name=stefano" run in 0.061 ms
+01/03/20 16:36:12 (pid 54156)> received request (139 bytes) "GET /servlet/benchmarking?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1:8080\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*" from 18 '127.0.0.1:59164'
+01/03/20 16:36:12 (pid 54156)> send response (176 bytes) "HTTP/1.1 200 OK\r\nDate: Sun, 01 Mar 2020 15:36:12 GMT\r\nServer: ULib\r\n" to 18 '127.0.0.1:59164'
+01/03/20 16:36:12 (pid 54156)> request "/servlet/benchmarking?name=stefano" run in 0.017 ms
+01/03/20 16:36:12 (pid 54156)> received request (139 bytes) "GET /servlet/benchmarking?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1:8080\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*" from 19 '127.0.0.1:59166'
+01/03/20 16:36:12 (pid 54156)> send response (176 bytes) "HTTP/1.1 200 OK\r\nDate: Sun, 01 Mar 2020 15:36:12 GMT\r\nServer: ULib\r\n" to 19 '127.0.0.1:59166'
+01/03/20 16:36:12 (pid 54156)> request "/servlet/benchmarking?name=stefano" run in 0.016 ms
+01/03/20 16:36:12 (pid 54156)> received request (139 bytes) "GET /servlet/benchmarking?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1:8080\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*" from 18 '127.0.0.1:59164'
+01/03/20 16:36:12 (pid 54156)> send response (176 bytes) "HTTP/1.1 200 OK\r\nDate: Sun, 01 Mar 2020 15:36:12 GMT\r\nServer: ULib\r\n" to 18 '127.0.0.1:59164'
+01/03/20 16:36:12 (pid 54156)> request "/servlet/benchmarking?name=stefano" run in 0.014 ms
+01/03/20 16:36:12 (pid 54156)> Client close connection from 19 '127.0.0.1:59166', 0 clients still connected
+01/03/20 16:36:12 (pid 54156)> Client close connection from 18 '127.0.0.1:59164', 0 clients still connected
+01/03/20 16:36:12 (pid 54156)> Waiting for connection on port 8080
+01/03/20 16:36:15 (pid 54156)> SIGTERM (Interrupt): address space usage: 606.96 MBytes - rss usage: 19.94 MBytes
+01/03/20 16:36:15 (pid 54156)> *** SHUTDOWN userver_tcp (64bit, pid 54156) [apache@stefano] ***

@@ -620,6 +620,8 @@ static inline bool u_is_overlap(const char* restrict dst, const char* restrict s
    return true;
 }
 
+static inline bool u_is_overlap1(const char* restrict dst, const char* restrict src, const char* restrict end) { return u_is_overlap(dst, src, end-src); }
+
 static inline __pure const char* u_basename(const char* restrict path, uint32_t len)
 {
    const char* restrict ptr;

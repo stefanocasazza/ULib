@@ -772,8 +772,8 @@ bool UString::shrink(bool bmalloc)
 
    U_INTERNAL_DUMP("rep->_capacity = %u length = %u sz = %u", rep->_capacity, length, sz)
 
-   U_INTERNAL_ASSERT_MAJOR(rep->_capacity, 0) // mode: 0 -> const
-   U_INTERNAL_ASSERT_MAJOR(rep->_capacity, length)
+   U_INTERNAL_ASSERT_MAJOR((int32_t)rep->_capacity, 0) // mode: 0 -> const
+   U_INTERNAL_ASSERT_MAJOR((int32_t)rep->_capacity, (int32_t)length)
 
 #ifndef ENABLE_MEMPOOL
    r = (UStringRep*) U_SYSCALL_MALLOC((capacity = sz));
@@ -1352,7 +1352,8 @@ char* UString::__replace(uint32_t pos, uint32_t n1, uint32_t n2)
 
    uint32_t __capacity = rep->_capacity;
 
-   if (__capacity == U_NOT_FOUND) __capacity = 0;
+        if (isMmap())   __capacity = 0;
+   else if (isToFree()) __capacity = rep->_length;
 
    if (rep->references ||
        n > __capacity)
@@ -2679,6 +2680,14 @@ bool UStringRep::invariant() const
       if (_length)
          {
          U_WARNING("Error on string_rep_null: (not empty)\n"
+                   "--------------------------------------------------\n%s", UStringRep::dump(true));
+
+         return false;
+         }
+
+      if (_capacity)
+         {
+         U_WARNING("Error on string_rep_null: (_capacity not 0)\n"
                    "--------------------------------------------------\n%s", UStringRep::dump(true));
 
          return false;

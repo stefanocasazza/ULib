@@ -168,7 +168,7 @@ public:
 
       U_CHECK_MEMORY
 
-      U_INTERNAL_DUMP("this = %p parent = %p references = %d child = %d", this, parent, references, child)
+      U_INTERNAL_DUMP("this = %p parent = %p references = %d child = %d _capacity = %d", this, parent, references, child, _capacity)
 
       ++references;
       }
@@ -177,12 +177,12 @@ public:
       {
       U_TRACE_NO_PARAM(0, "UStringRep::release()")
 
-      U_INTERNAL_DUMP("this = %p parent = %p references = %u child = %d", this, parent, references, child)
+      U_INTERNAL_DUMP("this = %p parent = %p references = %u child = %d _capacity = %d", this, parent, references, child, _capacity)
 
 #  ifdef DEBUG
       if (memory.invariant() == false)
          {
-         U_ERROR("UStringRep::release() %O - this = %p parent = %p references = %u child = %d _capacity = %u str(%u) = %#.*S",
+         U_ERROR("UStringRep::release() %O - this = %p parent = %p references = %u child = %d _capacity = %d str(%u) = %#.*S",
                   memory.getErrorType(this), this, parent, references, child, _capacity, _length, _length, str);
          }
 #  endif
@@ -221,6 +221,24 @@ public:
       U_CHECK_MEMORY
 
       _capacity = U_TO_FREE;
+      }
+
+   bool isToFree() const
+      {
+      U_TRACE_NO_PARAM(0, "UStringRep::isToFree()")
+
+      if (_capacity >= U_TO_MI_FREE) U_RETURN(true);
+
+      U_RETURN(false);
+      }
+
+   bool isMmap() const
+      {
+      U_TRACE_NO_PARAM(0, "UStringRep::isMmap()")
+
+      if (_capacity == U_NOT_FOUND) U_RETURN(true);
+
+      U_RETURN(false);
       }
 
    bool writeable() const
@@ -2255,6 +2273,7 @@ public:
       U_INTERNAL_ASSERT(invariant())
       }
 
+   bool  isToFree() { return rep->isToFree(); }
    void setToFree() { return rep->setToFree(); }
 
    bool uniq() const      { return rep->uniq(); }
@@ -2290,14 +2309,7 @@ public:
 
    // manage UString as memory mapped area...
 
-   bool isMmap() const
-      {
-      U_TRACE_NO_PARAM(0, "UString::isMmap()")
-
-      if (rep->_capacity == U_NOT_FOUND) U_RETURN(true);
-
-      U_RETURN(false);
-      }
+   bool isMmap() { return rep->isMmap(); }
 
    void mmap(const char* map, uint32_t len);
 
@@ -2356,10 +2368,15 @@ public:
 
       U_INTERNAL_ASSERT_MAJOR(rep->_length, n)
       U_INTERNAL_ASSERT_RANGE(1, n, max_size())
-      U_INTERNAL_ASSERT_MAJOR(rep->_capacity, n)
 
-#  if defined(DEBUG) && !defined(U_SUBSTR_INC_REF)
+#  ifdef DEBUG
+#   ifndef U_SUBSTR_INC_REF
       U_INTERNAL_ASSERT(rep->references == 0)
+#   endif
+      if (isConstant() == false)
+         {
+         U_INTERNAL_ASSERT_MAJOR((int32_t)rep->_capacity, (int32_t)n)
+         }
 #  endif
 
       rep->_length -= n;

@@ -88,14 +88,15 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 target_triplet = @target@
-@SSL_TRUE@am__append_1 = tsa_http.test tsa_https.test csp_rpc.test rsign_rpc.test tsa_rpc.test uclient.test
-@EXPAT_TRUE@@SSL_TRUE@am__append_2 = csp.test tsa_ssoap.test rsign.test
-@MINGW_FALSE@@SSL_TRUE@am__append_3 = lcsp_rpc.test
-@EXPAT_TRUE@@MINGW_FALSE@@SSL_TRUE@am__append_4 = lcsp.test
-@SSL_TRUE@am__append_5 = web_server_ssl.test
-@LIBZ_TRUE@@SSL_TRUE@am__append_6 = PEC_report_rejected.test PEC_report_messaggi.test PEC_report_virus.test PEC_report_anomalie.test PEC_check_namefile.test
-@LIBZ_TRUE@@SSL_TRUE@@ZIP_TRUE@am__append_7 = doc_parse.test doc_classifier.test
-@EXPAT_TRUE@am__append_8 = xml2txt.test
+@LIBURING_TRUE@am__append_1 = web_server_rng.test web_server_rng_multiclient.test
+@SSL_TRUE@am__append_2 = tsa_http.test tsa_https.test csp_rpc.test rsign_rpc.test tsa_rpc.test uclient.test
+@EXPAT_TRUE@@SSL_TRUE@am__append_3 = csp.test tsa_ssoap.test rsign.test
+@MINGW_FALSE@@SSL_TRUE@am__append_4 = lcsp_rpc.test
+@EXPAT_TRUE@@MINGW_FALSE@@SSL_TRUE@am__append_5 = lcsp.test
+@SSL_TRUE@am__append_6 = web_server_ssl.test
+@LIBZ_TRUE@@SSL_TRUE@am__append_7 = PEC_report_rejected.test PEC_report_messaggi.test PEC_report_virus.test PEC_report_anomalie.test PEC_check_namefile.test
+@LIBZ_TRUE@@SSL_TRUE@@ZIP_TRUE@am__append_8 = doc_parse.test doc_classifier.test
+@EXPAT_TRUE@am__append_9 = xml2txt.test
 check_PROGRAMS = $(am__EXEEXT_1)
 subdir = tests/examples
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -641,7 +642,8 @@ TESTS = client_server.test test_manager.test IR.test web_server.test \
 	web_server_multiclient.test web_socket.test \
 	web_server_proxy.test $(am__append_1) $(am__append_2) \
 	$(am__append_3) $(am__append_4) $(am__append_5) \
-	$(am__append_6) $(am__append_7) $(am__append_8) ../reset.color
+	$(am__append_6) $(am__append_7) $(am__append_8) \
+	$(am__append_9) ../reset.color
 @DEBUG_TRUE@PRG = bench_http_parser test_http_parser
 @DEBUG_TRUE@bench_http_parser_SOURCES = bench_http_parser.cpp
 @DEBUG_TRUE@test_http_parser_SOURCES = test_http_parser.cpp ctest_http_parser.c

@@ -3881,9 +3881,9 @@ int UHTTP::handlerREAD()
 #endif
 
 #ifndef U_HTTP2_DISABLE
-   U_INTERNAL_DUMP("U_ClientImage_is_http2 = %b", U_ClientImage_is_http2(UServer_Base::pClientImage))
+   U_DUMP("UServer_Base::pClientImage->isFlagStatusHttp2() = %b", UServer_Base::pClientImage->isFlagStatusHttp2())
 
-   if (U_ClientImage_is_http2(UServer_Base::pClientImage))
+   if (UServer_Base::pClientImage->isFlagStatusHttp2())
       {
       U_http_version = '2';
 
@@ -4703,7 +4703,11 @@ file_in_cache:
       U_DUMP("U_http_info.nResponseCode = %u", U_http_info.nResponseCode)
 
 #  ifdef U_EVASIVE_SUPPORT
-      if (UServer_Base::checkHitUriStats()) U_RETURN(U_PLUGIN_HANDLER_ERROR);
+      if (UServer_Base::db_evasive &&
+          UServer_Base::checkHitUriStats())
+         {
+         U_RETURN(U_PLUGIN_HANDLER_ERROR);
+         }
 #  endif
 
 #  if defined(U_HTTP_STRICT_TRANSPORT_SECURITY) || defined(USE_LIBSSL)
@@ -4852,6 +4856,7 @@ from_cache:
 #ifdef U_EVASIVE_SUPPORT
    if (UClientImage_Base::isRequestNotFound()         == false && // => 3)
        UClientImage_Base::isRequestAlreadyProcessed() == false && // => 4)
+       UServer_Base::db_evasive                                &&
        UServer_Base::checkHitUriStats())
       {
       U_RETURN(U_PLUGIN_HANDLER_ERROR);
@@ -4908,7 +4913,7 @@ from_cache:
 
          if (UServer_Base::startParallelization() == false) UWebSocket::handlerRequest(); // child
 #     else
-         UClientImage_Base::flag.c[0] |= 0x01;
+         UClientImage_Base::setFlagStatusWebSocket();
 
          U_ClientImage_parallelization = U_PARALLELIZATION_PARENT;
 
@@ -10772,10 +10777,7 @@ U_NO_EXPORT bool UHTTP::manageSendfile(const char* ptr, uint32_t len)
          handlerResponse();
 
          if (file_data->fd != UServer_Base::pClientImage->sfd) file->close();
-         else
-            {
-            UServer_Base::pClientImage->flag.c[0] |= 0x10;
-            }
+         else                 UServer_Base::pClientImage->setFlagStatusClose();
          }
 
       U_RETURN(true);

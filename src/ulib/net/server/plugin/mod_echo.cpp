@@ -47,11 +47,21 @@ int UEchoPlugIn::handlerRequest()
 
    UClientImage_Base::setRequestProcessed();
 
+   uint32_t sz;
+   const char* ptr;
+
 #ifdef U_ECHO_RESPONSE_FOR_TEST
-   (void) UClientImage_Base::wbuffer->assign(U_CONSTANT_TO_PARAM(U_ECHO_RESPONSE_FOR_TEST));
+   ptr =                 U_ECHO_RESPONSE_FOR_TEST;
+    sz = U_CONSTANT_SIZE(U_ECHO_RESPONSE_FOR_TEST);
 #else
-   *UClientImage_Base::wbuffer = UClientImage_Base::request->substr(0U, U_http_info.endHeader) + *UHTTP::body;
+   UString tmp = UClientImage_Base::request->substr(0U, U_http_info.endHeader) + *UHTTP::body;
+
+   ptr = tmp.data();
+    sz = tmp.size();
 #endif
+   (void) memcpy(UClientImage_Base::wbuffer->data(), ptr, sz); 
+
+   UClientImage_Base::wbuffer->size_adjust_constant(sz);
 
    U_RETURN(U_PLUGIN_HANDLER_PROCESSED);
 }

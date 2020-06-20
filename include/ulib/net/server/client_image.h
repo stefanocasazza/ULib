@@ -17,7 +17,6 @@
 #include <ulib/timeval.h>
 #include <ulib/event/event_fd.h>
 #include <ulib/internal/chttp.h>
-#include <ulib/utility/socket_ext.h>
 #include <ulib/net/server/server_plugin.h>
 
 #ifdef USE_LIBSSL
@@ -48,18 +47,10 @@ template <class T> class UHashMap;
 
 #define U_ClientImage_request_is_cached UClientImage_Base::cbuffer[0]
 
-#define U_ClientImage_is_wsk(obj)     (((obj)->UClientImage_Base::flag.c[0] & 0x01) != 0)
-#define U_ClientImage_is_http2(obj)   (((obj)->UClientImage_Base::flag.c[0] & 0x02) != 0)
-#define U_ClientImage_is_http3(obj)   (((obj)->UClientImage_Base::flag.c[0] & 0x04) != 0)
-#define U_ClientImage_is_idle(obj)    (((obj)->UClientImage_Base::flag.c[0] & 0x08) != 0)
-#define U_ClientImage_is_close(obj)   (((obj)->UClientImage_Base::flag.c[0] & 0x10) != 0)
-#define U_ClientImage_is_delete(obj)  (((obj)->UClientImage_Base::flag.c[0] & 0x20) != 0)
-#define U_ClientImage_user1_flag(obj) (((obj)->UClientImage_Base::flag.c[0] & 0x40) != 0)
-#define U_ClientImage_user2_flag(obj) (((obj)->UClientImage_Base::flag.c[0] & 0x80) != 0)
-
-#define U_ClientImage_op_pending(obj)   (obj)->UClientImage_Base::flag.c[1]
-#define U_ClientImage_idx_buffer(obj)   (obj)->UClientImage_Base::flag.c[2]
-#define U_ClientImage_user_value(obj)   (obj)->UClientImage_Base::flag.c[3]
+#define U_ClientImage_status(obj)     (obj)->UClientImage_Base::flag.c[0]
+#define U_ClientImage_op_pending(obj) (obj)->UClientImage_Base::flag.c[1]
+#define U_ClientImage_idx_buffer(obj) (obj)->UClientImage_Base::flag.c[2]
+#define U_ClientImage_user_value(obj) (obj)->UClientImage_Base::flag.c[3]
 
 class U_EXPORT UClientImage_Base : public UEventFd {
 public:
@@ -92,7 +83,6 @@ public:
    virtual int  handlerRead() U_DECL_OVERRIDE;
    virtual int  handlerWrite() U_DECL_FINAL;
    virtual int  handlerTimeout() U_DECL_FINAL;
-   virtual int  handlerRequest() U_DECL_OVERRIDE;
    virtual void handlerDelete() U_DECL_FINAL;
 
    static void init();
@@ -308,6 +298,369 @@ public:
 
    static uint32_t checkRequestToCache();
 
+   // pending operation processing
+
+   enum PendingOperationType {
+      _UPDATE = 0x00,
+      _BLOCK  = 0x01,
+      _POLL   = 0x02,
+      _ACCEPT = 0x04,
+      _READ   = 0x08,
+      _WRITE  = 0x10,
+      _WRITEV = 0x20,
+      _CLOSE  = 0x40 
+   };
+
+   void resetPendingOperation()
+      {
+      U_TRACE_NO_PARAM(0, "UClientImage_Base::resetPendingOperation()")
+
+      U_ClientImage_op_pending(this) = 0;
+      }
+
+   bool isFlagPendingOperation()
+      {
+      U_TRACE_NO_PARAM(0, "UClientImage_Base::isFlagPendingOperation()")
+
+      if (U_ClientImage_op_pending(this) != 0) U_RETURN(true);
+
+      U_RETURN(false);
+      }
+
+   void setNonBlocking()
+      {
+      U_TRACE_NO_PARAM(0, "UClientImage_Base::setNonBlocking()")
+
+#  ifdef DEBUG
+      int flags = U_SYSCALL(fcntl, "%d,%u,%u", fd, F_GETFL, 0);
+
+      U_INTERNAL_ASSERT_EQUALS(flags, O_RDWR | O_NONBLOCK)
+#  endif
+
+      (void) U_SYSCALL(fcntl, "%d,%u,%u", fd, F_SETFL, O_RDWR);
+      }
+
+   static bool isPendingOperationBlock(char op)
+      {
+      U_TRACE(0, "UClientImage_Base::isPendingOperationBlock(%u %B)", op, op)
+
+      if ((op & _BLOCK) != 0) U_RETURN(true);
+
+      U_RETURN(false);
+      }
+
+   static bool isPendingOperationRead(char op)
+      {
+      U_TRACE(0, "UClientImage_Base::isPendingOperationRead(%u %B)", op, op)
+
+      if ((op & _READ) != 0) U_RETURN(true);
+
+      U_RETURN(false);
+      }
+
+   static bool isPendingOperationWrite(char op)
+      {
+      U_TRACE(0, "UClientImage_Base::isPendingOperationWrite(%u %B)", op, op)
+
+      if ((op & _WRITE) != 0) U_RETURN(true);
+
+      U_RETURN(false);
+      }
+
+   static bool isPendingOperationClose(char op)
+      {
+      U_TRACE(0, "UClientImage_Base::isPendingOperationClose(%u %B)", op, op)
+
+      if ((op & _CLOSE) != 0) U_RETURN(true);
+
+      U_RETURN(false);
+      }
+
+   bool isPendingOperationRead()  { return isPendingOperationRead( U_ClientImage_op_pending(this)); }
+   bool isPendingOperationBlock() { return isPendingOperationBlock(U_ClientImage_op_pending(this)); }
+   bool isPendingOperationWrite() { return isPendingOperationWrite(U_ClientImage_op_pending(this)); }
+   bool isPendingOperationClose() { return isPendingOperationClose(U_ClientImage_op_pending(this)); }
+
+   void setPendingOperationBlock()
+      {
+      U_TRACE_NO_PARAM(0, "UClientImage_Base::setPendingOperationBlock()")
+
+      U_ASSERT_EQUALS(isPendingOperationBlock(), false)
+
+      U_ClientImage_op_pending(this) |= _BLOCK;
+      }
+
+   void resetPendingOperationBlock()
+      {
+      U_TRACE_NO_PARAM(0, "UClientImage_Base::resetPendingOperationBlock()")
+
+      U_ASSERT(isPendingOperationBlock())
+
+      U_ClientImage_op_pending(this) &= ~_BLOCK;
+      }
+
+   void setPendingOperationRead()
+      {
+      U_TRACE_NO_PARAM(0, "UClientImage_Base::setPendingOperationRead()")
+
+      U_DUMP("isPendingOperationRead() = %b", isPendingOperationRead())
+
+      U_ASSERT_EQUALS(isPendingOperationRead(), false)
+
+      U_ClientImage_op_pending(this) |= _READ;
+      }
+
+   void resetPendingOperationRead()
+      {
+      U_TRACE_NO_PARAM(0, "UClientImage_Base::resetPendingOperationRead()")
+
+      U_ASSERT(isPendingOperationRead())
+
+      U_ClientImage_op_pending(this) &= ~_READ;
+      }
+
+   void setPendingOperationWrite()
+      {
+      U_TRACE_NO_PARAM(0, "UClientImage_Base::setPendingOperationWrite()")
+
+#  ifdef DEBUG
+      U_DUMP("U_ClientImage_pipeline = %b isPendingOperationWrite() = %b", U_ClientImage_pipeline, isPendingOperationWrite())
+
+   // if (U_ClientImage_pipeline == false) U_ASSERT_EQUALS(isPendingOperationWrite(), false)
+#  endif
+
+      U_ClientImage_op_pending(this) |= _WRITE;
+      }
+
+   void resetPendingOperationWrite()
+      {
+      U_TRACE_NO_PARAM(0, "UClientImage_Base::resetPendingOperationWrite()")
+
+      U_ASSERT(isPendingOperationWrite())
+
+      U_ClientImage_op_pending(this) &= ~_WRITE;
+      }
+
+   void setPendingOperationClose()
+      {
+      U_TRACE_NO_PARAM(0, "UClientImage_Base::setPendingOperationClose()")
+
+      U_ASSERT_EQUALS(isPendingOperationClose(), false)
+
+      U_ClientImage_op_pending(this) = _CLOSE; // we reset all other operation pending
+      }
+
+   void resetPendingOperationClose()
+      {
+      U_TRACE_NO_PARAM(0, "UClientImage_Base::resetPendingOperationClose()")
+
+      U_ASSERT(isPendingOperationClose())
+
+      resetPendingOperation();
+      }
+
+   // flag status processing
+
+   enum FlagStatusType {
+   // NONE       = 0x00,
+      _WEBSOCKET = 0x01,
+      _HTTP2     = 0x02,
+      _HTTP3     = 0x04,
+   // _CLOSE     = 0x08,
+      _IDLE      = 0x10,
+      _DELETE    = 0x20
+   };
+
+   void resetFlagStatus()
+      {
+      U_TRACE_NO_PARAM(0, "UClientImage_Base::resetFlagStatus()")
+
+      U_ClientImage_op_pending(this) = 0;
+      }
+
+   bool isFlagStatus()
+      {
+      U_TRACE_NO_PARAM(0, "UClientImage_Base::isFlagStatus()")
+
+      if (U_ClientImage_op_pending(this) != 0) U_RETURN(true);
+
+      U_RETURN(false);
+      }
+
+   static bool isFlagStatusWebSocket(char op)
+      {
+      U_TRACE(0, "UClientImage_Base::isFlagStatusWebSocket(%u %B)", op, op)
+
+      if ((op & _WEBSOCKET) != 0) U_RETURN(true);
+
+      U_RETURN(false);
+      }
+
+   bool isFlagStatusWebSocket() { return isFlagStatusWebSocket(U_ClientImage_status(this)); }
+
+   void setFlagStatusWebSocket()
+      {
+      U_TRACE_NO_PARAM(0, "UClientImage_Base::setFlagStatusWebSocket()")
+
+      U_ASSERT_EQUALS(isFlagStatusWebSocket(), false)
+
+      U_ClientImage_status(this) |= _WEBSOCKET;
+      }
+
+   void resetFlagStatusWebSocket()
+      {
+      U_TRACE_NO_PARAM(0, "UClientImage_Base::resetFlagStatusWebSocket()")
+
+      U_ASSERT(isFlagStatusWebSocket())
+
+      U_ClientImage_op_pending(this) &= ~_WEBSOCKET;
+      }
+
+   static bool isFlagStatusHttp2(char op)
+      {
+      U_TRACE(0, "UClientImage_Base::isFlagStatusHttp2(%u %B)", op, op)
+
+      if ((op & _HTTP2) != 0) U_RETURN(true);
+
+      U_RETURN(false);
+      }
+
+   bool isFlagStatusHttp2() { return isFlagStatusHttp2(U_ClientImage_status(this)); }
+
+   void setFlagStatusHttp2()
+      {
+      U_TRACE_NO_PARAM(0, "UClientImage_Base::setFlagStatusHttp2()")
+
+      U_ASSERT_EQUALS(isFlagStatusHttp2(), false)
+
+      U_ClientImage_status(this) |= _HTTP2;
+      }
+
+   void resetFlagStatusHttp2()
+      {
+      U_TRACE_NO_PARAM(0, "UClientImage_Base::resetFlagStatusHttp2()")
+
+      U_ASSERT(isFlagStatusHttp2())
+
+      U_ClientImage_op_pending(this) &= ~_HTTP2;
+      }
+
+   static bool isFlagStatusHttp3(char op)
+      {
+      U_TRACE(0, "UClientImage_Base::isFlagStatusHttp3(%u %B)", op, op)
+
+      if ((op & _HTTP3) != 0) U_RETURN(true);
+
+      U_RETURN(false);
+      }
+
+   bool isFlagStatusHttp3() { return isFlagStatusHttp3(U_ClientImage_status(this)); }
+
+   void setFlagStatusHttp3()
+      {
+      U_TRACE_NO_PARAM(0, "UClientImage_Base::setFlagStatusHttp3()")
+
+      U_ASSERT_EQUALS(isFlagStatusHttp3(), false)
+
+      U_ClientImage_status(this) |= _HTTP3;
+      }
+
+   void resetFlagStatusHttp3()
+      {
+      U_TRACE_NO_PARAM(0, "UClientImage_Base::resetFlagStatusHttp3()")
+
+      U_ASSERT(isFlagStatusHttp3())
+
+      U_ClientImage_op_pending(this) &= ~_HTTP3;
+      }
+
+   static bool isFlagStatusClose(char op)
+      {
+      U_TRACE(0, "UClientImage_Base::isFlagStatusClose(%u %B)", op, op)
+
+      if ((op & _CLOSE) != 0) U_RETURN(true);
+
+      U_RETURN(false);
+      }
+
+   bool isFlagStatusClose() { return isFlagStatusClose(U_ClientImage_status(this)); }
+
+   void setFlagStatusClose()
+      {
+      U_TRACE_NO_PARAM(0, "UClientImage_Base::setFlagStatusClose()")
+
+      U_ASSERT_EQUALS(isFlagStatusClose(), false)
+
+      U_ClientImage_status(this) |= _CLOSE;
+      }
+
+   void resetFlagStatusClose()
+      {
+      U_TRACE_NO_PARAM(0, "UClientImage_Base::resetFlagStatusClose()")
+
+      U_ASSERT(isFlagStatusClose())
+
+      U_ClientImage_op_pending(this) &= ~_CLOSE;
+      }
+
+   static bool isFlagStatusIdle(char op)
+      {
+      U_TRACE(0, "UClientImage_Base::isFlagStatusIdle(%u %B)", op, op)
+
+      if ((op & _IDLE) != 0) U_RETURN(true);
+
+      U_RETURN(false);
+      }
+
+   bool isFlagStatusIdle() { return isFlagStatusIdle(U_ClientImage_status(this)); }
+
+   void setFlagStatusIdle()
+      {
+      U_TRACE_NO_PARAM(0, "UClientImage_Base::setFlagStatusIdle()")
+
+      U_ASSERT_EQUALS(isFlagStatusIdle(), false)
+
+      U_ClientImage_status(this) |= _IDLE;
+      }
+
+   void resetFlagStatusIdle()
+      {
+      U_TRACE_NO_PARAM(0, "UClientImage_Base::resetFlagStatusIdle()")
+
+      U_ASSERT(isFlagStatusIdle())
+
+      U_ClientImage_op_pending(this) &= ~_IDLE;
+      }
+
+   static bool isFlagStatusDelete(char op)
+      {
+      U_TRACE(0, "UClientImage_Base::isFlagStatusDelete(%u %B)", op, op)
+
+      if ((op & _DELETE) != 0) U_RETURN(true);
+
+      U_RETURN(false);
+      }
+
+   bool isFlagStatusDelete() { return isFlagStatusDelete(U_ClientImage_status(this)); }
+
+   void setFlagStatusDelete()
+      {
+      U_TRACE_NO_PARAM(0, "UClientImage_Base::setFlagStatusDelete()")
+
+      U_ASSERT_EQUALS(isFlagStatusDelete(), false)
+
+      U_ClientImage_status(this) |= _DELETE;
+      }
+
+   void resetFlagStatusDelete()
+      {
+      U_TRACE_NO_PARAM(0, "UClientImage_Base::resetFlagStatusDelete()")
+
+      U_ASSERT(isFlagStatusDelete())
+
+      U_ClientImage_op_pending(this) &= ~_DELETE;
+      }
+
    // DEBUG
 
 #if defined(U_STDCPP_ENABLE) && defined(DEBUG)
@@ -353,30 +706,9 @@ public:
       }
 
    bool writeResponse();
-   void writeResponseCompact()
-      {
-      U_TRACE_NO_PARAM(0, "UClientImage_Base::writeResponseCompact()")
+   void writeResponseCompact();
 
-      uint32_t sz = wbuffer->size();
-
-      U_ASSERT(body->empty())
-      U_INTERNAL_ASSERT_MAJOR(sz, 0)
-      U_INTERNAL_ASSERT_EQUALS(U_http_info.nResponseCode, 200)
-
-      iov_vec[2].iov_len  = sz;
-      iov_vec[2].iov_base = (caddr_t)wbuffer->data();
-
-      U_INTERNAL_DUMP("iov_vec[1].iov_len = %u", iov_vec[1].iov_len)
-
-      U_INTERNAL_ASSERT_EQUALS(iov_vec[1].iov_len, 17+51) // HTTP/1.1 200 OK\r\nDate: Wed, 20 Jun 2012 11:43:17 GMT\r\nServer: ULib\r\n
-
-#  ifndef U_PIPELINE_HOMOGENEOUS_DISABLE
-      if (nrequest <= 1)
-#  endif
-      {
-      (void) USocketExt::writev(socket, iov_vec+1, 2, 17+51+sz, 0);
-      }
-      }
+   uint32_t writev(struct iovec* iov, int iovcnt, uint32_t count, int timeoutMS);
 
 protected:
    USocket* socket;
@@ -393,6 +725,8 @@ protected:
    // HTTP3
    void* conn;
    void* http3;
+
+   bool isCallHandlerFailed();
 
 #ifndef U_LOG_DISABLE
    static int log_request_partial;
@@ -433,9 +767,10 @@ protected:
 
       body->clear();
 
-      U_DUMP("wbuffer(%u) = %V isConstant() = %b", wbuffer->size(), wbuffer->rep, wbuffer->isConstant())
+      U_INTERNAL_DUMP("wbuffer(%u) = %V", wbuffer->size(), wbuffer->rep)
 
-      wbuffer->setBuffer(U_CAPACITY); // NB: this string can be referenced more than one (often if U_SUBSTR_INC_REF is defined)...
+      if (wbuffer->isConstant()) wbuffer->size_adjust_constant(0U);
+      else                       wbuffer->setBuffer(U_CAPACITY); // NB: this string can be referenced more than one (often if U_SUBSTR_INC_REF is defined)...
       }
 
    int handlerResponse()
@@ -499,7 +834,7 @@ protected:
 
       prepareForSendfile();
 
-      flag.c[0] |= 0x10;
+      setFlagStatusClose();
       }
 #endif
 
