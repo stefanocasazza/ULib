@@ -945,6 +945,51 @@ void USocket::close_socket()
    _close_socket();
 }
 
+#ifdef DEBUG
+void USocket::dumpProperties()
+{
+   U_TRACE_NO_PARAM(0, "USocket::dumpProperties()")
+
+   struct linger x = { 0, -1 }; // { int l_onoff; int l_linger; }
+   uint32_t tmp0 = sizeof(struct linger), value = U_NOT_FOUND, tmp = sizeof(uint32_t);
+   (void) getSockOpt(SOL_SOCKET, SO_LINGER, (void*)&x, tmp0);
+   U_INTERNAL_DUMP("SO_LINGER = { %d %d }", x.l_onoff, x.l_linger)
+   U_DUMP("getBufferRCV() = %u getBufferSND() = %u", getBufferRCV(), getBufferSND())
+
+#ifdef TCP_CORK
+   (void) getSockOpt(SOL_TCP, TCP_CORK, (void*)&value, tmp);
+   U_INTERNAL_DUMP("TCP_CORK = %d", value)
+#endif
+#ifdef TCP_DEFER_ACCEPT
+   (void) getSockOpt(SOL_TCP, TCP_DEFER_ACCEPT, (void*)&value, tmp);
+   U_INTERNAL_DUMP("TCP_DEFER_ACCEPT = %d", value)
+#endif
+
+#ifdef TCP_QUICKACK
+   (void) getSockOpt(SOL_TCP, TCP_QUICKACK, (void*)&value, tmp);
+   U_INTERNAL_DUMP("TCP_QUICKACK = %d", value)
+#endif
+#ifdef TCP_NODELAY
+   (void) getSockOpt(SOL_TCP, TCP_NODELAY, (void*)&value, tmp);
+   U_INTERNAL_DUMP("TCP_NODELAY = %d", value)
+#endif
+#ifdef TCP_FASTOPEN
+   (void) getSockOpt(SOL_TCP, TCP_FASTOPEN, (void*)&value, tmp);
+   U_INTERNAL_DUMP("TCP_FASTOPEN = %d", value)
+#endif
+#ifdef SO_KEEPALIVE
+   (void) getSockOpt(SOL_SOCKET, SO_KEEPALIVE, (void*)&value, tmp);
+   U_INTERNAL_DUMP("SO_KEEPALIVE = %d", value)
+#endif
+#ifdef TCP_CONGESTION
+   char buffer[32];
+   uint32_t tmp1 = sizeof(buffer);
+   (void) getSockOpt(IPPROTO_TCP, TCP_CONGESTION, (void*)buffer, tmp1);
+   U_INTERNAL_DUMP("TCP_CONGESTION = %S", buffer)
+#endif
+}
+#endif
+
 bool USocket::acceptClient(USocket* pcNewConnection)
 {
    U_TRACE(1, "USocket::acceptClient(%p)", pcNewConnection)
@@ -990,61 +1035,9 @@ bool USocket::acceptClient(USocket* pcNewConnection)
 #  endif
 
 /*
-#ifdef DEBUG
-   struct linger x = { 0, -1 }; // { int l_onoff; int l_linger; }
-   uint32_t tmp0 = sizeof(struct linger), value = U_NOT_FOUND, tmp = sizeof(uint32_t);
-
-   (void) pcNewConnection->getSockOpt(SOL_SOCKET, SO_LINGER, (void*)&x, tmp0);
-
-   U_INTERNAL_DUMP("SO_LINGER = { %d %d }", x.l_onoff, x.l_linger)
-
-   U_DUMP("getBufferRCV() = %u getBufferSND() = %u", pcNewConnection->getBufferRCV(), pcNewConnection->getBufferSND())
-
-# ifdef TCP_CORK
-   (void) pcNewConnection->getSockOpt(SOL_TCP, TCP_CORK, (void*)&value, tmp);
-
-   U_INTERNAL_DUMP("TCP_CORK = %d", value)
-# endif
-
-# ifdef TCP_DEFER_ACCEPT
-   (void) pcNewConnection->getSockOpt(SOL_TCP, TCP_DEFER_ACCEPT, (void*)&value, tmp);
-
-   U_INTERNAL_DUMP("TCP_DEFER_ACCEPT = %d", value)
-# endif
-
-# ifdef TCP_QUICKACK
-   (void) pcNewConnection->getSockOpt(SOL_TCP, TCP_QUICKACK, (void*)&value, tmp);
-
-   U_INTERNAL_DUMP("TCP_QUICKACK = %d", value)
-# endif
-
-# ifdef TCP_NODELAY
-   (void) pcNewConnection->getSockOpt(SOL_TCP, TCP_NODELAY, (void*)&value, tmp);
-
-   U_INTERNAL_DUMP("TCP_NODELAY = %d", value)
-# endif
-
-# ifdef TCP_FASTOPEN
-   (void) pcNewConnection->getSockOpt(SOL_TCP, TCP_FASTOPEN, (void*)&value, tmp);
-
-   U_INTERNAL_DUMP("TCP_FASTOPEN = %d", value)
-# endif
-
-# ifdef SO_KEEPALIVE
-   (void) pcNewConnection->getSockOpt(SOL_SOCKET, SO_KEEPALIVE, (void*)&value, tmp);
-
-   U_INTERNAL_DUMP("SO_KEEPALIVE = %d", value)
-# endif
-
-# ifdef TCP_CONGESTION
-   char buffer[32];
-   uint32_t tmp1 = sizeof(buffer);
-
-   (void) pcNewConnection->getSockOpt(IPPROTO_TCP, TCP_CONGESTION, (void*)buffer, tmp1);
-
-   U_INTERNAL_DUMP("TCP_CONGESTION = %S", buffer)
-# endif
-#endif
+#  ifdef DEBUG
+      pcNewConnection->dumpProperties();
+#  endif
 */
 
 #  ifdef USE_LIBSSL

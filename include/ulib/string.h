@@ -979,6 +979,18 @@ protected:
 #endif
 
 private:
+   void set(uint32_t __length, const char* ptr)
+      {
+      U_TRACE(0, "UStringRep::set(%u,%p)", __length, ptr)
+
+      U_CHECK_MEMORY
+
+      U_INTERNAL_ASSERT_POINTER(ptr)
+
+      _length = __length;
+      str     = ptr;
+      }
+
    void set(uint32_t __length, uint32_t __capacity, const char* ptr)
       {
       U_TRACE(0, "UStringRep::set(%u,%u,%p)", __length, __capacity, ptr)
@@ -1010,14 +1022,13 @@ private:
       set(tlen, 0U, t);
       }
 
-   explicit UStringRep(uint32_t tlen, const char* t) // NB: to use only with new(UStringRep(tlen,t))...
+   explicit UStringRep(uint32_t __capacity, const char* t) // NB: to use only with new(UStringRep(tlen,t))...
       {
-      U_TRACE_CTOR(0, UStringRep, "%u,%p", tlen, t)
+      U_TRACE_CTOR(0, UStringRep, "%u,%p", __capacity, t)
 
       U_CHECK_MEMORY
 
-      U_INTERNAL_ASSERT_POINTER(t)
-      U_INTERNAL_ASSERT_MAJOR(tlen, 0)
+      U_INTERNAL_ASSERT_MAJOR(__capacity, 0)
 
 #  if defined(U_SUBSTR_INC_REF) || defined(DEBUG)
       parent = U_NULLPTR;
@@ -1027,7 +1038,7 @@ private:
 #  endif
 
       _length    = 0U;
-      _capacity  = tlen;
+      _capacity  = __capacity;
       references = 1; // NB: this object cannot be destroyed...
       str        = t;
       }
@@ -2370,7 +2381,7 @@ public:
       U_INTERNAL_ASSERT_RANGE(1, n, max_size())
 
 #  ifdef DEBUG
-#   ifndef U_SUBSTR_INC_REF
+#   if !defined(U_SUBSTR_INC_REF) && !defined(USE_LIBURING)
       U_INTERNAL_ASSERT(rep->references == 0)
 #   endif
       if (isConstant() == false)

@@ -28,7 +28,7 @@ userver {
  PORT 8080
  RUN_AS_USER nobody
 #MIN_SIZE_FOR_SENDFILE 1k
-#REQ_TIMEOUT 5
+ REQ_TIMEOUT 5
  WELCOME_MSG "220 david.unirel.intranet LCSP server (Version 1.1.0) ready.\n"
  DOS_WHITE_LIST 127.0.0.1,10.30.0.0/16
  LOG_FILE /tmp/ioring.log
@@ -38,12 +38,13 @@ userver {
  PLUGIN "echo http"
  PLUGIN_DIR ../../src/ulib/net/server/plugin/.libs
  ORM_DRIVER_DIR ../../src/ulib/orm/driver/.libs
- PREFORK_CHILD 0 
+ PREFORK_CHILD 0
 #CRASH_COUNT 1
 #CRASH_EMAIL_NOTIFY mail.unirel.com:stefano.casazza@unirel.com
 }
 http {
  CACHE_FILE_MASK _off_
+ ENABLE_INOTIFY yes
 #REQUEST_READ_TIMEOUT 30
  APACHE_LIKE_LOG /var/log/httpd/access_log
 }

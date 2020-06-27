@@ -24,6 +24,12 @@
 #  include <ulib/ssl/net/sslsocket.h>
 #endif
 
+#ifdef USE_LIBURING
+#  ifndef U_IO_BUFFER_SIZE
+#  define U_IO_BUFFER_SIZE U_1M // 1 MB in bytes
+#  endif
+#endif
+
 /**
  * @class UClientImage
  *
@@ -47,10 +53,10 @@ template <class T> class UHashMap;
 
 #define U_ClientImage_request_is_cached UClientImage_Base::cbuffer[0]
 
-#define U_ClientImage_status(obj)     (obj)->UClientImage_Base::flag.c[0]
-#define U_ClientImage_op_pending(obj) (obj)->UClientImage_Base::flag.c[1]
-#define U_ClientImage_idx_buffer(obj) (obj)->UClientImage_Base::flag.c[2]
-#define U_ClientImage_user_value(obj) (obj)->UClientImage_Base::flag.c[3]
+#define U_ClientImage_status(obj)      (obj)->UClientImage_Base::flag.c[0]
+#define U_ClientImage_op_pending(obj)  (obj)->UClientImage_Base::flag.c[1]
+#define U_ClientImage_user_value1(obj) (obj)->UClientImage_Base::flag.c[2]
+#define U_ClientImage_user_value2(obj) (obj)->UClientImage_Base::flag.c[3]
 
 class U_EXPORT UClientImage_Base : public UEventFd {
 public:
@@ -301,15 +307,32 @@ public:
    // pending operation processing
 
    enum PendingOperationType {
-      _UPDATE = 0x00,
-      _BLOCK  = 0x01,
-      _POLL   = 0x02,
-      _ACCEPT = 0x04,
-      _READ   = 0x08,
-      _WRITE  = 0x10,
-      _WRITEV = 0x20,
-      _CLOSE  = 0x40 
+      _UPDATE  = 0x01,
+      _POLL    = 0x02,
+      _ACCEPT  = 0x04,
+      _READ    = 0x08,
+      _WRITE   = 0x10,
+      _WRITEV  = 0x20,
+      _CLOSE   = 0x40,
+      _CONNECT = _UPDATE | _READ | _ACCEPT
    };
+
+#ifdef DEBUG
+   static const char* getPendingOperationDescription(int op)
+      {
+      return (op == 0        ? "NONE"     :
+              op == _UPDATE  ? "_UPDATE"  :
+              op == _POLL    ? "_POLL"    :
+              op == _ACCEPT  ? "_ACCEPT"  :
+              op == _READ    ? "_READ"    :
+              op == _WRITE   ? "_WRITE"   :
+              op == _WRITEV  ? "_WRITEV"  :
+              op == _CLOSE   ? "_CLOSE"   :
+              op == _CONNECT ? "_CONNECT" : "???");
+      }
+
+   const char* getPendingOperationDescription() { return getPendingOperationDescription( U_ClientImage_op_pending(this)); }
+#endif
 
    void resetPendingOperation()
       {
@@ -327,24 +350,20 @@ public:
       U_RETURN(false);
       }
 
-   void setNonBlocking()
+   static bool isPendingOperationAccept(char op)
       {
-      U_TRACE_NO_PARAM(0, "UClientImage_Base::setNonBlocking()")
+      U_TRACE(0, "UClientImage_Base::isPendingOperationAccept(%u %B)", op, op)
 
-#  ifdef DEBUG
-      int flags = U_SYSCALL(fcntl, "%d,%u,%u", fd, F_GETFL, 0);
+      if ((op & _ACCEPT) != 0) U_RETURN(true);
 
-      U_INTERNAL_ASSERT_EQUALS(flags, O_RDWR | O_NONBLOCK)
-#  endif
-
-      (void) U_SYSCALL(fcntl, "%d,%u,%u", fd, F_SETFL, O_RDWR);
+      U_RETURN(false);
       }
 
-   static bool isPendingOperationBlock(char op)
+   static bool isPendingOperationUpdate(char op)
       {
-      U_TRACE(0, "UClientImage_Base::isPendingOperationBlock(%u %B)", op, op)
+      U_TRACE(0, "UClientImage_Base::isPendingOperationUpdate(%u %B)", op, op)
 
-      if ((op & _BLOCK) != 0) U_RETURN(true);
+      if ((op & _UPDATE) != 0) U_RETURN(true);
 
       U_RETURN(false);
       }
@@ -376,28 +395,10 @@ public:
       U_RETURN(false);
       }
 
-   bool isPendingOperationRead()  { return isPendingOperationRead( U_ClientImage_op_pending(this)); }
-   bool isPendingOperationBlock() { return isPendingOperationBlock(U_ClientImage_op_pending(this)); }
-   bool isPendingOperationWrite() { return isPendingOperationWrite(U_ClientImage_op_pending(this)); }
-   bool isPendingOperationClose() { return isPendingOperationClose(U_ClientImage_op_pending(this)); }
-
-   void setPendingOperationBlock()
-      {
-      U_TRACE_NO_PARAM(0, "UClientImage_Base::setPendingOperationBlock()")
-
-      U_ASSERT_EQUALS(isPendingOperationBlock(), false)
-
-      U_ClientImage_op_pending(this) |= _BLOCK;
-      }
-
-   void resetPendingOperationBlock()
-      {
-      U_TRACE_NO_PARAM(0, "UClientImage_Base::resetPendingOperationBlock()")
-
-      U_ASSERT(isPendingOperationBlock())
-
-      U_ClientImage_op_pending(this) &= ~_BLOCK;
-      }
+   bool isPendingOperationRead()   { return isPendingOperationRead( U_ClientImage_op_pending(this)); }
+   bool isPendingOperationWrite()  { return isPendingOperationWrite(U_ClientImage_op_pending(this)); }
+   bool isPendingOperationClose()  { return isPendingOperationClose(U_ClientImage_op_pending(this)); }
+   bool isPendingOperationUpdate() { return isPendingOperationUpdate(U_ClientImage_op_pending(this)); }
 
    void setPendingOperationRead()
       {
@@ -405,7 +406,7 @@ public:
 
       U_DUMP("isPendingOperationRead() = %b", isPendingOperationRead())
 
-      U_ASSERT_EQUALS(isPendingOperationRead(), false)
+   // U_ASSERT_EQUALS(isPendingOperationRead(), false)
 
       U_ClientImage_op_pending(this) |= _READ;
       }
@@ -436,7 +437,9 @@ public:
       {
       U_TRACE_NO_PARAM(0, "UClientImage_Base::resetPendingOperationWrite()")
 
-      U_ASSERT(isPendingOperationWrite())
+      U_DUMP("isPendingOperationWrite() = %b", isPendingOperationWrite())
+
+   // U_ASSERT(isPendingOperationWrite())
 
       U_ClientImage_op_pending(this) &= ~_WRITE;
       }
@@ -769,8 +772,7 @@ protected:
 
       U_INTERNAL_DUMP("wbuffer(%u) = %V", wbuffer->size(), wbuffer->rep)
 
-      if (wbuffer->isConstant()) wbuffer->size_adjust_constant(0U);
-      else                       wbuffer->setBuffer(U_CAPACITY); // NB: this string can be referenced more than one (often if U_SUBSTR_INC_REF is defined)...
+      wbuffer->setBuffer(U_CAPACITY); // NB: this string can be referenced more than one (often if U_SUBSTR_INC_REF is defined)...
       }
 
    int handlerResponse()

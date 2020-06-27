@@ -94,7 +94,11 @@
 #  include <ulib/utility/base64.h>
 #endif
 
-//#define U_DISABLE_WATCH_THREAD // to read better debug trace file...
+/*
+#ifdef USE_LIBSSL
+#define U_DISABLE_WATCH_THREAD // to read better debug trace file...
+#endif
+*/
 
 int           UServer_Base::rkids;
 int           UServer_Base::timeoutMS;
@@ -206,9 +210,6 @@ UVector<UIPAllow*>* UServer_Base::vallow_IP_prv;
 #  ifndef SQ_THREAD_IDLE
 #  define SQ_THREAD_IDLE 2000
 #  endif
-#  ifndef U_IO_BUFFER_SIZE
-#  define U_IO_BUFFER_SIZE U_1M // 1 MB in bytes
-#  endif
 #  ifndef U_NUM_BUFFER_FOR_CPU
 #  define U_NUM_BUFFER_FOR_CPU 2
 #  endif
@@ -219,10 +220,12 @@ UVector<UIPAllow*>* UServer_Base::vallow_IP_prv;
 #  include <sys/poll.h>
 
 int*                   UServer_Base::socketfds;
-UString*               UServer_Base::rwBuffers;
-uint32_t               UServer_Base::bufNextIndex;
+uint32_t               UServer_Base::rbuffer_size = 65535;
+UString*               UServer_Base::rBuffers;
+UStringRep*            UServer_Base::rbuffer;
 struct io_uring*       UServer_Base::io_uring;
 UVector<UEventFd*>*    UServer_Base::handler_poll;
+struct io_uring_sqe*   UServer_Base::sqe;
 struct io_uring_cqe*   UServer_Base::cqe;
 #endif
 
@@ -343,6 +346,8 @@ public:
              delta <= -1)
             {
             U_SRV_LOG("handlerTime: server delta timeout exceed 1 sec: diff %ld sec", delta);
+
+            U_INTERNAL_DUMP("u_now->tv_sec = %#3D last_event = %#3D", u_now->tv_sec, UServer_Base::last_event)
             }
 
          UServer_Base::last_event = u_now->tv_sec;
@@ -352,7 +357,32 @@ public:
 
       U_INTERNAL_DUMP("UNotifier::num_connection = %u UNotifier::min_connection = %u", UNotifier::num_connection, UNotifier::min_connection)
 
-      if (UNotifier::num_connection > UNotifier::min_connection) UNotifier::callForAllEntryDynamic(UServer_Base::handlerTimeoutConnection);
+      if (UNotifier::num_connection > UNotifier::min_connection)
+         {
+#     ifdef USE_LIBURING
+         if (UServer_Base::brng)
+            {
+            UServer_Base::pClientImage = UServer_Base::vClientImage;
+
+            for (uint32_t num_close = 0; UServer_Base::pClientImage < UServer_Base::eClientImage; ++UServer_Base::pClientImage)
+               {
+               if (UServer_Base::pClientImage->UEventFd::fd != -1 &&
+                   UServer_Base::isReqTimeout(UServer_Base::pClientImage))
+                  {
+                  (void) UServer_Base::handlerTimeoutConnection(UServer_Base::pClientImage);
+
+                  U_INTERNAL_DUMP("num_close = %u", num_close+1)
+
+                  if (++num_close == UNotifier::num_connection) break;
+                  }
+               }
+            }
+         else
+#     endif
+         {
+         UNotifier::callForAllEntryDynamic(UServer_Base::handlerTimeoutConnection);
+         }
+         }
 
 #  if !defined(U_LOG_DISABLE) && defined(U_LINUX) && defined(ENABLE_THREAD)
       if (U_SRV_CNT_PARALLELIZATION)
@@ -1803,7 +1833,7 @@ UServer_Base::UServer_Base(UFileConfig* cfg)
 
    (void) u_get_num_cpu();
 
-   U_INTERNAL_DUMP("u_num_cpu = %u", u_num_cpu)
+   U_DEBUG("u_num_cpu = %u", u_num_cpu)
 
    /**
     * TMPDIR is the canonical Unix environment variable which points to user scratch space. Most Unix utilities will honor the setting of this
@@ -1892,6 +1922,13 @@ UServer_Base::~UServer_Base()
    UClientImage_Base::clear();
 
 #ifdef USE_LIBURING
+   if (rbuffer)
+      {
+      U_ASSERT_EQUALS(rbuffer->capacity(), rbuffer_size)
+
+      U_DELETE(rbuffer);
+      }
+
    if (io_uring)
       {
       U_SYSCALL_VOID(io_uring_queue_exit, "%p", io_uring);
@@ -1900,7 +1937,7 @@ UServer_Base::~UServer_Base()
 
       if (socketfds)
          {
-         U_DELETE(rwBuffers);
+         U_DELETE(rBuffers);
 
          handler_poll->_length = 0;
 
@@ -2302,6 +2339,10 @@ void UServer_Base::loadConfigParam()
    num_client_threshold       = pcfg->readLong(U_CONSTANT_TO_PARAM("CLIENT_THRESHOLD"));
    UNotifier::max_connection  = pcfg->readLong(U_CONSTANT_TO_PARAM("MAX_KEEP_ALIVE"), USocket::iBackLog);
    u_printf_string_max_length = pcfg->readLong(U_CONSTANT_TO_PARAM("LOG_MSG_SIZE"));
+
+#ifdef USERVER_RNG
+   rbuffer_size = pcfg->readLong(U_CONSTANT_TO_PARAM("READ_BUFFER_SIZE"), 65535);
+#endif
 
    U_INTERNAL_DUMP("UNotifier::max_connection = %u USocket::iBackLog = %u", UNotifier::max_connection, USocket::iBackLog)
 
@@ -3368,6 +3409,13 @@ next:
 
    UTimer::init(UTimer::NOSIGNAL);
 
+#ifdef USE_LIBURING
+   if (UServer_Base::brng)
+      {
+      U_NEW(UStringRep, rbuffer, UStringRep(rbuffer_size, U_NULLPTR));
+      }
+#endif
+
    UClientImage_Base::init();
 
    USocket::accept4_flags = SOCK_CLOEXEC | SOCK_NONBLOCK;
@@ -3893,7 +3941,7 @@ U_NO_EXPORT bool UServer_Base::clientImageHandlerRead()
 #ifndef U_LOG_DISABLE
 void UServer_Base::logNewClient(int fd)
 {
-   U_TRACE(0, "UServer_Base::logNewClient(int fd)", fd)
+   U_TRACE(0, "UServer_Base::logNewClient(%d)", fd)
 
    if (isLog())
       {
@@ -3914,6 +3962,10 @@ void UServer_Base::logNewClient(int fd)
       if (msg_welcome) log->log(U_CONSTANT_TO_PARAM("Sending welcome message to %v"), pClientImage->logbuf->rep);
 #  endif
       }
+
+#ifdef DEBUG
+   csocket->dumpProperties();
+#endif
 }
 #endif
 
@@ -4160,7 +4212,7 @@ loop:
          {
          U_gettimeofday // NB: optimization if it is enough a time resolution of one second...
 
-         if ((u_now->tv_sec - CLIENT_IMAGE->last_event) >= ptime->UTimeVal::tv_sec)
+         if (isReqTimeout(CLIENT_IMAGE))
             {
 #        if !defined(U_LOG_DISABLE) || (!defined(USE_LIBEVENT) && defined(HAVE_EPOLL_WAIT) && defined(DEBUG))
             called_from_handlerTime = false;
@@ -4438,7 +4490,7 @@ uint32_t UServer_Base::setNumConnection(char* ptr)
 
    U_RETURN(1);
 # else
-   uint32_t len, sz = UNotifier::num_connection - UNotifier::min_connection - 1;
+   uint32_t len, sz = UNotifier::num_connection - UNotifier::min_connection;
 
    if (preforked_num_kids <= 0) len = u_num2str32(sz, ptr) - ptr;
    else
@@ -4487,6 +4539,21 @@ bool UServer_Base::handlerTimeoutConnection(void* cimg)
    U_INTERNAL_DUMP("pthis = %p handler_other = %p handler_inotify = %p handler_db1 = %p handler_db2 = %p",
       UServer_Base::pthis, UServer_Base::handler_other, UServer_Base::handler_inotify, UServer_Base::handler_db1, UServer_Base::handler_db2)
 
+#ifdef USE_LIBURING
+   if (brng)
+      {
+      nClientIndex = pClientImage - vClientImage;
+
+      U_INTERNAL_ASSERT_MINOR(nClientIndex, UNotifier::max_connection)
+
+      submit(UClientImage_Base::_CLOSE); // this queues a close()
+
+      logReqTimeout(cimg, last_event);
+
+      U_RETURN(true);
+      }
+#endif
+
    if (cimg == pthis                         ||
        cimg == UServer_Base::handler_db1     ||
        cimg == UServer_Base::handler_db2     ||
@@ -4498,39 +4565,7 @@ bool UServer_Base::handlerTimeoutConnection(void* cimg)
 
    if (((UClientImage_Base*)cimg)->handlerTimeout() == U_NOTIFIER_DELETE)
       {
-#  ifndef U_LOG_DISABLE
-      if (isLog())
-         {
-         if (called_from_handlerTime)
-            {
-            log->log(U_CONSTANT_TO_PARAM("handlerTime: client connected didn't send any request in %u secs (timeout), close connection %v"),
-                     ptime->UTimeVal::tv_sec, ((UClientImage_Base*)cimg)->logbuf->rep);
-            }
-         else
-            {
-            log->log(U_CONSTANT_TO_PARAM("handlerTimeoutConnection: client connected didn't send any request in %u secs, close connection %v"),
-                     UNotifier::last_event - ((UClientImage_Base*)cimg)->last_event, ((UClientImage_Base*)cimg)->logbuf->rep);
-            }
-         }
-#  endif
-#  if !defined(USE_LIBEVENT) && defined(HAVE_EPOLL_WAIT) && defined(DEBUG)
-      if (called_from_handlerTime)
-         {
-         U_DEBUG("handlerTime: client connected didn't send any request in %u secs (timeout %u sec) - "
-                 "UEventFd::fd = %d socket->iSockDesc = %d UNotifier::num_connection = %d UNotifier::min_connection = %d",
-                 UNotifier::last_event - ((UClientImage_Base*)cimg)->last_event, ptime->UTimeVal::tv_sec,
-                                         ((UClientImage_Base*)cimg)->UEventFd::fd,
-                                         ((UClientImage_Base*)cimg)->socket->iSockDesc, UNotifier::num_connection, UNotifier::min_connection)
-         }
-      else
-         {
-         U_DEBUG("handlerTimeoutConnection: client connected didn't send any request in %u secs - "
-                 "UEventFd::fd = %d socket->iSockDesc = %d UNotifier::num_connection = %d UNotifier::min_connection = %d",
-                 UNotifier::last_event - ((UClientImage_Base*)cimg)->last_event,
-                                         ((UClientImage_Base*)cimg)->UEventFd::fd,
-                                         ((UClientImage_Base*)cimg)->socket->iSockDesc, UNotifier::num_connection, UNotifier::min_connection)
-         }
-#  endif
+      logReqTimeout(cimg, UNotifier::last_event);
 
       U_RETURN(true); // NB: return true mean that we want to erase the item...
       }
@@ -4541,7 +4576,7 @@ bool UServer_Base::handlerTimeoutConnection(void* cimg)
 #ifdef USE_LIBURING
 void UServer_Base::epoll_ctl_batch(uint32_t ctl_cmd_cnt)
 {
-   U_TRACE(0, "UServer_Base::epoll_ctl_batch(%u)", ctl_cmd_cnt)
+   U_TRACE(1, "UServer_Base::epoll_ctl_batch(%u)", ctl_cmd_cnt)
 
    U_INTERNAL_ASSERT_MAJOR(ctl_cmd_cnt, 0)
 
@@ -4575,163 +4610,147 @@ void UServer_Base::epoll_ctl_batch(uint32_t ctl_cmd_cnt)
 
 void UServer_Base::submit(int op, ...)
 {
-   U_TRACE(0, "UServer_Base::submit(%d)", op)
+   U_TRACE(1, "UServer_Base::submit(%d)", op)
 
-   int ret;
-   struct io_uring_sqe* sqe;
+   int flags = 0;
 
    va_list argp;
    va_start(argp, op);
 
-   switch (op)
+   if (op == UClientImage_Base::_POLL)
       {
-      case UClientImage_Base::_UPDATE:
-         {
-         // ...fd member is the index of the file in the file descriptor array
+      UEventFd* handler = va_arg(argp, UEventFd*);
 
-         U_INTERNAL_DUMP("socketfds[%u] = %d => %d", 1+nClientIndex, socketfds[1+nClientIndex], pClientImage->fd)
+      uint32_t nHandlerIndex = handler_poll->size();
 
-         U_INTERNAL_ASSERT_EQUALS(pClientImage, vClientImage+nClientIndex)
+      handler_poll->push_back(handler);
 
-         /*
-         U_SYSCALL_VOID(io_uring_prep_files_update, "%p,%p,%u,%d", sqe, &(pClientImage->fd), 1, 0);
+      get_sqe();
 
-         U_SYSCALL_VOID(io_uring_sqe_set_data, "%p,%p", sqe, (void*)(((long)pClientImage->fd << 32) + (long)UClientImage_Base::_UPDATE));
-         */
+      U_SYSCALL_VOID(io_uring_prep_poll_add, "%p,%d,%u", sqe, handler->UEventFd::fd, POLLIN);
 
-         ret = U_SYSCALL(io_uring_register_files_update, "%p,%u,%p,%u", io_uring, 1+nClientIndex, &(socketfds[1+nClientIndex] = pClientImage->fd), 1);
+      U_SYSCALL_VOID(io_uring_sqe_set_data, "%p,%p", sqe, (void*)(((long)nHandlerIndex << 32) + (long)UClientImage_Base::_POLL));
 
-         if (ret != 1)
-            {
-            U_ERROR("io_uring_register_files_update() failed: %d%R", ret, 0); // NB: the last argument (0) is necessary...
-            }
+      submit();
 
-         return;
-         }
-      break;
-
-      case UClientImage_Base::_POLL:
-         {
-         sqe = (struct io_uring_sqe*) U_SYSCALL(io_uring_get_sqe, "%p", io_uring);
-
-         UEventFd* handler = va_arg(argp, UEventFd*);
-
-         U_SYSCALL_VOID(io_uring_prep_poll_add, "%p,%d,%u", sqe, handler->UEventFd::fd, POLLIN);
-
-         uint32_t nHandlerIndex = handler_poll->size();
-
-         handler_poll->push_back(handler);
-
-         U_SYSCALL_VOID(io_uring_sqe_set_data, "%p,%p", sqe, (void*)(((long)nHandlerIndex << 32) + (long)UClientImage_Base::_POLL));
-         }
-      break;
-
-      case UClientImage_Base::_ACCEPT:
-         {
-         sqe = (struct io_uring_sqe*) U_SYSCALL(io_uring_get_sqe, "%p", io_uring);
-
-         USocket::resetPeerAddr();
-
-         // To make use of the registered files, the IOSQE_FIXED_FILE flag must be set in the flags member
-         // of the struct io_uring_sqe, and the fd member is set to the index of the file in the file descriptor array
-
-         U_SYSCALL_VOID(io_uring_prep_accept, "%p,%u,%p,%p,%u", sqe, 0, (struct sockaddr*)&USocket::peer_addr, &USocket::peer_addr_len, USocket::accept4_flags);
-
-         U_SYSCALL_VOID(io_uring_sqe_set_flags, "%p,%u", sqe, IOSQE_FIXED_FILE); // IOSQE_FIXED_FILE -> signals that we pass an index into socketfds rather than a file descriptor
-
-         U_SYSCALL_VOID(io_uring_sqe_set_data, "%p,%p", sqe, (void*)UClientImage_Base::_ACCEPT);
-         }
-      break;
-
-      case UClientImage_Base::_READ:
-      case UClientImage_Base::_WRITE:
-      case UClientImage_Base::_WRITEV:
-         {
-         if (pClientImage->isPendingOperationClose() == false)
-            {
-            U_INTERNAL_DUMP("socketfds[%u] = %d pClientImage->fd = %d", 1+nClientIndex, socketfds[1+nClientIndex], pClientImage->fd)
-
-            U_INTERNAL_ASSERT_EQUALS(pClientImage, vClientImage+nClientIndex)
-
-            sqe = (struct io_uring_sqe*) U_SYSCALL(io_uring_get_sqe, "%p", io_uring);
-
-            if (op == UClientImage_Base::_READ)
-               {
-               if (pClientImage->isPendingOperationRead() == false) pClientImage->setPendingOperationRead();
-
-               uint32_t start = U_ClientImage_idx_buffer(pClientImage) * U_IO_BUFFER_SIZE;
-
-               // To make use of the registered files, the IOSQE_FIXED_FILE flag must be set in the flags member
-               // of the struct io_uring_sqe, and the fd member is set to the index of the file in the file descriptor array
-
-               U_SYSCALL_VOID(io_uring_prep_read_fixed, "%p,%u,%p,%u,%u,%u", sqe, 1+nClientIndex, rwBuffers->c_pointer(start), U_IO_BUFFER_SIZE, 0, 0);
-               }
-            else
-               {
-               if (pClientImage->isPendingOperationWrite() == false) pClientImage->setPendingOperationWrite();
-
-               if (pClientImage->isPendingOperationBlock())
-                  {
-                  pClientImage->setNonBlocking();
-                  pClientImage->resetPendingOperationBlock();
-                  }
-
-               if (op == UClientImage_Base::_WRITE)
-                  {
-                  char* ptr          = va_arg(argp, char*);
-                  uint32_t sz        = va_arg(argp, uint32_t),
-                           buf_index = va_arg(argp, uint32_t);
-
-                  // To make use of the registered files, the IOSQE_FIXED_FILE flag must be set in the flags member
-                  // of the struct io_uring_sqe, and the fd member is set to the index of the file in the file descriptor array
-
-                  U_SYSCALL_VOID(io_uring_prep_write_fixed, "%p,%u,%p,%u,%u,%u", sqe, 1+nClientIndex, ptr, sz, 0, buf_index);
-                  }
-               else
-                  {
-                  struct iovec* iov   = va_arg(argp, struct iovec*);
-                  uint32_t iovcnt     = va_arg(argp, uint32_t),
-                           buf_select = va_arg(argp, uint32_t);
-
-                  U_SYSCALL_VOID(io_uring_prep_writev, "%p,%u,%p,%u,%u", sqe, 1+nClientIndex, iov, iovcnt, 0);
-
-                  if (buf_select)
-                     {
-                     sqe->flags    |= IOSQE_BUFFER_SELECT;
-                     sqe->buf_group = buf_select;
-                     }
-                  }
-               }
-
-            U_SYSCALL_VOID(io_uring_sqe_set_flags, "%p,%u", sqe, IOSQE_FIXED_FILE); // IOSQE_FIXED_FILE -> signals that we pass an index into socketfds rather than a file descriptor
-
-            U_SYSCALL_VOID(io_uring_sqe_set_data, "%p,%p", sqe, (void*)(((long)nClientIndex << 32) + (long)op));
-            }
-         }
-      break;
-
-      case UClientImage_Base::_CLOSE:
-         {
-         pClientImage->setPendingOperationClose();
-
-         sqe = (struct io_uring_sqe*) U_SYSCALL(io_uring_get_sqe, "%p", io_uring);
-
-         U_SYSCALL_VOID(io_uring_prep_close, "%p,%u", sqe, pClientImage->fd);
-
-         U_SYSCALL_VOID(io_uring_sqe_set_data, "%p,%p", sqe, (void*)(((long)nClientIndex << 32) + (long)UClientImage_Base::_CLOSE));
-         }
-      break;
-
-      default: break; // never
+      goto end;
       }
 
-   ret = U_SYSCALL(io_uring_submit, "%p", io_uring);
-
-   if (ret == -1)
+   if (op == UClientImage_Base::_ACCEPT)
       {
-      U_ERROR("io_uring_submit() failed: %d%R", ret, 0); // NB: the last argument (0) is necessary...
+      get_sqe();
+
+      prepareForAccept();
+
+      goto submit;
       }
 
+   // ...fd member is the index of the file in the file descriptor array
+
+   U_INTERNAL_DUMP("op = %s socketfds[%u] = %d pClientImage->fd = %d", UClientImage_Base::getPendingOperationDescription(op), 1+nClientIndex, socketfds[1+nClientIndex], pClientImage->fd)
+
+   U_INTERNAL_ASSERT_EQUALS(pClientImage, vClientImage+nClientIndex)
+
+   if (pClientImage->isPendingOperationClose()) goto end;
+
+   if (op == UClientImage_Base::_CLOSE)
+      {
+      pClientImage->setPendingOperationClose();
+
+      get_sqe();
+
+      U_SYSCALL_VOID(io_uring_prep_close, "%p,%u", sqe, pClientImage->fd);
+
+      U_SYSCALL_VOID(io_uring_sqe_set_data, "%p,%p", sqe, (void*)(((long)nClientIndex << 32) + (long)UClientImage_Base::_CLOSE));
+
+      submit();
+
+      goto end;
+      }
+
+   if (op == UClientImage_Base::_READ)
+      {
+      pClientImage->setPendingOperationRead();
+
+      get_sqe();
+
+      U_SYSCALL_VOID(io_uring_prep_read_fixed, "%p,%u,%p,%u,%u,%u", sqe, 1+nClientIndex, rBuffers->c_pointer(nClientIndex * rbuffer_size), rbuffer_size, 0, 0);
+
+      goto submit;
+      }
+
+   if (op != UClientImage_Base::_CONNECT)
+      {
+      void* ptr    = va_arg(argp, void*);
+      uint32_t sz  = va_arg(argp, uint32_t),
+               buf = va_arg(argp, uint32_t);
+
+      pClientImage->setPendingOperationWrite();
+
+      get_sqe();
+
+      if (op == UClientImage_Base::_WRITEV)
+         {
+         U_SYSCALL_VOID(io_uring_prep_writev, "%p,%u,%p,%u,%u", sqe, 1+nClientIndex, (const iovec*)ptr, sz, 0);
+
+         if (buf)
+            {
+            flags          = IOSQE_BUFFER_SELECT;
+            sqe->buf_group = buf;
+            }
+         }
+      else
+         {
+         U_INTERNAL_ASSERT_EQUALS(op, UClientImage_Base::_WRITE)
+
+         U_SYSCALL_VOID(io_uring_prep_write_fixed, "%p,%u,%p,%u,%u,%u", sqe, 1+nClientIndex, ptr, sz, 0, buf);
+         }
+
+      goto submit;
+      }
+
+   U_INTERNAL_ASSERT_EQUALS(op, UClientImage_Base::_CONNECT)
+
+#ifndef U_LOG_DISABLE
+   logNewClient(pClientImage->fd);
+#endif
+
+   register_files_update();
+
+#ifdef U_WELCOME_SUPPORT
+   if (msg_welcome)
+      {
+      pClientImage->setPendingOperationWrite();
+
+      get_sqe();
+
+      U_SYSCALL_VOID(io_uring_prep_write_fixed, "%p,%u,%p,%u,%u,%u", sqe, 1+nClientIndex, U_STRING_TO_PARAM(*msg_welcome), 0, 1);
+
+      submitOperation(UClientImage_Base::_WRITE);
+      }
+#endif
+
+   get_sqe();
+
+   U_SYSCALL_VOID(io_uring_prep_read_fixed, "%p,%u,%p,%u,%u,%u", sqe, 1+nClientIndex, rBuffers->c_pointer(nClientIndex * rbuffer_size), rbuffer_size, 0, 0);
+
+   submitOperation(UClientImage_Base::_READ);
+
+   if (UNotifier::num_connection < UNotifier::max_connection)
+      {
+      get_sqe();
+
+      prepareForAccept();
+
+      submitOperation(UClientImage_Base::_ACCEPT);
+      }
+
+   goto end;
+
+submit:
+   submitOperation(op, flags);
+
+end:
    va_end(argp);
 }
 
@@ -4739,51 +4758,57 @@ void UServer_Base::findNextClientImage()
 {
    U_TRACE_NO_PARAM(0, "UServer_Base::findNextClientImage()")
 
-   uint32_t u_num_buffer_for_cpu = u_num_cpu * U_NUM_BUFFER_FOR_CPU;
-
    pClientImage = vClientImage + UNotifier::num_connection;
 
-   while (true)
+loop:
+   U_INTERNAL_DUMP("\n----------------------------------------\n"
+                   "vClientImage[%u].fd         = %d\n"
+                   "vClientImage[%u].last_event = %#3D\n"
+                   "vClientImage[%u].op_pending = %u %s"
+                   "\n----------------------------------------\n",
+                   pClientImage-vClientImage, pClientImage->UEventFd::fd,
+                   pClientImage-vClientImage, pClientImage->last_event,
+                   pClientImage-vClientImage, U_ClientImage_op_pending(pClientImage), pClientImage->getPendingOperationDescription())
+
+   if (pClientImage->UEventFd::fd != -1) // busy
       {
-      U_INTERNAL_DUMP("\n----------------------------------------\n"
-                      "vClientImage[%u].fd         = %d\n"
-                      "vClientImage[%u].op_pending = %u\n"
-                      "vClientImage[%u].idx_buffer = %u"
-                      "\n----------------------------------------\n",
-                      pClientImage-vClientImage, pClientImage->UEventFd::fd,
-                      pClientImage-vClientImage, U_ClientImage_op_pending(pClientImage),
-                      pClientImage-vClientImage, U_ClientImage_idx_buffer(pClientImage))
-
-      if (pClientImage->fd == -1)
+      if (ptime) // NB: we check if the connection is idle...
          {
-         nClientIndex = pClientImage - vClientImage;
+         U_gettimeofday // NB: optimization if it is enough a time resolution of one second...
 
-         U_INTERNAL_ASSERT_MINOR(nClientIndex, UNotifier::max_connection)
+         if (isReqTimeout(pClientImage))
+            {
+#        if !defined(U_LOG_DISABLE) || (!defined(USE_LIBEVENT) && defined(HAVE_EPOLL_WAIT) && defined(DEBUG))
+            called_from_handlerTime = false;
+#        endif
 
-         if (++bufNextIndex >= u_num_buffer_for_cpu) bufNextIndex = 0;
-
-         U_ClientImage_idx_buffer(pClientImage) = bufNextIndex;
-
-         return;
+            (void) handlerTimeoutConnection(pClientImage);
+            }
          }
 
-      // busy
-      //
-      // TODO
-
       if (++pClientImage >= eClientImage) pClientImage = vClientImage;
+
+      goto loop;
       }
+
+   nClientIndex = pClientImage - vClientImage;
+
+   U_INTERNAL_ASSERT_MINOR(nClientIndex, UNotifier::max_connection)
 }
 
 void UServer_Base::waitForEvent(UEventTime* ptimeout)
 {
-   U_TRACE(0, "UServer_Base::waitForEvent(%p)", ptimeout)
+   U_TRACE(1, "UServer_Base::waitForEvent(%p)", ptimeout)
 
    U_INTERNAL_ASSERT_POINTER(ptimeout)
 
    struct timeval* p = UEventTime::getTimeVal(ptimeout);
 
    struct __kernel_timespec ts = { p->tv_sec, p->tv_usec * 1000 };
+
+   U_INTERNAL_DUMP("u_now->tv_sec = %#3D last_event = %#3D", u_now->tv_sec, UServer_Base::last_event)
+
+   last_event = u_now->tv_sec;
 
    int ret = U_SYSCALL(io_uring_wait_cqe_timeout, "%p,%p,%p", io_uring, &cqe, &ts);
 
@@ -4796,8 +4821,9 @@ void UServer_Base::waitForEvent(UEventTime* ptimeout)
       return;
       }
 
-        if (ret == -EINTR) UInterrupt::checkForEventSignalPending();
-   else if (ret != -ETIME)
+   UInterrupt::checkForEventSignalPending();
+
+   if (ret != -ETIME)
       {
       U_ERROR("io_uring_wait_cqe_timeout() failed: %d%R", ret, 0); // NB: the last argument (0) is necessary...
       }
@@ -4906,18 +4932,21 @@ void UServer_Base::runLoop(const char* user)
 
    if (brng)
       {
-      U_INTERNAL_ASSERT_EQUALS(rwBuffers, U_NULLPTR)
+      U_INTERNAL_ASSERT_EQUALS(rBuffers, U_NULLPTR)
       U_INTERNAL_ASSERT_EQUALS(socketfds, U_NULLPTR)
       U_INTERNAL_ASSERT_EQUALS(handler_poll, U_NULLPTR)
 
-      U_NEW_STRING(rwBuffers, UString);
+      U_NEW_STRING(rBuffers, UString);
       U_NEW(UVector<UEventFd*>, handler_poll, UVector<UEventFd*>);
 
       socketfds = (int*) UMemoryPool::cmalloc(1+UNotifier::max_connection, sizeof(int));
 
       (void) U_SYSCALL(memset, "%p,%u,%u", socketfds, 0xff, (1+UNotifier::max_connection) * sizeof(int)); // make sparse with -1
 
-      // register an array large enough to contain all possible file descriptors for io
+      // Register an array large enough to contain all possible file descriptors for io.
+      // To make use of the registered files, the IOSQE_FIXED_FILE flag must be set in the flags member
+      // of the struct io_uring_sqe, and the fd member is set to the index of the file in the file descriptor array
+
       ret = U_SYSCALL(io_uring_register_files, "%p,%p,%p", io_uring, socketfds, 1+UNotifier::max_connection);
 
       if (ret)
@@ -4925,13 +4954,15 @@ void UServer_Base::runLoop(const char* user)
          U_ERROR("io_uring_register_files() failed: %d%R", ret, 0); // NB: the last argument (0) is necessary...
          }
 
-      uint32_t sz = (u_num_cpu * U_NUM_BUFFER_FOR_CPU * U_IO_BUFFER_SIZE) * 2;
+      uint32_t sz = rbuffer_size * UNotifier::max_connection;
 
-      rwBuffers->setConstant(sz);
-      rwBuffers->checkConstant(sz);
+      rBuffers->setConstant(sz);
+      rBuffers->checkConstant(sz);
+
+      U_INTERNAL_DUMP("UClientImage_Base::iov_vec[1](%u) = %.*S", 17+6+29+2+12+2+17+2, 17+6+29+2+12+2+17+2, UClientImage_Base::iov_vec[1].iov_base)
 
       uint32_t num_iovec = 1;
-      struct iovec vrwBuffers[3] = { rwBuffers->data(), sz };
+      struct iovec vrwBuffers[2] = { rBuffers->data(), sz };
 
 #  ifdef U_WELCOME_SUPPORT
       if (msg_welcome)
@@ -4958,15 +4989,15 @@ void UServer_Base::runLoop(const char* user)
          U_ERROR("io_uring_register_files_update() failed: %d%R", ret, 0); // NB: the last argument (0) is necessary...
          }
 
-      int flags = U_SYSCALL(fcntl, "%d,%d,%d", socket->iSockDesc, F_GETFL, 0);
+      if (handler_inotify) submit(UClientImage_Base::_POLL, handler_inotify); // this queues an poll()
 
-      U_INTERNAL_DUMP("O_RDWR = %u, O_NONBLOCK = %u, flags = %u %B", O_RDWR, O_NONBLOCK, flags, flags)
+      /*
+      U_INTERNAL_ASSERT_EQUALS(fcntl(pthis->fd,F_GETFL,0), O_RDWR | O_CLOEXEC)
 
-      if (flags == O_RDWR) (void) U_SYSCALL(fcntl, "%d,%d,%d", socket->iSockDesc, F_SETFL, O_RDWR | O_CLOEXEC);
+      socket->setFlags(O_RDWR | O_CLOEXEC);
+      */
 
       submit(UClientImage_Base::_ACCEPT); // this queues an accept()
-
-      if (handler_inotify) submit(UClientImage_Base::_POLL, handler_inotify); // this queues an poll()
       }
 # endif
 
@@ -5149,204 +5180,180 @@ void UServer_Base::runLoop(const char* user)
 
          void* data = (void*) U_SYSCALL(io_uring_cqe_get_data, "%p", cqe);
 
-         int op = ((uint32_t)(long)data);
+         U_SYSCALL_VOID(io_uring_cqe_seen, "%p,%p", io_uring, cqe); // signal that we consumed one
 
-         U_INTERNAL_DUMP("op = %u", op)
+         int op     = ((uint32_t)(long)data),
+             result = cqe->res;
 
-         switch (op)
+         U_INTERNAL_DUMP("op = %u %s result = %d", op, UClientImage_Base::getPendingOperationDescription(op), result)
+
+         /*
+         if (op == UClientImage_Base::_UPDATE)
             {
-            case UClientImage_Base::_UPDATE:
+            int fd = (int)((long)data>>32);
+
+            if (UNLIKELY(result < 0))
                {
-               int fd = (int)((long)data>>32);
+               u_errno = -result;
 
-               if (UNLIKELY(cqe->res < 0))
-                  {
-                  u_errno = -cqe->res;
-
-                  U_WARNING("update fd %d got %d%R", fd, cqe->res, 0); // NB: the last argument (0) is necessary...
-                  }
+               U_WARNING("update fd %d got %d%R", fd, result, 0); // NB: the last argument (0) is necessary...
                }
-            break;
 
-            case UClientImage_Base::_POLL:
+            continue;
+            }
+         */
+
+         if (op == UClientImage_Base::_POLL)
+            {
+            uint32_t  nHandlerIndex = (uint32_t)((long)data>>32);
+            UEventFd* pHandlerIndex = handler_poll->at(nHandlerIndex);
+
+            U_INTERNAL_DUMP("nHandlerIndex = %u pHandlerIndex->fd = %d result = %d", nHandlerIndex, pHandlerIndex->fd, result)
+
+            U_INTERNAL_ASSERT_DIFFERS(pHandlerIndex->fd, -1)
+
+            if (UNLIKELY(result < 0))
                {
-               uint32_t  nHandlerIndex = (uint32_t)((long)data>>32);
-               UEventFd* pHandlerIndex = handler_poll->at(nHandlerIndex);
+               u_errno = -result;
 
-               U_INTERNAL_DUMP("nHandlerIndex = %u pHandlerIndex->fd = %d cqe->res = %d", nHandlerIndex, pHandlerIndex->fd, cqe->res)
-
-               U_INTERNAL_ASSERT_DIFFERS(pHandlerIndex->fd, -1)
-
-               if (UNLIKELY(cqe->res < 0))
-                  {
-                  u_errno = -cqe->res;
-
-                  U_WARNING("poll fd %d got %d%R", pHandlerIndex->fd, cqe->res, 0); // NB: the last argument (0) is necessary...
-                  }
-               else
-                  {
-                  pHandlerIndex->handlerRead();
-
-                  submit(UClientImage_Base::_POLL, pHandlerIndex); // this queues an poll() - It's a one-shot operation that must be resubmitted after it completes
-                  }
+               U_WARNING("poll fd %d got %d%R", pHandlerIndex->fd, result, 0); // NB: the last argument (0) is necessary...
                }
-            break;
-
-            case UClientImage_Base::_ACCEPT:
+            else
                {
-               U_INTERNAL_DUMP("socketfds[0] = %d op(0x4) = UClientImage_Base::_ACCEPT", socketfds[0])
+               pHandlerIndex->handlerRead();
 
-               if (UNLIKELY(cqe->res < 0)) // standard accept errors -> ENETDOWN, EPROTO, ENOPROTOOPT, EHOSTDOWN, ENONET, EHOSTUNREACH, EOPNOTSUPP, ENETUNREACH
-                  {
-                  if (cqe->res == -EAGAIN) submit(UClientImage_Base::_ACCEPT); // this queues a accept()
-                  else
-                     {
-                     u_errno = -cqe->res;
-
-                     U_WARNING("accept got %d%R", cqe->res, 0); // NB: the last argument (0) is necessary...
-                     }
-                  }
-               else
-                  {
-                  findNextClientImage();
-
-                  csocket = pClientImage->socket;
-
-#              if !defined(U_SERVER_CAPTIVE_PORTAL) || !defined(ENABLE_THREAD)
-                  csocket->setRemoteAddressAndPort();
-
-                  setClientAddress();
-#              endif
-
-                  if (pthis->handlerAccept(pClientImage->fd = cqe->res) == false) submit(UClientImage_Base::_CLOSE);
-                  else
-                     {
-#                 ifndef U_LOG_DISABLE
-                     logNewClient(pClientImage->fd);
-#                 endif
-
-                     submit(UClientImage_Base::_UPDATE);
-
-#                 ifdef U_WELCOME_SUPPORT
-                     if (msg_welcome)
-                        {
-                        pClientImage->setNonBlocking();
-
-                        submit(UClientImage_Base::_WRITE, U_STRING_TO_PARAM(*msg_welcome), 1); // this queues a write()
-                        }
-                     else
-#                 endif
-                     pClientImage->setPendingOperationBlock();
-
-                     submit(UClientImage_Base::_READ);
-
-                     U_INTERNAL_DUMP("UNotifier::num_connection = %u UNotifier::max_connection = %u", UNotifier::num_connection, UNotifier::max_connection)
-
-                     if (UNotifier::num_connection < UNotifier::max_connection) submit(UClientImage_Base::_ACCEPT); // this queues an accept()
-                     }
-                  }
+               submit(UClientImage_Base::_POLL, pHandlerIndex); // this queues an poll() - It's a one-shot operation that must be resubmitted after it completes
                }
-            break;
 
-            case UClientImage_Base::_READ:
-            case UClientImage_Base::_WRITE:
-         // case UClientImage_Base::_WRITEV:
-            case UClientImage_Base::_CLOSE:
-               {
-               pClientImage = vClientImage + (nClientIndex = (uint32_t)((long)data>>32));
-
-               U_INTERNAL_ASSERT_RANGE(0L, nClientIndex, UNotifier::max_connection-1)
-
-               U_INTERNAL_DUMP("socketfds[%u] = %d pClientImage->fd = %d cqe->res = %d", 1+nClientIndex, socketfds[1+nClientIndex], pClientImage->fd, cqe->res)
-
-               U_INTERNAL_ASSERT_DIFFERS(pClientImage->fd, -1)
-
-               if (op == UClientImage_Base::_CLOSE)
-                  {
-                  if (socketfds[1+nClientIndex] == -1) pClientImage->resetPendingOperationClose();
-                  else
-                     {
-                     pClientImage->UClientImage_Base::handlerDelete();
-
-                     U_INTERNAL_ASSERT_EQUALS(pClientImage->fd, -1)
-                     U_ASSERT_EQUALS(pClientImage->isPendingOperationClose(), false)
-
-                     submit(UClientImage_Base::_UPDATE);
-                     }
-                  }
-               else if (pClientImage->isPendingOperationClose() == false)
-                  {
-                  if (op == UClientImage_Base::_WRITE)
-                     {
-                     if (pClientImage->isPendingOperationWrite()) pClientImage->resetPendingOperationWrite();
-
-                     if (UNLIKELY(cqe->res < 0))
-                        {
-                        u_errno = -cqe->res;
-
-                        U_WARNING("write on fd %d got %d%R", pClientImage->fd, cqe->res, 0); // NB: the last argument (0) is necessary...
-
-                        submit(UClientImage_Base::_CLOSE); // this queues a close()
-                        }
-                     }
-                  else
-                     {
-                     if (UNLIKELY(cqe->res < 0))
-                        {
-                        if (cqe->res == -EAGAIN)
-                           {
-                           U_ASSERT(pClientImage->isPendingOperationBlock())
-
-                           pClientImage->setNonBlocking();
-                           pClientImage->resetPendingOperationBlock();
-
-                           submit(UClientImage_Base::_READ); // this queues a read()
-                           }
-                        else
-                           {
-                           u_errno = -cqe->res;
-
-                           U_WARNING("read on fd %d got %d%R", pClientImage->fd, cqe->res, 0); // NB: the last argument (0) is necessary...
-
-                           submit(UClientImage_Base::_CLOSE); // this queues a close()
-                           }
-                        }
-                     else
-                        {
-                        if (cqe->res == 0)
-                           {
-                           U_ClientImage_state = U_NOTIFY_DELETE;
-
-                           submit(UClientImage_Base::_CLOSE); // this queues a close()
-                           }
-                        else
-                           {
-                           uint32_t startr,
-                                    startw = (startr = U_ClientImage_idx_buffer(pClientImage) * U_IO_BUFFER_SIZE) + rwBuffers->size() / 2;
-
-                           U_INTERNAL_DUMP("BytesRead(%u) = %#.*S", cqe->res, cqe->res, rwBuffers->c_pointer(startr))
-
-                           *UClientImage_Base::rbuffer = rwBuffers->substr(startr, cqe->res),
-                           *UClientImage_Base::wbuffer = rwBuffers->substr(startw, U_IO_BUFFER_SIZE);
-
-                           if (pClientImage->handlerRead() == U_NOTIFIER_DELETE) submit(UClientImage_Base::_CLOSE); // this queues a close()
-                           else
-                              {
-                              if (*UClientImage_Base::wbuffer) submit(UClientImage_Base::_WRITE, U_STRING_TO_PARAM(*UClientImage_Base::wbuffer), 0); // this queues a write()
-
-                              submit(UClientImage_Base::_READ); // this queues a read()
-                              }
-                           }
-                        }
-                     }
-                  }
-               }
-            break;
-
-            default: break; // never
+            continue;
             }
 
-         U_SYSCALL_VOID(io_uring_cqe_seen, "%p,%p", io_uring, cqe); // signal that we consumed one
+         if (op == UClientImage_Base::_ACCEPT)
+            {
+            U_INTERNAL_DUMP("socketfds[0] = %d", socketfds[0])
+
+            if (UNLIKELY(result < 0)) // standard accept errors -> ENETDOWN, EPROTO, ENOPROTOOPT, EHOSTDOWN, ENONET, EHOSTUNREACH, EOPNOTSUPP, ENETUNREACH
+               {
+               u_errno = -result;
+
+               U_WARNING("accept got %d%R", result, 0); // NB: the last argument (0) is necessary...
+               }
+            else
+               {
+               findNextClientImage();
+
+               (csocket = pClientImage->socket)->setFd(pClientImage->fd = result);
+
+#           if !defined(U_SERVER_CAPTIVE_PORTAL) || !defined(ENABLE_THREAD)
+               csocket->setRemoteAddressAndPort();
+
+               setClientAddress();
+#           endif
+
+               submit(pthis->handlerAccept(pClientImage->fd) ? UClientImage_Base::_CONNECT
+                                                             : UClientImage_Base::_CLOSE);
+               }
+
+            continue;
+            }
+
+         pClientImage = vClientImage + (nClientIndex = (uint32_t)((long)data>>32));
+
+         U_INTERNAL_ASSERT_RANGE(0L, nClientIndex, UNotifier::max_connection-1)
+
+         U_INTERNAL_DUMP("socketfds[%u] = %d pClientImage->fd = %d", 1+nClientIndex, socketfds[1+nClientIndex], pClientImage->fd)
+
+         if (pClientImage->fd == -1) continue;
+
+         if (op == UClientImage_Base::_CLOSE)
+            {
+            if (result < 0)
+               {
+               u_errno = -result;
+
+               U_WARNING("close on fd %d got %d%R", pClientImage->fd, result, 0); // NB: the last argument (0) is necessary...
+               }
+            else
+               {
+               if (socketfds[1+nClientIndex] == -1) pClientImage->resetPendingOperationClose();
+               else
+                  {
+                  pClientImage->socket->setFd(-1);
+
+                  pClientImage->UClientImage_Base::handlerDelete();
+
+                  U_INTERNAL_ASSERT_EQUALS(pClientImage->fd, -1)
+                  U_ASSERT_EQUALS(pClientImage->isPendingOperationClose(), false)
+
+                  register_files_update();
+                  }
+               }
+
+            continue;
+            }
+
+         if (pClientImage->isPendingOperationClose()) continue;
+
+         if (op == UClientImage_Base::_READ)
+            {
+            U_INTERNAL_DUMP("read fd(%d) = %d", pClientImage->fd, result);
+
+            if (result > 0)
+               {
+               uint32_t start = nClientIndex * rbuffer_size;
+
+               U_INTERNAL_DUMP("BytesRead(%u) = %#.*S", result, result, rBuffers->c_pointer(start))
+
+               if (UClientImage_Base::rbuffer->same(rbuffer) == false) UClientImage_Base::rbuffer->_assign(rbuffer);
+               else
+                  {
+                  U_ASSERT_EQUALS(UClientImage_Base::rbuffer->capacity(), rbuffer_size)
+
+                  rbuffer->set(result, rBuffers->c_pointer(start));
+                  }
+
+               csocket = pClientImage->socket;
+
+               submit(pClientImage->handlerRead() != U_NOTIFIER_DELETE ? UClientImage_Base::_READ
+                                                                       : UClientImage_Base::_CLOSE);
+               }
+            else if (result == 0)
+               {
+               U_ClientImage_state = U_NOTIFY_DELETE;
+
+               submit(UClientImage_Base::_CLOSE); // this queues a close()
+               }
+            else
+               {
+               if (result == -EAGAIN) submit(UClientImage_Base::_READ); // this queues a read()
+               else
+                  {
+                  u_errno = -result;
+
+                  U_WARNING("read on fd %d got %d%R", pClientImage->fd, result, 0); // NB: the last argument (0) is necessary...
+
+                  submit(UClientImage_Base::_CLOSE); // this queues a close()
+                  }
+               }
+
+            continue;
+            }
+
+         U_INTERNAL_DUMP("write fd(%d) = %d", pClientImage->fd, result);
+
+         U_INTERNAL_ASSERT(op == UClientImage_Base::_WRITE || 
+                           op == UClientImage_Base::_WRITEV)
+
+         if (UNLIKELY(result < 0))
+            {
+            u_errno = -result;
+
+            U_WARNING("write on fd %d got %d%R", pClientImage->fd, result, 0); // NB: the last argument (0) is necessary...
+
+            submit(UClientImage_Base::_CLOSE); // this queues a close()
+            }
+
+         pClientImage->resetPendingOperationWrite();
 
          continue;
          }

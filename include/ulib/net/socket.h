@@ -738,9 +738,11 @@ protected:
 
    void setFlags(int _flags)
       {
-      U_TRACE(1, "USocket::setFlags(%d)", _flags)
+      U_TRACE(1, "USocket::setFlags(%u)", _flags)
 
       U_INTERNAL_ASSERT(isOpen())
+
+      U_INTERNAL_DUMP("O_RDWR = %u, O_NONBLOCK = %u, flags = %u %B => %B", O_RDWR, O_NONBLOCK, flags, flags, _flags)
 
       (void) U_FF_SYSCALL(fcntl, "%d,%d,%d", iSockDesc, F_SETFL, (flags = _flags));
       }
@@ -864,6 +866,10 @@ protected:
     */
 
    void _socket(int iSocketType = 0, int domain = 0, int protocol = 0);
+
+#ifdef DEBUG
+   void dumpProperties();
+#endif
 
 private:
    U_DISALLOW_COPY_AND_ASSIGN(USocket)

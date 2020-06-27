@@ -4250,6 +4250,8 @@ found1:           U_INTERNAL_DUMP("ptr = %.14S", ptr)
                   {
                   UClientImage_Base::resetPipelineAndSetCloseConnection();
 
+                  if (UNLIKELY(UServer_Base::csocket->isClosed())) U_RETURN(U_PLUGIN_HANDLER_ERROR);
+
                   setInternalError();
 
                   U_RETURN(U_PLUGIN_HANDLER_OK);
@@ -4304,6 +4306,8 @@ found1:           U_INTERNAL_DUMP("ptr = %.14S", ptr)
                if (count > USocketExt::byte_read) upload->ftruncate(rsz + body_byte_read + USocketExt::byte_read);
 
                U_http_info.nResponseCode = HTTP_INTERNAL_ERROR;
+
+               if (UNLIKELY(UServer_Base::csocket->isClosed())) U_RETURN(U_PLUGIN_HANDLER_ERROR);
                }
 
 next0:      lbody.clear();
@@ -4320,6 +4324,8 @@ next0:      lbody.clear();
          if (USocketExt::read(UServer_Base::csocket, *UClientImage_Base::request, count, U_SSL_TIMEOUT_MS, request_read_timeout) == false)
             {
             U_http_info.nResponseCode = HTTP_INTERNAL_ERROR;
+
+            if (UNLIKELY(UServer_Base::csocket->isClosed())) U_RETURN(U_PLUGIN_HANDLER_ERROR);
 
 next1:      setResponse();
 

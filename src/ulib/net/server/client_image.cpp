@@ -283,10 +283,9 @@ void UClientImage_Base::init()
    U_INTERNAL_ASSERT_EQUALS(chronometer, U_NULLPTR)
 
 #ifdef USE_LIBURING
-   if (UServer_Base::brng) 
+   if (UServer_Base::brng)
       {
-      U_NEW_STRING(rbuffer, UString);
-      U_NEW_STRING(wbuffer, UString);
+      U_NEW_STRING(rbuffer, UString(UServer_Base::rbuffer));
       }
    else
 #endif
@@ -298,12 +297,12 @@ void UClientImage_Base::init()
 #endif
 
    U_NEW_STRING(rbuffer, UString(sz));
-   U_NEW_STRING(wbuffer, UString(U_CAPACITY));
    }
 
    U_NEW_STRING(body, UString);
    U_NEW_STRING(request, UString);
    U_NEW_STRING(request_uri, UString);
+   U_NEW_STRING(wbuffer, UString(U_CAPACITY));
    U_NEW_STRING(environment, UString(U_CAPACITY));
 
    // NB: these are for ULib Servlet Page (USP) - USP_PRINTF...
@@ -334,7 +333,7 @@ void UClientImage_Base::clear()
       U_INTERNAL_ASSERT_POINTER(environment)
       U_INTERNAL_ASSERT_POINTER(chronometer)
 
-      U_DELETE(body)
+         U_DELETE(body)
       U_DELETE(wbuffer)
       U_DELETE(rbuffer)
       U_DELETE(request)
@@ -1040,6 +1039,10 @@ void UClientImage_Base::prepareForRead()
 
    u_clientimage_info.flag.u = 0; // NB: U_ClientImage_parallelization is reset by this...
 
+#ifdef USE_LIBURING
+   if (UServer_Base::brng == false)
+#endif
+   {
 #ifdef U_CLASSIC_SUPPORT
    if (UServer_Base::isClassic())
       {
@@ -1080,10 +1083,6 @@ void UClientImage_Base::prepareForRead()
       }
    else
       {
-#  ifdef USE_LIBURING
-      if (UServer_Base::brng == false)
-#  endif
-      {
       // NB: called from UServer_Base::handlerRead...
 
       U_INTERNAL_DUMP("UServer_Base::csocket = %p socket = %p UServer_Base::pClientImage = %p this = %p", UServer_Base::csocket, socket, UServer_Base::pClientImage, this)
@@ -1093,7 +1092,6 @@ void UClientImage_Base::prepareForRead()
       U_INTERNAL_ASSERT_EQUALS(UServer_Base::pClientImage, this)
 
       UEventFd::fd = socket->iSockDesc;
-      }
       }
 
 #ifdef U_EVASIVE_SUPPORT
@@ -1117,6 +1115,7 @@ void UClientImage_Base::prepareForRead()
 #ifdef U_THROTTLING_SUPPORT
    UServer_Base::initThrottlingClient();
 #endif
+   }
 }
 
 bool UClientImage_Base::genericRead()
@@ -1129,10 +1128,10 @@ bool UClientImage_Base::genericRead()
 
    U_INTERNAL_DUMP("rbuffer(%u) = %V", rbuffer->size(), rbuffer->rep)
 
-#ifdef USE_LIBURING
-   if (UServer_Base::brng == false)
-#endif
-   {
+   socket->iState = USocket::CONNECT; // prepare socket before read
+
+   U_INTERNAL_ASSERT_EQUALS(socket->iSockDesc, UEventFd::fd)
+
 #if defined(DEBUG) || defined(U_EVASIVE_SUPPORT)
    if (UNLIKELY(socket->iSockDesc == -1))
       {
@@ -1151,14 +1150,14 @@ bool UClientImage_Base::genericRead()
       }
 #endif
 
+#ifdef USE_LIBURING
+   if (UServer_Base::brng == false)
+#endif
+   {
    // NB: rbuffer string can be referenced more than one (often if U_SUBSTR_INC_REF is defined)...
 
    if (rbuffer->uniq()) rbuffer->rep->_length = 0; 
    else                 rbuffer->_set(UStringRep::create(0U, U_CAPACITY, U_NULLPTR));
-
-   socket->iState = USocket::CONNECT; // prepare socket before read
-
-   U_INTERNAL_ASSERT_EQUALS(socket->iSockDesc, UEventFd::fd)
 
    if (data_pending)
       {
@@ -1219,39 +1218,25 @@ bool UClientImage_Base::genericRead()
 
 uint32_t UClientImage_Base::writev(struct iovec* iov, int iovcnt, uint32_t _count, int timeoutMS)
 {
-   U_TRACE(0, "UClientImage_Base::writev(%p,%d,%u,%d)", iov, iovcnt, _count, timeoutMS)
+   U_TRACE(0, "UClientImage_Base::writev(%p,%u,%u,%d)", iov, iovcnt, _count, timeoutMS)
+
+   U_INTERNAL_ASSERT_MAJOR(_count, 0)
+   U_INTERNAL_ASSERT_RANGE(0,iovcnt,256)
 
 #ifdef USE_LIBURING
    if (UServer_Base::brng)
       {
       U_DUMP_IOVEC(iov,iovcnt)
 
-      U_ASSERT(wbuffer->isConstant())
-      U_INTERNAL_ASSERT_MAJOR(_count, 0)
-      U_INTERNAL_ASSERT_RANGE(0,iovcnt,256)
-
       U_DUMP("U_ClientImage_pipeline = %b isPendingOperationWrite() = %b", U_ClientImage_pipeline, isPendingOperationWrite())
 
-      if (iovcnt == 1)
-         {
-         if (U_ClientImage_pipeline) UServer_Base::submit(_WRITE, iov->iov_base, iov->iov_len, 0); // this queues a write()
-
-         U_INTERNAL_ASSERT_RANGE(wbuffer->data(),iov->iov_base,wbuffer->pend())
-         }
-      else
-         {
-         UServer_Base::submit(_WRITEV, iov, iovcnt, 0); // this queues a writev()
-
-         wbuffer->size_adjust_constant(0U);
-         }
+      UServer_Base::submit(_WRITEV, iov, iovcnt, 0); // this queues a writev()
 
       U_RETURN(_count);
       }
-   else
 #endif
-   {
+
    return USocketExt::writev(socket, iov, iovcnt, _count, timeoutMS);
-   }
 }
 
 bool UClientImage_Base::isCallHandlerFailed()
@@ -1262,12 +1247,14 @@ bool UClientImage_Base::isCallHandlerFailed()
                     socket->isClosed(),     U_http_info.nResponseCode,     U_ClientImage_close,     U_ClientImage_state, U_ClientImage_state)
 
 #ifdef USE_LIBURING
-   if (UServer_Base::brng)
+   if (UServer_Base::brng         &&
+       (isPendingOperationClose() ||
+        (U_ClientImage_state & U_PLUGIN_HANDLER_ERROR) != 0))
       {
-      if ((U_ClientImage_state & U_PLUGIN_HANDLER_ERROR) != 0) U_RETURN(true);
+      U_RETURN(true);
       }
-   else
 #endif
+
    if (UNLIKELY(socket->isClosed())) U_RETURN(true);
 
    U_RETURN(false);
@@ -1360,7 +1347,6 @@ data_missing:
       U_INTERNAL_DUMP("U_ClientImage_parallelization = %u U_http_version = %C", U_ClientImage_parallelization, U_http_version)
 
       U_INTERNAL_ASSERT_DIFFERS(U_http_version, '2')
-      U_INTERNAL_ASSERT_EQUALS(UServer_Base::brng, false)
 
       if (U_ClientImage_parallelization == U_PARALLELIZATION_CHILD)
          {
@@ -1383,9 +1369,7 @@ data_missing:
 
       U_INTERNAL_DUMP("data_pending(%u) = %V", data_pending->size(), data_pending->rep)
 
-#  ifndef USE_LIBURING
       U_ASSERT(isOpen())
-#  endif
       U_INTERNAL_ASSERT_DIFFERS(U_ClientImage_parallelization, U_PARALLELIZATION_CHILD)
 
       U_RETURN(U_NOTIFIER_OK);
@@ -1787,9 +1771,7 @@ death:
 
    last_event = u_now->tv_sec;
 
-#ifndef USE_LIBURING
    U_ASSERT(isOpen())
-#endif
    U_INTERNAL_ASSERT_DIFFERS(U_ClientImage_parallelization, U_PARALLELIZATION_CHILD)
    U_INTERNAL_ASSERT_DIFFERS(U_ClientImage_parallelization, U_PARALLELIZATION_PARENT)
 
@@ -1829,9 +1811,7 @@ bool UClientImage_Base::writeResponse()
 
    U_INTERNAL_DUMP("U_ClientImage_pipeline = %b U_ClientImage_close = %b nrequest = %u", U_ClientImage_pipeline, U_ClientImage_close, nrequest)
 
-#ifndef USE_LIBURING
    U_ASSERT(isOpen())
-#endif
    U_INTERNAL_ASSERT(*wbuffer)
    U_INTERNAL_ASSERT_DIFFERS(U_http_version, '2')
    U_INTERNAL_ASSERT_DIFFERS(U_ClientImage_parallelization, U_PARALLELIZATION_PARENT)

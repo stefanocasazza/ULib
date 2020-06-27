@@ -653,13 +653,16 @@ void UNotifier::waitForEvent(vPFpv waitForEventFunc)
    ++nwatches;
 #endif
 
+   long delta;
    UEventTime* ptimeout;
 
-loop:
    U_gettimeofday // NB: optimization if it is enough a time resolution of one second...
 
    last_event = u_now->tv_sec;
 
+   U_INTERNAL_DUMP("u_now->tv_sec = %#3D last_event = %#3D", u_now->tv_sec, last_event)
+
+loop:
    waitForEventFunc(ptimeout = UTimer::getTimeout());
 
    if (nfd_ready == 0 &&
@@ -669,9 +672,16 @@ loop:
 
       U_gettimeofday // NB: optimization if it is enough a time resolution of one second...
 
-      last_event = u_now->tv_sec;
+      delta = (u_now->tv_sec - last_event);
 
-      UTimer::callHandlerTimeout();
+      U_INTERNAL_DUMP("delta = %ld u_now->tv_sec = %#3D last_event = %#3D", delta, u_now->tv_sec, last_event)
+
+      if (delta >= ptimeout->UTimeVal::tv_sec)
+         {
+         last_event = u_now->tv_sec;
+
+         UTimer::callHandlerTimeout();
+         }
 
       goto loop;
       }

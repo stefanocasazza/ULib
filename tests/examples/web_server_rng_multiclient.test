@@ -73,16 +73,19 @@ start_prg_background userver_rng -c inp/webserver_rng.cfg
 
 wait_server_ready localhost 8080
 
+echo "PID = `cat /var/run/userver_rng.pid`"
+
 #ab -k -n 2	     -c 2    "http://$ADDRESS:8080/servlet/benchmarking?name=stefano"  >/dev/null   2>&1
  ab -k -n 100    -c 2    'http://127.0.0.1:8080/servlet/benchmarking?name=stefano' >/tmp/ab.out 2>&1
 #ab -k -n 100000 -c 1000 'http://127.0.0.1:8080/servlet/benchmarking?name=stefano' >/tmp/ab.txt 2>&1
 $SLEEP
 $SLEEP
-kill_server userver_rng
+#kill_server userver_rng
+exit 0
 
 mv err/userver_rng.err err/web_server_rng_multiclient.err
 
-cat $DOC_ROOT/web_server_rng_multiclient.log > out/web_server_rng_multiclient.out
+cat /tmp/web_server_rng_multiclient.log > out/web_server_rng_multiclient.out
 
 # Test against expected output
 test_output_wc l web_server_rng_multiclient
