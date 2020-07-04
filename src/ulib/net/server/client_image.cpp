@@ -608,7 +608,12 @@ void UClientImage_Base::handlerDelete()
 
    if (data_pending)
       {
+#  ifdef USE_LIBURING
+      if (UServer_Base::brng == false)
+#  endif
+      {
       U_DELETE(data_pending)
+      }
 
       data_pending = U_NULLPTR;
       }
@@ -1223,12 +1228,13 @@ uint32_t UClientImage_Base::writev(struct iovec* iov, int iovcnt, uint32_t _coun
    U_INTERNAL_ASSERT_MAJOR(_count, 0)
    U_INTERNAL_ASSERT_RANGE(0,iovcnt,256)
 
+   U_INTERNAL_DUMP("U_ClientImage_parallelization = %u U_ClientImage_pipeline = %b", U_ClientImage_parallelization, U_ClientImage_pipeline)
+
 #ifdef USE_LIBURING
-   if (UServer_Base::brng)
+   if (UServer_Base::brng &&
+       U_ClientImage_parallelization != U_PARALLELIZATION_CHILD)
       {
       U_DUMP_IOVEC(iov,iovcnt)
-
-      U_DUMP("U_ClientImage_pipeline = %b isPendingOperationWrite() = %b", U_ClientImage_pipeline, isPendingOperationWrite())
 
       UServer_Base::submit(_WRITEV, iov, iovcnt, 0); // this queues a writev()
 
@@ -1361,16 +1367,20 @@ data_missing:
 
       U_ClientImage_data_missing = false;
 
+      U_ASSERT(isOpen())
       U_INTERNAL_ASSERT_EQUALS(data_pending, U_NULLPTR)
 
       if (U_ClientImage_parallelization == U_PARALLELIZATION_CHILD) goto loop;
 
+#  ifdef USE_LIBURING
+      if (UServer_Base::brng) data_pending = (UString*)(long)request->size();
+      else
+#  endif
+      {
       U_NEW_STRING(data_pending, UString((void*)U_STRING_TO_PARAM(*request)));
 
       U_INTERNAL_DUMP("data_pending(%u) = %V", data_pending->size(), data_pending->rep)
-
-      U_ASSERT(isOpen())
-      U_INTERNAL_ASSERT_DIFFERS(U_ClientImage_parallelization, U_PARALLELIZATION_CHILD)
+      }
 
       U_RETURN(U_NOTIFIER_OK);
       }

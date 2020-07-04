@@ -22,6 +22,10 @@
 #  include <asm/mman.h>
 #endif
 
+#ifndef MAP_SHARED_VALIDATE
+#define MAP_SHARED_VALIDATE MAP_SHARED
+#endif
+
 // struct stat {
 //    dev_t     st_dev;      /* device */
 //    ino_t     st_ino;      /* inode */
@@ -914,7 +918,7 @@ public:
       return UString::getStringNull();
       }
 
-   static char* mmap(uint32_t* plength, int _fd = -1, int prot = PROT_READ | PROT_WRITE, int flags = MAP_SHARED | MAP_ANONYMOUS, uint32_t offset = 0);
+   static char* mmap(uint32_t* plength, int _fd = -1, int prot = PROT_READ | PROT_WRITE, int flags = MAP_SHARED, uint32_t offset = 0);
 
    static char* shm_open(  const char* name, uint32_t length); // create/open POSIX shared memory object
    static void  shm_unlink(const char *name);                  //      unlink POSIX shared memory object

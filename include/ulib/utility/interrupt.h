@@ -211,11 +211,11 @@ struct U_EXPORT UInterrupt {
 
    // manage async signal
 
-   static bool syscall_restart; // NB: notify to make certain system calls restartable across signals...
    static int event_signal_pending;
    static struct sigaction old[NSIG];
    static sig_atomic_t event_signal[NSIG];
    static sighandler_t handler_signal[NSIG];
+   static bool call_handler_signal, syscall_restart; // NB: notify to make certain system calls restartable across signals...
 
    static void callHandlerSignal();
    static void checkForEventSignalPending()
@@ -280,6 +280,8 @@ struct U_EXPORT UInterrupt {
       ++event_signal[signo];
 
       event_signal_pending = (event_signal_pending ? NSIG : signo);
+
+      if (call_handler_signal) checkForEventSignalPending();
       }
 };
 

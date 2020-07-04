@@ -85,6 +85,7 @@ const char* UInterrupt::BUS_errlist[] = {
 
 int               UInterrupt::event_signal_pending;
 bool              UInterrupt::flag_alarm;
+bool              UInterrupt::call_handler_signal;
 bool              UInterrupt::syscall_restart; // NB: notify to make certain system calls restartable across signals...
 bool              UInterrupt::exit_loop_wait_event_for_signal;
 jmp_buf           UInterrupt::jbuf;

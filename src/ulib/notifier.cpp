@@ -714,12 +714,13 @@ bool UNotifier::isHandler(int fd)
 
    U_INTERNAL_ASSERT_DIFFERS(fd, -1)
 
-   bool result = false;
-
    U_INTERNAL_DUMP("num_connection = %u min_connection = %u", num_connection, min_connection)
 
-   if (num_connection > min_connection)
+   if (lo_map_fd &&
+       num_connection > min_connection)
       {
+      bool result;
+
       U_INTERNAL_ASSERT_POINTER(lo_map_fd)
       U_INTERNAL_ASSERT_POINTER(hi_map_fd)
 
@@ -732,9 +733,11 @@ bool UNotifier::isHandler(int fd)
 
          unlock();
          }
+
+      U_RETURN(result);
       }
 
-   U_RETURN(result);
+   U_RETURN(false);
 }
 
 bool UNotifier::setHandler(int fd)

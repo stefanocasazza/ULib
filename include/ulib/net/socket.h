@@ -283,9 +283,9 @@ public:
 
       U_INTERNAL_DUMP("O_NONBLOCK = %B, flags = %B", O_NONBLOCK, flags)
 
-      bool blocking = ((flags & O_NONBLOCK) != O_NONBLOCK);
+      if ((flags & O_NONBLOCK) != 0) U_RETURN(false);
 
-      U_RETURN(blocking);
+      U_RETURN(true);
       }
 
    void setBlocking();
@@ -742,7 +742,7 @@ protected:
 
       U_INTERNAL_ASSERT(isOpen())
 
-      U_INTERNAL_DUMP("O_RDWR = %u, O_NONBLOCK = %u, flags = %u %B => %B", O_RDWR, O_NONBLOCK, flags, flags, _flags)
+      U_INTERNAL_DUMP("O_RDWR = %u, O_NONBLOCK = %u %B, O_CLOEXEC = %u %B, flags = %u %B => %B", O_RDWR, O_NONBLOCK, O_NONBLOCK, O_CLOEXEC, O_CLOEXEC, flags, flags, _flags)
 
       (void) U_FF_SYSCALL(fcntl, "%d,%d,%d", iSockDesc, F_SETFL, (flags = _flags));
       }

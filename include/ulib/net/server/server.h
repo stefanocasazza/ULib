@@ -921,6 +921,8 @@ protected:
 
       U_INTERNAL_ASSERT_POINTER(ptime)
 
+      U_INTERNAL_DUMP("u_now->tv_sec = %#3D last_event = %#3D", u_now->tv_sec, last_event)
+
 #  if !defined(U_LOG_DISABLE) && defined(DEBUG)
       last_event = u_now->tv_sec;
 
@@ -1096,6 +1098,7 @@ protected:
 #endif
 
 #ifdef USE_LIBURING
+   static int fds[1];
    static int* socketfds;
    static UString* rBuffers;
    static UStringRep* rbuffer;
@@ -1136,17 +1139,17 @@ protected:
          }
       }
 
-   static void submitOperation(long op, int flags = 0)
+   static void setOperation(long op, int flags = 0)
       {
-      U_TRACE(1, "UServer_Base::submitOperation(%ld,%u)", op, flags)
+      U_TRACE(1, "UServer_Base::setOperation(%ld,%u)", op, flags)
 
       U_INTERNAL_DUMP("op = %s socketfds[%u] = %d pClientImage->fd = %d", UClientImage_Base::getPendingOperationDescription(op), 1+nClientIndex, socketfds[1+nClientIndex], pClientImage->fd)
 
-      U_SYSCALL_VOID(io_uring_sqe_set_flags, "%p,%u", sqe, flags | IOSQE_FIXED_FILE); // IOSQE_FIXED_FILE -> signals that we pass an index into socketfds rather than a file descriptor
+      // IOSQE_FIXED_FILE -> signals that we pass an index into socketfds rather than a file descriptor
+
+      U_SYSCALL_VOID(io_uring_sqe_set_flags, "%p,%u", sqe, flags | IOSQE_ASYNC | IOSQE_FIXED_FILE);
 
       U_SYSCALL_VOID(io_uring_sqe_set_data, "%p,%p", sqe, (void*)(((long)nClientIndex << 32) + op));
-
-      submit();
       }
 
    static int wait_cqe()
@@ -1183,21 +1186,6 @@ protected:
          {
          U_ERROR("io_uring_register_files_update() failed: %d%R", ret, 0); // NB: the last argument (0) is necessary...
          }
-
-      /*
-      get_sqe();
-
-      U_SYSCALL_VOID(io_uring_prep_files_update, "%p,%p,%u,%d", sqe, &(pClientImage->fd), 1, 0);
-
-      U_SYSCALL_VOID(io_uring_sqe_set_data, "%p,%p", sqe, (void*)(((long)pClientImage->fd << 32) + (long)UClientImage_Base::_UPDATE));
-
-      int ret = U_SYSCALL(io_uring_submit_and_wait, "%p,%u", io_uring, 1);
-
-      if (ret == -1)
-         {
-         U_ERROR("io_uring_submit_and_wait() failed: %d%R", ret, 0); // NB: the last argument (0) is necessary...
-         }
-      */
       }
 
    static void prepareForAccept()
@@ -1211,6 +1199,8 @@ protected:
       USocket::resetPeerAddr();
 
       U_SYSCALL_VOID(io_uring_prep_accept, "%p,%u,%p,%p,%u", sqe, 0, (struct sockaddr*)&USocket::peer_addr, &USocket::peer_addr_len, SOCK_CLOEXEC);
+
+      nClientIndex = 0;
       }
 
    static void epoll_ctl_batch(UEventFd* handler)
@@ -1272,6 +1262,7 @@ protected:
 
    // SERVICES
 
+   static void handlerStop();
    static void suspendThread();
 
    static void _preallocate()

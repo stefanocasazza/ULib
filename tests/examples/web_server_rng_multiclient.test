@@ -16,7 +16,7 @@ rm -f /tmp/web_server_rng_multiclient.log* \
                 trace.*userver_*.[0-9]*           object.*userver_*.[0-9]*           stack.*userver_*.[0-9]*           mempool.*userver_*.[0-9]* \
       $DOC_ROOT/trace.*userver_*.[0-9]* $DOC_ROOT/object.*userver_*.[0-9]* $DOC_ROOT/stack.*userver_*.[0-9]* $DOC_ROOT/mempool.*userver_*.[0-9]*
 
- UTRACE="0 50M 0"
+#UTRACE="0 20M 0"
 #UTRACE_SIGNAL="0 10M 0"
  UTRACE_FOLDER=/tmp
 MIMALLOC_VERBOSE=1
@@ -73,15 +73,14 @@ start_prg_background userver_rng -c inp/webserver_rng.cfg
 
 wait_server_ready localhost 8080
 
-echo "PID = `cat /var/run/userver_rng.pid`"
+#echo "PID = `cat /var/run/userver_rng.pid`"
 
 #ab -k -n 2	     -c 2    "http://$ADDRESS:8080/servlet/benchmarking?name=stefano"  >/dev/null   2>&1
  ab -k -n 100    -c 2    'http://127.0.0.1:8080/servlet/benchmarking?name=stefano' >/tmp/ab.out 2>&1
 #ab -k -n 100000 -c 1000 'http://127.0.0.1:8080/servlet/benchmarking?name=stefano' >/tmp/ab.txt 2>&1
 $SLEEP
 $SLEEP
-#kill_server userver_rng
-exit 0
+kill_server userver_rng
 
 mv err/userver_rng.err err/web_server_rng_multiclient.err
 

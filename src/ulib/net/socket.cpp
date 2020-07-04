@@ -523,7 +523,7 @@ bool USocket::enable_bpf()
 
 void USocket::reusePort(int _flags)
 {
-   U_TRACE(1, "USocket::reusePort(%d)", _flags)
+   U_TRACE(1, "USocket::reusePort(%u %B)", _flags, _flags)
 
    U_CHECK_MEMORY
 

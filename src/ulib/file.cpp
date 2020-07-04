@@ -499,7 +499,7 @@ char* UFile::mmap_anon_huge(uint32_t* plength, int flags)
 
    U_DEBUG("We are going to allocate (%u KB - %u bytes) - nfree = %u flags = %B", *plength / 1024U, *plength, nfree, flags)
 
-   ptr = (char*) U_SYSCALL(mmap, "%p,%u,%u,%u,%d,%I", U_NULLPTR, *plength, PROT_READ | PROT_WRITE, flags, -1, 0);
+   ptr = (char*) U_SYSCALL(mmap, "%p,%u,%u,%u,%d,%I", U_NULLPTR, *plength, PROT_READ | PROT_WRITE, flags | U_MAP_ANON, -1, 0);
 
 #ifdef HAVE_NUMA
    if ((flags & MAP_SHARED) == 0 &&
@@ -528,12 +528,7 @@ char* UFile::mmap(uint32_t* plength, int _fd, int prot, int flags, uint32_t offs
 
    U_INTERNAL_ASSERT_EQUALS(prot, PROT_READ | PROT_WRITE)
 
-   if ((flags & MAP_SHARED) != 0)
-      {
-      U_INTERNAL_ASSERT_DIFFERS(flags & MAP_ANONYMOUS, 0)
-
-      return mmap_anon_huge(plength, flags);
-      }
+   if ((flags & MAP_SHARED) != 0) return mmap_anon_huge(plength, flags);
 
    U_INTERNAL_ASSERT_DIFFERS(flags & MAP_PRIVATE, 0)
 

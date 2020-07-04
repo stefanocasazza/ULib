@@ -82,7 +82,7 @@ wait_server_ready localhost 8080
 #./sendbytes.pl
 #$NCAT -w 10 test          80 < inp/request.14215 >>out/web_server.out
 #$NCAT -w 10 10.10.100.115 80 < inp/http/all4.inp >>out/web_server.out
-#$CURL -m 10 http://$1/browserconfig.xml             >>out/web_server.out 2>>err/web_server.err
+#$CURL -m 10 http://$1/browserconfig.xml          >>out/web_server.out 2>>err/web_server.err
 #send_req $NCAT test 80 inp/request.14215 web_server 2
 #exit 0
 #return
