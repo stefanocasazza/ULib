@@ -75,6 +75,21 @@
 # ifdef U_APEX_ENABLE
 #  include <ulib/base/apex/apex_memmove.h>
 # endif
+# ifdef USE_LIBMIMALLOC
+#  include <mimalloc.h> // mimalloc-new-delete.h
+
+#  define  U_SYSCALL_FREE(p)    U_SYSCALL_VOID(mi_free, "%p", p)
+#  define  U_SYSCALL_MALLOC(sz) U_SYSCALL(mi_malloc, "%u", sz)
+
+#  define  U_SYSCALL_STRDUP(s)    U_SYSCALL(mi_strdup,  "%S", s)
+#  define  U_SYSCALL_STRNDUP(s,n) U_SYSCALL(mi_strndup, "%p,%u", s,n)
+# else
+#  define  U_SYSCALL_FREE(p)    U_SYSCALL_VOID(free, "%p", p)
+#  define  U_SYSCALL_MALLOC(sz) U_SYSCALL(malloc, "%u", sz)
+
+#  define  U_SYSCALL_STRDUP(s)    U_SYSCALL(strdup,  "%S", s)
+#  define  U_SYSCALL_STRNDUP(s,n) U_SYSCALL(strndup, "%p,%u", s,n)
+# endif
 #endif
 
 #ifdef USE_LIBSSL
@@ -206,7 +221,7 @@ typedef int   (*iPFpv)    (void*);
 typedef bool  (*bPFpc)    (const char*);
 typedef void  (*vPFpc)    (const char*);
 typedef void* (*pvPFpv)   (void*);
-typedef void  (*vpFpcu)   (const char*,uint32_t);
+typedef void  (*vPFpcu)   (const char*,uint32_t);
 typedef bool  (*bPFpcu)   (const char*,uint32_t);
 typedef void  (*vPFpvu)   (void*,uint32_t);
 typedef int   (*iPFpvpv)  (void*,void*);
@@ -604,6 +619,8 @@ static inline bool u_is_overlap(const char* restrict dst, const char* restrict s
 
    return true;
 }
+
+static inline bool u_is_overlap1(const char* restrict dst, const char* restrict src, const char* restrict end) { return u_is_overlap(dst, src, end-src); }
 
 static inline __pure const char* u_basename(const char* restrict path, uint32_t len)
 {

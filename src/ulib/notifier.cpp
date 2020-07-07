@@ -99,29 +99,8 @@ void UEventFd::operator()(int _fd, short event)
 int                  UNotifier::epollfd;
 struct epoll_event*  UNotifier::events;
 struct epoll_event*  UNotifier::pevents;
-#   ifdef U_EPOLLET_POSTPONE_STRATEGY
+#  ifdef U_EPOLLET_POSTPONE_STRATEGY
 bool                 UNotifier::bepollet;
-#  endif
-#  ifdef HAVE_EPOLL_CTL_BATCH
-int                  UNotifier::ctl_cmd_cnt;
-struct epoll_ctl_cmd UNotifier::ctl_cmd[U_EPOLL_CTL_CMD_SIZE];
-
-void UNotifier::batch(UEventFd* item)
-{
-   U_TRACE(0, "UNotifier::batch(%p)", item)
-
-   U_INTERNAL_ASSERT_POINTER(item)
-
-   U_INTERNAL_DUMP("item->fd = %d item->op_mask = %B num_connection = %d", item->fd, item->op_mask, num_connection)
-
-   U_INTERNAL_ASSERT_EQUALS(ctl_cmd[ctl_cmd_cnt].op, EPOLL_CTL_ADD)
-   U_INTERNAL_ASSERT_EQUALS(ctl_cmd[ctl_cmd_cnt].events, EPOLLIN | EPOLLRDHUP | EPOLLET)
-
-   ctl_cmd[ctl_cmd_cnt].fd   = item->fd;
-   ctl_cmd[ctl_cmd_cnt].data = item;
-
-   if (++ctl_cmd_cnt >= U_EPOLL_CTL_CMD_SIZE) insertBatch();
-}
 #  endif
 # elif defined(HAVE_KQUEUE)
 int            UNotifier::kq;
@@ -279,8 +258,8 @@ next:
    U_INTERNAL_ASSERT_EQUALS(kqevents, 0)
    U_INTERNAL_ASSERT_EQUALS(kqrevents, 0)
 
-   kqevents  = (struct kevent*) UMemoryPool::malloc(max_connection, sizeof(struct kevent), true);
-   kqrevents = (struct kevent*) UMemoryPool::malloc(max_connection, sizeof(struct kevent), true);
+   kqevents  = (struct kevent*) UMemoryPool::cmalloc(max_connection, sizeof(struct kevent), true);
+   kqrevents = (struct kevent*) UMemoryPool::cmalloc(max_connection, sizeof(struct kevent), true);
 
    // Check for Mac OS X kqueue bug. If kqueue works, then kevent will succeed, and it will stick an error in events[0].
    // If kqueue is broken, then kevent will fail (This detects an old bug in Mac OS X 10.4, fixed in 10.5)
@@ -299,20 +278,12 @@ next:
       {
       createMapFd();
 
-#ifdef HAVE_EPOLL_WAIT
+#  ifdef HAVE_EPOLL_WAIT
       U_INTERNAL_ASSERT_EQUALS(events, U_NULLPTR)
 
        events =
-      pevents = (struct epoll_event*) UMemoryPool::malloc(max_connection+1, sizeof(struct epoll_event), true);
-
-#  ifdef HAVE_EPOLL_CTL_BATCH
-      for (int i = 0; i < U_EPOLL_CTL_CMD_SIZE; ++i)
-         {
-         ctl_cmd[i].op     = EPOLL_CTL_ADD;
-         ctl_cmd[i].events = EPOLLIN | EPOLLRDHUP | EPOLLET;
-         }
+      pevents = (struct epoll_event*) UMemoryPool::cmalloc(max_connection+1, sizeof(struct epoll_event), true);
 #  endif
-#endif
       }
 }
 
@@ -374,9 +345,9 @@ void UNotifier::suspend(UEventFd* item)
 #endif
 }
 
-int UNotifier::waitForEvent(int fd_max, fd_set* read_set, fd_set* write_set, UEventTime* ptimeout)
+int UNotifier::waitForEvent4(int fd_max, fd_set* read_set, fd_set* write_set, UEventTime* ptimeout)
 {
-   U_TRACE(1, "UNotifier::waitForEvent(%d,%p,%p,%p)", fd_max, read_set, write_set, ptimeout)
+   U_TRACE(1, "UNotifier::waitForEvent4(%d,%p,%p,%p)", fd_max, read_set, write_set, ptimeout)
 
    U_INTERNAL_ASSERT_DIFFERS(U_ClientImage_parallelization, U_PARALLELIZATION_CHILD)
 
@@ -413,9 +384,9 @@ int UNotifier::waitForEvent(int fd_max, fd_set* read_set, fd_set* write_set, UEv
    U_RETURN(result);
 }
 
-void UNotifier::waitForEvent(UEventTime* ptimeout)
+void UNotifier::waitForEvent1(UEventTime* ptimeout)
 {
-   U_TRACE(0, "UNotifier::waitForEvent(%p)", ptimeout)
+   U_TRACE(0, "UNotifier::waitForEvent1(%p)", ptimeout)
 
 #if !defined(HAVE_EPOLL_WAIT) && !defined(HAVE_KQUEUE)
    fd_set read_set, write_set;
@@ -425,7 +396,7 @@ loop:
    if (fd_read_cnt)   read_set = fd_set_read;
    if (fd_write_cnt) write_set = fd_set_write;
 
-   nfd_ready = waitForEvent(fd_set_max,
+   nfd_ready = waitForEvent4(fd_set_max,
                 (fd_read_cnt  ? &read_set
                               : 0),
                 (fd_write_cnt ? &write_set
@@ -674,22 +645,25 @@ loop2:         if (pevents->events)
       }
 }
 
-void UNotifier::waitForEvent()
+void UNotifier::waitForEvent(vPFpv waitForEventFunc)
 {
-   U_TRACE_NO_PARAM(0, "UNotifier::waitForEvent()")
+   U_TRACE(0, "UNotifier::waitForEvent(%p)", waitForEventFunc)
 
 #ifdef DEBUG
    ++nwatches;
 #endif
 
+   long delta;
    UEventTime* ptimeout;
 
-loop:
    U_gettimeofday // NB: optimization if it is enough a time resolution of one second...
 
    last_event = u_now->tv_sec;
 
-   waitForEvent(ptimeout = UTimer::getTimeout());
+   U_INTERNAL_DUMP("u_now->tv_sec = %#3D last_event = %#3D", u_now->tv_sec, last_event)
+
+loop:
+   waitForEventFunc(ptimeout = UTimer::getTimeout());
 
    if (nfd_ready == 0 &&
        ptimeout  != U_NULLPTR)
@@ -698,9 +672,16 @@ loop:
 
       U_gettimeofday // NB: optimization if it is enough a time resolution of one second...
 
-      last_event = u_now->tv_sec;
+      delta = (u_now->tv_sec - last_event);
 
-      UTimer::callHandlerTimeout();
+      U_INTERNAL_DUMP("delta = %ld u_now->tv_sec = %#3D last_event = %#3D", delta, u_now->tv_sec, last_event)
+
+      if (delta >= ptimeout->UTimeVal::tv_sec)
+         {
+         last_event = u_now->tv_sec;
+
+         UTimer::callHandlerTimeout();
+         }
 
       goto loop;
       }
@@ -733,12 +714,13 @@ bool UNotifier::isHandler(int fd)
 
    U_INTERNAL_ASSERT_DIFFERS(fd, -1)
 
-   bool result = false;
-
    U_INTERNAL_DUMP("num_connection = %u min_connection = %u", num_connection, min_connection)
 
-   if (num_connection > min_connection)
+   if (lo_map_fd &&
+       num_connection > min_connection)
       {
+      bool result;
+
       U_INTERNAL_ASSERT_POINTER(lo_map_fd)
       U_INTERNAL_ASSERT_POINTER(hi_map_fd)
 
@@ -751,9 +733,11 @@ bool UNotifier::isHandler(int fd)
 
          unlock();
          }
+
+      U_RETURN(result);
       }
 
-   U_RETURN(result);
+   U_RETURN(false);
 }
 
 bool UNotifier::setHandler(int fd)
@@ -1356,11 +1340,83 @@ int UNotifier::waitForRead(int fd, int timeoutMS)
    FD_ZERO(&fdmask);
    FD_SET(fd, &fdmask);
 
-   int ret = waitForEvent(fd + 1, &fdmask, 0, ptime);
+   int ret = waitForEvent4(fd + 1, &fdmask, 0, ptime);
 #endif
 
    U_RETURN(ret);
 }
+
+#ifdef HAVE_EPOLL_WAIT
+bool UNotifier::waitOnAsynchronousBatch(const UVector<UEventFd*>& waiting, int op, int timeoutMS)
+{
+   U_TRACE_NO_PARAM(0, "UNotifier::waitOnAsynchronousBatch()");
+
+   int nfd_ready;
+   UEventFd* waiter;
+   bool result = true;
+   UTimeVal* timer = U_NULLPTR;
+   struct epoll_event*  levents;
+   struct epoll_event* lpevents;
+   int32_t waitingOnN = waiting.size();
+   int epollfd = U_SYSCALL(epoll_create1, "%d", 0);
+
+   for (uint32_t i = 0; i < (uint32_t)waitingOnN; ++i)
+      {
+      waiter = waiting.at(i);
+
+      struct epoll_event _events = { (uint32_t)op, { waiter } };
+
+      (void) U_FF_SYSCALL(epoll_ctl, "%d,%d,%d,%p", epollfd, EPOLL_CTL_ADD, waiter->UEventFd::fd, &_events);
+      }
+
+   if (timeoutMS > 0) U_NEW(UTimeVal, timer, UTimeVal);
+
+    levents =
+   lpevents = (struct epoll_event*) UMemoryPool::cmalloc(waitingOnN + 1, sizeof(struct epoll_event), true);
+
+   do {
+      if (timer) timer->start();
+
+      nfd_ready = U_FF_SYSCALL(epoll_wait, "%d,%p,%u,%d", epollfd, levents, waitingOnN, timeoutMS); 
+
+      if (nfd_ready <= 0) // either timed out or failed
+         {
+         result = false;
+
+         break;
+         }
+
+      waitingOnN -= nfd_ready;
+
+      if (timer) timeoutMS -= timer->stop(); // if it had timed out it would have returned 0, so we still have some time left
+
+      lpevents = levents;
+
+      do {
+         waiter = (UEventFd*)lpevents->data.ptr;
+
+         switch (op)
+            {
+            case POLLIN:  waiter->handlerRead();    break;
+            case POLLOUT: waiter->handlerConnect(); break; // it's the responsibility of the wrapper to check if the connect completed succesfully or not
+            default:                                break;
+            }
+
+         ++lpevents;
+         }
+      while (--nfd_ready > 0);
+      }
+   while (waitingOnN > 0);
+
+   if (timer) U_DELETE(timer);
+
+   UMemoryPool::_free(levents, waitingOnN + 1, sizeof(struct epoll_event));
+
+   (void) U_FF_SYSCALL(close, "%d", epollfd);
+
+   U_RETURN(result);
+}
+#endif
 
 int UNotifier::waitForWrite(int fd, int timeoutMS)
 {
@@ -1409,7 +1465,7 @@ int UNotifier::waitForWrite(int fd, int timeoutMS)
    FD_ZERO(&fdmask);
    FD_SET(fd, &fdmask);
 
-   int ret = waitForEvent(fd + 1, 0, &fdmask, ptime);
+   int ret = waitForEvent4(fd + 1, 0, &fdmask, ptime);
 #endif
 
    U_RETURN(ret);

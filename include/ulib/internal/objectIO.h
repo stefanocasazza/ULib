@@ -130,7 +130,11 @@ template <class T> inline char* U_OBJECT_TO_TRACE(T& object)
 
    char* str = UObject2String<T>(object);
 
+# ifdef USE_LIBMIMALLOC
+   str = mi_strndup(str, UObjectIO::buffer_output_len);
+#else
    str = strndup(str, UObjectIO::buffer_output_len);
+#endif
 
 #ifdef DEBUG
    u_trace_suspend = status;

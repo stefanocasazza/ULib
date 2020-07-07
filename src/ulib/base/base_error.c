@@ -77,385 +77,406 @@ void u_getSysError(uint32_t* restrict len)
 
    static const struct error_info error_table[] = {
 #if defined(EPERM)
-   U_ERR_ENTRY(EPERM, "Not owner"),
+   U_ERR_ENTRY(EPERM, "Not owner"), /* 1 */
 #endif
 #if defined(ENOENT)
-   U_ERR_ENTRY(ENOENT, "No such file or directory"),
+   U_ERR_ENTRY(ENOENT, "No such file or directory"), /* 2 */
 #endif
 #if defined(ESRCH)
-   U_ERR_ENTRY(ESRCH, "No such process"),
+   U_ERR_ENTRY(ESRCH, "No such process"), /* 3 */
 #endif
 #if defined(EINTR)
-   U_ERR_ENTRY(EINTR, "Interrupted system call"),
+   U_ERR_ENTRY(EINTR, "Interrupted system call"), /* 4 */
 #endif
 #if defined(EIO)
-   U_ERR_ENTRY(EIO, "I/O error"),
+   U_ERR_ENTRY(EIO, "I/O error"), /* 5 */
 #endif
 #if defined(ENXIO)
-   U_ERR_ENTRY(ENXIO, "No such device or address"),
+   U_ERR_ENTRY(ENXIO, "No such device or address"), /* 6 */
 #endif
 #if defined(E2BIG)
-   U_ERR_ENTRY(E2BIG, "Argument list too long"),
+   U_ERR_ENTRY(E2BIG, "Argument list too long"), /* 7 */
 #endif
 #if defined(ENOEXEC)
-   U_ERR_ENTRY(ENOEXEC, "Exec format error"),
+   U_ERR_ENTRY(ENOEXEC, "Exec format error"), /* 8 */
 #endif
 #if defined(EBADF)
-   U_ERR_ENTRY(EBADF, "Bad file number"),
+   U_ERR_ENTRY(EBADF, "Bad file number"), /* 9 */
 #endif
 #if defined(ECHILD)
-   U_ERR_ENTRY(ECHILD, "No child processes"),
+   U_ERR_ENTRY(ECHILD, "No child processes"), /* 10 */
 #endif
 #if defined(EWOULDBLOCK)   /* Put before EAGAIN, sometimes aliased */
    U_ERR_ENTRY(EWOULDBLOCK, "Operation would block"),
 #endif
 #if defined(EAGAIN)
-   U_ERR_ENTRY(EAGAIN, "No more processes"),
+   U_ERR_ENTRY(EAGAIN, "Try again"), /* 11 */
 #endif
 #if defined(ENOMEM)
-   U_ERR_ENTRY(ENOMEM, "Cannot allocate memory"),
+   U_ERR_ENTRY(ENOMEM, "Cannot allocate memory"), /* 12 */
 #endif
 #if defined(EACCES)
-   U_ERR_ENTRY(EACCES, "Permission denied"),
+   U_ERR_ENTRY(EACCES, "Permission denied"), /* 13 */
 #endif
 #if defined(EFAULT)
-   U_ERR_ENTRY(EFAULT, "Bad address"),
+   U_ERR_ENTRY(EFAULT, "Bad address"), /* 14 */
 #endif
 #if defined(ENOTBLK)
-   U_ERR_ENTRY(ENOTBLK, "Block device required"),
+   U_ERR_ENTRY(ENOTBLK, "Block device required"), /* 15 */
 #endif
 #if defined(EBUSY)
-   U_ERR_ENTRY(EBUSY, "Device busy"),
+   U_ERR_ENTRY(EBUSY, "Device busy"), /* 16 */
 #endif
 #if defined(EEXIST)
-   U_ERR_ENTRY(EEXIST, "File exists"),
+   U_ERR_ENTRY(EEXIST, "File exists"), /* 17 */
 #endif
 #if defined(EXDEV)
-   U_ERR_ENTRY(EXDEV, "Cross-device link"),
+   U_ERR_ENTRY(EXDEV, "Cross-device link"), /* 18 */
 #endif
 #if defined(ENODEV)
-   U_ERR_ENTRY(ENODEV, "No such device"),
+   U_ERR_ENTRY(ENODEV, "No such device"), /* 19 */
 #endif
 #if defined(ENOTDIR)
-   U_ERR_ENTRY(ENOTDIR, "Not a directory"),
+   U_ERR_ENTRY(ENOTDIR, "Not a directory"), /* 20 */
 #endif
 #if defined(EISDIR)
-   U_ERR_ENTRY(EISDIR, "Is a directory"),
+   U_ERR_ENTRY(EISDIR, "Is a directory"), /* 21 */
 #endif
 #if defined(EINVAL)
-   U_ERR_ENTRY(EINVAL, "Invalid argument"),
+   U_ERR_ENTRY(EINVAL, "Invalid argument"), /* 22 */
 #endif
 #if defined(ENFILE)
-   U_ERR_ENTRY(ENFILE, "File table overflow"),
+   U_ERR_ENTRY(ENFILE, "File table overflow"), /* 23 */
 #endif
 #if defined(EMFILE)
-   U_ERR_ENTRY(EMFILE, "Too many open files"),
+   U_ERR_ENTRY(EMFILE, "Too many open files"), /* 24 */
 #endif
 #if defined(ENOTTY)
-   U_ERR_ENTRY(ENOTTY, "Not a typewriter"),
+   U_ERR_ENTRY(ENOTTY, "Not a typewriter"), /* 25 */
 #endif
 #if defined(ETXTBSY)
-   U_ERR_ENTRY(ETXTBSY, "Text file busy"),
+   U_ERR_ENTRY(ETXTBSY, "Text file busy"), /* 26 */
 #endif
 #if defined(EFBIG)
-   U_ERR_ENTRY(EFBIG, "File too large"),
+   U_ERR_ENTRY(EFBIG, "File too large"), /* 27 */
 #endif
 #if defined(ENOSPC)
-   U_ERR_ENTRY(ENOSPC, "No space left on device"),
+   U_ERR_ENTRY(ENOSPC, "No space left on device"), /* 28 */
 #endif
 #if defined(ESPIPE)
-   U_ERR_ENTRY(ESPIPE, "Illegal seek"),
+   U_ERR_ENTRY(ESPIPE, "Illegal seek"), /* 29 */
 #endif
 #if defined(EROFS)
-   U_ERR_ENTRY(EROFS, "Read-only file system"),
+   U_ERR_ENTRY(EROFS, "Read-only file system"), /* 30 */
 #endif
 #if defined(EMLINK)
-   U_ERR_ENTRY(EMLINK, "Too many links"),
+   U_ERR_ENTRY(EMLINK, "Too many links"), /* 31 */
 #endif
 #if defined(EPIPE)
-   U_ERR_ENTRY(EPIPE, "Broken pipe"),
+   U_ERR_ENTRY(EPIPE, "Broken pipe"), /* 32 */
 #endif
 #if defined(EDOM)
-   U_ERR_ENTRY(EDOM, "Math argument out of domain of func"),
+   U_ERR_ENTRY(EDOM, "Math argument out of domain of func"), /* 33 */
 #endif
 #if defined(ERANGE)
-   U_ERR_ENTRY(ERANGE, "Math result not representable"),
-#endif
-#if defined(ENOMSG)
-   U_ERR_ENTRY(ENOMSG, "No message of desired type"),
-#endif
-#if defined(EIDRM)
-   U_ERR_ENTRY(EIDRM, "Identifier removed"),
-#endif
-#if defined(ECHRNG)
-   U_ERR_ENTRY(ECHRNG, "Channel number out of range"),
-#endif
-#if defined(EL2NSYNC)
-   U_ERR_ENTRY(EL2NSYNC, "Level 2 not synchronized"),
-#endif
-#if defined(EL3HLT)
-   U_ERR_ENTRY(EL3HLT, "Level 3 halted"),
-#endif
-#if defined(EL3RST)
-   U_ERR_ENTRY(EL3RST, "Level 3 reset"),
-#endif
-#if defined(ELNRNG)
-   U_ERR_ENTRY(ELNRNG, "Link number out of range"),
-#endif
-#if defined(EUNATCH)
-   U_ERR_ENTRY(EUNATCH, "Protocol driver not attached"),
-#endif
-#if defined(ENOCSI)
-   U_ERR_ENTRY(ENOCSI, "No CSI structure available"),
-#endif
-#if defined(EL2HLT)
-   U_ERR_ENTRY(EL2HLT, "Level 2 halted"),
+   U_ERR_ENTRY(ERANGE, "Math result not representable"), /* 34 */
 #endif
 #if defined(EDEADLK)
-   U_ERR_ENTRY(EDEADLK, "Deadlock condition"),
-#endif
-#if defined(ENOLCK)
-   U_ERR_ENTRY(ENOLCK, "No record locks available"),
-#endif
-#if defined(EBADE)
-   U_ERR_ENTRY(EBADE, "Invalid exchange"),
-#endif
-#if defined(EBADR)
-   U_ERR_ENTRY(EBADR, "Invalid request descriptor"),
-#endif
-#if defined(EXFULL)
-   U_ERR_ENTRY(EXFULL, "Exchange full"),
-#endif
-#if defined(ENOANO)
-   U_ERR_ENTRY(ENOANO, "No anode"),
-#endif
-#if defined(EBADRQC)
-   U_ERR_ENTRY(EBADRQC, "Invalid request code"),
-#endif
-#if defined(EBADSLT)
-   U_ERR_ENTRY(EBADSLT, "Invalid slot"),
-#endif
-#if defined(EDEADLOCK)
-   U_ERR_ENTRY(EDEADLOCK, "File locking deadlock error"),
-#endif
-#if defined(EBFONT)
-   U_ERR_ENTRY(EBFONT, "Bad font file format"),
-#endif
-#if defined(ENOSTR)
-   U_ERR_ENTRY(ENOSTR, "Device not a stream"),
-#endif
-#if defined(ENODATA)
-   U_ERR_ENTRY(ENODATA, "No data available"),
-#endif
-#if defined(ETIME)
-   U_ERR_ENTRY(ETIME, "Timer expired"),
-#endif
-#if defined(ENOSR)
-   U_ERR_ENTRY(ENOSR, "Out of streams resources"),
-#endif
-#if defined(ENONET)
-   U_ERR_ENTRY(ENONET, "Machine is not on the network"),
-#endif
-#if defined(ENOPKG)
-   U_ERR_ENTRY(ENOPKG, "Package not installed"),
-#endif
-#if defined(EREMOTE)
-   U_ERR_ENTRY(EREMOTE, "Object is remote"),
-#endif
-#if defined(ENOLINK)
-   U_ERR_ENTRY(ENOLINK, "Link has been severed"),
-#endif
-#if defined(EADV)
-   U_ERR_ENTRY(EADV, "Advertise error"),
-#endif
-#if defined(ESRMNT)
-   U_ERR_ENTRY(ESRMNT, "Srmount error"),
-#endif
-#if defined(ECOMM)
-   U_ERR_ENTRY(ECOMM, "Communication error on send"),
-#endif
-#if defined(EPROTO)
-   U_ERR_ENTRY(EPROTO, "Protocol error"),
-#endif
-#if defined(EMULTIHOP)
-   U_ERR_ENTRY(EMULTIHOP, "Multihop attempted"),
-#endif
-#if defined(EDOTDOT)
-   U_ERR_ENTRY(EDOTDOT, "RFS specific error"),
-#endif
-#if defined(EBADMSG)
-   U_ERR_ENTRY(EBADMSG, "Not a data message"),
+   U_ERR_ENTRY(EDEADLK, "Deadlock condition"), /* 35 */
 #endif
 #if defined(ENAMETOOLONG)
-   U_ERR_ENTRY(ENAMETOOLONG, "File name too long"),
+   U_ERR_ENTRY(ENAMETOOLONG, "File name too long"), /* 36 */
 #endif
-#if defined(EOVERFLOW)
-   U_ERR_ENTRY(EOVERFLOW, "Value too large for defined data type"),
-#endif
-#if defined(ENOTUNIQ)
-   U_ERR_ENTRY(ENOTUNIQ, "Name not unique on network"),
-#endif
-#if defined(EBADFD)
-   U_ERR_ENTRY(EBADFD, "File descriptor in bad state"),
-#endif
-#if defined(EREMCHG)
-   U_ERR_ENTRY(EREMCHG, "Remote address changed"),
-#endif
-#if defined(ELIBACC)
-   U_ERR_ENTRY(ELIBACC, "Cannot access a needed shared library"),
-#endif
-#if defined(ELIBBAD)
-   U_ERR_ENTRY(ELIBBAD, "Accessing a corrupted shared library"),
-#endif
-#if defined(ELIBSCN)
-   U_ERR_ENTRY(ELIBSCN, ".lib section in a.out corrupted"),
-#endif
-#if defined(ELIBMAX)
-   U_ERR_ENTRY(ELIBMAX, "Attempting to link in too many shared libraries"),
-#endif
-#if defined(ELIBEXEC)
-   U_ERR_ENTRY(ELIBEXEC, "Cannot exec a shared library directly"),
-#endif
-#if defined(EILSEQ)
-   U_ERR_ENTRY(EILSEQ, "Illegal byte sequence"),
+#if defined(ENOLCK)
+   U_ERR_ENTRY(ENOLCK, "No record locks available"), /* 37 */
 #endif
 #if defined(ENOSYS)
-   U_ERR_ENTRY(ENOSYS, "Operation not applicable"),
-#endif
-#if defined(ELOOP)
-   U_ERR_ENTRY(ELOOP, "Too many symbolic links encountered"),
-#endif
-#if defined(ERESTART)
-   U_ERR_ENTRY(ERESTART, "Interrupted system call should be restarted"),
-#endif
-#if defined(ESTRPIPE)
-   U_ERR_ENTRY(ESTRPIPE, "Streams pipe error"),
+   U_ERR_ENTRY(ENOSYS, "Operation not applicable"),  /* 38 */
 #endif
 #if defined(ENOTEMPTY)
-   U_ERR_ENTRY(ENOTEMPTY, "Directory not empty"),
+   U_ERR_ENTRY(ENOTEMPTY, "Directory not empty"), /* 39 */
+#endif
+#if defined(ELOOP)
+   U_ERR_ENTRY(ELOOP, "Too many symbolic links encountered"), /* 40 */
+#endif
+#if defined(ENOMSG)
+   U_ERR_ENTRY(ENOMSG, "No message of desired type"), /* 42 */
+#endif
+#if defined(EIDRM)
+   U_ERR_ENTRY(EIDRM, "Identifier removed"), /* 43 */
+#endif
+#if defined(ECHRNG)
+   U_ERR_ENTRY(ECHRNG, "Channel number out of range"), /* 44 */
+#endif
+#if defined(EL2NSYNC)
+   U_ERR_ENTRY(EL2NSYNC, "Level 2 not synchronized"), /* 45 */
+#endif
+#if defined(EL3HLT)
+   U_ERR_ENTRY(EL3HLT, "Level 3 halted"), /* 46 */
+#endif
+#if defined(EL3RST)
+   U_ERR_ENTRY(EL3RST, "Level 3 reset"), /* 47 */
+#endif
+#if defined(ELNRNG)
+   U_ERR_ENTRY(ELNRNG, "Link number out of range"), /* 48 */
+#endif
+#if defined(EUNATCH)
+   U_ERR_ENTRY(EUNATCH, "Protocol driver not attached"), /* 49 */
+#endif
+#if defined(ENOCSI)
+   U_ERR_ENTRY(ENOCSI, "No CSI structure available"), /* 50 */
+#endif
+#if defined(EL2HLT)
+   U_ERR_ENTRY(EL2HLT, "Level 2 halted"), /* 51 */
+#endif
+#if defined(EBADE)
+   U_ERR_ENTRY(EBADE, "Invalid exchange"), /* 52 */
+#endif
+#if defined(EBADR)
+   U_ERR_ENTRY(EBADR, "Invalid request descriptor"), /* 53 */
+#endif
+#if defined(EXFULL)
+   U_ERR_ENTRY(EXFULL, "Exchange full"), /* 54 */
+#endif
+#if defined(ENOANO)
+   U_ERR_ENTRY(ENOANO, "No anode"), /* 55 */
+#endif
+#if defined(EBADRQC)
+   U_ERR_ENTRY(EBADRQC, "Invalid request code"), /* 56 */
+#endif
+#if defined(EBADSLT)
+   U_ERR_ENTRY(EBADSLT, "Invalid slot"), /* 57 */
+#endif
+#if defined(EDEADLOCK) /* aliased with EDEADLK */
+   U_ERR_ENTRY(EDEADLOCK, "File locking deadlock error"), /* 35 */
+#endif
+#if defined(EBFONT)
+   U_ERR_ENTRY(EBFONT, "Bad font file format"), /* 59 */
+#endif
+#if defined(ENOSTR)
+   U_ERR_ENTRY(ENOSTR, "Device not a stream"), /* 60 */
+#endif
+#if defined(ENODATA)
+   U_ERR_ENTRY(ENODATA, "No data available"), /* 61 */
+#endif
+#if defined(ETIME)
+   U_ERR_ENTRY(ETIME, "Timer expired"), /* 62 */
+#endif
+#if defined(ENOSR)
+   U_ERR_ENTRY(ENOSR, "Out of streams resources"), /* 63 */
+#endif
+#if defined(ENONET)
+   U_ERR_ENTRY(ENONET, "Machine is not on the network"), /* 64 */
+#endif
+#if defined(ENOPKG)
+   U_ERR_ENTRY(ENOPKG, "Package not installed"), /* 65 */
+#endif
+#if defined(EREMOTE)
+   U_ERR_ENTRY(EREMOTE, "Object is remote"), /* 66 */
+#endif
+#if defined(ENOLINK)
+   U_ERR_ENTRY(ENOLINK, "Link has been severed"), /* 67 */
+#endif
+#if defined(EADV)
+   U_ERR_ENTRY(EADV, "Advertise error"), /* 68 */
+#endif
+#if defined(ESRMNT)
+   U_ERR_ENTRY(ESRMNT, "Srmount error"), /* 69 */
+#endif
+#if defined(ECOMM)
+   U_ERR_ENTRY(ECOMM, "Communication error on send"), /* 70 */
+#endif
+#if defined(EPROTO)
+   U_ERR_ENTRY(EPROTO, "Protocol error"), /* 71 */
+#endif
+#if defined(EMULTIHOP)
+   U_ERR_ENTRY(EMULTIHOP, "Multihop attempted"), /* 72 */
+#endif
+#if defined(EDOTDOT)
+   U_ERR_ENTRY(EDOTDOT, "RFS specific error"), /* 73 */
+#endif
+#if defined(EBADMSG)
+   U_ERR_ENTRY(EBADMSG, "Not a data message"), /* 74 */
+#endif
+#if defined(EOVERFLOW)
+   U_ERR_ENTRY(EOVERFLOW, "Value too large for defined data type"), /* 75 */
+#endif
+#if defined(ENOTUNIQ)
+   U_ERR_ENTRY(ENOTUNIQ, "Name not unique on network"), /* 76 */
+#endif
+#if defined(EBADFD)
+   U_ERR_ENTRY(EBADFD, "File descriptor in bad state"), /* 77 */
+#endif
+#if defined(EREMCHG)
+   U_ERR_ENTRY(EREMCHG, "Remote address changed"), /* 78 */
+#endif
+#if defined(ELIBACC)
+   U_ERR_ENTRY(ELIBACC, "Cannot access a needed shared library"), /* 79 */
+#endif
+#if defined(ELIBBAD)
+   U_ERR_ENTRY(ELIBBAD, "Accessing a corrupted shared library"), /* 80 */
+#endif
+#if defined(ELIBSCN)
+   U_ERR_ENTRY(ELIBSCN, ".lib section in a.out corrupted"), /* 81 */
+#endif
+#if defined(ELIBMAX)
+   U_ERR_ENTRY(ELIBMAX, "Attempting to link in too many shared libraries"), /* 82 */
+#endif
+#if defined(ELIBEXEC)
+   U_ERR_ENTRY(ELIBEXEC, "Cannot exec a shared library directly"), /* 83 */
+#endif
+#if defined(EILSEQ)
+   U_ERR_ENTRY(EILSEQ, "Illegal byte sequence"), /* 84 */
+#endif
+#if defined(ERESTART)
+   U_ERR_ENTRY(ERESTART, "Interrupted system call should be restarted"), /* 85 */
+#endif
+#if defined(ESTRPIPE)
+   U_ERR_ENTRY(ESTRPIPE, "Streams pipe error"), /* 86 */
 #endif
 #if defined(EUSERS)
-   U_ERR_ENTRY(EUSERS, "Too many users"),
+   U_ERR_ENTRY(EUSERS, "Too many users"), /* 87 */
 #endif
 #if defined(ENOTSOCK)
-   U_ERR_ENTRY(ENOTSOCK, "Socket operation on non-socket"),
+   U_ERR_ENTRY(ENOTSOCK, "Socket operation on non-socket"), /* 88 */
 #endif
 #if defined(EDESTADDRREQ)
-   U_ERR_ENTRY(EDESTADDRREQ, "Destination address required"),
+   U_ERR_ENTRY(EDESTADDRREQ, "Destination address required"), /* 89 */
 #endif
 #if defined(EMSGSIZE)
-   U_ERR_ENTRY(EMSGSIZE, "Message too long"),
+   U_ERR_ENTRY(EMSGSIZE, "Message too long"), /* 90 */
 #endif
 #if defined(EPROTOTYPE)
-   U_ERR_ENTRY(EPROTOTYPE, "Protocol wrong type for socket"),
+   U_ERR_ENTRY(EPROTOTYPE, "Protocol wrong type for socket"), /* 91 */
 #endif
 #if defined(ENOPROTOOPT)
-   U_ERR_ENTRY(ENOPROTOOPT, "Protocol not available"),
+   U_ERR_ENTRY(ENOPROTOOPT, "Protocol not available"), /* 92 */
 #endif
 #if defined(EPROTONOSUPPORT)
-   U_ERR_ENTRY(EPROTONOSUPPORT, "Protocol not supported"),
+   U_ERR_ENTRY(EPROTONOSUPPORT, "Protocol not supported"), /* 93 */
 #endif
 #if defined(ESOCKTNOSUPPORT)
-   U_ERR_ENTRY(ESOCKTNOSUPPORT, "Socket type not supported"),
+   U_ERR_ENTRY(ESOCKTNOSUPPORT, "Socket type not supported"), /* 94 */
 #endif
 #if defined(EOPNOTSUPP)
-   U_ERR_ENTRY(EOPNOTSUPP, "Operation not supported on transport endpoint"),
+   U_ERR_ENTRY(EOPNOTSUPP, "Operation not supported on transport endpoint"), /* 95 */
 #endif
 #if defined(EPFNOSUPPORT)
-   U_ERR_ENTRY(EPFNOSUPPORT, "Protocol family not supported"),
+   U_ERR_ENTRY(EPFNOSUPPORT, "Protocol family not supported"), /* 96 */
 #endif
 #if defined(EAFNOSUPPORT)
-   U_ERR_ENTRY(EAFNOSUPPORT, "Address family not supported by protocol"),
+   U_ERR_ENTRY(EAFNOSUPPORT, "Address family not supported by protocol"), /* 97 */
 #endif
 #if defined(EADDRINUSE)
-   U_ERR_ENTRY(EADDRINUSE, "Address already in use"),
+   U_ERR_ENTRY(EADDRINUSE, "Address already in use"), /* 98 */
 #endif
 #if defined(EADDRNOTAVAIL)
-   U_ERR_ENTRY(EADDRNOTAVAIL, "Cannot assign requested address"),
+   U_ERR_ENTRY(EADDRNOTAVAIL, "Cannot assign requested address"), /* 99 */
 #endif
 #if defined(ENETDOWN)
-   U_ERR_ENTRY(ENETDOWN, "Network is down"),
+   U_ERR_ENTRY(ENETDOWN, "Network is down"), /* 100 */
 #endif
 #if defined(ENETUNREACH)
-   U_ERR_ENTRY(ENETUNREACH, "Network is unreachable"),
+   U_ERR_ENTRY(ENETUNREACH, "Network is unreachable"), /* 101 */
 #endif
 #if defined(ENETRESET)
-   U_ERR_ENTRY(ENETRESET, "Network dropped connection because of reset"),
+   U_ERR_ENTRY(ENETRESET, "Network dropped connection because of reset"), /* 102 */
 #endif
 #if defined(ECONNABORTED)
-   U_ERR_ENTRY(ECONNABORTED, "Software caused connection abort"),
+   U_ERR_ENTRY(ECONNABORTED, "Software caused connection abort"), /* 103 */
 #endif
 #if defined(ECONNRESET)
-   U_ERR_ENTRY(ECONNRESET, "Connection reset by peer"),
+   U_ERR_ENTRY(ECONNRESET, "Connection reset by peer"), /* 104 */
 #endif
 #if defined(ENOBUFS)
-   U_ERR_ENTRY(ENOBUFS, "No buffer space available"),
+   U_ERR_ENTRY(ENOBUFS, "No buffer space available"), /* 105 */
 #endif
 #if defined(EISCONN)
-   U_ERR_ENTRY(EISCONN, "Transport endpoint is already connected"),
+   U_ERR_ENTRY(EISCONN, "Transport endpoint is already connected"), /* 106 */
 #endif
 #if defined(ENOTCONN)
-   U_ERR_ENTRY(ENOTCONN, "Transport endpoint is not connected"),
+   U_ERR_ENTRY(ENOTCONN, "Transport endpoint is not connected"), /* 107 */
 #endif
 #if defined(ESHUTDOWN)
-   U_ERR_ENTRY(ESHUTDOWN, "Cannot send after transport endpoint shutdown"),
+   U_ERR_ENTRY(ESHUTDOWN, "Cannot send after transport endpoint shutdown"), /* 108 */
 #endif
 #if defined(ETOOMANYREFS)
-   U_ERR_ENTRY(ETOOMANYREFS, "Too many references: cannot splice"),
+   U_ERR_ENTRY(ETOOMANYREFS, "Too many references: cannot splice"), /* 109 */
 #endif
 #if defined(ETIMEDOUT)
-   U_ERR_ENTRY(ETIMEDOUT, "Connection timed out"),
+   U_ERR_ENTRY(ETIMEDOUT, "Connection timed out"), /* 110 */
 #endif
 #if defined(ECONNREFUSED)
-   U_ERR_ENTRY(ECONNREFUSED, "Connection refused"),
+   U_ERR_ENTRY(ECONNREFUSED, "Connection refused"), /* 111 */
 #endif
 #if defined(EHOSTDOWN)
-   U_ERR_ENTRY(EHOSTDOWN, "Host is down"),
+   U_ERR_ENTRY(EHOSTDOWN, "Host is down"), /* 112 */
 #endif
 #if defined(EHOSTUNREACH)
-   U_ERR_ENTRY(EHOSTUNREACH, "No route to host"),
+   U_ERR_ENTRY(EHOSTUNREACH, "No route to host"), /* 113 */
 #endif
 #if defined(EALREADY)
-   U_ERR_ENTRY(EALREADY, "Operation already in progress"),
+   U_ERR_ENTRY(EALREADY, "Operation already in progress"), /* 114 */
 #endif
 #if defined(EINPROGRESS)
-   U_ERR_ENTRY(EINPROGRESS, "Operation now in progress"),
+   U_ERR_ENTRY(EINPROGRESS, "Operation now in progress"), /* 115 */
 #endif
 #if defined(ESTALE)
-   U_ERR_ENTRY(ESTALE, "Stale NFS file handle"),
+   U_ERR_ENTRY(ESTALE, "Stale NFS file handle"), /* 116 */
 #endif
 #if defined(EUCLEAN)
-   U_ERR_ENTRY(EUCLEAN, "Structure needs cleaning"),
+   U_ERR_ENTRY(EUCLEAN, "Structure needs cleaning"), /* 117 */
 #endif
 #if defined(ENOTNAM)
-   U_ERR_ENTRY(ENOTNAM, "Not a XENIX named type file"),
+   U_ERR_ENTRY(ENOTNAM, "Not a XENIX named type file"), /* 118 */
 #endif
 #if defined(ENAVAIL)
-   U_ERR_ENTRY(ENAVAIL, "No XENIX semaphores available"),
+   U_ERR_ENTRY(ENAVAIL, "No XENIX semaphores available"), /* 119 */
 #endif
 #if defined(EISNAM)
-   U_ERR_ENTRY(EISNAM, "Is a named type file"),
+   U_ERR_ENTRY(EISNAM, "Is a named type file"), /* 120 */
 #endif
 #if defined(EREMOTEIO)
-   U_ERR_ENTRY(EREMOTEIO, "Remote I/O error"),
+   U_ERR_ENTRY(EREMOTEIO, "Remote I/O error"), /* 121 */
 #endif
 #if defined(EDQUOT)
-   U_ERR_ENTRY(EDQUOT, "Quota exceeded"),
+   U_ERR_ENTRY(EDQUOT, "Quota exceeded"), /* 122 */
 #endif
 #if defined(ENOMEDIUM)
-   U_ERR_ENTRY(ENOMEDIUM, "No medium found"),
+   U_ERR_ENTRY(ENOMEDIUM, "No medium found"), /* 123 */
 #endif
 #if defined(EMEDIUMTYPE)
-   U_ERR_ENTRY(EMEDIUMTYPE, "Wrong medium type"),
+   U_ERR_ENTRY(EMEDIUMTYPE, "Wrong medium type"), /* 124 */
 #endif
-#if defined(ENMFILE)
-   U_ERR_ENTRY(ENMFILE, "No more files"),
+#if defined(ECANCELED)
+   U_ERR_ENTRY(ECANCELED, "Operation canceled"), /* 125 */
+#endif
+#if defined(ENOKEY)
+   U_ERR_ENTRY(ENOKEY, "Required key not available"), /* 126 */
+#endif
+#if defined(EKEYEXPIRED)
+   U_ERR_ENTRY(EKEYEXPIRED, "Key has expired"), /* 127 */
+#endif
+#if defined(EKEYREVOKED)
+   U_ERR_ENTRY(EKEYREVOKED, "Key has been revoked"), /* 128 */
+#endif
+#if defined(EKEYREJECTED)
+   U_ERR_ENTRY(EKEYREJECTED, "Key was rejected by service"), /* 129 */
+#endif
+#if defined(EOWNERDEAD)
+   U_ERR_ENTRY(EOWNERDEAD, "Owner died"), /* 130 */
+#endif
+#if defined(ENOTRECOVERABLE)
+   U_ERR_ENTRY(ENOTRECOVERABLE, "State not recoverable"), /* 131 */
+#endif
+#if defined(ERFKILL)
+   U_ERR_ENTRY(ERFKILL, "Operation not possible due to RF-kill"), /* 132 */
+#endif
+#if defined(EHWPOISON)
+   U_ERR_ENTRY(EHWPOISON, "Memory page has hardware error"), /* 133 */
 #endif
 #if defined(ENOSHARE)
-   U_ERR_ENTRY(ENOSHARE, "No such host or network path"),
-#endif
-#if defined(EPROCLIM)
-   U_ERR_ENTRY(EPROCLIM, "Too many processes")
+   U_ERR_ENTRY(ENOSHARE, "No such host or network path"), /* ??? */
 #endif
 };
 

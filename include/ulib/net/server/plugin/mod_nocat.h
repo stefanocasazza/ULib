@@ -15,7 +15,6 @@
 #define U_MOD_NOCAT_H 1
 
 #include <ulib/url.h>
-#include <ulib/timer.h>
 #include <ulib/command.h>
 #include <ulib/net/ping.h>
 #include <ulib/net/tcpsocket.h>
@@ -47,10 +46,10 @@ public:
    U_MEMORY_TEST
 
    // Allocator e Deallocator
-   void* operator new(                 size_t sz) { U_TRACE(0, "UModNoCatPeer::operator new(%u)",   sz) return U_SYSCALL(malloc, "%u", sz); }
-   void* operator new[](               size_t sz) { U_TRACE(0, "UModNoCatPeer::operator new[](%u)", sz) return U_SYSCALL(malloc, "%u", sz); }
-   void  operator delete(  void* _ptr, size_t sz) { U_TRACE(0, "UModNoCatPeer::operator delete(%p,%u)",   _ptr, sz) U_SYSCALL_VOID(free, "%p", _ptr); }
-   void  operator delete[](void* _ptr, size_t sz) { U_TRACE(0, "UModNoCatPeer::operator delete[](%p,%u)", _ptr, sz) U_SYSCALL_VOID(free, "%p", _ptr); } 
+   void* operator new(                 size_t sz) { U_TRACE(0, "UModNoCatPeer::operator new(%u)",   sz) return U_SYSCALL_MALLOC(sz); }
+   void* operator new[](               size_t sz) { U_TRACE(0, "UModNoCatPeer::operator new[](%u)", sz) return U_SYSCALL_MALLOC(sz); }
+   void  operator delete(  void* _ptr, size_t sz) { U_TRACE(0, "UModNoCatPeer::operator delete(%p,%u)",   _ptr, sz) U_SYSCALL_FREE(_ptr); }
+   void  operator delete[](void* _ptr, size_t sz) { U_TRACE(0, "UModNoCatPeer::operator delete[](%p,%u)", _ptr, sz) U_SYSCALL_FREE(_ptr); } 
 
    void init()
       {

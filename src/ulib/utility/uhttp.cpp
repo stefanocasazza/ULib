@@ -3881,9 +3881,9 @@ int UHTTP::handlerREAD()
 #endif
 
 #ifndef U_HTTP2_DISABLE
-   U_INTERNAL_DUMP("U_ClientImage_http = %C", U_ClientImage_http(UServer_Base::pClientImage))
+   U_DUMP("UServer_Base::pClientImage->isFlagStatusHttp2() = %b", UServer_Base::pClientImage->isFlagStatusHttp2())
 
-   if (U_ClientImage_http(UServer_Base::pClientImage) == '2')
+   if (UServer_Base::pClientImage->isFlagStatusHttp2())
       {
       U_http_version = '2';
 
@@ -4250,6 +4250,8 @@ found1:           U_INTERNAL_DUMP("ptr = %.14S", ptr)
                   {
                   UClientImage_Base::resetPipelineAndSetCloseConnection();
 
+                  if (UNLIKELY(UServer_Base::csocket->isClosed())) U_RETURN(U_PLUGIN_HANDLER_ERROR);
+
                   setInternalError();
 
                   U_RETURN(U_PLUGIN_HANDLER_OK);
@@ -4304,6 +4306,8 @@ found1:           U_INTERNAL_DUMP("ptr = %.14S", ptr)
                if (count > USocketExt::byte_read) upload->ftruncate(rsz + body_byte_read + USocketExt::byte_read);
 
                U_http_info.nResponseCode = HTTP_INTERNAL_ERROR;
+
+               if (UNLIKELY(UServer_Base::csocket->isClosed())) U_RETURN(U_PLUGIN_HANDLER_ERROR);
                }
 
 next0:      lbody.clear();
@@ -4320,6 +4324,8 @@ next0:      lbody.clear();
          if (USocketExt::read(UServer_Base::csocket, *UClientImage_Base::request, count, U_SSL_TIMEOUT_MS, request_read_timeout) == false)
             {
             U_http_info.nResponseCode = HTTP_INTERNAL_ERROR;
+
+            if (UNLIKELY(UServer_Base::csocket->isClosed())) U_RETURN(U_PLUGIN_HANDLER_ERROR);
 
 next1:      setResponse();
 
@@ -4703,7 +4709,11 @@ file_in_cache:
       U_DUMP("U_http_info.nResponseCode = %u", U_http_info.nResponseCode)
 
 #  ifdef U_EVASIVE_SUPPORT
-      if (UServer_Base::checkHitUriStats()) U_RETURN(U_PLUGIN_HANDLER_ERROR);
+      if (UServer_Base::db_evasive &&
+          UServer_Base::checkHitUriStats())
+         {
+         U_RETURN(U_PLUGIN_HANDLER_ERROR);
+         }
 #  endif
 
 #  if defined(U_HTTP_STRICT_TRANSPORT_SECURITY) || defined(USE_LIBSSL)
@@ -4852,6 +4862,7 @@ from_cache:
 #ifdef U_EVASIVE_SUPPORT
    if (UClientImage_Base::isRequestNotFound()         == false && // => 3)
        UClientImage_Base::isRequestAlreadyProcessed() == false && // => 4)
+       UServer_Base::db_evasive                                &&
        UServer_Base::checkHitUriStats())
       {
       U_RETURN(U_PLUGIN_HANDLER_ERROR);
@@ -4908,7 +4919,7 @@ from_cache:
 
          if (UServer_Base::startParallelization() == false) UWebSocket::handlerRequest(); // child
 #     else
-         U_ClientImage_http(UServer_Base::pClientImage) = '0';
+         UClientImage_Base::setFlagStatusWebSocket();
 
          U_ClientImage_parallelization = U_PARALLELIZATION_PARENT;
 
@@ -10772,10 +10783,7 @@ U_NO_EXPORT bool UHTTP::manageSendfile(const char* ptr, uint32_t len)
          handlerResponse();
 
          if (file_data->fd != UServer_Base::pClientImage->sfd) file->close();
-         else
-            {
-            U_ClientImage_pclose(UServer_Base::pClientImage) = U_CLOSE;
-            }
+         else                 UServer_Base::pClientImage->setFlagStatusClose();
          }
 
       U_RETURN(true);

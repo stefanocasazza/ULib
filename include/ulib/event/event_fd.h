@@ -87,12 +87,14 @@ public:
       }
 
    // method VIRTUAL to define
-
+   
    virtual int handlerRead()    { return U_NOTIFIER_DELETE; }
    virtual int handlerWrite()   { return U_NOTIFIER_DELETE; }
    virtual int handlerTimeout() { return U_NOTIFIER_DELETE; }
+   virtual int handlerConnect() { return U_NOTIFIER_DELETE; }
+   virtual int handlerRequest() { return 0; }
 
-   virtual void handlerDelete() { delete this; }
+   virtual void handlerDelete()  { delete this; }
 
 #ifdef USE_LIBEVENT
    UEvent<UEventFd>* pevent;

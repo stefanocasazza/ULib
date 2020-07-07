@@ -110,25 +110,10 @@ public:
    static void suspend(UEventFd* item);
    static void  resume(UEventFd* item, uint32_t flags = EPOLLOUT);
 
-   static void waitForEvent();
-   static void waitForEvent(                                                 UEventTime* ptimeout);
-   static int  waitForEvent(int fd_max, fd_set* read_set, fd_set* write_set, UEventTime* ptimeout);
+   static void waitForEvent1(                                                 UEventTime* ptimeout);
+   static int  waitForEvent4(int fd_max, fd_set* read_set, fd_set* write_set, UEventTime* ptimeout);
 
-# ifdef HAVE_EPOLL_CTL_BATCH
-   static void insertBatch()
-      {
-      U_TRACE_NO_PARAM(0, "UNotifier::insertBatch()")
-
-      if (ctl_cmd_cnt)
-         {
-         (void) U_SYSCALL(epoll_ctl_batch, "%d,%d,%d,%p", epollfd, 0, ctl_cmd_cnt, ctl_cmd);
-
-         ctl_cmd_cnt = 0;
-         }
-      }
-
-   static void batch((UEventFd* handler_event);
-# endif
+   static void waitForEvent(vPFpv waitForEventFunc = (vPFpv)UNotifier::waitForEvent1);
 #else
    static void init()
       {
@@ -160,16 +145,16 @@ public:
       // TODO: implement resume() for libevent
       }
 
-   static int waitForEvent(int fd_max, fd_set* read_set, fd_set* write_set, UEventTime* ptimeout)
+   static int waitForEvent4(int fd_max, fd_set* read_set, fd_set* write_set, UEventTime* ptimeout)
       {
-      U_TRACE(0, "UNotifier::waitForEvent(%d,%p,%p,%p)", fd_max, read_set, write_set, ptimeout)
+      U_TRACE(0, "UNotifier::waitForEvent4(%d,%p,%p,%p)", fd_max, read_set, write_set, ptimeout)
 
       U_RETURN(-1);
       }
 
-   static void waitForEvent(UEventTime* ptimeout)
+   static void waitForEvent1(UEventTime* ptimeout)
       {
-      U_TRACE(0, "UNotifier::waitForEvent(%p)", ptimeout)
+      U_TRACE(0, "UNotifier::waitForEvent1(%p)", ptimeout)
 
       (void) UDispatcher::dispatch(UDispatcher::ONCE);
       }
@@ -185,7 +170,11 @@ public:
 #  endif
       }
 #endif
-
+   
+#ifdef HAVE_EPOLL_WAIT
+   static bool waitOnAsynchronousBatch(const UVector<UEventFd*>& waiting, int op, int timeoutMS = -1); // timeout does not include time spent in event handlers, only time waiting on epoll
+#endif
+                     
    // READ - WRITE
 
    // param timeoutMS specified the timeout value, in milliseconds.
@@ -217,10 +206,6 @@ protected:
 #  ifdef U_EPOLLET_POSTPONE_STRATEGY
    static bool bepollet;
 #  endif
-#  ifdef HAVE_EPOLL_CTL_BATCH
-   static int ctl_cmd_cnt;
-   static struct epoll_ctl_cmd ctl_cmd[U_EPOLL_CTL_CMD_SIZE];
-#  endif
 # elif defined(HAVE_KQUEUE)
    static int kq, nkqevents;
    static struct kevent* kqevents;
@@ -230,7 +215,7 @@ protected:
    static fd_set fd_set_read, fd_set_write;
    static int fd_set_max, fd_read_cnt, fd_write_cnt;
 
-   static int  getNFDS();     // nfds is the highest-numbered file descriptor in any of the three sets, plus 1.
+   static int  getNFDS();     // nfds is the highest-numbered file descriptor in any of the three sets, plus 1
    static void removeBadFd(); // rimuove i descrittori di file diventati invalidi (possibile con EPIPE)
 # endif
 #endif

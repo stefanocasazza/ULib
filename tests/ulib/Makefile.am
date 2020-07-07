@@ -124,6 +124,12 @@ TST += tdb.test
 test_tdb_SOURCES = test_tdb.cpp
 endif
 
+if LIBURING
+PRG += test_ioring
+TST += ioring.test
+test_ioring_SOURCES = test_ioring.cpp
+endif
+
 ## DEFS = -DU_TEST @DEFS@
 ## TESTS_ENVIRONMENT = srcdir=$(srcdir)
 ## AM_LFLAGS = -olex.yy.c -S$(shell pwd)/../../include/ulib/flex/flex.skl

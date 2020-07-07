@@ -85,6 +85,7 @@ const char* UInterrupt::BUS_errlist[] = {
 
 int               UInterrupt::event_signal_pending;
 bool              UInterrupt::flag_alarm;
+bool              UInterrupt::call_handler_signal;
 bool              UInterrupt::syscall_restart; // NB: notify to make certain system calls restartable across signals...
 bool              UInterrupt::exit_loop_wait_event_for_signal;
 jmp_buf           UInterrupt::jbuf;
@@ -393,8 +394,8 @@ void UInterrupt::getSignalInfo(int signo, siginfo_t* info)
 #        else
            CYAN,                errlist[index], info->si_code, errlist[index+1], YELLOW,
 #        endif
-           CYAN, (double)vsz / (1024.0 * 1024.0), YELLOW,
-           CYAN, (double)rss / (1024.0 * 1024.0), YELLOW);
+           CYAN, (double)rss / (1024.0 * 1024.0), YELLOW,
+           CYAN, (double)vsz / (1024.0 * 1024.0), YELLOW);
       }
 #  endif
 }

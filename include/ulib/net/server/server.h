@@ -15,6 +15,7 @@
 #define U_SERVER_H 1
 
 #include <ulib/log.h>
+#include <ulib/timer.h>
 #include <ulib/process.h>
 #include <ulib/command.h>
 #include <ulib/notifier.h>
@@ -24,6 +25,10 @@
 #include <ulib/utility/interrupt.h>
 #include <ulib/utility/socket_ext.h>
 #include <ulib/net/server/client_image.h>
+
+#ifdef USE_LIBURING
+#  include <liburing.h>
+#endif
 
 #ifndef SIGWINCH
 #define SIGWINCH 28
@@ -108,6 +113,7 @@ vClientImage = new client_type[UNotifier::max_connection]; } }
 class UHTTP;
 class UHTTP2;
 class UHTTP3;
+class UIORing;
 class UEventDB;
 class UCommand;
 class UTimeStat;
@@ -238,7 +244,7 @@ public:
 #endif
 
    static UFileConfig* pcfg;
-   static bool bssl, bipc, budp, flag_loop;
+   static bool bssl, bipc, budp, brng, flag_loop;
    static unsigned int port; // the port number to bind to
 
    static int          getReqTimeout()  { return (ptime ? ptime->UTimeVal::tv_sec : 0); }
@@ -688,7 +694,6 @@ public:
 
    static bool isLocalHost() { return csocket->cRemoteAddress.isLocalHost(); }
 
-   static void      setClientAddress() { setClientAddress(csocket, client_address, client_address_len); }
    static in_addr_t getClientAddress() { return csocket->getClientAddress(); }
 
    static UString getIPAddress()                         { return *IP_address; }
@@ -853,7 +858,7 @@ public:
    const char* dump(bool reset) const;
 #endif
 
-   static USocket* socket;
+   static USocket*  socket;
    static USocket* csocket;
    static UString* name_sock;  // name file for the listening socket
 protected:
@@ -885,7 +890,7 @@ protected:
    static USmtpClient* emailClient;
    static long last_time_email_crash;
    static UString* crashEmailAddress;
-   static bool monitoring_process, set_realtime_priority, public_address, binsert, set_tcp_keep_alive, called_from_handlerTime;
+   static bool monitoring_process, set_realtime_priority, public_address, binsert, baffinity, set_tcp_keep_alive, called_from_handlerTime;
 
    static uint32_t                 vplugin_size;
    static UVector<UString>*        vplugin_name;
@@ -898,8 +903,43 @@ protected:
    static void runLoop(const char* user);
    static bool handlerTimeoutConnection(void* cimg);
 
+   static bool isReqTimeout(void* cimg)
+      {
+      U_TRACE(0, "UServer_Base::isReqTimeout(%p)", cimg)
+
+      U_INTERNAL_ASSERT_POINTER(cimg)
+      U_INTERNAL_ASSERT_POINTER(ptime)
+
+      if ((u_now->tv_sec - ((UClientImage_Base*)cimg)->last_event) >= ptime->UTimeVal::tv_sec) U_RETURN(true);
+
+      U_RETURN(false);
+      }
+      
+   static void postEvent()
+      {
+      U_TRACE_NO_PARAM(0, "UServer_Base::postEvent()")
+
+      U_INTERNAL_ASSERT_POINTER(ptime)
+
+      U_INTERNAL_DUMP("u_now->tv_sec = %#3D last_event = %#3D", u_now->tv_sec, last_event)
+
+#  if !defined(U_LOG_DISABLE) && defined(DEBUG)
+      last_event = u_now->tv_sec;
+
+#   ifndef _MSWINDOWS_
+      if (monitoring_process &&
+          U_SYSCALL_NO_PARAM(getppid) == 1)
+         {
+         U_ERROR("the monitoring process has crashed, exiting...");
+         }
+#   endif
+#  endif
+
+      UTimer::updateTimeToExpire(ptime);
+      }
+
 #ifndef U_LOG_DISABLE
-   static void logNewClient(USocket* psocket, UClientImage_Base* lClientImage);
+   static void logNewClient(int fd);
 #endif
 
 #ifdef U_WELCOME_SUPPORT
@@ -1057,6 +1097,135 @@ protected:
       }
 #endif
 
+#ifdef USE_LIBURING
+   static int fds[1];
+   static int* socketfds;
+   static UString* rBuffers;
+   static UStringRep* rbuffer;
+   static uint32_t rbuffer_size;
+   static struct io_uring_sqe* sqe;
+   static struct io_uring_cqe* cqe;
+   static struct io_uring* io_uring;
+   static UVector<UEventFd*>* handler_poll;
+
+   static void get_sqe()
+      {
+      U_TRACE_NO_PARAM(1, "UServer_Base::get_sqe()")
+
+      /**
+       * Return an sqe to fill. Application must later call io_uring_submit() when it's ready to tell the kernel about it.
+       * The caller may call this function multiple times before calling io_uring_submit().
+       *
+       * Returns a vacant sqe, or NULL if we're full
+       */
+
+      sqe = (struct io_uring_sqe*) U_SYSCALL(io_uring_get_sqe, "%p", io_uring);
+
+      if (sqe == U_NULLPTR)
+         {
+         U_ERROR("io_uring_get_sqe() failed");
+         }
+      }
+
+   static void submit()
+      {
+      U_TRACE_NO_PARAM(1, "UServer_Base::submit()")
+
+      int ret = U_SYSCALL(io_uring_submit, "%p", io_uring);
+
+      if (ret == -1)
+         {
+         U_ERROR("io_uring_submit() failed: %d%R", ret, 0); // NB: the last argument (0) is necessary...
+         }
+      }
+
+   static void setOperation(long op, int flags = 0)
+      {
+      U_TRACE(1, "UServer_Base::setOperation(%ld,%u)", op, flags)
+
+      U_INTERNAL_DUMP("op = %s socketfds[%u] = %d pClientImage->fd = %d", UClientImage_Base::getPendingOperationDescription(op), 1+nClientIndex, socketfds[1+nClientIndex], pClientImage->fd)
+
+      // IOSQE_FIXED_FILE -> signals that we pass an index into socketfds rather than a file descriptor
+
+      U_SYSCALL_VOID(io_uring_sqe_set_flags, "%p,%u", sqe, flags | IOSQE_ASYNC | IOSQE_FIXED_FILE);
+
+      U_SYSCALL_VOID(io_uring_sqe_set_data, "%p,%p", sqe, (void*)(((long)nClientIndex << 32) + op));
+      }
+
+   static int wait_cqe()
+      {
+      U_TRACE_NO_PARAM(1, "UServer_Base::wait_cqe()")
+
+      int ret = U_SYSCALL(io_uring_wait_cqe, "%p,%p", io_uring, &cqe);
+
+      if (ret)
+         {
+         if (ret == -EINTR) UInterrupt::checkForEventSignalPending();
+         else
+            {
+            U_ERROR("io_uring_wait_cqe() failed: %d%R", ret, 0); // NB: the last argument (0) is necessary...
+            }
+         }
+
+      U_RETURN(ret);
+      }
+
+   static void register_files_update()
+      {
+      U_TRACE_NO_PARAM(1, "UServer_Base::register_files_update()")
+
+      // ...fd member is the index of the file in the file descriptor array
+
+      U_INTERNAL_DUMP("socketfds[%u] = %d pClientImage->fd = %d", 1+nClientIndex, socketfds[1+nClientIndex], pClientImage->fd)
+
+      U_INTERNAL_ASSERT_EQUALS(pClientImage, vClientImage+nClientIndex)
+
+      int ret = U_SYSCALL(io_uring_register_files_update, "%p,%u,%p,%u", io_uring, 1+nClientIndex, &(socketfds[1+nClientIndex] = pClientImage->fd), 1);
+
+      if (ret != 1)
+         {
+         U_ERROR("io_uring_register_files_update() failed: %d%R", ret, 0); // NB: the last argument (0) is necessary...
+         }
+      }
+
+   static void prepareForAccept()
+      {
+      U_TRACE_NO_PARAM(1, "UServer_Base::prepareForAccept()")
+
+      U_INTERNAL_DUMP("UNotifier::num_connection = %u UNotifier::max_connection = %u", UNotifier::num_connection, UNotifier::max_connection)
+
+      U_INTERNAL_ASSERT_MINOR(UNotifier::num_connection, UNotifier::max_connection)
+
+      USocket::resetPeerAddr();
+
+      U_SYSCALL_VOID(io_uring_prep_accept, "%p,%u,%p,%p,%u", sqe, 0, (struct sockaddr*)&USocket::peer_addr, &USocket::peer_addr_len, SOCK_CLOEXEC);
+
+      nClientIndex = 0;
+      }
+
+   static void epoll_ctl_batch(UEventFd* handler)
+      {
+      U_TRACE(1, "UServer_Base::epoll_ctl_batch(%p)", handler)
+
+      U_INTERNAL_ASSERT_POINTER(handler)
+
+      U_INTERNAL_DUMP("handler->fd = %d handler->op_mask = %B", handler->fd, handler->op_mask)
+
+      U_INTERNAL_ASSERT_EQUALS(handler->op_mask, EPOLLIN | EPOLLRDHUP | EPOLLET)
+
+      get_sqe();
+
+      struct epoll_event ev = { handler->op_mask, { handler } };
+
+      U_SYSCALL_VOID(io_uring_prep_epoll_ctl, "%p,%d,%d,%u,%p", sqe, UNotifier::epollfd, handler->fd, EPOLL_CTL_ADD, &ev);
+      }
+
+   static void submit(int op, ...);
+   static void findNextClientImage();
+   static void waitForEvent(UEventTime* ptimeout);
+   static void epoll_ctl_batch(uint32_t ctl_cmd_cnt);
+#endif
+
             UServer_Base(UFileConfig* cfg = U_NULLPTR);
    virtual ~UServer_Base();
 
@@ -1089,8 +1258,11 @@ protected:
    virtual bool check_memory() = 0;
 #endif
 
+   virtual bool handlerAccept(int newfd); // turn false if we should close the socket
+
    // SERVICES
 
+   static void handlerStop();
    static void suspendThread();
 
    static void _preallocate()
@@ -1153,16 +1325,14 @@ private:
       if (pluginsHandlerSigHUP() != U_PLUGIN_HANDLER_FINISHED) U_WARNING("Plugins stage SigHUP failed...");
       }
 
-   static void setClientAddress(USocket* psocket, char*& pclient_address, uint32_t& pclient_address_len)
+   static void setClientAddress()
       {
-      U_TRACE(0, "UServer_Base::setClientAddress(%p,%p,%u)", psocket, pclient_address, pclient_address_len)
+      U_TRACE_NO_PARAM(0, "UServer_Base::setClientAddress()")
 
-      U_INTERNAL_ASSERT(psocket->isConnected())
+      client_address     = UIPAddress::resolveStrAddress(iAddressType, csocket->cRemoteAddress.pcAddress.p, csocket->cRemoteAddress.pcStrAddress);
+      client_address_len = u__strlen(client_address, __PRETTY_FUNCTION__);
 
-      pclient_address     = UIPAddress::resolveStrAddress(iAddressType, psocket->cRemoteAddress.pcAddress.p, psocket->cRemoteAddress.pcStrAddress);
-      pclient_address_len = u__strlen(pclient_address, __PRETTY_FUNCTION__);
-
-      U_INTERNAL_DUMP("client_address = %.*S", pclient_address_len, pclient_address)
+      U_INTERNAL_DUMP("client_address = %.*S", U_CLIENT_ADDRESS_TO_TRACE)
       }
 
    static void logMemUsage(const char* signame)
@@ -1184,6 +1354,46 @@ private:
 #  endif
       }
 
+   static void logReqTimeout(void* cimg, long _last_event)
+      {
+      U_TRACE(0, "UServer_Base::logReqTimeout(%p,%ld)", cimg, _last_event)
+
+#  ifndef U_LOG_DISABLE
+      if (isLog())
+         {
+         if (called_from_handlerTime)
+            {
+            log->log(U_CONSTANT_TO_PARAM("handlerTime: client connected didn't send any request in %u secs (timeout), close connection %v"),
+                     ptime->UTimeVal::tv_sec, ((UClientImage_Base*)cimg)->logbuf->rep);
+            }
+         else
+            {
+            log->log(U_CONSTANT_TO_PARAM("handlerTimeoutConnection: client connected didn't send any request in %u secs, close connection %v"),
+                     _last_event - ((UClientImage_Base*)cimg)->last_event, ((UClientImage_Base*)cimg)->logbuf->rep);
+            }
+         }
+#  endif
+#  if !defined(USE_LIBEVENT) && defined(HAVE_EPOLL_WAIT) && defined(DEBUG)
+      if (called_from_handlerTime)
+         {
+         U_DEBUG("handlerTime: client connected didn't send any request in %u secs (timeout %u sec) - "
+                 "UEventFd::fd = %d socket->iSockDesc = %d UNotifier::num_connection = %d UNotifier::min_connection = %d",
+                 _last_event - ((UClientImage_Base*)cimg)->last_event, ptime->UTimeVal::tv_sec,
+                                         ((UClientImage_Base*)cimg)->UEventFd::fd,
+                                         ((UClientImage_Base*)cimg)->socket->iSockDesc, UNotifier::num_connection, UNotifier::min_connection)
+         }
+      else
+         {
+         U_DEBUG("handlerTimeoutConnection: client connected didn't send any request in %u secs - "
+                 "UEventFd::fd = %d socket->iSockDesc = %d UNotifier::num_connection = %d UNotifier::min_connection = %d",
+                 _last_event - ((UClientImage_Base*)cimg)->last_event,
+                               ((UClientImage_Base*)cimg)->UEventFd::fd,
+                               ((UClientImage_Base*)cimg)->socket->iSockDesc, UNotifier::num_connection, UNotifier::min_connection)
+         }
+#  endif
+      }
+
+   static bool postAccept() U_NO_EXPORT;
    static bool clientImageHandlerRead() U_NO_EXPORT;
    static void loadStaticLinkedModules(const UString& name) U_NO_EXPORT;
    static void manageCommand(const char* format, uint32_t fmt_size, ...) U_NO_EXPORT;
@@ -1193,6 +1403,7 @@ private:
    friend class UHTTP;
    friend class UHTTP2;
    friend class UHTTP3;
+   friend class UIORing;
    friend class UDayLight;
    friend class UTimeStat;
    friend class USSLSocket;

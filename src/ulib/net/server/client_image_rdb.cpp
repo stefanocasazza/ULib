@@ -243,7 +243,9 @@ int URDBClientImage::handlerRead()
 
       U_SRV_LOG_WITH_ADDR("method %.4S return %s for", ptr, res);
 
-      return UClientImage_Base::handlerResponse();
+      int ret = UClientImage_Base::handlerResponse();
+
+      U_RETURN(ret);
       }
 
    U_RETURN(U_NOTIFIER_OK);

@@ -30,4 +30,4 @@ test:
 	-make check
 
 clean-local:
-	-rm -rf out err core tmp/* .libs *.bb* *.da *.gc* trace.*.[0-9]* object.*.[0-9]* stack.*.[0-9]* *.log
+	-rm -rf out err core tmp/* .libs *.bb* *.da *.gc* trace.*.[0-9]* object.*.[0-9]* stack.*.[0-9]* *mempool.*.[0-9] *.log

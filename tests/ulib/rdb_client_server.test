@@ -4,15 +4,21 @@
 
 ## rdb_client_server.test -- Test rdb client server feature
 
-rm -f rdb_server.log
+rm -rf err/rdb*.err rdb*.log /tmp/rdb*.log \
+		      trace.*rdb*.[0-9]*      object.*rdb*.[0-9]*      stack.*rdb*.[0-9]*      mempool.*rdb*.[0-9]* \
+		 /tmp/trace.*rdb*.[0-9]* /tmp/object.*rdb*.[0-9]* /tmp/stack.*rdb*.[0-9]* /tmp/mempool.*rdb*.[0-9]*
 
 start_msg rdb_server
 start_msg rdb_client
 
-#UTRACE="0 50M -1"
+#UTRACE="0 50M 0"
+#UTRACE_SIGNAL="0 10M 0"
+ UTRACE_FOLDER=/tmp
+MIMALLOC_VERBOSE=1
+MIMALLOC_SHOW_ERRORS=1
 #UOBJDUMP="0 10M 100"
 #USIMERR="error.sim"
- export UTRACE UOBJDUMP USIMERR
+export UTRACE UOBJDUMP USIMERR UTRACE_SIGNAL UMEMUSAGE UTRACE_FOLDER TMPDIR MIMALLOC_VERBOSE MIMALLOC_SHOW_ERRORS
 
 # fallisce se NFS...
 
@@ -25,6 +31,26 @@ else
    ARG1="tmp/test_rdb"
    rm -f tmp/test_rdb*
 fi
+
+cat <<EOF >inp/rdb_server.cf
+userver {
+   PORT 8080
+   DOCUMENT_ROOT .
+
+#  DOS_SITE_COUNT 1
+   DOS_WHITE_LIST 127.0.0.1,10.8.0.0/16
+   DOS_LOGFILE /tmp/dos_blacklist.txt
+#  DOS_EMAIL_NOTIFY mail.unirel.com:stefano.casazza2@unirel.com
+
+   LOG_FILE    /tmp/rdb_server.log
+   LOG_FILE_SZ 1M
+
+   PLUGIN      echo
+   PLUGIN_DIR  ../../src/ulib/net/server/plugin/.libs
+
+   PREFORK_CHILD 0
+}
+EOF
 
 #STRACE=$TRUSS
 start_cmd_background "./test_rdb_server$SUFFIX inp/rdb_server.cf $ARG1 <inp/cdb.input >>out/rdb_client.out 2>>err/rdb_server.err"

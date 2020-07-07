@@ -3231,7 +3231,7 @@ bool UHTTP2::initRequest()
       {
       if (pConnection->state == CONN_STATE_OPEN)
          {
-         U_INTERNAL_ASSERT_EQUALS(U_ClientImage_http(UServer_Base::pClientImage), '2')
+         U_ASSERT(UServer_Base::pClientImage->isFlagStatusHttp2())
 
          do {
             U_INTERNAL_DUMP("pStreamEnd->id = %u pStreamEnd->state = %u", pStreamEnd->id, pStreamEnd->state)
@@ -3263,7 +3263,7 @@ void UHTTP2::handlerRequest()
 {
    U_TRACE_NO_PARAM(0, "UHTTP2::handlerRequest()")
 
-   U_INTERNAL_DUMP("U_ClientImage_http(%p) = %C U_http_version = %C", UServer_Base::pClientImage, U_ClientImage_http(UServer_Base::pClientImage), U_http_version)
+   U_DUMP("UServer_Base::pClientImage->isFlagStatusHttp2() = %b U_http_version = %C", UServer_Base::pClientImage->isFlagStatusHttp2(), U_http_version)
 
    U_INTERNAL_ASSERT_EQUALS(U_http_version, '2')
 
@@ -3277,7 +3277,7 @@ void UHTTP2::handlerRequest()
    if ((bsetting_ack =
         bsetting_send = initRequest()) == false)
       {
-      U_ClientImage_http(UServer_Base::pClientImage) = '2';
+      UServer_Base::pClientImage_Base->setFlagStatusHttp2();
 
       U_INTERNAL_DUMP("U_http2_settings_len = %u", U_http2_settings_len)
 

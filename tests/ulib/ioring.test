@@ -1,0 +1,73 @@
+#!/bin/sh
+
+. ../.function
+
+## ioring.test -- Test io_ring feature
+
+start_msg ioring
+
+rm -rf err/ioring.err /tmp/ioring.log \
+		      trace.*ioring*.[0-9]*      object.*ioring*.[0-9]*      stack.*ioring*.[0-9]*      mempool.*ioring*.[0-9]* \
+		 /tmp/trace.*ioring*.[0-9]* /tmp/object.*ioring*.[0-9]* /tmp/stack.*ioring*.[0-9]* /tmp/mempool.*ioring*.[0-9]*
+
+#UTRACE="0 20M 0"
+#UTRACE_SIGNAL="0 10M 0"
+ UTRACE_FOLDER=/tmp
+MIMALLOC_VERBOSE=1
+MIMALLOC_SHOW_ERRORS=1
+#UOBJDUMP="0 100k 10"
+#USIMERR="error.sim"
+export UTRACE UOBJDUMP USIMERR UTRACE_SIGNAL UMEMUSAGE UTRACE_FOLDER TMPDIR MIMALLOC_VERBOSE MIMALLOC_SHOW_ERRORS
+
+prepare_usp
+
+check_for_netcat
+
+cat <<EOF >../examples/inp/webserver.cfg
+userver {
+ PORT 8080
+ RUN_AS_USER nobody
+#MIN_SIZE_FOR_SENDFILE 1k
+#REQ_TIMEOUT 5
+ WELCOME_MSG "220 david.unirel.intranet LCSP server (Version 1.1.0) ready.\n"
+ DOS_WHITE_LIST 127.0.0.1,10.30.0.0/16
+ LOG_FILE /tmp/ioring.log
+ LOG_FILE_SZ 1M
+ LOG_MSG_SIZE -1
+ DOCUMENT_ROOT . 
+ PLUGIN "echo http"
+ PLUGIN_DIR ../../src/ulib/net/server/plugin/.libs
+ ORM_DRIVER_DIR ../../src/ulib/orm/driver/.libs
+ PREFORK_CHILD 2
+#CRASH_COUNT 1
+#CRASH_EMAIL_NOTIFY mail.unirel.com:stefano.casazza@unirel.com
+}
+http {
+ CACHE_FILE_MASK _off_
+#ENABLE_INOTIFY yes
+#REQUEST_READ_TIMEOUT 30
+ APACHE_LIKE_LOG /var/log/httpd/access_log
+}
+EOF
+
+#VALGRIND=valgrind # --gen-suppressions=all
+#STRACE=$TRUSS
+start_prg_background ioring ../examples/inp/webserver.cfg
+
+wait_server_ready localhost 8080
+
+#../examples/sendbytes.pl
+#$SLEEP
+send_req $NCAT localhost 8080 inp/http/form_enctype.http ioring 5 kill
+
+#ln -s ../examples/benchmark/docroot/servlet
+#ab -k -n 2      -c 2    "http://127.0.0.1:8080/servlet/benchmarking?name=stefano" >/dev/null 2>&1
+#ab -k -n 100    -c 2    'http://127.0.0.1:8080/servlet/benchmarking?name=stefano' >/tmp/ab.out 2>&1
+#ab -k -n 100000 -c 1000 'http://127.0.0.1:8080/servlet/benchmarking?name=stefano' >/tmp/ab.txt 2>&1
+
+kill_server test_ioring
+
+rm -rf /tmp/form*
+
+# Test against expected output
+test_output_diff ioring

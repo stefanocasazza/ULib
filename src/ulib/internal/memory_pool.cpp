@@ -451,9 +451,9 @@ bool UMemoryPool::check(void* ptr)
 #  endif
 #endif
 
-void* UMemoryPool::malloc(uint32_t num, uint32_t type_size, bool bzero)
+void* UMemoryPool::cmalloc(uint32_t num, uint32_t type_size, bool bzero)
 {
-   U_TRACE(0, "UMemoryPool::malloc(%u,%u,%b)", num, type_size, bzero)
+   U_TRACE(0, "UMemoryPool::cmalloc(%u,%u,%b)", num, type_size, bzero)
 
    U_INTERNAL_ASSERT_MAJOR(num, 0)
    U_INTERNAL_ASSERT_MAJOR(type_size, 0)
@@ -467,7 +467,7 @@ void* UMemoryPool::malloc(uint32_t num, uint32_t type_size, bool bzero)
 # ifndef HAVE_ARCH64
    U_INTERNAL_ASSERT_RANGE(4, length, 1U * 1024U * 1024U * 1024U) // NB: over 1G is very suspect on 32bit...
 # endif
-   ptr = U_SYSCALL(malloc, "%u", length);
+   ptr = U_SYSCALL_MALLOC(length);
 
    U_INTERNAL_ASSERT_POINTER_MSG(ptr, "cannot allocate memory, exiting...")
 #else

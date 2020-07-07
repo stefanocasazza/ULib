@@ -63,6 +63,7 @@ class UFile;
 class UHTTP;
 class UHTTP2;
 class UHTTP3;
+class UIORing;
 class UNotifier;
 class UWebSocket;
 class USocketExt;
@@ -250,6 +251,15 @@ public:
     * The setsockopt() function is called with the provided parameters to obtain the desired value
     */
 
+   static bool setSockOpt(int fd, int iCodeLevel, int iOptionName, const void* pOptionData, uint32_t iDataLength = sizeof(int))
+      {
+      U_TRACE(1, "USocket::setSockOpt(%d,%d,%d,%p,%u)", fd, iCodeLevel, iOptionName, pOptionData, iDataLength) // problem with sanitize address
+
+      if (U_FF_SYSCALL(setsockopt, "%d,%d,%d,%p,%u", fd, iCodeLevel, iOptionName, CAST(pOptionData), iDataLength) == 0) U_RETURN(true);
+
+      U_RETURN(false);
+      }
+
    bool setSockOpt(int iCodeLevel, int iOptionName, const void* pOptionData, uint32_t iDataLength = sizeof(int))
       {
       U_TRACE(1, "USocket::setSockOpt(%d,%d,%p,%u)", iCodeLevel, iOptionName, pOptionData, iDataLength) // problem with sanitize address
@@ -258,9 +268,7 @@ public:
 
       U_INTERNAL_ASSERT(isOpen())
 
-      if (U_FF_SYSCALL(setsockopt, "%d,%d,%d,%p,%u", getFd(), iCodeLevel, iOptionName, CAST(pOptionData), iDataLength) == 0) U_RETURN(true);
-
-      U_RETURN(false);
+      return setSockOpt(getFd(), iCodeLevel, iOptionName, CAST(pOptionData), iDataLength);
       }
 
    /**
@@ -275,9 +283,9 @@ public:
 
       U_INTERNAL_DUMP("O_NONBLOCK = %B, flags = %B", O_NONBLOCK, flags)
 
-      bool blocking = ((flags & O_NONBLOCK) != O_NONBLOCK);
+      if ((flags & O_NONBLOCK) != 0) U_RETURN(false);
 
-      U_RETURN(blocking);
+      U_RETURN(true);
       }
 
    void setBlocking();
@@ -576,7 +584,8 @@ public:
     * Ref4: tcp_max_orphans [https://www.frozentux.net/ipsysctl-tutorial/chunkyhtml/tcpvariables.html#AEN388]
     */
 
-   void setTcpKeepAlive();
+   static void setTcpKeepAlive(int fd);
+          void setTcpKeepAlive() { setTcpKeepAlive(iSockDesc); }
 
    /**
     * Enables/disables the @c SO_TIMEOUT pseudo option
@@ -673,7 +682,13 @@ public:
     */
 
    virtual bool connectServer(const UString& server, unsigned int iServPort, int timeoutMS = 0);
-
+   
+#ifdef HAVE_EPOLL_WAIT
+   // this methods initiates an asynchronous connection that you must later wait on with UNotifier::waitOnAsynchronousConnects(...)
+   virtual bool  beginAsynchronousConnect(const UString& server, unsigned int iServPort);
+   virtual bool finishAsynchronousConnect();
+#endif
+   
    /**
     * This method is called to receive a block of data on the connected socket.
     * The parameters signify the payload receiving buffer and its size.
@@ -714,11 +729,20 @@ protected:
    void setLocal(const UIPAddress& addr);
    bool setHostName(const UString& pcNewHostName);
 
+   void setFd(int fd)
+      {
+      U_TRACE(1, "USocket::setFd(%d)", fd)
+
+      iSockDesc = fd;
+      }
+
    void setFlags(int _flags)
       {
-      U_TRACE(1, "USocket::setFlags(%d)", _flags)
+      U_TRACE(1, "USocket::setFlags(%u)", _flags)
 
       U_INTERNAL_ASSERT(isOpen())
+
+      U_INTERNAL_DUMP("O_RDWR = %u, O_NONBLOCK = %u %B, O_CLOEXEC = %u %B, flags = %u %B => %B", O_RDWR, O_NONBLOCK, O_NONBLOCK, O_CLOEXEC, O_CLOEXEC, flags, flags, _flags)
 
       (void) U_FF_SYSCALL(fcntl, "%d,%d,%d", iSockDesc, F_SETFL, (flags = _flags));
       }
@@ -821,9 +845,20 @@ protected:
    static bool breuseport, bincoming_cpu;
    static int iBackLog, incoming_cpu, accept4_flags; // If flags is 0, then accept4() is the same as accept()
 
+   static int startServer(unsigned int port);
+
    static void setLocalInfo( USocket* p, SocketAddress* cLocal);
    static void setRemoteInfo(USocket* p, SocketAddress* cRemote);
 
+   static void resetPeerAddr()
+      {
+      U_TRACE_NO_PARAM(0, "USocket::resetPeerAddr()")
+
+      peer_addr_len = sizeof(peer_addr);
+
+      (void) U_SYSCALL(memset, "%p,%d,%u", &peer_addr, 0, U_SIZE_SOCKADDR);
+      }
+   
    /**
     * The _socket() function is called to create the socket of the specified type.
     * The parameters indicate whether the socket will use IPv6 or IPv4 and the type of socket
@@ -832,6 +867,10 @@ protected:
 
    void _socket(int iSocketType = 0, int domain = 0, int protocol = 0);
 
+#ifdef DEBUG
+   void dumpProperties();
+#endif
+
 private:
    U_DISALLOW_COPY_AND_ASSIGN(USocket)
 
@@ -839,6 +878,7 @@ private:
                       friend class UHTTP;
                       friend class UHTTP2;
                       friend class UHTTP3;
+                      friend class UIORing;
                       friend class UNotifier;
                       friend class UWebSocket;
                       friend class USocketExt;

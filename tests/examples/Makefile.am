@@ -17,6 +17,10 @@ bench_http_parser_SOURCES = bench_http_parser.cpp
 test_http_parser_SOURCES = test_http_parser.cpp ctest_http_parser.c
 endif
 
+if LIBURING
+TESTS += web_server_rng.test web_server_rng_multiclient.test
+endif
+
 if SSL
 TESTS += tsa_http.test tsa_https.test csp_rpc.test rsign_rpc.test tsa_rpc.test uclient.test
 if EXPAT

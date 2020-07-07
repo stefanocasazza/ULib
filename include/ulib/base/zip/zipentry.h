@@ -3,6 +3,16 @@
 #ifndef zipentry_H
 #define zipentry_H 1
 
+#ifdef USE_LIBMIMALLOC
+#  include <mimalloc.h> // mimalloc-new-delete.h
+#  define    free(p)    mi_free(p)
+#  define  malloc(sz)   mi_malloc(sz)
+#  define realloc(p,sz) mi_realloc(p,sz)
+#  define  calloc(n,sz) mi_calloc(n,sz)
+#  define strdup(s)     mi_strdup(s)
+#  define strndup(s,n)  mi_strndup(s,n)
+#endif
+
 /* Amount of bytes to read at a time. You can change this to optimize for your system */
 #define RDSZ 4096
 

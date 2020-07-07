@@ -111,7 +111,7 @@ int U_EXPORT main(int argc, char* argv[])
             }
          }
 
-      U_DUMP("malloc() = %p", U_SYSCALL(malloc, "%u", 1000))
+      U_DUMP("malloc() = %p", U_SYSCALL_MALLOC(1000))
       }
 
    U_RETURN(0);

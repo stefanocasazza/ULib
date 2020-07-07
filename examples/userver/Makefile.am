@@ -15,6 +15,14 @@ userver_tcp_LDFLAGS  = $(PRG_LDFLAGS) @FSTACKLDFLAGS@
 userver_tcp_CPPFLAGS = -DU_TCP_SOCKET $(CPPFLAGS)
 bin_PROGRAMS  			= userver_tcp
 
+if LIBURING
+userver_rng_LDADD    = $(ulib_la)
+userver_rng_SOURCES  = userver.cpp
+userver_rng_LDFLAGS  = $(PRG_LDFLAGS)
+userver_rng_CPPFLAGS = -DU_TCP_SOCKET -DUSERVER_RNG $(CPPFLAGS)
+bin_PROGRAMS  	  	  += userver_rng
+endif
+
 if SSL
 userver_ssl_LDADD    = $(ulib_la)
 userver_ssl_SOURCES  = userver.cpp

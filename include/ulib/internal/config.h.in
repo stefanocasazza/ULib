@@ -156,9 +156,6 @@
 /* has epoll_create1 */
 #undef HAVE_EPOLL_CREATE1
 
-/* has epoll_ctl_batch */
-#undef HAVE_EPOLL_CTL_BATCH
-
 /* has epoll_wait */
 #undef HAVE_EPOLL_WAIT
 
@@ -649,7 +646,7 @@
 /* Platform */
 #undef PLATFORM_VAR
 
-/* Define as the return type of signal handlers (`int' or `void'). */
+/* Define as the return type of signal handlers (`int' or `void') */
 #undef RETSIGTYPE
 
 /* The number of bytes in type int */
@@ -747,6 +744,9 @@
 /* Define if enable libmagic support */
 #undef USE_LIBMAGIC
 
+/* Define if enable libmimalloc support */
+#undef USE_LIBMIMALLOC
+
 /* Define if enable libpcre support */
 #undef USE_LIBPCRE
 
@@ -761,6 +761,9 @@
 
 /* Define if enable libtdb support */
 #undef USE_LIBTDB
+
+/* Define if enable liburing support */
+#undef USE_LIBURING
 
 /* Define if enable libuuid support */
 #undef USE_LIBUUID
@@ -1010,6 +1013,10 @@
 /* libevent - event notification library version */
 #undef _LIBEVENT_VERSION
 
+/* libmimalloc - library version of implementation of the QUIC transport
+   protocol and HTTP/3 */
+#undef _LIBMIMALLOC_VERSION
+
 /* libquiche - library version of implementation of the QUIC transport
    protocol and HTTP/3 */
 #undef _LIBQUICHE_VERSION
@@ -1019,6 +1026,10 @@
 
 /* libtdb - samba Trivial DB library version */
 #undef _LIBTDB_VERSION
+
+/* liburing - library version of implementation of efficient I/O with io_uring
+   */
+#undef _LIBURING_VERSION
 
 /* libuuid - version library to create a new UUID value */
 #undef _LIBUUID_VERSION

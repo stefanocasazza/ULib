@@ -303,25 +303,25 @@ bool USocket::connectServer(const UIPAddress& cAddr, unsigned int iServPort)
    U_RETURN(false);
 }
 
-void USocket::setTcpKeepAlive()
+void USocket::setTcpKeepAlive(int fd)
 {
-   U_TRACE_NO_PARAM(0, "USocket::setTcpKeepAlive()")
+   U_TRACE(0, "USocket::setTcpKeepAlive(%d)", fd)
 
    // Set TCP keep alive option to detect dead peers
 
 #ifdef SO_KEEPALIVE
-   (void) setSockOpt(SOL_SOCKET, SO_KEEPALIVE, (const int[]){ 1 });
+   (void) setSockOpt(fd, SOL_SOCKET, SO_KEEPALIVE, (const int[]){ 1 });
 
 # ifdef U_LINUX // Default settings are more or less garbage, with the keepalive time set to 7200 by default on Linux. Modify settings to make the feature actually useful
-   (void) setSockOpt(IPPROTO_TCP, TCP_KEEPIDLE, (const int[]){ 15 }); // Send first probe after interval
+   (void) setSockOpt(fd, IPPROTO_TCP, TCP_KEEPIDLE, (const int[]){ 15 }); // Send first probe after interval
 
    // Send next probes after the specified interval. Note that we set the delay as interval / 3, as we send three probes before detecting an error (see the next setsockopt call)
 
-   (void) setSockOpt(IPPROTO_TCP, TCP_KEEPINTVL, (const int[]){ 15 / 3 }); // Send next probe after interval
+   (void) setSockOpt(fd, IPPROTO_TCP, TCP_KEEPINTVL, (const int[]){ 15 / 3 }); // Send next probe after interval
 
    // Consider the socket in error state after three we send three ACK probes without getting a reply
 
-   (void) setSockOpt(IPPROTO_TCP, TCP_KEEPCNT, (const int[]){ 3 });
+   (void) setSockOpt(fd, IPPROTO_TCP, TCP_KEEPCNT, (const int[]){ 3 });
 # endif
 #endif
 }
@@ -462,6 +462,32 @@ bool USocket::setServer(unsigned int port, void* localAddress)
    U_RETURN(false);
 }
 
+int USocket::startServer(unsigned int port)
+{
+   U_TRACE(0, "USocket::startServer(%u)", port)
+
+   int32_t val = 1;
+   struct sockaddr_in addr;
+   int fd = U_SYSCALL(socket, "%d,%d,%d", AF_INET, SOCK_STREAM | SOCK_CLOEXEC, IPPROTO_TCP);
+
+   (void) U_SYSCALL(setsockopt, "%d,%d,%d,%p,%u", fd, SOL_SOCKET, SO_REUSEPORT, &val, sizeof(int));
+   (void) U_SYSCALL(setsockopt, "%d,%d,%d,%p,%u", fd, SOL_SOCKET, SO_REUSEADDR, &val, sizeof(int));
+
+   (void) U_SYSCALL(setsockopt, "%d,%d,%d,%p,%u", fd, SOL_TCP, TCP_NODELAY, (const int[]){ 1 }, sizeof(int));
+   (void) U_SYSCALL(setsockopt, "%d,%d,%d,%p,%u", fd, SOL_TCP, TCP_FASTOPEN, (const int[]){ 4096 }, sizeof(int));
+   (void) U_SYSCALL(setsockopt, "%d,%d,%d,%p,%u", fd, SOL_TCP, TCP_DEFER_ACCEPT, (const int[]){ 10 }, sizeof(int));
+   (void) U_SYSCALL(setsockopt, "%d,%d,%d,%p,%u", fd, SOL_SOCKET, SO_SNDBUF, (const int[]){ 500 * 1024 }, sizeof(int));
+
+   addr.sin_family = AF_INET;
+   addr.sin_port = htons(port);
+   addr.sin_addr.s_addr = htonl(INADDR_ANY);
+
+   (void) U_SYSCALL(bind, "%d,%p,%d", fd, (struct sockaddr*)&addr, sizeof(addr));
+   (void) U_SYSCALL(listen, "%d,%d",  fd, SOMAXCONN);
+
+   U_RETURN(fd);
+}
+
 #if defined(U_LINUX) && (!defined(U_SERVER_CAPTIVE_PORTAL) || defined(ENABLE_THREAD)) && !defined(HAVE_OLD_IOSTREAM)
 bool USocket::enable_bpf()
 {
@@ -497,7 +523,7 @@ bool USocket::enable_bpf()
 
 void USocket::reusePort(int _flags)
 {
-   U_TRACE(1, "USocket::reusePort(%d)", _flags)
+   U_TRACE(1, "USocket::reusePort(%u %B)", _flags, _flags)
 
    U_CHECK_MEMORY
 
@@ -919,6 +945,51 @@ void USocket::close_socket()
    _close_socket();
 }
 
+#ifdef DEBUG
+void USocket::dumpProperties()
+{
+   U_TRACE_NO_PARAM(0, "USocket::dumpProperties()")
+
+   struct linger x = { 0, -1 }; // { int l_onoff; int l_linger; }
+   uint32_t tmp0 = sizeof(struct linger), value = U_NOT_FOUND, tmp = sizeof(uint32_t);
+   (void) getSockOpt(SOL_SOCKET, SO_LINGER, (void*)&x, tmp0);
+   U_INTERNAL_DUMP("SO_LINGER = { %d %d }", x.l_onoff, x.l_linger)
+   U_DUMP("getBufferRCV() = %u getBufferSND() = %u", getBufferRCV(), getBufferSND())
+
+#ifdef TCP_CORK
+   (void) getSockOpt(SOL_TCP, TCP_CORK, (void*)&value, tmp);
+   U_INTERNAL_DUMP("TCP_CORK = %d", value)
+#endif
+#ifdef TCP_DEFER_ACCEPT
+   (void) getSockOpt(SOL_TCP, TCP_DEFER_ACCEPT, (void*)&value, tmp);
+   U_INTERNAL_DUMP("TCP_DEFER_ACCEPT = %d", value)
+#endif
+
+#ifdef TCP_QUICKACK
+   (void) getSockOpt(SOL_TCP, TCP_QUICKACK, (void*)&value, tmp);
+   U_INTERNAL_DUMP("TCP_QUICKACK = %d", value)
+#endif
+#ifdef TCP_NODELAY
+   (void) getSockOpt(SOL_TCP, TCP_NODELAY, (void*)&value, tmp);
+   U_INTERNAL_DUMP("TCP_NODELAY = %d", value)
+#endif
+#ifdef TCP_FASTOPEN
+   (void) getSockOpt(SOL_TCP, TCP_FASTOPEN, (void*)&value, tmp);
+   U_INTERNAL_DUMP("TCP_FASTOPEN = %d", value)
+#endif
+#ifdef SO_KEEPALIVE
+   (void) getSockOpt(SOL_SOCKET, SO_KEEPALIVE, (void*)&value, tmp);
+   U_INTERNAL_DUMP("SO_KEEPALIVE = %d", value)
+#endif
+#ifdef TCP_CONGESTION
+   char buffer[32];
+   uint32_t tmp1 = sizeof(buffer);
+   (void) getSockOpt(IPPROTO_TCP, TCP_CONGESTION, (void*)buffer, tmp1);
+   U_INTERNAL_DUMP("TCP_CONGESTION = %S", buffer)
+#endif
+}
+#endif
+
 bool USocket::acceptClient(USocket* pcNewConnection)
 {
    U_TRACE(1, "USocket::acceptClient(%p)", pcNewConnection)
@@ -964,61 +1035,9 @@ bool USocket::acceptClient(USocket* pcNewConnection)
 #  endif
 
 /*
-#ifdef DEBUG
-   struct linger x = { 0, -1 }; // { int l_onoff; int l_linger; }
-   uint32_t tmp0 = sizeof(struct linger), value = U_NOT_FOUND, tmp = sizeof(uint32_t);
-
-   (void) pcNewConnection->getSockOpt(SOL_SOCKET, SO_LINGER, (void*)&x, tmp0);
-
-   U_INTERNAL_DUMP("SO_LINGER = { %d %d }", x.l_onoff, x.l_linger)
-
-   U_DUMP("getBufferRCV() = %u getBufferSND() = %u", pcNewConnection->getBufferRCV(), pcNewConnection->getBufferSND())
-
-# ifdef TCP_CORK
-   (void) pcNewConnection->getSockOpt(SOL_TCP, TCP_CORK, (void*)&value, tmp);
-
-   U_INTERNAL_DUMP("TCP_CORK = %d", value)
-# endif
-
-# ifdef TCP_DEFER_ACCEPT
-   (void) pcNewConnection->getSockOpt(SOL_TCP, TCP_DEFER_ACCEPT, (void*)&value, tmp);
-
-   U_INTERNAL_DUMP("TCP_DEFER_ACCEPT = %d", value)
-# endif
-
-# ifdef TCP_QUICKACK
-   (void) pcNewConnection->getSockOpt(SOL_TCP, TCP_QUICKACK, (void*)&value, tmp);
-
-   U_INTERNAL_DUMP("TCP_QUICKACK = %d", value)
-# endif
-
-# ifdef TCP_NODELAY
-   (void) pcNewConnection->getSockOpt(SOL_TCP, TCP_NODELAY, (void*)&value, tmp);
-
-   U_INTERNAL_DUMP("TCP_NODELAY = %d", value)
-# endif
-
-# ifdef TCP_FASTOPEN
-   (void) pcNewConnection->getSockOpt(SOL_TCP, TCP_FASTOPEN, (void*)&value, tmp);
-
-   U_INTERNAL_DUMP("TCP_FASTOPEN = %d", value)
-# endif
-
-# ifdef SO_KEEPALIVE
-   (void) pcNewConnection->getSockOpt(SOL_SOCKET, SO_KEEPALIVE, (void*)&value, tmp);
-
-   U_INTERNAL_DUMP("SO_KEEPALIVE = %d", value)
-# endif
-
-# ifdef TCP_CONGESTION
-   char buffer[32];
-   uint32_t tmp1 = sizeof(buffer);
-
-   (void) pcNewConnection->getSockOpt(IPPROTO_TCP, TCP_CONGESTION, (void*)buffer, tmp1);
-
-   U_INTERNAL_DUMP("TCP_CONGESTION = %S", buffer)
-# endif
-#endif
+#  ifdef DEBUG
+      pcNewConnection->dumpProperties();
+#  endif
 */
 
 #  ifdef USE_LIBSSL
@@ -1172,6 +1191,69 @@ ok:      setLocal();
 
    U_RETURN(false);
 }
+
+#ifdef HAVE_EPOLL_WAIT
+bool USocket::beginAsynchronousConnect(const UString& server, unsigned int iServPort)
+{
+   U_TRACE(1, "USocket::beginAsynchronousConnect(%V,%u)", server.rep, iServPort)
+
+   U_CHECK_MEMORY
+
+   U_INTERNAL_ASSERT(server.isNullTerminated())
+
+   if (isOpen() == false) _socket();
+
+   if (cRemoteAddress.setHostName(server, U_socket_IPv6(this)))
+      {
+      setNonBlocking(); // we assume all sockets are blocking, so we will set nonBlocking for connect then unset back to blocking
+
+      SocketAddress cServer(iRemotePort = iServPort, cRemoteAddress);
+
+      /**
+       * Yes, a non-blocking connect() can return 0 (which means success), although this is not likely to happen with TCP.
+       * "Immediately" means that the kernel does not have to wait to determine the status. Situations where you could see this include:
+       *
+       * 1) UDP sockets, where connect() is basically advisory, allowing send() to be used later, rather than sendto()
+       * 2) Streaming UNIX domain sockets, where the peer is in the same kernel and thus could be scrutinized immediately
+       * 3) A TCP connection to 127.0.0.1 (localhost)
+       */
+
+      int result = U_FF_SYSCALL(connect, "%d,%p,%d", getFd(), (sockaddr*)cServer, cServer.sizeOf());
+
+      if ((result == -1 && errno == EINPROGRESS) ||
+          (result ==  0 && finishAsynchronousConnect()))
+         {
+         U_RETURN(true);
+         }
+
+      _close_socket();
+      }
+
+   U_RETURN(false);
+}
+
+bool USocket::finishAsynchronousConnect()
+{
+   U_TRACE_NO_PARAM(0, "USocket::finishAsynchronousConnect()")
+
+   setBlocking();
+
+   uint32_t error = U_NOT_FOUND, tmp = sizeof(uint32_t);
+
+   (void) getSockOpt(SOL_SOCKET, SO_ERROR, (void*)&error, tmp);
+
+   if (error == 0)
+      {
+      iState = CONNECT;
+
+      U_RETURN(true);
+      }
+
+   iState = -(errno = error);
+
+   U_RETURN(false);
+}
+#endif
 
 int USocket::send(const char* pData, uint32_t iDataLen)
 {

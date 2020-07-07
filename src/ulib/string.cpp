@@ -16,7 +16,7 @@
 #include <ulib/utility/escape.h>
 #include <ulib/internal/chttp.h>
 
-vpFpcu      UString::printValueToBuffer;
+vPFpcu      UString::printValueToBuffer;
 UString*    UString::string_null        = ULib::uustringnull.p2;
 UString*    UString::string_u_buffer    = ULib::uustringubuffer.p2;
 UStringRep* UStringRep::string_rep_null = ULib::uustringrepnull.p2;
@@ -630,7 +630,7 @@ UStringRep* UStringRep::create(uint32_t length, uint32_t need, const char* ptr)
    // NB: we don't use new (ctor) because we want an allocation with more space for string data...
 
 #ifndef ENABLE_MEMPOOL
-      r = (UStringRep*) U_SYSCALL(malloc, "%u", need+(1+sizeof(UStringRep)));
+      r = (UStringRep*) U_SYSCALL_MALLOC(need+(1+sizeof(UStringRep)));
    _ptr = (char*)(r + 1);
 
    U_INTERNAL_ASSERT_POINTER_MSG(r, "cannot allocate memory, exiting...")
@@ -744,7 +744,7 @@ bool UString::shrink(bool bmalloc)
 
    if (bmalloc)
       {
-      char* ptr = (char*) U_SYSCALL(malloc, "%u", length+1);
+      char* ptr = (char*) U_SYSCALL_MALLOC(length+1);
 
       U_INTERNAL_ASSERT_POINTER_MSG(ptr, "cannot allocate memory, exiting...")
 
@@ -754,7 +754,11 @@ bool UString::shrink(bool bmalloc)
 
       UString str(ptr, length);
 
-      str.setToFree();
+#  ifdef USE_LIBMIMALLOC
+      str.rep->_capacity = U_TO_MI_FREE;
+#  else
+      str.rep->_capacity = U_TO_FREE;
+#  endif
 
       _assign(str.rep);
 
@@ -768,11 +772,11 @@ bool UString::shrink(bool bmalloc)
 
    U_INTERNAL_DUMP("rep->_capacity = %u length = %u sz = %u", rep->_capacity, length, sz)
 
-   U_INTERNAL_ASSERT_MAJOR(rep->_capacity, 0) // mode: 0 -> const
-   U_INTERNAL_ASSERT_MAJOR(rep->_capacity, length)
+   U_INTERNAL_ASSERT_MAJOR((int32_t)rep->_capacity, 0) // mode: 0 -> const
+   U_INTERNAL_ASSERT_MAJOR((int32_t)rep->_capacity, (int32_t)length)
 
 #ifndef ENABLE_MEMPOOL
-   r = (UStringRep*) U_SYSCALL(malloc, "%u", (capacity = sz));
+   r = (UStringRep*) U_SYSCALL_MALLOC((capacity = sz));
 
    U_INTERNAL_ASSERT_POINTER_MSG(r, "cannot allocate memory, exiting...")
 #else
@@ -913,7 +917,7 @@ void UStringRep::_release()
 #endif
 
 #ifndef ENABLE_MEMPOOL
-   U_SYSCALL_VOID(free, "%p", (void*)this);
+   U_SYSCALL_FREE((void*)this);
 #else
    U_INTERNAL_DUMP("_capacity = %d (_capacity <= U_CAPACITY) = %b", (int32_t)_capacity, (_capacity <= U_CAPACITY))
 
@@ -946,8 +950,22 @@ void UStringRep::_release()
       {
       if (_capacity != U_NOT_FOUND)
          {
-         if (_capacity == U_TO_FREE) { U_SYSCALL_VOID(free, "%p", (void*)str); }
-         else UMemoryPool::deallocate((void*)str, _capacity);
+         if (_capacity < U_TO_MI_FREE) UMemoryPool::deallocate((void*)str, _capacity);
+         else
+            {
+#        ifdef USE_LIBMIMALLOC
+            if (_capacity == U_TO_MI_FREE)
+               {
+               U_SYSCALL_VOID(mi_free, "%p", (void*)str);
+               }
+            else
+#        endif
+            {
+            U_INTERNAL_ASSERT_EQUALS(_capacity, U_TO_FREE)
+
+            U_SYSCALL_VOID(free, "%p", (void*)str);
+            }
+            }
          }
       else
          {
@@ -1334,7 +1352,8 @@ char* UString::__replace(uint32_t pos, uint32_t n1, uint32_t n2)
 
    uint32_t __capacity = rep->_capacity;
 
-   if (__capacity == U_NOT_FOUND) __capacity = 0;
+        if (isMmap())   __capacity = 0;
+   else if (isToFree()) __capacity = rep->_length;
 
    if (rep->references ||
        n > __capacity)
@@ -2661,6 +2680,14 @@ bool UStringRep::invariant() const
       if (_length)
          {
          U_WARNING("Error on string_rep_null: (not empty)\n"
+                   "--------------------------------------------------\n%s", UStringRep::dump(true));
+
+         return false;
+         }
+
+      if (_capacity)
+         {
+         U_WARNING("Error on string_rep_null: (_capacity not 0)\n"
                    "--------------------------------------------------\n%s", UStringRep::dump(true));
 
          return false;

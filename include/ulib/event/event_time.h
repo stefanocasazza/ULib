@@ -18,6 +18,7 @@
 
 class UTimer;
 class UNotifier;
+class UServer_Base;
 #ifdef USE_LIBEVENT
 template <class T> class UTimerEv;
 #endif
@@ -305,6 +306,7 @@ private:
 
    friend class UTimer;
    friend class UNotifier;
+   friend class UServer_Base;
 };
 
 #endif

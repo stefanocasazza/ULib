@@ -865,7 +865,7 @@ protected:
 
    bool processRequest(char recvtype);
 
-#if defined(U_STDCPP_ENABLE) && defined(HAVE_CXX20) && defined(U_LINUX) && !defined(__clang__)
+#if defined(U_STDCPP_ENABLE) && defined(HAVE_CXX20) && defined(U_LINUX) && !defined(__clang__) && GCC_VERSION_NUM < 100100
    bool sendRequest(UStringType&& pipeline)
 #else
    bool sendRequest(const UString& pipeline)
@@ -1037,7 +1037,7 @@ private:
 
 // by Victor Stewart
 
-#if defined(U_STDCPP_ENABLE) && defined(HAVE_CXX20) && defined(U_LINUX) && !defined(__clang__)
+#if defined(U_STDCPP_ENABLE) && defined(HAVE_CXX20) && defined(U_LINUX) && !defined(__clang__) && GCC_VERSION_NUM < 100100
 
 class UCompileTimeRESPEncoder : public UCompileTimeStringFormatter {
 private:

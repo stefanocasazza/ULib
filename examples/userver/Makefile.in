@@ -91,10 +91,11 @@ build_triplet = @build@
 host_triplet = @host@
 target_triplet = @target@
 bin_PROGRAMS = userver_tcp$(EXEEXT) $(am__EXEEXT_1) $(am__EXEEXT_2) \
-	$(am__EXEEXT_3)
-@SSL_TRUE@am__append_1 = userver_ssl
-@USERVER_UDP_TRUE@am__append_2 = userver_udp
-@MINGW_FALSE@@USERVER_IPC_TRUE@am__append_3 = userver_ipc
+	$(am__EXEEXT_3) $(am__EXEEXT_4)
+@LIBURING_TRUE@am__append_1 = userver_rng
+@SSL_TRUE@am__append_2 = userver_ssl
+@USERVER_UDP_TRUE@am__append_3 = userver_udp
+@MINGW_FALSE@@USERVER_IPC_TRUE@am__append_4 = userver_ipc
 subdir = examples/userver
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/ac_check_package.m4 \
@@ -124,9 +125,10 @@ CONFIG_HEADER = $(top_builddir)/include/ulib/internal/config.h
 CONFIG_CLEAN_FILES = web_server.spec wagsmserver.spec tsaserver.spec \
 	cspserver.spec rsignserver.spec
 CONFIG_CLEAN_VPATH_FILES =
-@SSL_TRUE@am__EXEEXT_1 = userver_ssl$(EXEEXT)
-@USERVER_UDP_TRUE@am__EXEEXT_2 = userver_udp$(EXEEXT)
-@MINGW_FALSE@@USERVER_IPC_TRUE@am__EXEEXT_3 = userver_ipc$(EXEEXT)
+@LIBURING_TRUE@am__EXEEXT_1 = userver_rng$(EXEEXT)
+@SSL_TRUE@am__EXEEXT_2 = userver_ssl$(EXEEXT)
+@USERVER_UDP_TRUE@am__EXEEXT_3 = userver_udp$(EXEEXT)
+@MINGW_FALSE@@USERVER_IPC_TRUE@am__EXEEXT_4 = userver_ipc$(EXEEXT)
 am__installdirs = "$(DESTDIR)$(bindir)" "$(DESTDIR)$(sysconfdir)"
 PROGRAMS = $(bin_PROGRAMS)
 am__userver_ipc_SOURCES_DIST = userver.cpp
@@ -143,6 +145,13 @@ am__v_lt_1 =
 userver_ipc_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CXXLD) $(AM_CXXFLAGS) \
 	$(CXXFLAGS) $(userver_ipc_LDFLAGS) $(LDFLAGS) -o $@
+am__userver_rng_SOURCES_DIST = userver.cpp
+@LIBURING_TRUE@am_userver_rng_OBJECTS = userver_rng-userver.$(OBJEXT)
+userver_rng_OBJECTS = $(am_userver_rng_OBJECTS)
+@LIBURING_TRUE@userver_rng_DEPENDENCIES = $(am__DEPENDENCIES_1)
+userver_rng_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CXXLD) $(AM_CXXFLAGS) \
+	$(CXXFLAGS) $(userver_rng_LDFLAGS) $(LDFLAGS) -o $@
 am__userver_ssl_SOURCES_DIST = userver.cpp
 @SSL_TRUE@am_userver_ssl_OBJECTS = userver_ssl-userver.$(OBJEXT)
 userver_ssl_OBJECTS = $(am_userver_ssl_OBJECTS)
@@ -179,6 +188,7 @@ am__v_at_1 =
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__maybe_remake_depfiles = depfiles
 am__depfiles_remade = ./$(DEPDIR)/userver_ipc-userver.Po \
+	./$(DEPDIR)/userver_rng-userver.Po \
 	./$(DEPDIR)/userver_ssl-userver.Po \
 	./$(DEPDIR)/userver_tcp-userver.Po \
 	./$(DEPDIR)/userver_udp-userver.Po
@@ -201,9 +211,11 @@ AM_V_CXXLD = $(am__v_CXXLD_@AM_V@)
 am__v_CXXLD_ = $(am__v_CXXLD_@AM_DEFAULT_V@)
 am__v_CXXLD_0 = @echo "  CXXLD   " $@;
 am__v_CXXLD_1 = 
-SOURCES = $(userver_ipc_SOURCES) $(userver_ssl_SOURCES) \
-	$(userver_tcp_SOURCES) $(userver_udp_SOURCES)
+SOURCES = $(userver_ipc_SOURCES) $(userver_rng_SOURCES) \
+	$(userver_ssl_SOURCES) $(userver_tcp_SOURCES) \
+	$(userver_udp_SOURCES)
 DIST_SOURCES = $(am__userver_ipc_SOURCES_DIST) \
+	$(am__userver_rng_SOURCES_DIST) \
 	$(am__userver_ssl_SOURCES_DIST) $(userver_tcp_SOURCES) \
 	$(am__userver_udp_SOURCES_DIST)
 am__can_run_installinfo = \
@@ -472,6 +484,10 @@ userver_tcp_LDADD = $(ulib_la) @FSTACKLIBS@
 userver_tcp_SOURCES = userver.cpp
 userver_tcp_LDFLAGS = $(PRG_LDFLAGS) @FSTACKLDFLAGS@
 userver_tcp_CPPFLAGS = -DU_TCP_SOCKET $(CPPFLAGS)
+@LIBURING_TRUE@userver_rng_LDADD = $(ulib_la)
+@LIBURING_TRUE@userver_rng_SOURCES = userver.cpp
+@LIBURING_TRUE@userver_rng_LDFLAGS = $(PRG_LDFLAGS)
+@LIBURING_TRUE@userver_rng_CPPFLAGS = -DU_TCP_SOCKET -DUSERVER_RNG $(CPPFLAGS)
 @SSL_TRUE@userver_ssl_LDADD = $(ulib_la)
 @SSL_TRUE@userver_ssl_SOURCES = userver.cpp
 @SSL_TRUE@userver_ssl_LDFLAGS = $(PRG_LDFLAGS)
@@ -581,6 +597,10 @@ userver_ipc$(EXEEXT): $(userver_ipc_OBJECTS) $(userver_ipc_DEPENDENCIES) $(EXTRA
 	@rm -f userver_ipc$(EXEEXT)
 	$(AM_V_CXXLD)$(userver_ipc_LINK) $(userver_ipc_OBJECTS) $(userver_ipc_LDADD) $(LIBS)
 
+userver_rng$(EXEEXT): $(userver_rng_OBJECTS) $(userver_rng_DEPENDENCIES) $(EXTRA_userver_rng_DEPENDENCIES) 
+	@rm -f userver_rng$(EXEEXT)
+	$(AM_V_CXXLD)$(userver_rng_LINK) $(userver_rng_OBJECTS) $(userver_rng_LDADD) $(LIBS)
+
 userver_ssl$(EXEEXT): $(userver_ssl_OBJECTS) $(userver_ssl_DEPENDENCIES) $(EXTRA_userver_ssl_DEPENDENCIES) 
 	@rm -f userver_ssl$(EXEEXT)
 	$(AM_V_CXXLD)$(userver_ssl_LINK) $(userver_ssl_OBJECTS) $(userver_ssl_LDADD) $(LIBS)
@@ -600,6 +620,7 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/userver_ipc-userver.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/userver_rng-userver.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/userver_ssl-userver.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/userver_tcp-userver.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/userver_udp-userver.Po@am__quote@ # am--include-marker
@@ -647,6 +668,20 @@ userver_ipc-userver.obj: userver.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='userver.cpp' object='userver_ipc-userver.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(userver_ipc_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o userver_ipc-userver.obj `if test -f 'userver.cpp'; then $(CYGPATH_W) 'userver.cpp'; else $(CYGPATH_W) '$(srcdir)/userver.cpp'; fi`
+
+userver_rng-userver.o: userver.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(userver_rng_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT userver_rng-userver.o -MD -MP -MF $(DEPDIR)/userver_rng-userver.Tpo -c -o userver_rng-userver.o `test -f 'userver.cpp' || echo '$(srcdir)/'`userver.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/userver_rng-userver.Tpo $(DEPDIR)/userver_rng-userver.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='userver.cpp' object='userver_rng-userver.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(userver_rng_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o userver_rng-userver.o `test -f 'userver.cpp' || echo '$(srcdir)/'`userver.cpp
+
+userver_rng-userver.obj: userver.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(userver_rng_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT userver_rng-userver.obj -MD -MP -MF $(DEPDIR)/userver_rng-userver.Tpo -c -o userver_rng-userver.obj `if test -f 'userver.cpp'; then $(CYGPATH_W) 'userver.cpp'; else $(CYGPATH_W) '$(srcdir)/userver.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/userver_rng-userver.Tpo $(DEPDIR)/userver_rng-userver.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='userver.cpp' object='userver_rng-userver.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(userver_rng_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o userver_rng-userver.obj `if test -f 'userver.cpp'; then $(CYGPATH_W) 'userver.cpp'; else $(CYGPATH_W) '$(srcdir)/userver.cpp'; fi`
 
 userver_ssl-userver.o: userver.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(userver_ssl_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT userver_ssl-userver.o -MD -MP -MF $(DEPDIR)/userver_ssl-userver.Tpo -c -o userver_ssl-userver.o `test -f 'userver.cpp' || echo '$(srcdir)/'`userver.cpp
@@ -846,6 +881,7 @@ clean-am: clean-binPROGRAMS clean-generic clean-libtool clean-local \
 
 distclean: distclean-am
 		-rm -f ./$(DEPDIR)/userver_ipc-userver.Po
+	-rm -f ./$(DEPDIR)/userver_rng-userver.Po
 	-rm -f ./$(DEPDIR)/userver_ssl-userver.Po
 	-rm -f ./$(DEPDIR)/userver_tcp-userver.Po
 	-rm -f ./$(DEPDIR)/userver_udp-userver.Po
@@ -896,6 +932,7 @@ installcheck-am:
 
 maintainer-clean: maintainer-clean-am
 		-rm -f ./$(DEPDIR)/userver_ipc-userver.Po
+	-rm -f ./$(DEPDIR)/userver_rng-userver.Po
 	-rm -f ./$(DEPDIR)/userver_ssl-userver.Po
 	-rm -f ./$(DEPDIR)/userver_tcp-userver.Po
 	-rm -f ./$(DEPDIR)/userver_udp-userver.Po

@@ -61,7 +61,7 @@ void UHashMap<void*>::_allocate(uint32_t n)
 
    U_INTERNAL_ASSERT_EQUALS(n & (n-1), 0)
 
-   info  = (uint8_t*) U_SYSCALL(malloc, "%u", n*(1+UHashMapNode::size())); // UMemoryPool::malloc(n, 1+UHashMapNode::size(), false);
+   info  = (uint8_t*) U_SYSCALL_MALLOC(n*(1+UHashMapNode::size())); // UMemoryPool::cmalloc(n, 1+UHashMapNode::size(), false);
    table = (char*) (info + n);
 
    U_INTERNAL_ASSERT_POINTER_MSG(info, "cannot allocate memory, exiting...")
@@ -528,7 +528,7 @@ void UHashMap<void*>::increase_size()
 #     endif
       }
 
-   U_SYSCALL_VOID(free, "%p", old_info); // UMemoryPool::_free(old_info, old_capacity, 1+UHashMapNode::size());
+   U_SYSCALL_FREE(old_info); // UMemoryPool::_free(old_info, old_capacity, 1+UHashMapNode::size());
 }
 
 void UHashMap<void*>::eraseAfterFind()

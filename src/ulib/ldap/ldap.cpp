@@ -28,8 +28,8 @@ ULDAPEntry::ULDAPEntry(int num_names, const char** names, int num_entry)
    n_entry   = num_entry;
    attr_name = names;
 
-   dn       =    (char**) UMemoryPool::malloc(num_entry,             sizeof(char*),    true);
-   attr_val = (UString**) UMemoryPool::malloc(num_entry * num_names, sizeof(UString*), true);
+   dn       =    (char**) UMemoryPool::cmalloc(num_entry,             sizeof(char*),    true);
+   attr_val = (UString**) UMemoryPool::cmalloc(num_entry * num_names, sizeof(UString*), true);
 }
 
 ULDAPEntry::~ULDAPEntry()
@@ -159,25 +159,25 @@ void ULDAP::clear()
 #  else
       int i;
 
-      if (ludpp->lud_dn)     U_SYSCALL_VOID(free, "%p", (void*)ludpp->lud_dn);
-      if (ludpp->lud_host)   U_SYSCALL_VOID(free, "%p", (void*)ludpp->lud_host);
-      if (ludpp->lud_filter) U_SYSCALL_VOID(free, "%p",        ludpp->lud_filter);
+      if (ludpp->lud_dn)     U_SYSCALL_FREE((void*)ludpp->lud_dn);
+      if (ludpp->lud_host)   U_SYSCALL_FREE((void*)ludpp->lud_host);
+      if (ludpp->lud_filter) U_SYSCALL_FREE(       ludpp->lud_filter);
 
       if (ludpp->lud_attrs)
          {
-         for (i = 0; ludpp->lud_attrs[i]; ++i) U_SYSCALL_VOID(free, "%p", ludpp->lud_attrs[i]);
+         for (i = 0; ludpp->lud_attrs[i]; ++i) U_SYSCALL_FREE(ludpp->lud_attrs[i]);
 
-         U_SYSCALL_VOID(free, "%p", ludpp->lud_attrs);
+         U_SYSCALL_FREE(ludpp->lud_attrs);
          }
 
       if (ludpp->lud_exts)
          {
-         for (i = 0; ludpp->lud_exts[i]; ++i) U_SYSCALL_VOID(free, "%p", ludpp->lud_exts[i]);
+         for (i = 0; ludpp->lud_exts[i]; ++i) U_SYSCALL_FREE(ludpp->lud_exts[i]);
 
-         U_SYSCALL_VOID(free, "%p", ludpp->lud_exts);
+         U_SYSCALL_FREE(ludpp->lud_exts);
          }
 
-      U_SYSCALL_VOID(free, "%p", ludpp);
+      U_SYSCALL_FREE(ludpp);
 #  endif
 
       ludpp = U_NULLPTR;
@@ -434,7 +434,7 @@ bool ULDAP::init(const char* url)
 
    if (!*p) goto next;
 
-   ludpp->lud_filter = strdup(p);
+   ludpp->lud_filter = U_SYSCALL_STRDUP(p);
 
    U_INTERNAL_DUMP("filter = %S", ludpp->lud_filter)
 

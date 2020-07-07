@@ -368,7 +368,7 @@ char* UXML2Document::convString(const char* string, const char* in_charset, cons
          {
          xmlCharEncOutFunc(out, conv, NULL);
 
-         if (xmlCharEncOutFunc(out, conv, utf8) >= 0) ret = strdup((const char*)xmlBufferContent(conv));
+         if (xmlCharEncOutFunc(out, conv, utf8) >= 0) ret = U_SYSCALL_STRDUP((const char*)xmlBufferContent(conv));
          }
 
       xmlBufferFree(orig);

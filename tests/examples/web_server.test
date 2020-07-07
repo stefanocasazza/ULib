@@ -27,10 +27,12 @@ rm -f db/session.ssl* /tmp/ssl_session.txt /tmp/byterange* /tmp/soap.res /tmp/*.
  UTRACE_SIGNAL="0 50M -1"
  UTRACE_FOLDER=/tmp
  TMPDIR=/tmp
+MIMALLOC_VERBOSE=1
+MIMALLOC_SHOW_ERRORS=1
 #UOBJDUMP="0 10M 100"
 #USIMERR="error.sim"
 #UMEMUSAGE=yes
-export UTRACE UOBJDUMP USIMERR UTRACE_SIGNAL UMEMUSAGE UTRACE_FOLDER TMPDIR
+export UTRACE UOBJDUMP USIMERR UTRACE_SIGNAL UMEMUSAGE UTRACE_FOLDER TMPDIR MIMALLOC_VERBOSE MIMALLOC_SHOW_ERRORS
 
 if [ "$TERM" = "msys" ]; then
    export TMPDIR="c:/tmp"
@@ -80,7 +82,7 @@ wait_server_ready localhost 8080
 #./sendbytes.pl
 #$NCAT -w 10 test          80 < inp/request.14215 >>out/web_server.out
 #$NCAT -w 10 10.10.100.115 80 < inp/http/all4.inp >>out/web_server.out
-#$CURL -m 10 http://$1/browserconfig.xml             >>out/web_server.out 2>>err/web_server.err
+#$CURL -m 10 http://$1/browserconfig.xml          >>out/web_server.out 2>>err/web_server.err
 #send_req $NCAT test 80 inp/request.14215 web_server 2
 #exit 0
 #return
@@ -157,8 +159,8 @@ grep 'www.sito1.com' /etc/hosts >/dev/null 2>/dev/null
 
 if [ $? -ne 0 ]; then
    echo '# virtual host userver' >> /etc/hosts 2>/dev/null
-   echo localhost www.sito1.com  >> /etc/hosts 2>/dev/null
-   echo localhost www.sito2.com  >> /etc/hosts 2>/dev/null
+   echo 127.0.0.1 www.sito1.com  >> /etc/hosts 2>/dev/null
+   echo 127.0.0.1 www.sito2.com  >> /etc/hosts 2>/dev/null
 fi
 
 mkdir $DOC_ROOT/www.sito1.com

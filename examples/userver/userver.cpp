@@ -162,6 +162,8 @@ public:
       UServer_Base::budp = true;
 #  elif defined(U_UNIX_SOCKET)
       UServer_Base::bipc = true;
+#  elif defined(U_TCP_SOCKET) && defined(USERVER_RNG)
+      UServer_Base::brng = true;
 #  elif defined(USE_FSTACK)
       UString x = cfg.at(U_CONSTANT_TO_PARAM("FSTACK_ARG"));
 

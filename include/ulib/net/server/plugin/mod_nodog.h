@@ -15,7 +15,6 @@
 #define U_MOD_NODOG_H 1
 
 #include <ulib/url.h>
-#include <ulib/timer.h>
 #include <ulib/command.h>
 #include <ulib/net/tcpsocket.h>
 #include <ulib/net/client/http.h>
@@ -37,7 +36,7 @@ public:
       {
       U_TRACE(0, "UModNoDogPeer::operator new(%u)", sz)
       
-      char* p = (char*) U_SYSCALL(malloc, "%u", sz);
+      char* p = (char*) U_SYSCALL_MALLOC(sz);
       
       U_INTERNAL_ASSERT_POINTER_MSG(p, "cannot allocate memory, exiting...")
 
@@ -48,7 +47,7 @@ public:
       {
       U_TRACE(0, "UModNoDogPeer::operator delete(%p,%u)", _ptr, sz)
       
-      U_SYSCALL_VOID(free, "%p", _ptr);
+      U_SYSCALL_FREE(_ptr);
       }
 
    UModNoDogPeer() : UEventTime(30L,0L), mac(*UString::str_without_mac)

@@ -192,7 +192,7 @@ UPgSqlStatement::UPgSqlStatement(const char* s, uint32_t n) : USqlStatement(U_NU
       {
       vparam.reserve(num_bind_param);
 
-      paramTypes = (Oid*) UMemoryPool::malloc(num_bind_param * 3, sizeof(int), false);
+      paramTypes = (Oid*) UMemoryPool::cmalloc(num_bind_param * 3, sizeof(int), false);
       }
 }
 
@@ -417,7 +417,7 @@ bool UPgSqlStatement::setBindParam(UOrmDriver* pdrv)
       {
       if (paramValues == U_NULLPTR)
          {
-         paramValues = (const char**) UMemoryPool::malloc(num_bind_param, sizeof(const char*), false);
+         paramValues = (const char**) UMemoryPool::cmalloc(num_bind_param, sizeof(const char*), false);
 
          U_INTERNAL_ASSERT_EQUALS(paramLengths, U_NULLPTR)
 
