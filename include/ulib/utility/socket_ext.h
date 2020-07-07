@@ -158,6 +158,8 @@ public:
 private:
    
    friend class UREDISClusterMaster;
+	friend class URedisClient2;
+   friend class RedisSubscriber;
    
 #ifdef USE_C_ARES
    static int   resolv_status;
