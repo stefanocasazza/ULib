@@ -104,7 +104,6 @@ class UValue;
 class UString;
 class UBase64;
 class UEscape;
-class UIORing;
 class UHexDump;
 class UOptions;
 class UTimeDate;
@@ -168,7 +167,7 @@ public:
 
       U_CHECK_MEMORY
 
-      U_INTERNAL_DUMP("this = %p parent = %p references = %d child = %d _capacity = %d", this, parent, references, child, _capacity)
+      U_INTERNAL_DUMP("this = %p parent = %p references = %d child = %d", this, parent, references, child)
 
       ++references;
       }
@@ -177,12 +176,12 @@ public:
       {
       U_TRACE_NO_PARAM(0, "UStringRep::release()")
 
-      U_INTERNAL_DUMP("this = %p parent = %p references = %u child = %d _capacity = %d", this, parent, references, child, _capacity)
+      U_INTERNAL_DUMP("this = %p parent = %p references = %u child = %d", this, parent, references, child)
 
 #  ifdef DEBUG
       if (memory.invariant() == false)
          {
-         U_ERROR("UStringRep::release() %O - this = %p parent = %p references = %u child = %d _capacity = %d str(%u) = %#.*S",
+         U_ERROR("UStringRep::release() %s - this = %p parent = %p references = %u child = %d _capacity = %u str(%u) = %#.*S",
                   memory.getErrorType(this), this, parent, references, child, _capacity, _length, _length, str);
          }
 #  endif
@@ -221,24 +220,6 @@ public:
       U_CHECK_MEMORY
 
       _capacity = U_TO_FREE;
-      }
-
-   bool isToFree() const
-      {
-      U_TRACE_NO_PARAM(0, "UStringRep::isToFree()")
-
-      if (_capacity >= U_TO_MI_FREE) U_RETURN(true);
-
-      U_RETURN(false);
-      }
-
-   bool isMmap() const
-      {
-      U_TRACE_NO_PARAM(0, "UStringRep::isMmap()")
-
-      if (_capacity == U_NOT_FOUND) U_RETURN(true);
-
-      U_RETURN(false);
       }
 
    bool writeable() const
@@ -979,18 +960,6 @@ protected:
 #endif
 
 private:
-   void set(uint32_t __length, const char* ptr)
-      {
-      U_TRACE(0, "UStringRep::set(%u,%p)", __length, ptr)
-
-      U_CHECK_MEMORY
-
-      U_INTERNAL_ASSERT_POINTER(ptr)
-
-      _length = __length;
-      str     = ptr;
-      }
-
    void set(uint32_t __length, uint32_t __capacity, const char* ptr)
       {
       U_TRACE(0, "UStringRep::set(%u,%u,%p)", __length, __capacity, ptr)
@@ -1022,13 +991,14 @@ private:
       set(tlen, 0U, t);
       }
 
-   explicit UStringRep(uint32_t __capacity, const char* t) // NB: to use only with new(UStringRep(tlen,t))...
+   explicit UStringRep(uint32_t tlen, const char* t) // NB: to use only with new(UStringRep(tlen,t))...
       {
-      U_TRACE_CTOR(0, UStringRep, "%u,%p", __capacity, t)
+      U_TRACE_CTOR(0, UStringRep, "%u,%p", tlen, t)
 
       U_CHECK_MEMORY
 
-      U_INTERNAL_ASSERT_MAJOR(__capacity, 0)
+      U_INTERNAL_ASSERT_POINTER(t)
+      U_INTERNAL_ASSERT_MAJOR(tlen, 0)
 
 #  if defined(U_SUBSTR_INC_REF) || defined(DEBUG)
       parent = U_NULLPTR;
@@ -1038,7 +1008,7 @@ private:
 #  endif
 
       _length    = 0U;
-      _capacity  = __capacity;
+      _capacity  = tlen;
       references = 1; // NB: this object cannot be destroyed...
       str        = t;
       }
@@ -2042,13 +2012,8 @@ public:
       return (char*)rep->str;
       }
 
-#ifdef USE_LIBMIMALLOC
-   char* c_strdup() const                                            { return mi_strndup(rep->str, rep->_length); }
-   char* c_strndup(uint32_t pos = 0, uint32_t n = U_NOT_FOUND) const { return mi_strndup(rep->str+pos, rep->fold(pos, n)); }
-#else
    char* c_strdup() const                                            { return strndup(rep->str, rep->_length); }
    char* c_strndup(uint32_t pos = 0, uint32_t n = U_NOT_FOUND) const { return strndup(rep->str+pos, rep->fold(pos, n)); }
-#endif
 
    UString copy() const
       {
@@ -2284,7 +2249,6 @@ public:
       U_INTERNAL_ASSERT(invariant())
       }
 
-   bool  isToFree() { return rep->isToFree(); }
    void setToFree() { return rep->setToFree(); }
 
    bool uniq() const      { return rep->uniq(); }
@@ -2320,7 +2284,14 @@ public:
 
    // manage UString as memory mapped area...
 
-   bool isMmap() { return rep->isMmap(); }
+   bool isMmap() const
+      {
+      U_TRACE_NO_PARAM(0, "UString::isMmap()")
+
+      if (rep->_capacity == U_NOT_FOUND) U_RETURN(true);
+
+      U_RETURN(false);
+      }
 
    void mmap(const char* map, uint32_t len);
 
@@ -2379,15 +2350,10 @@ public:
 
       U_INTERNAL_ASSERT_MAJOR(rep->_length, n)
       U_INTERNAL_ASSERT_RANGE(1, n, max_size())
+      U_INTERNAL_ASSERT_MAJOR(rep->_capacity, n)
 
-#  ifdef DEBUG
-#   if !defined(U_SUBSTR_INC_REF) && !defined(USE_LIBURING)
+#  if defined(DEBUG) && !defined(U_SUBSTR_INC_REF)
       U_INTERNAL_ASSERT(rep->references == 0)
-#   endif
-      if (isConstant() == false)
-         {
-         U_INTERNAL_ASSERT_MAJOR((int32_t)rep->_capacity, (int32_t)n)
-         }
 #  endif
 
       rep->_length -= n;
@@ -2397,7 +2363,7 @@ public:
       U_INTERNAL_ASSERT(invariant())
       }
 
-   static vPFpcu printValueToBuffer;
+   static vpFpcu printValueToBuffer;
 
    void printKeyValue(const char* key, uint32_t keylen, const char* data, uint32_t datalen);
 
@@ -2811,9 +2777,7 @@ private:
       }
 
    friend class UHTTP;
-   friend class UIORing;
    friend class USSEThread;
-   friend class UServer_Base;
    friend class URDBClient_Base;
 
    template <class T> friend class UJsonTypeHandler;
@@ -2899,17 +2863,18 @@ template <> inline uint32_t UObject2String<UString>(UString& object, char* pbuff
 
 // by Victor Stewart
 
-#if defined(U_STDCPP_ENABLE)
-#  if defined(HAVE_CXX11)
+#if defined(U_STDCPP_ENABLE) && defined(HAVE_CXX11)
+
 namespace std {
    template<> struct hash<UString> {
       std::size_t operator()(const UString& str) const noexcept { return str.hash(); }
    };
 }
-#  endif
+#endif
 
-#if defined(HAVE_CXX20) && defined(U_LINUX) && !defined(__clang__)
-#     include <utility> // std::index_sequence
+#if defined(U_STDCPP_ENABLE) && defined(HAVE_CXX20) && defined(U_LINUX) && !defined(__clang__)
+
+#include <utility> // std::index_sequence
 template <char... Chars>
 class UCompileTimeStringView {
 private:
@@ -3208,24 +3173,17 @@ public:
    }
 };
 
-#  if defined(U_STDCPP_ENABLE) && defined(HAVE_CXX20) && defined(U_LINUX) && !defined(__clang__) && GCC_VERSION_NUM < 100100
 template<typename T>
-concept bool UCompileTimeStringType = requires(T string) {
-   is_ctv_v<T>;
-};
+concept UCompileTimeStringType = is_ctv_v<T>;
 
 template<typename T>
-concept bool UStringType = requires(T string)
-{
-   (std::is_same_v<T, UString> || is_ctv_v<T>);
-};
+concept UStringType = (std::is_same_v<std::remove_reference_t<T>, UString> || is_ctv_v<T>);
 
-inline bool operator==(const UString& lhs, const UCompileTimeStringType& rhs){ return lhs.equal(rhs.string); }
-inline bool operator==(const UCompileTimeStringType& lhs, const UString& rhs){ return rhs.equal(lhs.string); }
+inline bool operator==(const UString& lhs, const UCompileTimeStringType auto& rhs){ return lhs.equal(rhs.string); }
+inline bool operator==(const UCompileTimeStringType auto& lhs, const UString& rhs){ return rhs.equal(lhs.string); }
 
-inline bool operator!=(const UString& lhs, const UCompileTimeStringType& rhs){ return !lhs.equal(rhs.string); }
-inline bool operator!=(const UCompileTimeStringType& lhs, const UString& rhs){ return !rhs.equal(lhs.string); }
-#  endif
-#  endif
+inline bool operator!=(const UString& lhs, const UCompileTimeStringType auto& rhs){ return !lhs.equal(rhs.string); }
+inline bool operator!=(const UCompileTimeStringType auto& lhs, const UString& rhs){ return !rhs.equal(lhs.string); }
+
 #endif
 #endif
