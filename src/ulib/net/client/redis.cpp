@@ -66,7 +66,7 @@ bool UREDISClient_Base::connect(const char* phost, unsigned int _port)
        UClient_Base::connect())
       {
       init();
-
+      
       U_RETURN(true);
       }
 
@@ -352,7 +352,7 @@ bool UREDISClient_Base::deleteKeys(const char* pattern, uint32_t len) // Delete 
 
 // by Victor Stewart
 
-#if defined(U_STDCPP_ENABLE) && defined(HAVE_CXX20) && defined(U_LINUX) && !defined(__clang__) && GCC_VERSION_NUM < 100100
+#if defined(U_STDCPP_ENABLE) && defined(HAVE_CXX20) && defined(U_LINUX) && !defined(__clang__)
 
 int RedisSubscriber::handlerRead()
 {
@@ -529,6 +529,8 @@ bool UREDISClusterMaster::connect(const UString& host, uint16_t port)
    U_RETURN(false);
 }
 #endif
+
+// DEBUG
 
 #if defined(U_STDCPP_ENABLE) && defined(DEBUG)
 const char* UREDISClient_Base::dump(bool _reset) const
