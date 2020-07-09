@@ -832,11 +832,7 @@ protected:
 
    bool processRequest(char recvtype);
 
-#if defined(U_STDCPP_ENABLE) && defined(HAVE_CXX20) && defined(U_LINUX) && !defined(__clang__) && GCC_VERSION_NUM < 100100
-   bool sendRequest(UStringType&& pipeline)
-#else
    bool sendRequest(const UString& pipeline)
-#endif
       {
       U_TRACE_NO_PARAM(0, "UREDISClient_Base::sendRequest()");
 
@@ -1002,7 +998,7 @@ private:
 
 // by Victor Stewart
 
-#if defined(U_STDCPP_ENABLE) && defined(HAVE_CXX20) && defined(U_LINUX) && !defined(__clang__) && GCC_VERSION_NUM < 100100
+#if defined(U_STDCPP_ENABLE) && defined(HAVE_CXX20) && defined(U_LINUX) && !defined(__clang__)
 
 enum class RedisOptions : uint8_t {
    
@@ -1401,7 +1397,7 @@ public:
 
 ///// CLUSTER /////
 
-static uint16_t hashslotForKey(UStringType&& hashableKey) 
+static uint16_t hashslotForKey(UStringType auto&& hashableKey) 
 {
    return u_crc16(U_STRING_TO_PARAM(hashableKey)) % 16384;
 }
@@ -1428,9 +1424,10 @@ public:
       pipeline.setEmpty();
    }
 
-   void setHashslot(UStringType&& hashableKey)
+   template <UStringType T>
+   void setHashslot(T&& hashableKey)
    {
-      hashslot = hashslotForKey(std::forward<UStringType>(hashableKey));
+      hashslot = hashslotForKey(std::forward<T>(hashableKey));
    }
 
    void append(const UString& command, uint8_t count)
@@ -1673,7 +1670,7 @@ private:
       return report;
    }
 
-   bool handleErrors(RedisReadReport& report, uint16_t hashslot, UStringType&& pipeline, size_t commandCount, bool skipRecloning = false)
+   bool handleErrors(RedisReadReport& report, uint16_t hashslot, UStringType auto&& pipeline, size_t commandCount, bool skipRecloning = false)
    {
       bool recloned = skipRecloning;
 
