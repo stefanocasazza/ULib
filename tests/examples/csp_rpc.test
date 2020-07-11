@@ -6,12 +6,12 @@
 
 start_msg cspclient_rpc
 
-#UTRACE="0 5M -1"
+#UTRACE="0 5M 0"
 #UOBJDUMP="0 100k 10"
 #USIMERR="error.sim"
  export UTRACE UOBJDUMP USIMERR
 
-rm -rf CSP/cspserver_rpc.log CSP/CSP/DB_CA/log CSP/CSP/DB_CA/CA* \
+rm -rf /tmp/cspserver_rpc.log CSP/cspserver_rpc.log CSP/CSP/DB_CA/log CSP/CSP/DB_CA/CA* \
 		 out/userver_ssl.out err/userver_ssl.err \
        CSP/trace.*userver_ssl*.[0-9]* CSP/object.*userver_ssl*.[0-9]* CSP/stack.*userver_ssl*.[0-9]* CSP/mempool.*userver_ssl*.[0-9]*
 
@@ -52,7 +52,7 @@ rm -rf CSP/cspserver_rpc.log CSP/CSP/DB_CA/log CSP/CSP/DB_CA/CA* \
 
 cat <<EOF >inp/webserver.cfg
 userver {
- LOG_FILE cspserver_rpc.log
+ LOG_FILE /tmp/cspserver_rpc.log
  LOG_FILE_SZ 1M
  DOCUMENT_ROOT CSP
  PLUGIN rpc
@@ -76,7 +76,8 @@ EOF
 DIR_CMD="../../examples/userver"
 
 start_prg_background userver_ssl -c inp/webserver.cfg
-$SLEEP
+
+wait_server_ready localhost 443
 
 ## ./CSP/request/run.sh > out/cspclient_rpc.out
 

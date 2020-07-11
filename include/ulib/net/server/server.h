@@ -28,6 +28,7 @@
 
 #ifdef USE_LIBURING
 #  include <liburing.h>
+//#define U_FILES_UPDATE_ASYNC_WORK
 #endif
 
 #ifndef SIGWINCH
@@ -293,6 +294,8 @@ public:
 
       handler_other->push_back(item);
       }
+
+   static void addHandlerEventPoll(UEventFd* handler);
 
    static int loadPlugins(UString& plugin_dir, const UString& plugin_list); // load plugin modules and call server-wide hooks handlerConfig()...
 
@@ -1101,12 +1104,27 @@ protected:
    static int fds[1];
    static int* socketfds;
    static UString* rBuffers;
+   static struct msghdr rmsg;
    static UStringRep* rbuffer;
+   static struct in_pktinfo* pi;
    static uint32_t rbuffer_size;
    static struct io_uring_sqe* sqe;
    static struct io_uring_cqe* cqe;
    static struct io_uring* io_uring;
+   static struct iovec vrwBuffers[3];
+   static struct io_uring_probe* probe;
    static UVector<UEventFd*>* handler_poll;
+   static char cmbuf[CMSG_SPACE(sizeof(struct in6_pktinfo))];
+
+   static void checkIfOpcodeSupported(int op, const char* descr)
+      {
+      U_TRACE(1, "UServer_Base::checkIfOpcodeSupported(%d,%S)", op, descr)
+
+      if (U_SYSCALL(io_uring_opcode_supported, "%p,%u", probe, op) == false)
+         {
+         U_ERROR("%s not supported, kernel(%u)", descr, LINUX_VERSION_CODE)
+         }
+      }
 
    static void get_sqe()
       {
@@ -1152,22 +1170,25 @@ protected:
       U_SYSCALL_VOID(io_uring_sqe_set_data, "%p,%p", sqe, (void*)(((long)nClientIndex << 32) + op));
       }
 
-   static int wait_cqe()
+   static bool wait_cqe()
       {
       U_TRACE_NO_PARAM(1, "UServer_Base::wait_cqe()")
 
-      int ret = U_SYSCALL(io_uring_wait_cqe, "%p,%p", io_uring, &cqe);
+      int ret = U_SYSCALL(io_uring_submit_and_wait, "%p,%u", io_uring, 1);
 
-      if (ret)
+      if (ret < 0)
          {
-         if (ret == -EINTR) UInterrupt::checkForEventSignalPending();
-         else
+         if (ret == -EINTR)
             {
-            U_ERROR("io_uring_wait_cqe() failed: %d%R", ret, 0); // NB: the last argument (0) is necessary...
+            UInterrupt::checkForEventSignalPending();
+
+            U_RETURN(false);
             }
+
+         U_ERROR("io_uring_submit_and_wait() failed: %d%R", ret, 0); // NB: the last argument (0) is necessary...
          }
 
-      U_RETURN(ret);
+      U_RETURN(true);
       }
 
    static void register_files_update()
@@ -1188,19 +1209,46 @@ protected:
          }
       }
 
-   static void prepareForAccept()
+   static void reset()
       {
-      U_TRACE_NO_PARAM(1, "UServer_Base::prepareForAccept()")
+      U_TRACE_NO_PARAM(0, "UServer_Base::reset()")
 
-      U_INTERNAL_DUMP("UNotifier::num_connection = %u UNotifier::max_connection = %u", UNotifier::num_connection, UNotifier::max_connection)
+      pClientImage->fd      = -1;
+      pClientImage->flag.hi = 0;
 
-      U_INTERNAL_ASSERT_MINOR(UNotifier::num_connection, UNotifier::max_connection)
+      register_files_update();
+      }
 
-      USocket::resetPeerAddr();
+   static void prepareForCancelRead()
+      {
+      U_TRACE_NO_PARAM(1, "UServer_Base::prepareForCancelRead()")
 
-      U_SYSCALL_VOID(io_uring_prep_accept, "%p,%u,%p,%p,%u", sqe, 0, (struct sockaddr*)&USocket::peer_addr, &USocket::peer_addr_len, SOCK_CLOEXEC);
+      pClientImage->setPendingOperationCancel();
 
-      nClientIndex = 0;
+      get_sqe();
+
+      U_SYSCALL_VOID(io_uring_prep_cancel, "%p,%p,%u", sqe, (void*)(((long)nClientIndex << 32) + (long)UClientImage_Base::_READ), 0);
+
+      U_SYSCALL_VOID(io_uring_sqe_set_data, "%p,%p", sqe, (void*)(((long)nClientIndex << 32) + (long)UClientImage_Base::_CANCEL));
+
+      submit();
+      }
+
+   static void prepareFilesUpdate()
+      {
+      U_TRACE_NO_PARAM(1, "UServer_Base::prepareFilesUpdate()")
+
+#  ifndef U_FILES_UPDATE_ASYNC_WORK
+      register_files_update();
+#  else
+      get_sqe();
+
+      U_SYSCALL_VOID(io_uring_prep_files_update, "%p,%p,%u,%u", sqe, &(fds[0] = pClientImage->fd), 1, 1+nClientIndex);
+
+      U_SYSCALL_VOID(io_uring_sqe_set_flags, "%p,%u", sqe, IOSQE_IO_LINK); // That next SQE will not be started before this one completes
+
+      U_SYSCALL_VOID(io_uring_sqe_set_data, "%p,%p", sqe, (void*)(((long)nClientIndex << 32) + UClientImage_Base::_UPDATE));
+#  endif
       }
 
    static void epoll_ctl_batch(UEventFd* handler)
@@ -1220,8 +1268,9 @@ protected:
       U_SYSCALL_VOID(io_uring_prep_epoll_ctl, "%p,%d,%d,%u,%p", sqe, UNotifier::epollfd, handler->fd, EPOLL_CTL_ADD, &ev);
       }
 
-   static void submit(int op, ...);
-   static void findNextClientImage();
+   static void logNewClient();
+   static void findClientImage();
+   static void prepareOperation(int op, ...);
    static void waitForEvent(UEventTime* ptimeout);
    static void epoll_ctl_batch(uint32_t ctl_cmd_cnt);
 #endif

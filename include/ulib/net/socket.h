@@ -621,6 +621,15 @@ public:
       U_RETURN(false);
       }
 
+   void setPktInfo()
+      {
+      U_TRACE_NO_PARAM(0, "USocket::setPktInfo()")
+
+#  ifdef IP_PKTINFO
+      (void) setSockOpt(IPPROTO_IP, IP_PKTINFO, (const int[]){ 1 });
+#  endif
+      }
+
    /**
     * The recvfrom() function is called with the proper parameters, params is placed for obtaining
     * the source address information. The number of bytes read is returned
@@ -856,7 +865,30 @@ protected:
 
       peer_addr_len = sizeof(peer_addr);
 
-      (void) U_SYSCALL(memset, "%p,%d,%u", &peer_addr, 0, U_SIZE_SOCKADDR);
+      (void) U_SYSCALL(memset, "%p,%u,%u", &peer_addr, 0, U_SIZE_SOCKADDR);
+      }
+
+   void resetPeerAddrFromLocal()
+      {
+      U_TRACE_NO_PARAM(0, "USocket::resetPeerAddrFromLocal()")
+
+      resetPeerAddr();
+
+      uint32_t iAddressLength;
+
+#  ifdef ENABLE_IPV6
+      if (U_socket_IPv6(this)) iAddressLength = sizeof(in6_addr);
+      else
+#  endif
+      {
+      iAddressLength = sizeof(in_addr);
+      }
+
+      char* ptr = (char*)&peer_addr;
+
+      u_put_unalignedp16(ptr, cLocalAddress.getAddressFamily());
+
+      U_MEMCPY(ptr+sizeof(short), (const void*)&(cLocalAddress.pcAddress.p), iAddressLength);
       }
    
    /**

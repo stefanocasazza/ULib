@@ -473,6 +473,7 @@ wait_server_ready() {
 		if [ $? -eq 0 ]; then
 			break
 		fi
+		$SLEEP
 	done
 }
 

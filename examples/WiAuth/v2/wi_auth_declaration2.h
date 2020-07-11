@@ -592,10 +592,12 @@ static void setSessionPolicy()
       }
    else
       {
+      U_LOGGER("*** AP:id:%v NOT FOUND ***", ap_label->rep);
+
       ap_consume = true;
       ap_notify  = 0; // notify
 
-      (void) rc->hmset(U_CONSTANT_TO_PARAM("AP:id:%v consume 1 notify 3"), ap_label->rep);
+   // (void) rc->hmset(U_CONSTANT_TO_PARAM("AP:id:%v consume 1 notify 3"), ap_label->rep);
       }
 
    U_INTERNAL_DUMP("ap_consume = %b ap_notify = %u", ap_consume, ap_notify)

@@ -824,7 +824,11 @@ U_NO_EXPORT void UHTTP::loadStaticLinkedServlet(const char* name, uint32_t len, 
 
    file_data->mime_index = U_usp;
 
-   U_NEW(UHTTP::UServletPage, file_data->ptr, UHTTP::UServletPage(name, len, U_NULLPTR, 0, runDynamicPage, runDynamicPageParam));
+   UHTTP::UServletPage* page;
+
+   U_NEW(UHTTP::UServletPage, page, UHTTP::UServletPage(name, len, U_NULLPTR, 0, runDynamicPage, runDynamicPageParam));
+
+   file_data->ptr = page;
 
    U_INTERNAL_ASSERT_POINTER(vusp)
 

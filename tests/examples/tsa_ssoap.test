@@ -13,7 +13,7 @@ start_msg tsa_ssoap
 
 DOC_ROOT=TSA
 
-rm -rf $DOC_ROOT/*log \
+rm -rf $DOC_ROOT/*log /tmp/*log \
 		 out/userver_ssl.out err/userver_ssl.err \
                 trace.*userver_*.[0-9]*           object.*userver_*.[0-9]*           stack.*userver_*.[0-9]*           mempool.*userver_*.[0-9]* \
       $DOC_ROOT/trace.*userver_*.[0-9]* $DOC_ROOT/object.*userver_*.[0-9]* $DOC_ROOT/stack.*userver_*.[0-9]* $DOC_ROOT/mempool.*userver_*.[0-9]*
@@ -64,7 +64,7 @@ cat <<EOF >inp/webserver.cfg
 userver {
  REQ_TIMEOUT 5
  MAX_KEEP_ALIVE 256
- LOG_FILE tsa_ssoap.log
+ LOG_FILE /tmp/tsa_ssoap.log
  LOG_FILE_SZ 1M
  DOCUMENT_ROOT TSA
  PLUGIN "soap http"

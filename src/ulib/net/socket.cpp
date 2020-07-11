@@ -240,11 +240,9 @@ void USocket::setRemoteAddressAndPort()
 {
    U_TRACE_NO_PARAM(0, "USocket::setRemoteAddressAndPort()")
 
-   U_INTERNAL_DUMP("peer_addr_len = %u sizeOf() = %u", peer_addr_len, ((SocketAddress*)&peer_addr)->sizeOf())
+   U_INTERNAL_DUMP("peer_addr_len = %u sizeOf() = %u SocketAddress = %#.*S", peer_addr_len, ((SocketAddress*)&peer_addr)->sizeOf(), peer_addr_len, &peer_addr)
 
    U_INTERNAL_ASSERT_EQUALS(peer_addr_len, ((SocketAddress*)&peer_addr)->sizeOf())
-
-   U_INTERNAL_DUMP("SocketAddress = %#.*S", peer_addr_len, &peer_addr)
 
    iRemotePort = ((SocketAddress*)&peer_addr)->getPortNumber();
                  ((SocketAddress*)&peer_addr)->getIPAddress(cRemoteAddress);
@@ -931,12 +929,14 @@ void USocket::close_socket()
 #if defined(HAVE_EPOLL_WAIT) && !defined(USE_LIBEVENT)
    U_INTERNAL_DUMP("U_ClientImage_parallelization = %d", U_ClientImage_parallelization)
 
-   if (U_ClientImage_parallelization != U_PARALLELIZATION_CHILD &&
-       UNotifier::isHandler(iSockDesc))
+   if (U_ClientImage_parallelization != U_PARALLELIZATION_CHILD)
       {
-      (void) U_FF_SYSCALL(epoll_ctl, "%d,%d,%d,%p", UNotifier::epollfd, EPOLL_CTL_DEL, iSockDesc, (struct epoll_event*)1);
+      if (UNotifier::isHandler(iSockDesc))
+         {
+         (void) U_FF_SYSCALL(epoll_ctl, "%d,%d,%d,%p", UNotifier::epollfd, EPOLL_CTL_DEL, iSockDesc, (struct epoll_event*)1);
 
-      UNotifier::handlerDelete(iSockDesc, EPOLLIN | EPOLLRDHUP);
+         UNotifier::handlerDelete(iSockDesc, EPOLLIN | EPOLLRDHUP);
+         }
       }
 #endif
 
