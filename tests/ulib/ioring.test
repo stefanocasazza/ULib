@@ -6,7 +6,7 @@
 
 start_msg ioring
 
-rm -rf err/ioring.err /tmp/ioring.log \
+rm -rf err/ioring.err out/ioring.out /tmp/ioring.log \
 		      trace.*ioring*.[0-9]*      object.*ioring*.[0-9]*      stack.*ioring*.[0-9]*      mempool.*ioring*.[0-9]* \
 		 /tmp/trace.*ioring*.[0-9]* /tmp/object.*ioring*.[0-9]* /tmp/stack.*ioring*.[0-9]* /tmp/mempool.*ioring*.[0-9]*
 
@@ -28,7 +28,7 @@ userver {
  PORT 8080
  RUN_AS_USER nobody
 #MIN_SIZE_FOR_SENDFILE 1k
-#REQ_TIMEOUT 5
+ REQ_TIMEOUT 5
  WELCOME_MSG "220 david.unirel.intranet LCSP server (Version 1.1.0) ready.\n"
  DOS_WHITE_LIST 127.0.0.1,10.30.0.0/16
  LOG_FILE /tmp/ioring.log
@@ -44,8 +44,8 @@ userver {
 }
 http {
  CACHE_FILE_MASK _off_
-#ENABLE_INOTIFY yes
-#REQUEST_READ_TIMEOUT 30
+ ENABLE_INOTIFY yes
+ REQUEST_READ_TIMEOUT 30
  APACHE_LIKE_LOG /var/log/httpd/access_log
 }
 EOF
@@ -57,7 +57,7 @@ start_prg_background ioring ../examples/inp/webserver.cfg
 wait_server_ready localhost 8080
 
 #../examples/sendbytes.pl
-#$SLEEP
+$SLEEP
 send_req $NCAT localhost 8080 inp/http/form_enctype.http ioring 5 kill
 
 #ln -s ../examples/benchmark/docroot/servlet

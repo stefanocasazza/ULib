@@ -139,8 +139,10 @@ UClientImage_Base::UClientImage_Base()
    flag.u     = 0;
    last_event = u_now->tv_sec;
 
-   conn  = U_NULLPTR;
+#ifdef USE_LIBURING
+   conn  =
    http3 = U_NULLPTR;
+#endif
 
    // NB: array are not pointers (virtual table can shift the address of 'this')...
 
@@ -182,8 +184,16 @@ void UClientImage_Base::set()
       socket->cLocalAddress.set(UServer_Base::socket->cLocalAddress);
       }
 
-                                               socket->flags |= O_CLOEXEC;
+   socket->flags |= O_CLOEXEC;
+
+#ifdef USE_LIBURING
+   if (UServer_Base::brng == false)
+#endif
+   {
+#ifdef HAVE_ACCEPT4
    if (USocket::accept4_flags & SOCK_NONBLOCK) socket->flags |= O_NONBLOCK;
+#endif
+   }
 
 #ifdef DEBUG
                U_CHECK_MEMORY
@@ -283,20 +293,15 @@ void UClientImage_Base::init()
    U_INTERNAL_ASSERT_EQUALS(chronometer, U_NULLPTR)
 
 #ifdef USE_LIBURING
-   if (UServer_Base::brng)
+   if (UServer_Base::brng ||
+       UServer_Base::budp)
       {
       U_NEW_STRING(rbuffer, UString(UServer_Base::rbuffer));
       }
    else
 #endif
    {
-   uint32_t sz = 8192;
-
-#ifdef USERVER_UDP
-   if (UServer_Base::budp) sz = 65535;
-#endif
-
-   U_NEW_STRING(rbuffer, UString(sz));
+   U_NEW_STRING(rbuffer, UString(8192));
    }
 
    U_NEW_STRING(body, UString);
@@ -608,12 +613,7 @@ void UClientImage_Base::handlerDelete()
 
    if (data_pending)
       {
-#  ifdef USE_LIBURING
-      if (UServer_Base::brng == false)
-#  endif
-      {
       U_DELETE(data_pending)
-      }
 
       data_pending = U_NULLPTR;
       }
@@ -642,15 +642,29 @@ void UClientImage_Base::handlerDelete()
       reset();
       }
 
+#ifdef USE_LIBURING
+   if (UServer_Base::brng)
+      {
+      flag.lo = 0;
+
+      resetPendingOperationClose();
+      }
+   else
+#endif
+   {
    flag.u = 0;
 
    UEventFd::fd = -1;
 
+#ifdef HAVE_ACCEPT4
+   U_INTERNAL_ASSERT_EQUALS(((USocket::accept4_flags & SOCK_NONBLOCK) != 0),((socket->flags & O_NONBLOCK) != 0))
+#endif
+   }
+
    U_INTERNAL_ASSERT_EQUALS(data_pending, U_NULLPTR)
    U_INTERNAL_ASSERT_EQUALS(UEventFd::op_mask, EPOLLIN | EPOLLRDHUP | EPOLLET)
 #ifdef HAVE_ACCEPT4
-   U_INTERNAL_ASSERT_EQUALS(((USocket::accept4_flags & SOCK_CLOEXEC)  != 0),((socket->flags & O_CLOEXEC)  != 0))
-   U_INTERNAL_ASSERT_EQUALS(((USocket::accept4_flags & SOCK_NONBLOCK) != 0),((socket->flags & O_NONBLOCK) != 0))
+   U_INTERNAL_ASSERT_EQUALS(((USocket::accept4_flags & SOCK_CLOEXEC)  != 0),((socket->flags & O_CLOEXEC) != 0))
 #endif
 
 #ifdef USE_LIBEVENT
@@ -1156,7 +1170,9 @@ bool UClientImage_Base::genericRead()
 #endif
 
 #ifdef USE_LIBURING
-   if (UServer_Base::brng == false)
+   if (UServer_Base::brng == false ||
+       (U_ClientImage_request == 0 &&
+        U_ClientImage_parallelization == U_PARALLELIZATION_CHILD))
 #endif
    {
    // NB: rbuffer string can be referenced more than one (often if U_SUBSTR_INC_REF is defined)...
@@ -1236,7 +1252,7 @@ uint32_t UClientImage_Base::writev(struct iovec* iov, int iovcnt, uint32_t _coun
       {
       U_DUMP_IOVEC(iov,iovcnt)
 
-      UServer_Base::submit(_WRITEV, iov, iovcnt, 0); // this queues a writev()
+      UServer_Base::prepareOperation(_WRITE, iov, iovcnt, 0);
 
       U_RETURN(_count);
       }
@@ -1280,8 +1296,6 @@ start:
 
    if (genericRead() == false)
       {
-      U_INTERNAL_ASSERT_EQUALS(UServer_Base::brng, false)
-
       if (U_ClientImage_state == U_PLUGIN_HANDLER_AGAIN &&
           U_ClientImage_parallelization != U_PARALLELIZATION_CHILD)
          {
@@ -2056,7 +2070,10 @@ void UClientImage_Base::abortive_close()
 
    if (U_ClientImage_pipeline) resetPipeline();
 
-   if (UServer_Base::csocket->isOpen()) UServer_Base::csocket->abortive_close();
+   if (UServer_Base::csocket->isOpen())
+      {
+      UServer_Base::csocket->abortive_close();
+      }
 }
 
 void UClientImage_Base::resetPipeline()

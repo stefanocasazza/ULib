@@ -155,10 +155,14 @@ public:
    static void startResolv(const char* name, int family = AF_INET); // AF_INET6
 #endif
 
+   // write data
+
+   static uint32_t write(USocket* sk, const UString& buffer,           int timeoutMS) { return write(sk, U_STRING_TO_PARAM(buffer), timeoutMS); }
+   static uint32_t write(USocket* sk, const char* ptr, uint32_t count, int timeoutMS);
+
+   static bool read(USocket* sk, UString& buffer, uint32_t count = U_SINGLE_READ, int timeoutMS = -1, uint32_t time_limit = 0); // read while not received almost count data
+
 private:
-   
-   friend class UREDISClusterMaster;
-   
 #ifdef USE_C_ARES
    static int   resolv_status;
    static char  resolv_hostname[INET6_ADDRSTRLEN];
@@ -178,8 +182,6 @@ private:
 
    static uint32_t byte_read, start_read;
 
-   static bool read(USocket* sk, UString& buffer, uint32_t count = U_SINGLE_READ, int timeoutMS = -1, uint32_t time_limit = 0); // read while not received almost count data
-
    // read while received data
 
    static void readEOF(USocket* sk, UString& buffer)
@@ -192,11 +194,6 @@ private:
    // read while not received token, return position of token in buffer
 
    static uint32_t readWhileNotToken(USocket* sk, UString& buffer, const char* token, uint32_t token_len, int timeoutMS = -1);
-
-   // write data
-
-   static uint32_t write(USocket* sk, const UString& buffer,           int timeoutMS) { return write(sk, U_STRING_TO_PARAM(buffer), timeoutMS); }
-   static uint32_t write(USocket* sk, const char* ptr, uint32_t count, int timeoutMS);
 
    // write data from multiple buffers
 

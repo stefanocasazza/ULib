@@ -24,12 +24,6 @@
 #  include <ulib/ssl/net/sslsocket.h>
 #endif
 
-#ifdef USE_LIBURING
-#  ifndef U_IO_BUFFER_SIZE
-#  define U_IO_BUFFER_SIZE U_1M // 1 MB in bytes
-#  endif
-#endif
-
 /**
  * @class UClientImage
  *
@@ -54,9 +48,9 @@ template <class T> class UHashMap;
 #define U_ClientImage_request_is_cached UClientImage_Base::cbuffer[0]
 
 #define U_ClientImage_status(obj)        (obj)->UClientImage_Base::flag.c[0]
-#define U_ClientImage_op_pending(obj)    (obj)->UClientImage_Base::flag.c[1]
-#define U_ClientImage_write_pending(obj) (obj)->UClientImage_Base::flag.c[2]
-#define U_ClientImage_user_value(obj)    (obj)->UClientImage_Base::flag.c[3]
+#define U_ClientImage_user_value(obj)    (obj)->UClientImage_Base::flag.c[1]
+#define U_ClientImage_op_pending(obj)    (obj)->UClientImage_Base::flag.c[2]
+#define U_ClientImage_write_pending(obj) (obj)->UClientImage_Base::flag.c[3]
 
 class U_EXPORT UClientImage_Base : public UEventFd {
 public:
@@ -311,10 +305,10 @@ public:
       _ACCEPT  = 0x02,
       _READ    = 0x04,
       _WRITE   = 0x08,
-      _WRITEV  = 0x10,
-      _CLOSE   = 0x20,
-      _CANCEL  = 0x40,
-      _UPDATE  = 0x80,
+      _CLOSE   = 0x10,
+      _CANCEL  = 0x20,
+      _UPDATE  = 0x40,
+      _RECVMSG = 0x80,
       _CONNECT = _READ | _ACCEPT
    };
 
@@ -325,25 +319,18 @@ public:
               op == _ACCEPT  ? "_ACCEPT"  :
               op == _READ    ? "_READ"    :
               op == _WRITE   ? "_WRITE"   :
-              op == _WRITEV  ? "_WRITEV"  :
               op == _CLOSE   ? "_CLOSE"   :
               op == _CANCEL  ? "_CANCEL"  :
               op == _UPDATE  ? "_UPDATE"  :
+              op == _RECVMSG ? "_RECVMSG" :
               op == _CONNECT ? "_CONNECT" : "???");
       }
 
    const char* getPendingOperationDescription() { return getPendingOperationDescription( U_ClientImage_op_pending(this)); }
 
-   void resetPendingOperation()
+   bool isPendingOperation()
       {
-      U_TRACE_NO_PARAM(0, "UClientImage_Base::resetPendingOperation()")
-
-      U_ClientImage_op_pending(this) = 0;
-      }
-
-   bool isFlagPendingOperation()
-      {
-      U_TRACE_NO_PARAM(0, "UClientImage_Base::isFlagPendingOperation()")
+      U_TRACE_NO_PARAM(0, "UClientImage_Base::isPendingOperation()")
 
       if (U_ClientImage_op_pending(this) != 0) U_RETURN(true);
 
@@ -377,9 +364,19 @@ public:
       U_RETURN(false);
       }
 
-   bool isPendingOperationRead()  { return isPendingOperationRead( U_ClientImage_op_pending(this)); }
-   bool isPendingOperationWrite() { return isPendingOperationWrite(U_ClientImage_op_pending(this)); }
-   bool isPendingOperationClose() { return isPendingOperationClose(U_ClientImage_op_pending(this)); }
+   static bool isPendingOperationCancel(char op)
+      {
+      U_TRACE(0, "UClientImage_Base::isPendingOperationCancel(%u %B)", op, op)
+
+      if ((op & _CANCEL) != 0) U_RETURN(true);
+
+      U_RETURN(false);
+      }
+
+   bool isPendingOperationRead()   { return isPendingOperationRead( U_ClientImage_op_pending(this)); }
+   bool isPendingOperationWrite()  { return isPendingOperationWrite(U_ClientImage_op_pending(this)); }
+   bool isPendingOperationClose()  { return isPendingOperationClose(U_ClientImage_op_pending(this)); }
+   bool isPendingOperationCancel() { return isPendingOperationCancel(U_ClientImage_op_pending(this)); }
 
    void setPendingOperationRead()
       {
@@ -420,7 +417,7 @@ public:
          {
          U_ClientImage_op_pending(this) &= ~_WRITE;
 
-         if (isPendingOperationClose()) U_RETURN(true);
+         U_RETURN(true);
          }
 
       U_RETURN(false);
@@ -442,6 +439,31 @@ public:
       U_DUMP("isPendingOperationClose() = %b", isPendingOperationClose())
 
       U_ClientImage_op_pending(this) &= ~_CLOSE;
+      }
+
+   void setPendingOperationCancel()
+      {
+      U_TRACE_NO_PARAM(0, "UClientImage_Base::setPendingOperationCancel()")
+
+      U_ASSERT_EQUALS(isPendingOperationCancel(), false)
+
+      U_ClientImage_op_pending(this) |= _CANCEL;
+      }
+
+   void resetPendingOperationCancel()
+      {
+      U_TRACE_NO_PARAM(0, "UClientImage_Base::resetPendingOperationCancel()")
+
+      U_DUMP("isPendingOperationCancel() = %b", isPendingOperationCancel())
+
+      U_ClientImage_op_pending(this) &= ~_CANCEL;
+      }
+
+   void resetPendingOperation()
+      {
+      U_TRACE_NO_PARAM(0, "UClientImage_Base::resetPendingOperation()")
+
+      U_ClientImage_op_pending(this) = 0;
       }
 
    // flag status processing
@@ -707,9 +729,10 @@ protected:
    int sfd;
    uucflag flag;
    long last_event;
-   // HTTP3
+#ifdef USE_LIBURING
    void* conn;
    void* http3;
+#endif
 
    bool isCallHandlerFailed();
 

@@ -104,7 +104,6 @@ class UValue;
 class UString;
 class UBase64;
 class UEscape;
-class UIORing;
 class UHexDump;
 class UOptions;
 class UTimeDate;
@@ -2811,7 +2810,6 @@ private:
       }
 
    friend class UHTTP;
-   friend class UIORing;
    friend class USSEThread;
    friend class UServer_Base;
    friend class URDBClient_Base;
@@ -2899,17 +2897,16 @@ template <> inline uint32_t UObject2String<UString>(UString& object, char* pbuff
 
 // by Victor Stewart
 
-#if defined(U_STDCPP_ENABLE)
-#  if defined(HAVE_CXX11)
+#if defined(U_STDCPP_ENABLE) && defined(HAVE_CXX11)
 namespace std {
    template<> struct hash<UString> {
       std::size_t operator()(const UString& str) const noexcept { return str.hash(); }
    };
 }
-#  endif
+#endif
 
-#if defined(HAVE_CXX20) && defined(U_LINUX) && !defined(__clang__)
-#     include <utility> // std::index_sequence
+#if defined(U_STDCPP_ENABLE) && defined(HAVE_CXX20) && defined(U_LINUX) && !defined(__clang__)
+#  include <utility> // std::index_sequence
 template <char... Chars>
 class UCompileTimeStringView {
 private:
@@ -3208,24 +3205,19 @@ public:
    }
 };
 
-#  if defined(U_STDCPP_ENABLE) && defined(HAVE_CXX20) && defined(U_LINUX) && !defined(__clang__) && GCC_VERSION_NUM < 100100
+#  if defined(U_STDCPP_ENABLE) && defined(HAVE_CXX20) && defined(U_LINUX) && !defined(__clang__)
 template<typename T>
-concept bool UCompileTimeStringType = requires(T string) {
-   is_ctv_v<T>;
-};
+concept UCompileTimeStringType = is_ctv_v<T>;
 
 template<typename T>
-concept bool UStringType = requires(T string)
-{
-   (std::is_same_v<T, UString> || is_ctv_v<T>);
-};
+concept UStringType = (std::is_same_v<std::remove_reference_t<T>, UString> || is_ctv_v<T>);
 
-inline bool operator==(const UString& lhs, const UCompileTimeStringType& rhs){ return lhs.equal(rhs.string); }
-inline bool operator==(const UCompileTimeStringType& lhs, const UString& rhs){ return rhs.equal(lhs.string); }
+inline bool operator==(const UString& lhs, const UCompileTimeStringType auto& rhs){ return lhs.equal(rhs.string); }
+inline bool operator==(const UCompileTimeStringType auto& lhs, const UString& rhs){ return rhs.equal(lhs.string); }
 
-inline bool operator!=(const UString& lhs, const UCompileTimeStringType& rhs){ return !lhs.equal(rhs.string); }
-inline bool operator!=(const UCompileTimeStringType& lhs, const UString& rhs){ return !rhs.equal(lhs.string); }
-#  endif
+inline bool operator!=(const UString& lhs, const UCompileTimeStringType auto& rhs){ return !lhs.equal(rhs.string); }
+inline bool operator!=(const UCompileTimeStringType auto& lhs, const UString& rhs){ return !rhs.equal(lhs.string); }
+
 #  endif
 #endif
 #endif

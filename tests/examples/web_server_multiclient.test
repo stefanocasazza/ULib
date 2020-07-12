@@ -11,7 +11,7 @@ start_msg web_server_multiclient
 
 DOC_ROOT=benchmark/docroot
 
-rm -f $DOC_ROOT/web_server_multiclient.log* \
+rm -f $DOC_ROOT/web_server_multiclient.log* /tmp/web_server_multiclient.log* \
       out/userver_tcp.out err/userver_tcp.err err/web_server_multiclient.err \
                 trace.*userver_*.[0-9]*           object.*userver_*.[0-9]*           stack.*userver_*.[0-9]*           mempool.*userver_*.[0-9]* \
       $DOC_ROOT/trace.*userver_*.[0-9]* $DOC_ROOT/object.*userver_*.[0-9]* $DOC_ROOT/stack.*userver_*.[0-9]* $DOC_ROOT/mempool.*userver_*.[0-9]*
@@ -31,10 +31,10 @@ userver {
  PORT 8080
  RUN_AS_USER apache
  DOS_WHITE_LIST 127.0.0.1,10.30.0.0/16
- LOG_FILE web_server_multiclient.log
+ LOG_FILE /tmp/web_server_multiclient.log
  LOG_FILE_SZ 1M
  LOG_MSG_SIZE -1
-#REQ_TIMEOUT 5
+ REQ_TIMEOUT 5
 #MAX_KEEP_ALIVE 3
  PID_FILE /var/run/userver_tcp.pid
  DOCUMENT_ROOT benchmark/docroot
@@ -68,18 +68,20 @@ compile_usp
 #VALGRIND='valgrind --leak-check=yes --track-origins=yes'
 start_prg_background userver_tcp -c inp/webserver.cfg
 
-wait_server_ready localhost 8080
+wait_server_ready 127.0.0.1 8080
+
+#netstat -tulap > /tmp/netstat.out 2>&1 
+#$CURL -v http://127.0.0.1:8080/1000.html > /tmp/curl.out 2>&1 
 
 #ab -k -n 2	     -c 2    "http://$ADDRESS:8080/servlet/benchmarking?name=stefano" >/dev/null 2>&1
  ab -k -n 100    -c 2    'http://127.0.0.1:8080/servlet/benchmarking?name=stefano' >/tmp/ab.out 2>&1
 #ab -k -n 100000 -c 1000 'http://127.0.0.1:8080/servlet/benchmarking?name=stefano' >/tmp/ab.txt 2>&1
 $SLEEP
-$SLEEP
 kill_server userver_tcp
 
 mv err/userver_tcp.err err/web_server_multiclient.err
 
-cat $DOC_ROOT/web_server_multiclient.log > out/web_server_multiclient.out
+cp /tmp/web_server_multiclient.log out/web_server_multiclient.out
 
 # Test against expected output
 test_output_wc l web_server_multiclient

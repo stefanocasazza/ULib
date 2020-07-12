@@ -16,7 +16,7 @@ start_msg web_server
 DOC_ROOT=docroot
 
 rm -f db/session.ssl* /tmp/ssl_session.txt /tmp/byterange* /tmp/soap.res /tmp/*.memusage.* /tmp/*.hpack.* \
-      $DOC_ROOT/webserver*.log* $DOC_ROOT/uploads/* /var/log/httpd/access_log \
+      /tmp/$DOC_ROOT/webserver*.log* $DOC_ROOT/webserver*.log* $DOC_ROOT/uploads/* /var/log/httpd/access_log \
       out/userver_tcp.out err/userver_tcp.err web_server.err \
                 trace.*userver_*.[0-9]*           object.*userver_*.[0-9]*           stack.*userver_*.[0-9]*           mempool.*userver_*.[0-9]* \
       $DOC_ROOT/trace.*userver_*.[0-9]* $DOC_ROOT/object.*userver_*.[0-9]* $DOC_ROOT/stack.*userver_*.[0-9]* $DOC_ROOT/mempool.*userver_*.[0-9]*
@@ -125,7 +125,7 @@ userver {
 #MIN_SIZE_FOR_SENDFILE 1k
  REQ_TIMEOUT 5
  DOS_WHITE_LIST 127.0.0.1,10.30.0.0/16
- LOG_FILE webserver$1.log
+ LOG_FILE /tmp/webserver$1.log
  LOG_FILE_SZ 1M
  LOG_MSG_SIZE -1
  DOCUMENT_ROOT $DOC_ROOT

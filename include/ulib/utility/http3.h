@@ -15,14 +15,20 @@
 #define ULIB_HTTP3_H 1
 
 #include <ulib/db/rdb.h>
-#include <ulib/notifier.h>
+#include <ulib/net/server/server.h>
 
 #include <quiche.h>
+
+#define U_MAX_TOKEN_LEN \
+    sizeof("quiche")-1 + \
+    sizeof(struct sockaddr_storage) + \
+    QUICHE_MAX_CONN_ID_LEN
 
 #define U_LOCAL_CONN_ID_LEN 16
 
 class UHTTP;
 class UHttpPlugIn;
+class UServer_Base;
 class UClientImage_Base;
 
 /**
@@ -54,20 +60,19 @@ public:
       quiche_h3_conn* http3;
    } conn_io;
 
-   static bool handlerRead();
-   static bool handlerAccept();
    static int loadConfigParam();
+   static bool handlerNewConnection();
 
 protected:
    static conn_io conn;
-   static size_t conn_id_len;
+   static uint8_t pkt_type;
    static quiche_config* qconfig;
    static quiche_h3_config* http3_config;
    static struct sockaddr_storage peer_addr;
-   static uint8_t conn_id[QUICHE_MAX_CONN_ID_LEN];
-   static uint32_t quiche_max_packet_size, peer_addr_len;
-
    static UHashMap<UClientImage_Base*>* peers;
+   static size_t conn_id_len, scid_len, token_len;
+   static uint32_t pkt_version, quiche_max_packet_size, peer_addr_len;
+   static uint8_t token[U_MAX_TOKEN_LEN], scid[QUICHE_MAX_CONN_ID_LEN], conn_id[QUICHE_MAX_CONN_ID_LEN];
 
    // SERVICES
 
@@ -90,6 +95,29 @@ protected:
       if (http3_config) U_SYSCALL_VOID(quiche_h3_config_free, "%p", http3_config);
       }
    
+   static bool parseHeader(const char* data, uint32_t iBytesRead);
+
+   // Lookup a connection based on the packet's connection ID
+
+   static bool lookup()
+      {
+      U_TRACE_NO_PARAM(0, "UHTTP3::lookup()")
+
+      if (peers->empty() == false &&
+          ((UServer_Base::pClientImage = peers->at((const char*)conn_id, conn_id_len))))
+         {
+         UServer_Base::nClientIndex = UServer_Base::pClientImage - UServer_Base::vClientImage;
+
+         U_INTERNAL_DUMP("UServer_Base::nClientIndex = %u", UServer_Base::nClientIndex)
+
+         U_INTERNAL_ASSERT_MINOR(UServer_Base::nClientIndex, UNotifier::max_connection)
+
+         U_RETURN(true);
+         }
+
+      U_RETURN(false);
+      }
+
    static int for_each_header(uint8_t* name, size_t name_len, uint8_t* value, size_t value_len, void* argp)
       {
       U_TRACE(0, "UHTTP3::for_each_header(%.*S,%u,%.*S,%u,%p)", name_len, name, name_len, value_len, value, value_len, argp)
@@ -114,6 +142,7 @@ private:
    friend class UHTTP;
    friend class Application;
    friend class UHttpPlugIn;
+   friend class UServer_Base;
    friend class UClientImage_Base;
 };
 #endif

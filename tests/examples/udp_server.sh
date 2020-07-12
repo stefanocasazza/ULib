@@ -11,7 +11,7 @@ rm -f tmp/usp_compile.sh.err /tmp/*.hpack.* \
            /tmp/trace.*userver_*.[0-9]*      /tmp/object.*userver_*.[0-9]*      /tmp/stack.*userver_*.[0-9]*      /tmp/mempool.*userver_*.[0-9]* \
       $DOC_ROOT/trace.*userver_*.[0-9]* $DOC_ROOT/object.*userver_*.[0-9]* $DOC_ROOT/stack.*userver_*.[0-9]* $DOC_ROOT/mempool.*userver_*.[0-9]*
 
- UTRACE="0 50M -1"
+ UTRACE="0 20M 0"
  UTRACE_SIGNAL="0 50M 0"
  UTRACE_FOLDER=/tmp
 #UOBJDUMP="0 10M 100"
@@ -71,9 +71,7 @@ sync
 echo "PID = `cat /var/run/userver_udp.pid`"
 
 $SLEEP
-$SLEEP
 curl -vvvv --http3 https://localhost:4433 &
-$SLEEP
 $SLEEP
 killall userver_udp
 $SLEEP

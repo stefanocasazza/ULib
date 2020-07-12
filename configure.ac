@@ -2558,7 +2558,7 @@ fi
 AM_CONDITIONAL(HTTP3, false)
 AM_CONDITIONAL(USERVER_UDP, false)
 
-if test "x$use_userver_udp" != "xno" -a "$enable_http3" = "yes" -a "$USE_LIBQUICHE" = "yes"; then
+if test "x$use_userver_udp" != "xno" -a "$enable_http3" = "yes" -a "$USE_LIBQUICHE" = "yes" -a "$USE_LIBURING" = "yes"; then
 	AM_CONDITIONAL(HTTP3, true)
 	AM_CONDITIONAL(USERVER_UDP, true)
 	AC_DEFINE(USERVER_UDP, 1, [Define if use userver_udp])

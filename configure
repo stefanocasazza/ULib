@@ -33126,7 +33126,7 @@ else
 fi
 
 
-if test "x$use_userver_udp" != "xno" -a "$enable_http3" = "yes" -a "$USE_LIBQUICHE" = "yes"; then
+if test "x$use_userver_udp" != "xno" -a "$enable_http3" = "yes" -a "$USE_LIBQUICHE" = "yes" -a "$USE_LIBURING" = "yes"; then
 	 if true; then
   HTTP3_TRUE=
   HTTP3_FALSE='#'
