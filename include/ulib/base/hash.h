@@ -14,7 +14,8 @@
 #ifndef ULIB_BASE_HASH_H
 #define ULIB_BASE_HASH_H 1
 
-#include <ulib/base/xxhash/xxhash.h>
+#define XXH_INLINE_ALL 1
+#include <ulib/base/xxhash/xxh3.h>
 
 #undef GCC_VERSION
 #include <ulib/base/base.h>
@@ -53,13 +54,16 @@ extern "C" {
 #endif
 
 /* hash variable-length key into 32-bit value */
+	
+// static inline uint32_t u_xxhash64(const unsigned char* restrict t, uint32_t tlen) { return XXH32(t, tlen, u_seed_hash); }
+// static inline uint32_t u_xxhash64(const unsigned char* restrict t, uint32_t tlen)
+//    { return (uint32_t)(((XXH64(t, tlen, u_seed_hash) * (1578233944ULL << 32 | 194370989ULL)) + (20591ULL << 16)) >> 32); }
 
-static inline uint32_t u_xxhash32(const unsigned char* restrict t, uint32_t tlen) { return XXH32(t, tlen, u_seed_hash); }
-static inline uint32_t u_xxhash64(const unsigned char* restrict t, uint32_t tlen)
-   { return (uint32_t)(((XXH64(t, tlen, u_seed_hash) * (1578233944ULL << 32 | 194370989ULL)) + (20591ULL << 16)) >> 32); }
+// RE https://github.com/rurban/smhasher/ this is the most performant 
+static inline uint32_t u_xxhash64(const unsigned char* restrict t, uint32_t tlen) { return (uint32_t)XXH3_64bits_withSeed(t, tlen, u_seed_hash); }
 
 #ifndef USE_HARDWARE_CRC32
-static inline uint32_t u_hash(const unsigned char* restrict t, uint32_t tlen) { return XXH32(t, tlen, u_seed_hash); }
+static inline uint32_t u_hash(const unsigned char* restrict t, uint32_t tlen) { return u_xxhash64(t, tlen, u_seed_hash); }
 #else
 static inline uint32_t u_crc32(const unsigned char* restrict bp, uint32_t len)
 {
