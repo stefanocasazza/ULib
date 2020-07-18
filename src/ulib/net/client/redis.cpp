@@ -16,6 +16,7 @@
 
 uint32_t           UREDISClient_Base::start;
 ptrdiff_t          UREDISClient_Base::diff;
+UVector<UString>*  UREDISClient_Base::pvec;
 UREDISClient_Base* UREDISClient_Base::pthis;
 
 // Connect to REDIS server
@@ -158,6 +159,184 @@ void UREDISClient_Base::manageResponseBufferResize(uint32_t n)
 
       U_INTERNAL_ASSERT(pthis->UClient_Base::response.invariant())
       }
+}
+
+U_NO_EXPORT bool UREDISClient_Base::getResponseItem()
+{
+   U_TRACE_NO_PARAM(0, "UREDISClient_Base::getResponseItem()")
+
+   char prefix;
+   uint32_t len;
+   const char* ptr1;
+   const char* ptr2;
+
+   if (start == UClient_Base::response.size() &&
+       UClient_Base::readResponse() == false)
+      {
+      U_RETURN(false);
+      }
+
+   U_INTERNAL_DUMP("start = %u (%.20S)", start, UClient_Base::response.c_pointer(start))
+
+   U_INTERNAL_ASSERT(memcmp(UClient_Base::response.c_pointer(start), U_CRLF, U_CONSTANT_SIZE(U_CRLF)))
+
+   prefix = UClient_Base::response.c_char(start++);
+
+   U_INTERNAL_DUMP("prefix = %C", prefix)
+
+   ptr1 =
+   ptr2 = UClient_Base::response.c_pointer(start);
+
+   if (prefix != U_RC_BULK &&    // "$15\r\nmy-value-tester\r\n"
+       prefix != U_RC_MULTIBULK) // "*2\r\n$10\r\n1439822796\r\n$6\r\n311090\r\n"
+      {
+      U_INTERNAL_ASSERT(prefix == U_RC_ANY   || // '?'
+                        prefix == U_RC_INT   || // ':'
+                        prefix == U_RC_ERROR || // '-'
+                        prefix == U_RC_INLINE)  // '+'
+
+      while (*ptr2 != '\r') ++ptr2;
+
+      len = ptr2-ptr1;
+
+      if (len     != 1   ||
+          ptr1[0] != '0' ||
+          prefix != U_RC_INT)
+         {
+         pvec->push_back(UClient_Base::response.substr(ptr1, len));
+         }
+
+      start += len + U_CONSTANT_SIZE(U_CRLF);
+
+      U_RETURN(false);
+      }
+
+   if (ptr2[0] == '-')
+      {
+      U_INTERNAL_ASSERT_EQUALS(ptr2[1], '1')
+      U_INTERNAL_ASSERT_EQUALS(prefix, U_RC_BULK) // "$-1\r\n" (Null Bulk String)
+
+      pvec->push_back(UString::getStringNull());
+
+      start += (ptr2-ptr1) + 2 + U_CONSTANT_SIZE(U_CRLF);
+
+      U_RETURN(false);
+      }
+
+   len = u_strtoulp(&ptr2);
+
+   ++ptr2;
+
+   U_INTERNAL_DUMP("len = %u ptr2 = %#.2S", len, ptr2-2)
+
+   U_INTERNAL_ASSERT_EQUALS(memcmp(ptr2-2, U_CRLF, U_CONSTANT_SIZE(U_CRLF)), 0)
+
+   if (prefix == U_RC_BULK) // "$15\r\nmy-value-tester\r\n"
+      {
+      len += U_CONSTANT_SIZE(U_CRLF);
+
+      while (len > (uint32_t)UClient_Base::response.remain(ptr2))
+         {
+         uint32_t d = UClient_Base::response.distance(ptr2);
+
+         manageResponseBufferResize(len);
+
+         if (UClient_Base::readResponse() == false)
+            {
+            U_RETURN(false);
+            }
+
+         ptr1 = UClient_Base::response.c_pointer(start);
+         ptr2 = UClient_Base::response.c_pointer(d);
+         }
+
+      pvec->push_back(UClient_Base::response.substr(ptr2, len-U_CONSTANT_SIZE(U_CRLF)));
+
+      start += (ptr2-ptr1) + len;
+
+      U_RETURN(false);
+      }
+
+   /**
+    * Ex: "*2\r\n$10\r\n1439822796\r\n$6\r\n311090\r\n"
+    *
+    * Only certain commands (especially those returning list of values) return multi-bulk replies, you can try by using LRANGE for example
+    * but you can check the command reference for more details. Usually multi-bulk replies are only 1-level deep but some Redis commands can
+    * return nested multi-bulk replies, notably EXEC (depending on the commands executed while inside the transaction context) and both
+    * EVAL / EVALSHA (depending on the value returned by the Lua script). Here is an example using EXEC:
+    *
+    * redis 127.0.0.1:6379> MULTI
+    * OK
+    * redis 127.0.0.1:6379> LPUSH metavars foo foobar hoge
+    * QUEUED
+    * redis 127.0.0.1:6379> LRANGE metavars 0 -1
+    * QUEUED
+    * redis 127.0.0.1:6379> EXEC
+    * 1) (integer) 4
+    * 2) 1) "hoge"
+    *    2) "foobar"
+    *    3) "foo"
+    *    4) "metavars"
+    *
+    * The second element of the multi-bulk reply to EXEC is a multi-bulk itself
+    */
+
+   U_INTERNAL_ASSERT_EQUALS(prefix, U_RC_MULTIBULK)
+
+   UVector<UString> vec1(len);
+   UVector<UString>* pvec1 = pvec;
+                             pvec = &vec1;
+
+   start += (ptr2-ptr1);
+
+   for (uint32_t i = 0; i < len; ++i)
+      {
+      if (getResponseItem() == false)
+         {
+         if (UClient_Base::isConnected() == false)
+            {
+            (void) UClient_Base::connect();
+
+            U_RETURN(false);
+            }
+
+         pvec1->move(vec1);
+         }
+      else
+         {
+         typedef UVector<UString> uvectorstring;
+
+         char buffer_output[64U * 1024U];
+         uint32_t buffer_output_len = UObject2String<uvectorstring>(vec1, buffer_output, sizeof(buffer_output));
+
+         pvec1->push_back(UStringRep::create(buffer_output_len, buffer_output_len, (const char*)buffer_output));
+
+         vec1.clear();
+         }
+      }
+
+   pvec = pvec1;
+
+   U_RETURN(true);
+}
+
+void UREDISClient_Base::processResponse()
+{
+   U_TRACE_NO_PARAM(0, "UREDISClient_Base::processResponse()")
+
+   U_INTERNAL_DUMP("err = %d", err)
+
+   U_INTERNAL_ASSERT_EQUALS(err, U_RC_OK)
+
+   start = 0;
+   pvec  = &vitem;
+
+   do {
+      getResponseItem();
+
+      U_DUMP_CONTAINER(vitem)
+      }
+   while (start < UClient_Base::response.size());
 }
 
 bool UREDISClient_Base::processRequest(char recvtype)

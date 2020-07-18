@@ -25,6 +25,7 @@
     QUICHE_MAX_CONN_ID_LEN
 
 #define U_LOCAL_CONN_ID_LEN 16
+#define U_MAX_DATAGRAM_SIZE 1350
 
 class UHTTP;
 class UHttpPlugIn;
@@ -61,17 +62,22 @@ public:
    } conn_io;
 
    static int loadConfigParam();
+
+   static bool handlerRead();
    static bool handlerNewConnection();
 
 protected:
    static conn_io conn;
    static uint8_t pkt_type;
+   static bool bwait_for_data;
+   static ssize_t written, sent;
    static quiche_config* qconfig;
+   static quiche_h3_header* headers;
    static quiche_h3_config* http3_config;
    static struct sockaddr_storage peer_addr;
    static UHashMap<UClientImage_Base*>* peers;
    static size_t conn_id_len, scid_len, token_len;
-   static uint32_t pkt_version, quiche_max_packet_size, peer_addr_len;
+   static uint32_t pkt_version, peer_addr_len, headers_len;
    static uint8_t token[U_MAX_TOKEN_LEN], scid[QUICHE_MAX_CONN_ID_LEN], conn_id[QUICHE_MAX_CONN_ID_LEN];
 
    // SERVICES
@@ -95,6 +101,7 @@ protected:
       if (http3_config) U_SYSCALL_VOID(quiche_h3_config_free, "%p", http3_config);
       }
    
+   static bool flush_egress();
    static bool parseHeader(const char* data, uint32_t iBytesRead);
 
    // Lookup a connection based on the packet's connection ID
@@ -122,7 +129,7 @@ protected:
       {
       U_TRACE(0, "UHTTP3::for_each_header(%.*S,%u,%.*S,%u,%p)", name_len, name, name_len, value_len, value, value_len, argp)
 
-      U_DEBUG("got HTTP header: %.*S(%u)=%.*S(%u)", name_len, name, name_len, value_len, value, value_len);
+      U_DEBUG("quiche: got HTTP header: %.*S(%u)=%.*S(%u)", name_len, name, name_len, value_len, value, value_len)
 
       U_RETURN(0);
       }
@@ -130,9 +137,7 @@ protected:
 #ifdef DEBUG
    static void quiche_debug_log(const char* line, void* argp)
       {
-      U_TRACE(0, "UHTTP3::quiche_debug_log(%S,%p)", line, argp)
-
-      U_DEBUG("quiche_debug_log: %s\n", line);
+      U_DEBUG("%s\n", line)
       }
 #endif
 

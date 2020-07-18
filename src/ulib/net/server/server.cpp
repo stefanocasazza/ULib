@@ -95,10 +95,10 @@
 #endif
 
 /*
+*/
 #ifdef DEBUG
 #define U_DISABLE_WATCH_THREAD // to read better debug trace file...
 #endif
-*/
 
 int           UServer_Base::rkids;
 int           UServer_Base::timeoutMS;
@@ -4189,16 +4189,12 @@ loop:
                    "vClientImage[%u].last_event        = %#3D\n"
                    "vClientImage[%u].sfd               = %d\n"
                    "vClientImage[%u].UEventFd::fd      = %d\n"
-                   "vClientImage[%u].conn              = %p\n"
-                   "vClientImage[%u].http3             = %p\n"
                    "vClientImage[%u].socket->flags     = %u %B\n"
                    "vClientImage[%u].socket->iSockDesc = %d"
                    "\n----------------------------------------\n",
                    (CLIENT_IMAGE - vClientImage), CLIENT_IMAGE->last_event,
                    (CLIENT_IMAGE - vClientImage), CLIENT_IMAGE->sfd,
                    (CLIENT_IMAGE - vClientImage), CLIENT_IMAGE->UEventFd::fd,
-                   (CLIENT_IMAGE - vClientImage), CLIENT_IMAGE->conn,
-                   (CLIENT_IMAGE - vClientImage), CLIENT_IMAGE->http3,
                    (CLIENT_IMAGE - vClientImage), CSOCKET->flags, CSOCKET->flags,
                    (CLIENT_IMAGE - vClientImage), CSOCKET->iSockDesc)
 
@@ -4836,10 +4832,14 @@ loop:
    U_INTERNAL_DUMP("\n----------------------------------------\n"
                    "vClientImage[%u].fd         = %d\n"
                    "vClientImage[%u].last_event = %#3D\n"
+                   "vClientImage[%u].conn       = %p\n"
+                   "vClientImage[%u].http3      = %p\n"
                    "vClientImage[%u].op_pending = %u %s"
                    "\n----------------------------------------\n",
                    pClientImage-vClientImage, pClientImage->UEventFd::fd,
                    pClientImage-vClientImage, pClientImage->last_event,
+                   pClientImage-vClientImage, pClientImage->conn,
+                   pClientImage-vClientImage, pClientImage->http3,
                    pClientImage-vClientImage, U_ClientImage_op_pending(pClientImage), pClientImage->getPendingOperationDescription())
 
    if (pClientImage->UEventFd::fd != -1) // busy
@@ -5394,15 +5394,16 @@ void UServer_Base::runLoop(const char* user)
 
          io_uring_for_each_cqe(io_uring, head, cqe)
             {
-              data = (void*) U_SYSCALL(io_uring_cqe_get_data, "%p", cqe);
-              op   = ((uint32_t)(long)data),
-            result = cqe->res;
-
-            U_INTERNAL_DUMP("op = %u %s result = %d count = %u", op, UClientImage_Base::getPendingOperationDescription(op), result, count)
+            data = (void*) U_SYSCALL(io_uring_cqe_get_data, "%p", cqe);
 
             if ((unsigned long)data == 0xffffffffffffffff) break;
 
+            op     = ((uint32_t)(long)data),
+            result = cqe->res;
+
             ++count;
+
+            U_INTERNAL_DUMP("op = %u %s result = %d count = %u", op, UClientImage_Base::getPendingOperationDescription(op), result, count)
 
             if (op == UClientImage_Base::_ACCEPT)
                {
@@ -5440,8 +5441,6 @@ void UServer_Base::runLoop(const char* user)
                   u_errno = -result;
 
                   U_WARNING("recvmsg on fd %d got %d%R", fds[0], result, 0); // NB: the last argument (0) is necessary...
-
-               // result = U_SYSCALL(recvmsg, "%u,%p,%u", fds[0], &rmsg, 0); 
                   }
                else
                   {
@@ -5469,6 +5468,8 @@ void UServer_Base::runLoop(const char* user)
                            {
                            if (pthis->handlerAccept(-1))
                               {
+                           // U_MEMCPY(&peer_addr, &USocket::peer_addr, peer_addr_len = USocket::peer_addr_len);
+
                               // TODO
                               }
                            }

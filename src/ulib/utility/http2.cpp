@@ -3277,7 +3277,7 @@ void UHTTP2::handlerRequest()
    if ((bsetting_ack =
         bsetting_send = initRequest()) == false)
       {
-      UServer_Base::pClientImage_Base->setFlagStatusHttp2();
+      UServer_Base::pClientImage->setFlagStatusHttp2();
 
       U_INTERNAL_DUMP("U_http2_settings_len = %u", U_http2_settings_len)
 
@@ -3800,10 +3800,13 @@ void UHTTP2::sendGoAway(USocket* psocket)
 
    u_write_unalignedp32(ptr+ 9,pConnection->max_processed_stream_id);
    u_write_unalignedp32(ptr+13,nerror);
-   
-   const char* descr = getFrameErrorCodeDescription(nerror);
 
-   if (nerror) U_SRV_LOG("send GOAWAY frame with error (%u, %s)", nerror, descr);
+   if (nerror)
+      {
+      const char* descr = getFrameErrorCodeDescription(nerror);
+
+      U_SRV_LOG("send GOAWAY frame with error (%u, %s)", nerror, descr);
+      }
 
    pConnection->state = CONN_STATE_IS_CLOSING;
 

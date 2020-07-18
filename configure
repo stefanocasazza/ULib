@@ -734,6 +734,8 @@ LIBXML2_FALSE
 LIBXML2_TRUE
 LIBEVENT_FALSE
 LIBEVENT_TRUE
+LIBARGON2_FALSE
+LIBARGON2_TRUE
 LIBURING_FALSE
 LIBURING_TRUE
 LIBTDB_FALSE
@@ -1097,6 +1099,7 @@ with_libbrotli
 with_libquiche
 with_libmimalloc
 with_liburing
+with_libargon2
 with_magic
 enable_ssl_staticlib_deps
 with_ssl
@@ -1869,6 +1872,7 @@ Optional Packages:
   --with-libquiche        use system   quiche library - [will check /usr /usr/local] [default=use if present]
   --with-libmimalloc      use system mimalloc library - [will check /usr /usr/local] [default=use if present]
   --with-liburing         use system    uring library - [will check /usr /usr/local] [default=use if present]
+  --with-libargon2        use system   argon2 library - [will check /usr /usr/local] [default=use if present]
   --with-magic            use system libmagic library - [will check /usr /usr/local] [default=use if present]
   --with-ssl              use system      SSL library - [will check /usr /usr/local] [default=use if present]
   --with-pcre             use system     PCRE library - [will check /usr /usr/local] [default=use if present]
@@ -26221,6 +26225,7 @@ ulib_libzopfli_msg="no (--with-libzopfli)"
 ulib_libbrotli_msg="no (--with-libbrotli)"
 ulib_libquiche_msg="no (--with-libquiche)"
  ulib_liburing_msg="no (--with-liburing)"
+ulib_libargon2_msg="no (--with-libargon2)"
  ulib_mimalloc_msg="no (--with-libmimalloc)"
    ulib_libtdb_msg="no (--with-libtdb)"
      ulib_curl_msg="no (--with-curl)"
@@ -27450,6 +27455,7 @@ libzopfli_version="unknown"
 libbrotli_version="unknown"
 libquiche_version="unknown"
 liburing_version="unknown"
+libargon2_version="unknown"
 mimalloc_version="unknown"
 libtdb_version="unknown"
 pcre_version="unknown"
@@ -27729,6 +27735,13 @@ $as_echo "$msg" >&6; }
 $as_echo "#define USE_LIBQUICHE 1" >>confdefs.h
 
 
+			pkg-config --atleast-version=0.5 quiche 2>/dev/null
+			if [ "$?" -eq 0 ]; then
+
+$as_echo "#define LIBQUICHE_AT_LEAST_0_5 1" >>confdefs.h
+
+			fi
+
 			if test -z "$CROSS_ENVIRONMENT" -a x_$PKG_CONFIG != x_no; then
 				libquiche_version=$(pkg-config --modversion quiche 2>/dev/null)
 			fi
@@ -27877,6 +27890,73 @@ $as_echo "#define USE_LIBURING 1" >>confdefs.h
 				CPPFLAGS="$CPPFLAGS -I$liburingdir/include"
 				LDFLAGS="$LDFLAGS -L$liburingdir/lib -Wl,-R$liburingdir/lib";
 				PRG_LDFLAGS="$PRG_LDFLAGS -L$liburingdir/lib";
+			fi
+		fi
+	fi
+
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if argon2 library is wanted" >&5
+$as_echo_n "checking if argon2 library is wanted... " >&6; }
+	wanted=1;
+	if test -z "$with_libargon2" ; then
+		wanted=0;
+		if test -n "$CROSS_ENVIRONMENT" -o "$USP_FLAGS" = "-DAS_cpoll_cppsp_DO" -o "$enable_shared" = "no"; then
+			with_libargon2="no";
+		else
+			with_libargon2="${CROSS_ENVIRONMENT}/usr";
+		fi
+	fi
+
+# Check whether --with-libargon2 was given.
+if test "${with_libargon2+set}" = set; then :
+  withval=$with_libargon2;
+	if test "$withval" = "no"; then
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+	else
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+		for dir in $withval ${CROSS_ENVIRONMENT}/ ${CROSS_ENVIRONMENT}/usr ${CROSS_ENVIRONMENT}/usr/local; do
+			libargon2dir="$dir"
+			if test -f "$dir/include/argon2.h"; then
+				found_libargon2="yes";
+				break;
+			fi
+		done
+		if test x_$found_libargon2 != x_yes; then
+			msg="Cannot find libargon2 library";
+			if test $wanted = 1; then
+				as_fn_error $? "$msg" "$LINENO" 5
+			else
+				{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $msg" >&5
+$as_echo "$msg" >&6; }
+			fi
+		else
+			echo "${T_MD}libargon2 found in $libargon2dir${T_ME}"
+			USE_LIBARGON2=yes
+
+$as_echo "#define USE_LIBARGON2 1" >>confdefs.h
+
+
+			if test -z "$CROSS_ENVIRONMENT" -a x_$PKG_CONFIG != x_no; then
+				libargon2_version=$(pkg-config --modversion libargon2 2>/dev/null)
+			fi
+			if test -z "${libargon2_version}"; then
+				libargon2_version=$(ls $libargon2dir/lib*/libargon2.so.*.* 2>/dev/null | head -n 1 | awk -F'.so.' '{n=2; print $n}' 2>/dev/null)
+			fi
+			if test -z "${libargon2_version}"; then
+				libargon2_version="unknown"
+			fi
+			ULIB_LIBS="$ULIB_LIBS -largon2";
+			if test $libargon2dir != "${CROSS_ENVIRONMENT}/" -a $libargon2dir != "${CROSS_ENVIRONMENT}/usr" -a $libargon2dir != "${CROSS_ENVIRONMENT}/usr/local"; then
+				CPPFLAGS="$CPPFLAGS -I$libargon2dir/include"
+				LDFLAGS="$LDFLAGS -L$libargon2dir/lib -Wl,-R$libargon2dir/lib";
+				PRG_LDFLAGS="$PRG_LDFLAGS -L$libargon2dir/lib";
 			fi
 		fi
 	fi
@@ -29435,6 +29515,10 @@ if test "$USE_LIBURING" = "yes"; then
 	ulib_liburing_msg="yes ( $liburing_version )"
 fi
 
+if test "$USE_LIBARGON2" = "yes"; then
+	ulib_libargon2_msg="yes ( $libargon2_version )"
+fi
+
 if test "$USE_LIBTDB" = "yes"; then
 	ulib_libtdb_msg="yes ( $libtdb_version )"
 	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for tdb_traverse_read in -ltdb" >&5
@@ -30929,6 +31013,14 @@ else
   LIBURING_FALSE=
 fi
 
+ if test "$USE_LIBARGON2"	= "yes"; then
+  LIBARGON2_TRUE=
+  LIBARGON2_FALSE='#'
+else
+  LIBARGON2_TRUE='#'
+  LIBARGON2_FALSE=
+fi
+
  if test "$USE_LIBEVENT"		= "yes"; then
   LIBEVENT_TRUE=
   LIBEVENT_FALSE='#'
@@ -31047,6 +31139,11 @@ _ACEOF
 
 cat >>confdefs.h <<_ACEOF
 #define _LIBURING_VERSION "$liburing_version"
+_ACEOF
+
+
+cat >>confdefs.h <<_ACEOF
+#define _LIBARGON2_VERSION "$libargon2_version"
 _ACEOF
 
 
@@ -34460,6 +34557,7 @@ ULIB_SYSCONFDIR="$u_sysconfdir"
       LIBBROTLI support: ${ulib_libbrotli_msg}
       LIBQUICHE support: ${ulib_libquiche_msg}
        LIBURING support: ${ulib_liburing_msg}
+      LIBARGON2 support: ${ulib_libargon2_msg}
        MIMALLOC support: ${ulib_mimalloc_msg}
          LIBTDB support: ${ulib_libtdb_msg}
            PCRE support: ${ulib_pcre_msg}
@@ -34526,6 +34624,7 @@ $as_echo "$as_me: Configured to build src/ulib/lib${ULIB}:
       LIBBROTLI support: ${ulib_libbrotli_msg}
       LIBQUICHE support: ${ulib_libquiche_msg}
        LIBURING support: ${ulib_liburing_msg}
+      LIBARGON2 support: ${ulib_libargon2_msg}
        MIMALLOC support: ${ulib_mimalloc_msg}
          LIBTDB support: ${ulib_libtdb_msg}
            PCRE support: ${ulib_pcre_msg}
@@ -35283,6 +35382,10 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${LIBURING_TRUE}" && test -z "${LIBURING_FALSE}"; then
   as_fn_error $? "conditional \"LIBURING\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${LIBARGON2_TRUE}" && test -z "${LIBARGON2_FALSE}"; then
+  as_fn_error $? "conditional \"LIBARGON2\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${LIBEVENT_TRUE}" && test -z "${LIBEVENT_FALSE}"; then

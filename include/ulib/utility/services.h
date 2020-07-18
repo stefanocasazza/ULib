@@ -21,6 +21,10 @@
 #  include <uuid/uuid.h>
 #endif
 
+#ifdef USE_LIBARGON2
+#  include <argon2.h>
+#endif
+
 #ifdef USE_LIBSSL
 #  include <openssl/pem.h>
 #  include <openssl/engine.h>
@@ -166,6 +170,12 @@ struct U_EXPORT UServices {
 
    static UString generateToken(const UString& data, time_t expire);
    static bool    getTokenData(       UString& data, const UString& value, time_t& expire);
+
+#ifdef USE_LIBARGON2
+   static UString saltAndHash(unsigned char* salt, uint32_t saltlen, unsigned char* hash, uint32_t hashlen, int base64 = -1);
+   static UString saltAndHash(const UString& salt,                   const UString& hash,                   int base64 = -1)
+      { return saltAndHash((unsigned char*)U_STRING_TO_PARAM(salt), (unsigned char*)U_STRING_TO_PARAM(hash), base64); }
+#endif
 
    // creat a new unique UUID value - 16 bytes (128 bits) long
    // return from the binary representation a 36-byte string (plus tailing '\0') of the form 1b4e28ba-2fa1-11d2-883f-0016d3cca427

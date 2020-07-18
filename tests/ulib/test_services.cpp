@@ -49,5 +49,11 @@ U_EXPORT main (int argc, char* argv[])
 
    U_ASSERT( result2.empty() == false )
 
+#ifdef USE_LIBARGON2
+   result1 = UServices::saltAndHash(U_STRING_FROM_CONSTANT("somesalt"), U_STRING_FROM_CONSTANT("password"), 0);
+
+   U_ASSERT( result1.empty() == false )
+#endif
+
    cout.write(result2.data(), result2.size());
 }

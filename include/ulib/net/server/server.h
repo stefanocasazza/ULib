@@ -924,9 +924,9 @@ protected:
 
       U_INTERNAL_ASSERT_POINTER(ptime)
 
+#  if !defined(U_LOG_DISABLE) && defined(DEBUG)
       U_INTERNAL_DUMP("u_now->tv_sec = %#3D last_event = %#3D", u_now->tv_sec, last_event)
 
-#  if !defined(U_LOG_DISABLE) && defined(DEBUG)
       last_event = u_now->tv_sec;
 
 #   ifndef _MSWINDOWS_

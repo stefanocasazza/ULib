@@ -23,7 +23,7 @@ pkgconfig_DATA = ULib.pc
 ## base/lzo/minilzo.c
 ## base/mkqsort.c base/rsort.c
 
-SRC_C = base/base.c base/base_error.c base/hash.c base/utility.c base/miniz/miniz.c base/xxhash/xxhash.c \
+SRC_C = base/base.c base/base_error.c base/hash.c base/utility.c base/miniz/miniz.c \
 		  base/coder/cbase64.c base/coder/cquoted_printable.c base/coder/curl_coder.c base/coder/cxml_coder.c base/coder/cescape.c base/coder/chexdump.c
 
 SRC_CPP = internal/common.cpp internal/error.cpp \
@@ -334,7 +334,7 @@ endif
 endif
 
 if FINAL
-lib@ULIB@_la_SOURCES = all_c.c base/xxhash/xxhash.c all_cpp.cpp
+lib@ULIB@_la_SOURCES = all_c.c all_cpp.cpp
 else
 lib@ULIB@_la_SOURCES = $(SRC_C) $(SRC_CPP)
 endif
@@ -386,14 +386,14 @@ endif
 ##
 ##.libs/lib@ULIB@.so: .libs/lib@ULIB@.a
 ##	$(DLLTOOL) --export-all-symbols -e .libs/exports.o -l .libs/lib@ULIB@.lib -z .libs/lib@ULIB@.def $<
-##	$(CXX_LD) -shared .libs/exports.o .libs/all_c.o base/xxhash/.libs/xxhash.o .libs/all_cpp.o $< -o $@ @ULIB_LIBS@
+##	$(CXX_LD) -shared .libs/exports.o .libs/all_c.o .libs/all_cpp.o $< -o $@ @ULIB_LIBS@
 ##
 ##all: .libs/lib@ULIB@.so
 ##endif
 
 ULib-win32-res.o: ULib.rc
 	$(WINDRES) $< $@
-	$(DLLTOOL) -export-all-symbols -z $(srcdir)/@ULIB@.def $(srcdir)/.libs/all_c.o $(srcdir)/base/xxhash/.libs/xxhash.o $(srcdir)/.libs/all_cpp.o
+	$(DLLTOOL) -export-all-symbols -z $(srcdir)/@ULIB@.def $(srcdir)/.libs/all_c.o $(srcdir)/.libs/all_cpp.o
 	$(SED) -i 's/EXPORTS/;/' $(srcdir)/@ULIB@.def
 
 if MINGW

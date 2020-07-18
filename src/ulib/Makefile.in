@@ -228,23 +228,23 @@ LTLIBRARIES = $(lib_LTLIBRARIES)
 lib@ULIB@_la_LIBADD =
 am__lib@ULIB@_la_SOURCES_DIST = base/base.c base/base_error.c \
 	base/hash.c base/utility.c base/miniz/miniz.c \
-	base/xxhash/xxhash.c base/coder/cbase64.c \
-	base/coder/cquoted_printable.c base/coder/curl_coder.c \
-	base/coder/cxml_coder.c base/coder/cescape.c \
-	base/coder/chexdump.c base/base_trace.c replace/getopt_long.c \
-	replace/mremap.c replace/nanosleep.c replace/sendfile.c \
-	replace/strndup.c replace/sem.c replace/sem_timedwait.c \
-	replace/strptime.c replace/mkdtemp.c replace/memmem.c \
-	replace/memrchr.c replace/gmtime.c replace/timegm.c \
-	replace/fnmatch.c replace/fallocate.c replace/fallocate64.c \
-	replace/pread.c replace/assert.c base/apex/apex_memmove.c \
-	replace/sched_getcpu.c base/zip/inflate.c base/zip/dostime.c \
-	base/zip/pushback.c base/zip/ziptool.c base/coder/cgzio.c \
-	base/ssl/cdes3.c base/ssl/dgst.c base/win32/mingw32.c \
-	internal/common.cpp internal/error.cpp ui/dialog.cpp \
-	db/cdb.cpp db/rdb.cpp dynamic/dynamic.cpp dynamic/plugin.cpp \
-	mime/header.cpp mime/entity.cpp mime/multipart.cpp \
-	container/vector.cpp container/hash_map.cpp container/tree.cpp \
+	base/coder/cbase64.c base/coder/cquoted_printable.c \
+	base/coder/curl_coder.c base/coder/cxml_coder.c \
+	base/coder/cescape.c base/coder/chexdump.c base/base_trace.c \
+	replace/getopt_long.c replace/mremap.c replace/nanosleep.c \
+	replace/sendfile.c replace/strndup.c replace/sem.c \
+	replace/sem_timedwait.c replace/strptime.c replace/mkdtemp.c \
+	replace/memmem.c replace/memrchr.c replace/gmtime.c \
+	replace/timegm.c replace/fnmatch.c replace/fallocate.c \
+	replace/fallocate64.c replace/pread.c replace/assert.c \
+	base/apex/apex_memmove.c replace/sched_getcpu.c \
+	base/zip/inflate.c base/zip/dostime.c base/zip/pushback.c \
+	base/zip/ziptool.c base/coder/cgzio.c base/ssl/cdes3.c \
+	base/ssl/dgst.c base/win32/mingw32.c internal/common.cpp \
+	internal/error.cpp ui/dialog.cpp db/cdb.cpp db/rdb.cpp \
+	dynamic/dynamic.cpp dynamic/plugin.cpp mime/header.cpp \
+	mime/entity.cpp mime/multipart.cpp container/vector.cpp \
+	container/hash_map.cpp container/tree.cpp \
 	utility/interrupt.cpp utility/services.cpp \
 	utility/semaphore.cpp utility/base64.cpp utility/lock.cpp \
 	utility/string_ext.cpp utility/socket_ext.cpp \
@@ -331,18 +331,18 @@ am__dirstamp = $(am__leading_dot)dirstamp
 @SSL_TRUE@am__objects_24 = base/ssl/cdes3.lo base/ssl/dgst.lo
 @MINGW_TRUE@am__objects_25 = base/win32/mingw32.lo
 am__objects_26 = base/base.lo base/base_error.lo base/hash.lo \
-	base/utility.lo base/miniz/miniz.lo base/xxhash/xxhash.lo \
-	base/coder/cbase64.lo base/coder/cquoted_printable.lo \
-	base/coder/curl_coder.lo base/coder/cxml_coder.lo \
-	base/coder/cescape.lo base/coder/chexdump.lo $(am__objects_1) \
-	$(am__objects_2) $(am__objects_3) $(am__objects_4) \
-	$(am__objects_5) $(am__objects_6) $(am__objects_7) \
-	$(am__objects_8) $(am__objects_9) $(am__objects_10) \
-	$(am__objects_11) $(am__objects_12) $(am__objects_13) \
-	$(am__objects_14) $(am__objects_15) $(am__objects_16) \
-	$(am__objects_17) $(am__objects_18) $(am__objects_19) \
-	$(am__objects_20) $(am__objects_21) $(am__objects_22) \
-	$(am__objects_23) $(am__objects_24) $(am__objects_25)
+	base/utility.lo base/miniz/miniz.lo base/coder/cbase64.lo \
+	base/coder/cquoted_printable.lo base/coder/curl_coder.lo \
+	base/coder/cxml_coder.lo base/coder/cescape.lo \
+	base/coder/chexdump.lo $(am__objects_1) $(am__objects_2) \
+	$(am__objects_3) $(am__objects_4) $(am__objects_5) \
+	$(am__objects_6) $(am__objects_7) $(am__objects_8) \
+	$(am__objects_9) $(am__objects_10) $(am__objects_11) \
+	$(am__objects_12) $(am__objects_13) $(am__objects_14) \
+	$(am__objects_15) $(am__objects_16) $(am__objects_17) \
+	$(am__objects_18) $(am__objects_19) $(am__objects_20) \
+	$(am__objects_21) $(am__objects_22) $(am__objects_23) \
+	$(am__objects_24) $(am__objects_25)
 @LIBTDB_TRUE@am__objects_27 = db/tdb.lo
 @MONGODB_TRUE@am__objects_28 = net/client/mongodb.lo
 @HTTP2_TRUE@am__objects_29 = utility/http2.lo
@@ -451,8 +451,7 @@ am__objects_69 = internal/common.lo internal/error.lo ui/dialog.lo \
 	$(am__objects_68)
 @FINAL_FALSE@am_lib@ULIB@_la_OBJECTS = $(am__objects_26) \
 @FINAL_FALSE@	$(am__objects_69)
-@FINAL_TRUE@am_lib@ULIB@_la_OBJECTS = all_c.lo base/xxhash/xxhash.lo \
-@FINAL_TRUE@	all_cpp.lo
+@FINAL_TRUE@am_lib@ULIB@_la_OBJECTS = all_c.lo all_cpp.lo
 lib@ULIB@_la_OBJECTS = $(am_lib@ULIB@_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
@@ -497,7 +496,6 @@ am__depfiles_remade = ./$(DEPDIR)/all_c.Plo ./$(DEPDIR)/all_cpp.Plo \
 	base/coder/$(DEPDIR)/cxml_coder.Plo \
 	base/miniz/$(DEPDIR)/miniz.Plo base/ssl/$(DEPDIR)/cdes3.Plo \
 	base/ssl/$(DEPDIR)/dgst.Plo base/win32/$(DEPDIR)/mingw32.Plo \
-	base/xxhash/$(DEPDIR)/xxhash.Plo \
 	base/zip/$(DEPDIR)/dostime.Plo base/zip/$(DEPDIR)/inflate.Plo \
 	base/zip/$(DEPDIR)/pushback.Plo base/zip/$(DEPDIR)/ziptool.Plo \
 	container/$(DEPDIR)/hash_map.Plo container/$(DEPDIR)/tree.Plo \
@@ -920,7 +918,7 @@ DEFAULT_INCLUDES = -I. -I$(top_builddir)/include @FSTACKINCLUDES@
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = ULib.pc
 SRC_C = base/base.c base/base_error.c base/hash.c base/utility.c \
-	base/miniz/miniz.c base/xxhash/xxhash.c base/coder/cbase64.c \
+	base/miniz/miniz.c base/coder/cbase64.c \
 	base/coder/cquoted_printable.c base/coder/curl_coder.c \
 	base/coder/cxml_coder.c base/coder/cescape.c \
 	base/coder/chexdump.c $(am__append_7) $(am__append_10) \
@@ -978,7 +976,7 @@ lib@ULIB@_la_LDFLAGS = @ULIB_LIBS@ $(am__append_67) -version-info \
 	1:0:0 -release @ULIB_VERSION@ $(am__append_68)
 @MINGW_TRUE@lib@ULIB@_la_DEPENDENCIES = ULib-win32-res.o
 @FINAL_FALSE@lib@ULIB@_la_SOURCES = $(SRC_C) $(SRC_CPP)
-@FINAL_TRUE@lib@ULIB@_la_SOURCES = all_c.c base/xxhash/xxhash.c all_cpp.cpp
+@FINAL_TRUE@lib@ULIB@_la_SOURCES = all_c.c all_cpp.cpp
 lib_LTLIBRARIES = lib@ULIB@.la
 @CROSS_COMPILING_FALSE@SUFFIXES = .cpp .usp .lo .la
 @MS_LIB_AVAILABLE_TRUE@noinst_DATA = @ULIB@-@ULIB_VERSION@.lib
@@ -1073,14 +1071,6 @@ base/miniz/$(DEPDIR)/$(am__dirstamp):
 	@: > base/miniz/$(DEPDIR)/$(am__dirstamp)
 base/miniz/miniz.lo: base/miniz/$(am__dirstamp) \
 	base/miniz/$(DEPDIR)/$(am__dirstamp)
-base/xxhash/$(am__dirstamp):
-	@$(MKDIR_P) base/xxhash
-	@: > base/xxhash/$(am__dirstamp)
-base/xxhash/$(DEPDIR)/$(am__dirstamp):
-	@$(MKDIR_P) base/xxhash/$(DEPDIR)
-	@: > base/xxhash/$(DEPDIR)/$(am__dirstamp)
-base/xxhash/xxhash.lo: base/xxhash/$(am__dirstamp) \
-	base/xxhash/$(DEPDIR)/$(am__dirstamp)
 base/coder/$(am__dirstamp):
 	@$(MKDIR_P) base/coder
 	@: > base/coder/$(am__dirstamp)
@@ -1649,8 +1639,6 @@ mostlyclean-compile:
 	-rm -f base/ssl/*.lo
 	-rm -f base/win32/*.$(OBJEXT)
 	-rm -f base/win32/*.lo
-	-rm -f base/xxhash/*.$(OBJEXT)
-	-rm -f base/xxhash/*.lo
 	-rm -f base/zip/*.$(OBJEXT)
 	-rm -f base/zip/*.lo
 	-rm -f container/*.$(OBJEXT)
@@ -1768,7 +1756,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@base/ssl/$(DEPDIR)/cdes3.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@base/ssl/$(DEPDIR)/dgst.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@base/win32/$(DEPDIR)/mingw32.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@base/xxhash/$(DEPDIR)/xxhash.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@base/zip/$(DEPDIR)/dostime.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@base/zip/$(DEPDIR)/inflate.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@base/zip/$(DEPDIR)/pushback.Plo@am__quote@ # am--include-marker
@@ -1982,7 +1969,6 @@ clean-libtool:
 	-rm -rf base/miniz/.libs base/miniz/_libs
 	-rm -rf base/ssl/.libs base/ssl/_libs
 	-rm -rf base/win32/.libs base/win32/_libs
-	-rm -rf base/xxhash/.libs base/xxhash/_libs
 	-rm -rf base/zip/.libs base/zip/_libs
 	-rm -rf container/.libs container/_libs
 	-rm -rf curl/.libs curl/_libs
@@ -2250,8 +2236,6 @@ distclean-generic:
 	-rm -f base/ssl/$(am__dirstamp)
 	-rm -f base/win32/$(DEPDIR)/$(am__dirstamp)
 	-rm -f base/win32/$(am__dirstamp)
-	-rm -f base/xxhash/$(DEPDIR)/$(am__dirstamp)
-	-rm -f base/xxhash/$(am__dirstamp)
 	-rm -f base/zip/$(DEPDIR)/$(am__dirstamp)
 	-rm -f base/zip/$(am__dirstamp)
 	-rm -f container/$(DEPDIR)/$(am__dirstamp)
@@ -2376,7 +2360,6 @@ distclean: distclean-recursive
 	-rm -f base/ssl/$(DEPDIR)/cdes3.Plo
 	-rm -f base/ssl/$(DEPDIR)/dgst.Plo
 	-rm -f base/win32/$(DEPDIR)/mingw32.Plo
-	-rm -f base/xxhash/$(DEPDIR)/xxhash.Plo
 	-rm -f base/zip/$(DEPDIR)/dostime.Plo
 	-rm -f base/zip/$(DEPDIR)/inflate.Plo
 	-rm -f base/zip/$(DEPDIR)/pushback.Plo
@@ -2604,7 +2587,6 @@ maintainer-clean: maintainer-clean-recursive
 	-rm -f base/ssl/$(DEPDIR)/cdes3.Plo
 	-rm -f base/ssl/$(DEPDIR)/dgst.Plo
 	-rm -f base/win32/$(DEPDIR)/mingw32.Plo
-	-rm -f base/xxhash/$(DEPDIR)/xxhash.Plo
 	-rm -f base/zip/$(DEPDIR)/dostime.Plo
 	-rm -f base/zip/$(DEPDIR)/inflate.Plo
 	-rm -f base/zip/$(DEPDIR)/pushback.Plo
@@ -2820,7 +2802,7 @@ clean-local:
 
 ULib-win32-res.o: ULib.rc
 	$(WINDRES) $< $@
-	$(DLLTOOL) -export-all-symbols -z $(srcdir)/@ULIB@.def $(srcdir)/.libs/all_c.o $(srcdir)/base/xxhash/.libs/xxhash.o $(srcdir)/.libs/all_cpp.o
+	$(DLLTOOL) -export-all-symbols -z $(srcdir)/@ULIB@.def $(srcdir)/.libs/all_c.o $(srcdir)/.libs/all_cpp.o
 	$(SED) -i 's/EXPORTS/;/' $(srcdir)/@ULIB@.def
 
 @MINGW_TRUE@install-def-file:

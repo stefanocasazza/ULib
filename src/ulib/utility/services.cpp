@@ -305,6 +305,77 @@ UString UServices::getUUID()
    U_RETURN_STRING(buffer);
 }
 
+#ifdef USE_LIBARGON2
+UString UServices::saltAndHash(unsigned char* salt, uint32_t saltlen, unsigned char* hash, uint32_t hashlen, int base64)
+{
+   U_TRACE(0, "UServices::saltAndHash(%.*S,%u,%.*S,%u,%d)", saltlen, salt, saltlen, hashlen, hash, hashlen, base64)
+
+   U_INTERNAL_ASSERT(salt && *salt)
+   U_INTERNAL_ASSERT(hash && *hash)
+   U_INTERNAL_ASSERT_MAJOR(saltlen, 0)
+   U_INTERNAL_ASSERT_MAJOR(hashlen, 0)
+
+   /*
+    * #define HASHLEN 32
+    * #define SALTLEN 16
+    */
+
+   UString buffer(32U);
+
+   uint32_t t_cost = 16;      // 1-pass computation
+   uint32_t m_cost = (1<<16); // 64 mebibytes memory usage
+   uint32_t parallelism = 1;  // number of threads and lanes
+
+   // low-level API
+   argon2_context context = {
+      (uint8_t*)buffer.data(), /* output array, at least HASHLEN in size */
+      32,                      /* HASHLEN digest length */
+      hash,                    /* password array */
+      hashlen,                 /* password length */
+      salt,                    /* salt array */
+      saltlen,                 /* salt length */
+      0, 0,                    /* optional secret data */
+      0, 0,                    /* optional associated data */
+      t_cost, m_cost, parallelism, parallelism,
+      ARGON2_VERSION_13, /* algorithm version */
+      0, 0, /* custom memory allocation / deallocation functions */
+      /* by default only internal memory is cleared (pwd is not wiped) */
+      ARGON2_DEFAULT_FLAGS
+   };
+
+   int rc = U_SYSCALL(argon2i_ctx, "%p", &context);
+
+   if (ARGON2_OK != rc)
+      {
+      U_WARNING("argon2i_ctx() failed: %s", argon2_error_message(rc));
+
+      return UString::getStringNull();
+      }
+
+   buffer.size_adjust(32);
+
+   if (base64 == -1)
+      {
+      U_RETURN_STRING(buffer);
+      }
+
+   UString output(100U);
+
+   if (base64 == 0)
+      {
+      output.size_adjust(u_hexdump_encode((unsigned char*)U_STRING_TO_PARAM(buffer), (uint8_t*)output.data()));
+      }
+   else
+      {
+      U_INTERNAL_ASSERT_EQUALS(base64, 1)
+
+      output.size_adjust(u_base64_encode((unsigned char*)U_STRING_TO_PARAM(buffer), (uint8_t*)output.data()));
+      }
+
+   U_RETURN_STRING(output);
+}
+#endif
+
 #ifdef USE_LIBSSL
 #  include <openssl/err.h>
 #  include <openssl/engine.h>

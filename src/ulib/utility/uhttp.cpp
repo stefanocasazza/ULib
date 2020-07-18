@@ -4923,7 +4923,7 @@ from_cache:
 
          if (UServer_Base::startParallelization() == false) UWebSocket::handlerRequest(); // child
 #     else
-         UClientImage_Base::setFlagStatusWebSocket();
+         UServer_Base::pClientImage->setFlagStatusWebSocket();
 
          U_ClientImage_parallelization = U_PARALLELIZATION_PARENT;
 

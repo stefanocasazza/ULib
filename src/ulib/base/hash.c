@@ -16,7 +16,6 @@
 */
 
 #include <ulib/base/hash.h>
-#include <ulib/base/utility.h>
 
 /**
  * Quick 4byte hashing function

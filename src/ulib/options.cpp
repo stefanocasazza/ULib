@@ -72,6 +72,11 @@
 #else
 #  define LIBURING_ENABLE   "no"
 #endif
+#ifdef USE_LIBARGON2
+#  define LIBARGON2_ENABLE   "yes ( " _LIBARGON2_VERSION " )"
+#else
+#  define LIBARGON2_ENABLE   "no"
+#endif
 #ifdef USE_LIBMIMALLOC
 #  define LIBMIMALLOC_ENABLE   "yes ( " _LIBMIMALLOC_VERSION " )"
 #else
@@ -738,6 +743,7 @@ PYTHON language support: yes ( 2.7 )
       "LIBBROTLI support......:%W " LIBBROTLI_ENABLE "%W\n" \
       "LIBQUICHE support......:%W " LIBQUICHE_ENABLE "%W\n" \
       "LIBURING support.......:%W " LIBURING_ENABLE "%W\n" \
+      "LIBARGON2 support......:%W " LIBARGON2_ENABLE "%W\n" \
       "MIMALLOC support.......:%W " LIBMIMALLOC_ENABLE "%W\n" \
       "LIBTDB support.........:%W " LIBTDB_ENABLE "%W\n" \
       "PCRE support...........:%W " LIBPCRE_ENABLE "%W\n" \
@@ -793,6 +799,7 @@ PYTHON language support: yes ( 2.7 )
                BRIGHTGREEN, RESET,
                BRIGHTGREEN, RESET,
                // wrapping
+               BRIGHTYELLOW, RESET,
                BRIGHTYELLOW, RESET,
                BRIGHTYELLOW, RESET,
                BRIGHTYELLOW, RESET,

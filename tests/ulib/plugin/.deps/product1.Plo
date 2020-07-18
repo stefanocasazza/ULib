@@ -1,8 +1,7 @@
 plugin/product1.lo: plugin/product1.cpp /usr/include/stdc-predef.h \
  plugin/product.h ../../include/ulib/dynamic/plugin.h \
  ../../include/ulib/dynamic/dynamic.h ../../include/ulib/string.h \
- ../../include/ulib/base/hash.h ../../include/ulib/base/xxhash/xxhash.h \
- /usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/stddef.h \
+ ../../include/ulib/base/hash.h ../../include/ulib/base/utility.h \
  ../../include/ulib/base/base.h ../../include/ulib/internal/config.h \
  ../../include/ulib/internal/platform.h /usr/include/sys/mman.h \
  /usr/include/features.h /usr/include/sys/cdefs.h \
@@ -10,6 +9,7 @@ plugin/product1.lo: plugin/product1.cpp /usr/include/stdc-predef.h \
  /usr/include/gnu/stubs.h /usr/include/gnu/stubs-64.h \
  /usr/include/bits/types.h /usr/include/bits/timesize.h \
  /usr/include/bits/typesizes.h /usr/include/bits/time64.h \
+ /usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/stddef.h \
  /usr/include/bits/mman.h /usr/include/bits/mman-map-flags-generic.h \
  /usr/include/bits/mman-linux.h /usr/include/bits/mman-shared.h \
  /usr/include/stdio.h /usr/include/bits/libc-header-start.h \
@@ -109,7 +109,79 @@ plugin/product1.lo: plugin/product1.cpp /usr/include/stdc-predef.h \
  /usr/include/bits/local_lim.h /usr/include/linux/limits.h \
  /usr/include/bits/posix2_lim.h /usr/include/bits/xopen_lim.h \
  ../../include/ulib/base/color.h ../../include/ulib/base/macro.h \
- /usr/include/zlib.h /usr/include/zconf.h \
+ /usr/include/zlib.h /usr/include/zconf.h /usr/include/dirent.h \
+ /usr/include/bits/dirent.h /usr/include/bits/dirent_ext.h \
+ /usr/include/fnmatch.h ../../include/ulib/base/xxhash/xxh3.h \
+ ../../include/ulib/base/xxhash/xxhash.h \
+ ../../include/ulib/base/xxhash/xxh3.h \
+ /usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/immintrin.h \
+ /usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/mmintrin.h \
+ /usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/xmmintrin.h \
+ /usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/mm_malloc.h \
+ /usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/emmintrin.h \
+ /usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/pmmintrin.h \
+ /usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/tmmintrin.h \
+ /usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/smmintrin.h \
+ /usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/popcntintrin.h \
+ /usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/wmmintrin.h \
+ /usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/fxsrintrin.h \
+ /usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/xsaveintrin.h \
+ /usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/xsaveoptintrin.h \
+ /usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/xsavesintrin.h \
+ /usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/xsavecintrin.h \
+ /usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/avxintrin.h \
+ /usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/avx2intrin.h \
+ /usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/avx512fintrin.h \
+ /usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/avx512erintrin.h \
+ /usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/avx512pfintrin.h \
+ /usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/avx512cdintrin.h \
+ /usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/avx512vlintrin.h \
+ /usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/avx512bwintrin.h \
+ /usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/avx512dqintrin.h \
+ /usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/avx512vlbwintrin.h \
+ /usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/avx512vldqintrin.h \
+ /usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/avx512ifmaintrin.h \
+ /usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/avx512ifmavlintrin.h \
+ /usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/avx512vbmiintrin.h \
+ /usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/avx512vbmivlintrin.h \
+ /usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/avx5124fmapsintrin.h \
+ /usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/avx5124vnniwintrin.h \
+ /usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/avx512vpopcntdqintrin.h \
+ /usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/avx512vbmi2intrin.h \
+ /usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/avx512vbmi2vlintrin.h \
+ /usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/avx512vnniintrin.h \
+ /usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/avx512vnnivlintrin.h \
+ /usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/avx512vpopcntdqvlintrin.h \
+ /usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/avx512bitalgintrin.h \
+ /usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/avx512vp2intersectintrin.h \
+ /usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/avx512vp2intersectvlintrin.h \
+ /usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/shaintrin.h \
+ /usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/lzcntintrin.h \
+ /usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/bmiintrin.h \
+ /usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/bmi2intrin.h \
+ /usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/fmaintrin.h \
+ /usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/f16cintrin.h \
+ /usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/rtmintrin.h \
+ /usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/xtestintrin.h \
+ /usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/cetintrin.h \
+ /usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/gfniintrin.h \
+ /usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/vaesintrin.h \
+ /usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/vpclmulqdqintrin.h \
+ /usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/movdirintrin.h \
+ /usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/sgxintrin.h \
+ /usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/pconfigintrin.h \
+ /usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/waitpkgintrin.h \
+ /usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/cldemoteintrin.h \
+ /usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/avx512bf16vlintrin.h \
+ /usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/avx512bf16intrin.h \
+ /usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/enqcmdintrin.h \
+ /usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/rdseedintrin.h \
+ /usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/prfchwintrin.h \
+ /usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/adxintrin.h \
+ /usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/clwbintrin.h \
+ /usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/clflushoptintrin.h \
+ /usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/wbnoinvdintrin.h \
+ /usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/pkuintrin.h \
  ../../include/ulib/internal/common.h \
  /usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/g++-v10/iostream \
  /usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/g++-v10/ostream \
@@ -206,9 +278,7 @@ plugin/product1.lo: plugin/product1.cpp /usr/include/stdc-predef.h \
  /usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/g++-v10/backward/strstream \
  /usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/g++-v10/backward/backward_warning.h \
  ../../include/ulib/debug/macro.h ../../include/ulib/debug/trace.h \
- ../../include/ulib/base/trace.h ../../include/ulib/base/utility.h \
- /usr/include/dirent.h /usr/include/bits/dirent.h \
- /usr/include/bits/dirent_ext.h /usr/include/fnmatch.h \
+ ../../include/ulib/base/trace.h \
  ../../include/ulib/debug/error_simulation.h \
  ../../include/ulib/debug/common.h ../../include/ulib/internal/error.h \
  ../../include/ulib/debug/error_memory.h \
@@ -278,8 +348,7 @@ plugin/product.h:
 ../../include/ulib/dynamic/dynamic.h:
 ../../include/ulib/string.h:
 ../../include/ulib/base/hash.h:
-../../include/ulib/base/xxhash/xxhash.h:
-/usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/stddef.h:
+../../include/ulib/base/utility.h:
 ../../include/ulib/base/base.h:
 ../../include/ulib/internal/config.h:
 ../../include/ulib/internal/platform.h:
@@ -294,6 +363,7 @@ plugin/product.h:
 /usr/include/bits/timesize.h:
 /usr/include/bits/typesizes.h:
 /usr/include/bits/time64.h:
+/usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/stddef.h:
 /usr/include/bits/mman.h:
 /usr/include/bits/mman-map-flags-generic.h:
 /usr/include/bits/mman-linux.h:
@@ -461,6 +531,81 @@ plugin/product.h:
 ../../include/ulib/base/macro.h:
 /usr/include/zlib.h:
 /usr/include/zconf.h:
+/usr/include/dirent.h:
+/usr/include/bits/dirent.h:
+/usr/include/bits/dirent_ext.h:
+/usr/include/fnmatch.h:
+../../include/ulib/base/xxhash/xxh3.h:
+../../include/ulib/base/xxhash/xxhash.h:
+../../include/ulib/base/xxhash/xxh3.h:
+/usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/immintrin.h:
+/usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/mmintrin.h:
+/usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/xmmintrin.h:
+/usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/mm_malloc.h:
+/usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/emmintrin.h:
+/usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/pmmintrin.h:
+/usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/tmmintrin.h:
+/usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/smmintrin.h:
+/usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/popcntintrin.h:
+/usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/wmmintrin.h:
+/usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/fxsrintrin.h:
+/usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/xsaveintrin.h:
+/usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/xsaveoptintrin.h:
+/usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/xsavesintrin.h:
+/usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/xsavecintrin.h:
+/usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/avxintrin.h:
+/usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/avx2intrin.h:
+/usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/avx512fintrin.h:
+/usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/avx512erintrin.h:
+/usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/avx512pfintrin.h:
+/usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/avx512cdintrin.h:
+/usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/avx512vlintrin.h:
+/usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/avx512bwintrin.h:
+/usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/avx512dqintrin.h:
+/usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/avx512vlbwintrin.h:
+/usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/avx512vldqintrin.h:
+/usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/avx512ifmaintrin.h:
+/usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/avx512ifmavlintrin.h:
+/usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/avx512vbmiintrin.h:
+/usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/avx512vbmivlintrin.h:
+/usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/avx5124fmapsintrin.h:
+/usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/avx5124vnniwintrin.h:
+/usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/avx512vpopcntdqintrin.h:
+/usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/avx512vbmi2intrin.h:
+/usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/avx512vbmi2vlintrin.h:
+/usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/avx512vnniintrin.h:
+/usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/avx512vnnivlintrin.h:
+/usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/avx512vpopcntdqvlintrin.h:
+/usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/avx512bitalgintrin.h:
+/usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/avx512vp2intersectintrin.h:
+/usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/avx512vp2intersectvlintrin.h:
+/usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/shaintrin.h:
+/usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/lzcntintrin.h:
+/usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/bmiintrin.h:
+/usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/bmi2intrin.h:
+/usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/fmaintrin.h:
+/usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/f16cintrin.h:
+/usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/rtmintrin.h:
+/usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/xtestintrin.h:
+/usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/cetintrin.h:
+/usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/gfniintrin.h:
+/usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/vaesintrin.h:
+/usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/vpclmulqdqintrin.h:
+/usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/movdirintrin.h:
+/usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/sgxintrin.h:
+/usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/pconfigintrin.h:
+/usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/waitpkgintrin.h:
+/usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/cldemoteintrin.h:
+/usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/avx512bf16vlintrin.h:
+/usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/avx512bf16intrin.h:
+/usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/enqcmdintrin.h:
+/usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/rdseedintrin.h:
+/usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/prfchwintrin.h:
+/usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/adxintrin.h:
+/usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/clwbintrin.h:
+/usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/clflushoptintrin.h:
+/usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/wbnoinvdintrin.h:
+/usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/pkuintrin.h:
 ../../include/ulib/internal/common.h:
 /usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/g++-v10/iostream:
 /usr/lib/gcc/x86_64-pc-linux-gnu/10.1.0/include/g++-v10/ostream:
@@ -563,11 +708,6 @@ plugin/product.h:
 ../../include/ulib/debug/macro.h:
 ../../include/ulib/debug/trace.h:
 ../../include/ulib/base/trace.h:
-../../include/ulib/base/utility.h:
-/usr/include/dirent.h:
-/usr/include/bits/dirent.h:
-/usr/include/bits/dirent_ext.h:
-/usr/include/fnmatch.h:
 ../../include/ulib/debug/error_simulation.h:
 ../../include/ulib/debug/common.h:
 ../../include/ulib/internal/error.h:

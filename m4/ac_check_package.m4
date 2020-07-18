@@ -195,6 +195,11 @@ AC_DEFUN([AC_CHECK_PACKAGE],[
 			USE_LIBQUICHE=yes
 			AC_DEFINE(USE_LIBQUICHE, 1, [Define if enable libquiche support])
 
+			pkg-config --atleast-version=0.5 quiche 2>/dev/null
+			if [[ "$?" -eq 0 ]]; then
+				AC_DEFINE(LIBQUICHE_AT_LEAST_0_5, 1, [Define if we have at least libquiche 0.5])
+			fi
+
 			if test -z "$CROSS_ENVIRONMENT" -a x_$PKG_CONFIG != x_no; then
 				libquiche_version=$(pkg-config --modversion quiche 2>/dev/null)
 			fi
@@ -315,6 +320,59 @@ AC_DEFUN([AC_CHECK_PACKAGE],[
 				CPPFLAGS="$CPPFLAGS -I$liburingdir/include"
 				LDFLAGS="$LDFLAGS -L$liburingdir/lib -Wl,-R$liburingdir/lib";
 				PRG_LDFLAGS="$PRG_LDFLAGS -L$liburingdir/lib";
+			fi
+		fi
+	fi
+	], [AC_MSG_RESULT(no)])
+
+	AC_MSG_CHECKING(if argon2 library is wanted)
+	wanted=1;
+	if test -z "$with_libargon2" ; then
+		wanted=0;
+		if test -n "$CROSS_ENVIRONMENT" -o "$USP_FLAGS" = "-DAS_cpoll_cppsp_DO" -o "$enable_shared" = "no"; then
+			with_libargon2="no";
+		else
+			with_libargon2="${CROSS_ENVIRONMENT}/usr";
+		fi
+	fi
+	AC_ARG_WITH(libargon2, [  --with-libargon2        use system   argon2 library - [[will check /usr /usr/local]] [[default=use if present]]], [
+	if test "$withval" = "no"; then
+		AC_MSG_RESULT(no)
+	else
+		AC_MSG_RESULT(yes)
+		for dir in $withval ${CROSS_ENVIRONMENT}/ ${CROSS_ENVIRONMENT}/usr ${CROSS_ENVIRONMENT}/usr/local; do
+			libargon2dir="$dir"
+			if test -f "$dir/include/argon2.h"; then
+				found_libargon2="yes";
+				break;
+			fi
+		done
+		if test x_$found_libargon2 != x_yes; then
+			msg="Cannot find libargon2 library";
+			if test $wanted = 1; then
+				AC_MSG_ERROR($msg)
+			else
+				AC_MSG_RESULT($msg)
+			fi
+		else
+			echo "${T_MD}libargon2 found in $libargon2dir${T_ME}"
+			USE_LIBARGON2=yes
+			AC_DEFINE(USE_LIBARGON2, 1, [Define if enable libargon2 support])
+
+			if test -z "$CROSS_ENVIRONMENT" -a x_$PKG_CONFIG != x_no; then
+				libargon2_version=$(pkg-config --modversion libargon2 2>/dev/null)
+			fi
+			if test -z "${libargon2_version}"; then
+				libargon2_version=$(ls $libargon2dir/lib*/libargon2.so.*.* 2>/dev/null | head -n 1 | awk -F'.so.' '{n=2; print $n}' 2>/dev/null)
+			fi
+			if test -z "${libargon2_version}"; then
+				libargon2_version="unknown"
+			fi
+			ULIB_LIBS="$ULIB_LIBS -largon2";
+			if test $libargon2dir != "${CROSS_ENVIRONMENT}/" -a $libargon2dir != "${CROSS_ENVIRONMENT}/usr" -a $libargon2dir != "${CROSS_ENVIRONMENT}/usr/local"; then
+				CPPFLAGS="$CPPFLAGS -I$libargon2dir/include"
+				LDFLAGS="$LDFLAGS -L$libargon2dir/lib -Wl,-R$libargon2dir/lib";
+				PRG_LDFLAGS="$PRG_LDFLAGS -L$libargon2dir/lib";
 			fi
 		fi
 	fi

@@ -607,6 +607,9 @@
 /* Define to 1 if PostgreSQL libpgport is not available */
 #undef LIBPGPORT_NOT_FOUND
 
+/* Define if we have at least libquiche 0.5 */
+#undef LIBQUICHE_AT_LEAST_0_5
+
 /* Libraries */
 #undef LIBS_VAR
 
@@ -722,6 +725,9 @@
 
 /* Define if we have support for crc32 intrinsics */
 #undef USE_HARDWARE_CRC32
+
+/* Define if enable libargon2 support */
+#undef USE_LIBARGON2
 
 /* Define if enable libbrotli support */
 #undef USE_LIBBROTLI
@@ -1006,6 +1012,10 @@
 
 /* Ldap version */
 #undef _LDAP_VERSION
+
+/* libargon2 - library version of password hashing software that won the
+   Password Hashing Competition (PHC) */
+#undef _LIBARGON2_VERSION
 
 /* libbrotli - google compression library version */
 #undef _LIBBROTLI_VERSION

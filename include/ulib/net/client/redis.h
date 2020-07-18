@@ -757,6 +757,7 @@ protected:
 
    static uint32_t start;
    static ptrdiff_t diff;
+   static UVector<UString>* pvec;
    static UREDISClient_Base* pthis;
 
    UREDISClient_Base() : UClient_Base(U_NULLPTR)
@@ -767,6 +768,7 @@ protected:
       }
 
    void init();
+   void processResponse();
 
    static void parseResponse(UString& response, UVector<UString>& parsed, size_t index, size_t terminalIndex, ssize_t depth = 0)
    {
@@ -824,17 +826,11 @@ protected:
       }
    }
 
-   void processResponse()
-   {
-      vitem.clear();
-      parseResponse(response, vitem, 0, response.size());
-   }
-
    bool processRequest(char recvtype);
 
    bool sendRequest(const UString& pipeline)
       {
-      U_TRACE_NO_PARAM(0, "UREDISClient_Base::sendRequest()");
+      U_TRACE(0, "UREDISClient_Base::sendRequest(%V)", pipeline.rep)
 
       UClient_Base::iov[0].iov_base = (caddr_t)pipeline.data();
       UClient_Base::iov[0].iov_len  =          pipeline.size();
