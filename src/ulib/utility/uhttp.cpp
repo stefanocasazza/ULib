@@ -7536,6 +7536,8 @@ void UHTTP::manageSSE()
    const char* ptr = getHeaderValuePtr(U_CONSTANT_TO_PARAM("last-event-id"), true);
    uint32_t last_event_id = (ptr ? u_atoi(ptr) : 0);
 
+   U_INTERNAL_ASSERT_POINTER(UServer_Base::sse_id)
+
    UServer_Base::sse_id->clear();
 
    (void) UClientImage_Base::wbuffer->snprintf(U_CONSTANT_TO_PARAM("Access-Control-Allow-Origin: %s\r\n"

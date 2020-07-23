@@ -95,10 +95,10 @@
 #endif
 
 /*
-*/
 #ifdef DEBUG
 #define U_DISABLE_WATCH_THREAD // to read better debug trace file...
 #endif
+*/
 
 int           UServer_Base::rkids;
 int           UServer_Base::timeoutMS;
@@ -216,7 +216,6 @@ UVector<UIPAllow*>* UServer_Base::vallow_IP_prv;
 #  ifndef IORING_FEAT_FAST_POLL
 #  define IORING_FEAT_FAST_POLL (1U << 5)
 #  endif
-//#define U_FILES_UPDATE_ASYNC_WORK
 #  include <sys/poll.h>
 
 int                    UServer_Base::fds[1] = { -1 };
