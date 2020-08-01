@@ -139,6 +139,7 @@ bool UCertificate::isIssued(const UCertificate& ca) const
 
    U_INTERNAL_ASSERT_POINTER(x509)
 
+#ifdef U_LINUX
    int ok = U_SYSCALL(X509_check_issued, "%p,%p", ca.x509, x509);
 
    if (ok == X509_V_OK)
@@ -159,6 +160,7 @@ bool UCertificate::isIssued(const UCertificate& ca) const
 
       U_RETURN(ok ==  X509_V_OK);
       }
+#endif
 
    U_RETURN(false);
 }
@@ -389,11 +391,13 @@ uint32_t UCertificate::getRevocationURL(UVector<UString>& vec) const
     *  CN=Some Name
     */
 
+   uint32_t result, n = vec.size();
+
+#ifdef U_LINUX
    UString uri;
    X509_NAME* base;
    X509_NAME* merge;
    GENERAL_NAME* nm;
-   uint32_t result, n = vec.size();
 
    // CRLDistributionPoints ::= SEQUENCE OF DistributionPoint
 
@@ -465,6 +469,7 @@ uint32_t UCertificate::getRevocationURL(UVector<UString>& vec) const
          uri.clear();
          }
       }
+#endif
 
    result = (vec.size() - n);
 
@@ -490,6 +495,9 @@ uint32_t UCertificate::getCAIssuers(UVector<UString>& vec) const
     * authorityInfoAccess = caIssuers;URI:http://my.ca/ca.html
     */
 
+   uint32_t result, n = vec.size();
+
+#ifdef U_LINUX
    UString uri;
 
    // try to extract an AuthorityInfoAccessSyntax extension from x509
@@ -518,8 +526,7 @@ uint32_t UCertificate::getCAIssuers(UVector<UString>& vec) const
          if (uri) vec.push_back(uri);
          }
       }
-
-   uint32_t result, n = vec.size();
+#endif
 
    result = (vec.size() - n);
 

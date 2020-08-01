@@ -3881,6 +3881,11 @@ int UHTTP::handlerREAD()
 #ifndef U_HTTP3_DISABLE
    if (UServer_Base::budp)
       {
+      U_http_version = '3';
+
+      UHTTP3::handlerRequest(UServer_Base::getQuicheConn(), UServer_Base::getQuicheHttp3Conn());
+
+      U_RETURN(U_ClientImage_state);
       }
 #endif
 

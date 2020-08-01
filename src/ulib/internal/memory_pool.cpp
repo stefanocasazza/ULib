@@ -491,6 +491,7 @@ void* UMemoryPool::cmalloc(uint32_t num, uint32_t type_size, bool bzero)
    U_RETURN(ptr);
 }
 
+#ifdef ENABLE_MEMPOOL
 void* UMemoryPool::pmalloc(uint32_t* pnum, uint32_t type_size, bool bzero)
 {
    U_TRACE(1, "UMemoryPool::pmalloc(%p,%u,%b)", pnum, type_size, bzero)
@@ -525,7 +526,7 @@ void* UMemoryPool::pmalloc(uint32_t* pnum, uint32_t type_size, bool bzero)
    U_RETURN(ptr);
 }
 
-#if defined(ENABLE_MEMPOOL) && (!defined(U_SERVER_CAPTIVE_PORTAL) || defined(ENABLE_THREAD))
+#if !defined(U_SERVER_CAPTIVE_PORTAL) || defined(ENABLE_THREAD)
 void UMemoryPool::deallocate(void* ptr, uint32_t length)
 {
    U_TRACE(1, "UMemoryPool::deallocate(%p,%u)", ptr, length)
@@ -575,6 +576,7 @@ void UMemoryPool::deallocate(void* ptr, uint32_t length)
 
    (void) U_SYSCALL(munmap, "%p,%lu", (void*)ptr, length);
 }
+#endif
 #endif
 
 #if defined(DEBUG) && defined(U_STDCPP_ENABLE)

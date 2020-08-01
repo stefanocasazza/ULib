@@ -70,17 +70,17 @@ wait_server_ready localhost 4433
 
 sync
 echo "PID = `cat /var/run/userver_udp.pid`"
-
+exit 0
 $SLEEP
-curl -vvvv --http3 https://localhost:4433 &
+curl -vvvv --http3 https://localhost:4433
 $SLEEP
 killall userver_udp
 $SLEEP
 pkill userver_udp 2>/dev/null
-$SLEEP
 
-sync
-grep ' quiche:' err/userver_udp.err >/tmp/out.txt
+#$SLEEP
+#sync
+#grep ' quiche:' err/userver_udp.err >/tmp/out.txt
 #gvimdiff /tmp/out.txt /mnt/data/storage/ulib/ULib-2.4.2/doc/quiche-0.4.0/examples/out.txt 
 
 #nc -u -w 5 192.168.42.12 4433 < /tmp/audacious-temp-*

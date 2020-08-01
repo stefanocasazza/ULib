@@ -1059,7 +1059,8 @@ void UClientImage_Base::prepareForRead()
    u_clientimage_info.flag.u = 0; // NB: U_ClientImage_parallelization is reset by this...
 
 #ifdef USE_LIBURING
-   if (UServer_Base::brng == false)
+   if (UServer_Base::brng == false &&
+       UServer_Base::budp == false)
 #endif
    {
 #ifdef U_CLASSIC_SUPPORT
@@ -1082,6 +1083,7 @@ void UClientImage_Base::prepareForRead()
 
       U_INTERNAL_ASSERT_DIFFERS(UEventFd::fd, -1)
       U_INTERNAL_ASSERT_EQUALS(UServer_Base::brng, false)
+      U_INTERNAL_ASSERT_EQUALS(UServer_Base::budp, false)
 
       UServer_Base::csocket            = socket;
       UServer_Base::pClientImage       = this;
@@ -1170,8 +1172,9 @@ bool UClientImage_Base::genericRead()
 #endif
 
 #ifdef USE_LIBURING
-   if (UServer_Base::brng == false ||
-       (U_ClientImage_request == 0 &&
+   if ((UServer_Base::brng == false  &&
+        UServer_Base::budp == false) ||
+       (U_ClientImage_request == 0   &&
         U_ClientImage_parallelization == U_PARALLELIZATION_CHILD))
 #endif
    {

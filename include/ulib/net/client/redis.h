@@ -916,7 +916,7 @@ private:
 
    friend class UREDISClusterMaster;
 
-// U_DISALLOW_COPY_AND_ASSIGN(UREDISClient_Base)
+   U_DISALLOW_COPY_AND_ASSIGN(UREDISClient_Base)
 };
 
 template <class Socket> class U_EXPORT UREDISClient : public UREDISClient_Base {

@@ -470,13 +470,21 @@ int USocket::startServer(unsigned int port)
    struct sockaddr_in addr;
    int fd = U_SYSCALL(socket, "%d,%d,%d", AF_INET, SOCK_STREAM | SOCK_CLOEXEC, IPPROTO_TCP);
 
+#ifdef U_LINUX
+# ifdef SO_REUSEPORT
    (void) U_SYSCALL(setsockopt, "%d,%d,%d,%p,%u", fd, SOL_SOCKET, SO_REUSEPORT, &val, sizeof(int));
+# endif
    (void) U_SYSCALL(setsockopt, "%d,%d,%d,%p,%u", fd, SOL_SOCKET, SO_REUSEADDR, &val, sizeof(int));
 
    (void) U_SYSCALL(setsockopt, "%d,%d,%d,%p,%u", fd, SOL_TCP, TCP_NODELAY, (const int[]){ 1 }, sizeof(int));
+# ifdef TCP_FASTOPEN
    (void) U_SYSCALL(setsockopt, "%d,%d,%d,%p,%u", fd, SOL_TCP, TCP_FASTOPEN, (const int[]){ 4096 }, sizeof(int));
+# endif
+# ifdef TCP_DEFER_ACCEPT
    (void) U_SYSCALL(setsockopt, "%d,%d,%d,%p,%u", fd, SOL_TCP, TCP_DEFER_ACCEPT, (const int[]){ 10 }, sizeof(int));
+# endif
    (void) U_SYSCALL(setsockopt, "%d,%d,%d,%p,%u", fd, SOL_SOCKET, SO_SNDBUF, (const int[]){ 500 * 1024 }, sizeof(int));
+#endif
 
    addr.sin_family = AF_INET;
    addr.sin_port = htons(port);
@@ -952,10 +960,14 @@ void USocket::dumpProperties()
 {
    U_TRACE_NO_PARAM(0, "USocket::dumpProperties()")
 
+   uint32_t value = U_NOT_FOUND, tmp = sizeof(uint32_t);
+
+#ifdef U_LINUX
    struct linger x = { 0, -1 }; // { int l_onoff; int l_linger; }
-   uint32_t tmp0 = sizeof(struct linger), value = U_NOT_FOUND, tmp = sizeof(uint32_t);
+   uint32_t tmp0 = sizeof(struct linger);
    (void) getSockOpt(SOL_SOCKET, SO_LINGER, (void*)&x, tmp0);
    U_INTERNAL_DUMP("SO_LINGER = { %d %d }", x.l_onoff, x.l_linger)
+#endif
    U_DUMP("getBufferRCV() = %u getBufferSND() = %u", getBufferRCV(), getBufferSND())
 
 #ifdef TCP_CORK

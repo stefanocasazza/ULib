@@ -31,6 +31,10 @@
 //#define U_FILES_UPDATE_ASYNC_WORK
 #endif
 
+#ifndef U_HTTP3_DISABLE
+#  include <quiche.h>
+#endif
+
 #ifndef SIGWINCH
 #define SIGWINCH 28
 #endif
@@ -1350,6 +1354,11 @@ protected:
 // static RETSIGTYPE handlerForSigCHLD(int signo);
 
    static void sendSignalToAllChildren(int signo, sighandler_t handler);
+
+#ifndef U_HTTP3_DISABLE
+   static quiche_conn*    getQuicheConn()      { return (quiche_conn*)    pClientImage->conn; }
+   static quiche_h3_conn* getQuicheHttp3Conn() { return (quiche_h3_conn*) pClientImage->http3; }
+#endif
 
 private:
    static void manageWaitAll()

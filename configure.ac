@@ -1089,7 +1089,7 @@ AC_FUNC_CLOSEDIR_VOID
 rlib=""
 posix4_lib=""
 
-for func in accept4 atexit clock_gettime daemon dup3 epoll_create1 epoll_wait epoll_ctl_batch fallocate fallocate64 fnmatch getaddrinfo getnameinfo getopt_long getpriority gettid inet_ntop kqueue kqueue1 lrintl memmem memrchr mkdtemp mremap pipe2 posix_spawn pread sched_getcpu sched_getaffinity sem_init sem_getvalue sem_timedwait sendfile sendfile64 strndup strptime strsignal strtof strtold strtoull gmtime_r timegm nanosleep strerror shm_open; do
+for func in accept4 atexit clock_gettime daemon dup3 epoll_create1 epoll_wait fallocate fallocate64 fnmatch getaddrinfo getnameinfo getopt_long getpriority gettid inet_ntop kqueue kqueue1 lrintl memmem memrchr mkdtemp mremap pipe2 posix_spawn pread sched_getcpu sched_getaffinity sem_init sem_getvalue sem_timedwait sendfile sendfile64 strndup strptime strsignal strtof strtold strtoull gmtime_r timegm nanosleep strerror shm_open; do
     found="no"
     AC_CHECK_FUNC($func,[
         found=$func
@@ -2533,7 +2533,15 @@ if test -z "$enable_examples" -a "$enable_shared" = "yes"; then
 	enable_examples="yes"
 fi
 
+AM_CONDITIONAL(HTTP3, false)
 AM_CONDITIONAL(USERVER_IPC, false)
+AM_CONDITIONAL(USERVER_UDP, false)
+
+if test "x$use_userver_udp" != "xno" -a "$enable_http3" = "yes" -a "$USE_LIBQUICHE" = "yes" -a "$USE_LIBURING" = "yes"; then
+	AM_CONDITIONAL(HTTP3, true)
+	AM_CONDITIONAL(USERVER_UDP, true)
+	AC_DEFINE(USERVER_UDP, 1, [Define if use userver_udp])
+fi
 
 if test "$enable_examples" = "yes"; then
    AC_MSG_RESULT(yes)
@@ -2556,20 +2564,11 @@ if test "$enable_examples" = "yes"; then
 	AC_ARG_WITH(userver-udp,
 	[  --with-userver-udp      Enable building of userver_udp, default is disabled],
 	[use_userver_udp=$withval],
-	[])
+	[use_userver_udp=no])
 	AC_MSG_RESULT($use_userver_udp)
 else
    AC_MSG_RESULT(no)
 	AM_CONDITIONAL(ENABLE_EXAMPLES, false)
-fi
-
-AM_CONDITIONAL(HTTP3, false)
-AM_CONDITIONAL(USERVER_UDP, false)
-
-if test "x$use_userver_udp" != "xno" -a "$enable_http3" = "yes" -a "$USE_LIBQUICHE" = "yes" -a "$USE_LIBURING" = "yes"; then
-	AM_CONDITIONAL(HTTP3, true)
-	AM_CONDITIONAL(USERVER_UDP, true)
-	AC_DEFINE(USERVER_UDP, 1, [Define if use userver_udp])
 fi
 
 CXXFLAGS="$CXXFLAGS -fno-exceptions"

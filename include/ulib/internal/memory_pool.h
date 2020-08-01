@@ -496,7 +496,7 @@ public:
       U_INTERNAL_ASSERT_POINTER(ptr)
       }
 
-   static void* UMemoryPool::pmalloc(uint32_t* pnum, uint32_t type_size = sizeof(char), bool bzero = false)
+   static void* pmalloc(uint32_t* pnum, uint32_t type_size = sizeof(char), bool bzero = false)
       {
       U_TRACE(1, "UMemoryPool::pmalloc(%p,%u,%b)", pnum, type_size, bzero)
 
@@ -513,7 +513,7 @@ public:
 
       if (length == 0) length = type_size;
 
-      ptr = U_SYSCALL_MALLOC(length);
+      void* ptr = U_SYSCALL_MALLOC(length);
 
       U_INTERNAL_ASSERT_POINTER_MSG(ptr, "cannot allocate memory, exiting...")
 

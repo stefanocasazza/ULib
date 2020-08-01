@@ -332,7 +332,7 @@ void UREDISClient_Base::processResponse()
    pvec  = &vitem;
 
    do {
-      getResponseItem();
+      (void) getResponseItem();
 
       U_DUMP_CONTAINER(vitem)
       }
@@ -351,6 +351,7 @@ bool UREDISClient_Base::processRequest(char recvtype)
       if (UNLIKELY(prefix == U_RC_ERROR))
          {
          err =  U_RC_ERROR;
+
          U_RETURN(false);
          }
 

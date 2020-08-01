@@ -4944,14 +4944,16 @@ void UServer_Base::logNewClient()
 
    setClientAddress();
 
-   U_DUMP("UHTTP3::conn_id = %M", UHTTP3::conn_id, UHTTP3::conn_id_len)
+#ifndef U_HTTP3_DISABLE
+   U_INTERNAL_DUMP("UHTTP3::conn_id = %M", UHTTP3::conn_id, UHTTP3::conn_id_len)
+#endif
 
 #ifndef U_LOG_DISABLE
    if (isLog())
       {
       char buffer[32];
       uint32_t len = setNumConnection(buffer),
-      sz = u__snprintf(u_buffer, U_BUFFER_SIZE, U_CONSTANT_TO_PARAM("'%s:%u'"), csocket->cRemoteAddress.pcStrAddress, csocket->iRemotePort);
+      sz = u__snprintf(u_buffer, U_BUFFER_SIZE, U_CONSTANT_TO_PARAM("'%s:%u'"), socket->cRemoteAddress.pcStrAddress, socket->iRemotePort);
 
       log->log(U_CONSTANT_TO_PARAM("New client connected from %.*s, %.*s clients currently connected"), sz, u_buffer, len, buffer);
       }
@@ -5443,6 +5445,7 @@ void UServer_Base::runLoop(const char* user)
                   }
                else
                   {
+                  bool blookup = false;
                   char* ptr = rbuffer->data();
 
                   U_INTERNAL_DUMP("BytesRead(%u) = %#.*S", result, result, ptr)
@@ -5451,30 +5454,38 @@ void UServer_Base::runLoop(const char* user)
                   U_INTERNAL_ASSERT(UClientImage_Base::rbuffer->same(rbuffer))
                   U_ASSERT_EQUALS(UClientImage_Base::rbuffer->capacity(), rbuffer_size)
 
-                  if (UHTTP3::parseHeader(ptr, result))
+                  rbuffer->size_adjust_force(result);
+
+                  if (UHTTP3::parseHeader() == false) goto next;
+
+                  if ((blookup = UHTTP3::lookup()) == false)
                      {
-                     rbuffer->size_adjust_force(result);
+                     logNewClient();
 
-                     if (UHTTP3::lookup())
-                        {
-                        // TODO
-                        }
-                     else
-                        {
-                        logNewClient();
+                     if (UHTTP3::handlerNewConnection() == false) goto next;
 
-                        if (UHTTP3::handlerNewConnection())
-                           {
-                           if (pthis->handlerAccept(-1))
-                              {
-                           // U_MEMCPY(&peer_addr, &USocket::peer_addr, peer_addr_len = USocket::peer_addr_len);
+                     findClientImage();
 
-                              // TODO
-                              }
-                           }
-                        }
+                     if (pthis->handlerAccept(-1) == false) goto next;
+
+                     pClientImage->conn  = UHTTP3::conn;
+                     pClientImage->http3 = UHTTP3::http3;
+
+                     pClientImage->socket->setFd(pClientImage->fd = fds[0]);
+
+                     if (isLog()) USocketExt::setRemoteInfo(fds[0], csocket, *(pClientImage->logbuf));
                      }
+
+                  csocket = pClientImage->socket;
+
+                  result = pClientImage->handlerRead();
+
+                  U_DUMP("result = %d csocket->isClosed() = %b U_ClientImage_close = %b", result, csocket->isClosed(), U_ClientImage_close)
+
+               // if (blookup == false) UHTTP3::insert();
                   }
+
+next:          prepareOperation(UClientImage_Base::_RECVMSG);
                }
 #        endif
             else if (op == UClientImage_Base::_POLL)

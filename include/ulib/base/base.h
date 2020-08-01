@@ -83,13 +83,15 @@
 
 #  define  U_SYSCALL_STRDUP(s)    U_SYSCALL(mi_strdup,  "%S", s)
 #  define  U_SYSCALL_STRNDUP(s,n) U_SYSCALL(mi_strndup, "%p,%u", s,n)
-# else
+# endif
+#endif
+
+#ifndef U_SYSCALL_FREE 
 #  define  U_SYSCALL_FREE(p)    U_SYSCALL_VOID(free, "%p", p)
 #  define  U_SYSCALL_MALLOC(sz) U_SYSCALL(malloc, "%u", sz)
 
 #  define  U_SYSCALL_STRDUP(s)    U_SYSCALL(strdup,  "%S", s)
 #  define  U_SYSCALL_STRNDUP(s,n) U_SYSCALL(strndup, "%p,%u", s,n)
-# endif
 #endif
 
 #ifdef USE_LIBSSL

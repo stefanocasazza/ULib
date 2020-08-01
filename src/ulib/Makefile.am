@@ -26,7 +26,7 @@ pkgconfig_DATA = ULib.pc
 SRC_C = base/base.c base/base_error.c base/hash.c base/utility.c base/miniz/miniz.c \
 		  base/coder/cbase64.c base/coder/cquoted_printable.c base/coder/curl_coder.c base/coder/cxml_coder.c base/coder/cescape.c base/coder/chexdump.c
 
-SRC_CPP = internal/common.cpp internal/error.cpp \
+SRC_CPP = internal/common.cpp internal/error.cpp internal/memory_pool.cpp \
 			 ui/dialog.cpp db/cdb.cpp db/rdb.cpp \
 			 dynamic/dynamic.cpp dynamic/plugin.cpp \
 			 mime/header.cpp mime/entity.cpp mime/multipart.cpp \
@@ -154,10 +154,6 @@ endif
 
 if APEXMEM
 SRC_C += base/apex/apex_memmove.c
-endif
-
-if MEMORY_POOL
-SRC_CPP += internal/memory_pool.cpp
 endif
 
 if !SCHED_GETCPU

@@ -3052,6 +3052,7 @@ protected:
          return generateSegments<formatTermination + 1, argumentCount - 1>(format, std::forward<Ts>(ts)..., StringClass::instance.template substr<workingIndex, nextFormat>(), std::forward<T>(t));
       }
    }
+
 #ifdef GCC_IS_GNU
    #pragma GCC diagnostic pop
 #endif
@@ -3205,7 +3206,6 @@ public:
    }
 };
 
-#  if defined(U_STDCPP_ENABLE) && defined(HAVE_CXX20) && defined(U_LINUX) && !defined(__clang__)
 template<typename T>
 concept UCompileTimeStringType = is_ctv_v<T>;
 
@@ -3217,7 +3217,5 @@ inline bool operator==(const UCompileTimeStringType auto& lhs, const UString& rh
 
 inline bool operator!=(const UString& lhs, const UCompileTimeStringType auto& rhs){ return !lhs.equal(rhs.string); }
 inline bool operator!=(const UCompileTimeStringType auto& lhs, const UString& rhs){ return !rhs.equal(lhs.string); }
-
-#  endif
 #endif
 #endif

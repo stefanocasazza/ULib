@@ -655,14 +655,14 @@ DOXYGEN
 mcpp
 cpp
 GCC_AR
-USERVER_UDP_FALSE
-USERVER_UDP_TRUE
-HTTP3_FALSE
-HTTP3_TRUE
 ENABLE_EXAMPLES_FALSE
 ENABLE_EXAMPLES_TRUE
+USERVER_UDP_FALSE
+USERVER_UDP_TRUE
 USERVER_IPC_FALSE
 USERVER_IPC_TRUE
+HTTP3_FALSE
+HTTP3_TRUE
 MEMORY_POOL_FALSE
 MEMORY_POOL_TRUE
 SANITIZE_FALSE
@@ -25615,7 +25615,7 @@ fi
 rlib=""
 posix4_lib=""
 
-for func in accept4 atexit clock_gettime daemon dup3 epoll_create1 epoll_wait epoll_ctl_batch fallocate fallocate64 fnmatch getaddrinfo getnameinfo getopt_long getpriority gettid inet_ntop kqueue kqueue1 lrintl memmem memrchr mkdtemp mremap pipe2 posix_spawn pread sched_getcpu sched_getaffinity sem_init sem_getvalue sem_timedwait sendfile sendfile64 strndup strptime strsignal strtof strtold strtoull gmtime_r timegm nanosleep strerror shm_open; do
+for func in accept4 atexit clock_gettime daemon dup3 epoll_create1 epoll_wait fallocate fallocate64 fnmatch getaddrinfo getnameinfo getopt_long getpriority gettid inet_ntop kqueue kqueue1 lrintl memmem memrchr mkdtemp mremap pipe2 posix_spawn pread sched_getcpu sched_getaffinity sem_init sem_getvalue sem_timedwait sendfile sendfile64 strndup strptime strsignal strtof strtold strtoull gmtime_r timegm nanosleep strerror shm_open; do
     found="no"
     as_ac_var=`$as_echo "ac_cv_func_$func" | $as_tr_sh`
 ac_fn_cxx_check_func "$LINENO" "$func" "$as_ac_var"
@@ -33135,6 +33135,14 @@ if test -z "$enable_examples" -a "$enable_shared" = "yes"; then
 fi
 
  if false; then
+  HTTP3_TRUE=
+  HTTP3_FALSE='#'
+else
+  HTTP3_TRUE='#'
+  HTTP3_FALSE=
+fi
+
+ if false; then
   USERVER_IPC_TRUE=
   USERVER_IPC_FALSE='#'
 else
@@ -33142,6 +33150,36 @@ else
   USERVER_IPC_FALSE=
 fi
 
+ if false; then
+  USERVER_UDP_TRUE=
+  USERVER_UDP_FALSE='#'
+else
+  USERVER_UDP_TRUE='#'
+  USERVER_UDP_FALSE=
+fi
+
+
+if test "x$use_userver_udp" != "xno" -a "$enable_http3" = "yes" -a "$USE_LIBQUICHE" = "yes" -a "$USE_LIBURING" = "yes"; then
+	 if true; then
+  HTTP3_TRUE=
+  HTTP3_FALSE='#'
+else
+  HTTP3_TRUE='#'
+  HTTP3_FALSE=
+fi
+
+	 if true; then
+  USERVER_UDP_TRUE=
+  USERVER_UDP_FALSE='#'
+else
+  USERVER_UDP_TRUE='#'
+  USERVER_UDP_FALSE=
+fi
+
+
+$as_echo "#define USERVER_UDP 1" >>confdefs.h
+
+fi
 
 if test "$enable_examples" = "yes"; then
    { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
@@ -33189,6 +33227,8 @@ $as_echo_n "checking if you want to build userver_udp... " >&6; }
 # Check whether --with-userver-udp was given.
 if test "${with_userver_udp+set}" = set; then :
   withval=$with_userver_udp; use_userver_udp=$withval
+else
+  use_userver_udp=no
 fi
 
 	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $use_userver_udp" >&5
@@ -33203,45 +33243,6 @@ else
   ENABLE_EXAMPLES_TRUE='#'
   ENABLE_EXAMPLES_FALSE=
 fi
-
-fi
-
- if false; then
-  HTTP3_TRUE=
-  HTTP3_FALSE='#'
-else
-  HTTP3_TRUE='#'
-  HTTP3_FALSE=
-fi
-
- if false; then
-  USERVER_UDP_TRUE=
-  USERVER_UDP_FALSE='#'
-else
-  USERVER_UDP_TRUE='#'
-  USERVER_UDP_FALSE=
-fi
-
-
-if test "x$use_userver_udp" != "xno" -a "$enable_http3" = "yes" -a "$USE_LIBQUICHE" = "yes" -a "$USE_LIBURING" = "yes"; then
-	 if true; then
-  HTTP3_TRUE=
-  HTTP3_FALSE='#'
-else
-  HTTP3_TRUE='#'
-  HTTP3_FALSE=
-fi
-
-	 if true; then
-  USERVER_UDP_TRUE=
-  USERVER_UDP_FALSE='#'
-else
-  USERVER_UDP_TRUE='#'
-  USERVER_UDP_FALSE=
-fi
-
-
-$as_echo "#define USERVER_UDP 1" >>confdefs.h
 
 fi
 
@@ -35552,24 +35553,12 @@ if test -z "${HTTP2_TRUE}" && test -z "${HTTP2_FALSE}"; then
   as_fn_error $? "conditional \"HTTP2\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
-if test -z "${USERVER_IPC_TRUE}" && test -z "${USERVER_IPC_FALSE}"; then
-  as_fn_error $? "conditional \"USERVER_IPC\" was never defined.
-Usually this means the macro was only invoked conditionally." "$LINENO" 5
-fi
-if test -z "${ENABLE_EXAMPLES_TRUE}" && test -z "${ENABLE_EXAMPLES_FALSE}"; then
-  as_fn_error $? "conditional \"ENABLE_EXAMPLES\" was never defined.
-Usually this means the macro was only invoked conditionally." "$LINENO" 5
-fi
-if test -z "${USERVER_IPC_TRUE}" && test -z "${USERVER_IPC_FALSE}"; then
-  as_fn_error $? "conditional \"USERVER_IPC\" was never defined.
-Usually this means the macro was only invoked conditionally." "$LINENO" 5
-fi
-if test -z "${ENABLE_EXAMPLES_TRUE}" && test -z "${ENABLE_EXAMPLES_FALSE}"; then
-  as_fn_error $? "conditional \"ENABLE_EXAMPLES\" was never defined.
-Usually this means the macro was only invoked conditionally." "$LINENO" 5
-fi
 if test -z "${HTTP3_TRUE}" && test -z "${HTTP3_FALSE}"; then
   as_fn_error $? "conditional \"HTTP3\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${USERVER_IPC_TRUE}" && test -z "${USERVER_IPC_FALSE}"; then
+  as_fn_error $? "conditional \"USERVER_IPC\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${USERVER_UDP_TRUE}" && test -z "${USERVER_UDP_FALSE}"; then
@@ -35582,6 +35571,18 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${USERVER_UDP_TRUE}" && test -z "${USERVER_UDP_FALSE}"; then
   as_fn_error $? "conditional \"USERVER_UDP\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${ENABLE_EXAMPLES_TRUE}" && test -z "${ENABLE_EXAMPLES_FALSE}"; then
+  as_fn_error $? "conditional \"ENABLE_EXAMPLES\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${USERVER_IPC_TRUE}" && test -z "${USERVER_IPC_FALSE}"; then
+  as_fn_error $? "conditional \"USERVER_IPC\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${ENABLE_EXAMPLES_TRUE}" && test -z "${ENABLE_EXAMPLES_FALSE}"; then
+  as_fn_error $? "conditional \"ENABLE_EXAMPLES\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${SANITIZE_TRUE}" && test -z "${SANITIZE_FALSE}"; then
