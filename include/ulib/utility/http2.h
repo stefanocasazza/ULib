@@ -31,6 +31,7 @@
 #define HTTP2_CONNECTION_PREFACE "PRI * HTTP/2.0\r\n\r\nSM\r\n\r\n" // (24 bytes)
 
 class UHTTP;
+class UHTTP3;
 class UClientImage_Base;
 
 class U_EXPORT UHTTP2 {
@@ -282,6 +283,7 @@ protected:
    static void sendPing();
    static void readFrame();
    static void setStream();
+   static void buildTable();
    static void manageData();
    static bool initRequest();
    static void writeResponse();
@@ -490,7 +492,7 @@ protected:
 
       U_RETURN(false);
       }
-      
+
    static bool eraseHeaders(UStringRep* key, void* elem) // callWithDeleteForAllEntry()...
       {
       U_TRACE(0, "UHTTP2::eraseHeaders(%V,%p)", key, elem)
@@ -849,6 +851,7 @@ private:
    U_DISALLOW_COPY_AND_ASSIGN(UHTTP2)
 
    friend class UHTTP;
+   friend class UHTTP3;
    friend class Application;
    friend class UClientImage_Base;
 };

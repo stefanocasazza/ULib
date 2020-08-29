@@ -160,9 +160,9 @@ UHTTP2::Connection::Connection() : itable(64, setIndexStaticTable)
    hpack_error[i].desc  = d
 #endif
 
-void UHTTP2::ctor()
+void UHTTP2::buildTable()
 {
-   U_TRACE_NO_PARAM(0+256, "UHTTP2::ctor()")
+   U_TRACE_NO_PARAM(0+256, "UHTTP2::buildTable()")
 
    UString::str_allocate(STR_ALLOCATE_HTTP2);
 
@@ -293,6 +293,13 @@ void UHTTP2::ctor()
     hash_static_table[59]       = UString::str_via->hashIgnoreCase();
    hpack_static_table[60].name  = UString::str_www_authenticate->rep;
     hash_static_table[60]       = UString::str_www_authenticate->hashIgnoreCase();
+}
+
+void UHTTP2::ctor()
+{
+   U_TRACE_NO_PARAM(0+256, "UHTTP2::ctor()")
+
+   buildTable();
 
 #ifdef DEBUG
    if (btest)
@@ -3084,7 +3091,8 @@ void UHTTP2::downgradeRequest()
    if (sz)
       {
       if (U_http_content_type_len) UClientImage_Base::request->snprintf_add(U_CONSTANT_TO_PARAM("Content-Type: %.*s\r\n"), U_HTTP_CTYPE_TO_TRACE);
-                                   UClientImage_Base::request->snprintf_add(U_CONSTANT_TO_PARAM("Content-Length: %u\r\n"), sz);
+
+      UClientImage_Base::request->snprintf_add(U_CONSTANT_TO_PARAM("Content-Length: %u\r\n"), sz);
       }
 
    pConnection->itable.callForAllEntry(copyHeaders);
@@ -3583,7 +3591,7 @@ process_request:
 
             U_SRV_LOG_WITH_ADDR("send response (HTTP2,id:%u,bytes:%u) %#.*S to", pStream->id, sz0, sz0, ptr0);
 
-            if (USocketExt::write(UServer_Base::csocket, ptr0, sz0, 0) != (int)sz0) nerror = CONNECT_ERROR;
+            if (USocketExt::write(UServer_Base::csocket, ptr0, sz0, 0) != sz0) nerror = CONNECT_ERROR;
 
 #        ifdef DEBUG
          // (void) UFile::writeToTmp(ptr0, sz0, O_RDWR | O_TRUNC, U_CONSTANT_TO_PARAM("load_balance_response.%P"), 0);

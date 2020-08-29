@@ -61,7 +61,10 @@ if HTTP2
 SRC_CPP += utility/http2.cpp
 endif
 if HTTP3
-SRC_CPP += utility/http3.cpp
+SRC_CPP += utility/http3.cpp utility/uquic.cpp
+if !HTTP2
+SRC_CPP += utility/http2.cpp
+endif
 endif
 
 if STDCPP

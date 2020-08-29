@@ -115,6 +115,7 @@ vClientImage = new client_type[UNotifier::max_connection]; } }
 
 #endif
 
+class UQuic;
 class UHTTP;
 class UHTTP2;
 class UHTTP3;
@@ -1458,6 +1459,7 @@ private:
 
    U_DISALLOW_COPY_AND_ASSIGN(UServer_Base)
 
+   friend class UQuic;
    friend class UHTTP;
    friend class UHTTP2;
    friend class UHTTP3;

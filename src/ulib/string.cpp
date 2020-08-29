@@ -114,7 +114,7 @@ const UString* UString::str_pgsql_name;
 const UString* UString::str_sqlite_name;
 const UString* UString::str_dbdir;
 const UString* UString::str_memory;
-#ifndef U_HTTP2_DISABLE
+#if !defined(U_HTTP2_DISABLE) || !defined(U_HTTP3_DISABLE)
 const UString* UString::str_authority;
 const UString* UString::str_method;
 const UString* UString::str_method_get;
@@ -181,10 +181,10 @@ const UString* UString::str_www_authenticate;
 const UString* UString::str_ULib;
 #endif
 
-#ifdef U_HTTP2_DISABLE
-static ustringrep stringrep_storage[75] = {
-#else
+#if !defined(U_HTTP2_DISABLE) || !defined(U_HTTP3_DISABLE)
 static ustringrep stringrep_storage[139] = {
+#else
+static ustringrep stringrep_storage[75] = {
 #endif
    { U_STRINGREP_FROM_CONSTANT("host") },
    { U_STRINGREP_FROM_CONSTANT("chunked") },
@@ -270,7 +270,7 @@ static ustringrep stringrep_storage[139] = {
    { U_STRINGREP_FROM_CONSTANT("auto-reconnect") },
    // ORM PGSQL
    { U_STRINGREP_FROM_CONSTANT("pgsql") },
-#ifndef U_HTTP2_DISABLE
+#if !defined(U_HTTP2_DISABLE) || !defined(U_HTTP3_DISABLE)
    { U_STRINGREP_FROM_CONSTANT(":authority") },
    { U_STRINGREP_FROM_CONSTANT(":method") },
    { U_STRINGREP_FROM_CONSTANT("GET") },
@@ -530,7 +530,7 @@ void UString::str_allocate(int which)
       U_NEW_ULIB_STRING(str_auto_reconnect, UString(stringrep_storage+STR_ALLOCATE_INDEX_ORM+13));
       U_NEW_ULIB_STRING(str_pgsql_name,     UString(stringrep_storage+STR_ALLOCATE_INDEX_ORM+14));
       }
-#ifndef U_HTTP2_DISABLE
+#if !defined(U_HTTP2_DISABLE) || !defined(U_HTTP3_DISABLE)
    else if ((which & STR_ALLOCATE_HTTP2) != 0)
       {
       U_INTERNAL_ASSERT_EQUALS(str_authority, U_NULLPTR)

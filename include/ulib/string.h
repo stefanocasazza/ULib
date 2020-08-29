@@ -1267,7 +1267,7 @@ public:
    // ORM SQLITE
    static const UString* str_sqlite_name;
    static const UString* str_dbdir;
-#ifndef U_HTTP2_DISABLE
+#if !defined(U_HTTP2_DISABLE) || !defined(U_HTTP3_DISABLE)
    static const UString* str_authority;
    static const UString* str_method;
    static const UString* str_method_get;

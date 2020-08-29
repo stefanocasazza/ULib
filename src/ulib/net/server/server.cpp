@@ -4945,7 +4945,7 @@ void UServer_Base::logNewClient()
    setClientAddress();
 
 #ifndef U_HTTP3_DISABLE
-   U_INTERNAL_DUMP("UHTTP3::conn_id = %M", UHTTP3::conn_id, UHTTP3::conn_id_len)
+   U_INTERNAL_DUMP("UQuic::conn_id = %M", UQuic::conn_id, UQuic::conn_id_len)
 #endif
 
 #ifndef U_LOG_DISABLE
@@ -5456,9 +5456,9 @@ void UServer_Base::runLoop(const char* user)
 
                   rbuffer->size_adjust_force(result);
 
-                  if (UHTTP3::parseHeader() == false) goto next;
+                  if (UQuic::parseHeader() == false) goto next;
 
-                  if ((blookup = UHTTP3::lookup()) == false)
+                  if ((blookup = UQuic::lookup()) == false)
                      {
                      logNewClient();
 
@@ -5468,7 +5468,7 @@ void UServer_Base::runLoop(const char* user)
 
                      if (pthis->handlerAccept(-1) == false) goto next;
 
-                     pClientImage->conn  = UHTTP3::conn;
+                     pClientImage->conn  = UQuic::conn;
                      pClientImage->http3 = UHTTP3::http3;
 
                      pClientImage->socket->setFd(pClientImage->fd = fds[0]);
@@ -5482,7 +5482,7 @@ void UServer_Base::runLoop(const char* user)
 
                   U_DUMP("result = %d csocket->isClosed() = %b U_ClientImage_close = %b", result, csocket->isClosed(), U_ClientImage_close)
 
-               // if (blookup == false) UHTTP3::insert();
+               // if (blookup == false) UQuic::insert();
                   }
 
 next:          prepareOperation(UClientImage_Base::_RECVMSG);

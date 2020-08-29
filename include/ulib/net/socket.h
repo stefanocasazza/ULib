@@ -59,6 +59,7 @@
  * they use class UIPAddress instances and port numbers rather than sockaddr structures
  */
 
+class UQuic;
 class UFile;
 class UHTTP;
 class UHTTP2;
@@ -906,6 +907,7 @@ protected:
 private:
    U_DISALLOW_COPY_AND_ASSIGN(USocket)
 
+                      friend class UQuic;
                       friend class UFile;
                       friend class UHTTP;
                       friend class UHTTP2;
